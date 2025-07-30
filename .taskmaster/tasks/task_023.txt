@@ -1,0 +1,43 @@
+# Task ID: 23
+# Title: Create Documentation and Examples
+# Status: pending
+# Dependencies: 22
+# Priority: high
+# Description: Write comprehensive documentation and usage examples
+# Details:
+Write README.md with quick start guide. Create API documentation using TypeDoc. Add examples/ directory with common use cases. Document Effect.ts patterns used. Include troubleshooting guide. Add migration guide from other tools.
+
+# Test Strategy:
+Test all examples run correctly. Verify documentation builds. Test quick start works for new users. Check for documentation completeness.
+
+# Subtasks:
+## 1. Create Main README.md with Quick Start Guide [pending]
+### Dependencies: None
+### Description: Write the primary README.md file with project overview, installation instructions, and a quick start guide that gets users running in under 5 minutes
+### Details:
+Create README.md at project root. Include: Project description and key features, Prerequisites (Node.js, Bun), Installation steps using bun install, Quick start example showing basic usage with a simple evaluator, Project structure overview, Links to detailed documentation. Use clear headings and code blocks for examples.
+
+## 2. Set Up TypeDoc and Generate API Documentation [pending]
+### Dependencies: 23.1
+### Description: Configure TypeDoc to generate comprehensive API documentation from TypeScript source files across all packages
+### Details:
+Install TypeDoc as dev dependency. Create typedoc.json config at root with proper entryPoints for all packages. Configure to output to docs/api directory. Set up npm script 'docs:build' to generate documentation. Include proper theme and navigation. Ensure all public APIs have JSDoc comments. Generate initial documentation and verify output.
+
+## 3. Create Examples Directory with Common Use Cases [pending]
+### Dependencies: 23.1
+### Description: Build a comprehensive examples directory demonstrating various Evaluatorq usage patterns and integrations
+### Details:
+Create examples/ directory at root. Include: basic-evaluation.ts (simple score evaluation), multiple-evaluators.ts (combining evaluators), custom-evaluator.ts (implementing custom evaluator), orq-integration.ts (using orq.ai integration), streaming-results.ts (handling large datasets), error-handling.ts (proper error handling patterns). Each example should be runnable with bun run and include inline comments explaining the code.
+
+## 4. Document Effect.ts Patterns and Best Practices [pending]
+### Dependencies: 23.2
+### Description: Create documentation explaining the Effect.ts patterns used throughout the codebase and how users can leverage them
+### Details:
+Create docs/effect-patterns.md. Document: Why Effect.ts is used (error handling, composability), Common Effect patterns in the codebase (services, layers, error types), How to extend Evaluatorq with Effect, Effect.pipe usage examples, Error handling strategies, Resource management patterns. Include code snippets from actual implementation. Link to official Effect documentation for deeper learning.
+
+## 5. Create Troubleshooting and Migration Guides [pending]
+### Dependencies: 23.3, 23.4
+### Description: Write comprehensive troubleshooting documentation and migration guides from other evaluation tools
+### Details:
+Create docs/troubleshooting.md with common issues: TypeScript configuration problems, Effect runtime errors, orq.ai connection issues, Performance optimization tips, Debugging strategies. Create docs/migration.md with guides for migrating from: Custom evaluation scripts, Other evaluation frameworks, Step-by-step migration examples, API comparison tables. Include FAQ section based on anticipated user questions.
+

@@ -1,0 +1,102 @@
+{
+  "experimentName": "Basic QA Evaluation",
+  "timestamp": "2025-07-21T19:07:02.087Z",
+  "results": [
+    {
+      "input": "What is the capital of France?",
+      "output": "The capital of France is Paris.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "questionType": "what",
+            "responseLength": 31,
+            "hasNumbers": false,
+            "sentiment": "concise"
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.6666666666666666
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 0
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.3870967741935484
+        }
+      ]
+    },
+    {
+      "input": "What is 2 + 2?",
+      "output": "2 + 2 equals 4.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "questionType": "what",
+            "responseLength": 15,
+            "hasNumbers": true,
+            "sentiment": "concise"
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.50709255283711
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 0
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.1333333333333333
+        }
+      ]
+    },
+    {
+      "input": "Who wrote Romeo and Juliet?",
+      "output": "William Shakespeare wrote Romeo and Juliet.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "questionType": "who",
+            "responseLength": 43,
+            "hasNumbers": false,
+            "sentiment": "concise"
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.5477225575051661
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 0
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.5813953488372092
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 3,
+    "averageScores": {
+      "CosineSimilarity": 0.5738272590029808,
+      "ExactMatch": 0,
+      "LevenshteinDistance": 0.3672751521213636
+    },
+    "executionTime": 3
+  }
+}

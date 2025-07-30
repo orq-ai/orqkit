@@ -1,0 +1,111 @@
+{
+  "experimentName": "Experiment007",
+  "timestamp": "2025-07-21T18:46:06.390Z",
+  "results": [
+    {
+      "input": "Hello, how are you?",
+      "output": "I'm good, thank you!",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": "Hello, how are you? I'm good, thank you!"
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "inputLength": 19,
+            "outputLength": 20,
+            "ratio": 0.95
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "What is 2+2?",
+      "output": "4",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": "What is 2+2? 4"
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "inputLength": 12,
+            "outputLength": 1,
+            "ratio": 12
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "Tell me a joke",
+      "output": "Why did the chicken cross the road? To get to the other side!",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": "Tell me a joke Why did the chicken cross the road? To get to the other side!"
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "inputLength": 14,
+            "outputLength": 61,
+            "ratio": 0.22950819672131148
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 3,
+    "averageScores": {
+      "CosineSimilarity": 1,
+      "ExactMatch": 1,
+      "LevenshteinDistance": 1
+    },
+    "executionTime": 4
+  }
+}

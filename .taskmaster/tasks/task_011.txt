@@ -1,0 +1,43 @@
+# Task ID: 11
+# Title: Implement CLI Package Structure
+# Status: pending
+# Dependencies: 1
+# Priority: medium
+# Description: Set up the CLI package with commander.js and basic command structure
+# Details:
+In packages/cli, install commander, chalk, ora dependencies. Create main CLI entry point with evaluatorq command. Set up command structure for run, version, help. Configure package.json with proper bin field. Implement basic option parsing.
+
+# Test Strategy:
+Test CLI can be invoked from command line. Test help command displays correctly. Test version command shows package version. Verify commander parses options correctly.
+
+# Subtasks:
+## 1. Initialize CLI Package and Install Dependencies [pending]
+### Dependencies: None
+### Description: Create the CLI package structure in packages/cli and install required dependencies
+### Details:
+Create packages/cli directory if not exists. Initialize package.json with proper name (@evaluatorq/cli), version, and type module. Install commander.js for command parsing, chalk for colored output, and ora for loading spinners. Set up TypeScript configuration extending from root tsconfig.
+
+## 2. Create Main CLI Entry Point [pending]
+### Dependencies: 11.1
+### Description: Set up the main CLI entry file with proper bin configuration
+### Details:
+Create src/index.ts as the main entry point. Add shebang line '#!/usr/bin/env node' at the top. Configure package.json bin field to point to dist/index.js with 'evaluatorq' as the command name. Set up basic TypeScript build script. Create a simple wrapper that imports and executes the main CLI function.
+
+## 3. Implement Command Structure with Commander [pending]
+### Dependencies: 11.2
+### Description: Set up the main command structure using commander.js with subcommands
+### Details:
+Create src/cli.ts with the main program setup using commander. Define the main 'evaluatorq' program with description and version from package.json. Add 'run' command for executing evaluations. Add built-in 'version' handling. Add comprehensive 'help' command with examples. Set up global options like --verbose and --quiet.
+
+## 4. Implement Option Parsing and Validation [pending]
+### Dependencies: 11.3
+### Description: Add option parsing for the run command with proper validation
+### Details:
+Add options to run command: --config/-c for config file path, --output/-o for output format (json/table/csv), --concurrency/-n for parallel execution limit, --verbose/-v for debug output. Create option validators for file paths, numeric ranges, and enum values. Use commander's .option() with custom parsers. Add .hook() for preprocessing and validation.
+
+## 5. Add Error Handling and Output Formatting [pending]
+### Dependencies: 11.4
+### Description: Implement proper error handling and formatted output using chalk and ora
+### Details:
+Create src/utils/output.ts with functions for success, error, warning, and info messages using chalk. Implement spinner management with ora for long-running operations. Add global error handler to catch and format errors nicely. Create output formatters for different verbosity levels. Ensure clean exit codes (0 for success, 1 for errors).
+

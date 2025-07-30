@@ -1,0 +1,43 @@
+# Task ID: 14
+# Title: Create orq.ai API Client
+# Status: pending
+# Dependencies: 2, 3
+# Priority: medium
+# Description: Build the orq.ai integration client using Effect.ts in the orq-integration package
+# Details:
+In packages/orq-integration, install @orq-ai/node SDK. Create Effect service for orq client with methods: authenticate, sendResults. Implement retry logic using Effect.retry with exponential backoff. Handle rate limiting with Effect.RateLimiter. Check ORQ_API_KEY environment variable.
+
+# Test Strategy:
+Mock orq API responses for testing. Test retry logic with simulated failures. Test rate limiting behavior. Test authentication error handling.
+
+# Subtasks:
+## 1. Install Dependencies and Set Up Package Structure [pending]
+### Dependencies: None
+### Description: Install @orq-ai/node SDK and set up the initial package structure for orq-integration
+### Details:
+Navigate to packages/orq-integration and run 'bun add @orq-ai/node'. Create the directory structure: src/index.ts, src/client.ts, src/types.ts. Set up package.json with proper exports and TypeScript configuration. Ensure the package is properly linked in the Nx workspace.
+
+## 2. Create Effect Service and Type Definitions [pending]
+### Dependencies: 14.1
+### Description: Define the orq.ai client service interface and types using Effect.ts patterns
+### Details:
+In src/types.ts, define interfaces for OrqConfig, OrqAuthResponse, OrqResultPayload, and OrqApiError. In src/client.ts, create an Effect.Tag for OrqClient service with methods: authenticate(): Effect<OrqAuthResponse, OrqApiError, never> and sendResults(results: OrqResultPayload): Effect<void, OrqApiError, never>. Define the service interface following Effect.ts service patterns.
+
+## 3. Implement Authentication and Environment Configuration [pending]
+### Dependencies: 14.2
+### Description: Implement authentication logic with environment variable validation
+### Details:
+Create a configuration layer that reads ORQ_API_KEY from environment variables using Effect.Config. Implement the authenticate method that calls the orq.ai authentication endpoint. Use Effect.fail for missing API key errors. Store auth token in service state for subsequent requests. Handle authentication errors with proper Effect error types.
+
+## 4. Implement Retry Logic and Rate Limiting [pending]
+### Dependencies: 14.3
+### Description: Add exponential backoff retry logic and rate limiting to API calls
+### Details:
+Wrap API calls with Effect.retry using Schedule.exponential with initial delay of 1 second and factor of 2, max 5 retries. Implement Effect.RateLimiter with configurable requests per minute (default 60). Apply rate limiting to sendResults method. Handle 429 (rate limit) responses specially with longer backoff.
+
+## 5. Implement sendResults Method and Export Client [pending]
+### Dependencies: 14.4
+### Description: Complete the sendResults implementation and create the main export
+### Details:
+Implement sendResults method that accepts evaluation results, applies rate limiting, includes auth token from stored state, handles HTTP errors with proper Effect error types. In src/index.ts, export the OrqClient service, configuration layer, and helper functions for creating the client. Include factory function makeOrqClient() that returns the complete Effect layer.
+

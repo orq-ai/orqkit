@@ -1,0 +1,43 @@
+# Task ID: 18
+# Title: Add Configuration Loading
+# Status: pending
+# Dependencies: 11
+# Priority: low
+# Description: Implement configuration file support for the CLI
+# Details:
+Support .evaluatorqrc.json configuration file. Load config from current directory or home. Allow overriding with CLI flags. Support environment variables. Merge configurations with proper precedence.
+
+# Test Strategy:
+Test configuration loading from different locations. Test CLI flags override config file. Test environment variable handling. Test invalid configuration handling.
+
+# Subtasks:
+## 1. Define Configuration Schema and Types [pending]
+### Dependencies: None
+### Description: Create TypeScript interfaces and schema for the .evaluatorqrc.json configuration file
+### Details:
+In packages/cli/src/config/types.ts, define interfaces for configuration structure including evaluator settings, output formats, default options, and environment variables. Create a JSON schema in packages/cli/src/config/schema.json for validation. Include fields for evaluator configurations, logging levels, output preferences, and API keys if needed.
+
+## 2. Implement Configuration File Loader [pending]
+### Dependencies: 18.1
+### Description: Build the core configuration loading logic that searches and reads .evaluatorqrc.json files
+### Details:
+In packages/cli/src/config/loader.ts, implement file search logic starting from current directory up to home directory. Use fs.promises for async file operations. Parse JSON safely with error handling. Search for .evaluatorqrc.json in order: current directory, parent directories up to root, then home directory. Return the first valid configuration found or empty object if none exists.
+
+## 3. Create Environment Variable Parser [pending]
+### Dependencies: 18.1
+### Description: Implement environment variable parsing and mapping to configuration options
+### Details:
+In packages/cli/src/config/env-parser.ts, create a mapping of environment variables to configuration paths (e.g., EVALUATORQ_LOG_LEVEL -> logLevel). Parse process.env and extract relevant variables with EVALUATORQ_ prefix. Convert environment variable values to appropriate types (boolean, number, string). Handle nested configuration paths using delimiter like double underscore.
+
+## 4. Build Configuration Merger [pending]
+### Dependencies: 18.2, 18.3
+### Description: Implement configuration merging logic with proper precedence order
+### Details:
+In packages/cli/src/config/merger.ts, implement deep merge functionality that combines configurations from multiple sources. Establish precedence order: CLI flags (highest) -> environment variables -> config file -> defaults (lowest). Use a recursive merge that handles nested objects and arrays appropriately. Preserve type safety throughout the merge process.
+
+## 5. Integrate Configuration System with CLI [pending]
+### Dependencies: 18.4
+### Description: Wire up the configuration system to the CLI command structure and make it accessible throughout the application
+### Details:
+In packages/cli/src/config/index.ts, create a ConfigManager class that orchestrates loading, parsing, and merging. Modify CLI entry point to load configuration before command execution. Pass configuration context to all commands. Add --config flag to specify custom config file path. Ensure configuration is loaded once and cached. Export helper functions for accessing nested config values safely.
+

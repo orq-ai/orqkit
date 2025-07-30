@@ -1,0 +1,43 @@
+# Task ID: 21
+# Title: Add TypeScript Type Helpers
+# Status: pending
+# Dependencies: 3
+# Priority: low
+# Description: Create type helper utilities for better developer experience
+# Details:
+Create type guards for runtime validation. Add generic constraint helpers. Implement type-safe builders for experiments. Create typed error constructors. Export utility types for users.
+
+# Test Strategy:
+Test type guards work at runtime. Test type inference with helpers. Test builders produce correct types. Verify exported types are usable.
+
+# Subtasks:
+## 1. Create Type Guard Utilities [pending]
+### Dependencies: None
+### Description: Implement runtime type guard functions for validating data types at runtime
+### Details:
+Create packages/shared/src/type-guards.ts with functions like isDataPoint(), isTask(), isEvaluator(), isExperiment(), and isEvaluationResult(). Each guard should check the shape and required properties of the type. Use Effect's Schema library for runtime validation where appropriate. Export guards as a namespace TypeGuards for better organization.
+
+## 2. Implement Generic Constraint Helpers [pending]
+### Dependencies: None
+### Description: Create utility types and functions for working with generic constraints in the codebase
+### Details:
+Create packages/shared/src/type-constraints.ts with helpers like Constrain<T, U>, ExtractInput<T>, ExtractOutput<T>, and ValidateTaskType<T>. Add utility types for constraining evaluator inputs/outputs. Create helper functions for runtime constraint validation. Include types for ensuring type compatibility between tasks and evaluators.
+
+## 3. Build Type-Safe Experiment Builders [pending]
+### Dependencies: 21.1, 21.2
+### Description: Create builder pattern implementations for constructing experiments with full type safety
+### Details:
+Create packages/shared/src/builders.ts with ExperimentBuilder class using fluent API. Implement methods like withName(), withDataPoints(), withEvaluators(), and build(). Use TypeScript's builder pattern with phantom types to ensure compile-time safety. Leverage Effect's pipe function for composition. Include TaskBuilder and EvaluatorBuilder for complete coverage.
+
+## 4. Create Typed Error Constructors [pending]
+### Dependencies: 21.1
+### Description: Implement typed error classes and constructor functions for consistent error handling
+### Details:
+Create packages/shared/src/errors.ts with typed error classes: ValidationError, EvaluationError, ExperimentError, and ConfigurationError. Each should extend Effect's Cause type. Create factory functions like createValidationError() that return properly typed Effect failures. Include error type guards and error serialization utilities. Add discriminated union type for all possible errors.
+
+## 5. Export Public Utility Types [pending]
+### Dependencies: 21.1, 21.2, 21.3, 21.4
+### Description: Create and export a comprehensive set of utility types for library users
+### Details:
+Create packages/shared/src/types/index.ts as the main export point. Export utility types like DeepPartial<T>, Awaitable<T>, ExtractEffectValue<T>, TaskInput<T>, TaskOutput<T>, and EvaluatorScore. Include type aliases for common Effect patterns. Create a types namespace for organized exports. Add JSDoc comments for all exported types. Ensure all types are re-exported from packages/shared/src/index.ts.
+

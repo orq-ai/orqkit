@@ -1,0 +1,43 @@
+# Task ID: 16
+# Title: Add Local Fallback Mechanism
+# Status: pending
+# Dependencies: 14, 15
+# Priority: high
+# Description: Implement automatic fallback to local JSON output when orq.ai is unavailable
+# Details:
+Detect missing ORQ_API_KEY or API failures. Automatically switch to local file output. Save results to ./evaluatorq-results-{timestamp}.json. Log clear message about fallback. Ensure same result format for both modes.
+
+# Test Strategy:
+Test fallback triggers without API key. Test fallback on API errors. Verify local files are created correctly. Test result format consistency.
+
+# Subtasks:
+## 1. Create Fallback Configuration Interface [pending]
+### Dependencies: None
+### Description: Define configuration interface and types for fallback mechanism settings
+### Details:
+Create a FallbackConfig interface in packages/core/src/types/fallback.ts that includes: outputDirectory (default './'), filePrefix (default 'evaluatorq-results'), enableAutoFallback (boolean), fallbackLogLevel, and timestamp format. Export configuration types and default values that can be used throughout the fallback system.
+
+## 2. Implement API Availability Detector [pending]
+### Dependencies: 16.1
+### Description: Build service to detect ORQ_API_KEY presence and test API connectivity
+### Details:
+In packages/core/src/services/api-detector.ts, create an Effect service that checks for ORQ_API_KEY in environment variables, attempts a lightweight API health check if key exists, and returns availability status. Include timeout handling and proper error catching. Export as ApiDetector service with checkAvailability method returning Effect<boolean>.
+
+## 3. Build Local File Writer Service [pending]
+### Dependencies: 16.1
+### Description: Create service to handle local JSON file output with timestamped filenames
+### Details:
+Implement LocalFileWriter service in packages/core/src/services/file-writer.ts using Effect.ts. Include methods to generate timestamped filenames (evaluatorq-results-{ISO8601}.json), write JSON data with proper formatting, handle file system errors gracefully, and ensure directory exists before writing. Use Effect's file system capabilities or Node.js fs with proper Effect wrapping.
+
+## 4. Create Fallback Orchestrator [pending]
+### Dependencies: 16.2, 16.3
+### Description: Build main fallback logic that coordinates detection and switching between API and local modes
+### Details:
+In packages/core/src/services/fallback-orchestrator.ts, create FallbackOrchestrator service that uses ApiDetector to check availability, decides whether to use API or local mode, logs clear messages about the mode being used, and provides a unified interface for result submission. Implement submitResults method that automatically routes to appropriate output method based on availability.
+
+## 5. Integrate Fallback with Main Evaluation Pipeline [pending]
+### Dependencies: 16.4
+### Description: Wire fallback mechanism into the existing evaluation pipeline to ensure seamless operation
+### Details:
+Modify the main evaluation pipeline in packages/core to use FallbackOrchestrator for result submission. Update CLI to accept fallback configuration options. Ensure result format remains consistent between API and local modes by using the same serialization logic. Add configuration parsing for fallback settings and pass them through the pipeline properly.
+

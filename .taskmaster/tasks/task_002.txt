@@ -1,0 +1,43 @@
+# Task ID: 2
+# Title: Configure Effect.ts and Core Dependencies
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Install and configure Effect.ts and other core dependencies across the monorepo
+# Details:
+Install effect@^3.16.16 as workspace dependency. Configure TypeScript to work with Effect.ts patterns. Set up shared Effect utilities in packages/shared for error handling, concurrency, and resource management. Create base Effect service definitions for dependency injection pattern.
+
+# Test Strategy:
+Create simple Effect pipeline tests to verify proper installation. Test Effect error boundaries and resource management. Verify TypeScript inference works correctly with Effect types.
+
+# Subtasks:
+## 1. Install Effect.ts and Core Dependencies [pending]
+### Dependencies: None
+### Description: Add Effect.ts and essential dependencies to the monorepo workspace
+### Details:
+Run `bun add effect@^3.16.16` to install Effect.ts as a workspace dependency. This will add it to the root package.json and make it available to all packages. Also install any peer dependencies if required. Verify installation by checking package.json and bun.lock files.
+
+## 2. Configure TypeScript for Effect.ts Patterns [pending]
+### Dependencies: 2.1
+### Description: Update TypeScript configuration to properly support Effect.ts type inference and patterns
+### Details:
+Update the root tsconfig.json to include Effect.ts specific settings. Add "strict": true, "exactOptionalPropertyTypes": true, "noUncheckedIndexedAccess": true for better Effect type safety. Ensure "moduleResolution": "bundler" or "node" is set. Add "lib": ["ES2022"] for modern JavaScript features. Update package-specific tsconfig.json files to extend the root configuration.
+
+## 3. Create Shared Effect Utilities Package [pending]
+### Dependencies: 2.1, 2.2
+### Description: Set up packages/shared with common Effect.ts utilities and patterns
+### Details:
+Generate the shared package using `npx nx g @nx/js:lib packages/shared --publishable --importPath=@evaluatorq/shared`. Create utility modules: error.ts for custom error types and handlers using Effect.Data.TaggedError, concurrency.ts for semaphore and rate limiting utilities, resource.ts for resource management patterns using Effect.Resource, logger.ts for structured logging with Effect.Logger.
+
+## 4. Implement Base Effect Service Definitions [pending]
+### Dependencies: 2.3
+### Description: Create foundational service interfaces and implementations for dependency injection
+### Details:
+In packages/shared/src/services, create base service definitions using Effect.Context.Tag pattern. Implement: ConfigService for configuration management, LoggerService extending Effect.Logger, MetricsService for telemetry, ErrorReporter for centralized error handling. Use Effect.Layer to create service layers with proper dependencies. Export service tags and layer constructors.
+
+## 5. Create Effect.ts Integration Tests [pending]
+### Dependencies: 2.3, 2.4
+### Description: Implement comprehensive integration tests to verify Effect.ts setup across the monorepo
+### Details:
+Create test/effect-integration.spec.ts in packages/shared. Test: importing and using Effect from multiple packages, service layer composition across packages, error propagation through Effect pipelines, resource cleanup and finalization, concurrent execution with proper type inference. Ensure tests run via `npx nx test shared`.
+

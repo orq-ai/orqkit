@@ -2,5 +2,21 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/evaluators"
+    },
+    {
+      "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/orq-integration"
+    },
+    {
+      "path": "./packages/shared"
+    }
+  ]
 }

@@ -1,0 +1,49 @@
+{
+  "experimentName": "Test Experiment",
+  "timestamp": "2025-07-21T18:55:51.648Z",
+  "results": [
+    {
+      "input": "test",
+      "output": "test",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "isMatch": true
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "MockEvaluator",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "foo",
+      "output": "bar",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "isMatch": false
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "MockEvaluator",
+          "score": 0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 2,
+    "averageScores": {
+      "MockEvaluator": 0.5
+    },
+    "executionTime": 3
+  }
+}

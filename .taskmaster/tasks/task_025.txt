@@ -1,0 +1,11 @@
+# Task ID: 25
+# Title: Performance Optimization and Benchmarking
+# Status: pending
+# Dependencies: 22
+# Priority: low
+# Description: Optimize performance for large-scale evaluations and add benchmarks
+# Details:
+Profile evaluation pipeline for bottlenecks. Optimize Effect.ts fiber usage. Add streaming support for large datasets. Implement result batching for orq.ai. Create benchmark suite comparing with similar tools. Document performance characteristics.
+
+# Test Strategy:
+Run benchmarks with various data sizes. Test memory usage stays bounded. Compare performance with baseline. Verify optimizations don't break functionality.

@@ -1,0 +1,154 @@
+#!/usr/bin/env bun
+
+// Evaluatorq runner - discovers and runs .eval.ts files
+import { Glob } from 'bun';
+import path from 'path';
+import chalk from 'chalk';
+
+// Setup module aliases
+const aliases = {
+  "@evaluatorq/shared": "./packages/shared/src/index.ts",
+  "@evaluatorq/core": "./packages/core/src/index.ts",
+  "@evaluatorq/evaluators": "./packages/evaluators/src/index.ts",
+  "@evaluatorq/orq-integration": "./packages/orq-integration/src/index.ts",
+};
+
+for (const [alias, modulePath] of Object.entries(aliases)) {
+  // @ts-ignore
+  Bun.plugin({
+    name: alias,
+    setup(build) {
+      build.onResolve({ filter: new RegExp(`^${alias}$`) }, () => ({
+        path: new URL(modulePath, import.meta.url).href,
+      }));
+    },
+  });
+}
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const command = args[0] || 'run';
+
+async function discoverEvalFiles(pattern = '**/*.eval.ts') {
+  const glob = new Glob(pattern);
+  const files = [];
+  
+  for await (const file of glob.scan({ cwd: process.cwd() })) {
+    if (
+      !file.includes('node_modules') && 
+      !file.includes('.git') &&
+      !file.includes('dist')
+    ) {
+      files.push(file);
+    }
+  }
+  
+  return files;
+}
+
+async function runEvalFile(filePath: string) {
+  console.log(chalk.blue(`\n📊 Running: ${filePath}`));
+  
+  try {
+    const fullPath = path.resolve(process.cwd(), filePath);
+    await import(fullPath);
+    console.log(chalk.green(`✓ Completed: ${path.basename(filePath)}`));
+  } catch (error) {
+    console.error(chalk.red(`✗ Failed: ${path.basename(filePath)}`));
+    console.error(error);
+  }
+}
+
+async function main() {
+  switch (command) {
+    case 'run': {
+      const pattern = args[1] || '**/*.eval.ts';
+      console.log(chalk.bold('🔍 Discovering evaluation files...\n'));
+      
+      const files = await discoverEvalFiles(pattern);
+      
+      if (files.length === 0) {
+        console.log(chalk.yellow('No .eval.ts files found.'));
+        console.log(chalk.gray('Create a file with .eval.ts extension to get started.'));
+        console.log(chalk.gray('\nExample: my-test.eval.ts'));
+        process.exit(0);
+      }
+      
+      console.log(`Found ${files.length} evaluation file(s):`);
+      files.forEach(file => console.log(chalk.gray(`  • ${file}`)));
+      
+      // Check orq.ai
+      if (process.env.ORQ_API_KEY) {
+        console.log(chalk.green('\n✓ orq.ai integration enabled'));
+      } else {
+        console.log(chalk.gray('\n○ Set ORQ_API_KEY to enable orq.ai integration'));
+      }
+      
+      // Run all files
+      for (const file of files) {
+        await runEvalFile(file);
+      }
+      
+      console.log(chalk.bold('\n✨ All evaluations completed!'));
+      break;
+    }
+    
+    case 'init': {
+      const name = args[1] || 'example';
+      const fileName = `${name}.eval.ts`;
+      
+      const template = `import { Evaluatorq } from '@evaluatorq/core';
+import { CosineSimilarity, ExactMatch, LevenshteinDistance } from '@evaluatorq/evaluators';
+
+// ${name} evaluation
+await Evaluatorq('${name}', {
+  data: async () => {
+    // Your test data here
+    return [
+      { 
+        input: 'What is the capital of France?',
+        output: 'The capital of France is Paris.'
+      },
+      { 
+        input: 'What is 2 + 2?',
+        output: '2 + 2 equals 4.'
+      },
+    ];
+  },
+  
+  tasks: [
+    ({ input, output }) => ({
+      inputLength: input.length,
+      outputLength: output.length,
+    }),
+  ],
+  
+  evaluators: [
+    CosineSimilarity,
+    ExactMatch,
+    LevenshteinDistance,
+  ],
+});
+`;
+      
+      await Bun.write(fileName, template);
+      console.log(chalk.green(`✓ Created ${fileName}`));
+      console.log(chalk.gray(`\nRun it with: ./evaluatorq run`));
+      break;
+    }
+    
+    case 'help':
+    default: {
+      console.log(chalk.bold('Evaluatorq - AI/LLM Evaluation Framework\n'));
+      console.log('Usage:');
+      console.log('  ./evaluatorq run [pattern]    - Run evaluation files (default: **/*.eval.ts)');
+      console.log('  ./evaluatorq init [name]      - Create example evaluation file');
+      console.log('  ./evaluatorq help             - Show this help\n');
+      console.log('Environment Variables:');
+      console.log('  ORQ_API_KEY                   - Enable orq.ai integration');
+      console.log('  ORQ_API_URL                   - Custom orq.ai API URL');
+    }
+  }
+}
+
+main().catch(console.error);

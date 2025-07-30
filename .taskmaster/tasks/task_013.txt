@@ -1,0 +1,43 @@
+# Task ID: 13
+# Title: Add CLI Progress Indicators
+# Status: pending
+# Dependencies: 11
+# Priority: low
+# Description: Implement progress bars and spinners for long-running evaluations
+# Details:
+Use ora for spinner during data loading. Implement progress bar showing evaluation progress. Update progress for each data point processed. Show current task and evaluator being run. Handle cleanup on interruption (Ctrl+C).
+
+# Test Strategy:
+Test progress updates smoothly during evaluation. Test interruption cleans up properly. Test progress calculations are accurate. Verify no console output conflicts.
+
+# Subtasks:
+## 1. Set up progress indicator dependencies and types [pending]
+### Dependencies: None
+### Description: Install ora package for spinners and create TypeScript interfaces for progress tracking throughout the evaluation pipeline
+### Details:
+Install ora as a dependency in the CLI package. Create a new file packages/cli/src/progress.ts that exports interfaces for ProgressReporter with methods like startDataLoading(), updateEvaluationProgress(current, total), setCurrentTask(name), and cleanup(). Define types for progress state including current evaluator, task name, and completion percentage.
+
+## 2. Implement progress reporter service with ora integration [pending]
+### Dependencies: 13.1
+### Description: Create a concrete implementation of the progress reporter that uses ora for spinners and displays evaluation progress
+### Details:
+In packages/cli/src/progress.ts, implement ProgressReporter class that uses ora for spinners during data loading phase. Implement progress bar display using text updates showing percentage, current/total items, and current evaluator name. Use ora's persist() for completed phases and clear() for transitions. Format output as: 'Evaluating... 45% [450/1000] | Current: cosine-similarity'
+
+## 3. Integrate progress reporting into evaluation pipeline [pending]
+### Dependencies: 13.2
+### Description: Add progress tracking hooks to the core evaluation runner to report progress during data processing
+### Details:
+Modify packages/core/src/runner.ts to accept an optional progress reporter. Add progress callbacks at key points: before data loading, for each data point processed, when switching evaluators. Calculate and report accurate progress based on total data points * number of evaluators. Ensure progress updates are throttled to avoid excessive redraws (e.g., update at most every 100ms).
+
+## 4. Add progress display to CLI commands [pending]
+### Dependencies: 13.3
+### Description: Wire up the progress reporter to the evaluate command and ensure proper display during execution
+### Details:
+In packages/cli/src/commands/evaluate.ts, instantiate ProgressReporter and pass it to the evaluation runner. Start spinner during config loading and data preparation. Switch to progress bar during evaluation. Show completion message with total time taken. Ensure console.log statements from evaluators don't interfere with progress display by capturing and buffering them.
+
+## 5. Implement graceful interruption handling [pending]
+### Dependencies: 13.4
+### Description: Add signal handlers to properly clean up progress indicators when the process is interrupted
+### Details:
+Add process.on('SIGINT') and process.on('SIGTERM') handlers in the CLI entry point. When interrupted, call progress reporter's cleanup() method to clear any active spinners or progress bars. Show a clean interruption message like 'Evaluation interrupted by user'. Ensure the process exits cleanly with appropriate exit code. Store partial results if possible before exit.
+

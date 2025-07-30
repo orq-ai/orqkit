@@ -1,0 +1,833 @@
+{
+  "graph": {
+    "nodes": {
+      "@evaluatorq/orq-integration": {
+        "name": "@evaluatorq/orq-integration",
+        "type": "lib",
+        "data": {
+          "root": "packages/orq-integration",
+          "projectType": "library",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "packages/orq-integration",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "packages/orq-integration",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "bun nx watch --projects @evaluatorq/orq-integration --includeDependentProjects -- bun nx build-deps @evaluatorq/orq-integration"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "@evaluatorq/orq-integration",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/orq-integration",
+              "packageExports": {
+                "./package.json": "./package.json",
+                ".": {
+                  "development": "./src/index.ts",
+                  "types": "./dist/index.d.ts",
+                  "import": "./dist/index.js",
+                  "default": "./dist/index.js"
+                }
+              },
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@evaluatorq/evaluators": {
+        "name": "@evaluatorq/evaluators",
+        "type": "lib",
+        "data": {
+          "root": "packages/evaluators",
+          "projectType": "library",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "packages/evaluators",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "packages/evaluators",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "bun nx watch --projects @evaluatorq/evaluators --includeDependentProjects -- bun nx build-deps @evaluatorq/evaluators"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "@evaluatorq/evaluators",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/evaluators",
+              "packageExports": {
+                "./package.json": "./package.json",
+                ".": {
+                  "development": "./src/index.ts",
+                  "types": "./dist/index.d.ts",
+                  "import": "./dist/index.js",
+                  "default": "./dist/index.js"
+                }
+              },
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@evaluatorq/shared": {
+        "name": "@evaluatorq/shared",
+        "type": "lib",
+        "data": {
+          "root": "packages/shared",
+          "projectType": "library",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "packages/shared",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "packages/shared",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "bun nx watch --projects @evaluatorq/shared --includeDependentProjects -- bun nx build-deps @evaluatorq/shared"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "@evaluatorq/shared",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/shared",
+              "packageExports": {
+                "./package.json": "./package.json",
+                ".": {
+                  "development": "./src/index.ts",
+                  "types": "./dist/index.d.ts",
+                  "import": "./dist/index.js",
+                  "default": "./dist/index.js"
+                }
+              },
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@evaluatorq/core": {
+        "name": "@evaluatorq/core",
+        "type": "lib",
+        "data": {
+          "root": "packages/core",
+          "projectType": "library",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "packages/core",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "packages/core",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "bun nx watch --projects @evaluatorq/core --includeDependentProjects -- bun nx build-deps @evaluatorq/core"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "@evaluatorq/core",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/core",
+              "packageExports": {
+                "./package.json": "./package.json",
+                ".": {
+                  "development": "./src/index.ts",
+                  "types": "./dist/index.d.ts",
+                  "import": "./dist/index.js",
+                  "default": "./dist/index.js"
+                }
+              },
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@evaluatorq/cli": {
+        "name": "@evaluatorq/cli",
+        "type": "lib",
+        "data": {
+          "root": "packages/cli",
+          "projectType": "library",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "packages/cli",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "packages/cli",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "bun tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "bun nx watch --projects @evaluatorq/cli --includeDependentProjects -- bun nx build-deps @evaluatorq/cli"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "@evaluatorq/cli",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/cli",
+              "packageExports": {
+                "./package.json": "./package.json",
+                ".": {
+                  "development": "./src/index.ts",
+                  "types": "./dist/index.d.ts",
+                  "import": "./dist/index.js",
+                  "default": "./dist/index.js"
+                }
+              },
+              "packageMain": "./dist/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@evaluatorq/source": {
+        "name": "@evaluatorq/source",
+        "type": "lib",
+        "data": {
+          "root": ".",
+          "name": "@evaluatorq/source",
+          "includedScripts": [],
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@evaluatorq/source",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "local-registry": {
+              "executor": "@nx/js:verdaccio",
+              "options": {
+                "port": 4873,
+                "config": ".verdaccio/config.yml",
+                "storage": "tmp/local-registry/storage"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "continuous": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "@evaluatorq/orq-integration": [],
+      "@evaluatorq/evaluators": [
+        {
+          "source": "@evaluatorq/evaluators",
+          "target": "@evaluatorq/shared",
+          "type": "static"
+        }
+      ],
+      "@evaluatorq/shared": [],
+      "@evaluatorq/core": [],
+      "@evaluatorq/cli": [],
+      "@evaluatorq/source": []
+    }
+  }
+}

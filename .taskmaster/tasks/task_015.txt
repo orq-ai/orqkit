@@ -1,0 +1,43 @@
+# Task ID: 15
+# Title: Implement Result Transformation for orq.ai
+# Status: pending
+# Dependencies: 14, 10
+# Priority: medium
+# Description: Create transformation logic to convert evaluation results to orq.ai format
+# Details:
+Create transformer that maps EvaluationResult to orq.ai schema. Handle nested data structures and metadata. Ensure all scores are properly formatted. Include experiment metadata and timestamps. Support partial results for streaming.
+
+# Test Strategy:
+Test transformation with various result structures. Verify output matches orq.ai API schema. Test edge cases like missing data. Validate against orq.ai API documentation.
+
+# Subtasks:
+## 1. Define orq.ai Result Schema Types [pending]
+### Dependencies: None
+### Description: Create TypeScript interfaces and types that represent the orq.ai API result format, including all required fields and nested structures
+### Details:
+In packages/core/src/types/orqai-schema.ts, define interfaces for OrqAIResult, OrqAIMetadata, OrqAIScore, and other nested types. Reference orq.ai API documentation to ensure all required fields are included. Include optional fields for flexibility. Use strict typing with no 'any' types.
+
+## 2. Create Core Transformation Logic [pending]
+### Dependencies: 15.1
+### Description: Implement the main transformer function that maps EvaluationResult to orq.ai schema format
+### Details:
+In packages/core/src/transformers/orqai-transformer.ts, create transformToOrqAI function using Effect.ts. Map EvaluationResult fields to OrqAIResult structure. Handle nested data structures recursively. Use Effect.gen for clean async transformation. Include proper error handling with Effect.catchAll for missing or malformed data.
+
+## 3. Implement Score Formatting and Metadata Handling [pending]
+### Dependencies: 15.2
+### Description: Add specialized handling for score normalization and experiment metadata transformation
+### Details:
+Create formatScore function to ensure scores follow orq.ai requirements (e.g., 0-1 range, specific decimal precision). Implement extractMetadata function to map experiment context to orq.ai metadata format. Add timestamp formatting using ISO 8601 standard. Handle different score types (numeric, boolean, categorical).
+
+## 4. Add Streaming Support for Partial Results [pending]
+### Dependencies: 15.2, 15.3
+### Description: Implement streaming transformation capabilities to handle partial evaluation results as they become available
+### Details:
+Create streamTransform function using Effect.Stream. Support incremental result transformation as evaluations complete. Maintain state for partially transformed results. Emit valid orq.ai formatted results as soon as minimum required fields are available. Handle backpressure appropriately.
+
+## 5. Create Validation and Error Recovery [pending]
+### Dependencies: 15.2, 15.3, 15.4
+### Description: Implement comprehensive validation of transformed results and graceful error handling for edge cases
+### Details:
+Create validateOrqAIResult function using Effect.Schema or similar validation. Check for required fields, valid score ranges, and proper data types. Implement fallback strategies for missing data (e.g., default values, null handling). Add detailed error messages for debugging. Create recovery strategies for common transformation failures.
+

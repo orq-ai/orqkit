@@ -1,0 +1,35 @@
+{
+  "name": "@evaluatorq/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "evaluatorq": "./bin/evaluatorq.ts"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "commander": "^14.0.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.2.0",
+    "effect": "^3.16.16",
+    "@evaluatorq/core": "workspace:*",
+    "@evaluatorq/evaluators": "workspace:*",
+    "@evaluatorq/shared": "workspace:*"
+  }
+}

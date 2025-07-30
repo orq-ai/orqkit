@@ -5,9 +5,11 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2022"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "lib": [
+      "es2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
@@ -15,7 +17,29 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
     "target": "es2022",
-    "customConditions": ["development"]
+    "customConditions": [
+      "development"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@evaluatorq/cli": [
+        "packages/cli/src/index.ts"
+      ],
+      "@evaluatorq/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@evaluatorq/evaluators": [
+        "packages/evaluators/src/index.ts"
+      ],
+      "@evaluatorq/orq-integration": [
+        "packages/orq-integration/src/index.ts"
+      ],
+      "@evaluatorq/shared": [
+        "packages/shared/src/index.ts"
+      ]
+    }
   }
 }

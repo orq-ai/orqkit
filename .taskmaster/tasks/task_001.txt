@@ -1,0 +1,43 @@
+# Task ID: 1
+# Title: Initialize Nx Monorepo Structure
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Set up the Nx monorepo workspace with TypeScript configuration and required workspace packages
+# Details:
+Initialize Nx workspace with TypeScript plugin. Create packages directory structure: packages/core, packages/evaluators, packages/cli, packages/orq-integration, packages/shared. Configure nx.json with TypeScript plugin settings. Set up root tsconfig.json with strict mode, ES2022 target, and composite builds. Configure Vitest workspace for testing across packages.
+
+# Test Strategy:
+Verify workspace structure with nx graph command. Run nx sync to ensure TypeScript references are correct. Test that nx build commands work for each package.
+
+# Subtasks:
+## 1. Create Nx workspace with TypeScript plugin [pending]
+### Dependencies: None
+### Description: Initialize a new Nx workspace using the TypeScript preset and configure the initial workspace structure
+### Details:
+Run `npx create-nx-workspace@latest evaluatorq --preset=ts --packageManager=bun` to create the workspace. Accept defaults for TypeScript configuration. Ensure the workspace is created with the @nx/js plugin installed. Update nx.json to include TypeScript plugin configuration with strict type checking enabled.
+
+## 2. Set up root TypeScript configuration [pending]
+### Dependencies: 1.1
+### Description: Configure the root tsconfig.json with strict mode, ES2022 target, and composite build settings for the monorepo
+### Details:
+Edit tsconfig.base.json to set compilerOptions with strict: true, target: 'ES2022', module: 'node16', moduleResolution: 'node16', composite: true, declaration: true, declarationMap: true. Add paths configuration for @evaluatorq/* aliases pointing to packages/*. Configure exclude patterns for node_modules and dist directories.
+
+## 3. Generate workspace packages structure [pending]
+### Dependencies: 1.2
+### Description: Create the five main packages using Nx generators with proper configuration
+### Details:
+Use Nx generators to create packages: Run `npx nx g @nx/js:lib packages/core --publishable --importPath=@evaluatorq/core`, `npx nx g @nx/js:lib packages/evaluators --publishable --importPath=@evaluatorq/evaluators`, `npx nx g @nx/js:lib packages/cli --publishable --importPath=@evaluatorq/cli`, `npx nx g @nx/js:lib packages/orq-integration --publishable --importPath=@evaluatorq/orq-integration`, `npx nx g @nx/js:lib packages/shared --publishable --importPath=@evaluatorq/shared`. Each command creates a package with TypeScript configuration, project.json, and proper import paths.
+
+## 4. Configure Vitest workspace [pending]
+### Dependencies: 1.3
+### Description: Set up Vitest configuration for testing across all packages in the monorepo
+### Details:
+Create vitest.workspace.ts in the root with configuration pointing to all packages. Install vitest, @vitest/ui as dev dependencies. Create vitest.config.ts in root with shared configuration. Update each package's project.json to include test target using vitest. Configure test file patterns as *.test.ts and *.spec.ts.
+
+## 5. Verify monorepo integration [pending]
+### Dependencies: 1.4
+### Description: Ensure all packages are properly connected and TypeScript references work correctly
+### Details:
+Run `npx nx sync` to synchronize TypeScript project references. Update root package.json with workspace configuration for Bun. Add scripts for common operations: build:all, test:all, typecheck. Create a simple import test where packages/evaluators imports from packages/shared to verify cross-package imports work. Run `npx nx graph` to visualize and verify the dependency graph.
+

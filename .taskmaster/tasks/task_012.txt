@@ -1,0 +1,43 @@
+# Task ID: 12
+# Title: Build CLI Table Display
+# Status: pending
+# Dependencies: 11, 10
+# Priority: medium
+# Description: Implement table formatting for evaluation results in the CLI
+# Details:
+Create table formatter using chalk for colors. Implement column width calculation and text truncation. Display headers: Data, Task Result, Evaluator Scores. Add summary row with aggregate statistics. Use box-drawing characters for clean appearance.
+
+# Test Strategy:
+Test table renders correctly with various data sizes. Test text truncation works properly. Test color output in different terminals. Verify table is readable with many columns.
+
+# Subtasks:
+## 1. Create Table Formatter Core Structure [pending]
+### Dependencies: None
+### Description: Set up the basic table formatter module with TypeScript interfaces and core data structures
+### Details:
+Create packages/cli/src/table-formatter.ts with TableFormatter class. Define interfaces for TableConfig (column widths, padding, borders), TableColumn (header, width, alignment), and TableRow. Import chalk for color support. Set up the basic class structure with constructor accepting configuration options.
+
+## 2. Implement Column Width Calculation [pending]
+### Dependencies: 12.1
+### Description: Build automatic column width calculation based on content and terminal width
+### Details:
+Add calculateColumnWidths method that analyzes all data to find optimal widths. Consider terminal width from process.stdout.columns. Implement minimum/maximum width constraints. Handle dynamic width distribution when content varies. Create helper methods for measuring text length excluding ANSI escape codes.
+
+## 3. Implement Text Truncation and Wrapping [pending]
+### Dependencies: 12.2
+### Description: Add text truncation logic for cells that exceed column width
+### Details:
+Create truncateText method that handles text overflow with ellipsis (...). Add option for word-wrap vs character-wrap. Preserve ANSI color codes when truncating. Handle multi-byte Unicode characters properly. Add configuration for truncation symbol and position (end, middle).
+
+## 4. Build Table Rendering with Box-Drawing Characters [pending]
+### Dependencies: 12.3
+### Description: Implement the actual table rendering using Unicode box-drawing characters
+### Details:
+Create renderTable method that builds the complete table string. Use Unicode box-drawing characters (─, │, ┌, ┐, └, ┘, ├, ┤, ┬, ┴, ┼). Implement header row with proper borders. Add data rows with alternating colors option. Apply chalk colors for headers (bold), data, and borders (dim). Handle alignment (left, right, center) for each column.
+
+## 5. Add Summary Row and Integration [pending]
+### Dependencies: 12.4
+### Description: Implement summary row with aggregate statistics and integrate with CLI display command
+### Details:
+Add renderSummaryRow method that calculates and displays aggregates (average scores, total evaluations, success rate). Style summary row distinctly with bold and different background. Integrate TableFormatter into display-results command. Add options for hiding borders, colors, or summary. Export formatter for use in other CLI commands.
+

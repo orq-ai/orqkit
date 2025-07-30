@@ -1,0 +1,89 @@
+{
+  "experimentName": "Model Output Comparison",
+  "timestamp": "2025-07-30T16:26:11.934Z",
+  "results": [
+    {
+      "input": "TypeScript is a statically typed superset of JavaScript developed by Microsoft.",
+      "output": "TypeScript extends JavaScript with static types, created by Microsoft for better tooling.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "lengthDifference": 10,
+            "modelALength": 79,
+            "modelBLength": 89,
+            "commonWords": 3
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.26111648393354675
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.3033707865168539
+        }
+      ]
+    },
+    {
+      "input": "Async/await is a syntax for handling asynchronous operations in JavaScript.",
+      "output": "Async/await provides cleaner syntax for promises in JavaScript programming.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "lengthDifference": 0,
+            "modelALength": 75,
+            "modelBLength": 75,
+            "commonWords": 4
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.4216370213557839
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.3733333333333333
+        }
+      ]
+    },
+    {
+      "input": "React is a JavaScript library for building user interfaces, created by Facebook.",
+      "output": "React is a UI library made by Meta (Facebook) for creating component-based interfaces.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "lengthDifference": 6,
+            "modelALength": 80,
+            "modelBLength": 86,
+            "commonWords": 6
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.48038446141526125
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 0.3023255813953488
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 3,
+    "averageScores": {
+      "CosineSimilarity": 0.3877126555681973,
+      "LevenshteinDistance": 0.326343233748512
+    },
+    "executionTime": 1
+  }
+}

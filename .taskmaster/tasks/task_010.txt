@@ -1,0 +1,43 @@
+# Task ID: 10
+# Title: Create Result Formatting System
+# Status: pending
+# Dependencies: 3
+# Priority: medium
+# Description: Implement result formatting and transformation logic in shared package
+# Details:
+In packages/shared/src/formatting.ts, create formatters for: JSON output with proper structure, Summary statistics calculation (mean, median, std dev), Result aggregation by evaluator. Use Effect for error handling in formatters. Support streaming for large results.
+
+# Test Strategy:
+Test JSON formatting produces valid output. Test statistics calculations are accurate. Test large result handling doesn't cause memory issues. Verify formatted output matches expected schema.
+
+# Subtasks:
+## 1. Set up formatting module structure and core types [pending]
+### Dependencies: None
+### Description: Create the initial formatting.ts file in packages/shared/src with TypeScript interfaces and types for formatters, including base formatter interface, result types, and configuration options
+### Details:
+Create packages/shared/src/formatting.ts file. Define core types: Formatter<T> interface with format method, FormatterConfig for options, FormattedResult type union for different output formats. Import Effect for error handling. Define error types specific to formatting failures.
+
+## 2. Implement JSON formatter with Effect error handling [pending]
+### Dependencies: 10.1
+### Description: Create a JSON formatter that converts evaluation results to properly structured JSON output with error handling using Effect
+### Details:
+Implement createJsonFormatter function that returns Effect.Effect<FormattedResult, FormatterError>. Handle circular references, BigInt serialization, and Date formatting. Support customizable indentation and key ordering. Use Effect.try for JSON.stringify error handling. Include metadata fields like timestamp and version.
+
+## 3. Build statistics calculation utilities [pending]
+### Dependencies: 10.1
+### Description: Implement functions to calculate mean, median, standard deviation and other statistical measures from evaluation results
+### Details:
+Create calculateStatistics function that accepts array of numeric scores. Implement mean, median, mode, standard deviation, percentiles (25th, 75th, 95th). Handle edge cases: empty arrays, single values, non-numeric data. Use Effect for error handling. Return StatisticsResult object with all calculated values.
+
+## 4. Create result aggregation by evaluator functionality [pending]
+### Dependencies: 10.1, 10.3
+### Description: Implement logic to group and aggregate evaluation results by evaluator type with support for custom aggregation strategies
+### Details:
+Build aggregateByEvaluator function that groups results by evaluator name/type. Support different aggregation strategies: average, sum, latest, custom. Calculate per-evaluator statistics using the statistics utilities. Handle missing or partial data gracefully. Return structured aggregation with evaluator metadata.
+
+## 5. Implement streaming support for large result sets [pending]
+### Dependencies: 10.2, 10.3, 10.4
+### Description: Add streaming capabilities to handle large evaluation results without memory issues, supporting incremental formatting and processing
+### Details:
+Create StreamingFormatter that processes results in chunks using Effect.Stream. Implement backpressure handling and configurable chunk sizes. Support streaming JSON output with proper array formatting. Add progress callbacks for long-running operations. Use Effect.Stream.fromIterable and Effect.Stream.mapChunks for efficient processing.
+

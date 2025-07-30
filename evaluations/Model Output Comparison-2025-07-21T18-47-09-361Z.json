@@ -1,0 +1,99 @@
+{
+  "experimentName": "Model Output Comparison",
+  "timestamp": "2025-07-21T18:47:09.361Z",
+  "results": [
+    {
+      "input": "The capital of France is Paris.",
+      "output": "Paris is the capital city of France.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "expectedLength": 31,
+            "actualLength": 36,
+            "lengthDifference": 5
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "Two plus two equals four.",
+      "output": "4",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "expectedLength": 25,
+            "actualLength": 1,
+            "lengthDifference": 24
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "TypeScript is a programming language developed by Microsoft that adds static typing to JavaScript.",
+      "output": "TypeScript is basically JavaScript with types. It was created by Microsoft.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "expectedLength": 98,
+            "actualLength": 75,
+            "lengthDifference": 23
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 3,
+    "averageScores": {
+      "CosineSimilarity": 1,
+      "ExactMatch": 1,
+      "LevenshteinDistance": 1
+    },
+    "executionTime": 3
+  }
+}

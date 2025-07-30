@@ -1,0 +1,252 @@
+<context>
+# Overview
+Evaluatorq is a lightweight TypeScript evaluation library for AI/LLM applications. It provides a simple, type-safe API for running experiments and evaluations on AI model outputs. The library uses Effect.ts for functional programming patterns and robust error handling. When an ORQ_API_KEY is provided, results are sent to the orq.ai platform for visualization and analysis. Without the API key, results are saved locally as JSON and displayed in the CLI.
+
+# Core Features
+## Experiment Definition API
+- Simple, intuitive API: `Evaluatorq(name, { data, tasks, evaluators })`
+- Type-safe with TypeScript and Effect.ts
+- Async data loading support
+- Multiple task execution per data point
+- Pluggable evaluator system
+
+## Built-in Evaluators
+- Cosine Similarity: Measures semantic similarity between text outputs
+- Exact Match: Checks for exact string equality
+- Levenshtein Distance: Calculates edit distance between strings
+- Custom evaluator support through simple interface
+
+## Output Modes
+- Local Mode: Outputs results as JSON file and displays summary in CLI
+- orq.ai Integration: Automatically sends results when ORQ_API_KEY is present
+- Consistent result format across both modes
+
+## Developer Experience
+- Zero configuration required for basic usage
+- TypeScript types for all APIs
+- Clear error messages with Effect.ts error boundaries
+- Progress indicators for long-running evaluations
+
+# User Experience
+## Target Users
+- AI/ML engineers evaluating model outputs
+- Product teams testing LLM applications
+- Researchers comparing different models or prompts
+
+## Key User Flows
+1. Define experiment with data and evaluators
+2. Run evaluation with single command
+3. View results locally or in orq.ai dashboard
+4. Iterate based on evaluation scores
+
+## CLI Experience
+- Clean table output with truncated values
+- Summary statistics
+- Clear indication of where results are saved
+- Progress bar for evaluation execution
+</context>
+<PRD>
+# Technical Architecture
+
+## System Components
+### Core Package
+- Main `Evaluatorq` function entry point
+- Evaluation engine built with Effect.ts
+- Type definitions and interfaces
+- Error handling and logging
+
+### Evaluators Package
+- Base evaluator interface
+- Built-in evaluator implementations
+- Evaluator utilities and helpers
+- Score normalization functions
+
+### CLI Package
+- Command-line interface
+- Output formatting (tables, JSON)
+- Progress indicators
+- Configuration loading
+
+### orq Integration Package
+- orq.ai API client wrapper
+- Result transformation to orq format
+- Authentication handling
+- Retry logic with Effect.ts
+
+### Shared Package
+- Common types and interfaces
+- Utility functions
+- Constants and configurations
+
+## Data Models
+### Experiment
+- name: string
+- data: async function returning array of input/output pairs
+- tasks: array of functions processing data points
+- evaluators: array of evaluator instances
+
+### EvaluationResult
+- experimentName: string
+- timestamp: Date
+- results: array of individual evaluations
+- summary: statistics and metadata
+
+### Evaluator
+- name: string
+- evaluate: function returning score (0-1)
+- metadata: optional configuration
+
+## APIs and Integrations
+### orq.ai Integration
+- REST API for sending evaluation results
+- Authentication via ORQ_API_KEY environment variable
+- Automatic fallback to local output
+- Retry logic for failed requests
+
+### Effect.ts Integration
+- Error handling with Effect types
+- Concurrent execution control
+- Resource management
+- Composable operations
+
+# Development Roadmap
+
+## MVP Requirements
+### Core Functionality
+- Basic evaluation engine with Effect.ts
+- Three built-in evaluators (Cosine, Exact Match, Levenshtein)
+- Local JSON output with CLI display
+- Basic orq.ai integration
+
+### Developer Experience
+- TypeScript types and interfaces
+- Simple API matching proposed syntax
+- Basic error handling
+- Minimal configuration
+
+### Documentation
+- README with usage examples
+- API documentation
+- Installation instructions
+
+## Phase 2 Enhancements
+### Additional Evaluators
+- BLEU score for translation quality
+- Semantic similarity using embeddings
+- Custom LLM-based evaluators
+- Composite evaluators
+
+### Advanced Features
+- Streaming results for large datasets
+- Batch processing optimization
+- Caching layer for evaluations
+- Plugin system for custom evaluators
+
+### CLI Improvements
+- Watch mode for continuous evaluation
+- Configuration file support
+- Multiple output formats
+- Interactive mode
+
+## Phase 3 Production Features
+### Enterprise Support
+- Remote storage backends
+- Team collaboration features
+- Access control for orq.ai
+- Audit logging
+
+### Performance
+- Distributed evaluation support
+- GPU acceleration for embeddings
+- Memory optimization for large datasets
+- Result streaming to orq.ai
+
+# Logical Dependency Chain
+
+## Foundation (Must be built first)
+1. Project setup and monorepo structure
+2. Core types and interfaces with Effect.ts
+3. Basic evaluation engine implementation
+4. Data loading and task execution pipeline
+
+## Core Features (Built on foundation)
+1. Evaluator base interface and utilities
+2. Three basic evaluator implementations
+3. Result formatting and output system
+4. CLI table display and JSON output
+
+## Integration Layer
+1. orq.ai API client with Effect.ts
+2. Result transformation logic
+3. Authentication and error handling
+4. Local fallback mechanism
+
+## Developer Experience
+1. CLI commands and interface
+2. Progress indicators and logging
+3. Error messages and debugging
+4. Documentation and examples
+
+# Risks and Mitigations
+
+## Technical Challenges
+### Effect.ts Learning Curve
+- Risk: Developers unfamiliar with Effect.ts patterns
+- Mitigation: Comprehensive examples and clear documentation
+- Provide escape hatches for Promise-based usage
+
+### API Rate Limiting
+- Risk: orq.ai API rate limits for large evaluations
+- Mitigation: Implement retry logic and backoff
+- Add batching support for large datasets
+
+### Type Safety Complexity
+- Risk: Complex generic types may confuse users
+- Mitigation: Provide pre-typed helpers
+- Clear examples for common use cases
+
+## MVP Scope
+### Feature Creep
+- Risk: Adding too many features before core is stable
+- Mitigation: Strict MVP feature set
+- Defer advanced features to later phases
+
+### Integration Complexity
+- Risk: orq.ai integration adds complexity
+- Mitigation: Clean separation of concerns
+- Local mode works perfectly without integration
+
+# Appendix
+
+## Research Findings
+### Similar Tools Analysis
+- Evalite: TypeScript-first, includes UI and storage
+- Promptfoo: YAML-based, broader feature set
+- Autoevals: Library of evaluators, no framework
+
+### Effect.ts Benefits
+- Robust error handling for production use
+- Composable architecture for extensibility
+- Built-in concurrency control
+- Type-safe dependency injection
+
+## Technical Specifications
+### Package Dependencies
+- effect: ^3.16.16 (functional programming)
+- @orq-ai/node: Latest (orq.ai SDK)
+- chalk: CLI formatting
+- ora: Progress indicators
+- commander: CLI framework
+
+### TypeScript Configuration
+- Strict mode enabled
+- Target ES2022
+- Module resolution: Node
+- Composite builds for monorepo
+
+### Build Configuration
+- Nx monorepo with TypeScript plugin
+- Vitest for testing
+- Biome for linting/formatting
+- Bun as package manager
+</PRD>

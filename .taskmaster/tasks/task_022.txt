@@ -1,0 +1,43 @@
+# Task ID: 22
+# Title: Write Comprehensive Tests
+# Status: pending
+# Dependencies: 5, 9, 16
+# Priority: high
+# Description: Create full test suite using Vitest across all packages
+# Details:
+Write unit tests for each package. Create integration tests for full pipeline. Add performance benchmarks. Test Effect.ts error scenarios. Achieve >80% code coverage. Set up test utilities and fixtures.
+
+# Test Strategy:
+Run tests in CI/CD pipeline. Monitor test execution time. Check coverage reports. Test both success and failure paths.
+
+# Subtasks:
+## 1. Set up test infrastructure and utilities [pending]
+### Dependencies: None
+### Description: Create test configuration, utilities, and fixtures for the entire test suite
+### Details:
+Create vitest.config.ts and vitest.workspace.ts in project root. Set up test utilities in packages/shared/src/test-utils including: mock data generators, test helpers for Effect.ts testing, fixture loaders, custom matchers. Configure coverage thresholds at 80%. Set up test environment variables. Create base test setup files for each package.
+
+## 2. Write unit tests for shared package [pending]
+### Dependencies: 22.1
+### Description: Create comprehensive unit tests for all modules in the shared package
+### Details:
+In packages/shared/src/__tests__, write unit tests for: data loading utilities (CSV, JSON, Parquet), schema validation using Effect.Schema, result formatting and aggregation functions, error handling utilities. Focus on edge cases like malformed data, empty inputs, and large datasets. Use Effect.Test utilities for testing Effect-based code.
+
+## 3. Write unit tests for evaluator packages [pending]
+### Dependencies: 22.1
+### Description: Create unit tests for core evaluator and specific evaluator implementations
+### Details:
+Write tests for packages/core-evaluator covering: base evaluator interface, evaluation pipeline logic, result aggregation. For packages/llm-evaluator and packages/sql-evaluator, test: evaluation logic, prompt/query generation, response parsing, error scenarios. Mock external dependencies (LLM APIs, database connections). Test Effect.ts streams and pipelines.
+
+## 4. Create integration tests for full pipeline [pending]
+### Dependencies: 22.2, 22.3
+### Description: Write end-to-end integration tests that test the complete evaluation pipeline
+### Details:
+In packages/cli/src/__tests__/integration, create tests that: load real test data files, run multiple evaluators in sequence/parallel, test orq.ai integration with mocked API, verify CLI command execution, test error propagation through the pipeline. Use Docker containers for database tests. Create test scenarios for common use cases.
+
+## 5. Add performance benchmarks and Effect.ts error tests [pending]
+### Dependencies: 22.4
+### Description: Create performance benchmarks and comprehensive Effect.ts error scenario tests
+### Details:
+Set up Vitest bench for performance testing: benchmark data loading for different file sizes, measure evaluator execution times, test parallel vs sequential processing. Create specific tests for Effect.ts error boundaries: test error recovery strategies, verify error messages and stack traces, test cascading failures, ensure errors don't leak memory. Add benchmarks to CI to catch performance regressions.
+

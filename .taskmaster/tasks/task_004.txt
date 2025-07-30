@@ -1,0 +1,43 @@
+# Task ID: 4
+# Title: Implement Basic Evaluation Engine
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Build the core evaluation engine using Effect.ts in the core package
+# Details:
+In packages/core/src/engine.ts, implement evaluation pipeline using Effect. Create runExperiment function that: loads data using Effect.tryPromise, executes tasks concurrently with Effect.forEach, applies evaluators to results, handles errors with Effect.catchAll. Use Effect.gen for readable async code. Implement concurrency control with Effect.Semaphore.
+
+# Test Strategy:
+Unit test each pipeline stage separately. Test concurrent execution limits. Test error propagation through the pipeline. Integration test with mock data and evaluators.
+
+# Subtasks:
+## 1. Create Core Engine Module Structure [pending]
+### Dependencies: None
+### Description: Set up the basic module structure and types for the evaluation engine in packages/core/src/engine.ts
+### Details:
+Create engine.ts file with TypeScript interfaces for Experiment, EvaluationResult, and RunOptions. Define the main runExperiment function signature. Import necessary Effect.ts modules (Effect, Either, Option, Semaphore). Set up basic error types for the engine (DataLoadError, EvaluationError, etc.).
+
+## 2. Implement Data Loading Pipeline [pending]
+### Dependencies: 4.1
+### Description: Build the data loading stage using Effect.tryPromise to handle async data fetching with proper error handling
+### Details:
+Implement loadExperimentData function using Effect.tryPromise to load test data from files or external sources. Map errors to appropriate DataLoadError types. Support different data formats (JSON, CSV). Use Effect.gen for readable async code. Add retry logic with exponential backoff for transient failures.
+
+## 3. Build Concurrent Task Execution System [pending]
+### Dependencies: 4.1, 4.2
+### Description: Implement the concurrent task execution pipeline with configurable concurrency limits using Effect.Semaphore
+### Details:
+Create executeTasks function that processes evaluation tasks concurrently. Use Effect.Semaphore to control concurrency (default 5 concurrent tasks). Implement with Effect.forEach and proper error boundaries. Each task should run in isolation with its own error handling. Collect results and errors separately for reporting.
+
+## 4. Create Evaluator Application Pipeline [pending]
+### Dependencies: 4.3
+### Description: Build the system to apply evaluators to task results and aggregate scores
+### Details:
+Implement applyEvaluators function that takes task results and runs configured evaluators. Support multiple evaluators per result with score aggregation. Use Effect.all to run evaluators in parallel per result. Implement score normalization and weighting. Handle evaluator failures gracefully with default scores.
+
+## 5. Implement Error Handling and Result Aggregation [pending]
+### Dependencies: 4.2, 4.3, 4.4
+### Description: Build comprehensive error handling using Effect.catchAll and create the final result aggregation system
+### Details:
+Wrap entire pipeline with Effect.catchAll for top-level error handling. Implement result aggregation that combines successful evaluations and errors. Create detailed error reports with context (which task/evaluator failed). Build summary statistics (success rate, average scores, etc.). Return structured EvaluationResult with both data and metadata.
+

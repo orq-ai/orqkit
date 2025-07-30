@@ -1,0 +1,1730 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Nx Monorepo Structure",
+        "description": "Set up the Nx monorepo workspace with TypeScript configuration and required workspace packages",
+        "details": "Initialize Nx workspace with TypeScript plugin. Create packages directory structure: packages/core, packages/evaluators, packages/cli, packages/orq-integration, packages/shared. Configure nx.json with TypeScript plugin settings. Set up root tsconfig.json with strict mode, ES2022 target, and composite builds. Configure Vitest workspace for testing across packages.",
+        "testStrategy": "Verify workspace structure with nx graph command. Run nx sync to ensure TypeScript references are correct. Test that nx build commands work for each package.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Nx workspace with TypeScript plugin",
+            "description": "Initialize a new Nx workspace using the TypeScript preset and configure the initial workspace structure",
+            "dependencies": [],
+            "details": "Run `npx create-nx-workspace@latest evaluatorq --preset=ts --packageManager=bun` to create the workspace. Accept defaults for TypeScript configuration. Ensure the workspace is created with the @nx/js plugin installed. Update nx.json to include TypeScript plugin configuration with strict type checking enabled.",
+            "status": "done",
+            "testStrategy": "Verify nx.json exists and contains TypeScript plugin configuration. Run `nx list` to confirm available generators. Test `nx graph` command works without errors."
+          },
+          {
+            "id": 2,
+            "title": "Set up root TypeScript configuration",
+            "description": "Configure the root tsconfig.json with strict mode, ES2022 target, and composite build settings for the monorepo",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "Edit tsconfig.base.json to set compilerOptions with strict: true, target: 'ES2022', module: 'node16', moduleResolution: 'node16', composite: true, declaration: true, declarationMap: true. Add paths configuration for @evaluatorq/* aliases pointing to packages/*. Configure exclude patterns for node_modules and dist directories.",
+            "status": "done",
+            "testStrategy": "Run `npx tsc --noEmit` to verify TypeScript configuration is valid. Check that TypeScript recognizes the strict mode settings."
+          },
+          {
+            "id": 3,
+            "title": "Generate workspace packages structure",
+            "description": "Create the five main packages using Nx generators with proper configuration",
+            "dependencies": [
+              "1.2"
+            ],
+            "details": "Use Nx generators to create packages: Run `npx nx g @nx/js:lib packages/core --publishable --importPath=@evaluatorq/core`, `npx nx g @nx/js:lib packages/evaluators --publishable --importPath=@evaluatorq/evaluators`, `npx nx g @nx/js:lib packages/cli --publishable --importPath=@evaluatorq/cli`, `npx nx g @nx/js:lib packages/orq-integration --publishable --importPath=@evaluatorq/orq-integration`, `npx nx g @nx/js:lib packages/shared --publishable --importPath=@evaluatorq/shared`. Each command creates a package with TypeScript configuration, project.json, and proper import paths.",
+            "status": "done",
+            "testStrategy": "Verify each package directory exists with src/index.ts, project.json, and tsconfig.json files. Run `nx build core` for each package to ensure build configuration works."
+          },
+          {
+            "id": 4,
+            "title": "Configure Vitest workspace",
+            "description": "Set up Vitest configuration for testing across all packages in the monorepo",
+            "dependencies": [
+              "1.3"
+            ],
+            "details": "Create vitest.workspace.ts in the root with configuration pointing to all packages. Install vitest, @vitest/ui as dev dependencies. Create vitest.config.ts in root with shared configuration. Update each package's project.json to include test target using vitest. Configure test file patterns as *.test.ts and *.spec.ts.",
+            "status": "done",
+            "testStrategy": "Run `bun run test` to verify Vitest runs across all workspaces. Create a simple test file in packages/core/src/index.test.ts and verify it's discovered and runs."
+          },
+          {
+            "id": 5,
+            "title": "Verify monorepo integration",
+            "description": "Ensure all packages are properly connected and TypeScript references work correctly",
+            "dependencies": [
+              "1.4"
+            ],
+            "details": "Run `npx nx sync` to synchronize TypeScript project references. Update root package.json with workspace configuration for Bun. Add scripts for common operations: build:all, test:all, typecheck. Create a simple import test where packages/evaluators imports from packages/shared to verify cross-package imports work. Run `npx nx graph` to visualize and verify the dependency graph.",
+            "status": "done",
+            "testStrategy": "Execute `npx nx run-many --target=build` to build all packages. Run `npx nx run-many --target=typecheck` to verify TypeScript compilation. Test that `npx nx affected --target=test` identifies affected packages correctly."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Configure Effect.ts and Core Dependencies",
+        "description": "Install and configure Effect.ts and other core dependencies across the monorepo",
+        "details": "Install effect@^3.16.16 as workspace dependency. Configure TypeScript to work with Effect.ts patterns. Set up shared Effect utilities in packages/shared for error handling, concurrency, and resource management. Create base Effect service definitions for dependency injection pattern.",
+        "testStrategy": "Create simple Effect pipeline tests to verify proper installation. Test Effect error boundaries and resource management. Verify TypeScript inference works correctly with Effect types.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install Effect.ts and Core Dependencies",
+            "description": "Add Effect.ts and essential dependencies to the monorepo workspace",
+            "dependencies": [],
+            "details": "Run `bun add effect@^3.16.16` to install Effect.ts as a workspace dependency. This will add it to the root package.json and make it available to all packages. Also install any peer dependencies if required. Verify installation by checking package.json and bun.lock files.",
+            "status": "done",
+            "testStrategy": "Create a simple test file that imports Effect and runs a basic Effect pipeline to verify proper installation"
+          },
+          {
+            "id": 2,
+            "title": "Configure TypeScript for Effect.ts Patterns",
+            "description": "Update TypeScript configuration to properly support Effect.ts type inference and patterns",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Update the root tsconfig.json to include Effect.ts specific settings. Add \"strict\": true, \"exactOptionalPropertyTypes\": true, \"noUncheckedIndexedAccess\": true for better Effect type safety. Ensure \"moduleResolution\": \"bundler\" or \"node\" is set. Add \"lib\": [\"ES2022\"] for modern JavaScript features. Update package-specific tsconfig.json files to extend the root configuration.",
+            "status": "done",
+            "testStrategy": "Create a TypeScript file with complex Effect types and verify proper type inference without errors"
+          },
+          {
+            "id": 3,
+            "title": "Create Shared Effect Utilities Package",
+            "description": "Set up packages/shared with common Effect.ts utilities and patterns",
+            "dependencies": [
+              "2.1",
+              "2.2"
+            ],
+            "details": "Generate the shared package using `npx nx g @nx/js:lib packages/shared --publishable --importPath=@evaluatorq/shared`. Create utility modules: error.ts for custom error types and handlers using Effect.Data.TaggedError, concurrency.ts for semaphore and rate limiting utilities, resource.ts for resource management patterns using Effect.Resource, logger.ts for structured logging with Effect.Logger.",
+            "status": "done",
+            "testStrategy": "Unit test each utility module with various use cases and edge conditions"
+          },
+          {
+            "id": 4,
+            "title": "Implement Base Effect Service Definitions",
+            "description": "Create foundational service interfaces and implementations for dependency injection",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "In packages/shared/src/services, create base service definitions using Effect.Context.Tag pattern. Implement: ConfigService for configuration management, LoggerService extending Effect.Logger, MetricsService for telemetry, ErrorReporter for centralized error handling. Use Effect.Layer to create service layers with proper dependencies. Export service tags and layer constructors.",
+            "status": "pending",
+            "testStrategy": "Test service creation, dependency injection, and layer composition with mock implementations"
+          },
+          {
+            "id": 5,
+            "title": "Create Effect.ts Integration Tests",
+            "description": "Implement comprehensive integration tests to verify Effect.ts setup across the monorepo",
+            "dependencies": [
+              "2.3",
+              "2.4"
+            ],
+            "details": "Create test/effect-integration.spec.ts in packages/shared. Test: importing and using Effect from multiple packages, service layer composition across packages, error propagation through Effect pipelines, resource cleanup and finalization, concurrent execution with proper type inference. Ensure tests run via `npx nx test shared`.",
+            "status": "pending",
+            "testStrategy": "Run integration tests in CI to ensure Effect.ts works correctly across different environments"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Define Core Types and Interfaces",
+        "description": "Create TypeScript interfaces and types for the entire system in the shared package",
+        "details": "In packages/shared/src/types.ts, define: DataPoint<TInput, TOutput> interface, Task<TInput, TOutput> type, Evaluator interface with evaluate method returning 0-1 score, Experiment<TData> interface, EvaluationResult interface with experimentName, timestamp, results array, and summary. Use Effect types for error handling (Effect.Effect<A, E, R>).",
+        "testStrategy": "Compile TypeScript to ensure all types are valid. Create type tests using expect-type or similar to verify type inference. Test generic constraints work as expected.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up shared package structure and Effect.ts",
+            "description": "Initialize the shared package directory structure and install Effect.ts as the primary dependency for error handling and functional programming patterns",
+            "dependencies": [],
+            "details": "Create packages/shared directory with proper TypeScript configuration. Install Effect.ts (@effect/schema, @effect/io) and set up tsconfig.json with strict mode. Create src/types.ts file and establish the module structure with proper exports in index.ts",
+            "status": "done",
+            "testStrategy": "Verify package builds correctly with TypeScript. Test that Effect.ts imports work properly. Ensure module exports are accessible from other packages"
+          },
+          {
+            "id": 2,
+            "title": "Define base data structures and generic types",
+            "description": "Create the foundational generic interfaces for DataPoint and Task that will be used throughout the evaluation system",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "In packages/shared/src/types.ts, define DataPoint<TInput, TOutput> interface with fields for id, input: TInput, expectedOutput: TOutput, and optional metadata. Define Task<TInput, TOutput> as a type that extends DataPoint with additional fields like name, description, and tags. Use TypeScript generics to ensure type safety",
+            "status": "done",
+            "testStrategy": "Create type tests to verify generic constraints work correctly. Test that DataPoint and Task can be instantiated with various input/output types. Verify type inference works as expected"
+          },
+          {
+            "id": 3,
+            "title": "Implement Evaluator interface with Effect types",
+            "description": "Define the core Evaluator interface using Effect.ts for error handling and async operations",
+            "dependencies": [
+              "3.1",
+              "3.2"
+            ],
+            "details": "Create Evaluator interface with evaluate method that takes input and output, returns Effect.Effect<number, EvaluatorError, EvaluatorContext> where the number is 0-1 score. Define EvaluatorError as a tagged union of possible errors. Include metadata methods like getName(), getDescription(). Add support for batch evaluation",
+            "status": "done",
+            "testStrategy": "Test that Evaluator implementations properly return Effect types. Verify error handling works with Effect.catchAll. Test score bounds validation (0-1)"
+          },
+          {
+            "id": 4,
+            "title": "Create Experiment and EvaluationResult interfaces",
+            "description": "Define interfaces for organizing experiments and storing evaluation results with proper typing",
+            "dependencies": [
+              "3.1",
+              "3.2",
+              "3.3"
+            ],
+            "details": "Define Experiment<TData> interface with fields: id, name, description, dataset: TData[], evaluators: Evaluator[], configuration. Create EvaluationResult interface with experimentName, timestamp, results array containing scores and metadata, summary statistics. Use Effect.Struct for immutable data structures",
+            "status": "done",
+            "testStrategy": "Test that Experiment can hold different data types. Verify EvaluationResult structure matches expected schema. Test immutability of result objects"
+          },
+          {
+            "id": 5,
+            "title": "Export types and create type utilities",
+            "description": "Set up proper module exports and create utility types for common use cases in the evaluation system",
+            "dependencies": [
+              "3.1",
+              "3.2",
+              "3.3",
+              "3.4"
+            ],
+            "details": "Create index.ts that exports all types from types.ts. Add utility types like PartialEvaluator, EvaluatorConfig, ResultSummary. Create type guards and validation functions using Effect.Schema. Document all exported types with JSDoc comments. Ensure compatibility with both CommonJS and ESM",
+            "status": "done",
+            "testStrategy": "Test all exports are accessible from package root. Verify type guards work correctly. Test that JSDoc appears in IDE autocomplete. Check both import styles work"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Implement Basic Evaluation Engine",
+        "description": "Build the core evaluation engine using Effect.ts in the core package",
+        "details": "In packages/core/src/engine.ts, implement evaluation pipeline using Effect. Create runExperiment function that: loads data using Effect.tryPromise, executes tasks concurrently with Effect.forEach, applies evaluators to results, handles errors with Effect.catchAll. Use Effect.gen for readable async code. Implement concurrency control with Effect.Semaphore.",
+        "testStrategy": "Unit test each pipeline stage separately. Test concurrent execution limits. Test error propagation through the pipeline. Integration test with mock data and evaluators.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Core Engine Module Structure",
+            "description": "Set up the basic module structure and types for the evaluation engine in packages/core/src/engine.ts",
+            "dependencies": [],
+            "details": "Create engine.ts file with TypeScript interfaces for Experiment, EvaluationResult, and RunOptions. Define the main runExperiment function signature. Import necessary Effect.ts modules (Effect, Either, Option, Semaphore). Set up basic error types for the engine (DataLoadError, EvaluationError, etc.).",
+            "status": "done",
+            "testStrategy": "Test that all types are properly exported and can be imported. Verify type definitions compile correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement Data Loading Pipeline",
+            "description": "Build the data loading stage using Effect.tryPromise to handle async data fetching with proper error handling",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Implement loadExperimentData function using Effect.tryPromise to load test data from files or external sources. Map errors to appropriate DataLoadError types. Support different data formats (JSON, CSV). Use Effect.gen for readable async code. Add retry logic with exponential backoff for transient failures.",
+            "status": "done",
+            "testStrategy": "Test successful data loading from various sources. Test error handling for missing files, network errors, and invalid formats. Verify retry logic works correctly."
+          },
+          {
+            "id": 3,
+            "title": "Build Concurrent Task Execution System",
+            "description": "Implement the concurrent task execution pipeline with configurable concurrency limits using Effect.Semaphore",
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
+            "details": "Create executeTasks function that processes evaluation tasks concurrently. Use Effect.Semaphore to control concurrency (default 5 concurrent tasks). Implement with Effect.forEach and proper error boundaries. Each task should run in isolation with its own error handling. Collect results and errors separately for reporting.",
+            "status": "done",
+            "testStrategy": "Test concurrent execution respects semaphore limits. Verify tasks run in parallel up to the limit. Test error isolation - one failing task shouldn't affect others. Benchmark performance gains from concurrency."
+          },
+          {
+            "id": 4,
+            "title": "Create Evaluator Application Pipeline",
+            "description": "Build the system to apply evaluators to task results and aggregate scores",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Implement applyEvaluators function that takes task results and runs configured evaluators. Support multiple evaluators per result with score aggregation. Use Effect.all to run evaluators in parallel per result. Implement score normalization and weighting. Handle evaluator failures gracefully with default scores.",
+            "status": "done",
+            "testStrategy": "Test multiple evaluators can be applied to single result. Verify score aggregation works correctly. Test evaluator failure handling doesn't break pipeline. Test performance with many evaluators."
+          },
+          {
+            "id": 5,
+            "title": "Implement Error Handling and Result Aggregation",
+            "description": "Build comprehensive error handling using Effect.catchAll and create the final result aggregation system",
+            "dependencies": [
+              "4.2",
+              "4.3",
+              "4.4"
+            ],
+            "details": "Wrap entire pipeline with Effect.catchAll for top-level error handling. Implement result aggregation that combines successful evaluations and errors. Create detailed error reports with context (which task/evaluator failed). Build summary statistics (success rate, average scores, etc.). Return structured EvaluationResult with both data and metadata.",
+            "status": "done",
+            "testStrategy": "Test error propagation through entire pipeline. Verify partial results are returned when some tasks fail. Test summary statistics calculation. Integration test with mock data and evaluators."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Create Main Evaluatorq Entry Point",
+        "description": "Implement the main Evaluatorq function that provides the public API",
+        "details": "In packages/core/src/index.ts, export main Evaluatorq function with signature: Evaluatorq<T>(name: string, config: { data: () => Promise<T[]>, tasks: Task<T>[], evaluators: Evaluator[] }). Function should create Effect pipeline, run evaluation engine, handle orq.ai integration check (ORQ_API_KEY), return results. Use Effect.runPromise for Promise compatibility.",
+        "testStrategy": "Test API with various configurations. Test type inference for generic parameters. Test error cases like invalid data or failed evaluators. Verify Effect errors are properly handled.",
+        "priority": "high",
+        "dependencies": [
+          4
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Main Function Signature and Types",
+            "description": "Create the TypeScript interface and type definitions for the main Evaluatorq function including generic constraints and config parameter types",
+            "dependencies": [],
+            "details": "In packages/core/src/index.ts, define: 1) EvaluatorqConfig<T> interface with data, tasks, and evaluators properties, 2) EvaluatorqResult type for return value, 3) Generic constraints for T to ensure proper type inference, 4) Export the function signature with proper JSDoc comments",
+            "status": "done",
+            "testStrategy": "Create type tests to verify generic inference works correctly and that the types properly constrain invalid configurations"
+          },
+          {
+            "id": 2,
+            "title": "Implement Environment Variable Check and Configuration",
+            "description": "Set up environment variable checking for ORQ_API_KEY and create configuration layer using Effect",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Create Effect service for configuration that: 1) Checks process.env.ORQ_API_KEY existence, 2) Validates API key format if present, 3) Creates config layer with orq integration enabled/disabled flag, 4) Use Effect.Config for environment variable access with proper error handling",
+            "status": "done",
+            "testStrategy": "Test with and without ORQ_API_KEY set, verify proper error messages for invalid keys, test configuration layer creation"
+          },
+          {
+            "id": 3,
+            "title": "Create Main Effect Pipeline",
+            "description": "Build the core Effect pipeline that orchestrates data loading, task execution, and evaluator running",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "Implement pipeline that: 1) Loads data using Effect.tryPromise on the data function, 2) Creates evaluation context from config, 3) Runs evaluation engine (from task 4), 4) Collects and formats results, 5) Uses Effect.gen for readable async flow, 6) Proper error handling with Effect.catchAll",
+            "status": "done",
+            "testStrategy": "Test pipeline with mock data and evaluators, verify error propagation, test cancellation behavior"
+          },
+          {
+            "id": 4,
+            "title": "Integrate orq.ai Result Submission",
+            "description": "Add conditional orq.ai integration that submits results when API key is present",
+            "dependencies": [
+              "5.3"
+            ],
+            "details": "In the pipeline: 1) Check if orq integration is enabled from config, 2) If enabled, transform results to orq format (using task 15's transformer), 3) Submit to orq.ai using client from task 14, 4) Handle submission errors gracefully without failing evaluation, 5) Add submission status to final result",
+            "status": "done",
+            "testStrategy": "Test with mocked orq client, verify results are submitted when key present, test error handling doesn't break evaluation"
+          },
+          {
+            "id": 5,
+            "title": "Implement Promise Compatibility Layer",
+            "description": "Wrap the Effect pipeline with Effect.runPromise to provide standard Promise-based API",
+            "dependencies": [
+              "5.3",
+              "5.4"
+            ],
+            "details": "Create wrapper that: 1) Uses Effect.runPromise to execute the pipeline, 2) Properly handles Effect errors and converts to Promise rejections, 3) Ensures all Effect resources are properly cleaned up, 4) Provides clear error messages for common failure cases, 5) Returns properly typed Promise<EvaluatorqResult>",
+            "status": "done",
+            "testStrategy": "Test Promise resolution and rejection cases, verify async/await usage works correctly, test resource cleanup on errors"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Implement Base Evaluator Interface",
+        "description": "Create the base evaluator interface and utilities in the evaluators package",
+        "details": "In packages/evaluators/src/base.ts, define Evaluator abstract class with evaluate(expected: string, actual: string): number method. Create EvaluatorConfig interface for metadata. Implement score normalization utilities (clamp to 0-1). Add evaluator composition helpers for combining multiple evaluators.",
+        "testStrategy": "Test base class can be extended properly. Test score normalization edge cases. Test evaluator composition maintains score bounds. Verify TypeScript abstract class constraints.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Core Interfaces and Types",
+            "description": "Create TypeScript interfaces for Evaluator abstract class and EvaluatorConfig",
+            "dependencies": [],
+            "details": "In packages/evaluators/src/base.ts, define: 1) EvaluatorConfig interface with properties like name (string), description (string), version (string), and optional metadata. 2) Abstract Evaluator class with abstract evaluate(expected: string, actual: string): number method. 3) Type definitions for EvaluatorResult including score, timestamp, and evaluatorName. Use strict TypeScript types throughout.",
+            "status": "pending",
+            "testStrategy": "Create test implementations of the abstract class to verify TypeScript constraints. Test that the abstract class cannot be instantiated directly. Verify that implementations must provide the evaluate method."
+          },
+          {
+            "id": 2,
+            "title": "Implement Score Normalization Utilities",
+            "description": "Create utility functions for normalizing and validating evaluation scores",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "In packages/evaluators/src/utils/normalization.ts, implement: 1) normalizeScore(score: number, min?: number, max?: number): number that clamps values to [0, 1] range. 2) validateScore(score: number): boolean to check if score is valid. 3) rescaleScore(score: number, fromRange: [number, number], toRange: [number, number]): number for custom range mapping. Handle edge cases like NaN, Infinity, and negative values. Export from base.ts.",
+            "status": "pending",
+            "testStrategy": "Test edge cases: NaN, Infinity, negative numbers, values outside bounds. Test rescaling with various ranges. Verify clamping behavior at boundaries (0 and 1)."
+          },
+          {
+            "id": 3,
+            "title": "Create Base Evaluator Implementation",
+            "description": "Build a concrete base class that extends the abstract Evaluator with common functionality",
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
+            "details": "In packages/evaluators/src/base.ts, create BaseEvaluator class that extends Evaluator. Implement: 1) Constructor accepting EvaluatorConfig. 2) Protected preprocess(text: string): string method for common text preprocessing. 3) Protected postprocess(score: number): number that uses normalization utilities. 4) getConfig(): EvaluatorConfig method. Make evaluate() call preprocess on inputs and postprocess on results.",
+            "status": "pending",
+            "testStrategy": "Test preprocessing handles whitespace, casing consistently. Test postprocessing normalizes scores correctly. Verify config is stored and retrieved properly."
+          },
+          {
+            "id": 4,
+            "title": "Implement Evaluator Composition Helpers",
+            "description": "Create utilities for combining multiple evaluators into composite evaluators",
+            "dependencies": [
+              "6.1",
+              "6.3"
+            ],
+            "details": "In packages/evaluators/src/utils/composition.ts, implement: 1) CompositeEvaluator class that accepts multiple evaluators and a combination strategy (average, weighted average, min, max). 2) createWeightedEvaluator(evaluators: Array<{evaluator: Evaluator, weight: number}>): Evaluator function. 3) createVotingEvaluator(evaluators: Evaluator[], threshold?: number): Evaluator for consensus-based evaluation. Ensure all composite evaluators maintain score bounds [0, 1].",
+            "status": "pending",
+            "testStrategy": "Test different combination strategies produce expected results. Verify weighted averages sum to 1.0. Test edge cases with single evaluator, empty array. Ensure composite scores stay within bounds."
+          },
+          {
+            "id": 5,
+            "title": "Add Type Guards and Export Structure",
+            "description": "Create type guards and organize exports for the evaluators package",
+            "dependencies": [
+              "6.1",
+              "6.2",
+              "6.3",
+              "6.4"
+            ],
+            "details": "In packages/evaluators/src/base.ts and index.ts: 1) Implement isEvaluator(obj: unknown): obj is Evaluator type guard. 2) Create isValidScore(score: number): boolean utility. 3) Set up proper exports in index.ts to expose Evaluator, BaseEvaluator, EvaluatorConfig, composition utilities, and normalization functions. 4) Add JSDoc comments for all public APIs. 5) Create a re-export strategy that maintains clean import paths.",
+            "status": "pending",
+            "testStrategy": "Test type guards correctly identify valid/invalid evaluators. Verify all exports are accessible from package root. Test that internal utilities are not accidentally exposed."
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Implement Cosine Similarity Evaluator",
+        "description": "Build cosine similarity evaluator for semantic text comparison",
+        "details": "In packages/evaluators/src/cosine-similarity.ts, implement text vectorization using simple TF-IDF. Calculate cosine similarity between vectors. Handle edge cases (empty strings, identical texts). Return normalized score 0-1. Consider using a lightweight embedding library if available.",
+        "testStrategy": "Test with known similar/dissimilar text pairs. Test edge cases: empty strings, single words, identical texts. Verify scores are properly normalized. Benchmark performance with long texts.",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up project structure and dependencies for cosine similarity evaluator",
+            "description": "Create the cosine similarity evaluator file structure and install necessary dependencies for text vectorization",
+            "dependencies": [],
+            "details": "Create packages/evaluators/src/cosine-similarity.ts file. Set up the basic module structure with proper TypeScript types. Research and install a lightweight text vectorization library (consider natural, ml-distance, or implement TF-IDF from scratch). Create the evaluator interface matching the base evaluator type from the core package.",
+            "status": "pending",
+            "testStrategy": "Verify file structure is created correctly and dependencies are installed without conflicts"
+          },
+          {
+            "id": 2,
+            "title": "Implement TF-IDF vectorization algorithm",
+            "description": "Build the text vectorization logic using TF-IDF (Term Frequency-Inverse Document Frequency) for converting text to numerical vectors",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Implement tokenization function to split text into words/terms. Calculate term frequency (TF) for each term in the document. Implement inverse document frequency (IDF) calculation. Create a function to convert text to TF-IDF vector representation. Handle text preprocessing (lowercase, remove punctuation, etc.). Store vectors in a format suitable for cosine similarity calculation.",
+            "status": "pending",
+            "testStrategy": "Test tokenization with various text inputs. Verify TF-IDF calculations match expected values for known examples. Test vector generation produces consistent results"
+          },
+          {
+            "id": 3,
+            "title": "Implement cosine similarity calculation",
+            "description": "Create the mathematical function to calculate cosine similarity between two TF-IDF vectors",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "Implement dot product calculation between two vectors. Calculate magnitude (norm) for each vector. Compute cosine similarity as (dot product) / (magnitude1 * magnitude2). Ensure the result is normalized between 0 and 1. Handle numerical edge cases like division by zero when vectors have zero magnitude.",
+            "status": "pending",
+            "testStrategy": "Test with orthogonal vectors (should return 0). Test with identical vectors (should return 1). Test with known vector pairs to verify correct similarity scores"
+          },
+          {
+            "id": 4,
+            "title": "Handle edge cases and special scenarios",
+            "description": "Implement robust handling of edge cases including empty strings, single words, and identical texts",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Add validation for empty or null input strings (return 0 or appropriate default). Handle single-word comparisons appropriately. Optimize for identical text comparison (early return with 1.0). Implement proper error handling for malformed inputs. Add configuration options for preprocessing (case sensitivity, punctuation handling, stopword removal).",
+            "status": "pending",
+            "testStrategy": "Test empty string inputs return expected values. Test single word comparisons. Verify identical texts return exactly 1.0. Test various Unicode and special character scenarios"
+          },
+          {
+            "id": 5,
+            "title": "Create evaluator wrapper and integration with Effect.ts",
+            "description": "Wrap the cosine similarity implementation in the evaluator interface and integrate with the Effect.ts evaluation pipeline",
+            "dependencies": [
+              "7.4"
+            ],
+            "details": "Create CosineSimilarityEvaluator class implementing the base evaluator interface. Use Effect.tryPromise for async operations if needed. Implement the evaluate method that takes expected and actual text, returns Effect with similarity score. Add configuration options (preprocessing, algorithm parameters). Export the evaluator for use in the evaluation engine. Include proper TypeScript types and documentation.",
+            "status": "pending",
+            "testStrategy": "Integration test with the evaluation engine. Test Effect error handling and propagation. Verify the evaluator works correctly in concurrent evaluation scenarios. Benchmark performance with various text lengths"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Implement Exact Match Evaluator",
+        "description": "Create exact match evaluator for strict string equality checking",
+        "details": "In packages/evaluators/src/exact-match.ts, implement simple string comparison. Add options for case sensitivity, whitespace normalization. Return 1.0 for exact match, 0.0 otherwise. Support configurable preprocessing (trim, lowercase, etc).",
+        "testStrategy": "Test exact matches return 1.0. Test near matches return 0.0. Test configuration options work correctly. Test Unicode and special character handling.",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create ExactMatchEvaluator class and interface",
+            "description": "Define the base structure for the exact match evaluator with TypeScript interfaces and class implementation",
+            "dependencies": [],
+            "details": "Create packages/evaluators/src/exact-match.ts file. Define ExactMatchOptions interface with properties: caseSensitive (boolean), trimWhitespace (boolean), normalizeWhitespace (boolean), ignoreLineBreaks (boolean). Create ExactMatchEvaluator class that extends base Evaluator interface from core package. Implement constructor to accept options with sensible defaults (caseSensitive: true, trimWhitespace: false, etc).",
+            "status": "pending",
+            "testStrategy": "Test that the class can be instantiated with various option combinations. Verify default options are applied correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement preprocessing methods",
+            "description": "Create private methods for text preprocessing based on configuration options",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Implement private preprocess(text: string): string method that applies transformations in order: trim whitespace if enabled, normalize multiple spaces/tabs to single space if enabled, remove or normalize line breaks if enabled, convert to lowercase if case-insensitive. Handle null/undefined inputs gracefully by converting to empty string. Ensure Unicode normalization for consistent comparison.",
+            "status": "pending",
+            "testStrategy": "Unit test each preprocessing option individually. Test combinations of options. Test with various Unicode characters, emojis, and special characters."
+          },
+          {
+            "id": 3,
+            "title": "Implement core evaluation logic",
+            "description": "Create the main evaluate method that performs exact match comparison",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "Implement evaluate(expected: string, actual: string): Effect.Effect<number, Error> method. Use Effect.gen to: preprocess both strings using the preprocess method, perform strict equality check (===), return Effect.succeed(1.0) for exact match or Effect.succeed(0.0) for mismatch. Wrap in try-catch and use Effect.fail for any errors. Add logging for debugging if enabled.",
+            "status": "pending",
+            "testStrategy": "Test exact matches return 1.0, mismatches return 0.0. Test with preprocessed strings based on different options. Verify Effect error handling works correctly."
+          },
+          {
+            "id": 4,
+            "title": "Add batch evaluation support",
+            "description": "Implement batch evaluation method for processing multiple comparisons efficiently",
+            "dependencies": [
+              "8.3"
+            ],
+            "details": "Implement evaluateBatch(pairs: Array<{expected: string, actual: string}>): Effect.Effect<number[], Error> method. Use Effect.forEach with concurrency limit to process pairs. Calculate aggregate metrics like accuracy (percentage of exact matches). Return array of individual scores. Add performance optimization for large batches by preprocessing expected values once if they repeat.",
+            "status": "pending",
+            "testStrategy": "Test with various batch sizes. Verify performance doesn't degrade linearly with batch size. Test memory usage with large batches."
+          },
+          {
+            "id": 5,
+            "title": "Export evaluator and add documentation",
+            "description": "Create proper exports, type definitions, and comprehensive documentation",
+            "dependencies": [
+              "8.4"
+            ],
+            "details": "Export ExactMatchEvaluator class and ExactMatchOptions interface from packages/evaluators/src/index.ts. Add JSDoc comments explaining each option and method. Create usage examples showing common configurations (case-insensitive matching, whitespace normalization). Document performance characteristics and edge cases. Ensure compatibility with the evaluation engine from task 4.",
+            "status": "pending",
+            "testStrategy": "Test that exports work correctly when imported from other packages. Verify TypeScript types are properly exported. Test integration with the core evaluation engine."
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Implement Levenshtein Distance Evaluator",
+        "description": "Build Levenshtein distance evaluator for edit distance calculation",
+        "details": "In packages/evaluators/src/levenshtein.ts, implement dynamic programming algorithm for edit distance. Normalize score based on maximum string length: 1 - (distance / maxLength). Handle empty strings appropriately. Optimize for performance with memoization if needed.",
+        "testStrategy": "Test with known edit distances. Test normalization produces scores in 0-1 range. Test performance with long strings. Verify edge cases like empty strings.",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Levenshtein distance evaluator structure and interface",
+            "description": "Set up the basic structure for the Levenshtein distance evaluator in packages/evaluators/src/levenshtein.ts with proper TypeScript interfaces and Effect.ts integration",
+            "dependencies": [],
+            "details": "Create the evaluator file at packages/evaluators/src/levenshtein.ts. Define the LevenshteinEvaluator type that extends the base Evaluator interface. Set up the basic structure with evaluate method signature that takes two strings and returns Effect<number, never, never>. Import necessary dependencies from Effect and the core package. Define configuration options interface for future extensibility (e.g., case sensitivity, normalization options).",
+            "status": "pending",
+            "testStrategy": "Create test file at packages/evaluators/src/__tests__/levenshtein.test.ts. Test that the evaluator exports the correct interface. Verify TypeScript types compile correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement dynamic programming algorithm for edit distance calculation",
+            "description": "Implement the core Levenshtein distance algorithm using dynamic programming approach with a 2D matrix for optimal performance",
+            "dependencies": [
+              "9.1"
+            ],
+            "details": "Implement the classic dynamic programming solution using a 2D matrix. Create a helper function calculateLevenshteinDistance(str1: string, str2: string): number. Initialize matrix with dimensions (str1.length + 1) x (str2.length + 1). Fill first row and column with indices. For each cell, calculate minimum of: insertion (cell above + 1), deletion (cell to left + 1), substitution (diagonal cell + 0 or 1). Return bottom-right cell value. Handle Unicode characters correctly using proper string iteration.",
+            "status": "pending",
+            "testStrategy": "Test with known edit distances: 'kitten' to 'sitting' = 3, 'saturday' to 'sunday' = 3. Test identical strings return 0. Test one empty string returns length of other string. Test both empty strings return 0."
+          },
+          {
+            "id": 3,
+            "title": "Implement score normalization and edge case handling",
+            "description": "Add score normalization logic to convert edit distance to 0-1 similarity score and handle edge cases like empty strings",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "Create normalizeScore function that converts distance to similarity: 1 - (distance / maxLength). Handle edge cases: both strings empty should return 1.0 (perfect match), one string empty should return 0.0. Ensure the score is always between 0 and 1 using Math.max(0, Math.min(1, score)). Add proper handling for null/undefined inputs by using Effect.fromNullable or similar patterns.",
+            "status": "pending",
+            "testStrategy": "Test normalization produces scores in 0-1 range for various string pairs. Test edge cases: empty strings, single characters, very long strings. Verify identical strings always return 1.0. Test that completely different strings of same length approach 0.0."
+          },
+          {
+            "id": 4,
+            "title": "Add performance optimization with memoization",
+            "description": "Implement memoization to cache previously calculated distances for improved performance with repeated evaluations",
+            "dependencies": [
+              "9.3"
+            ],
+            "details": "Create a memoization layer using a Map or WeakMap to cache results. Implement cache key generation that handles string order (since distance(a,b) = distance(b,a)). Add configurable cache size limit to prevent memory issues. Consider using LRU (Least Recently Used) eviction strategy. Wrap the main evaluation logic with Effect.cached or implement custom caching logic. Add option to disable caching if needed.",
+            "status": "pending",
+            "testStrategy": "Benchmark performance improvement with repeated evaluations of same string pairs. Test cache hit rate with realistic workload. Verify cache doesn't affect correctness of results. Test memory usage stays within reasonable bounds with cache size limits."
+          },
+          {
+            "id": 5,
+            "title": "Integrate with Effect.ts pipeline and add comprehensive tests",
+            "description": "Complete the Effect.ts integration and add comprehensive test coverage for all functionality",
+            "dependencies": [
+              "9.4"
+            ],
+            "details": "Wrap the evaluation logic in Effect.succeed and handle any potential errors with Effect.catchAll. Ensure the evaluator implements the standard Evaluator interface from the core package. Add proper error handling for invalid inputs. Export the evaluator instance and any configuration types. Update the evaluators package index to export the new evaluator. Add JSDoc comments for public API.",
+            "status": "pending",
+            "testStrategy": "Test integration with Effect pipeline using Effect.runSync. Test error handling for invalid inputs. Test performance with strings of varying lengths (10, 100, 1000, 10000 characters). Verify the evaluator works correctly when used in the full evaluation pipeline. Add property-based tests to ensure score properties hold for random inputs."
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Create Result Formatting System",
+        "description": "Implement result formatting and transformation logic in shared package",
+        "details": "In packages/shared/src/formatting.ts, create formatters for: JSON output with proper structure, Summary statistics calculation (mean, median, std dev), Result aggregation by evaluator. Use Effect for error handling in formatters. Support streaming for large results.",
+        "testStrategy": "Test JSON formatting produces valid output. Test statistics calculations are accurate. Test large result handling doesn't cause memory issues. Verify formatted output matches expected schema.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up formatting module structure and core types",
+            "description": "Create the initial formatting.ts file in packages/shared/src with TypeScript interfaces and types for formatters, including base formatter interface, result types, and configuration options",
+            "dependencies": [],
+            "details": "Create packages/shared/src/formatting.ts file. Define core types: Formatter<T> interface with format method, FormatterConfig for options, FormattedResult type union for different output formats. Import Effect for error handling. Define error types specific to formatting failures.",
+            "status": "pending",
+            "testStrategy": "Test that types are properly exported and can be imported. Verify type inference works correctly with generic parameters."
+          },
+          {
+            "id": 2,
+            "title": "Implement JSON formatter with Effect error handling",
+            "description": "Create a JSON formatter that converts evaluation results to properly structured JSON output with error handling using Effect",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "Implement createJsonFormatter function that returns Effect.Effect<FormattedResult, FormatterError>. Handle circular references, BigInt serialization, and Date formatting. Support customizable indentation and key ordering. Use Effect.try for JSON.stringify error handling. Include metadata fields like timestamp and version.",
+            "status": "pending",
+            "testStrategy": "Test JSON output validity with JSON.parse. Test edge cases: circular references, special types, large nested objects. Verify error handling for non-serializable data."
+          },
+          {
+            "id": 3,
+            "title": "Build statistics calculation utilities",
+            "description": "Implement functions to calculate mean, median, standard deviation and other statistical measures from evaluation results",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "Create calculateStatistics function that accepts array of numeric scores. Implement mean, median, mode, standard deviation, percentiles (25th, 75th, 95th). Handle edge cases: empty arrays, single values, non-numeric data. Use Effect for error handling. Return StatisticsResult object with all calculated values.",
+            "status": "pending",
+            "testStrategy": "Test calculations against known datasets with expected results. Test edge cases: empty data, single value, all same values. Verify precision and rounding behavior."
+          },
+          {
+            "id": 4,
+            "title": "Create result aggregation by evaluator functionality",
+            "description": "Implement logic to group and aggregate evaluation results by evaluator type with support for custom aggregation strategies",
+            "dependencies": [
+              "10.1",
+              "10.3"
+            ],
+            "details": "Build aggregateByEvaluator function that groups results by evaluator name/type. Support different aggregation strategies: average, sum, latest, custom. Calculate per-evaluator statistics using the statistics utilities. Handle missing or partial data gracefully. Return structured aggregation with evaluator metadata.",
+            "status": "pending",
+            "testStrategy": "Test grouping logic with mixed evaluator results. Verify aggregation strategies produce correct outputs. Test handling of missing evaluators or empty result sets."
+          },
+          {
+            "id": 5,
+            "title": "Implement streaming support for large result sets",
+            "description": "Add streaming capabilities to handle large evaluation results without memory issues, supporting incremental formatting and processing",
+            "dependencies": [
+              "10.2",
+              "10.3",
+              "10.4"
+            ],
+            "details": "Create StreamingFormatter that processes results in chunks using Effect.Stream. Implement backpressure handling and configurable chunk sizes. Support streaming JSON output with proper array formatting. Add progress callbacks for long-running operations. Use Effect.Stream.fromIterable and Effect.Stream.mapChunks for efficient processing.",
+            "status": "pending",
+            "testStrategy": "Test with large datasets (100k+ results) monitoring memory usage. Verify streaming output produces valid JSON. Test interruption and resumption. Benchmark performance vs non-streaming approach."
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Implement CLI Package Structure",
+        "description": "Set up the CLI package with commander.js and basic command structure",
+        "details": "In packages/cli, install commander, chalk, ora dependencies. Create main CLI entry point with evaluatorq command. Set up command structure for run, version, help. Configure package.json with proper bin field. Implement basic option parsing.",
+        "testStrategy": "Test CLI can be invoked from command line. Test help command displays correctly. Test version command shows package version. Verify commander parses options correctly.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize CLI Package and Install Dependencies",
+            "description": "Create the CLI package structure in packages/cli and install required dependencies",
+            "dependencies": [],
+            "details": "Create packages/cli directory if not exists. Initialize package.json with proper name (@evaluatorq/cli), version, and type module. Install commander.js for command parsing, chalk for colored output, and ora for loading spinners. Set up TypeScript configuration extending from root tsconfig.",
+            "status": "pending",
+            "testStrategy": "Verify package.json is created correctly. Check that all dependencies are installed and importable. Ensure TypeScript configuration is valid."
+          },
+          {
+            "id": 2,
+            "title": "Create Main CLI Entry Point",
+            "description": "Set up the main CLI entry file with proper bin configuration",
+            "dependencies": [
+              "11.1"
+            ],
+            "details": "Create src/index.ts as the main entry point. Add shebang line '#!/usr/bin/env node' at the top. Configure package.json bin field to point to dist/index.js with 'evaluatorq' as the command name. Set up basic TypeScript build script. Create a simple wrapper that imports and executes the main CLI function.",
+            "status": "pending",
+            "testStrategy": "Build the package and verify dist/index.js is created. Test that the bin field is correctly configured. Verify the CLI can be invoked using 'evaluatorq' command after linking."
+          },
+          {
+            "id": 3,
+            "title": "Implement Command Structure with Commander",
+            "description": "Set up the main command structure using commander.js with subcommands",
+            "dependencies": [
+              "11.2"
+            ],
+            "details": "Create src/cli.ts with the main program setup using commander. Define the main 'evaluatorq' program with description and version from package.json. Add 'run' command for executing evaluations. Add built-in 'version' handling. Add comprehensive 'help' command with examples. Set up global options like --verbose and --quiet.",
+            "status": "pending",
+            "testStrategy": "Test 'evaluatorq --version' displays correct version. Test 'evaluatorq --help' shows all commands and options. Test 'evaluatorq run --help' shows run-specific help. Verify unknown commands show appropriate error."
+          },
+          {
+            "id": 4,
+            "title": "Implement Option Parsing and Validation",
+            "description": "Add option parsing for the run command with proper validation",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "Add options to run command: --config/-c for config file path, --output/-o for output format (json/table/csv), --concurrency/-n for parallel execution limit, --verbose/-v for debug output. Create option validators for file paths, numeric ranges, and enum values. Use commander's .option() with custom parsers. Add .hook() for preprocessing and validation.",
+            "status": "pending",
+            "testStrategy": "Test each option parser with valid and invalid inputs. Verify error messages are helpful for invalid options. Test option combinations work correctly. Check default values are applied when options are omitted."
+          },
+          {
+            "id": 5,
+            "title": "Add Error Handling and Output Formatting",
+            "description": "Implement proper error handling and formatted output using chalk and ora",
+            "dependencies": [
+              "11.4"
+            ],
+            "details": "Create src/utils/output.ts with functions for success, error, warning, and info messages using chalk. Implement spinner management with ora for long-running operations. Add global error handler to catch and format errors nicely. Create output formatters for different verbosity levels. Ensure clean exit codes (0 for success, 1 for errors).",
+            "status": "pending",
+            "testStrategy": "Test error formatting with different error types. Verify spinner shows during async operations. Test output respects verbosity flags. Check proper exit codes are returned for success/failure scenarios."
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Build CLI Table Display",
+        "description": "Implement table formatting for evaluation results in the CLI",
+        "details": "Create table formatter using chalk for colors. Implement column width calculation and text truncation. Display headers: Data, Task Result, Evaluator Scores. Add summary row with aggregate statistics. Use box-drawing characters for clean appearance.",
+        "testStrategy": "Test table renders correctly with various data sizes. Test text truncation works properly. Test color output in different terminals. Verify table is readable with many columns.",
+        "priority": "medium",
+        "dependencies": [
+          11,
+          10
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Table Formatter Core Structure",
+            "description": "Set up the basic table formatter module with TypeScript interfaces and core data structures",
+            "dependencies": [],
+            "details": "Create packages/cli/src/table-formatter.ts with TableFormatter class. Define interfaces for TableConfig (column widths, padding, borders), TableColumn (header, width, alignment), and TableRow. Import chalk for color support. Set up the basic class structure with constructor accepting configuration options.",
+            "status": "pending",
+            "testStrategy": "Test class instantiation with various configurations. Verify default values are set correctly. Test TypeScript interfaces compile properly."
+          },
+          {
+            "id": 2,
+            "title": "Implement Column Width Calculation",
+            "description": "Build automatic column width calculation based on content and terminal width",
+            "dependencies": [
+              "12.1"
+            ],
+            "details": "Add calculateColumnWidths method that analyzes all data to find optimal widths. Consider terminal width from process.stdout.columns. Implement minimum/maximum width constraints. Handle dynamic width distribution when content varies. Create helper methods for measuring text length excluding ANSI escape codes.",
+            "status": "pending",
+            "testStrategy": "Test width calculation with various data sizes. Test terminal width constraints are respected. Verify ANSI codes don't affect width calculations."
+          },
+          {
+            "id": 3,
+            "title": "Implement Text Truncation and Wrapping",
+            "description": "Add text truncation logic for cells that exceed column width",
+            "dependencies": [
+              "12.2"
+            ],
+            "details": "Create truncateText method that handles text overflow with ellipsis (...). Add option for word-wrap vs character-wrap. Preserve ANSI color codes when truncating. Handle multi-byte Unicode characters properly. Add configuration for truncation symbol and position (end, middle).",
+            "status": "pending",
+            "testStrategy": "Test truncation preserves color codes. Test Unicode characters are handled correctly. Test various truncation strategies work as expected."
+          },
+          {
+            "id": 4,
+            "title": "Build Table Rendering with Box-Drawing Characters",
+            "description": "Implement the actual table rendering using Unicode box-drawing characters",
+            "dependencies": [
+              "12.3"
+            ],
+            "details": "Create renderTable method that builds the complete table string. Use Unicode box-drawing characters (─, │, ┌, ┐, └, ┘, ├, ┤, ┬, ┴, ┼). Implement header row with proper borders. Add data rows with alternating colors option. Apply chalk colors for headers (bold), data, and borders (dim). Handle alignment (left, right, center) for each column.",
+            "status": "pending",
+            "testStrategy": "Test table renders with correct box-drawing characters. Test in different terminal encodings. Verify colors apply correctly to different elements."
+          },
+          {
+            "id": 5,
+            "title": "Add Summary Row and Integration",
+            "description": "Implement summary row with aggregate statistics and integrate with CLI display command",
+            "dependencies": [
+              "12.4"
+            ],
+            "details": "Add renderSummaryRow method that calculates and displays aggregates (average scores, total evaluations, success rate). Style summary row distinctly with bold and different background. Integrate TableFormatter into display-results command. Add options for hiding borders, colors, or summary. Export formatter for use in other CLI commands.",
+            "status": "pending",
+            "testStrategy": "Test summary calculations are correct. Test integration with actual evaluation results. Test display options work properly. Verify performance with large result sets."
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Add CLI Progress Indicators",
+        "description": "Implement progress bars and spinners for long-running evaluations",
+        "details": "Use ora for spinner during data loading. Implement progress bar showing evaluation progress. Update progress for each data point processed. Show current task and evaluator being run. Handle cleanup on interruption (Ctrl+C).",
+        "testStrategy": "Test progress updates smoothly during evaluation. Test interruption cleans up properly. Test progress calculations are accurate. Verify no console output conflicts.",
+        "priority": "low",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up progress indicator dependencies and types",
+            "description": "Install ora package for spinners and create TypeScript interfaces for progress tracking throughout the evaluation pipeline",
+            "dependencies": [],
+            "details": "Install ora as a dependency in the CLI package. Create a new file packages/cli/src/progress.ts that exports interfaces for ProgressReporter with methods like startDataLoading(), updateEvaluationProgress(current, total), setCurrentTask(name), and cleanup(). Define types for progress state including current evaluator, task name, and completion percentage.",
+            "status": "pending",
+            "testStrategy": "Verify ora is properly installed and types are correctly exported. Test that interfaces provide proper type safety for progress operations."
+          },
+          {
+            "id": 2,
+            "title": "Implement progress reporter service with ora integration",
+            "description": "Create a concrete implementation of the progress reporter that uses ora for spinners and displays evaluation progress",
+            "dependencies": [
+              "13.1"
+            ],
+            "details": "In packages/cli/src/progress.ts, implement ProgressReporter class that uses ora for spinners during data loading phase. Implement progress bar display using text updates showing percentage, current/total items, and current evaluator name. Use ora's persist() for completed phases and clear() for transitions. Format output as: 'Evaluating... 45% [450/1000] | Current: cosine-similarity'",
+            "status": "pending",
+            "testStrategy": "Test spinner starts and stops correctly. Verify progress updates display accurate percentages. Test that output formatting is consistent and readable."
+          },
+          {
+            "id": 3,
+            "title": "Integrate progress reporting into evaluation pipeline",
+            "description": "Add progress tracking hooks to the core evaluation runner to report progress during data processing",
+            "dependencies": [
+              "13.2"
+            ],
+            "details": "Modify packages/core/src/runner.ts to accept an optional progress reporter. Add progress callbacks at key points: before data loading, for each data point processed, when switching evaluators. Calculate and report accurate progress based on total data points * number of evaluators. Ensure progress updates are throttled to avoid excessive redraws (e.g., update at most every 100ms).",
+            "status": "pending",
+            "testStrategy": "Test progress is accurately calculated for multiple evaluators and data points. Verify throttling prevents console flooding. Test progress reporter is optional and doesn't break existing functionality."
+          },
+          {
+            "id": 4,
+            "title": "Add progress display to CLI commands",
+            "description": "Wire up the progress reporter to the evaluate command and ensure proper display during execution",
+            "dependencies": [
+              "13.3"
+            ],
+            "details": "In packages/cli/src/commands/evaluate.ts, instantiate ProgressReporter and pass it to the evaluation runner. Start spinner during config loading and data preparation. Switch to progress bar during evaluation. Show completion message with total time taken. Ensure console.log statements from evaluators don't interfere with progress display by capturing and buffering them.",
+            "status": "pending",
+            "testStrategy": "Run actual evaluations and verify progress displays correctly. Test with different data sizes and evaluator counts. Verify console output from evaluators doesn't break progress display."
+          },
+          {
+            "id": 5,
+            "title": "Implement graceful interruption handling",
+            "description": "Add signal handlers to properly clean up progress indicators when the process is interrupted",
+            "dependencies": [
+              "13.4"
+            ],
+            "details": "Add process.on('SIGINT') and process.on('SIGTERM') handlers in the CLI entry point. When interrupted, call progress reporter's cleanup() method to clear any active spinners or progress bars. Show a clean interruption message like 'Evaluation interrupted by user'. Ensure the process exits cleanly with appropriate exit code. Store partial results if possible before exit.",
+            "status": "pending",
+            "testStrategy": "Test Ctrl+C during different phases (loading, evaluation). Verify console is properly cleaned up. Test that partial results are saved if applicable. Ensure exit codes are appropriate."
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Create orq.ai API Client",
+        "description": "Build the orq.ai integration client using Effect.ts in the orq-integration package",
+        "details": "In packages/orq-integration, install @orq-ai/node SDK. Create Effect service for orq client with methods: authenticate, sendResults. Implement retry logic using Effect.retry with exponential backoff. Handle rate limiting with Effect.RateLimiter. Check ORQ_API_KEY environment variable.",
+        "testStrategy": "Mock orq API responses for testing. Test retry logic with simulated failures. Test rate limiting behavior. Test authentication error handling.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install Dependencies and Set Up Package Structure",
+            "description": "Install @orq-ai/node SDK and set up the initial package structure for orq-integration",
+            "dependencies": [],
+            "details": "Navigate to packages/orq-integration and run 'bun add @orq-ai/node'. Create the directory structure: src/index.ts, src/client.ts, src/types.ts. Set up package.json with proper exports and TypeScript configuration. Ensure the package is properly linked in the Nx workspace.",
+            "status": "pending",
+            "testStrategy": "Verify package installation and that imports resolve correctly. Test that the package builds successfully with 'npx nx build orq-integration'."
+          },
+          {
+            "id": 2,
+            "title": "Create Effect Service and Type Definitions",
+            "description": "Define the orq.ai client service interface and types using Effect.ts patterns",
+            "dependencies": [
+              "14.1"
+            ],
+            "details": "In src/types.ts, define interfaces for OrqConfig, OrqAuthResponse, OrqResultPayload, and OrqApiError. In src/client.ts, create an Effect.Tag for OrqClient service with methods: authenticate(): Effect<OrqAuthResponse, OrqApiError, never> and sendResults(results: OrqResultPayload): Effect<void, OrqApiError, never>. Define the service interface following Effect.ts service patterns.",
+            "status": "pending",
+            "testStrategy": "Test that types are properly exported and can be imported. Verify service tag creation follows Effect conventions."
+          },
+          {
+            "id": 3,
+            "title": "Implement Authentication and Environment Configuration",
+            "description": "Implement authentication logic with environment variable validation",
+            "dependencies": [
+              "14.2"
+            ],
+            "details": "Create a configuration layer that reads ORQ_API_KEY from environment variables using Effect.Config. Implement the authenticate method that calls the orq.ai authentication endpoint. Use Effect.fail for missing API key errors. Store auth token in service state for subsequent requests. Handle authentication errors with proper Effect error types.",
+            "status": "pending",
+            "testStrategy": "Test with missing API key to verify error handling. Mock authentication endpoint to test successful auth flow. Test token storage and reuse."
+          },
+          {
+            "id": 4,
+            "title": "Implement Retry Logic and Rate Limiting",
+            "description": "Add exponential backoff retry logic and rate limiting to API calls",
+            "dependencies": [
+              "14.3"
+            ],
+            "details": "Wrap API calls with Effect.retry using Schedule.exponential with initial delay of 1 second and factor of 2, max 5 retries. Implement Effect.RateLimiter with configurable requests per minute (default 60). Apply rate limiting to sendResults method. Handle 429 (rate limit) responses specially with longer backoff.",
+            "status": "pending",
+            "testStrategy": "Test retry logic with simulated network failures. Verify exponential backoff timing. Test rate limiter prevents exceeding limits. Test 429 response handling."
+          },
+          {
+            "id": 5,
+            "title": "Implement sendResults Method and Export Client",
+            "description": "Complete the sendResults implementation and create the main export",
+            "dependencies": [
+              "14.4"
+            ],
+            "details": "Implement sendResults method that accepts evaluation results, applies rate limiting, includes auth token from stored state, handles HTTP errors with proper Effect error types. In src/index.ts, export the OrqClient service, configuration layer, and helper functions for creating the client. Include factory function makeOrqClient() that returns the complete Effect layer.",
+            "status": "pending",
+            "testStrategy": "Test sendResults with various payload sizes. Mock API responses for different error scenarios. Test the complete client creation and usage flow. Verify proper error propagation through Effect pipeline."
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Implement Result Transformation for orq.ai",
+        "description": "Create transformation logic to convert evaluation results to orq.ai format",
+        "details": "Create transformer that maps EvaluationResult to orq.ai schema. Handle nested data structures and metadata. Ensure all scores are properly formatted. Include experiment metadata and timestamps. Support partial results for streaming.",
+        "testStrategy": "Test transformation with various result structures. Verify output matches orq.ai API schema. Test edge cases like missing data. Validate against orq.ai API documentation.",
+        "priority": "medium",
+        "dependencies": [
+          14,
+          10
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define orq.ai Result Schema Types",
+            "description": "Create TypeScript interfaces and types that represent the orq.ai API result format, including all required fields and nested structures",
+            "dependencies": [],
+            "details": "In packages/core/src/types/orqai-schema.ts, define interfaces for OrqAIResult, OrqAIMetadata, OrqAIScore, and other nested types. Reference orq.ai API documentation to ensure all required fields are included. Include optional fields for flexibility. Use strict typing with no 'any' types.",
+            "status": "pending",
+            "testStrategy": "Create type tests using TypeScript's type system to ensure interfaces are correctly defined. Test that sample data conforms to the schema."
+          },
+          {
+            "id": 2,
+            "title": "Create Core Transformation Logic",
+            "description": "Implement the main transformer function that maps EvaluationResult to orq.ai schema format",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "In packages/core/src/transformers/orqai-transformer.ts, create transformToOrqAI function using Effect.ts. Map EvaluationResult fields to OrqAIResult structure. Handle nested data structures recursively. Use Effect.gen for clean async transformation. Include proper error handling with Effect.catchAll for missing or malformed data.",
+            "status": "pending",
+            "testStrategy": "Test transformation with complete EvaluationResult objects. Verify all fields are correctly mapped. Test that nested structures are properly transformed."
+          },
+          {
+            "id": 3,
+            "title": "Implement Score Formatting and Metadata Handling",
+            "description": "Add specialized handling for score normalization and experiment metadata transformation",
+            "dependencies": [
+              "15.2"
+            ],
+            "details": "Create formatScore function to ensure scores follow orq.ai requirements (e.g., 0-1 range, specific decimal precision). Implement extractMetadata function to map experiment context to orq.ai metadata format. Add timestamp formatting using ISO 8601 standard. Handle different score types (numeric, boolean, categorical).",
+            "status": "pending",
+            "testStrategy": "Test score formatting with various input ranges. Verify metadata extraction preserves all relevant information. Test timestamp formatting across different timezones."
+          },
+          {
+            "id": 4,
+            "title": "Add Streaming Support for Partial Results",
+            "description": "Implement streaming transformation capabilities to handle partial evaluation results as they become available",
+            "dependencies": [
+              "15.2",
+              "15.3"
+            ],
+            "details": "Create streamTransform function using Effect.Stream. Support incremental result transformation as evaluations complete. Maintain state for partially transformed results. Emit valid orq.ai formatted results as soon as minimum required fields are available. Handle backpressure appropriately.",
+            "status": "pending",
+            "testStrategy": "Test streaming with simulated partial results. Verify each emitted result is valid orq.ai format. Test that final aggregated result matches non-streaming transformation."
+          },
+          {
+            "id": 5,
+            "title": "Create Validation and Error Recovery",
+            "description": "Implement comprehensive validation of transformed results and graceful error handling for edge cases",
+            "dependencies": [
+              "15.2",
+              "15.3",
+              "15.4"
+            ],
+            "details": "Create validateOrqAIResult function using Effect.Schema or similar validation. Check for required fields, valid score ranges, and proper data types. Implement fallback strategies for missing data (e.g., default values, null handling). Add detailed error messages for debugging. Create recovery strategies for common transformation failures.",
+            "status": "pending",
+            "testStrategy": "Test validation with valid and invalid transformed results. Test edge cases: missing required fields, out-of-range scores, null values. Verify error messages are helpful for debugging. Test recovery strategies produce valid output."
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Add Local Fallback Mechanism",
+        "description": "Implement automatic fallback to local JSON output when orq.ai is unavailable",
+        "details": "Detect missing ORQ_API_KEY or API failures. Automatically switch to local file output. Save results to ./evaluatorq-results-{timestamp}.json. Log clear message about fallback. Ensure same result format for both modes.",
+        "testStrategy": "Test fallback triggers without API key. Test fallback on API errors. Verify local files are created correctly. Test result format consistency.",
+        "priority": "high",
+        "dependencies": [
+          14,
+          15
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Fallback Configuration Interface",
+            "description": "Define configuration interface and types for fallback mechanism settings",
+            "dependencies": [],
+            "details": "Create a FallbackConfig interface in packages/core/src/types/fallback.ts that includes: outputDirectory (default './'), filePrefix (default 'evaluatorq-results'), enableAutoFallback (boolean), fallbackLogLevel, and timestamp format. Export configuration types and default values that can be used throughout the fallback system.",
+            "status": "pending",
+            "testStrategy": "Test type exports and default configuration values are properly defined"
+          },
+          {
+            "id": 2,
+            "title": "Implement API Availability Detector",
+            "description": "Build service to detect ORQ_API_KEY presence and test API connectivity",
+            "dependencies": [
+              "16.1"
+            ],
+            "details": "In packages/core/src/services/api-detector.ts, create an Effect service that checks for ORQ_API_KEY in environment variables, attempts a lightweight API health check if key exists, and returns availability status. Include timeout handling and proper error catching. Export as ApiDetector service with checkAvailability method returning Effect<boolean>.",
+            "status": "pending",
+            "testStrategy": "Mock environment variables to test key detection. Mock API responses to test connectivity checks. Verify timeout handling works correctly."
+          },
+          {
+            "id": 3,
+            "title": "Build Local File Writer Service",
+            "description": "Create service to handle local JSON file output with timestamped filenames",
+            "dependencies": [
+              "16.1"
+            ],
+            "details": "Implement LocalFileWriter service in packages/core/src/services/file-writer.ts using Effect.ts. Include methods to generate timestamped filenames (evaluatorq-results-{ISO8601}.json), write JSON data with proper formatting, handle file system errors gracefully, and ensure directory exists before writing. Use Effect's file system capabilities or Node.js fs with proper Effect wrapping.",
+            "status": "pending",
+            "testStrategy": "Test file creation with mock file system. Verify timestamp format in filenames. Test error handling for permission issues. Check JSON formatting is correct."
+          },
+          {
+            "id": 4,
+            "title": "Create Fallback Orchestrator",
+            "description": "Build main fallback logic that coordinates detection and switching between API and local modes",
+            "dependencies": [
+              "16.2",
+              "16.3"
+            ],
+            "details": "In packages/core/src/services/fallback-orchestrator.ts, create FallbackOrchestrator service that uses ApiDetector to check availability, decides whether to use API or local mode, logs clear messages about the mode being used, and provides a unified interface for result submission. Implement submitResults method that automatically routes to appropriate output method based on availability.",
+            "status": "pending",
+            "testStrategy": "Test orchestration logic with different API states. Verify correct routing decisions. Check logging messages are clear and informative."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Fallback with Main Evaluation Pipeline",
+            "description": "Wire fallback mechanism into the existing evaluation pipeline to ensure seamless operation",
+            "dependencies": [
+              "16.4"
+            ],
+            "details": "Modify the main evaluation pipeline in packages/core to use FallbackOrchestrator for result submission. Update CLI to accept fallback configuration options. Ensure result format remains consistent between API and local modes by using the same serialization logic. Add configuration parsing for fallback settings and pass them through the pipeline properly.",
+            "status": "pending",
+            "testStrategy": "End-to-end tests with and without API key. Verify CLI options work correctly. Test result format consistency between modes. Performance test to ensure minimal overhead."
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Implement Error Handling System",
+        "description": "Create comprehensive error handling using Effect.ts error boundaries",
+        "details": "Define custom error types in shared package: EvaluationError, DataLoadError, EvaluatorError. Implement Effect error handlers with helpful messages. Add error recovery strategies. Create error formatting for CLI output. Include stack traces in debug mode.",
+        "testStrategy": "Test each error type triggers correctly. Test error messages are helpful. Test recovery strategies work. Verify errors don't crash the process.",
+        "priority": "high",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Custom Error Types in Shared Package",
+            "description": "Create a comprehensive error type hierarchy in the shared package that covers all error scenarios in the evaluation system",
+            "dependencies": [],
+            "details": "Create packages/shared/src/errors.ts with custom error classes extending Effect.Data.TaggedError. Define: EvaluationError for general evaluation failures, DataLoadError for data loading issues (file not found, parse errors), EvaluatorError for evaluator-specific failures. Each error should include: message, cause (optional), context object with relevant debugging info, timestamp. Use Effect.Data.TaggedError for proper Effect integration.",
+            "status": "pending",
+            "testStrategy": "Test error instantiation with various parameters. Verify error inheritance chain. Test serialization/deserialization of errors. Ensure errors work with Effect.match patterns."
+          },
+          {
+            "id": 2,
+            "title": "Implement Effect Error Handlers with Recovery Strategies",
+            "description": "Create error handling utilities that integrate with Effect.ts error boundaries and provide recovery mechanisms",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "In packages/core/src/error-handlers.ts, implement: handleEvaluationError that retries failed evaluations with exponential backoff, handleDataLoadError that attempts alternative data sources or formats, handleEvaluatorError that falls back to simpler evaluators when available. Use Effect.retry with schedules, Effect.orElse for fallbacks, Effect.catchTag for specific error handling. Include circuit breaker pattern for repeated failures.",
+            "status": "pending",
+            "testStrategy": "Test retry logic with controllable failures. Verify exponential backoff timing. Test fallback mechanisms work correctly. Test circuit breaker triggers after threshold."
+          },
+          {
+            "id": 3,
+            "title": "Create Error Formatting for CLI Output",
+            "description": "Build error formatting system that presents errors clearly in the CLI with appropriate detail levels",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "In packages/cli/src/error-formatter.ts, implement formatError function that: displays error type and message prominently, shows error context in a structured format, includes suggestions for common issues, formats stack traces readably when in debug mode. Use chalk for color coding (red for errors, yellow for warnings), create error templates for different error types, support --verbose flag for detailed output.",
+            "status": "pending",
+            "testStrategy": "Test formatting of each error type. Verify color coding works correctly. Test verbose vs normal output modes. Test terminal width handling for long messages."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Error Handling into Evaluation Pipeline",
+            "description": "Wire up the error handling system throughout the evaluation engine and ensure proper error propagation",
+            "dependencies": [
+              "17.1",
+              "17.2"
+            ],
+            "details": "Modify packages/core/src/engine.ts to use the error handling system: wrap data loading in Effect.tryPromise with DataLoadError, catch evaluator exceptions and wrap in EvaluatorError, use Effect.tapError for logging before handling, implement Effect.provideService for error handler injection. Ensure errors bubble up appropriately while maintaining Effect's type safety. Add error accumulation for batch operations.",
+            "status": "pending",
+            "testStrategy": "Test error propagation through the pipeline. Verify errors don't stop other evaluations unnecessarily. Test batch error accumulation. Test error handler injection works correctly."
+          },
+          {
+            "id": 5,
+            "title": "Add Debug Mode with Stack Traces",
+            "description": "Implement debug mode that provides detailed error information including stack traces for troubleshooting",
+            "dependencies": [
+              "17.3",
+              "17.4"
+            ],
+            "details": "In packages/cli/src/debug.ts, create debug mode that: captures and preserves full stack traces using Error.captureStackTrace, enriches errors with execution context (file paths, line numbers), provides execution timeline for debugging async issues, integrates with source maps for TypeScript. Add --debug flag to CLI that enables verbose error output, execution tracing, and performance metrics. Store debug logs in .evaluatorq/debug/ directory.",
+            "status": "pending",
+            "testStrategy": "Test stack trace capture and formatting. Verify source map integration works. Test debug log file creation and rotation. Test performance impact of debug mode."
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Add Configuration Loading",
+        "description": "Implement configuration file support for the CLI",
+        "details": "Support .evaluatorqrc.json configuration file. Load config from current directory or home. Allow overriding with CLI flags. Support environment variables. Merge configurations with proper precedence.",
+        "testStrategy": "Test configuration loading from different locations. Test CLI flags override config file. Test environment variable handling. Test invalid configuration handling.",
+        "priority": "low",
+        "dependencies": [
+          11
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Configuration Schema and Types",
+            "description": "Create TypeScript interfaces and schema for the .evaluatorqrc.json configuration file",
+            "dependencies": [],
+            "details": "In packages/cli/src/config/types.ts, define interfaces for configuration structure including evaluator settings, output formats, default options, and environment variables. Create a JSON schema in packages/cli/src/config/schema.json for validation. Include fields for evaluator configurations, logging levels, output preferences, and API keys if needed.",
+            "status": "pending",
+            "testStrategy": "Test type definitions compile correctly. Validate sample configurations against the schema. Test that all configuration options have proper TypeScript types."
+          },
+          {
+            "id": 2,
+            "title": "Implement Configuration File Loader",
+            "description": "Build the core configuration loading logic that searches and reads .evaluatorqrc.json files",
+            "dependencies": [
+              "18.1"
+            ],
+            "details": "In packages/cli/src/config/loader.ts, implement file search logic starting from current directory up to home directory. Use fs.promises for async file operations. Parse JSON safely with error handling. Search for .evaluatorqrc.json in order: current directory, parent directories up to root, then home directory. Return the first valid configuration found or empty object if none exists.",
+            "status": "pending",
+            "testStrategy": "Test file discovery in different directory structures. Test handling of malformed JSON files. Test that loader finds the nearest config file first. Mock file system for unit tests."
+          },
+          {
+            "id": 3,
+            "title": "Create Environment Variable Parser",
+            "description": "Implement environment variable parsing and mapping to configuration options",
+            "dependencies": [
+              "18.1"
+            ],
+            "details": "In packages/cli/src/config/env-parser.ts, create a mapping of environment variables to configuration paths (e.g., EVALUATORQ_LOG_LEVEL -> logLevel). Parse process.env and extract relevant variables with EVALUATORQ_ prefix. Convert environment variable values to appropriate types (boolean, number, string). Handle nested configuration paths using delimiter like double underscore.",
+            "status": "pending",
+            "testStrategy": "Test environment variable parsing with various data types. Test nested path resolution. Test that invalid environment variables are ignored. Test precedence over file config."
+          },
+          {
+            "id": 4,
+            "title": "Build Configuration Merger",
+            "description": "Implement configuration merging logic with proper precedence order",
+            "dependencies": [
+              "18.2",
+              "18.3"
+            ],
+            "details": "In packages/cli/src/config/merger.ts, implement deep merge functionality that combines configurations from multiple sources. Establish precedence order: CLI flags (highest) -> environment variables -> config file -> defaults (lowest). Use a recursive merge that handles nested objects and arrays appropriately. Preserve type safety throughout the merge process.",
+            "status": "pending",
+            "testStrategy": "Test merge precedence with conflicting values. Test deep merging of nested objects. Test array handling strategies. Test that CLI flags always win. Test partial configurations merge correctly."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Configuration System with CLI",
+            "description": "Wire up the configuration system to the CLI command structure and make it accessible throughout the application",
+            "dependencies": [
+              "18.4"
+            ],
+            "details": "In packages/cli/src/config/index.ts, create a ConfigManager class that orchestrates loading, parsing, and merging. Modify CLI entry point to load configuration before command execution. Pass configuration context to all commands. Add --config flag to specify custom config file path. Ensure configuration is loaded once and cached. Export helper functions for accessing nested config values safely.",
+            "status": "pending",
+            "testStrategy": "Test CLI commands receive proper configuration. Test --config flag loads custom file. Test configuration is accessible in all command handlers. Test error handling when config loading fails."
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "Create Plugin System for Custom Evaluators",
+        "description": "Build extensible plugin system for user-defined evaluators",
+        "details": "Define plugin interface extending base Evaluator. Create plugin loader using dynamic imports. Support both CommonJS and ESM plugins. Add plugin validation and error handling. Document plugin API clearly.",
+        "testStrategy": "Test loading valid plugins. Test rejection of invalid plugins. Test plugin isolation. Test both module formats work.",
+        "priority": "low",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Plugin Interface and Base Types",
+            "description": "Create the core plugin interface that extends the base Evaluator type and define all necessary types for the plugin system",
+            "dependencies": [],
+            "details": "In packages/core/src/plugins/types.ts, define PluginInterface extending base Evaluator with required methods: name, version, evaluate(), optional methods: init(), cleanup(). Create PluginMetadata type with fields: id, name, version, author, description. Define PluginConfig type for configuration options. Export PluginError class extending Error for plugin-specific errors.",
+            "status": "pending",
+            "testStrategy": "Test that interfaces properly extend base types. Verify type compatibility with existing Evaluator interface. Test PluginError construction and inheritance."
+          },
+          {
+            "id": 2,
+            "title": "Implement Plugin Loader with Dynamic Import Support",
+            "description": "Create the plugin loader that can dynamically import plugins from file paths, supporting both CommonJS and ESM formats",
+            "dependencies": [
+              "19.1"
+            ],
+            "details": "In packages/core/src/plugins/loader.ts, implement loadPlugin() function using dynamic import() for ESM and require() for CommonJS. Detect module format by checking file extension (.mjs for ESM, .cjs for CommonJS, .js checks package.json type field). Use Effect.tryPromise for error handling during import. Create module resolution logic to handle relative and absolute paths. Implement module caching to prevent duplicate loads.",
+            "status": "pending",
+            "testStrategy": "Test loading ESM modules with .mjs extension. Test loading CommonJS with .cjs extension. Test automatic format detection for .js files. Test error handling for non-existent modules."
+          },
+          {
+            "id": 3,
+            "title": "Create Plugin Validation and Sanitization System",
+            "description": "Build comprehensive validation system to ensure loaded plugins conform to the expected interface and are safe to execute",
+            "dependencies": [
+              "19.1",
+              "19.2"
+            ],
+            "details": "In packages/core/src/plugins/validator.ts, implement validatePlugin() that checks: plugin exports required methods (name, evaluate), version string follows semver format, evaluate method returns proper Result type. Create sanitizePlugin() to wrap plugin methods in try-catch blocks. Implement plugin sandboxing using vm.createContext() for untrusted plugins. Add runtime type checking using Effect.Schema.",
+            "status": "pending",
+            "testStrategy": "Test validation catches plugins missing required methods. Test version validation with invalid formats. Test sanitization handles throwing plugins. Verify sandboxing prevents access to global scope."
+          },
+          {
+            "id": 4,
+            "title": "Build Plugin Registry and Management System",
+            "description": "Create a registry system to manage loaded plugins, handle lifecycle events, and provide plugin discovery",
+            "dependencies": [
+              "19.2",
+              "19.3"
+            ],
+            "details": "In packages/core/src/plugins/registry.ts, implement PluginRegistry class with methods: register(plugin), unregister(pluginId), getPlugin(id), listPlugins(). Add lifecycle management: call init() on registration, cleanup() on unregistration. Implement plugin discovery by scanning directories for valid plugin files. Create event emitter for plugin lifecycle events. Store plugin metadata and instances in Map structures.",
+            "status": "pending",
+            "testStrategy": "Test plugin registration and retrieval. Test lifecycle methods are called correctly. Test plugin discovery finds valid plugins in directory. Verify cleanup is called on unregistration."
+          },
+          {
+            "id": 5,
+            "title": "Create Plugin API Documentation and Example Plugins",
+            "description": "Write comprehensive documentation for the plugin API and create example plugins demonstrating best practices",
+            "dependencies": [
+              "19.1",
+              "19.2",
+              "19.3",
+              "19.4"
+            ],
+            "details": "In packages/core/docs/plugin-api.md, document: plugin interface requirements, lifecycle methods, error handling expectations, module format support. Create example plugins in packages/core/examples/plugins/: simple-evaluator.mjs (ESM example), legacy-evaluator.cjs (CommonJS example), async-evaluator.js (async evaluation example). Include TypeScript definitions for plugin authors. Document security considerations and sandboxing options.",
+            "status": "pending",
+            "testStrategy": "Test all example plugins load and execute correctly. Verify documentation code samples are valid. Test TypeScript definitions compile without errors. Ensure examples cover common use cases."
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Implement Logging System",
+        "description": "Add structured logging throughout the library using Effect.ts",
+        "details": "Create Effect logger service with levels (debug, info, warn, error). Add contextual logging in evaluation pipeline. Support different output formats (JSON, pretty). Allow log level configuration. Integrate with CLI output properly.",
+        "testStrategy": "Test log levels filter correctly. Test structured log output. Test CLI integration doesn't break. Verify performance impact is minimal.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          17
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and implement Effect.ts logger service interface",
+            "description": "Create the core logger service using Effect.ts patterns with support for different log levels and structured data",
+            "dependencies": [],
+            "details": "Create packages/core/src/logger/Logger.ts with Effect service definition. Define LogLevel enum (debug, info, warn, error). Create LogEntry interface with timestamp, level, message, context fields. Implement Logger service with methods: debug, info, warn, error. Each method should accept message and optional context object. Use Effect.Tag for service definition and Effect.gen for implementation. Include method to set minimum log level.",
+            "status": "pending",
+            "testStrategy": "Test logger service creation and dependency injection. Verify each log method creates proper LogEntry. Test log level filtering works correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement log output formatters",
+            "description": "Create formatters for JSON and pretty-printed console output with configurable options",
+            "dependencies": [
+              "20.1"
+            ],
+            "details": "Create packages/core/src/logger/formatters.ts with Formatter interface. Implement JsonFormatter that outputs structured JSON with all fields. Implement PrettyFormatter with colored output using chalk or similar. Add timestamp formatting options. Include context serialization handling for both formatters. Create FormatterConfig type for customization options.",
+            "status": "pending",
+            "testStrategy": "Test JSON formatter produces valid JSON. Test pretty formatter output format. Verify context objects are properly serialized. Test formatter configuration options."
+          },
+          {
+            "id": 3,
+            "title": "Create configurable logger implementation",
+            "description": "Build the concrete logger implementation with runtime configuration for output format and log level",
+            "dependencies": [
+              "20.1",
+              "20.2"
+            ],
+            "details": "Create packages/core/src/logger/LoggerLive.ts implementing the Logger service. Add LoggerConfig with minLevel, formatter, and output stream options. Implement log level filtering based on config. Use Effect.Layer for service construction. Support multiple output targets (console, file, custom). Include buffering for performance. Add method to dynamically change log level.",
+            "status": "pending",
+            "testStrategy": "Test logger respects minimum log level setting. Verify correct formatter is used based on config. Test output to different targets. Verify performance with high log volume."
+          },
+          {
+            "id": 4,
+            "title": "Integrate logging into evaluation pipeline",
+            "description": "Add contextual logging throughout the evaluation engine to track experiment progress and debug issues",
+            "dependencies": [
+              "20.3"
+            ],
+            "details": "Update packages/core/src/engine.ts to inject Logger service. Add logging at key pipeline stages: experiment start/end, data loading, task execution, evaluator application, error handling. Include relevant context like task IDs, timing, result summaries. Use appropriate log levels for different events. Ensure errors are logged with full context. Add performance metrics logging.",
+            "status": "pending",
+            "testStrategy": "Test logs are emitted at each pipeline stage. Verify context includes relevant information. Test error scenarios produce appropriate logs. Check performance impact is minimal."
+          },
+          {
+            "id": 5,
+            "title": "Integrate logger with CLI and add configuration",
+            "description": "Connect the logger to CLI output and add command-line options for log configuration",
+            "dependencies": [
+              "20.4"
+            ],
+            "details": "Update packages/cli/src/commands/run.ts to configure logger based on CLI flags. Add --log-level flag with choices (debug, info, warn, error). Add --log-format flag (json, pretty). Ensure CLI output and logs don't interfere. Implement quiet mode that suppresses non-error logs. Add --log-file option for file output. Create sensible defaults (info level, pretty format for TTY, json for non-TTY).",
+            "status": "pending",
+            "testStrategy": "Test CLI flags properly configure logger. Verify quiet mode suppresses appropriate logs. Test file output works correctly. Ensure JSON format is used in CI environments."
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "title": "Add TypeScript Type Helpers",
+        "description": "Create type helper utilities for better developer experience",
+        "details": "Create type guards for runtime validation. Add generic constraint helpers. Implement type-safe builders for experiments. Create typed error constructors. Export utility types for users.",
+        "testStrategy": "Test type guards work at runtime. Test type inference with helpers. Test builders produce correct types. Verify exported types are usable.",
+        "priority": "low",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Type Guard Utilities",
+            "description": "Implement runtime type guard functions for validating data types at runtime",
+            "dependencies": [],
+            "details": "Create packages/shared/src/type-guards.ts with functions like isDataPoint(), isTask(), isEvaluator(), isExperiment(), and isEvaluationResult(). Each guard should check the shape and required properties of the type. Use Effect's Schema library for runtime validation where appropriate. Export guards as a namespace TypeGuards for better organization.",
+            "status": "pending",
+            "testStrategy": "Test each type guard with valid and invalid inputs. Verify guards narrow types correctly in TypeScript. Test edge cases like null, undefined, and malformed objects."
+          },
+          {
+            "id": 2,
+            "title": "Implement Generic Constraint Helpers",
+            "description": "Create utility types and functions for working with generic constraints in the codebase",
+            "dependencies": [],
+            "details": "Create packages/shared/src/type-constraints.ts with helpers like Constrain<T, U>, ExtractInput<T>, ExtractOutput<T>, and ValidateTaskType<T>. Add utility types for constraining evaluator inputs/outputs. Create helper functions for runtime constraint validation. Include types for ensuring type compatibility between tasks and evaluators.",
+            "status": "pending",
+            "testStrategy": "Use TypeScript's type testing utilities to verify constraint helpers work correctly. Test that invalid type combinations are caught at compile time. Verify runtime constraint validation functions work properly."
+          },
+          {
+            "id": 3,
+            "title": "Build Type-Safe Experiment Builders",
+            "description": "Create builder pattern implementations for constructing experiments with full type safety",
+            "dependencies": [
+              "21.1",
+              "21.2"
+            ],
+            "details": "Create packages/shared/src/builders.ts with ExperimentBuilder class using fluent API. Implement methods like withName(), withDataPoints(), withEvaluators(), and build(). Use TypeScript's builder pattern with phantom types to ensure compile-time safety. Leverage Effect's pipe function for composition. Include TaskBuilder and EvaluatorBuilder for complete coverage.",
+            "status": "pending",
+            "testStrategy": "Test builders produce correctly typed experiments. Verify type inference works through the entire builder chain. Test that incomplete builds are caught at compile time. Test builder immutability."
+          },
+          {
+            "id": 4,
+            "title": "Create Typed Error Constructors",
+            "description": "Implement typed error classes and constructor functions for consistent error handling",
+            "dependencies": [
+              "21.1"
+            ],
+            "details": "Create packages/shared/src/errors.ts with typed error classes: ValidationError, EvaluationError, ExperimentError, and ConfigurationError. Each should extend Effect's Cause type. Create factory functions like createValidationError() that return properly typed Effect failures. Include error type guards and error serialization utilities. Add discriminated union type for all possible errors.",
+            "status": "pending",
+            "testStrategy": "Test error constructors create proper Effect failures. Verify error type guards work correctly. Test error serialization and deserialization. Check that error types integrate properly with Effect's error handling."
+          },
+          {
+            "id": 5,
+            "title": "Export Public Utility Types",
+            "description": "Create and export a comprehensive set of utility types for library users",
+            "dependencies": [
+              "21.1",
+              "21.2",
+              "21.3",
+              "21.4"
+            ],
+            "details": "Create packages/shared/src/types/index.ts as the main export point. Export utility types like DeepPartial<T>, Awaitable<T>, ExtractEffectValue<T>, TaskInput<T>, TaskOutput<T>, and EvaluatorScore. Include type aliases for common Effect patterns. Create a types namespace for organized exports. Add JSDoc comments for all exported types. Ensure all types are re-exported from packages/shared/src/index.ts.",
+            "status": "pending",
+            "testStrategy": "Test that all utility types are properly exported. Verify types work correctly when imported in other packages. Test type inference with complex nested types. Check JSDoc appears in IDE tooltips."
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "title": "Write Comprehensive Tests",
+        "description": "Create full test suite using Vitest across all packages",
+        "details": "Write unit tests for each package. Create integration tests for full pipeline. Add performance benchmarks. Test Effect.ts error scenarios. Achieve >80% code coverage. Set up test utilities and fixtures.",
+        "testStrategy": "Run tests in CI/CD pipeline. Monitor test execution time. Check coverage reports. Test both success and failure paths.",
+        "priority": "high",
+        "dependencies": [
+          5,
+          9,
+          16
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up test infrastructure and utilities",
+            "description": "Create test configuration, utilities, and fixtures for the entire test suite",
+            "dependencies": [],
+            "details": "Create vitest.config.ts and vitest.workspace.ts in project root. Set up test utilities in packages/shared/src/test-utils including: mock data generators, test helpers for Effect.ts testing, fixture loaders, custom matchers. Configure coverage thresholds at 80%. Set up test environment variables. Create base test setup files for each package.",
+            "status": "pending",
+            "testStrategy": "Verify test configuration works by running a simple test. Check that coverage reporting is properly configured."
+          },
+          {
+            "id": 2,
+            "title": "Write unit tests for shared package",
+            "description": "Create comprehensive unit tests for all modules in the shared package",
+            "dependencies": [
+              "22.1"
+            ],
+            "details": "In packages/shared/src/__tests__, write unit tests for: data loading utilities (CSV, JSON, Parquet), schema validation using Effect.Schema, result formatting and aggregation functions, error handling utilities. Focus on edge cases like malformed data, empty inputs, and large datasets. Use Effect.Test utilities for testing Effect-based code.",
+            "status": "pending",
+            "testStrategy": "Aim for 90% coverage in shared package. Test both success and failure paths. Use property-based testing for data transformations."
+          },
+          {
+            "id": 3,
+            "title": "Write unit tests for evaluator packages",
+            "description": "Create unit tests for core evaluator and specific evaluator implementations",
+            "dependencies": [
+              "22.1"
+            ],
+            "details": "Write tests for packages/core-evaluator covering: base evaluator interface, evaluation pipeline logic, result aggregation. For packages/llm-evaluator and packages/sql-evaluator, test: evaluation logic, prompt/query generation, response parsing, error scenarios. Mock external dependencies (LLM APIs, database connections). Test Effect.ts streams and pipelines.",
+            "status": "pending",
+            "testStrategy": "Mock all external API calls. Test timeout handling and retries. Verify evaluators handle malformed responses gracefully."
+          },
+          {
+            "id": 4,
+            "title": "Create integration tests for full pipeline",
+            "description": "Write end-to-end integration tests that test the complete evaluation pipeline",
+            "dependencies": [
+              "22.2",
+              "22.3"
+            ],
+            "details": "In packages/cli/src/__tests__/integration, create tests that: load real test data files, run multiple evaluators in sequence/parallel, test orq.ai integration with mocked API, verify CLI command execution, test error propagation through the pipeline. Use Docker containers for database tests. Create test scenarios for common use cases.",
+            "status": "pending",
+            "testStrategy": "Use test containers for database dependencies. Create isolated test environments. Test with various data sizes to catch performance issues."
+          },
+          {
+            "id": 5,
+            "title": "Add performance benchmarks and Effect.ts error tests",
+            "description": "Create performance benchmarks and comprehensive Effect.ts error scenario tests",
+            "dependencies": [
+              "22.4"
+            ],
+            "details": "Set up Vitest bench for performance testing: benchmark data loading for different file sizes, measure evaluator execution times, test parallel vs sequential processing. Create specific tests for Effect.ts error boundaries: test error recovery strategies, verify error messages and stack traces, test cascading failures, ensure errors don't leak memory. Add benchmarks to CI to catch performance regressions.",
+            "status": "pending",
+            "testStrategy": "Run benchmarks with consistent hardware specs. Set performance budgets. Test with datasets 10x larger than typical to find bottlenecks."
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "title": "Create Documentation and Examples",
+        "description": "Write comprehensive documentation and usage examples",
+        "details": "Write README.md with quick start guide. Create API documentation using TypeDoc. Add examples/ directory with common use cases. Document Effect.ts patterns used. Include troubleshooting guide. Add migration guide from other tools.",
+        "testStrategy": "Test all examples run correctly. Verify documentation builds. Test quick start works for new users. Check for documentation completeness.",
+        "priority": "high",
+        "dependencies": [
+          22
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Main README.md with Quick Start Guide",
+            "description": "Write the primary README.md file with project overview, installation instructions, and a quick start guide that gets users running in under 5 minutes",
+            "dependencies": [],
+            "details": "Create README.md at project root. Include: Project description and key features, Prerequisites (Node.js, Bun), Installation steps using bun install, Quick start example showing basic usage with a simple evaluator, Project structure overview, Links to detailed documentation. Use clear headings and code blocks for examples.",
+            "status": "pending",
+            "testStrategy": "Test all commands in quick start work on fresh install. Verify code examples compile and run. Check markdown renders correctly."
+          },
+          {
+            "id": 2,
+            "title": "Set Up TypeDoc and Generate API Documentation",
+            "description": "Configure TypeDoc to generate comprehensive API documentation from TypeScript source files across all packages",
+            "dependencies": [
+              "23.1"
+            ],
+            "details": "Install TypeDoc as dev dependency. Create typedoc.json config at root with proper entryPoints for all packages. Configure to output to docs/api directory. Set up npm script 'docs:build' to generate documentation. Include proper theme and navigation. Ensure all public APIs have JSDoc comments. Generate initial documentation and verify output.",
+            "status": "pending",
+            "testStrategy": "Run docs:build and verify no errors. Check generated HTML is navigable. Verify all public APIs are documented. Test documentation links work correctly."
+          },
+          {
+            "id": 3,
+            "title": "Create Examples Directory with Common Use Cases",
+            "description": "Build a comprehensive examples directory demonstrating various Evaluatorq usage patterns and integrations",
+            "dependencies": [
+              "23.1"
+            ],
+            "details": "Create examples/ directory at root. Include: basic-evaluation.ts (simple score evaluation), multiple-evaluators.ts (combining evaluators), custom-evaluator.ts (implementing custom evaluator), orq-integration.ts (using orq.ai integration), streaming-results.ts (handling large datasets), error-handling.ts (proper error handling patterns). Each example should be runnable with bun run and include inline comments explaining the code.",
+            "status": "pending",
+            "testStrategy": "Test each example runs without errors. Verify examples produce expected output. Check examples follow best practices. Ensure examples cover documented use cases."
+          },
+          {
+            "id": 4,
+            "title": "Document Effect.ts Patterns and Best Practices",
+            "description": "Create documentation explaining the Effect.ts patterns used throughout the codebase and how users can leverage them",
+            "dependencies": [
+              "23.2"
+            ],
+            "details": "Create docs/effect-patterns.md. Document: Why Effect.ts is used (error handling, composability), Common Effect patterns in the codebase (services, layers, error types), How to extend Evaluatorq with Effect, Effect.pipe usage examples, Error handling strategies, Resource management patterns. Include code snippets from actual implementation. Link to official Effect documentation for deeper learning.",
+            "status": "pending",
+            "testStrategy": "Verify all Effect examples compile. Test documented patterns match actual implementation. Check links to Effect docs are valid."
+          },
+          {
+            "id": 5,
+            "title": "Create Troubleshooting and Migration Guides",
+            "description": "Write comprehensive troubleshooting documentation and migration guides from other evaluation tools",
+            "dependencies": [
+              "23.3",
+              "23.4"
+            ],
+            "details": "Create docs/troubleshooting.md with common issues: TypeScript configuration problems, Effect runtime errors, orq.ai connection issues, Performance optimization tips, Debugging strategies. Create docs/migration.md with guides for migrating from: Custom evaluation scripts, Other evaluation frameworks, Step-by-step migration examples, API comparison tables. Include FAQ section based on anticipated user questions.",
+            "status": "pending",
+            "testStrategy": "Test all troubleshooting solutions work. Verify migration examples are accurate. Check documentation completeness against all error scenarios."
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Set Up Build and Release Pipeline",
+        "description": "Configure build, test, and release automation using Nx",
+        "details": "Configure Nx release process for all packages. Set up semantic versioning. Create GitHub Actions workflow. Add pre-commit hooks with Biome. Configure changelog generation. Set up npm publishing automation.",
+        "testStrategy": "Test local builds work correctly. Test CI pipeline runs successfully. Test package publishing (dry run). Verify version bumping works.",
+        "priority": "medium",
+        "dependencies": [
+          22
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure Nx Release Process",
+            "description": "Set up Nx release configuration for managing package versions and releases across the monorepo",
+            "dependencies": [],
+            "details": "Configure nx.json with release settings including version resolver, changelog generation, and git tag format. Set up release groups if needed for independent package versioning. Configure semantic versioning with conventional commits. Add release targets to project.json files for each publishable package. Set up npm registry configuration in .npmrc file.",
+            "status": "pending",
+            "testStrategy": "Run nx release --dry-run to verify configuration without making changes. Test version bump logic with different commit types. Verify changelog generation format matches requirements."
+          },
+          {
+            "id": 2,
+            "title": "Create GitHub Actions CI/CD Workflow",
+            "description": "Implement GitHub Actions workflow for automated testing, building, and releasing packages",
+            "dependencies": [
+              "24.1"
+            ],
+            "details": "Create .github/workflows/ci.yml with jobs for: installing dependencies with Bun, running nx affected commands for tests and builds, running type checking and linting, generating and uploading coverage reports. Add release workflow in .github/workflows/release.yml triggered on main branch pushes, using nx release command with npm publish. Configure secrets for NPM_TOKEN and set up proper permissions.",
+            "status": "pending",
+            "testStrategy": "Push workflow to feature branch and verify it runs. Test affected commands work correctly. Verify secrets are properly configured. Test release workflow with dry-run flag."
+          },
+          {
+            "id": 3,
+            "title": "Set Up Pre-commit Hooks with Biome",
+            "description": "Configure Git pre-commit hooks using Biome for code quality enforcement",
+            "dependencies": [],
+            "details": "Install husky as dev dependency and initialize with npx husky init. Create .husky/pre-commit hook that runs: bun run lint:fix for staged files, bun run format for code formatting, nx affected:test for affected test suites. Configure lint-staged to run Biome only on staged files. Add commit-msg hook for conventional commit validation using commitlint.",
+            "status": "pending",
+            "testStrategy": "Make intentional formatting errors and verify pre-commit catches them. Test that commits with invalid format are rejected. Verify hooks don't run on files outside staged changes."
+          },
+          {
+            "id": 4,
+            "title": "Configure Automated Changelog Generation",
+            "description": "Set up automatic changelog generation based on conventional commits",
+            "dependencies": [
+              "24.1",
+              "24.3"
+            ],
+            "details": "Configure Nx release to use conventional-changelog preset. Set up changelog generation rules in nx.json including types to include (feat, fix, perf, etc.), sections mapping, and header format. Create CHANGELOG.md template if needed. Configure per-package changelogs for publishable packages. Set up changelog versioning to match package versions.",
+            "status": "pending",
+            "testStrategy": "Create test commits with different types and verify changelog generation. Test that breaking changes are properly highlighted. Verify changelog links to commits and issues correctly."
+          },
+          {
+            "id": 5,
+            "title": "Configure NPM Publishing Automation",
+            "description": "Set up automated npm package publishing as part of the release pipeline",
+            "dependencies": [
+              "24.1",
+              "24.2",
+              "24.4"
+            ],
+            "details": "Configure package.json files with proper publishing settings including access level, registry URL, and files to include. Set up .npmignore files to exclude unnecessary files from packages. Configure nx release to handle npm publishing with proper authentication. Add provenance generation for npm packages. Set up post-publish hooks for notifications or documentation updates.",
+            "status": "pending",
+            "testStrategy": "Run npm pack to verify package contents are correct. Test npm publish with --dry-run flag. Verify package.json has all required fields for publishing. Test that only intended files are included in published packages."
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Performance Optimization and Benchmarking",
+        "description": "Optimize performance for large-scale evaluations and add benchmarks",
+        "details": "Profile evaluation pipeline for bottlenecks. Optimize Effect.ts fiber usage. Add streaming support for large datasets. Implement result batching for orq.ai. Create benchmark suite comparing with similar tools. Document performance characteristics.",
+        "testStrategy": "Run benchmarks with various data sizes. Test memory usage stays bounded. Compare performance with baseline. Verify optimizations don't break functionality.",
+        "priority": "low",
+        "dependencies": [
+          22
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Profile Evaluation Pipeline and Identify Bottlenecks",
+            "description": "Set up profiling infrastructure and analyze the current evaluation pipeline to identify performance bottlenecks",
+            "dependencies": [],
+            "details": "Install and configure profiling tools like clinic.js or 0x for Node.js profiling. Create benchmark scenarios with varying data sizes (100, 1000, 10000 data points). Profile the evaluation engine from packages/core/src/engine.ts focusing on: data loading performance, task execution concurrency, evaluator application overhead, Effect.ts fiber creation and management. Generate flame graphs and performance reports. Document findings in a performance analysis report identifying top 5 bottlenecks.",
+            "status": "pending",
+            "testStrategy": "Create automated performance regression tests that run profiling on sample workloads and alert if execution time exceeds baseline by more than 10%"
+          },
+          {
+            "id": 2,
+            "title": "Optimize Effect.ts Fiber Usage and Concurrency",
+            "description": "Implement optimizations for Effect.ts fiber management and improve concurrent task execution",
+            "dependencies": [
+              "25.1"
+            ],
+            "details": "Based on profiling results, optimize fiber usage in the evaluation engine. Implement fiber pooling to reduce creation overhead. Tune Effect.Semaphore limits based on system resources using Runtime.defaultRuntime. Add adaptive concurrency that adjusts based on task complexity and available memory. Implement Effect.Queue for better work distribution. Use Effect.fiberIdWith for better fiber tracking. Optimize Effect.forEach to use batching for large datasets. Add configuration options for concurrency limits in the Evaluatorq API.",
+            "status": "pending",
+            "testStrategy": "Test fiber pool efficiency with concurrent load tests. Verify memory usage stays bounded under high concurrency. Benchmark improvements against baseline from profiling phase."
+          },
+          {
+            "id": 3,
+            "title": "Implement Streaming Support for Large Datasets",
+            "description": "Add streaming capabilities to handle large datasets without loading everything into memory",
+            "dependencies": [
+              "25.2"
+            ],
+            "details": "Implement streaming data loading using Effect.Stream in packages/core. Modify DataPoint loader to support streaming from various sources (file, HTTP, database). Create StreamingEvaluator interface that processes data in chunks. Implement backpressure handling to prevent memory overflow. Add progress reporting callbacks for long-running evaluations. Update the main Evaluatorq API to accept stream sources. Use Effect.Stream.fromAsyncIterable for Node.js streams compatibility. Implement windowing strategies for aggregate evaluators.",
+            "status": "pending",
+            "testStrategy": "Test with datasets larger than available memory. Verify memory usage stays constant regardless of dataset size. Test stream error handling and recovery."
+          },
+          {
+            "id": 4,
+            "title": "Implement Result Batching for orq.ai Integration",
+            "description": "Add intelligent batching for orq.ai API calls to optimize network usage and reduce API costs",
+            "dependencies": [
+              "25.3"
+            ],
+            "details": "In packages/orq-integration, implement a batching layer for orq.ai API calls. Create a BatchingOrqClient that collects evaluation requests and sends them in optimized batches. Implement configurable batch size (default 100) and time window (default 1s). Add retry logic with exponential backoff for failed batches. Implement request deduplication to avoid redundant API calls. Add metrics for batch efficiency (requests saved, latency reduction). Update the orq.ai integration to use batching by default with opt-out option.",
+            "status": "pending",
+            "testStrategy": "Test batch formation logic with various request patterns. Verify retry mechanism handles partial batch failures. Test that batching reduces total API calls by at least 50% in typical scenarios."
+          },
+          {
+            "id": 5,
+            "title": "Create Comprehensive Benchmark Suite",
+            "description": "Develop a benchmark suite comparing Evaluatorq with similar evaluation tools and document performance characteristics",
+            "dependencies": [
+              "25.4"
+            ],
+            "details": "Create packages/benchmarks with standardized benchmark scenarios. Implement benchmarks for: small (100 items), medium (10K items), and large (1M items) datasets. Compare against popular alternatives like LangChain evaluators, Promptfoo, and custom solutions. Measure metrics: throughput (evals/second), memory usage, latency percentiles (p50, p95, p99), startup time. Create visualization dashboard using Vega-Lite. Generate performance documentation with charts showing scaling characteristics. Add CI integration to run benchmarks on each commit and detect regressions.",
+            "status": "pending",
+            "testStrategy": "Verify benchmark results are reproducible across runs. Test that benchmark suite runs in under 10 minutes. Validate comparison metrics are fair and accurate."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-21T18:17:58.236Z",
+      "updated": "2025-07-21T18:42:17.404Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

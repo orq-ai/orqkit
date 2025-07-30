@@ -2,19 +2,57 @@
   "name": "@evaluatorq/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "build:all": "nx run-many --target=build",
+    "test:all": "nx run-many --target=test",
+    "typecheck": "nx run-many --target=typecheck"
+  },
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@effect/schema": "^0.75.5",
+    "@orq-ai/node": "^3.9.15",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "effect": "^3.16.16",
+    "ora": "^8.2.0"
+  },
   "devDependencies": {
+    "@biomejs/biome": "^2.1.2",
     "@nx/js": "21.3.2",
     "@swc-node/register": "~1.9.1",
+    "@swc/cli": "^0.7.8",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "@types/node": "18.16.9",
+    "@vitest/ui": "^3.2.4",
     "nx": "21.3.2",
+    "swc-loader": "^0.2.6",
     "tslib": "^2.3.0",
-    "typescript": "~5.8.2"
+    "typescript": "^5.8.3",
+    "verdaccio": "^6.0.5",
+    "vitest": "^3.2.4"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "nx": {
+    "includedScripts": [],
+    "targets": {
+      "local-registry": {
+        "executor": "@nx/js:verdaccio",
+        "options": {
+          "port": 4873,
+          "config": ".verdaccio/config.yml",
+          "storage": "tmp/local-registry/storage"
+        }
+      }
+    }
+  }
 }

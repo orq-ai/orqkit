@@ -1,0 +1,213 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-21T18:19:34.408Z",
+		"tasksAnalyzed": 25,
+		"totalTasks": 25,
+		"analysisCount": 25,
+		"thresholdScore": 5,
+		"projectName": "Task Master",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Initialize Nx Monorepo Structure",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down the Nx monorepo initialization into steps for workspace setup, package creation, TypeScript configuration, and Vitest integration. Each subtask should be independently executable.",
+			"reasoning": "Requires multiple configuration steps across workspace setup, package structure creation, TypeScript configuration, and test framework setup. Each area has specific requirements that need careful implementation."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Configure Effect.ts and Core Dependencies",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Divide into Effect.ts installation, TypeScript configuration for Effect patterns, shared utility creation for error handling, concurrency utilities, resource management, and dependency injection setup.",
+			"reasoning": "Effect.ts integration requires deep understanding of functional programming patterns, TypeScript configuration adjustments, and creating multiple utility modules. Each utility type needs its own implementation."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Define Core Types and Interfaces",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into creating base data types (DataPoint, Task), evaluation interfaces (Evaluator, EvaluationResult), experiment types, and Effect.ts error type integration.",
+			"reasoning": "While conceptually straightforward, requires careful design of generic types and interfaces that will be used throughout the system. Effect types add complexity."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Basic Evaluation Engine",
+			"complexityScore": 8,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break down into data loading pipeline, task execution logic, evaluator application, concurrency control with Semaphore, error handling with catchAll, Effect.gen implementation, and pipeline composition.",
+			"reasoning": "Core engine implementation involves multiple complex Effect.ts patterns, concurrent execution management, error handling, and proper pipeline composition. Each aspect requires careful implementation."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Create Main Evaluatorq Entry Point",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into API design, Effect pipeline creation, orq.ai integration check, result handling, and Promise compatibility layer with Effect.runPromise.",
+			"reasoning": "Requires careful API design, integration of evaluation engine, environment variable checking, and proper Effect-to-Promise conversion for user-facing API."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement Base Evaluator Interface",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into abstract class definition, score normalization utilities, evaluator composition helpers, and configuration interface design.",
+			"reasoning": "Foundational work that requires careful design of extensible interfaces, utility functions for score handling, and composition patterns."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Implement Cosine Similarity Evaluator",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into text preprocessing, TF-IDF implementation, vector calculation, cosine similarity computation, and edge case handling.",
+			"reasoning": "Requires implementing text vectorization algorithm from scratch, mathematical computations, and proper handling of edge cases. TF-IDF implementation adds significant complexity."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Exact Match Evaluator",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Divide into basic comparison logic, preprocessing options implementation (case sensitivity, whitespace), and configuration handling.",
+			"reasoning": "Relatively simple implementation with straightforward logic, mainly focused on string comparison and preprocessing options."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Levenshtein Distance Evaluator",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into dynamic programming algorithm implementation, score normalization logic, optimization with memoization, and edge case handling.",
+			"reasoning": "Requires implementing a well-known but non-trivial algorithm, score normalization math, and potential performance optimizations."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Create Result Formatting System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into JSON formatter, statistics calculator (mean, median, std dev), result aggregation logic, Effect error handling integration, and streaming support.",
+			"reasoning": "Multiple distinct formatting requirements, statistical calculations, and streaming considerations for large datasets add complexity."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Implement CLI Package Structure",
+			"complexityScore": 5,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into package setup with dependencies, commander.js integration, command structure implementation, bin configuration, and option parsing setup.",
+			"reasoning": "Standard CLI setup with multiple components: dependency management, command structure, executable configuration, and argument parsing."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Build CLI Table Display",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split into table layout design, column width calculation, text truncation logic, color formatting with chalk, and summary statistics row.",
+			"reasoning": "Requires handling dynamic table sizing, text formatting, color output, and proper alignment. Box-drawing characters add visual complexity."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Add CLI Progress Indicators",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into ora spinner integration, progress bar implementation, progress calculation logic, and interrupt handling (Ctrl+C cleanup).",
+			"reasoning": "Involves integrating multiple UI libraries, calculating progress accurately, and handling process interruption gracefully."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Create orq.ai API Client",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Divide into SDK installation, Effect service creation, authentication logic, retry with exponential backoff, rate limiting implementation, and environment variable handling.",
+			"reasoning": "Complex integration involving external SDK, Effect.ts service patterns, multiple resilience patterns (retry, rate limiting), and error handling."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Implement Result Transformation for orq.ai",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Split into schema mapping logic, nested data handling, metadata inclusion, and streaming support for partial results.",
+			"reasoning": "Requires understanding both internal and external schemas, handling complex data transformations, and supporting streaming scenarios."
+		},
+		{
+			"taskId": 16,
+			"taskTitle": "Add Local Fallback Mechanism",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into API availability detection, fallback trigger logic, local file writing with timestamps, and consistent formatting between modes.",
+			"reasoning": "Involves environment detection, error handling, file system operations, and maintaining format consistency across different output modes."
+		},
+		{
+			"taskId": 17,
+			"taskTitle": "Implement Error Handling System",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Divide into custom error type definitions, Effect error handler implementation, recovery strategy design, CLI error formatting, debug mode stack traces, and error propagation patterns.",
+			"reasoning": "Comprehensive error handling requires multiple error types, Effect.ts integration, recovery strategies, and proper formatting for different contexts."
+		},
+		{
+			"taskId": 18,
+			"taskTitle": "Add Configuration Loading",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split into file loading logic, configuration parsing, CLI flag integration, environment variable support, and configuration merging with precedence rules.",
+			"reasoning": "Multiple configuration sources, precedence rules, validation, and merging logic add complexity to implementation."
+		},
+		{
+			"taskId": 19,
+			"taskTitle": "Create Plugin System for Custom Evaluators",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into plugin interface design, dynamic import loader, module format support (CJS/ESM), validation logic, and error handling for invalid plugins.",
+			"reasoning": "Dynamic loading, supporting multiple module formats, validation, and isolation requirements make this technically challenging."
+		},
+		{
+			"taskId": 20,
+			"taskTitle": "Implement Logging System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into Effect logger service creation, log level implementation, contextual logging integration, output format support, and CLI integration without conflicts.",
+			"reasoning": "Requires Effect.ts service implementation, multiple output formats, proper integration with existing CLI output, and performance considerations."
+		},
+		{
+			"taskId": 21,
+			"taskTitle": "Add TypeScript Type Helpers",
+			"complexityScore": 5,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Split into type guard implementation, generic constraint helpers, type-safe builders, typed error constructors, and utility type exports.",
+			"reasoning": "Each helper type requires careful TypeScript implementation to ensure proper type inference and runtime validation."
+		},
+		{
+			"taskId": 22,
+			"taskTitle": "Write Comprehensive Tests",
+			"complexityScore": 8,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break down into unit test setup per package, integration test suite, Effect.ts scenario testing, performance benchmarks, test utilities creation, fixture setup, and coverage configuration.",
+			"reasoning": "Comprehensive testing across multiple packages, different test types, Effect.ts specific scenarios, and achieving high coverage requires significant effort."
+		},
+		{
+			"taskId": 23,
+			"taskTitle": "Create Documentation and Examples",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Divide into README quick start, API documentation with TypeDoc, example directory structure, Effect.ts pattern documentation, troubleshooting guide, and migration guide creation.",
+			"reasoning": "Multiple documentation types, example creation, tool configuration, and ensuring completeness across different user needs adds complexity."
+		},
+		{
+			"taskId": 24,
+			"taskTitle": "Set Up Build and Release Pipeline",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Split into Nx release configuration, semantic versioning setup, GitHub Actions workflow, pre-commit hooks with Biome, changelog automation, and npm publishing setup.",
+			"reasoning": "Multiple CI/CD components, tool configurations, automation setup, and ensuring reliable releases across monorepo packages."
+		},
+		{
+			"taskId": 25,
+			"taskTitle": "Performance Optimization and Benchmarking",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down into profiling setup, Effect fiber optimization, streaming implementation, result batching, benchmark suite creation, and performance documentation.",
+			"reasoning": "Requires deep performance analysis, Effect.ts optimization knowledge, implementing streaming patterns, creating meaningful benchmarks, and documenting findings."
+		}
+	]
+}

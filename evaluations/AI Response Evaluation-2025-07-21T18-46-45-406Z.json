@@ -1,0 +1,269 @@
+{
+  "experimentName": "AI Response Evaluation",
+  "timestamp": "2025-07-21T18:46:45.406Z",
+  "results": [
+    {
+      "input": "What is the capital of France?",
+      "output": "The capital of France is Paris.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [
+              "capital",
+              "france",
+              "paris"
+            ],
+            "keywordCount": 6
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 30,
+            "outputLength": 31,
+            "lengthRatio": 1.0333333333333334
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "What is the capital of France?",
+      "output": "Paris is the capital city of France.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [
+              "paris",
+              "capital",
+              "city",
+              "france"
+            ],
+            "keywordCount": 7
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 30,
+            "outputLength": 36,
+            "lengthRatio": 1.2
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "What is 2+2?",
+      "output": "Two plus two equals four.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [
+              "plus",
+              "equals",
+              "four"
+            ],
+            "keywordCount": 5
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 12,
+            "outputLength": 25,
+            "lengthRatio": 2.0833333333333335
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "What is 2+2?",
+      "output": "4",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [],
+            "keywordCount": 1
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 12,
+            "outputLength": 1,
+            "lengthRatio": 0.08333333333333333
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "Tell me about TypeScript",
+      "output": "TypeScript is a programming language developed by Microsoft that adds static typing to JavaScript.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [
+              "typescript",
+              "programming",
+              "language",
+              "developed",
+              "microsoft",
+              "that",
+              "adds",
+              "static",
+              "typing",
+              "javascript"
+            ],
+            "keywordCount": 14
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 24,
+            "outputLength": 98,
+            "lengthRatio": 4.083333333333333
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    },
+    {
+      "input": "Tell me about TypeScript",
+      "output": "TypeScript is basically JavaScript with types. It was created by Microsoft.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "task": "keyword_extraction",
+            "keywords": [
+              "typescript",
+              "basically",
+              "javascript",
+              "with",
+              "types",
+              "created",
+              "microsoft"
+            ],
+            "keywordCount": 11
+          }
+        },
+        {
+          "taskIndex": 1,
+          "result": {
+            "task": "length_analysis",
+            "inputLength": 24,
+            "outputLength": 75,
+            "lengthRatio": 3.125
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 1
+        },
+        {
+          "evaluatorName": "ExactMatch",
+          "score": 1
+        },
+        {
+          "evaluatorName": "LevenshteinDistance",
+          "score": 1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 6,
+    "averageScores": {
+      "CosineSimilarity": 1,
+      "ExactMatch": 1,
+      "LevenshteinDistance": 1
+    },
+    "executionTime": 4
+  }
+}

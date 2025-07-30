@@ -1,0 +1,43 @@
+# Task ID: 8
+# Title: Implement Exact Match Evaluator
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Create exact match evaluator for strict string equality checking
+# Details:
+In packages/evaluators/src/exact-match.ts, implement simple string comparison. Add options for case sensitivity, whitespace normalization. Return 1.0 for exact match, 0.0 otherwise. Support configurable preprocessing (trim, lowercase, etc).
+
+# Test Strategy:
+Test exact matches return 1.0. Test near matches return 0.0. Test configuration options work correctly. Test Unicode and special character handling.
+
+# Subtasks:
+## 1. Create ExactMatchEvaluator class and interface [pending]
+### Dependencies: None
+### Description: Define the base structure for the exact match evaluator with TypeScript interfaces and class implementation
+### Details:
+Create packages/evaluators/src/exact-match.ts file. Define ExactMatchOptions interface with properties: caseSensitive (boolean), trimWhitespace (boolean), normalizeWhitespace (boolean), ignoreLineBreaks (boolean). Create ExactMatchEvaluator class that extends base Evaluator interface from core package. Implement constructor to accept options with sensible defaults (caseSensitive: true, trimWhitespace: false, etc).
+
+## 2. Implement preprocessing methods [pending]
+### Dependencies: 8.1
+### Description: Create private methods for text preprocessing based on configuration options
+### Details:
+Implement private preprocess(text: string): string method that applies transformations in order: trim whitespace if enabled, normalize multiple spaces/tabs to single space if enabled, remove or normalize line breaks if enabled, convert to lowercase if case-insensitive. Handle null/undefined inputs gracefully by converting to empty string. Ensure Unicode normalization for consistent comparison.
+
+## 3. Implement core evaluation logic [pending]
+### Dependencies: 8.2
+### Description: Create the main evaluate method that performs exact match comparison
+### Details:
+Implement evaluate(expected: string, actual: string): Effect.Effect<number, Error> method. Use Effect.gen to: preprocess both strings using the preprocess method, perform strict equality check (===), return Effect.succeed(1.0) for exact match or Effect.succeed(0.0) for mismatch. Wrap in try-catch and use Effect.fail for any errors. Add logging for debugging if enabled.
+
+## 4. Add batch evaluation support [pending]
+### Dependencies: 8.3
+### Description: Implement batch evaluation method for processing multiple comparisons efficiently
+### Details:
+Implement evaluateBatch(pairs: Array<{expected: string, actual: string}>): Effect.Effect<number[], Error> method. Use Effect.forEach with concurrency limit to process pairs. Calculate aggregate metrics like accuracy (percentage of exact matches). Return array of individual scores. Add performance optimization for large batches by preprocessing expected values once if they repeat.
+
+## 5. Export evaluator and add documentation [pending]
+### Dependencies: 8.4
+### Description: Create proper exports, type definitions, and comprehensive documentation
+### Details:
+Export ExactMatchEvaluator class and ExactMatchOptions interface from packages/evaluators/src/index.ts. Add JSDoc comments explaining each option and method. Create usage examples showing common configurations (case-insensitive matching, whitespace normalization). Document performance characteristics and edge cases. Ensure compatibility with the evaluation engine from task 4.
+

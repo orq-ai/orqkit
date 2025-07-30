@@ -1,0 +1,43 @@
+# Task ID: 5
+# Title: Create Main Evaluatorq Entry Point
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Implement the main Evaluatorq function that provides the public API
+# Details:
+In packages/core/src/index.ts, export main Evaluatorq function with signature: Evaluatorq<T>(name: string, config: { data: () => Promise<T[]>, tasks: Task<T>[], evaluators: Evaluator[] }). Function should create Effect pipeline, run evaluation engine, handle orq.ai integration check (ORQ_API_KEY), return results. Use Effect.runPromise for Promise compatibility.
+
+# Test Strategy:
+Test API with various configurations. Test type inference for generic parameters. Test error cases like invalid data or failed evaluators. Verify Effect errors are properly handled.
+
+# Subtasks:
+## 1. Define Main Function Signature and Types [pending]
+### Dependencies: None
+### Description: Create the TypeScript interface and type definitions for the main Evaluatorq function including generic constraints and config parameter types
+### Details:
+In packages/core/src/index.ts, define: 1) EvaluatorqConfig<T> interface with data, tasks, and evaluators properties, 2) EvaluatorqResult type for return value, 3) Generic constraints for T to ensure proper type inference, 4) Export the function signature with proper JSDoc comments
+
+## 2. Implement Environment Variable Check and Configuration [pending]
+### Dependencies: 5.1
+### Description: Set up environment variable checking for ORQ_API_KEY and create configuration layer using Effect
+### Details:
+Create Effect service for configuration that: 1) Checks process.env.ORQ_API_KEY existence, 2) Validates API key format if present, 3) Creates config layer with orq integration enabled/disabled flag, 4) Use Effect.Config for environment variable access with proper error handling
+
+## 3. Create Main Effect Pipeline [pending]
+### Dependencies: 5.1, 5.2
+### Description: Build the core Effect pipeline that orchestrates data loading, task execution, and evaluator running
+### Details:
+Implement pipeline that: 1) Loads data using Effect.tryPromise on the data function, 2) Creates evaluation context from config, 3) Runs evaluation engine (from task 4), 4) Collects and formats results, 5) Uses Effect.gen for readable async flow, 6) Proper error handling with Effect.catchAll
+
+## 4. Integrate orq.ai Result Submission [pending]
+### Dependencies: 5.3
+### Description: Add conditional orq.ai integration that submits results when API key is present
+### Details:
+In the pipeline: 1) Check if orq integration is enabled from config, 2) If enabled, transform results to orq format (using task 15's transformer), 3) Submit to orq.ai using client from task 14, 4) Handle submission errors gracefully without failing evaluation, 5) Add submission status to final result
+
+## 5. Implement Promise Compatibility Layer [pending]
+### Dependencies: 5.3, 5.4
+### Description: Wrap the Effect pipeline with Effect.runPromise to provide standard Promise-based API
+### Details:
+Create wrapper that: 1) Uses Effect.runPromise to execute the pipeline, 2) Properly handles Effect errors and converts to Promise rejections, 3) Ensures all Effect resources are properly cleaned up, 4) Provides clear error messages for common failure cases, 5) Returns properly typed Promise<EvaluatorqResult>
+

@@ -1,0 +1,43 @@
+# Task ID: 7
+# Title: Implement Cosine Similarity Evaluator
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Build cosine similarity evaluator for semantic text comparison
+# Details:
+In packages/evaluators/src/cosine-similarity.ts, implement text vectorization using simple TF-IDF. Calculate cosine similarity between vectors. Handle edge cases (empty strings, identical texts). Return normalized score 0-1. Consider using a lightweight embedding library if available.
+
+# Test Strategy:
+Test with known similar/dissimilar text pairs. Test edge cases: empty strings, single words, identical texts. Verify scores are properly normalized. Benchmark performance with long texts.
+
+# Subtasks:
+## 1. Set up project structure and dependencies for cosine similarity evaluator [pending]
+### Dependencies: None
+### Description: Create the cosine similarity evaluator file structure and install necessary dependencies for text vectorization
+### Details:
+Create packages/evaluators/src/cosine-similarity.ts file. Set up the basic module structure with proper TypeScript types. Research and install a lightweight text vectorization library (consider natural, ml-distance, or implement TF-IDF from scratch). Create the evaluator interface matching the base evaluator type from the core package.
+
+## 2. Implement TF-IDF vectorization algorithm [pending]
+### Dependencies: 7.1
+### Description: Build the text vectorization logic using TF-IDF (Term Frequency-Inverse Document Frequency) for converting text to numerical vectors
+### Details:
+Implement tokenization function to split text into words/terms. Calculate term frequency (TF) for each term in the document. Implement inverse document frequency (IDF) calculation. Create a function to convert text to TF-IDF vector representation. Handle text preprocessing (lowercase, remove punctuation, etc.). Store vectors in a format suitable for cosine similarity calculation.
+
+## 3. Implement cosine similarity calculation [pending]
+### Dependencies: 7.2
+### Description: Create the mathematical function to calculate cosine similarity between two TF-IDF vectors
+### Details:
+Implement dot product calculation between two vectors. Calculate magnitude (norm) for each vector. Compute cosine similarity as (dot product) / (magnitude1 * magnitude2). Ensure the result is normalized between 0 and 1. Handle numerical edge cases like division by zero when vectors have zero magnitude.
+
+## 4. Handle edge cases and special scenarios [pending]
+### Dependencies: 7.3
+### Description: Implement robust handling of edge cases including empty strings, single words, and identical texts
+### Details:
+Add validation for empty or null input strings (return 0 or appropriate default). Handle single-word comparisons appropriately. Optimize for identical text comparison (early return with 1.0). Implement proper error handling for malformed inputs. Add configuration options for preprocessing (case sensitivity, punctuation handling, stopword removal).
+
+## 5. Create evaluator wrapper and integration with Effect.ts [pending]
+### Dependencies: 7.4
+### Description: Wrap the cosine similarity implementation in the evaluator interface and integrate with the Effect.ts evaluation pipeline
+### Details:
+Create CosineSimilarityEvaluator class implementing the base evaluator interface. Use Effect.tryPromise for async operations if needed. Implement the evaluate method that takes expected and actual text, returns Effect with similarity score. Add configuration options (preprocessing, algorithm parameters). Export the evaluator for use in the evaluation engine. Include proper TypeScript types and documentation.
+

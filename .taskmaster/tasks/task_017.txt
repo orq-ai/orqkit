@@ -1,0 +1,43 @@
+# Task ID: 17
+# Title: Implement Error Handling System
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Create comprehensive error handling using Effect.ts error boundaries
+# Details:
+Define custom error types in shared package: EvaluationError, DataLoadError, EvaluatorError. Implement Effect error handlers with helpful messages. Add error recovery strategies. Create error formatting for CLI output. Include stack traces in debug mode.
+
+# Test Strategy:
+Test each error type triggers correctly. Test error messages are helpful. Test recovery strategies work. Verify errors don't crash the process.
+
+# Subtasks:
+## 1. Define Custom Error Types in Shared Package [pending]
+### Dependencies: None
+### Description: Create a comprehensive error type hierarchy in the shared package that covers all error scenarios in the evaluation system
+### Details:
+Create packages/shared/src/errors.ts with custom error classes extending Effect.Data.TaggedError. Define: EvaluationError for general evaluation failures, DataLoadError for data loading issues (file not found, parse errors), EvaluatorError for evaluator-specific failures. Each error should include: message, cause (optional), context object with relevant debugging info, timestamp. Use Effect.Data.TaggedError for proper Effect integration.
+
+## 2. Implement Effect Error Handlers with Recovery Strategies [pending]
+### Dependencies: 17.1
+### Description: Create error handling utilities that integrate with Effect.ts error boundaries and provide recovery mechanisms
+### Details:
+In packages/core/src/error-handlers.ts, implement: handleEvaluationError that retries failed evaluations with exponential backoff, handleDataLoadError that attempts alternative data sources or formats, handleEvaluatorError that falls back to simpler evaluators when available. Use Effect.retry with schedules, Effect.orElse for fallbacks, Effect.catchTag for specific error handling. Include circuit breaker pattern for repeated failures.
+
+## 3. Create Error Formatting for CLI Output [pending]
+### Dependencies: 17.1
+### Description: Build error formatting system that presents errors clearly in the CLI with appropriate detail levels
+### Details:
+In packages/cli/src/error-formatter.ts, implement formatError function that: displays error type and message prominently, shows error context in a structured format, includes suggestions for common issues, formats stack traces readably when in debug mode. Use chalk for color coding (red for errors, yellow for warnings), create error templates for different error types, support --verbose flag for detailed output.
+
+## 4. Integrate Error Handling into Evaluation Pipeline [pending]
+### Dependencies: 17.1, 17.2
+### Description: Wire up the error handling system throughout the evaluation engine and ensure proper error propagation
+### Details:
+Modify packages/core/src/engine.ts to use the error handling system: wrap data loading in Effect.tryPromise with DataLoadError, catch evaluator exceptions and wrap in EvaluatorError, use Effect.tapError for logging before handling, implement Effect.provideService for error handler injection. Ensure errors bubble up appropriately while maintaining Effect's type safety. Add error accumulation for batch operations.
+
+## 5. Add Debug Mode with Stack Traces [pending]
+### Dependencies: 17.3, 17.4
+### Description: Implement debug mode that provides detailed error information including stack traces for troubleshooting
+### Details:
+In packages/cli/src/debug.ts, create debug mode that: captures and preserves full stack traces using Error.captureStackTrace, enriches errors with execution context (file paths, line numbers), provides execution timeline for debugging async issues, integrates with source maps for TypeScript. Add --debug flag to CLI that enables verbose error output, execution tracing, and performance metrics. Store debug logs in .evaluatorq/debug/ directory.
+

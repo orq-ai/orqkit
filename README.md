@@ -1,90 +1,195 @@
-# Evaluatorq
+# Evaluatorq 🔍
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A lightweight, Effect.ts-powered evaluation framework for testing AI/LLM applications. Inspired by Evalite, but designed for simplicity and integration with the orq.ai platform.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## Features
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- 🚀 **Simple API** - Intuitive syntax for defining evaluations
+- 📊 **Built-in Evaluators** - CosineSimilarity, ExactMatch, LevenshteinDistance
+- 🔌 **Extensible** - Create custom evaluators and tasks
+- 📁 **.eval.ts Files** - Automatic discovery and execution of evaluation files
+- 🌐 **orq.ai Integration** - Seamlessly upload results to orq.ai for visualization
+- ⚡ **Effect.ts Powered** - Robust error handling and functional programming patterns
 
-## Finish your CI setup
+## Quick Start
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/2Kx9hqepqa)
+### 1. Install Dependencies
 
-
-## Generate a library
-
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+```bash
+bun install
 ```
 
-## Run tasks
+### 2. Create Your First Evaluation
 
-To build the library use:
+Create a file named `my-test.eval.ts`:
 
-```sh
-npx nx build pkg1
+```typescript
+import { Evaluatorq } from '@evaluatorq/core';
+import { CosineSimilarity, ExactMatch } from '@evaluatorq/evaluators';
+
+await Evaluatorq('My First Evaluation', {
+  data: async () => {
+    // Your test data
+    return [
+      { 
+        input: 'What is the capital of France?',
+        output: 'The capital of France is Paris.'
+      },
+    ];
+  },
+  
+  tasks: [
+    // Custom analysis
+    ({ input, output }) => ({
+      inputLength: input.length,
+      outputLength: output.length,
+    }),
+  ],
+  
+  evaluators: [
+    CosineSimilarity,
+    ExactMatch,
+  ],
+});
 ```
 
-To run any task with Nx use:
+### 3. Run Your Evaluation
 
-```sh
-npx nx <target> <project-name>
+```bash
+./evaluatorq run
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+This will:
+- Discover all `.eval.ts` files
+- Execute each evaluation
+- Display results in the terminal
+- Save detailed results to `./evaluations/` directory
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## API
 
-## Versioning and releasing
+### Core Function
 
-To version and release the library use
-
-```
-npx nx release
-```
-
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
-
-```sh
-npx nx sync
+```typescript
+Evaluatorq(name: string, config: {
+  data: () => Promise<Array<{ input: TInput; output: TOutput }>>,
+  tasks: Array<Task<TInput, TOutput>>,
+  evaluators: Array<Evaluator<TOutput>>
+})
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+### Built-in Evaluators
 
-```sh
-npx nx sync:check
+- **CosineSimilarity**: Measures semantic similarity using TF-IDF (0-1)
+- **ExactMatch**: Binary comparison with options for case/whitespace
+- **LevenshteinDistance**: Normalized edit distance (0-1)
+
+### Custom Evaluators
+
+```typescript
+const MyEvaluator: Evaluator<string> = {
+  name: 'MyEvaluator',
+  evaluate: (output, expected) => 
+    Effect.succeed(output === expected ? 1 : 0)
+};
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+## .eval.ts File Pattern
 
+Evaluatorq automatically discovers and runs files ending with `.eval.ts`:
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+./evaluatorq run                    # Run all .eval.ts files
+./evaluatorq run "tests/*.eval.ts"  # Run specific pattern
+./evaluatorq init my-test           # Create example file
+```
 
-## Install Nx Console
+## orq.ai Integration
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+Set your API key to automatically upload results:
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+ORQ_API_KEY=your-key ./evaluatorq run
+```
 
-## Useful links
+Results will be uploaded to orq.ai for advanced visualization and tracking.
 
-Learn more:
+## Examples
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Basic Q&A Evaluation
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```typescript
+await Evaluatorq('Q&A Test', {
+  data: async () => [
+    { input: 'Question', output: 'Answer' }
+  ],
+  tasks: [],
+  evaluators: [CosineSimilarity]
+});
+```
+
+### Model Comparison
+
+```typescript
+const modelA = await callModelA(prompt);
+const modelB = await callModelB(prompt);
+
+await Evaluatorq('Model Comparison', {
+  data: async () => [
+    { input: modelA, output: modelB }
+  ],
+  tasks: [],
+  evaluators: [CosineSimilarity, LevenshteinDistance]
+});
+```
+
+### LLM Integration
+
+```typescript
+await Evaluatorq('LLM Evaluation', {
+  data: async () => {
+    const questions = ['What is AI?', 'Explain ML'];
+    const results = [];
+    
+    for (const q of questions) {
+      const response = await callLLM(q);
+      results.push({ input: q, output: response });
+    }
+    
+    return results;
+  },
+  tasks: [],
+  evaluators: [/* your evaluators */]
+});
+```
+
+## Development
+
+This is an Nx monorepo with the following packages:
+
+- `@evaluatorq/core` - Main evaluation engine
+- `@evaluatorq/evaluators` - Built-in evaluators
+- `@evaluatorq/shared` - Shared types and utilities
+- `@evaluatorq/cli` - Command-line interface
+- `@evaluatorq/orq-integration` - orq.ai integration
+
+### Running Tests
+
+```bash
+bun test
+```
+
+### Building
+
+```bash
+npx nx build core
+npx nx build evaluators
+# etc...
+```
+
+## License
+
+MIT
+
+## Credits
+
+Created by the Orquesta team. Inspired by [Evalite](https://evalite.dev).

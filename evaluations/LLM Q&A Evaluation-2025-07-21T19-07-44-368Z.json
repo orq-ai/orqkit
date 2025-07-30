@@ -1,0 +1,92 @@
+{
+  "experimentName": "LLM Q&A Evaluation",
+  "timestamp": "2025-07-21T19:07:44.368Z",
+  "results": [
+    {
+      "input": "What is JavaScript?",
+      "output": "JavaScript is a high-level, interpreted programming language used for web development.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "question": "What is JavaScript?",
+            "expectedAnswer": "JavaScript is a programming language commonly used for web development, both client-side and server-side.",
+            "actualAnswer": "JavaScript is a high-level, interpreted programming language used for web development.",
+            "answerLength": 86,
+            "containsKeyTerms": true
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "ExpectedAnswerSimilarity",
+          "score": 0.6446583712203043
+        },
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.17407765595569785
+        }
+      ]
+    },
+    {
+      "input": "What is Node.js?",
+      "output": "Node.js is a JavaScript runtime built on Chrome's V8 engine for server-side development.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "question": "What is Node.js?",
+            "expectedAnswer": "Node.js is a runtime environment that allows JavaScript to run on the server.",
+            "actualAnswer": "Node.js is a JavaScript runtime built on Chrome's V8 engine for server-side development.",
+            "answerLength": 88,
+            "containsKeyTerms": true
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "ExpectedAnswerSimilarity",
+          "score": 0.4615384615384616
+        },
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.16012815380508713
+        }
+      ]
+    },
+    {
+      "input": "What is npm?",
+      "output": "npm (Node Package Manager) is the default package manager for Node.js.",
+      "taskResults": [
+        {
+          "taskIndex": 0,
+          "result": {
+            "question": "What is npm?",
+            "expectedAnswer": "npm is the package manager for JavaScript and Node.js ecosystems.",
+            "actualAnswer": "npm (Node Package Manager) is the default package manager for Node.js.",
+            "answerLength": 70,
+            "containsKeyTerms": true
+          }
+        }
+      ],
+      "scores": [
+        {
+          "evaluatorName": "ExpectedAnswerSimilarity",
+          "score": 0.6139406135149204
+        },
+        {
+          "evaluatorName": "CosineSimilarity",
+          "score": 0.16012815380508713
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalSamples": 3,
+    "averageScores": {
+      "ExpectedAnswerSimilarity": 0.5733791487578954,
+      "CosineSimilarity": 0.16477798785529071
+    },
+    "executionTime": 3
+  }
+}

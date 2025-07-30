@@ -1,0 +1,43 @@
+# Task ID: 6
+# Title: Implement Base Evaluator Interface
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create the base evaluator interface and utilities in the evaluators package
+# Details:
+In packages/evaluators/src/base.ts, define Evaluator abstract class with evaluate(expected: string, actual: string): number method. Create EvaluatorConfig interface for metadata. Implement score normalization utilities (clamp to 0-1). Add evaluator composition helpers for combining multiple evaluators.
+
+# Test Strategy:
+Test base class can be extended properly. Test score normalization edge cases. Test evaluator composition maintains score bounds. Verify TypeScript abstract class constraints.
+
+# Subtasks:
+## 1. Define Core Interfaces and Types [pending]
+### Dependencies: None
+### Description: Create TypeScript interfaces for Evaluator abstract class and EvaluatorConfig
+### Details:
+In packages/evaluators/src/base.ts, define: 1) EvaluatorConfig interface with properties like name (string), description (string), version (string), and optional metadata. 2) Abstract Evaluator class with abstract evaluate(expected: string, actual: string): number method. 3) Type definitions for EvaluatorResult including score, timestamp, and evaluatorName. Use strict TypeScript types throughout.
+
+## 2. Implement Score Normalization Utilities [pending]
+### Dependencies: 6.1
+### Description: Create utility functions for normalizing and validating evaluation scores
+### Details:
+In packages/evaluators/src/utils/normalization.ts, implement: 1) normalizeScore(score: number, min?: number, max?: number): number that clamps values to [0, 1] range. 2) validateScore(score: number): boolean to check if score is valid. 3) rescaleScore(score: number, fromRange: [number, number], toRange: [number, number]): number for custom range mapping. Handle edge cases like NaN, Infinity, and negative values. Export from base.ts.
+
+## 3. Create Base Evaluator Implementation [pending]
+### Dependencies: 6.1, 6.2
+### Description: Build a concrete base class that extends the abstract Evaluator with common functionality
+### Details:
+In packages/evaluators/src/base.ts, create BaseEvaluator class that extends Evaluator. Implement: 1) Constructor accepting EvaluatorConfig. 2) Protected preprocess(text: string): string method for common text preprocessing. 3) Protected postprocess(score: number): number that uses normalization utilities. 4) getConfig(): EvaluatorConfig method. Make evaluate() call preprocess on inputs and postprocess on results.
+
+## 4. Implement Evaluator Composition Helpers [pending]
+### Dependencies: 6.1, 6.3
+### Description: Create utilities for combining multiple evaluators into composite evaluators
+### Details:
+In packages/evaluators/src/utils/composition.ts, implement: 1) CompositeEvaluator class that accepts multiple evaluators and a combination strategy (average, weighted average, min, max). 2) createWeightedEvaluator(evaluators: Array<{evaluator: Evaluator, weight: number}>): Evaluator function. 3) createVotingEvaluator(evaluators: Evaluator[], threshold?: number): Evaluator for consensus-based evaluation. Ensure all composite evaluators maintain score bounds [0, 1].
+
+## 5. Add Type Guards and Export Structure [pending]
+### Dependencies: 6.1, 6.2, 6.3, 6.4
+### Description: Create type guards and organize exports for the evaluators package
+### Details:
+In packages/evaluators/src/base.ts and index.ts: 1) Implement isEvaluator(obj: unknown): obj is Evaluator type guard. 2) Create isValidScore(score: number): boolean utility. 3) Set up proper exports in index.ts to expose Evaluator, BaseEvaluator, EvaluatorConfig, composition utilities, and normalization functions. 4) Add JSDoc comments for all public APIs. 5) Create a re-export strategy that maintains clean import paths.
+

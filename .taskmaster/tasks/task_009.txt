@@ -1,0 +1,43 @@
+# Task ID: 9
+# Title: Implement Levenshtein Distance Evaluator
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Build Levenshtein distance evaluator for edit distance calculation
+# Details:
+In packages/evaluators/src/levenshtein.ts, implement dynamic programming algorithm for edit distance. Normalize score based on maximum string length: 1 - (distance / maxLength). Handle empty strings appropriately. Optimize for performance with memoization if needed.
+
+# Test Strategy:
+Test with known edit distances. Test normalization produces scores in 0-1 range. Test performance with long strings. Verify edge cases like empty strings.
+
+# Subtasks:
+## 1. Create Levenshtein distance evaluator structure and interface [pending]
+### Dependencies: None
+### Description: Set up the basic structure for the Levenshtein distance evaluator in packages/evaluators/src/levenshtein.ts with proper TypeScript interfaces and Effect.ts integration
+### Details:
+Create the evaluator file at packages/evaluators/src/levenshtein.ts. Define the LevenshteinEvaluator type that extends the base Evaluator interface. Set up the basic structure with evaluate method signature that takes two strings and returns Effect<number, never, never>. Import necessary dependencies from Effect and the core package. Define configuration options interface for future extensibility (e.g., case sensitivity, normalization options).
+
+## 2. Implement dynamic programming algorithm for edit distance calculation [pending]
+### Dependencies: 9.1
+### Description: Implement the core Levenshtein distance algorithm using dynamic programming approach with a 2D matrix for optimal performance
+### Details:
+Implement the classic dynamic programming solution using a 2D matrix. Create a helper function calculateLevenshteinDistance(str1: string, str2: string): number. Initialize matrix with dimensions (str1.length + 1) x (str2.length + 1). Fill first row and column with indices. For each cell, calculate minimum of: insertion (cell above + 1), deletion (cell to left + 1), substitution (diagonal cell + 0 or 1). Return bottom-right cell value. Handle Unicode characters correctly using proper string iteration.
+
+## 3. Implement score normalization and edge case handling [pending]
+### Dependencies: 9.2
+### Description: Add score normalization logic to convert edit distance to 0-1 similarity score and handle edge cases like empty strings
+### Details:
+Create normalizeScore function that converts distance to similarity: 1 - (distance / maxLength). Handle edge cases: both strings empty should return 1.0 (perfect match), one string empty should return 0.0. Ensure the score is always between 0 and 1 using Math.max(0, Math.min(1, score)). Add proper handling for null/undefined inputs by using Effect.fromNullable or similar patterns.
+
+## 4. Add performance optimization with memoization [pending]
+### Dependencies: 9.3
+### Description: Implement memoization to cache previously calculated distances for improved performance with repeated evaluations
+### Details:
+Create a memoization layer using a Map or WeakMap to cache results. Implement cache key generation that handles string order (since distance(a,b) = distance(b,a)). Add configurable cache size limit to prevent memory issues. Consider using LRU (Least Recently Used) eviction strategy. Wrap the main evaluation logic with Effect.cached or implement custom caching logic. Add option to disable caching if needed.
+
+## 5. Integrate with Effect.ts pipeline and add comprehensive tests [pending]
+### Dependencies: 9.4
+### Description: Complete the Effect.ts integration and add comprehensive test coverage for all functionality
+### Details:
+Wrap the evaluation logic in Effect.succeed and handle any potential errors with Effect.catchAll. Ensure the evaluator implements the standard Evaluator interface from the core package. Add proper error handling for invalid inputs. Export the evaluator instance and any configuration types. Update the evaluators package index to export the new evaluator. Add JSDoc comments for public API.
+

@@ -1,0 +1,43 @@
+# Task ID: 3
+# Title: Define Core Types and Interfaces
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create TypeScript interfaces and types for the entire system in the shared package
+# Details:
+In packages/shared/src/types.ts, define: DataPoint<TInput, TOutput> interface, Task<TInput, TOutput> type, Evaluator interface with evaluate method returning 0-1 score, Experiment<TData> interface, EvaluationResult interface with experimentName, timestamp, results array, and summary. Use Effect types for error handling (Effect.Effect<A, E, R>).
+
+# Test Strategy:
+Compile TypeScript to ensure all types are valid. Create type tests using expect-type or similar to verify type inference. Test generic constraints work as expected.
+
+# Subtasks:
+## 1. Set up shared package structure and Effect.ts [pending]
+### Dependencies: None
+### Description: Initialize the shared package directory structure and install Effect.ts as the primary dependency for error handling and functional programming patterns
+### Details:
+Create packages/shared directory with proper TypeScript configuration. Install Effect.ts (@effect/schema, @effect/io) and set up tsconfig.json with strict mode. Create src/types.ts file and establish the module structure with proper exports in index.ts
+
+## 2. Define base data structures and generic types [pending]
+### Dependencies: 3.1
+### Description: Create the foundational generic interfaces for DataPoint and Task that will be used throughout the evaluation system
+### Details:
+In packages/shared/src/types.ts, define DataPoint<TInput, TOutput> interface with fields for id, input: TInput, expectedOutput: TOutput, and optional metadata. Define Task<TInput, TOutput> as a type that extends DataPoint with additional fields like name, description, and tags. Use TypeScript generics to ensure type safety
+
+## 3. Implement Evaluator interface with Effect types [pending]
+### Dependencies: 3.1, 3.2
+### Description: Define the core Evaluator interface using Effect.ts for error handling and async operations
+### Details:
+Create Evaluator interface with evaluate method that takes input and output, returns Effect.Effect<number, EvaluatorError, EvaluatorContext> where the number is 0-1 score. Define EvaluatorError as a tagged union of possible errors. Include metadata methods like getName(), getDescription(). Add support for batch evaluation
+
+## 4. Create Experiment and EvaluationResult interfaces [pending]
+### Dependencies: 3.1, 3.2, 3.3
+### Description: Define interfaces for organizing experiments and storing evaluation results with proper typing
+### Details:
+Define Experiment<TData> interface with fields: id, name, description, dataset: TData[], evaluators: Evaluator[], configuration. Create EvaluationResult interface with experimentName, timestamp, results array containing scores and metadata, summary statistics. Use Effect.Struct for immutable data structures
+
+## 5. Export types and create type utilities [pending]
+### Dependencies: 3.1, 3.2, 3.3, 3.4
+### Description: Set up proper module exports and create utility types for common use cases in the evaluation system
+### Details:
+Create index.ts that exports all types from types.ts. Add utility types like PartialEvaluator, EvaluatorConfig, ResultSummary. Create type guards and validation functions using Effect.Schema. Document all exported types with JSDoc comments. Ensure compatibility with both CommonJS and ESM
+

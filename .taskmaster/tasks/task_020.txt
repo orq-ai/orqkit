@@ -1,0 +1,43 @@
+# Task ID: 20
+# Title: Implement Logging System
+# Status: pending
+# Dependencies: 2, 17
+# Priority: medium
+# Description: Add structured logging throughout the library using Effect.ts
+# Details:
+Create Effect logger service with levels (debug, info, warn, error). Add contextual logging in evaluation pipeline. Support different output formats (JSON, pretty). Allow log level configuration. Integrate with CLI output properly.
+
+# Test Strategy:
+Test log levels filter correctly. Test structured log output. Test CLI integration doesn't break. Verify performance impact is minimal.
+
+# Subtasks:
+## 1. Design and implement Effect.ts logger service interface [pending]
+### Dependencies: None
+### Description: Create the core logger service using Effect.ts patterns with support for different log levels and structured data
+### Details:
+Create packages/core/src/logger/Logger.ts with Effect service definition. Define LogLevel enum (debug, info, warn, error). Create LogEntry interface with timestamp, level, message, context fields. Implement Logger service with methods: debug, info, warn, error. Each method should accept message and optional context object. Use Effect.Tag for service definition and Effect.gen for implementation. Include method to set minimum log level.
+
+## 2. Implement log output formatters [pending]
+### Dependencies: 20.1
+### Description: Create formatters for JSON and pretty-printed console output with configurable options
+### Details:
+Create packages/core/src/logger/formatters.ts with Formatter interface. Implement JsonFormatter that outputs structured JSON with all fields. Implement PrettyFormatter with colored output using chalk or similar. Add timestamp formatting options. Include context serialization handling for both formatters. Create FormatterConfig type for customization options.
+
+## 3. Create configurable logger implementation [pending]
+### Dependencies: 20.1, 20.2
+### Description: Build the concrete logger implementation with runtime configuration for output format and log level
+### Details:
+Create packages/core/src/logger/LoggerLive.ts implementing the Logger service. Add LoggerConfig with minLevel, formatter, and output stream options. Implement log level filtering based on config. Use Effect.Layer for service construction. Support multiple output targets (console, file, custom). Include buffering for performance. Add method to dynamically change log level.
+
+## 4. Integrate logging into evaluation pipeline [pending]
+### Dependencies: 20.3
+### Description: Add contextual logging throughout the evaluation engine to track experiment progress and debug issues
+### Details:
+Update packages/core/src/engine.ts to inject Logger service. Add logging at key pipeline stages: experiment start/end, data loading, task execution, evaluator application, error handling. Include relevant context like task IDs, timing, result summaries. Use appropriate log levels for different events. Ensure errors are logged with full context. Add performance metrics logging.
+
+## 5. Integrate logger with CLI and add configuration [pending]
+### Dependencies: 20.4
+### Description: Connect the logger to CLI output and add command-line options for log configuration
+### Details:
+Update packages/cli/src/commands/run.ts to configure logger based on CLI flags. Add --log-level flag with choices (debug, info, warn, error). Add --log-format flag (json, pretty). Ensure CLI output and logs don't interfere. Implement quiet mode that suppresses non-error logs. Add --log-file option for file output. Create sensible defaults (info level, pretty format for TTY, json for non-TTY).
+

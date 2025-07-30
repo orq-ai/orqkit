@@ -1,0 +1,43 @@
+# Task ID: 24
+# Title: Set Up Build and Release Pipeline
+# Status: pending
+# Dependencies: 22
+# Priority: medium
+# Description: Configure build, test, and release automation using Nx
+# Details:
+Configure Nx release process for all packages. Set up semantic versioning. Create GitHub Actions workflow. Add pre-commit hooks with Biome. Configure changelog generation. Set up npm publishing automation.
+
+# Test Strategy:
+Test local builds work correctly. Test CI pipeline runs successfully. Test package publishing (dry run). Verify version bumping works.
+
+# Subtasks:
+## 1. Configure Nx Release Process [pending]
+### Dependencies: None
+### Description: Set up Nx release configuration for managing package versions and releases across the monorepo
+### Details:
+Configure nx.json with release settings including version resolver, changelog generation, and git tag format. Set up release groups if needed for independent package versioning. Configure semantic versioning with conventional commits. Add release targets to project.json files for each publishable package. Set up npm registry configuration in .npmrc file.
+
+## 2. Create GitHub Actions CI/CD Workflow [pending]
+### Dependencies: 24.1
+### Description: Implement GitHub Actions workflow for automated testing, building, and releasing packages
+### Details:
+Create .github/workflows/ci.yml with jobs for: installing dependencies with Bun, running nx affected commands for tests and builds, running type checking and linting, generating and uploading coverage reports. Add release workflow in .github/workflows/release.yml triggered on main branch pushes, using nx release command with npm publish. Configure secrets for NPM_TOKEN and set up proper permissions.
+
+## 3. Set Up Pre-commit Hooks with Biome [pending]
+### Dependencies: None
+### Description: Configure Git pre-commit hooks using Biome for code quality enforcement
+### Details:
+Install husky as dev dependency and initialize with npx husky init. Create .husky/pre-commit hook that runs: bun run lint:fix for staged files, bun run format for code formatting, nx affected:test for affected test suites. Configure lint-staged to run Biome only on staged files. Add commit-msg hook for conventional commit validation using commitlint.
+
+## 4. Configure Automated Changelog Generation [pending]
+### Dependencies: 24.1, 24.3
+### Description: Set up automatic changelog generation based on conventional commits
+### Details:
+Configure Nx release to use conventional-changelog preset. Set up changelog generation rules in nx.json including types to include (feat, fix, perf, etc.), sections mapping, and header format. Create CHANGELOG.md template if needed. Configure per-package changelogs for publishable packages. Set up changelog versioning to match package versions.
+
+## 5. Configure NPM Publishing Automation [pending]
+### Dependencies: 24.1, 24.2, 24.4
+### Description: Set up automated npm package publishing as part of the release pipeline
+### Details:
+Configure package.json files with proper publishing settings including access level, registry URL, and files to include. Set up .npmignore files to exclude unnecessary files from packages. Configure nx release to handle npm publishing with proper authentication. Add provenance generation for npm packages. Set up post-publish hooks for notifications or documentation updates.
+

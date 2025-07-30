@@ -1,0 +1,43 @@
+# Task ID: 19
+# Title: Create Plugin System for Custom Evaluators
+# Status: pending
+# Dependencies: 6
+# Priority: low
+# Description: Build extensible plugin system for user-defined evaluators
+# Details:
+Define plugin interface extending base Evaluator. Create plugin loader using dynamic imports. Support both CommonJS and ESM plugins. Add plugin validation and error handling. Document plugin API clearly.
+
+# Test Strategy:
+Test loading valid plugins. Test rejection of invalid plugins. Test plugin isolation. Test both module formats work.
+
+# Subtasks:
+## 1. Define Plugin Interface and Base Types [pending]
+### Dependencies: None
+### Description: Create the core plugin interface that extends the base Evaluator type and define all necessary types for the plugin system
+### Details:
+In packages/core/src/plugins/types.ts, define PluginInterface extending base Evaluator with required methods: name, version, evaluate(), optional methods: init(), cleanup(). Create PluginMetadata type with fields: id, name, version, author, description. Define PluginConfig type for configuration options. Export PluginError class extending Error for plugin-specific errors.
+
+## 2. Implement Plugin Loader with Dynamic Import Support [pending]
+### Dependencies: 19.1
+### Description: Create the plugin loader that can dynamically import plugins from file paths, supporting both CommonJS and ESM formats
+### Details:
+In packages/core/src/plugins/loader.ts, implement loadPlugin() function using dynamic import() for ESM and require() for CommonJS. Detect module format by checking file extension (.mjs for ESM, .cjs for CommonJS, .js checks package.json type field). Use Effect.tryPromise for error handling during import. Create module resolution logic to handle relative and absolute paths. Implement module caching to prevent duplicate loads.
+
+## 3. Create Plugin Validation and Sanitization System [pending]
+### Dependencies: 19.1, 19.2
+### Description: Build comprehensive validation system to ensure loaded plugins conform to the expected interface and are safe to execute
+### Details:
+In packages/core/src/plugins/validator.ts, implement validatePlugin() that checks: plugin exports required methods (name, evaluate), version string follows semver format, evaluate method returns proper Result type. Create sanitizePlugin() to wrap plugin methods in try-catch blocks. Implement plugin sandboxing using vm.createContext() for untrusted plugins. Add runtime type checking using Effect.Schema.
+
+## 4. Build Plugin Registry and Management System [pending]
+### Dependencies: 19.2, 19.3
+### Description: Create a registry system to manage loaded plugins, handle lifecycle events, and provide plugin discovery
+### Details:
+In packages/core/src/plugins/registry.ts, implement PluginRegistry class with methods: register(plugin), unregister(pluginId), getPlugin(id), listPlugins(). Add lifecycle management: call init() on registration, cleanup() on unregistration. Implement plugin discovery by scanning directories for valid plugin files. Create event emitter for plugin lifecycle events. Store plugin metadata and instances in Map structures.
+
+## 5. Create Plugin API Documentation and Example Plugins [pending]
+### Dependencies: 19.1, 19.2, 19.3, 19.4
+### Description: Write comprehensive documentation for the plugin API and create example plugins demonstrating best practices
+### Details:
+In packages/core/docs/plugin-api.md, document: plugin interface requirements, lifecycle methods, error handling expectations, module format support. Create example plugins in packages/core/examples/plugins/: simple-evaluator.mjs (ESM example), legacy-evaluator.cjs (CommonJS example), async-evaluator.js (async evaluation example). Include TypeScript definitions for plugin authors. Document security considerations and sandboxing options.
+
