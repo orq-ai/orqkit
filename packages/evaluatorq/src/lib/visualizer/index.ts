@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { platform } from "node:os";
 import { resolve } from "node:path";
-import type { EvaluatorqResult } from "../evaluatorq.js";
+import type { EvaluatorqResult } from "../types.js";
 import { generateHTML } from "./html-generator.js";
 import type { VisualizerOptions } from "./types.js";
 

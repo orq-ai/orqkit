@@ -1,4 +1,9 @@
-import type { EvaluatorqResult } from "../evaluatorq.ts";
+import type {
+  DataPointResult,
+  EvaluatorqResult,
+  EvaluatorScore,
+  JobResult,
+} from "../types.js";
 import type { TableRow, VisualizerOptions } from "./types.ts";
 
 export function generateHTML(
@@ -47,11 +52,11 @@ export function generateHTML(
                 </div>
                 <div class="summary-item">
                     <div class="summary-label">Failed Data Points</div>
-                    <div class="summary-value">${results.filter((r) => r.error).length}</div>
+                    <div class="summary-value">${results.filter((r: DataPointResult) => r.error).length}</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-label">Failed Jobs</div>
-                    <div class="summary-value">${tableRows.filter((r) => r.jobError).length}</div>
+                    <div class="summary-value">${tableRows.filter((r: TableRow) => r.jobError).length}</div>
                 </div>
             </div>
         </div>
@@ -85,7 +90,7 @@ export function generateHTML(
 function flattenResultsToRows(results: EvaluatorqResult): TableRow[] {
   const rows: TableRow[] = [];
 
-  results.forEach((result, dataPointIndex) => {
+  results.forEach((result: DataPointResult, dataPointIndex: number) => {
     if (result.error) {
       rows.push({
         dataPointIndex: dataPointIndex + 1,
@@ -97,11 +102,11 @@ function flattenResultsToRows(results: EvaluatorqResult): TableRow[] {
         evaluatorScores: {},
       });
     } else if (result.jobResults) {
-      result.jobResults.forEach((jobResult) => {
+      result.jobResults.forEach((jobResult: JobResult) => {
         const evaluatorScores: Record<string, string> = {};
 
         if (jobResult.evaluatorScores) {
-          jobResult.evaluatorScores.forEach((score) => {
+          jobResult.evaluatorScores.forEach((score: EvaluatorScore) => {
             if (score.error) {
               evaluatorScores[score.evaluatorName] =
                 `Error: ${score.error.message}`;
@@ -130,9 +135,9 @@ function flattenResultsToRows(results: EvaluatorqResult): TableRow[] {
 function extractEvaluatorNames(results: EvaluatorqResult): string[] {
   const names = new Set<string>();
 
-  results.forEach((result) => {
-    result.jobResults?.forEach((jobResult) => {
-      jobResult.evaluatorScores?.forEach((score) => {
+  results.forEach((result: DataPointResult) => {
+    result.jobResults?.forEach((jobResult: JobResult) => {
+      jobResult.evaluatorScores?.forEach((score: EvaluatorScore) => {
         names.add(score.evaluatorName);
       });
     });

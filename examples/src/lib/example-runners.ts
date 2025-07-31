@@ -1,144 +1,115 @@
 import type { DataPoint } from "@orq/evaluatorq";
 import { evaluatorq } from "@orq/evaluatorq";
 
-// Example 1: Simple evaluation without scorers
-export async function runSimpleExample() {
+// Simulate delays for realistic async operations
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Example with simulated delays for jobs and evaluators
+export async function runSimulatedDelayExample() {
   const dataPoints: Promise<DataPoint>[] = [
     Promise.resolve({
-      inputs: { question: "What is 2 + 2?" },
-      expectedOutput: 4,
-    }),
-    Promise.resolve({
-      inputs: { question: "What is the capital of France?" },
+      inputs: { query: "What is the capital of France?", userId: "user-123" },
       expectedOutput: "Paris",
     }),
-  ];
-
-  const result = await evaluatorq("simple-math-evaluation", {
-    data: dataPoints,
-    jobs: [
-      async (data) => {
-        // Simulate an LLM call or computation
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        if (data.inputs.question === "What is 2 + 2?") {
-          return { name: "calculator", output: 4 };
-        }
-        return { name: "knowledge-base", output: "Paris" };
+    Promise.resolve({
+      inputs: { query: "Calculate 42 * 17", userId: "user-456" },
+      expectedOutput: 714,
+    }),
+    Promise.resolve({
+      inputs: {
+        query: "What year was JavaScript created?",
+        userId: "user-789",
       },
-    ],
-  });
-
-  return result;
-}
-
-// Example 2: Evaluation with multiple jobs and evaluators
-export async function runEvaluationWithScorers() {
-  const dataPoints: Promise<DataPoint>[] = [
-    Promise.resolve({
-      inputs: { text: "The quick brown fox" },
-      expectedOutput: "THE QUICK BROWN FOX",
+      expectedOutput: 1995,
     }),
     Promise.resolve({
-      inputs: { text: "hello world" },
-      expectedOutput: "HELLO WORLD",
+      inputs: { query: "Name the largest planet", userId: "user-012" },
+      expectedOutput: "Jupiter",
     }),
   ];
 
-  const result = await evaluatorq("text-transformation-evaluation", {
+  const result = await evaluatorq("simulated-llm-evaluation", {
     data: dataPoints,
     jobs: [
-      // Job 1: Uppercase transformation
+      // Job 1: Simulated LLM response (takes 500-1500ms)
       async (data) => {
-        const text = data.inputs.text as string;
+        const processingTime = 500 + Math.random() * 1000;
+        await delay(processingTime);
+
+        // Simulate different responses based on query
+        const query = data.inputs.query as string;
+        let output: string | number;
+
+        if (query.includes("capital of France")) {
+          output = "Paris";
+        } else if (query.includes("42 * 17")) {
+          output = 714;
+        } else if (query.includes("JavaScript created")) {
+          output = 1995;
+        } else if (query.includes("largest planet")) {
+          output = "Jupiter";
+        } else {
+          output = "Unknown query";
+        }
+
         return {
-          name: "uppercase-transform",
-          output: text.toUpperCase(),
+          name: "llm-response",
+          output,
         };
       },
-      // Job 2: Word count
+
+      // Job 2: Simulated context retrieval (takes 200-800ms)
       async (data) => {
-        const text = data.inputs.text as string;
-        const wordCount = text.split(" ").length;
+        const processingTime = 200 + Math.random() * 600;
+        await delay(processingTime);
+
         return {
-          name: "word-counter",
-          output: wordCount,
+          name: "context-retrieval",
+          output: `Retrieved context for user ${data.inputs.userId}`,
         };
       },
     ],
     evaluators: [
       {
-        name: "exact-match",
+        name: "accuracy-checker",
         scorer: async ({ data, output }) => {
-          return output === data.expectedOutput;
+          // Simulate evaluator processing time (100-400ms)
+          await delay(100 + Math.random() * 300);
+
+          // Check if the output matches expected
+          return output === data.expectedOutput ? 1.0 : 0.0;
         },
       },
       {
-        name: "similarity-score",
-        scorer: async ({ data, output }) => {
-          // Simple string similarity (in production, use proper similarity metrics)
-          if (
-            typeof output === "string" &&
-            typeof data.expectedOutput === "string"
-          ) {
-            const outputLower = output.toLowerCase();
-            const expectedLower = data.expectedOutput.toLowerCase();
-            return outputLower === expectedLower ? 1.0 : 0.0;
-          }
-          return 0.0;
-        },
-      },
-    ],
-  });
-
-  return result;
-}
-
-// Example 3: Parallel processing with error handling
-export async function runParallelProcessingExample() {
-  // Create data points that will have different behaviors
-  const dataPoints: Promise<DataPoint>[] = [
-    Promise.resolve({ inputs: { id: 1 }, expectedOutput: "success" }),
-    Promise.resolve({ inputs: { id: 2 }, expectedOutput: "success" }),
-    Promise.reject(new Error("Failed to load data point 3")), // This will error
-    Promise.resolve({ inputs: { id: 4 }, expectedOutput: "success" }),
-    Promise.resolve({ inputs: { id: 5 }, expectedOutput: "success" }),
-  ];
-
-  const result = await evaluatorq("parallel-processing-demo", {
-    data: dataPoints,
-    jobs: [
-      async (data) => {
-        // Job that might fail for certain inputs
-        if (data.inputs.id === 2) {
-          throw new Error("Job failed for id 2");
-        }
-        return {
-          name: "risky-job",
-          output: `Processed ${data.inputs.id}`,
-        };
-      },
-      async (data) => {
-        // Safe job that always succeeds
-        return {
-          name: "safe-job",
-          output: `Safe processing of ${data.inputs.id}`,
-        };
-      },
-    ],
-    evaluators: [
-      {
-        name: "error-checker",
+        name: "response-validator",
         scorer: async ({ output }) => {
-          // This evaluator might also fail
-          if (output === "Processed 4") {
-            throw new Error("Evaluator error on id 4");
+          // Simulate validation processing time (150-350ms)
+          await delay(150 + Math.random() * 200);
+
+          // Simple validation: check if output is not empty
+          if (typeof output === "string" && output.length > 0) {
+            return true;
+          } else if (typeof output === "number") {
+            return true;
           }
-          return typeof output === "string" ? 1 : 0;
+          return false;
+        },
+      },
+      {
+        name: "latency-scorer",
+        scorer: async () => {
+          // Simulate scoring based on response time (50-150ms)
+          await delay(50 + Math.random() * 100);
+
+          // Return a simulated latency score
+          return 0.85 + Math.random() * 0.15; // Score between 0.85 and 1.0
         },
       },
     ],
     parallelism: 2, // Process 2 data points at a time
+    print: true, // Display the table
   });
 
   return result;
