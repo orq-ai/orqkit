@@ -19,14 +19,14 @@
       },
     },
     "examples": {
-      "name": "@orq/evaluatorq-examples",
+      "name": "@orq-ai/evaluatorq-examples",
       "version": "0.0.1",
       "dependencies": {
         "tslib": "^2.3.0",
       },
     },
     "packages/evaluatorq": {
-      "name": "@orq/evaluatorq",
+      "name": "@orq-ai/evaluatorq",
       "version": "0.0.1",
       "dependencies": {
         "chalk": "^5.4.1",
@@ -306,11 +306,11 @@
 
     "@nx/workspace": ["@nx/workspace@0.0.0-pr-31973-1767d75", "", { "dependencies": { "@nx/devkit": "0.0.0-pr-31973-1767d75", "@zkochan/js-yaml": "0.0.7", "chalk": "^4.1.0", "enquirer": "~2.3.6", "nx": "0.0.0-pr-31973-1767d75", "picomatch": "4.0.2", "tslib": "^2.3.0", "yargs-parser": "21.1.1" } }, "sha512-osFsHIuvQKy31raezVE249VWX9hvKOlHNRX27XthDT0hEQWgLWdVBAdD5lHOi5DH7Txe/NpUeV9aIhmcSXSjUA=="],
 
+    "@orq-ai/evaluatorq": ["@orq-ai/evaluatorq@workspace:packages/evaluatorq"],
+
+    "@orq-ai/evaluatorq-examples": ["@orq-ai/evaluatorq-examples@workspace:examples"],
+
     "@orq-ai/node": ["@orq-ai/node@3.9.26", "", { "peerDependencies": { "@modelcontextprotocol/sdk": ">=1.5.0 <1.10.0", "zod": ">= 3 <4" }, "optionalPeers": ["@modelcontextprotocol/sdk"], "bin": { "mcp": "bin/mcp-server.js" } }, "sha512-vOx7iFVk2ZCJr796grDfkZJslAuZhmCNZc9vM8e9fZXQ6HrQ+Ebs1tPU3HSkjQruPleKL1uvkBrrHQCJWdB4Bw=="],
-
-    "@orq/evaluatorq": ["@orq/evaluatorq@workspace:packages/evaluatorq"],
-
-    "@orq/evaluatorq-examples": ["@orq/evaluatorq-examples@workspace:examples"],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.34.38", "", {}, "sha512-HpkxMmc2XmZKhvaKIZZThlHmx1L0I/V1hWK1NubtlFnr6ZqdiOpV72TKudZUNQjZNsyDBay72qFEhEvb+bcwcA=="],
 

@@ -33,33 +33,6 @@ function pad(
   }
 }
 
-// Format value with smart truncation
-function formatValue(value: unknown, _maxWidth: number = 30): string {
-  if (value === null || value === undefined) return "-";
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (typeof value === "number") {
-    return String(value);
-  }
-
-  if (typeof value === "object") {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return "[object]";
-    }
-  }
-
-  return String(value);
-}
-
 // Get terminal width with fallback
 function getTerminalWidth(): number {
   return process.stdout.columns || 80;
@@ -197,19 +170,41 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
   return renderDetailedTable(headers, rows, [20, 15]);
 }
 
-// Create the main results display with new layout
-function createResultsDisplay(results: EvaluatorqResult): string {
-  if (results.length === 0) return "";
-
+// Calculate averages for evaluator scores across all data points
+function calculateEvaluatorAverages(results: EvaluatorqResult): {
+  jobNames: string[];
+  evaluatorNames: string[];
+  averages: Map<
+    string,
+    Map<string, { value: string; color: (text: string) => string }>
+  >;
+} {
   // Collect all unique job names and evaluator names
   const allJobNames = new Set<string>();
   const allEvaluatorNames = new Set<string>();
+
+  // Store all scores per evaluator per job
+  const scoresByEvaluatorAndJob = new Map<
+    string,
+    Map<string, (number | boolean | string)[]>
+  >();
 
   results.forEach((result) => {
     result.jobResults?.forEach((jobResult) => {
       allJobNames.add(jobResult.jobName);
       jobResult.evaluatorScores?.forEach((score) => {
         allEvaluatorNames.add(score.evaluatorName);
+
+        if (!score.error) {
+          if (!scoresByEvaluatorAndJob.has(score.evaluatorName)) {
+            scoresByEvaluatorAndJob.set(score.evaluatorName, new Map());
+          }
+          const jobScores = scoresByEvaluatorAndJob.get(score.evaluatorName);
+          if (jobScores && !jobScores.has(jobResult.jobName)) {
+            jobScores.set(jobResult.jobName, []);
+          }
+          jobScores?.get(jobResult.jobName)?.push(score.score);
+        }
       });
     });
   });
@@ -217,124 +212,99 @@ function createResultsDisplay(results: EvaluatorqResult): string {
   const jobNames = Array.from(allJobNames);
   const evaluatorNames = Array.from(allEvaluatorNames);
 
-  // Calculate column widths
-  const minWidths = {
-    response: 40,
-    evaluator: 15,
-  };
+  // Calculate averages
+  const averages = new Map<
+    string,
+    Map<string, { value: string; color: (text: string) => string }>
+  >();
 
-  // Build headers: [For each job: Response + evaluator columns]
-  const headers: string[] = [];
-  const minColWidths: number[] = [];
+  evaluatorNames.forEach((evaluatorName) => {
+    const evaluatorAverages = new Map<
+      string,
+      { value: string; color: (text: string) => string }
+    >();
 
-  // Add headers for each job
-  jobNames.forEach((jobName) => {
-    headers.push(`${jobName}`);
-    minColWidths.push(minWidths.response);
+    jobNames.forEach((jobName) => {
+      const scores =
+        scoresByEvaluatorAndJob.get(evaluatorName)?.get(jobName) || [];
 
-    // Add evaluator columns
-    evaluatorNames.forEach((evaluatorName) => {
-      headers.push(evaluatorName);
-      minColWidths.push(minWidths.evaluator);
+      if (scores.length === 0) {
+        evaluatorAverages.set(jobName, { value: "-", color: chalk.gray });
+      } else {
+        const firstScore = scores[0];
+
+        if (typeof firstScore === "number") {
+          // Calculate average for numeric scores
+          const numericScores = scores as number[];
+          const sum = numericScores.reduce((acc, score) => acc + score, 0);
+          const avg = sum / numericScores.length;
+          evaluatorAverages.set(jobName, {
+            value: avg.toFixed(2),
+            color: chalk.yellow,
+          });
+        } else if (typeof firstScore === "boolean") {
+          // Calculate pass rate for boolean scores
+          const passCount = scores.filter((score) => score === true).length;
+          const passRate = (passCount / scores.length) * 100;
+          evaluatorAverages.set(jobName, {
+            value: `${passRate.toFixed(1)}%`,
+            color:
+              passRate === 100
+                ? chalk.green
+                : passRate >= 50
+                  ? chalk.yellow
+                  : chalk.red,
+          });
+        } else {
+          // For strings, we ignore as per requirements
+          evaluatorAverages.set(jobName, {
+            value: "[string]",
+            color: chalk.gray,
+          });
+        }
+      }
     });
+
+    averages.set(evaluatorName, evaluatorAverages);
   });
+
+  return { jobNames, evaluatorNames, averages };
+}
+
+// Create the main results display with new layout
+function createResultsDisplay(results: EvaluatorqResult): string {
+  if (results.length === 0) return "";
+
+  const { jobNames, evaluatorNames, averages } =
+    calculateEvaluatorAverages(results);
+
+  if (jobNames.length === 0 || evaluatorNames.length === 0) {
+    return chalk.yellow("No job results or evaluators found.");
+  }
+
+  // Build headers: ["Evaluators"] + job names
+  const headers = ["Evaluators", ...jobNames];
+
+  // Calculate column widths
+  const minColWidths = [20]; // First column for evaluator names
+  jobNames.forEach(() => minColWidths.push(15)); // Job columns
 
   const rows: Array<{ main: string[]; details?: string[] }> = [];
 
-  // Process each data point
-  results.forEach((result, dataPointIndex) => {
-    const row: string[] = [];
-    const details: string[] = [];
+  // Create a row for each evaluator
+  evaluatorNames.forEach((evaluatorName) => {
+    const row: string[] = [evaluatorName];
 
-    if (result.error) {
-      // Fill remaining columns with error message
-      jobNames.forEach(() => {
-        row.push(chalk.red("ERROR"));
-        // Add empty columns for evaluators
-        evaluatorNames.forEach(() => {
-          row.push("-");
-        });
-      });
-      details.push(
-        chalk.red(
-          `Data point #${dataPointIndex} error: ${result.error.message}`,
-        ),
-      );
-    } else if (result.jobResults) {
-      // Process each job column
-      jobNames.forEach((jobName) => {
-        const jobResult = result.jobResults?.find(
-          (jr) => jr.jobName === jobName,
-        );
-
-        if (jobResult) {
-          const outputStr = formatValue(jobResult.output);
-
-          // Add response column
-          if (jobResult.error) {
-            row.push(chalk.red("Error"));
-            details.push(
-              chalk.red(`${jobName} Error: ${jobResult.error.message}`),
-            );
-          } else {
-            // Special truncation for context-retrieval responses
-            let displayStr = outputStr;
-            if (
-              jobName === "context-retrieval" &&
-              outputStr.includes("Retrieved context for user")
-            ) {
-              // Extract just the user ID from "Retrieved context for user user-123"
-              const userMatch = outputStr.match(/user-\d+/);
-              displayStr = userMatch
-                ? `Retrieved for ${userMatch[0]}`
-                : outputStr;
-            }
-            row.push(truncate(displayStr, minWidths.response));
-            // Add full output to details if truncated or specially formatted
-            if (
-              outputStr.length > minWidths.response ||
-              typeof jobResult.output === "object" ||
-              displayStr !== outputStr
-            ) {
-              details.push(`${jobName} full output: ${outputStr}`);
-            }
-          }
-
-          // Add evaluator score columns
-          evaluatorNames.forEach((evaluatorName) => {
-            const score = jobResult.evaluatorScores?.find(
-              (s) => s.evaluatorName === evaluatorName,
-            );
-
-            if (score) {
-              if (score.error) {
-                row.push(chalk.red("ERROR"));
-              } else if (typeof score.score === "boolean") {
-                row.push(score.score ? chalk.green("PASS") : chalk.red("FAIL"));
-              } else if (typeof score.score === "number") {
-                row.push(chalk.yellow(score.score.toFixed(3)));
-              } else {
-                row.push(chalk.gray(String(score.score)));
-              }
-            } else {
-              row.push("-");
-            }
-          });
-        } else {
-          // Job not found for this data point
-          row.push("-");
-          // Fill evaluator columns
-          evaluatorNames.forEach(() => {
-            row.push("-");
-          });
-        }
-      });
-    }
-
-    rows.push({
-      main: row,
-      details: details.length > 0 ? details : undefined,
+    jobNames.forEach((jobName) => {
+      const avgData = averages.get(evaluatorName)?.get(jobName);
+      if (avgData) {
+        row.push(avgData.color(avgData.value));
+      } else {
+        row.push(chalk.gray("-"));
+      }
     });
+
+    rows.push({ main: row });
   });
 
   const terminalWidth = getTerminalWidth();

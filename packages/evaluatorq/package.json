@@ -1,5 +1,5 @@
 {
-  "name": "@orq/evaluatorq",
+  "name": "@orq-ai/evaluatorq",
   "version": "0.0.1",
   "private": true,
   "type": "module",

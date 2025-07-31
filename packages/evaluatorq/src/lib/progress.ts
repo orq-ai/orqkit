@@ -88,6 +88,11 @@ const makeProgressService = (): ProgressService => {
     startSpinner: () =>
       Effect.sync(() => {
         if (!spinner) {
+          // Reserve space first by printing empty lines
+          process.stdout.write("\n\n\n");
+          // Move cursor back up to where we want the spinner
+          process.stdout.write("\x1b[3A");
+
           spinner = ora({
             text: formatProgressText(),
             spinner: "dots",
@@ -102,8 +107,12 @@ const makeProgressService = (): ProgressService => {
         if (spinner) {
           if (state.phase === "completed") {
             spinner.succeed(chalk.green("✓ Evaluation completed successfully"));
+            // Just one newline since table display adds its own
+            process.stdout.write("\n");
           } else {
             spinner.stop();
+            // Just one newline since table display adds its own
+            process.stdout.write("\n");
           }
           spinner = null;
         }
