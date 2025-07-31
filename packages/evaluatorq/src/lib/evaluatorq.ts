@@ -1,3 +1,5 @@
+import { Effect, pipe } from "effect";
+
 export interface EvaluatorScore {
   evaluatorName: string;
   score: number | boolean | string;
@@ -37,112 +39,127 @@ export async function evaluatorq(
     );
   }
 
-  // Process data points with controlled parallelism
-  const results: EvaluatorqResult = [];
   const dataPromises = data as Promise<DataPoint>[];
 
-  // Process data points in batches
-  for (let i = 0; i < dataPromises.length; i += parallelism) {
-    const batch = dataPromises.slice(i, i + parallelism);
-    const batchResults = await Promise.all(
-      batch.map(async (dataPromise, batchIndex) => {
-        const rowIndex = i + batchIndex;
-        return processDataPoint(
+  // Create Effect for processing all data points
+  const program = pipe(
+    Effect.forEach(
+      dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
+      ({ dataPromise, index }) =>
+        processDataPointEffect(
           dataPromise,
-          rowIndex,
+          index,
           jobs,
           evaluators,
           parallelism,
-        );
-      }),
-    );
-    results.push(...batchResults);
-  }
+        ),
+      { concurrency: parallelism },
+    ),
+    Effect.map((results) => results.flat()),
+  );
 
-  return results;
+  // Run the Effect and convert back to Promise
+  return Effect.runPromise(program);
 }
 
-async function processDataPoint(
+function processDataPointEffect(
   dataPromise: Promise<DataPoint>,
   rowIndex: number,
   jobs: Job[],
   evaluators: { name: string; scorer: Scorer }[],
   parallelism: number,
-): Promise<DataPointResult> {
-  try {
-    const dataPoint = await dataPromise;
-    const jobResults: JobResult[] = [];
-
-    // Run jobs with controlled parallelism
-    for (let i = 0; i < jobs.length; i += parallelism) {
-      const jobBatch = jobs.slice(i, i + parallelism);
-      const batchResults = await Promise.all(
-        jobBatch.map(async (job) => {
-          return processJob(job, dataPoint, rowIndex, evaluators);
-        }),
-      );
-      jobResults.push(...batchResults);
-    }
-
-    return {
-      dataPoint,
-      jobResults,
-    };
-  } catch (error) {
-    return {
-      dataPoint: { inputs: {} }, // Placeholder since we couldn't get the actual data
-      error: error as Error,
-    };
-  }
+): Effect.Effect<DataPointResult[], Error> {
+  return pipe(
+    Effect.tryPromise({
+      try: () => dataPromise,
+      catch: (error) => error as Error,
+    }),
+    Effect.flatMap((dataPoint) =>
+      pipe(
+        Effect.forEach(
+          jobs,
+          (job) => processJobEffect(job, dataPoint, rowIndex, evaluators),
+          { concurrency: parallelism },
+        ),
+        Effect.map((jobResults) => [
+          {
+            dataPoint,
+            jobResults,
+          },
+        ]),
+      ),
+    ),
+    Effect.catchAll((error) =>
+      Effect.succeed([
+        {
+          dataPoint: { inputs: {} }, // Placeholder since we couldn't get the actual data
+          error,
+        },
+      ]),
+    ),
+  );
 }
 
-async function processJob(
+function processJobEffect(
   job: Job,
   dataPoint: DataPoint,
   rowIndex: number,
   evaluators: { name: string; scorer: Scorer }[],
-): Promise<JobResult> {
-  try {
-    const jobResult = await job(dataPoint, rowIndex);
-    const evaluatorScores: EvaluatorScore[] = [];
-
-    // Run evaluators on successful job output
-    if (evaluators.length > 0) {
-      const scorerResults = await Promise.all(
-        evaluators.map(async (evaluator) => {
-          try {
-            const score = await evaluator.scorer({
-              data: dataPoint,
+): Effect.Effect<JobResult, Error> {
+  return pipe(
+    Effect.tryPromise({
+      try: () => job(dataPoint, rowIndex),
+      catch: (error) => error as Error,
+    }),
+    Effect.flatMap((jobResult) =>
+      evaluators.length > 0
+        ? pipe(
+            Effect.forEach(
+              evaluators,
+              (evaluator) =>
+                pipe(
+                  Effect.tryPromise({
+                    try: () =>
+                      evaluator.scorer({
+                        data: dataPoint,
+                        output: jobResult.output,
+                      }),
+                    catch: (error) => error as Error,
+                  }),
+                  Effect.map((score) => ({
+                    evaluatorName: evaluator.name,
+                    score,
+                  })),
+                  Effect.catchAll((error) =>
+                    Effect.succeed({
+                      evaluatorName: evaluator.name,
+                      score: "" as string,
+                      error,
+                    }),
+                  ),
+                ),
+              { concurrency: "unbounded" },
+            ),
+            Effect.map((evaluatorScores) => ({
+              jobName: jobResult.name,
               output: jobResult.output,
-            });
-            return {
-              evaluatorName: evaluator.name,
-              score,
-            };
-          } catch (error) {
-            return {
-              evaluatorName: evaluator.name,
-              score: "" as string,
-              error: error as Error,
-            };
-          }
-        }),
-      );
-      evaluatorScores.push(...scorerResults);
-    }
-
-    return {
-      jobName: jobResult.name,
-      output: jobResult.output,
-      evaluatorScores,
-    };
-  } catch (error) {
-    return {
-      jobName: "Unknown", // We don't know the job name if it threw before returning
-      output: null,
-      error: error as Error,
-    };
-  }
+              evaluatorScores,
+            })),
+          )
+        : Effect.succeed({
+            jobName: jobResult.name,
+            output: jobResult.output,
+            evaluatorScores: [],
+          }),
+    ),
+    Effect.catchAll((error) =>
+      Effect.succeed({
+        jobName: "Unknown", // We don't know the job name if it threw before returning
+        output: null,
+        error,
+      }),
+    ),
+  );
 }
 
 export type Output = string | number | boolean | Record<string, unknown> | null;
