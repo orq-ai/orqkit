@@ -108,7 +108,7 @@ export async function runSimulatedDelayExample() {
         },
       },
     ],
-    parallelism: 2, // Process 2 data points at a time
+    parallelism: 10, // Process 2 data points at a time
     print: true, // Display the table
   });
 

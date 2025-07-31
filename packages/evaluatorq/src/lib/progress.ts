@@ -1,6 +1,6 @@
+import chalk from "chalk";
 import { Context, Effect, Layer } from "effect";
 import ora, { type Ora } from "ora";
-import chalk from "chalk";
 
 // Progress state types
 export interface ProgressState {
