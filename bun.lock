@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@orq/evaluatorq-source",
+      "name": "@orq/orqkit",
       "dependencies": {
         "@orq-ai/node": "^3.9.26",
       },
