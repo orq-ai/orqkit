@@ -8,6 +8,15 @@
   "bin": {
     "orq": "./dist/bin/cli.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orq-ai/orqkit.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/orq-ai/orqkit/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/orq-ai/orqkit/issues"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
