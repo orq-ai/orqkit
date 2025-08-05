@@ -17,6 +17,14 @@
       "tag": true
     }
   },
+  "targetDefaults": {
+    "@nx/js:release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      },
+      "dependsOn": ["build"]
+    }
+  },
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
