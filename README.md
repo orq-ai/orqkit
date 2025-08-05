@@ -122,6 +122,11 @@ bun run src/lib/dataset-example.ts
 
 We welcome contributions! Whether it's bug fixes, new features, or documentation improvements, please feel free to make a pull request.
 
+### Have an idea?
+
+- **Create an issue**: If you have ideas for improvements or new features, please [create an issue](https://github.com/orq-ai/orqkit/issues/new) to discuss it
+- **Check the roadmap**: Take a look at our [public roadmap](https://github.com/orgs/orq-ai/projects/3) to see what we're working on and what's planned
+
 ## 📄 License
 
 This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.

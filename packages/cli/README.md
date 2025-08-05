@@ -126,7 +126,6 @@ All evaluations completed successfully!
 The CLI respects environment variables used by @orq-ai/evaluatorq:
 
 - `ORQ_API_KEY`: API key for Orq platform integration
-- `EVALUATION_OUTPUT_DIR`: Custom directory for evaluation outputs
 
 ### TypeScript Configuration
 
@@ -160,18 +159,6 @@ The CLI uses tsx for TypeScript execution, which supports:
 }
 ```
 
-### Programmatic Usage
-
-While the CLI is designed for command-line use, you can also use it programmatically:
-
-```typescript
-import { evaluate } from "@orq-ai/cli";
-
-await evaluate("**/*.eval.ts", {
-  // Options (currently unused, reserved for future features)
-});
-```
-
 ## 🛠️ Development
 
 ```bash
@@ -184,14 +171,6 @@ bunx nx typecheck cli
 # Run locally without installing
 bunx tsx packages/cli/src/bin/cli.ts evaluate "**/*.eval.ts"
 ```
-
-## 🚧 Upcoming Features
-
-- `--watch` mode for continuous evaluation during development
-- `--parallel` flag for concurrent execution
-- `--filter` option to run specific evaluators
-- JSON output format for CI/CD integration
-- Configuration file support
 
 ## 📄 License
 

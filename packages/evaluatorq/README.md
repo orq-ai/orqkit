@@ -1,16 +1,13 @@
 # @orq-ai/evaluatorq
 
-A powerful TypeScript evaluation framework built with Effect for robust error handling and composability. This library provides a flexible way to run parallel evaluations, visualize results, and integrate with the Orq AI platform.
+An evaluation framework library that provides a flexible way to run parallel evaluations and optionally integrate with the Orq AI platform.
 
 ## 🎯 Features
 
-- **Effect-based Architecture**: Built on Effect for robust error handling and composability
 - **Parallel Execution**: Run multiple evaluation jobs concurrently with progress tracking
-- **Flexible Data Sources**: Support for inline data, async iterables, and Orq platform datasets
-- **Rich Visualizations**: Generate HTML reports with detailed evaluation results
-- **Type-safe**: Full TypeScript support with comprehensive type definitions
-- **Progress Tracking**: Real-time progress updates with spinners and status indicators
-- **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI
+- **Flexible Data Sources**: Support for inline data, promises, and Orq platform datasets
+- **Type-safe**: Fully written in TypeScript
+- **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI (optional)
 
 ## 📥 Installation
 
@@ -149,51 +146,23 @@ await evaluatorq("error-handling", {
 #### Async Data Sources
 
 ```typescript
-async function* generateData() {
-  for (let i = 0; i < 1000; i++) {
-    yield { inputs: { value: i } };
-  }
-}
+// Create an array of promises for async data
+const dataPromises = Array.from({ length: 1000 }, (_, i) => 
+  Promise.resolve({ inputs: { value: i } })
+);
 
-await evaluatorq("streaming-eval", {
-  data: generateData(),
+await evaluatorq("async-eval", {
+  data: dataPromises,
   jobs: [...],
   evaluators: [...],
 });
 ```
-
-## 📊 Visualization
-
-Evaluatorq automatically generates an HTML report after each evaluation run. The report includes:
-
-- Summary statistics for all evaluators
-- Detailed results for each data point
-- Job outputs and scores
-- Error tracking and debugging information
-- Interactive tables with sorting and filtering
-
-Reports are saved to `.evaluations/[evaluation-name]/[timestamp].html`
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
 - `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access)
-- `EVALUATION_OUTPUT_DIR`: Custom directory for evaluation outputs (default: `.evaluations`)
-
-### TypeScript Configuration
-
-The package uses ES modules. Ensure your `tsconfig.json` includes:
-
-```json
-{
-  "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "target": "ES2022"
-  }
-}
-```
 
 ## 📚 API Reference
 
