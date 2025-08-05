@@ -19,10 +19,7 @@
   },
   "targetDefaults": {
     "nx-release-publish": {
-      "options": {
-        "packageRoot": "dist/{projectRoot}"
-      },
-      "dependsOn": ["^build"]
+      "dependsOn": ["build"]
     }
   },
   "plugins": [
