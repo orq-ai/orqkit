@@ -18,11 +18,11 @@
     }
   },
   "targetDefaults": {
-    "@nx/js:release-publish": {
+    "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
       },
-      "dependsOn": ["build"]
+      "dependsOn": ["^build"]
     }
   },
   "plugins": [
