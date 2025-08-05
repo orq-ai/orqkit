@@ -5,6 +5,18 @@
     "production": ["default"],
     "sharedGlobals": []
   },
+  "release": {
+    "projects": ["packages/*"],
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github"
+      }
+    },
+    "git": {
+      "commit": true,
+      "tag": true
+    }
+  },
   "plugins": [
     {
       "plugin": "@nx/js/typescript",

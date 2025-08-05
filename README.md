@@ -1,109 +1,135 @@
-# Evaluatorq
+# 🚀 Orqkit
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Open source tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines. This monorepo contains TypeScript packages designed to help developers evaluate, test, and improve their AI applications.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🌟 About Orq AI
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+[Orq AI](https://orq.ai) is a platform for building, deploying, and monitoring AI applications. We believe in providing developers with powerful, open-source tools that integrate seamlessly with our platform while remaining useful as standalone utilities.
 
-## Generate a library
+## 📦 Packages
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+This monorepo contains the following open-source packages:
+
+| Package | Description | Version |
+|---------|-------------|---------|
+| [`@orq-ai/evaluatorq`](./packages/evaluatorq) | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | ![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq) |
+| [`@orq-ai/cli`](./packages/cli) | Command-line interface for discovering and running evaluation files | ![npm](https://img.shields.io/npm/v/@orq-ai/cli) |
+
+## 🎯 Why Orqkit?
+
+- **Production-Ready**: Built with Effect for robust error handling and composability
+- **Developer-Friendly**: Full TypeScript support with comprehensive type definitions
+- **Platform Integration**: Seamlessly works with Orq AI platform, but fully functional standalone
+
+## 🚀 Quick Start
+
+### Install Evaluatorq
+
+```bash
+# Install the core evaluation framework
+npm install @orq-ai/evaluatorq
+
+# Install the CLI globally (optional)
+npm install -g @orq-ai/cli
 ```
 
-## Run tasks
+### Create Your First Evaluation
 
-To build the library use:
+```typescript
+// my-eval.eval.ts
+import { evaluatorq } from "@orq-ai/evaluatorq";
 
-```sh
-npx nx build pkg1
+await evaluatorq("hello-world", {
+  data: [
+    { inputs: { name: "Alice" } },
+    { inputs: { name: "Bob" } },
+  ],
+  jobs: [
+    async (data) => ({
+      name: "greeter",
+      output: `Hello, ${data.inputs.name}!`,
+    }),
+  ],
+  evaluators: [
+    {
+      name: "friendly-check",
+      scorer: async ({ output }) => 
+        output.includes("Hello"),
+    },
+  ],
+});
 ```
 
-To run any task with Nx use:
+### Run It
 
-```sh
-npx nx <target> <project-name>
+```bash
+# Using the CLI
+orq evaluate my-eval.eval.ts
+
+# Or directly with a runtime
+bun run my-eval.eval.ts
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## 🔗 Integration with Orq Platform
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+While our tools work great standalone, they shine when integrated with the [Orq AI platform](https://orq.ai):
 
-## Versioning and releasing
+- **Dataset Management**: Store and version your evaluation datasets
+- **Result Tracking**: Track evaluation results over time
+- **Team Collaboration**: Share evaluations and results with your team
+- **API Integration**: Use your Orq API key to access platform features
 
-To version and release the library use
-
-```
-npx nx release
-```
-
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
-
-```sh
-npx nx sync
+```typescript
+// Using Orq platform datasets
+await evaluatorq("platform-eval", {
+  data: {
+    datasetId: "your-dataset-id", // From Orq platform
+  },
+  jobs: [...],
+  evaluators: [...],
+});
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+## 🛠️ Development
 
-```sh
-npx nx sync:check
+This is an Nx-based monorepo using Bun as the package manager.
+
+```bash
+# Clone the repository
+git clone https://github.com/orq-ai/orqkit.git
+cd orqkit
+
+# Install dependencies
+bun install
+
+# Build all packages
+bunx nx build evaluatorq
+bunx nx build cli
+
+# Run examples
+cd examples
+bun run src/lib/dataset-example.ts
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+## 📚 Documentation
 
-## Set up CI!
+- [Evaluatorq Documentation](./packages/evaluatorq/README.md) - Core evaluation framework
+- [CLI Documentation](./packages/cli/README.md) - Command-line interface
+- [Examples](./examples) - Sample evaluation implementations
+- [Orq AI Platform Docs](https://docs.orq.ai) - Platform documentation
 
-### Step 1
+## 🤝 Contributing
 
-To connect to Nx Cloud, run the following command:
+We welcome contributions! Whether it's bug fixes, new features, or documentation improvements, please feel free to make a pull request.
 
-```sh
-npx nx connect
-```
+## 📄 License
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+<p align="center">
+  Built with ❤️ by <a href="https://orq.ai">Orq AI</a>
+  <br>
+  <a href="https://orq.ai">Website</a> • <a href="https://docs.orq.ai">Documentation</a> • <a href="https://github.com/orq-ai">GitHub</a>
+</p>
