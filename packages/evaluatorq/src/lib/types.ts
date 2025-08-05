@@ -73,6 +73,7 @@ export type ScorerParameter = {
   output: Output;
 };
 
-export type Scorer = (
-  params: ScorerParameter,
-) => Promise<number | boolean | string>;
+export type Scorer =
+  | ((params: ScorerParameter) => Promise<string>)
+  | ((params: ScorerParameter) => Promise<number>)
+  | ((params: ScorerParameter) => Promise<boolean>);

@@ -1,4 +1,5 @@
 import { Effect, pipe } from "effect";
+
 import { ProgressService } from "./progress.js";
 import type {
   DataPoint,
@@ -120,22 +121,24 @@ export function processJobEffect(
               const score = yield* _(
                 pipe(
                   Effect.tryPromise({
-                    try: () =>
-                      evaluator.scorer({
+                    try: async () => {
+                      const result = await evaluator.scorer({
                         data: dataPoint,
                         output: jobResult.output,
-                      }),
+                      });
+                      return result;
+                    },
                     catch: (error) => error as Error,
                   }),
                   Effect.map((score) => ({
                     evaluatorName: evaluator.name,
-                    score,
+                    score: score as string | number | boolean,
                   })),
                   Effect.catchAll((error) =>
                     Effect.succeed({
                       evaluatorName: evaluator.name,
                       score: "" as string,
-                      error,
+                      error: error as Error,
                     }),
                   ),
                 ),

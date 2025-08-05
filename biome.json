@@ -6,7 +6,17 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/build",
+      "!**/dist",
+      "!**/.nx",
+      "!node_modules",
+      "!**/*.generated.ts",
+      "!**/.claude",
+      "!**/.taskmaster"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -25,10 +35,22 @@
     }
   },
   "assist": {
-    "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [":BUN:", ":NODE:"],
+              ":BLANK_LINE:",
+              [":PACKAGE:", "!@orq-ai/**"],
+              ":BLANK_LINE:",
+              "@orq-ai/**",
+              ":BLANK_LINE:",
+              ":PATH:"
+            ]
+          }
+        }
       }
     }
   }

@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { Effect } from "effect";
 import stripAnsi from "strip-ansi";
+
 import type { EvaluatorqResult } from "./types.js";
 
 // Truncate string to fit within maxWidth (accounting for ANSI codes)

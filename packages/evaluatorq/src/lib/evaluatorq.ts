@@ -1,5 +1,7 @@
-import type { Orq } from "@orq-ai/node";
 import { Effect, pipe } from "effect";
+
+import type { Orq } from "@orq-ai/node";
+
 import { processDataPointEffect } from "./effects.js";
 import {
   ProgressService,
