@@ -9,7 +9,8 @@
     "projects": ["packages/*"],
     "changelog": {
       "workspaceChangelog": {
-        "createRelease": "github"
+        "createRelease": "github",
+        "file": false
       }
     },
     "git": {
