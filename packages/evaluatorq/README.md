@@ -185,27 +185,43 @@ Promise that resolves when evaluation is complete.
 ### Types
 
 ```typescript
+type Output = string | number | boolean | Record<string, unknown> | null;
+
 interface DataPoint {
-  inputs: Record<string, any>;
-  expectedOutput?: any;
-  metadata?: Record<string, any>;
+  inputs: Record<string, unknown>;
+  expectedOutput?: Output;
 }
 
 interface JobResult {
-  name: string;
-  output: any;
+  jobName: string;
+  output: Output;
+  error?: Error;
+  evaluatorScores?: EvaluatorScore[];
 }
 
-interface Evaluator {
-  name: string;
-  scorer: (context: EvaluatorContext) => Promise<number>;
+interface EvaluatorScore {
+  evaluatorName: string;
+  score: number | boolean | string;
+  error?: Error;
 }
 
-interface EvaluatorContext {
+type Job = (
+  data: DataPoint,
+  row: number,
+) => Promise<{
+  name: string;
+  output: Output;
+}>;
+
+type ScorerParameter = {
   data: DataPoint;
-  output: any;
-  row: number;
-}
+  output: Output;
+};
+
+type Scorer =
+  | ((params: ScorerParameter) => Promise<string>)
+  | ((params: ScorerParameter) => Promise<number>)
+  | ((params: ScorerParameter) => Promise<boolean>);
 ```
 
 ## 🛠️ Development
@@ -216,9 +232,6 @@ bunx nx build evaluatorq
 
 # Run type checking
 bunx nx typecheck evaluatorq
-
-# Run tests
-bunx nx test evaluatorq
 ```
 
 ## 📄 License

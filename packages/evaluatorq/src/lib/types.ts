@@ -59,14 +59,16 @@ export interface EvaluatorParams {
         datasetId: string;
       }
     | Promise<DataPoint>[];
-  evaluators?: {
-    name: string;
-    scorer: Scorer;
-  }[];
+  evaluators?: Evaluator[];
   jobs: Job[];
   parallelism?: number;
   print?: boolean;
 }
+
+export type Evaluator = {
+  name: string;
+  scorer: Scorer;
+};
 
 export type ScorerParameter = {
   data: DataPoint;

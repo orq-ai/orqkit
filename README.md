@@ -1,4 +1,4 @@
-# 🚀 Orqkit
+# 🚀 OrqKit
 
 Open source tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines. This monorepo contains TypeScript packages designed to help developers evaluate, test, and improve their AI applications.
 
@@ -10,16 +10,17 @@ Open source tools from [Orq AI](https://orq.ai) for building robust AI evaluatio
 
 This monorepo contains the following open-source packages:
 
-| Package | Description | Version |
-|---------|-------------|---------|
+| Package                                       | Description                                                                                  | Version                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | [`@orq-ai/evaluatorq`](./packages/evaluatorq) | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | ![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq) |
-| [`@orq-ai/cli`](./packages/cli) | Command-line interface for discovering and running evaluation files | ![npm](https://img.shields.io/npm/v/@orq-ai/cli) |
+| [`@orq-ai/cli`](./packages/cli)               | Command-line interface for discovering and running evaluation files                          | ![npm](https://img.shields.io/npm/v/@orq-ai/cli)        |
 
-## 🎯 Why Orqkit?
+## 🎯 Why OrqKit?
 
-- **Production-Ready**: Built with Effect for robust error handling and composability
 - **Developer-Friendly**: Full TypeScript support with comprehensive type definitions
+- **Reusability**: Giving back to the community by sharing reusable tools and examples that we wrote initially for in-house use
 - **Platform Integration**: Seamlessly works with Orq AI platform, but fully functional standalone
+- **Continuous Integration**: Make it part of your CI/CD pipeline in order to run evaluations on every commit or pull request
 
 ## 🚀 Quick Start
 
@@ -70,6 +71,47 @@ orq evaluate my-eval.eval.ts
 bun run my-eval.eval.ts
 ```
 
+#### Output
+
+```bash
+orq evaluate ./examples/src/lib/eval-reuse.eval.ts
+
+Running evaluations:
+
+⚡ Running eval-reuse.eval.ts...
+⠋ Initializing evaluation...
+
+EVALUATION RESULTS
+
+Summary:
+┌──────────────────────┬─────────────────┐
+│ Metric               │ Value           │
+├──────────────────────┼─────────────────┤
+│ Total Data Points    │ 1               │
+├──────────────────────┼─────────────────┤
+│ Failed Data Points   │ 0               │
+├──────────────────────┼─────────────────┤
+│ Total Jobs           │ 1               │
+├──────────────────────┼─────────────────┤
+│ Failed Jobs          │ 0               │
+├──────────────────────┼─────────────────┤
+│ Success Rate         │ 100%            │
+└──────────────────────┴─────────────────┘
+
+Detailed Results:
+┌───────────────────────────────────────────────────────────┬─────────────────────────────────────────────┐
+│ Evaluators                                                │ text-analyzer                               │
+├───────────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ max-length-10                                             │ 100.0%                                      │
+└───────────────────────────────────────────────────────────┴─────────────────────────────────────────────┘
+
+💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.
+
+✔ ✓ Evaluation completed successfully
+
+✅ eval-reuse.eval.ts completed
+```
+
 ## 🔗 Integration with Orq Platform
 
 While our tools work great standalone, they shine when integrated with the [Orq AI platform](https://orq.ai):
@@ -77,7 +119,7 @@ While our tools work great standalone, they shine when integrated with the [Orq 
 - **Dataset Management**: Store and version your evaluation datasets
 - **Result Tracking**: Track evaluation results over time
 - **Team Collaboration**: Share evaluations and results with your team
-- **API Integration**: Use your Orq API key to access platform features
+- **API Integration**: Use your [Orq API key](https://my.orq.ai/) to access platform features
 
 ```typescript
 // Using Orq platform datasets
