@@ -20,6 +20,7 @@
     "examples"
   ],
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.58.0",
     "@orq-ai/node": "^3.9.26"
   }
 }

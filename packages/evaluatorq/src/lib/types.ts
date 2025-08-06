@@ -58,7 +58,7 @@ export interface EvaluatorParams {
     | {
         datasetId: string;
       }
-    | Promise<DataPoint>[];
+    | (Promise<DataPoint> | DataPoint)[];
   evaluators?: Evaluator[];
   jobs: Job[];
   parallelism?: number;

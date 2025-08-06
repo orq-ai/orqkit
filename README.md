@@ -37,27 +37,46 @@ npm install -g @orq-ai/cli
 ### Create Your First Evaluation
 
 ```typescript
-// my-eval.eval.ts
-import { evaluatorq } from "@orq-ai/evaluatorq";
+// example-llm.eval.ts
+import Anthropic from "@anthropic-ai/sdk";
+import { type DataPoint, evaluatorq, type Job } from "@orq-ai/evaluatorq";
 
-await evaluatorq("hello-world", {
+const claude = new Anthropic();
+
+const greet: Job = async (data: DataPoint) => {
+  const output = await claude.messages.create({
+    stream: false,
+    max_tokens: 100,
+    model: "claude-3-5-haiku-latest",
+    messages: [
+      { role: "user", content: `Hello My name is ${data.inputs.name}` },
+    ],
+  });
+
+  return {
+    name: "greet",
+    output: output.content[0].type === "text" ? output.content[0].text : "",
+  };
+};
+
+await evaluatorq("llm-greeting-eval", {
   data: [
     { inputs: { name: "Alice" } },
     { inputs: { name: "Bob" } },
+    // can mix sync and async data points
+    Promise.resolve({ inputs: { name: "Márk" } }),
   ],
-  jobs: [
-    async (data) => ({
-      name: "greeter",
-      output: `Hello, ${data.inputs.name}!`,
-    }),
-  ],
+  jobs: [greet],
   evaluators: [
     {
-      name: "friendly-check",
-      scorer: async ({ output }) => 
-        output.includes("Hello"),
+      name: "contains-name",
+      scorer: async ({ data, output }) => {
+        const name = data.inputs.name as string;
+        return typeof output === "string" && output.includes(name);
+      },
     },
   ],
+  parallelism: 2,
 });
 ```
 
@@ -65,21 +84,20 @@ await evaluatorq("hello-world", {
 
 ```bash
 # Using the CLI
-orq evaluate my-eval.eval.ts
+orq evaluate example-llm.eval.ts
 
 # Or directly with a runtime
-bun run my-eval.eval.ts
+bun run example-llm.eval.ts
 ```
 
 #### Output
 
 ```bash
-orq evaluate ./examples/src/lib/eval-reuse.eval.ts
-
+orq evaluate ./examples/src/lib/cli/example-llm.eval.ts
 Running evaluations:
 
-⚡ Running eval-reuse.eval.ts...
-⠋ Initializing evaluation...
+⚡ Running example-llm.eval.ts...
+⠙ Evaluating results 3/3 (100%) - Running evaluator: contains-name
 
 EVALUATION RESULTS
 
@@ -87,11 +105,11 @@ Summary:
 ┌──────────────────────┬─────────────────┐
 │ Metric               │ Value           │
 ├──────────────────────┼─────────────────┤
-│ Total Data Points    │ 1               │
+│ Total Data Points    │ 3               │
 ├──────────────────────┼─────────────────┤
 │ Failed Data Points   │ 0               │
 ├──────────────────────┼─────────────────┤
-│ Total Jobs           │ 1               │
+│ Total Jobs           │ 3               │
 ├──────────────────────┼─────────────────┤
 │ Failed Jobs          │ 0               │
 ├──────────────────────┼─────────────────┤
@@ -99,17 +117,17 @@ Summary:
 └──────────────────────┴─────────────────┘
 
 Detailed Results:
-┌───────────────────────────────────────────────────────────┬─────────────────────────────────────────────┐
-│ Evaluators                                                │ text-analyzer                               │
-├───────────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
-│ max-length-10                                             │ 100.0%                                      │
-└───────────────────────────────────────────────────────────┴─────────────────────────────────────────────┘
+┌──────────────────────────────────┬─────────────────────────┐
+│ Evaluators                       │ greet                   │
+├──────────────────────────────────┼─────────────────────────┤
+│ contains-name                    │ 100.0%                  │
+└──────────────────────────────────┴─────────────────────────┘
 
 💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.
 
 ✔ ✓ Evaluation completed successfully
 
-✅ eval-reuse.eval.ts completed
+✅ example-llm.eval.ts completed
 ```
 
 ## 🔗 Integration with Orq Platform
