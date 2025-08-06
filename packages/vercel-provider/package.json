@@ -1,10 +1,23 @@
 {
   "name": "@orq-ai/vercel-provider",
-  "version": "0.0.1",
+  "version": "1.0.0-9",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "UNLICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orq-ai/orqkit.git",
+    "directory": "packages/vercel-provider"
+  },
+  "homepage": "https://github.com/orq-ai/orqkit/tree/main/packages/vercel-provider#readme",
+  "bugs": {
+    "url": "https://github.com/orq-ai/orqkit/issues"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -14,10 +27,6 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "!**/*.tsbuildinfo"
-  ],
   "dependencies": {
     "@ai-sdk/provider": "^2.0.0",
     "@ai-sdk/openai-compatible": "^1.0.1",
