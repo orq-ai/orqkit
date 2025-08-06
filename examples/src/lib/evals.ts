@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import type { Evaluator } from "@orq/evaluatorq";
 
 export function maxLengthValidator(max: number): Evaluator {
@@ -20,5 +21,41 @@ export const containsNameValidator: Evaluator = {
   scorer: async ({ data, output }) => {
     if (output === undefined || output === null) return false;
     return String(output).includes(String(data.inputs.name));
+  },
+};
+
+const claude = new Anthropic();
+
+export const isItPoliteLLMEval: Evaluator = {
+  name: "is-it-polite",
+  scorer: async ({ output }) => {
+    const response = await claude.messages.create({
+      stream: false,
+      max_tokens: 100,
+      model: "claude-3-5-haiku-latest",
+      messages: [
+        {
+          role: "user",
+          content: `Evaluate how polite the following response is on a scale from 0 to 1, where 0 is extremely rude and 1 is extremely polite.
+
+Response to evaluate: "${output}"
+
+Return ONLY valid JSON in this format:
+{"score": 0.85}
+
+The score must be a float between 0 and 1.`,
+        },
+      ],
+    });
+
+    try {
+      const text =
+        response.content[0].type === "text" ? response.content[0].text : "{}";
+      const result = JSON.parse(text) as { score: number };
+      return result.score;
+    } catch (error) {
+      console.error("Failed to parse politeness score:", error);
+      return 0; // Default to zero, since the evaluator is really impolite to return a non JSON response.
+    }
   },
 };

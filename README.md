@@ -39,7 +39,9 @@ npm install -g @orq-ai/cli
 ```typescript
 // example-llm.eval.ts
 import Anthropic from "@anthropic-ai/sdk";
-import { type DataPoint, evaluatorq, type Job } from "@orq-ai/evaluatorq";
+import { type DataPoint, evaluatorq, type Job } from "@orq/evaluatorq";
+
+import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
 
 const claude = new Anthropic();
 
@@ -48,10 +50,16 @@ const greet: Job = async (data: DataPoint) => {
     stream: false,
     max_tokens: 100,
     model: "claude-3-5-haiku-latest",
+    system: `For testing purposes please be really lazy and sarcastic in your response, not polite at all.`,
     messages: [
-      { role: "user", content: `Hello My name is ${data.inputs.name}` },
+      {
+        role: "user",
+        content: `Hello My name is ${data.inputs.name}`,
+      },
     ],
   });
+
+  // LLM response: *sighs dramatically* Oh great, another Bob. Let me guess, you want me to care about something? Fine. Hi, Bob. What do you want?
 
   return {
     name: "greet",
@@ -59,24 +67,16 @@ const greet: Job = async (data: DataPoint) => {
   };
 };
 
-await evaluatorq("llm-greeting-eval", {
+await evaluatorq("dataset-evaluation", {
   data: [
     { inputs: { name: "Alice" } },
     { inputs: { name: "Bob" } },
-    // can mix sync and async data points
     Promise.resolve({ inputs: { name: "Márk" } }),
   ],
   jobs: [greet],
-  evaluators: [
-    {
-      name: "contains-name",
-      scorer: async ({ data, output }) => {
-        const name = data.inputs.name as string;
-        return typeof output === "string" && output.includes(name);
-      },
-    },
-  ],
+  evaluators: [containsNameValidator, isItPoliteLLMEval],
   parallelism: 2,
+  print: true,
 });
 ```
 
@@ -97,7 +97,7 @@ orq evaluate ./examples/src/lib/cli/example-llm.eval.ts
 Running evaluations:
 
 ⚡ Running example-llm.eval.ts...
-⠙ Evaluating results 3/3 (100%) - Running evaluator: contains-name
+⠏ Evaluating results 3/3 (100%) - Running evaluator: is-it-polite
 
 EVALUATION RESULTS
 
@@ -117,11 +117,13 @@ Summary:
 └──────────────────────┴─────────────────┘
 
 Detailed Results:
-┌──────────────────────────────────┬─────────────────────────┐
-│ Evaluators                       │ greet                   │
-├──────────────────────────────────┼─────────────────────────┤
-│ contains-name                    │ 100.0%                  │
-└──────────────────────────────────┴─────────────────────────┘
+┌──────────────────────────┬────────────────────────┐
+│ Evaluators               │ greet                  │
+├──────────────────────────┼────────────────────────┤
+│ contains-name            │ 100.0%                 │
+├──────────────────────────┼────────────────────────┤
+│ is-it-polite             │ 0.08                   │
+└──────────────────────────┴────────────────────────┘
 
 💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.
 

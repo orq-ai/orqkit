@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { type DataPoint, evaluatorq, type Job } from "@orq/evaluatorq";
 
-import { containsNameValidator } from "../evals.js";
+import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
 
 const claude = new Anthropic();
 
@@ -10,8 +10,12 @@ const greet: Job = async (data: DataPoint) => {
     stream: false,
     max_tokens: 100,
     model: "claude-3-5-haiku-latest",
+    system: `For testing purposes please be really lazy and sarcastic in your response, not polite at all.`,
     messages: [
-      { role: "user", content: `Hello My name is ${data.inputs.name}` },
+      {
+        role: "user",
+        content: `Hello My name is ${data.inputs.name}`,
+      },
     ],
   });
 
@@ -28,7 +32,7 @@ await evaluatorq("dataset-evaluation", {
     Promise.resolve({ inputs: { name: "Márk" } }),
   ],
   jobs: [greet],
-  evaluators: [containsNameValidator],
+  evaluators: [containsNameValidator, isItPoliteLLMEval],
   parallelism: 2,
   print: true,
 });
