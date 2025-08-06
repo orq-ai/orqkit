@@ -1,5 +1,5 @@
-import type { DataPoint } from "@orq/evaluatorq";
-import { evaluatorq } from "@orq/evaluatorq";
+import type { DataPoint } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
 
 // Simulate delays for realistic async operations
 function delay(ms: number): Promise<void> {

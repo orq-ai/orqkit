@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { type DataPoint, evaluatorq, type Job } from "@orq/evaluatorq";
+
+import { type DataPoint, evaluatorq, type Job } from "@orq-ai/evaluatorq";
 
 import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
 

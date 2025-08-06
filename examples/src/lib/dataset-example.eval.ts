@@ -1,5 +1,5 @@
-import type { DataPoint } from "@orq/evaluatorq";
-import { evaluatorq } from "@orq/evaluatorq";
+import type { DataPoint } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
 
 await evaluatorq("dataset-evaluation", {
   data: {

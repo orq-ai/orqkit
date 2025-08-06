@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { Evaluator } from "@orq/evaluatorq";
+
+import type { Evaluator } from "@orq-ai/evaluatorq";
 
 export function maxLengthValidator(max: number): Evaluator {
   return {
