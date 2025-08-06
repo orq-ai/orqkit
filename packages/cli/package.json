@@ -19,6 +19,10 @@
   "bin": {
     "orq": "./dist/bin/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public"
   },

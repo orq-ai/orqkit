@@ -184,6 +184,16 @@ bun run src/lib/dataset-example.ts
 
 We welcome contributions! Whether it's bug fixes, new features, or documentation improvements, please feel free to make a pull request.
 
+## 📦 Releases
+
+We release all packages to npm using nx under one version number.
+
+```bash
+# Publish the packages using nx. this will run the release workflow, increment the version, build the libraries and publish the packages to npm.
+# check the docs for more details: https://nx.dev/recipes/nx-release/release-npm-packages
+nx release publish
+```
+
 ### Have an idea?
 
 - **Create an issue**: If you have ideas for improvements or new features, please [create an issue](https://github.com/orq-ai/orqkit/issues/new) to discuss it
