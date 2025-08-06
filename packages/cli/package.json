@@ -1,14 +1,28 @@
 {
   "name": "@orq-ai/cli",
-  "version": "1.0.0-9",
+  "version": "1.0.0-11",
+  "description": "Command-line interface for discovering and running evaluation files with @orq-ai/evaluatorq, and working with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "UNLICENSE",
+  "keywords": [
+    "cli",
+    "ai",
+    "evaluation",
+    "testing",
+    "orq",
+    "orq-ai",
+    "typescript"
+  ],
   "bin": {
     "orq": "./dist/bin/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public"
   },

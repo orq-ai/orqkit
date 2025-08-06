@@ -41,27 +41,46 @@ npm install @orq-ai/vercel-provider
 ### Create Your First Evaluation
 
 ```typescript
-// my-eval.eval.ts
-import { evaluatorq } from "@orq-ai/evaluatorq";
+// example-llm.eval.ts
+import Anthropic from "@anthropic-ai/sdk";
+import { type DataPoint, evaluatorq, type Job } from "@orq/evaluatorq";
 
-await evaluatorq("hello-world", {
+import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
+
+const claude = new Anthropic();
+
+const greet: Job = async (data: DataPoint) => {
+  const output = await claude.messages.create({
+    stream: false,
+    max_tokens: 100,
+    model: "claude-3-5-haiku-latest",
+    system: `For testing purposes please be really lazy and sarcastic in your response, not polite at all.`,
+    messages: [
+      {
+        role: "user",
+        content: `Hello My name is ${data.inputs.name}`,
+      },
+    ],
+  });
+
+  // LLM response: *sighs dramatically* Oh great, another Bob. Let me guess, you want me to care about something? Fine. Hi, Bob. What do you want?
+
+  return {
+    name: "greet",
+    output: output.content[0].type === "text" ? output.content[0].text : "",
+  };
+};
+
+await evaluatorq("dataset-evaluation", {
   data: [
     { inputs: { name: "Alice" } },
     { inputs: { name: "Bob" } },
+    Promise.resolve({ inputs: { name: "Márk" } }),
   ],
-  jobs: [
-    async (data) => ({
-      name: "greeter",
-      output: `Hello, ${data.inputs.name}!`,
-    }),
-  ],
-  evaluators: [
-    {
-      name: "friendly-check",
-      scorer: async ({ output }) => 
-        output.includes("Hello"),
-    },
-  ],
+  jobs: [greet],
+  evaluators: [containsNameValidator, isItPoliteLLMEval],
+  parallelism: 2,
+  print: true,
 });
 ```
 
@@ -69,10 +88,10 @@ await evaluatorq("hello-world", {
 
 ```bash
 # Using the CLI
-orq evaluate my-eval.eval.ts
+orq evaluate example-llm.eval.ts
 
 # Or directly with a runtime
-bun run my-eval.eval.ts
+bun run example-llm.eval.ts
 ```
 
 ### Use Vercel AI SDK Provider
@@ -97,12 +116,11 @@ console.log(text);
 #### Output
 
 ```bash
-orq evaluate ./examples/src/lib/eval-reuse.eval.ts
-
+orq evaluate ./examples/src/lib/cli/example-llm.eval.ts
 Running evaluations:
 
-⚡ Running eval-reuse.eval.ts...
-⠋ Initializing evaluation...
+⚡ Running example-llm.eval.ts...
+⠏ Evaluating results 3/3 (100%) - Running evaluator: is-it-polite
 
 EVALUATION RESULTS
 
@@ -110,11 +128,11 @@ Summary:
 ┌──────────────────────┬─────────────────┐
 │ Metric               │ Value           │
 ├──────────────────────┼─────────────────┤
-│ Total Data Points    │ 1               │
+│ Total Data Points    │ 3               │
 ├──────────────────────┼─────────────────┤
 │ Failed Data Points   │ 0               │
 ├──────────────────────┼─────────────────┤
-│ Total Jobs           │ 1               │
+│ Total Jobs           │ 3               │
 ├──────────────────────┼─────────────────┤
 │ Failed Jobs          │ 0               │
 ├──────────────────────┼─────────────────┤
@@ -122,17 +140,19 @@ Summary:
 └──────────────────────┴─────────────────┘
 
 Detailed Results:
-┌───────────────────────────────────────────────────────────┬─────────────────────────────────────────────┐
-│ Evaluators                                                │ text-analyzer                               │
-├───────────────────────────────────────────────────────────┼─────────────────────────────────────────────┤
-│ max-length-10                                             │ 100.0%                                      │
-└───────────────────────────────────────────────────────────┴─────────────────────────────────────────────┘
+┌──────────────────────────┬────────────────────────┐
+│ Evaluators               │ greet                  │
+├──────────────────────────┼────────────────────────┤
+│ contains-name            │ 100.0%                 │
+├──────────────────────────┼────────────────────────┤
+│ is-it-polite             │ 0.08                   │
+└──────────────────────────┴────────────────────────┘
 
 💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.
 
 ✔ ✓ Evaluation completed successfully
 
-✅ eval-reuse.eval.ts completed
+✅ example-llm.eval.ts completed
 ```
 
 ## 🔗 Integration with Orq Platform
@@ -182,12 +202,22 @@ bun run src/lib/dataset-example.ts
 - [Evaluatorq Documentation](./packages/evaluatorq/README.md) - Core evaluation framework
 - [CLI Documentation](./packages/cli/README.md) - Command-line interface
 - [Vercel Provider Documentation](./packages/vercel-provider/README.md) - Vercel AI SDK provider
-- [Examples](./examples) - Sample evaluation implementations
+- [Examples](./examples/README.md) - Sample evaluation implementations
 - [Orq AI Platform Docs](https://docs.orq.ai) - Platform documentation
 
 ## 🤝 Contributing
 
 We welcome contributions! Whether it's bug fixes, new features, or documentation improvements, please feel free to make a pull request.
+
+## 📦 Releases
+
+We release all packages to npm using nx under one version number.
+
+```bash
+# Publish the packages using nx. this will run the release workflow, increment the version, build the libraries and publish the packages to npm.
+# check the docs for more details: https://nx.dev/recipes/nx-release/release-npm-packages
+nx release publish
+```
 
 ### Have an idea?
 

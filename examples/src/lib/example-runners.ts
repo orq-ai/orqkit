@@ -1,8 +1,6 @@
 import type { DataPoint } from "@orq/evaluatorq";
 import { evaluatorq } from "@orq/evaluatorq";
 
-export { runDatasetExample } from "./dataset-example.js";
-
 // Simulate delays for realistic async operations
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

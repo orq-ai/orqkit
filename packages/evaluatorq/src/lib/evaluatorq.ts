@@ -20,7 +20,7 @@ async function setupOrqClient(apiKey: string) {
   try {
     const client = await import("@orq-ai/node");
 
-    return new client.Orq({ apiKey, serverURL: "https://my.staging.orq.ai" });
+    return new client.Orq({ apiKey });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
     if (
@@ -79,7 +79,7 @@ export async function evaluatorq(
     orqClient = await setupOrqClient(orqApiKey);
   }
 
-  let dataPromises: Promise<DataPoint>[];
+  let dataPromises: (Promise<DataPoint> | DataPoint)[];
 
   // Handle datasetId case
   if ("datasetId" in data) {
@@ -90,7 +90,7 @@ export async function evaluatorq(
     }
     dataPromises = await fetchDatasetAsDataPoints(orqClient, data.datasetId);
   } else {
-    dataPromises = data as Promise<DataPoint>[];
+    dataPromises = data;
   }
 
   // Create Effect for processing all data points
@@ -113,7 +113,9 @@ export async function evaluatorq(
           dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
           ({ dataPromise, index }) =>
             processDataPointEffect(
-              dataPromise,
+              dataPromise instanceof Promise
+                ? dataPromise
+                : Promise.resolve(dataPromise),
               index,
               jobs,
               evaluators,
@@ -190,7 +192,7 @@ export const evaluatorqEffect = (
     });
   }
 
-  const dataPromises = data as Promise<DataPoint>[];
+  const dataPromises = data;
   return runEvaluationEffect(
     dataPromises,
     evaluators,
@@ -202,7 +204,7 @@ export const evaluatorqEffect = (
 
 // Extract common evaluation logic
 const runEvaluationEffect = (
-  dataPromises: Promise<DataPoint>[],
+  dataPromises: (Promise<DataPoint> | DataPoint)[],
   evaluators: EvaluatorParams["evaluators"] = [],
   jobs: Job[],
   parallelism: number,
@@ -227,7 +229,9 @@ const runEvaluationEffect = (
           dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
           ({ dataPromise, index }) =>
             processDataPointEffect(
-              dataPromise,
+              dataPromise instanceof Promise
+                ? dataPromise
+                : Promise.resolve(dataPromise),
               index,
               jobs,
               evaluators,

@@ -1,20 +1,7 @@
-import type { DataPoint, Evaluator, Job } from "@orq/evaluatorq";
+import type { DataPoint, Job } from "@orq/evaluatorq";
 import { evaluatorq } from "@orq/evaluatorq";
 
-function maxLengthValidator(max: number): Evaluator {
-  return {
-    name: `max-length-${max}`,
-    scorer: async ({ output }) => {
-      if (output === undefined || output === null) return false;
-      return (
-        (typeof output === "object" &&
-          "length" in output &&
-          Number(output.length) <= max) ??
-        false
-      );
-    },
-  };
-}
+import { maxLengthValidator } from "./evals.js";
 
 const textAnalysisJob: Job = async (data: DataPoint) => {
   const text = data.inputs.text || data.inputs.input || "";
