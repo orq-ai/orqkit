@@ -177,7 +177,7 @@ bun run src/lib/dataset-example.ts
 
 - [Evaluatorq Documentation](./packages/evaluatorq/README.md) - Core evaluation framework
 - [CLI Documentation](./packages/cli/README.md) - Command-line interface
-- [Examples](./examples) - Sample evaluation implementations
+- [Examples](./examples/README.md) - Sample evaluation implementations
 - [Orq AI Platform Docs](https://docs.orq.ai) - Platform documentation
 
 ## 🤝 Contributing

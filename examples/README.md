@@ -1,10 +1,10 @@
-# @orq-ai/evaluatorq Examples
+# 📚 @orq-ai/evaluatorq Examples
 
 This directory contains various examples demonstrating the capabilities of the `@orq-ai/evaluatorq` library.
 
-## Examples Overview
+## 🎯 Examples Overview
 
-### Basic Examples
+### 📝 Basic Examples
 
 #### [examples.ts](src/lib/examples.ts)
 Entry point for running different example types. Run with:
@@ -16,14 +16,15 @@ bun run src/lib/examples.ts
 Contains the simulated delay example implementation:
 - **Simulated Delay Example**: Demonstrates async job processing with simulated LLM responses, context retrieval, and multiple evaluators with realistic delays
 
-### Utility Modules
+### 🛠️ Utility Modules
 
 #### [evals.ts](src/lib/evals.ts)
 Provides reusable evaluator functions:
 - `maxLengthValidator`: Factory function for creating max length validators
 - `containsNameValidator`: Evaluator that checks if output contains the input name
+- `isItPoliteLLMEval`: LLM-based evaluator that scores politeness (0-1 scale)
 
-### Specialized Examples
+### ⚡ Specialized Examples
 
 #### [eval-reuse.eval.ts](src/lib/eval-reuse.eval.ts)
 Demonstrates reusable evaluation patterns:
@@ -39,7 +40,7 @@ Shows how to:
 - Implement custom evaluators for validation and scoring
 - Process evaluation results with summary statistics
 
-### CLI Integration Examples
+### 🖥️ CLI Integration Examples
 
 The `cli/` folder contains examples of using evaluatorq with the Orq CLI:
 
@@ -57,16 +58,16 @@ Demonstrates real LLM integration:
 - Implements a politeness LLM-based evaluator
 - Configurable parallelism for concurrent API calls
 
-## Running the Examples
+## 🚀 Running the Examples
 
-### Prerequisites
+### 📋 Prerequisites
 
 For dataset examples, set your Orq API key:
 ```bash
 export ORQ_API_KEY="your-api-key"
 ```
 
-### Running Individual Examples
+### ▶️ Running Individual Examples
 
 ```bash
 # Run simulated delay example (default)
@@ -86,7 +87,7 @@ cd src/lib/cli
 ./eval-cli.sh
 ```
 
-## Key Concepts Demonstrated
+## 💡 Key Concepts Demonstrated
 
 ### 1. **Parallel Processing**
 All examples use `parallelism` parameter to process multiple data points concurrently, improving performance.

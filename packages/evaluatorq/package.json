@@ -1,6 +1,7 @@
 {
   "name": "@orq-ai/evaluatorq",
   "version": "1.0.0-9",
+  "description": "Evaluation framework with Effect-based architecture for running parallel AI evaluations",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -9,6 +10,17 @@
     "access": "public"
   },
   "license": "UNLICENSE",
+  "keywords": [
+    "ai",
+    "evaluation",
+    "testing",
+    "llm",
+    "effect",
+    "parallel",
+    "orq",
+    "orq-ai",
+    "typescript"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/orq-ai/orqkit.git",

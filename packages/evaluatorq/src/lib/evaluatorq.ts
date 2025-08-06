@@ -20,7 +20,7 @@ async function setupOrqClient(apiKey: string) {
   try {
     const client = await import("@orq-ai/node");
 
-    return new client.Orq({ apiKey, serverURL: "https://my.staging.orq.ai" });
+    return new client.Orq({ apiKey });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
     if (
