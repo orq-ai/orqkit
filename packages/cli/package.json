@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/cli",
-  "version": "1.0.0-11",
+  "version": "1.0.0-12",
   "description": "Command-line interface for discovering and running evaluation files with @orq-ai/evaluatorq, and working with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
