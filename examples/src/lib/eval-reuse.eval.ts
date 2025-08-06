@@ -1,5 +1,5 @@
-import type { DataPoint, Job } from "@orq/evaluatorq";
-import { evaluatorq } from "@orq/evaluatorq";
+import type { DataPoint, Job } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
 
 import { maxLengthValidator } from "./evals.js";
 
