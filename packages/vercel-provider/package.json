@@ -1,14 +1,31 @@
 {
   "name": "@orq-ai/vercel-provider",
   "version": "1.0.0-9",
+  "description": "Vercel AI SDK provider for seamless integration with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "license": "UNLICENSE",
+  "keywords": [
+    "ai",
+    "vercel",
+    "vercel-ai",
+    "provider",
+    "llm",
+    "openai",
+    "gpt",
+    "orq",
+    "orq-ai",
+    "typescript"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/orq-ai/orqkit.git",
@@ -31,5 +48,13 @@
     "@ai-sdk/provider": "^2.0.0",
     "@ai-sdk/openai-compatible": "^1.0.1",
     "@ai-sdk/provider-utils": "^3.0.0"
+  },
+  "peerDependencies": {
+    "ai": "^3.0.0 || ^4.0.0 || ^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ai": {
+      "optional": false
+    }
   }
 }

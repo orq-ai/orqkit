@@ -13,11 +13,19 @@ A Vercel AI SDK provider for Orq AI platform that enables seamless integration o
 ## 📥 Installation
 
 ```bash
-npm install @orq-ai/vercel-provider
+npm install @orq-ai/vercel-provider ai
 # or
-yarn add @orq-ai/vercel-provider
+yarn add @orq-ai/vercel-provider ai
 # or
-bun add @orq-ai/vercel-provider
+bun add @orq-ai/vercel-provider ai
+```
+
+### Peer Dependencies
+
+This package requires the Vercel AI SDK:
+
+```bash
+npm install ai
 ```
 
 ## 🚀 Quick Start
