@@ -1,0 +1,358 @@
+---
+title: Orq AI
+---
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+
+# Orq AI Provider
+
+The [Orq AI](https://orq.ai) provider for the AI SDK enables access to Orq AI's unified platform for AI model deployment and routing.
+With Orq AI, you can access multiple AI models through a single API endpoint, with automatic routing, optimization, and monitoring capabilities.
+
+## Setup
+
+The Orq AI provider is available via the `@orq-ai/vercel-provider` module. You can install it with:
+
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">npm</TabsTrigger>
+    <TabsTrigger value="pnpm">pnpm</TabsTrigger>
+    <TabsTrigger value="yarn">yarn</TabsTrigger>
+    <TabsTrigger value="bun">bun</TabsTrigger>
+  </TabsList>
+  <TabsContent value="npm">
+    ```bash
+    npm install @orq-ai/vercel-provider
+    ```
+  </TabsContent>
+  <TabsContent value="pnpm">
+    ```bash
+    pnpm add @orq-ai/vercel-provider
+    ```
+  </TabsContent>
+  <TabsContent value="yarn">
+    ```bash
+    yarn add @orq-ai/vercel-provider
+    ```
+  </TabsContent>
+  <TabsContent value="bun">
+    ```bash
+    bun add @orq-ai/vercel-provider
+    ```
+  </TabsContent>
+</Tabs>
+
+## Provider Instance
+
+You can import the default provider instance `orq` from `@orq-ai/vercel-provider`:
+
+```ts
+import { orq } from '@orq-ai/vercel-provider';
+```
+
+If you need to customize the provider, you can create your own instance with `createOrqAiProvider`:
+
+```ts
+import { createOrqAiProvider } from '@orq-ai/vercel-provider';
+
+const orq = createOrqAiProvider({
+  apiKey: process.env.ORQ_API_KEY ?? '',
+  // optional base URL for custom deployments
+  baseURL: 'https://api.orq.ai/v2/proxy',
+  // optional additional headers
+  headers: {
+    'X-Custom-Header': 'value',
+  },
+});
+```
+
+## Language Models
+
+Orq AI supports a wide range of language models from various providers, all accessible through a unified interface.
+
+### Chat Models
+
+You can create models using the provider instance.
+The first argument is the model id.
+Chat models are the default type when using the provider instance.
+
+```ts
+const model = orq('gpt-4o');
+```
+
+Or explicitly using the `chatModel` method:
+
+```ts
+const model = orq.chatModel('gpt-4o');
+```
+
+### Completion Models
+
+For text completion models:
+
+```ts
+const model = orq.completionModel('gpt-3.5-turbo-instruct');
+```
+
+### Examples
+
+<Tabs defaultValue="generateText">
+  <TabsList>
+    <TabsTrigger value="generateText">generateText</TabsTrigger>
+    <TabsTrigger value="streamText">streamText</TabsTrigger>
+    <TabsTrigger value="generateObject">generateObject</TabsTrigger>
+    <TabsTrigger value="tools">Tool Calling</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="generateText">
+    ```ts
+    import { generateText } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+
+    const { text } = await generateText({
+      model: orq('gpt-4o'),
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: 'What is the capital of France?' },
+      ],
+    });
+    ```
+  </TabsContent>
+  
+  <TabsContent value="streamText">
+    ```ts
+    import { streamText } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+
+    const { textStream } = await streamText({
+      model: orq('gpt-4o'),
+      messages: [
+        { role: 'user', content: 'Tell me a story about a brave knight' },
+      ],
+    });
+
+    for await (const chunk of textStream) {
+      console.log(chunk);
+    }
+    ```
+  </TabsContent>
+  
+  <TabsContent value="generateObject">
+    ```ts
+    import { generateObject } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+    import { z } from 'zod';
+
+    const { object } = await generateObject({
+      model: orq('gpt-4o'),
+      schema: z.object({
+        name: z.string(),
+        age: z.number(),
+        email: z.string().email(),
+      }),
+      prompt: 'Generate a random person profile',
+    });
+    ```
+  </TabsContent>
+  
+  <TabsContent value="tools">
+    ```ts
+    import { generateText } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+    import { z } from 'zod';
+
+    const { text } = await generateText({
+      model: orq('gpt-4o'),
+      messages: [
+        { role: 'user', content: 'What is the weather in San Francisco?' },
+      ],
+      tools: {
+        getWeather: {
+          description: 'Get the current weather for a location',
+          parameters: z.object({
+            location: z.string().describe('The city and state'),
+          }),
+          execute: async ({ location }) => {
+            const weather = await fetchWeather(location);
+            return `The weather in ${location} is ${weather}`;
+          },
+        },
+      },
+    });
+    ```
+  </TabsContent>
+</Tabs>
+
+## Embedding Models
+
+Orq AI provides access to various embedding models for semantic search and similarity computations.
+
+### Text Embedding Models
+
+```ts
+const model = orq.textEmbeddingModel('text-embedding-ada-002');
+```
+
+### Examples
+
+<Tabs defaultValue="embed">
+  <TabsList>
+    <TabsTrigger value="embed">Single Embedding</TabsTrigger>
+    <TabsTrigger value="embedMany">Multiple Embeddings</TabsTrigger>
+    <TabsTrigger value="similarity">Similarity</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="embed">
+    ```ts
+    import { embed } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+
+    const { embedding } = await embed({
+      model: orq.textEmbeddingModel('text-embedding-ada-002'),
+      value: 'The quick brown fox jumps over the lazy dog',
+    });
+    ```
+  </TabsContent>
+  
+  <TabsContent value="embedMany">
+    ```ts
+    import { embedMany } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+
+    const { embeddings } = await embedMany({
+      model: orq.textEmbeddingModel('text-embedding-ada-002'),
+      values: [
+        'First document about AI',
+        'Second document about machine learning',
+        'Third document about deep learning',
+      ],
+    });
+    ```
+  </TabsContent>
+  
+  <TabsContent value="similarity">
+    ```ts
+    import { embed, cosineSimilarity } from 'ai';
+    import { orq } from '@orq-ai/vercel-provider';
+
+    const model = orq.textEmbeddingModel('text-embedding-ada-002');
+
+    const { embedding: embedding1 } = await embed({
+      model,
+      value: 'Machine learning is amazing',
+    });
+
+    const { embedding: embedding2 } = await embed({
+      model,
+      value: 'AI is revolutionary',
+    });
+
+    const similarity = cosineSimilarity(embedding1, embedding2);
+    console.log('Similarity:', similarity);
+    ```
+  </TabsContent>
+</Tabs>
+
+## Image Models
+
+Orq AI supports image generation models for creating images from text prompts.
+
+### Image Generation Models
+
+```ts
+const model = orq.imageModel('dall-e-3');
+```
+
+### Examples
+
+```ts
+import { orq } from '@orq-ai/vercel-provider';
+
+const model = orq.imageModel('dall-e-3');
+
+const result = await model.doGenerate({
+  prompt: 'A futuristic city with flying cars at sunset',
+  n: 1,
+  size: '1024x1024',
+  quality: 'hd',
+  style: 'vivid',
+});
+
+console.log(result.images[0].url);
+```
+
+## Model Capabilities
+
+Orq AI supports models with various capabilities:
+
+<Card>
+  <div className="space-y-4">
+    <div>
+      <h3 className="font-semibold">Language Models</h3>
+      <ul className="list-disc pl-6 mt-2">
+        <li>OpenAI models (GPT-4, GPT-3.5, etc.)</li>
+        <li>Anthropic Claude models</li>
+        <li>Google Gemini models</li>
+        <li>Meta Llama models</li>
+        <li>And many more...</li>
+      </ul>
+    </div>
+    <div>
+      <h3 className="font-semibold">Features</h3>
+      <ul className="list-disc pl-6 mt-2">
+        <li>Streaming responses</li>
+        <li>Tool/Function calling</li>
+        <li>Structured output generation</li>
+        <li>Multi-modal inputs (where supported)</li>
+      </ul>
+    </div>
+  </div>
+</Card>
+
+## Advanced Configuration
+
+### Custom Headers and Authentication
+
+```ts
+const orq = createOrqAiProvider({
+  apiKey: process.env.ORQ_API_KEY ?? '',
+  headers: {
+    'X-Organization-Id': 'org-123',
+    'X-Project-Id': 'project-456',
+  },
+});
+```
+
+### Error Handling
+
+```ts
+import { generateText } from 'ai';
+import { orq } from '@orq-ai/vercel-provider';
+
+try {
+  const { text } = await generateText({
+    model: orq('gpt-4o'),
+    messages: [{ role: 'user', content: 'Hello' }],
+  });
+} catch (error) {
+  if (error.code === 'RATE_LIMIT_EXCEEDED') {
+    // Handle rate limiting
+  } else if (error.code === 'INVALID_API_KEY') {
+    // Handle authentication errors
+  }
+  // Handle other errors
+}
+```
+
+## Platform Features
+
+Orq AI provides additional platform features beyond model access:
+
+- **Automatic Model Routing**: Intelligently route requests to the best available model
+- **Performance Monitoring**: Track latency, cost, and quality metrics
+- **A/B Testing**: Test different models and configurations
+- **Fallback Handling**: Automatic failover to backup models
+- **Cost Optimization**: Optimize for performance vs. cost trade-offs
+
+Learn more about Orq AI's platform features at [orq.ai](https://orq.ai).
