@@ -284,8 +284,8 @@ export const knowledgeBaseSearchProperties: INodeProperties[] = [
           {
             name: "Hybrid Search",
             value: "hybrid_search",
-          }
-        ]
+          },
+        ],
       },
     ],
   },
