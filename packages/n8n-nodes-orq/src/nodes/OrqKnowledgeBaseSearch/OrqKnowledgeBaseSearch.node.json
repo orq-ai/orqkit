@@ -1,0 +1,18 @@
+{
+  "node": "@orq-ai/n8n-nodes-orq.orqKnowledgeBaseSearch",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["AI", "Development"],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://docs.orq.ai"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://docs.orq.ai/reference/searchknowledge"
+      }
+    ]
+  }
+}
