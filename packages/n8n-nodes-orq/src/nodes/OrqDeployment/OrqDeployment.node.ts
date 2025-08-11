@@ -1,4 +1,5 @@
 import type {
+  IDataObject,
   IExecuteFunctions,
   ILoadOptionsFunctions,
   INodeExecutionData,
@@ -98,7 +99,7 @@ export class OrqDeployment implements INodeType {
         Validators.validateCredentials(credentials, this.getNode());
 
         const response = await invokeDeployment(this, body);
-        const responseData = {
+        const responseData: IDataObject = {
           id: response.id,
           created: response.created,
           object: response.object,
@@ -109,21 +110,31 @@ export class OrqDeployment implements INodeType {
           finalized: response.finalized,
           systemFingerprint: response.systemFingerprint,
           retrievals: response.retrievals,
-          providerResponse: response.providerResponse,
+          providerResponse: response.providerResponse as
+            | IDataObject
+            | undefined,
           choices: response.choices,
         };
         returnData.push({
           json: responseData,
           pairedItem: { item: i },
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorObj = error as Error & {
+          response?: { status?: number; data?: { message?: string } };
+          statusCode?: number;
+          description?: string;
+          message?: string;
+        };
+
         if (this.continueOnFail()) {
           returnData.push({
             json: {
-              error: error.message || "Request failed",
+              error: errorObj.message || "Request failed",
               statusCode:
-                error.response?.status || error.statusCode || "Unknown",
-              details: error.response?.data || error.description || undefined,
+                errorObj.response?.status || errorObj.statusCode || "Unknown",
+              details:
+                errorObj.response?.data || errorObj.description || undefined,
             },
             pairedItem: { item: i },
           });
@@ -132,9 +143,9 @@ export class OrqDeployment implements INodeType {
 
         throw new NodeOperationError(
           this.getNode(),
-          error.message || "Request failed",
+          errorObj.message || "Request failed",
           {
-            description: `${error.response?.data?.message || error.description}`,
+            description: `${errorObj.response?.data?.message || errorObj.description}`,
           },
         );
       }

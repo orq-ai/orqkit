@@ -3,6 +3,7 @@ import type { IExecuteFunctions } from "n8n-workflow";
 import { ValidationError } from "./errors";
 import type {
   AndFilter,
+  FilterOperator,
   OrFilter,
   SearchFilter,
   SearchFilterRecord,
@@ -102,8 +103,7 @@ export class FilterBuilder {
   private static createFilterValue(
     operator: string,
     value: unknown,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any {
+  ): FilterOperator | string | number | boolean {
     if (operator === "in" || operator === "nin") {
       const arrayValues = InputValidator.parseArrayValue(String(value));
       return { [operator]: arrayValues };

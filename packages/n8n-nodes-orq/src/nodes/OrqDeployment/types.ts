@@ -129,8 +129,8 @@ export interface OrqApiResponse {
   integrationId?: string;
   finalized?: Date | string;
   systemFingerprint?: string;
-  retrievals?: any[];
-  providerResponse?: any;
+  retrievals?: unknown[];
+  providerResponse?: unknown;
   choices: OrqChoice[];
 }
 
