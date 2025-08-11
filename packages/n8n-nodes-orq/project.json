@@ -23,6 +23,8 @@
     "typecheck": {
       "executor": "@nx/js:tsc",
       "options": {
+        "main": "packages/n8n-nodes-orq/src/index.ts",
+        "outputPath": "packages/n8n-nodes-orq/dist",
         "tsConfig": "packages/n8n-nodes-orq/tsconfig.lib.json",
         "noEmit": true
       }
