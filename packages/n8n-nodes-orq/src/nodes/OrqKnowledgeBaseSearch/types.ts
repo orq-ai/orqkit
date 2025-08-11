@@ -29,6 +29,7 @@ export interface IOrqKnowledgeBaseSearchRequest {
   query: string;
   top_k?: number;
   threshold?: number;
+  search_type?: string;
   filter_by?: SearchFilter;
   search_options?: {
     include_scores?: boolean;

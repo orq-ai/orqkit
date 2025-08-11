@@ -265,6 +265,28 @@ export const knowledgeBaseSearchProperties: INodeProperties[] = [
         validateType: "number",
         hint: "Enter a number between 0 and 1",
       },
+      {
+        displayName: "Search Type",
+        name: "search_type",
+        type: "options",
+        default: null,
+        description:
+          "The type of search to perform. If not provided, will default to hybrid search",
+        options: [
+          {
+            name: "Vector Search",
+            value: "vector_search",
+          },
+          {
+            name: "Keyword Search",
+            value: "keyword_search",
+          },
+          {
+            name: "Hybrid Search",
+            value: "hybrid_search",
+          }
+        ]
+      },
     ],
   },
 ];

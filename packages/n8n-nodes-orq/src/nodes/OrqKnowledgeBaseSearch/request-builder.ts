@@ -7,6 +7,7 @@ import { InputValidator } from "./validators";
 interface AdditionalOptions {
   top_k?: number;
   threshold?: number;
+  search_type?: string;
 }
 
 export function buildSearchRequest(
@@ -39,6 +40,10 @@ export function buildSearchRequest(
       context.getNode(),
       additionalOptions.threshold,
     );
+  }
+
+  if (additionalOptions.search_type !== undefined) {
+    request.search_type = additionalOptions.search_type;
   }
 
   const metadataFilterType = context.getNodeParameter(

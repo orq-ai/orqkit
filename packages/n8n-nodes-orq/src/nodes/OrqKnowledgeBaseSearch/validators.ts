@@ -120,6 +120,10 @@ export function validateSearchRequest(
     validated.search_options = request.search_options;
   }
 
+  if (request.search_type !== undefined) {
+    validated.search_type = request.search_type;
+  }
+
   return validated;
 }
 
