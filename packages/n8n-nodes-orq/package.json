@@ -1,51 +1,51 @@
 {
-	"name": "@orq-ai/n8n-nodes-orq",
-	"version": "1.0.4",
-	"description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
-	"keywords": [
-		"n8n-community-node-package",
-		"n8n",
-		"orq",
-		"ai",
-		"llm",
-		"deployment"
-	],
-	"license": "MIT",
-	"homepage": "https://github.com/orq-ai/orq-n8n",
-	"author": {
-		"name": "orq.ai"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/orq-ai/orq-n8n.git"
-	},
-	"engines": {
-		"node": ">=20.15"
-	},
-	"main": "dist/src/index.js",
-	"scripts": {
-		"build": "bunx nx build n8n-nodes-orq",
-		"dev": "bunx nx dev n8n-nodes-orq",
-		"typecheck": "bunx nx typecheck n8n-nodes-orq",
-		"test:local": "bunx nx test:local n8n-nodes-orq"
-	},
-	"files": [
-		"dist"
-	],
-	"n8n": {
-		"n8nNodesApiVersion": 1,
-		"credentials": [
-			"dist/src/credentials/OrqApi.credentials.js"
-		],
-		"nodes": [
-			"dist/src/nodes/OrqDeployment/OrqDeployment.node.js",
-			"dist/src/nodes/OrqKnowledgeBaseSearch/OrqKnowledgeBaseSearch.node.js"
-		]
-	},
-	"devDependencies": {
-		"n8n-workflow": "^1.103.0"
-	},
-	"peerDependencies": {
-		"n8n-workflow": "^1.99.1"
-	}
+  "name": "@orq-ai/n8n-nodes-orq",
+  "version": "1.0.4",
+  "description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "orq",
+    "ai",
+    "llm",
+    "deployment"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/orq-ai/orq-n8n",
+  "author": {
+    "name": "orq.ai"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orq-ai/orq-n8n.git"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "bunx nx build n8n-nodes-orq",
+    "dev": "bunx nx dev n8n-nodes-orq",
+    "typecheck": "bunx nx typecheck n8n-nodes-orq",
+    "test:local": "bunx nx test:local n8n-nodes-orq"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/src/credentials/OrqApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/src/nodes/OrqDeployment/OrqDeployment.node.js",
+      "dist/src/nodes/OrqKnowledgeBaseSearch/OrqKnowledgeBaseSearch.node.js"
+    ]
+  },
+  "devDependencies": {
+    "n8n-workflow": "^1.103.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "^1.99.1"
+  }
 }

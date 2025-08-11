@@ -1,3 +1,3 @@
 export function n8nNodesOrq(): string {
-  return 'n8n-nodes-orq';
+  return "n8n-nodes-orq";
 }

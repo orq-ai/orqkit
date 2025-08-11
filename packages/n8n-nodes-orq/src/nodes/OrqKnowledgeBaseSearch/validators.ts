@@ -51,10 +51,7 @@ export function validateQuery(node: INode, query: unknown): string {
   return trimmedQuery;
 }
 
-export function validateTopK(
-  node: INode,
-  topK: unknown,
-): number | undefined {
+export function validateTopK(node: INode, topK: unknown): number | undefined {
   if (topK === undefined || topK === null || topK === "") {
     return undefined;
   }

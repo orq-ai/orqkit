@@ -1,18 +1,18 @@
 {
-	"node": "@orq-ai/n8n-nodes-orq.orqDeployment",
-	"nodeVersion": "1.0",
-	"codexVersion": "1.0",
-	"categories": ["AI", "Development"],
-	"resources": {
-		"credentialDocumentation": [
-			{
-				"url": "https://docs.orq.ai/authentication"
-			}
-		],
-		"primaryDocumentation": [
-			{
-				"url": "https://docs.orq.ai/reference/deploymentinvoke-1"
-			}
-		]
-	}
+  "node": "@orq-ai/n8n-nodes-orq.orqDeployment",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["AI", "Development"],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://docs.orq.ai/authentication"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://docs.orq.ai/reference/deploymentinvoke-1"
+      }
+    ]
+  }
 }
