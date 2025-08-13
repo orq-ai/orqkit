@@ -31,9 +31,17 @@ export interface DataPoint {
 }
 
 /**
+ * A job function that processes data and returns output.
+ * Use the `job` helper to create named jobs from these functions.
+ *
  * @param data - The data to evaluate.
  * @param row - The row number of the data.
  * @returns The output of the job.
+ *
+ * @example
+ * const processData = job("processData", async (data) => {
+ *   return data.inputs.text.toUpperCase();
+ * });
  */
 export type Job = (
   data: DataPoint,
@@ -52,6 +60,8 @@ export type Job = (
  * @param jobs - The jobs to run.
  * @param parallelism - The number of jobs to run in parallel. If not provided, we will run the jobs sequentially.
  * @param print - Whether to print the results in a table format to the console. Defaults to true.
+ * @param sendResults - Whether to send the results to Orq platform. Defaults to true when ORQ_API_KEY is set, false otherwise.
+ * @param description - Optional description for the evaluation run.
  */
 export interface EvaluatorParams {
   data:
@@ -63,6 +73,8 @@ export interface EvaluatorParams {
   jobs: Job[];
   parallelism?: number;
   print?: boolean;
+  sendResults?: boolean;
+  description?: string;
 }
 
 export type Evaluator = {

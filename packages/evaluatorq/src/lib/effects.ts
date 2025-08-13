@@ -163,12 +163,15 @@ export function processJobEffect(
       evaluatorScores: [],
     };
   }).pipe(
-    Effect.catchAll((error) =>
-      Effect.succeed({
-        jobName: "Unknown", // We don't know the job name if it threw before returning
+    Effect.catchAll((error) => {
+      // Check if the error has a jobName property (set by our job helper)
+      const errorWithJobName = error as Error & { jobName?: string };
+      const jobName = errorWithJobName.jobName || "Unknown";
+      return Effect.succeed({
+        jobName,
         output: null,
         error,
-      }),
-    ),
+      });
+    }),
   );
 }
