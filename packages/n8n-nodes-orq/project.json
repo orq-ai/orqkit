@@ -4,31 +4,6 @@
   "sourceRoot": "packages/n8n-nodes-orq/src",
   "projectType": "library",
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "packages/n8n-nodes-orq/dist",
-        "main": "packages/n8n-nodes-orq/src/index.ts",
-        "tsConfig": "packages/n8n-nodes-orq/tsconfig.lib.json",
-        "assets": [
-          {
-            "input": "packages/n8n-nodes-orq/src",
-            "glob": "**/*.{svg,png,json}",
-            "output": "src"
-          }
-        ]
-      }
-    },
-    "typecheck": {
-      "executor": "@nx/js:tsc",
-      "options": {
-        "main": "packages/n8n-nodes-orq/src/index.ts",
-        "outputPath": "packages/n8n-nodes-orq/dist",
-        "tsConfig": "packages/n8n-nodes-orq/tsconfig.lib.json",
-        "noEmit": true
-      }
-    },
     "dev": {
       "command": "tsc --watch",
       "options": {

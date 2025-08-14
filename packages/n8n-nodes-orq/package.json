@@ -2,36 +2,56 @@
   "name": "@orq-ai/n8n-nodes-orq",
   "version": "1.0.4",
   "description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "UNLICENSE",
   "keywords": [
     "n8n-community-node-package",
     "n8n",
     "orq",
+    "orq-ai",
     "ai",
     "llm",
-    "deployment"
+    "deployment",
+    "typescript"
   ],
-  "license": "MIT",
-  "homepage": "https://github.com/orq-ai/orq-n8n",
-  "author": {
-    "name": "orq.ai"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/orq-ai/orq-n8n.git"
+    "url": "https://github.com/orq-ai/orqkit.git",
+    "directory": "packages/n8n-nodes-orq"
+  },
+  "homepage": "https://github.com/orq-ai/orqkit/tree/main/packages/n8n-nodes-orq#readme",
+  "bugs": {
+    "url": "https://github.com/orq-ai/orqkit/issues"
+  },
+  "author": {
+    "name": "orq.ai"
   },
   "engines": {
     "node": ">=20.15"
   },
-  "main": "dist/src/index.js",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    }
+  },
   "scripts": {
-    "build": "bunx nx build n8n-nodes-orq",
     "dev": "bunx nx dev n8n-nodes-orq",
-    "typecheck": "bunx nx typecheck n8n-nodes-orq",
     "test:local": "bunx nx test:local n8n-nodes-orq"
   },
-  "files": [
-    "dist"
-  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
