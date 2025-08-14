@@ -288,7 +288,9 @@ function createResultsDisplay(results: EvaluatorqResult): string {
 
   // Calculate column widths
   const minColWidths = [20]; // First column for evaluator names
-  jobNames.forEach(() => minColWidths.push(15)); // Job columns
+  jobNames.forEach(() => {
+    minColWidths.push(15);
+  }); // Job columns
 
   const rows: Array<{ main: string[]; details?: string[] }> = [];
 
@@ -316,6 +318,33 @@ function createResultsDisplay(results: EvaluatorqResult): string {
   return renderDetailedTable(headers, rows, responsiveWidths);
 }
 
+// Collect and format error messages
+function collectErrors(results: EvaluatorqResult): string[] {
+  const errors: string[] = [];
+
+  results.forEach((result, idx) => {
+    if (result.error) {
+      errors.push(`• Data point ${idx + 1}: ${result.error.message}`);
+    }
+
+    result.jobResults?.forEach((job) => {
+      if (job.error) {
+        errors.push(`• Job "${job.jobName}": ${job.error.message}`);
+      }
+
+      job.evaluatorScores?.forEach((score) => {
+        if (score.error) {
+          errors.push(
+            `• Evaluator "${score.evaluatorName}": ${score.error.message}`,
+          );
+        }
+      });
+    });
+  });
+
+  return errors;
+}
+
 export const displayResultsTableEffect = (
   results: EvaluatorqResult,
 ): Effect.Effect<void, never, never> =>
@@ -341,6 +370,16 @@ export const displayResultsTableEffect = (
     console.log(chalk.bold.white("Detailed Results:"));
     console.log(createResultsDisplay(results));
     console.log("");
+
+    // Show errors if any
+    const errors = collectErrors(results);
+    if (errors.length > 0) {
+      console.log(chalk.bold.red("Errors:"));
+      errors.forEach((error) => {
+        console.log(chalk.red(error));
+      });
+      console.log("");
+    }
 
     // Show tip
     console.log(chalk.dim("💡 Tip: Use print:false to get raw JSON results."));
