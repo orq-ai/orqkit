@@ -14,6 +14,9 @@
     },
     {
       "path": "./packages/vercel-provider"
+    },
+    {
+      "path": "./packages/n8n-nodes-orq"
     }
   ]
 }

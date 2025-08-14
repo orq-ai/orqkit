@@ -1,0 +1,60 @@
+{
+  "name": "@orq-ai/n8n-nodes-orq",
+  "version": "1.0.4",
+  "description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "UNLICENSE",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "orq",
+    "orq-ai",
+    "ai",
+    "llm",
+    "deployment",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orq-ai/orqkit.git",
+    "directory": "packages/n8n-nodes-orq"
+  },
+  "homepage": "https://github.com/orq-ai/orqkit/tree/main/packages/n8n-nodes-orq#readme",
+  "bugs": {
+    "url": "https://github.com/orq-ai/orqkit/issues"
+  },
+  "author": {
+    "name": "orq.ai"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "scripts": {
+    "dev": "bunx nx dev n8n-nodes-orq",
+    "test:local": "bunx nx test:local n8n-nodes-orq"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/src/credentials/OrqApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/src/nodes/OrqDeployment/OrqDeployment.node.js",
+      "dist/src/nodes/OrqKnowledgeBaseSearch/OrqKnowledgeBaseSearch.node.js"
+    ]
+  },
+  "devDependencies": {
+    "n8n-workflow": "^1.103.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "^1.99.1"
+  }
+}

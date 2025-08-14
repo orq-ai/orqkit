@@ -1,0 +1,26 @@
+{
+  "name": "n8n-nodes-orq",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/n8n-nodes-orq/src",
+  "projectType": "library",
+  "targets": {
+    "dev": {
+      "command": "tsc --watch",
+      "options": {
+        "cwd": "packages/n8n-nodes-orq"
+      }
+    },
+    "test:local": {
+      "command": "npm link && n8n start",
+      "options": {
+        "cwd": "packages/n8n-nodes-orq"
+      },
+      "dependsOn": ["build"]
+    },
+    "test:local:custom": {
+      "command": "N8N_CUSTOM_EXTENSIONS=\"$(pwd)/packages/n8n-nodes-orq\" n8n start",
+      "dependsOn": ["build"]
+    }
+  },
+  "tags": []
+}
