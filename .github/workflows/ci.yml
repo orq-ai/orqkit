@@ -26,14 +26,14 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         id: cache-node-modules
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}
+          path: |
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
