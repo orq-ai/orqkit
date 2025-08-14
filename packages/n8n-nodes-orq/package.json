@@ -2,9 +2,7 @@
   "name": "@orq-ai/n8n-nodes-orq",
   "version": "1.0.4",
   "description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
-  "type": "module",
   "main": "./dist/src/index.js",
-  "module": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "files": [
     "dist",
@@ -38,15 +36,6 @@
   },
   "engines": {
     "node": ">=20.15"
-  },
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "development": "./src/index.ts",
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "default": "./dist/src/index.js"
-    }
   },
   "scripts": {
     "dev": "bunx nx dev n8n-nodes-orq",
