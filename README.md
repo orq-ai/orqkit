@@ -43,13 +43,13 @@ npm install @orq-ai/vercel-provider
 ```typescript
 // example-llm.eval.ts
 import Anthropic from "@anthropic-ai/sdk";
-import { type DataPoint, evaluatorq, type Job } from "@orq/evaluatorq";
+import { type DataPoint, evaluatorq, job } from "@orq/evaluatorq";
 
 import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
 
 const claude = new Anthropic();
 
-const greet: Job = async (data: DataPoint) => {
+const greet = job("greet", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
     max_tokens: 100,
@@ -65,11 +65,8 @@ const greet: Job = async (data: DataPoint) => {
 
   // LLM response: *sighs dramatically* Oh great, another Bob. Let me guess, you want me to care about something? Fine. Hi, Bob. What do you want?
 
-  return {
-    name: "greet",
-    output: output.content[0].type === "text" ? output.content[0].text : "",
-  };
-};
+  return output.content[0].type === "text" ? output.content[0].text : "";
+});
 
 await evaluatorq("dataset-evaluation", {
   data: [

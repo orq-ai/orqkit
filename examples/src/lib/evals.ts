@@ -17,6 +17,16 @@ export function maxLengthValidator(max: number): Evaluator {
   };
 }
 
+export function minLengthValidator(min: number): Evaluator {
+  return {
+    name: `min-length-${min}`,
+    scorer: async ({ output }) => {
+      if (output === undefined || output === null) return false;
+      return (typeof output === "string" && output.length >= min) ?? false;
+    },
+  };
+}
+
 export const containsNameValidator: Evaluator = {
   name: "contains-name",
   scorer: async ({ data, output }) => {
@@ -44,7 +54,7 @@ Response to evaluate: "${output}"
 Return ONLY valid JSON in this format:
 {"score": 0.85}
 
-The score must be a float between 0 and 1.`,
+The score must be a float between 0 and 1. NO EXPLANATION, NO COMMENTS, NO THINKING, NO NOTHING, ONLY JSON.`,
         },
       ],
     });
@@ -56,6 +66,8 @@ The score must be a float between 0 and 1.`,
       return result.score;
     } catch (error) {
       console.error("Failed to parse politeness score:", error);
+
+      console.dir(response, { depth: null });
       return 0; // Default to zero, since the evaluator is really impolite to return a non JSON response.
     }
   },

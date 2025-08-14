@@ -1,9 +1,9 @@
-import type { DataPoint, Job } from "@orq-ai/evaluatorq";
-import { evaluatorq } from "@orq-ai/evaluatorq";
+import type { DataPoint } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
 
 import { maxLengthValidator } from "./evals.js";
 
-const textAnalysisJob: Job = async (data: DataPoint) => {
+const textAnalysisJob = job("text-analyzer", async (data: DataPoint) => {
   const text = data.inputs.text || data.inputs.input || "";
 
   const analysis = {
@@ -13,11 +13,8 @@ const textAnalysisJob: Job = async (data: DataPoint) => {
     hasSpecialChars: /[^a-zA-Z0-9\s]/.test(String(text)),
   };
 
-  return {
-    name: "text-analyzer",
-    output: analysis,
-  };
-};
+  return analysis;
+});
 
 await evaluatorq("dataset-evaluation", {
   data: [

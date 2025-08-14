@@ -32,28 +32,25 @@ npm install @orq-ai/node
 ### Basic Usage
 
 ```typescript
-import { evaluatorq } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
+
+const textAnalyzer = job("text-analyzer", async (data) => {
+  const text = data.inputs.text;
+  const analysis = {
+    length: text.length,
+    wordCount: text.split(" ").length,
+    uppercase: text.toUpperCase(),
+  };
+  
+  return analysis;
+});
 
 await evaluatorq("text-analysis", {
   data: [
     { inputs: { text: "Hello world" } },
     { inputs: { text: "Testing evaluation" } },
   ],
-  jobs: [
-    async (data) => {
-      const text = data.inputs.text;
-      const analysis = {
-        length: text.length,
-        wordCount: text.split(" ").length,
-        uppercase: text.toUpperCase(),
-      };
-      
-      return {
-        name: "text-analyzer",
-        output: analysis,
-      };
-    },
-  ],
+  jobs: [textAnalyzer],
   evaluators: [
     {
       name: "length-check",
@@ -68,22 +65,19 @@ await evaluatorq("text-analysis", {
 ### Using Orq Platform Datasets
 
 ```typescript
-import { evaluatorq } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
+
+const processor = job("processor", async (data) => {
+  // Process each data point from the dataset
+  return processData(data);
+});
 
 // Requires ORQ_API_KEY environment variable
 await evaluatorq("dataset-evaluation", {
   data: {
     datasetId: "your-dataset-id", // From Orq platform
   },
-  jobs: [
-    async (data) => {
-      // Process each data point from the dataset
-      return {
-        name: "processor",
-        output: processData(data),
-      };
-    },
-  ],
+  jobs: [processor],
   evaluators: [
     {
       name: "accuracy",
@@ -103,22 +97,15 @@ await evaluatorq("dataset-evaluation", {
 Run multiple jobs in parallel for each data point:
 
 ```typescript
+import { job } from "@orq-ai/evaluatorq";
+
+const preprocessor = job("preprocessor", async (data) => preprocess(data));
+const analyzer = job("analyzer", async (data) => analyze(data));
+const transformer = job("transformer", async (data) => transform(data));
+
 await evaluatorq("multi-job-eval", {
   data: [...],
-  jobs: [
-    async (data) => ({
-      name: "preprocessor",
-      output: preprocess(data),
-    }),
-    async (data) => ({
-      name: "analyzer",
-      output: analyze(data),
-    }),
-    async (data) => ({
-      name: "transformer",
-      output: transform(data),
-    }),
-  ],
+  jobs: [preprocessor, analyzer, transformer],
   evaluators: [...],
 });
 ```
@@ -126,19 +113,18 @@ await evaluatorq("multi-job-eval", {
 #### Custom Error Handling
 
 ```typescript
+import { job } from "@orq-ai/evaluatorq";
+
+const riskyJob = job("risky-job", async (data) => {
+  // Errors are captured and included in the evaluation results
+  // The job name is preserved even when errors occur
+  const result = await riskyOperation(data);
+  return result;
+});
+
 await evaluatorq("error-handling", {
   data: [...],
-  jobs: [
-    async (data) => {
-      try {
-        const result = await riskyOperation(data);
-        return { name: "risky-job", output: result };
-      } catch (error) {
-        // Errors are captured and included in the evaluation results
-        throw new Error(`Failed to process: ${error.message}`);
-      }
-    },
-  ],
+  jobs: [riskyJob],
   evaluators: [...],
 });
 ```
@@ -162,7 +148,53 @@ await evaluatorq("async-eval", {
 
 ### Environment Variables
 
-- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access)
+- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results)
+
+## 📊 Orq Platform Integration
+
+### Automatic Result Sending
+
+When the `ORQ_API_KEY` environment variable is set, evaluatorq automatically sends evaluation results to the Orq platform for visualization and analysis.
+
+```typescript
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
+
+// Results are automatically sent when ORQ_API_KEY environment variable is present
+await evaluatorq("my-evaluation", {
+  data: [...],
+  jobs: [...],
+  evaluators: [...],
+  sendResults: true, // Enabled by default when ORQ_API_KEY environment variable is set
+});
+```
+
+#### Configuration Options
+
+- `sendResults`: Boolean flag to control result sending (defaults to `true` when `ORQ_API_KEY` is set)
+
+#### What Gets Sent
+
+When enabled, the following information is sent to Orq:
+- Evaluation name
+- Dataset ID (when using Orq datasets)
+- Job results with outputs and errors
+- Evaluator scores
+- Execution timing information
+
+#### Result Visualization
+
+After successful submission, you'll see a console message with a link to view your results:
+
+```
+📊 View your evaluation results at: <url to the evaluation>
+```
+
+The Orq platform provides:
+- Interactive result tables
+- Score statistics
+- Performance metrics
+- Historical comparisons
+
 
 ## 📚 API Reference
 
@@ -212,6 +244,12 @@ type Job = (
   name: string;
   output: Output;
 }>;
+
+// Helper function for creating jobs with preserved names on errors
+function job(
+  name: string,
+  fn: (data: DataPoint, row: number) => Promise<Output> | Output,
+): Job;
 
 type ScorerParameter = {
   data: DataPoint;

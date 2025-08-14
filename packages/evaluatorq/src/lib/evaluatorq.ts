@@ -8,6 +8,7 @@ import {
   ProgressServiceLive,
   withProgress,
 } from "./progress.js";
+import { sendResultsToOrqEffect } from "./send-results.js";
 import { displayResultsTableEffect } from "./table-display.js";
 import type {
   DataPoint,
@@ -70,7 +71,15 @@ export async function evaluatorq(
   _name: string,
   params: EvaluatorParams,
 ): Promise<EvaluatorqResult> {
-  const { data, evaluators = [], jobs, parallelism = 1, print = true } = params;
+  const {
+    data,
+    evaluators = [],
+    jobs,
+    parallelism = 1,
+    print = true,
+    sendResults,
+    description,
+  } = params;
 
   let orqClient: Orq | undefined;
   const orqApiKey = process.env.ORQ_API_KEY;
@@ -79,7 +88,13 @@ export async function evaluatorq(
     orqClient = await setupOrqClient(orqApiKey);
   }
 
+  // Default sendResults to true when API key is available
+  const shouldSendResults =
+    sendResults !== undefined ? sendResults : Boolean(orqApiKey);
+  const startTime = new Date();
+
   let dataPromises: (Promise<DataPoint> | DataPoint)[];
+  let datasetId: string | undefined;
 
   // Handle datasetId case
   if ("datasetId" in data) {
@@ -88,6 +103,7 @@ export async function evaluatorq(
         "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform.",
       );
     }
+    datasetId = data.datasetId;
     dataPromises = await fetchDatasetAsDataPoints(orqClient, data.datasetId);
   } else {
     dataPromises = data;
@@ -131,6 +147,20 @@ export async function evaluatorq(
     print
       ? Effect.tap((results) => displayResultsTableEffect(results))
       : Effect.tap(() => Effect.void),
+    // Conditionally send results to Orq
+    shouldSendResults && orqApiKey
+      ? Effect.tap((results) =>
+          sendResultsToOrqEffect(
+            orqApiKey,
+            _name,
+            description,
+            datasetId,
+            results,
+            startTime,
+            new Date(),
+          ),
+        )
+      : Effect.tap(() => Effect.void),
     // Provide the progress service
     Effect.provide(ProgressServiceLive),
     // Wrap with progress tracking
@@ -146,7 +176,17 @@ export const evaluatorqEffect = (
   _name: string,
   params: EvaluatorParams,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
-  const { data, evaluators = [], jobs, parallelism = 1, print = true } = params;
+  const {
+    data,
+    evaluators = [],
+    jobs,
+    parallelism = 1,
+    print = true,
+    sendResults,
+    description,
+  } = params;
+
+  const startTime = new Date();
 
   // Handle datasetId case
   if ("datasetId" in data) {
@@ -187,7 +227,19 @@ export const evaluatorqEffect = (
       );
 
       return yield* _(
-        runEvaluationEffect(dataPromises, evaluators, jobs, parallelism, print),
+        runEvaluationEffect(
+          dataPromises,
+          evaluators,
+          jobs,
+          parallelism,
+          print,
+          sendResults,
+          description,
+          _name,
+          data.datasetId,
+          apiKey,
+          startTime,
+        ),
       );
     });
   }
@@ -199,6 +251,12 @@ export const evaluatorqEffect = (
     jobs,
     parallelism,
     print,
+    sendResults,
+    description,
+    _name,
+    undefined,
+    undefined,
+    startTime,
   );
 };
 
@@ -209,8 +267,19 @@ const runEvaluationEffect = (
   jobs: Job[],
   parallelism: number,
   print: boolean,
-): Effect.Effect<EvaluatorqResult, Error, never> =>
-  pipe(
+  sendResults: boolean | undefined,
+  description: string | undefined,
+  evaluationName: string,
+  datasetId: string | undefined,
+  apiKey: string | undefined,
+  startTime: Date,
+): Effect.Effect<EvaluatorqResult, Error, never> => {
+  // Default sendResults to true when API key is available
+  const orqApiKey = apiKey || process.env.ORQ_API_KEY;
+  const shouldSendResults =
+    sendResults !== undefined ? sendResults : Boolean(orqApiKey);
+
+  return pipe(
     Effect.gen(function* (_) {
       const progress = yield* _(ProgressService);
 
@@ -247,11 +316,26 @@ const runEvaluationEffect = (
     print
       ? Effect.tap((results) => displayResultsTableEffect(results))
       : Effect.tap(() => Effect.void),
+    // Conditionally send results to Orq
+    shouldSendResults && orqApiKey
+      ? Effect.tap((results) =>
+          sendResultsToOrqEffect(
+            orqApiKey,
+            evaluationName,
+            description,
+            datasetId,
+            results,
+            startTime,
+            new Date(),
+          ),
+        )
+      : Effect.tap(() => Effect.void),
     // Provide the progress service
     Effect.provide(ProgressServiceLive),
     // Wrap with progress tracking
     (effect) => withProgress(effect, print),
   );
+};
 
 // Composable evaluatorq with display
 export const evaluatorqWithTableEffect = (

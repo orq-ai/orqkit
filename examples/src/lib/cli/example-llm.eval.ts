@@ -1,12 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import { type DataPoint, evaluatorq, type Job } from "@orq-ai/evaluatorq";
+import { type DataPoint, evaluatorq, job } from "@orq-ai/evaluatorq";
 
 import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
 
 const claude = new Anthropic();
 
-const greet: Job = async (data: DataPoint) => {
+const greet = job("greet", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
     max_tokens: 100,
@@ -20,11 +20,8 @@ const greet: Job = async (data: DataPoint) => {
     ],
   });
 
-  return {
-    name: "greet",
-    output: output.content[0].type === "text" ? output.content[0].text : "",
-  };
-};
+  return output.content[0].type === "text" ? output.content[0].text : "";
+});
 
 await evaluatorq("dataset-evaluation", {
   data: [
