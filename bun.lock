@@ -6,6 +6,7 @@
       "dependencies": {
         "@anthropic-ai/sdk": "^0.60.0",
         "@orq-ai/node": "^3.10.20",
+        "chalk": "^5.5.0",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.2.0",
