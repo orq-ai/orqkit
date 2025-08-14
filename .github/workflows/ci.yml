@@ -36,7 +36,6 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Cache Nx
