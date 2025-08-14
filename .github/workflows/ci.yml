@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os }}-nx-
 
       - name: Check code quality with Biome
-        run: bunx biome check
+        run: bun biome check
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         id: setSHAs
@@ -60,4 +60,4 @@ jobs:
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
       - name: Run affected typecheck and build
-        run: bunx nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+        run: bun nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
