@@ -1,5 +1,5 @@
 import type { DataPoint } from "@orq-ai/evaluatorq";
-import { evaluatorq } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
 
 // Simulate delays for realistic async operations
 function delay(ms: number): Promise<void> {
@@ -34,7 +34,7 @@ export async function runSimulatedDelayExample() {
     data: dataPoints,
     jobs: [
       // Job 1: Simulated LLM response (takes 500-1500ms)
-      async (data) => {
+      job("llm-response", async (data) => {
         const processingTime = 500 + Math.random() * 1000;
         await delay(processingTime);
 
@@ -54,22 +54,16 @@ export async function runSimulatedDelayExample() {
           output = "Unknown query";
         }
 
-        return {
-          name: "llm-response",
-          output,
-        };
-      },
+        return output;
+      }),
 
       // Job 2: Simulated context retrieval (takes 200-800ms)
-      async (data) => {
+      job("context-retrieval", async (data) => {
         const processingTime = 200 + Math.random() * 600;
         await delay(processingTime);
 
-        return {
-          name: "context-retrieval",
-          output: `Retrieved context for user ${data.inputs.userId}`,
-        };
-      },
+        return `Retrieved context for user ${data.inputs.userId}`;
+      }),
     ],
     evaluators: [
       {

@@ -1,5 +1,5 @@
 import type { DataPoint } from "@orq-ai/evaluatorq";
-import { evaluatorq } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
 
 await evaluatorq("dataset-evaluation", {
   data: [
@@ -15,7 +15,7 @@ await evaluatorq("dataset-evaluation", {
   ],
   jobs: [
     // Job 1: Text analysis job
-    async (data: DataPoint, _row: number) => {
+    job("text-analyzer", async (data: DataPoint, _row: number) => {
       const text = data.inputs.text || data.inputs.input || "";
       const analysis = {
         length: String(text).length,
@@ -24,11 +24,8 @@ await evaluatorq("dataset-evaluation", {
         hasSpecialChars: /[^a-zA-Z0-9\s]/.test(String(text)),
       };
 
-      return {
-        name: "text-analyzer",
-        output: analysis,
-      };
-    },
+      return analysis;
+    }),
   ],
   evaluators: [
     {

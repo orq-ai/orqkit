@@ -38,6 +38,8 @@ interface OrqResponse {
   manifest_id: string;
   experiment_name: string;
   rows_created: number;
+  workspace_key?: string;
+  experiment_url?: string;
 }
 
 export const sendResultsToOrqEffect = (
@@ -122,6 +124,13 @@ export const sendResultsToOrqEffect = (
           console.log(
             `\n✅ Results sent to Orq: ${result.experiment_name} (${result.rows_created} rows created)`,
           );
+
+          // Display the experiment URL if available
+          if (result.experiment_url) {
+            console.log(
+              `   📊 View your evaluation at: ${result.experiment_url}`,
+            );
+          }
         },
         catch: (error) => {
           // Log warning for network or other errors
