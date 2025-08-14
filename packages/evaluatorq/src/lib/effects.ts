@@ -132,12 +132,12 @@ export function processJobEffect(
                   }),
                   Effect.map((score) => ({
                     evaluatorName: evaluator.name,
-                    score: score as string | number | boolean,
+                    score,
                   })),
                   Effect.catchAll((error) =>
                     Effect.succeed({
                       evaluatorName: evaluator.name,
-                      score: "" as string,
+                      score: { value: "" as string },
                       error: error as Error,
                     }),
                   ),

@@ -145,7 +145,7 @@ Detailed Results:
 │ is-it-polite             │ 0.08                   │
 └──────────────────────────┴────────────────────────┘
 
-💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.
+💡 Tip: Use print:false to get raw JSON results.
 
 ✔ ✓ Evaluation completed successfully
 

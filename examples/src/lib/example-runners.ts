@@ -73,7 +73,13 @@ export async function runSimulatedDelayExample() {
           await delay(100 + Math.random() * 300);
 
           // Check if the output matches expected
-          return output === data.expectedOutput ? 1.0 : 0.0;
+          const isCorrect = output === data.expectedOutput;
+          return {
+            value: isCorrect ? 1.0 : 0.0,
+            explanation: isCorrect
+              ? "Output matches expected result"
+              : `Expected ${data.expectedOutput}, got ${output}`,
+          };
         },
       },
       {
@@ -84,11 +90,20 @@ export async function runSimulatedDelayExample() {
 
           // Simple validation: check if output is not empty
           if (typeof output === "string" && output.length > 0) {
-            return true;
+            return {
+              value: true,
+              explanation: "Valid string response",
+            };
           } else if (typeof output === "number") {
-            return true;
+            return {
+              value: true,
+              explanation: "Valid numeric response",
+            };
           }
-          return false;
+          return {
+            value: false,
+            explanation: "Invalid or empty response",
+          };
         },
       },
       {
@@ -98,7 +113,11 @@ export async function runSimulatedDelayExample() {
           await delay(50 + Math.random() * 100);
 
           // Return a simulated latency score
-          return 0.85 + Math.random() * 0.15; // Score between 0.85 and 1.0
+          const score = 0.85 + Math.random() * 0.15; // Score between 0.85 and 1.0
+          return {
+            value: score,
+            explanation: score >= 0.95 ? "Excellent latency" : "Good latency",
+          };
         },
       },
     ],

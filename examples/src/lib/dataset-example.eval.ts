@@ -37,7 +37,10 @@ await evaluatorq("dataset-evaluation", {
       scorer: async ({ data, output }) => {
         // Check if output is valid (not null/undefined)
         if (output === null || output === undefined) {
-          return 0;
+          return {
+            value: 0,
+            explanation: "Output is null or undefined",
+          };
         }
 
         // If there's an expected output, compare
@@ -47,17 +50,30 @@ await evaluatorq("dataset-evaluation", {
             typeof output === "object" &&
             typeof data.expectedOutput === "object"
           ) {
-            return JSON.stringify(output) ===
-              JSON.stringify(data.expectedOutput)
-              ? 1
-              : 0.5;
+            const matches =
+              JSON.stringify(output) === JSON.stringify(data.expectedOutput);
+            return {
+              value: matches ? 1 : 0.5,
+              explanation: matches
+                ? "Output exactly matches expected structure"
+                : "Output structure partially matches expected",
+            };
           }
           // For primitives, direct comparison
-          return output === data.expectedOutput ? 1 : 0;
+          const matches = output === data.expectedOutput;
+          return {
+            value: matches ? 1 : 0,
+            explanation: matches
+              ? "Output matches expected value"
+              : `Expected ${data.expectedOutput}, got ${output}`,
+          };
         }
 
         // No expected output, just validate the output exists
-        return 1;
+        return {
+          value: 1,
+          explanation: "Output exists (no expected output to compare)",
+        };
       },
     },
     {
@@ -67,23 +83,40 @@ await evaluatorq("dataset-evaluation", {
         if (typeof output === "object" && output !== null) {
           // For object outputs (like from text-analyzer)
           const obj = output as Record<string, unknown>;
-          const score = Object.keys(obj).length > 0 ? 0.8 : 0.2;
-          return score + Math.random() * 0.2; // Add some variability
+          const keyCount = Object.keys(obj).length;
+          const score = (keyCount > 0 ? 0.8 : 0.2) + Math.random() * 0.2;
+          return {
+            value: score,
+            explanation: `Object with ${keyCount} properties analyzed`,
+          };
         } else if (typeof output === "string") {
           // For string outputs (like from text-normalizer)
-          return output.length > 0 ? 0.9 : 0.1;
+          const score = output.length > 0 ? 0.9 : 0.1;
+          return {
+            value: score,
+            explanation:
+              output.length > 0 ? "Non-empty string output" : "Empty string",
+          };
         }
-        return 0.5;
+        return {
+          value: 0.5,
+          explanation: "Neutral performance score",
+        };
       },
     },
     {
       name: "contains the word joke",
       scorer: async ({ output, data }) => {
-        return (
+        const hasJoke =
           (data.expectedOutput?.toString().includes("joke") ||
             output?.toString().includes("joke")) ??
-          false
-        );
+          false;
+        return {
+          value: hasJoke,
+          explanation: hasJoke
+            ? "Contains the word 'joke'"
+            : "Does not contain the word 'joke'",
+        };
       },
     },
   ],

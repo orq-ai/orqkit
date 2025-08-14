@@ -5,7 +5,10 @@ import type { DataPoint, EvaluatorqResult, Output } from "./types.js";
 // Same structure as EvaluatorqResult but with Error objects converted to strings for JSON serialization
 export interface SerializedEvaluatorScore {
   evaluatorName: string;
-  score: number | boolean | string;
+  score: {
+    value: number | boolean | string;
+    explanation?: string;
+  };
   error?: string; // Error serialized to string
 }
 

@@ -79,7 +79,10 @@ await evaluatorq("my-evaluation", {
   evaluators: [
     {
       name: "length-check",
-      scorer: async ({ output }) => output.length > 3 ? 1 : 0,
+      scorer: async ({ output }) => ({
+        value: output.length > 3 ? 1 : 0,
+        explanation: output.length > 3 ? "Sufficient length" : "Too short",
+      }),
     },
   ],
 });

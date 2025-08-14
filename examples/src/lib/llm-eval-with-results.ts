@@ -61,7 +61,7 @@ const calculator = job("calculator", async (data: DataPoint) => {
   return output.content[0].type === "text" ? output.content[0].text : "";
 });
 
-const results = await evaluatorq("dataset-evaluation", {
+await evaluatorq("llm-eval-with-results", {
   data: [
     { inputs: { name: "Alice" } },
     { inputs: { name: "Bob" } },
@@ -73,8 +73,6 @@ const results = await evaluatorq("dataset-evaluation", {
     isItPoliteLLMEval,
     minLengthValidator(70),
   ],
-  parallelism: 2,
+  parallelism: 4,
   print: true,
 });
-
-console.log(JSON.stringify(results, null, 2));

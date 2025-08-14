@@ -204,7 +204,7 @@ function calculateEvaluatorAverages(results: EvaluatorqResult): {
           if (jobScores && !jobScores.has(jobResult.jobName)) {
             jobScores.set(jobResult.jobName, []);
           }
-          jobScores?.get(jobResult.jobName)?.push(score.score);
+          jobScores?.get(jobResult.jobName)?.push(score.score.value);
         }
       });
     });
@@ -343,10 +343,6 @@ export const displayResultsTableEffect = (
     console.log("");
 
     // Show tip
-    console.log(
-      chalk.dim(
-        "💡 Tip: Details are shown below each row. Use print:false to get raw JSON results.",
-      ),
-    );
+    console.log(chalk.dim("💡 Tip: Use print:false to get raw JSON results."));
     console.log("");
   });

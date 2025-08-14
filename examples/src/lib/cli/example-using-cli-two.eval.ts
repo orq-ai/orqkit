@@ -33,7 +33,10 @@ await evaluatorq("dataset-evaluation 2", {
       scorer: async ({ data, output }) => {
         // Check if output is valid (not null/undefined)
         if (output === null || output === undefined) {
-          return false;
+          return {
+            value: false,
+            explanation: "Output is null or undefined",
+          };
         }
 
         if (data.expectedOutput !== null && data.expectedOutput !== undefined) {
@@ -41,15 +44,29 @@ await evaluatorq("dataset-evaluation 2", {
             typeof output === "object" &&
             typeof data.expectedOutput === "object"
           ) {
-            return (
-              JSON.stringify(output) === JSON.stringify(data.expectedOutput)
-            );
+            const matches =
+              JSON.stringify(output) === JSON.stringify(data.expectedOutput);
+            return {
+              value: matches,
+              explanation: matches
+                ? "Output matches expected structure"
+                : "Output does not match expected structure",
+            };
           }
 
-          return output === data.expectedOutput;
+          const matches = output === data.expectedOutput;
+          return {
+            value: matches,
+            explanation: matches
+              ? "Output matches expected value"
+              : `Expected ${data.expectedOutput}, got ${output}`,
+          };
         }
 
-        return true;
+        return {
+          value: true,
+          explanation: "Output exists (no expected output to compare)",
+        };
       },
     },
   ],

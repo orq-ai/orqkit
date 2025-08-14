@@ -55,7 +55,13 @@ await evaluatorq("text-analysis", {
     {
       name: "length-check",
       scorer: async ({ output }) => {
-        return output.length > 10 ? 1 : 0;
+        const passesCheck = output.length > 10;
+        return {
+          value: passesCheck ? 1 : 0,
+          explanation: passesCheck
+            ? "Output length is sufficient"
+            : `Output too short (${output.length} chars, need >10)`,
+        };
       },
     },
   ],
@@ -83,7 +89,15 @@ await evaluatorq("dataset-evaluation", {
       name: "accuracy",
       scorer: async ({ data, output }) => {
         // Compare output with expected results
-        return calculateScore(output, data.expectedOutput);
+        const score = calculateScore(output, data.expectedOutput);
+        return {
+          value: score,
+          explanation: score > 0.8
+            ? "High accuracy match"
+            : score > 0.5
+              ? "Partial match"
+              : "Low accuracy match",
+        };
       },
     },
   ],
@@ -178,8 +192,10 @@ When enabled, the following information is sent to Orq:
 - Evaluation name
 - Dataset ID (when using Orq datasets)
 - Job results with outputs and errors
-- Evaluator scores
+- Evaluator scores with values and explanations
 - Execution timing information
+
+Note: Evaluator explanations are included in the data sent to Orq but are not displayed in the terminal output to keep the console clean.
 
 #### Result Visualization
 
@@ -233,7 +249,7 @@ interface JobResult {
 
 interface EvaluatorScore {
   evaluatorName: string;
-  score: number | boolean | string;
+  score: EvaluationResult<number | boolean | string>;
   error?: Error;
 }
 
@@ -256,10 +272,15 @@ type ScorerParameter = {
   output: Output;
 };
 
+type EvaluationResult<T> = {
+  value: T;
+  explanation?: string;
+};
+
 type Scorer =
-  | ((params: ScorerParameter) => Promise<string>)
-  | ((params: ScorerParameter) => Promise<number>)
-  | ((params: ScorerParameter) => Promise<boolean>);
+  | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
+  | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
+  | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>);
 ```
 
 ## 🛠️ Development
