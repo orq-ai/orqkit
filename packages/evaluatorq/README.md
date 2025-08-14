@@ -148,7 +148,53 @@ await evaluatorq("async-eval", {
 
 ### Environment Variables
 
-- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access)
+- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results)
+
+## 📊 Orq Platform Integration
+
+### Automatic Result Sending
+
+When the `ORQ_API_KEY` environment variable is set, evaluatorq automatically sends evaluation results to the Orq platform for visualization and analysis.
+
+```typescript
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
+
+// Results are automatically sent when ORQ_API_KEY environment variable is present
+await evaluatorq("my-evaluation", {
+  data: [...],
+  jobs: [...],
+  evaluators: [...],
+  sendResults: true, // Enabled by default when ORQ_API_KEY environment variable is set
+});
+```
+
+#### Configuration Options
+
+- `sendResults`: Boolean flag to control result sending (defaults to `true` when `ORQ_API_KEY` is set)
+
+#### What Gets Sent
+
+When enabled, the following information is sent to Orq:
+- Evaluation name
+- Dataset ID (when using Orq datasets)
+- Job results with outputs and errors
+- Evaluator scores
+- Execution timing information
+
+#### Result Visualization
+
+After successful submission, you'll see a console message with a link to view your results:
+
+```
+📊 View your evaluation results at: <url to the evaluation>
+```
+
+The Orq platform provides:
+- Interactive result tables
+- Score statistics
+- Performance metrics
+- Historical comparisons
+
 
 ## 📚 API Reference
 
