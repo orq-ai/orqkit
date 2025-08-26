@@ -2,7 +2,7 @@
 
 Community nodes for integrating [Orq AI](https://orq.ai) with n8n workflows. These nodes provide seamless access to Orq AI's deployment and knowledge base capabilities within your automation workflows.
 
-## 🎯 Features
+## Features
 
 - **Deployment Invocation**: Execute Orq AI deployments with messages, context, and inputs
 - **Knowledge Base Search**: Search and retrieve content from Orq knowledge bases
@@ -11,7 +11,7 @@ Community nodes for integrating [Orq AI](https://orq.ai) with n8n workflows. The
 - **Metadata Filtering**: Advanced filtering options for knowledge base searches
 - **Error Handling**: Built-in error handling with continue-on-fail support
 
-## 📥 Installation
+## Installation
 
 ### Community Node Installation
 
@@ -31,7 +31,34 @@ If using n8n with Docker, set the environment variable:
 N8N_COMMUNITY_NODE_PACKAGES=@orq-ai/n8n-nodes-orq
 ```
 
-## 🔑 Authentication
+### Local Development Installation
+
+For local development and testing with n8n:
+
+1. Clone and navigate to the package:
+```bash
+git clone https://github.com/orq-ai/orqkit.git
+cd orqkit/packages/n8n-nodes-orq
+```
+
+2. Install dependencies:
+```bash
+bun install
+```
+
+3. Build the nodes:
+```bash
+bunx nx build n8n-nodes-orq
+```
+
+4. Start n8n with custom nodes:
+```bash
+N8N_CUSTOM_EXTENSIONS="$(pwd)" n8n start
+```
+
+The nodes will appear as "OrqDeployment" and "OrqKnowledgeBaseSearch" in the n8n node panel.
+
+## Authentication
 
 1. Sign up or log in at [Orq AI](https://orq.ai)
 2. Navigate to your account settings to generate an API key
@@ -41,7 +68,7 @@ N8N_COMMUNITY_NODE_PACKAGES=@orq-ai/n8n-nodes-orq
    - Enter your API key
    - Save the credentials
 
-## 📚 Available Nodes
+## Available Nodes
 
 ### Orq Deployment
 
@@ -93,7 +120,7 @@ Search and retrieve relevant content from your Orq knowledge bases.
 - Content discovery and recommendations
 - Metadata-based filtering
 
-## 🔧 Workflow Examples
+## Workflow Examples
 
 ### Basic Text Generation
 
@@ -130,7 +157,7 @@ Search and retrieve relevant content from your Orq knowledge bases.
 3. Store results (e.g., Database)
 ```
 
-## 🛠️ Development
+## Development
 
 ```bash
 # Build the package
@@ -139,17 +166,17 @@ bunx nx build n8n-nodes-orq
 # Run development mode
 bunx nx dev n8n-nodes-orq
 
-# Test locally
-bunx nx test:local n8n-nodes-orq
+# Test locally with n8n
+npm run test:local
 ```
 
-## 📄 Resources
+## Resources
 
 - [n8n Documentation](https://docs.n8n.io)
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 - [Orq AI Documentation](https://docs.orq.ai)
 - [Orq AI Platform](https://orq.ai)
 
-## 📄 License
+## License
 
 This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.
