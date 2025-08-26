@@ -38,8 +38,10 @@
     "node": ">=20.15"
   },
   "scripts": {
+    "build": "bunx nx build n8n-nodes-orq",
     "dev": "bunx nx dev n8n-nodes-orq",
-    "test:local": "bunx nx test:local n8n-nodes-orq"
+    "test:local": "bunx nx build n8n-nodes-orq && EXECUTIONS_PROCESS=main N8N_CUSTOM_EXTENSIONS=\"$(pwd)\" N8N_PORT=5678 n8n start",
+    "test:link": "bunx nx build n8n-nodes-orq && N8N_PORT=5678 n8n start"
   },
   "n8n": {
     "n8nNodesApiVersion": 1,

@@ -2,7 +2,7 @@
   "node": "@orq-ai/n8n-nodes-orq.orqDeployment",
   "nodeVersion": "1.0",
   "codexVersion": "1.0",
-  "categories": ["AI", "Development"],
+  "categories": ["Data Transformation", "Development"],
   "resources": {
     "credentialDocumentation": [
       {

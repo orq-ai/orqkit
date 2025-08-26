@@ -4,6 +4,12 @@
   "sourceRoot": "packages/n8n-nodes-orq/src",
   "projectType": "library",
   "targets": {
+    "build": {
+      "command": "bunx rimraf dist && bunx tsc -p tsconfig.lib.json && bun load-icons.ts",
+      "options": {
+        "cwd": "packages/n8n-nodes-orq"
+      }
+    },
     "dev": {
       "command": "tsc --watch",
       "options": {
@@ -11,7 +17,7 @@
       }
     },
     "test:local": {
-      "command": "npm link && n8n start",
+      "command": "bun link && n8n start",
       "options": {
         "cwd": "packages/n8n-nodes-orq"
       },
