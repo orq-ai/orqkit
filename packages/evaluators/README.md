@@ -46,8 +46,3 @@ The cosine similarity evaluator requires one of:
 - `ORQ_API_KEY` - For Orq proxy access (automatically uses `https://api.orq.ai/v2/proxy`)
 
 When using Orq proxy, models should be prefixed with `openai/` (e.g., `openai/text-embedding-3-small`).
-
-
-## License
-
-UNLICENSE

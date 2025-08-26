@@ -292,7 +292,3 @@ bunx nx build evaluatorq
 # Run type checking
 bunx nx typecheck evaluatorq
 ```
-
-## 📄 License
-
-This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.

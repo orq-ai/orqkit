@@ -12,7 +12,7 @@
     "tslib": "^2.8.1",
     "typescript": "^5.9.2"
   },
-  "license": "UNLICENSE",
+  "license": "MIT",
   "private": true,
   "scripts": {},
   "workspaces": [
