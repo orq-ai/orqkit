@@ -5,7 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "command": "bunx rimraf dist && bunx tsc -p tsconfig.lib.json && bunx gulp build:icons",
+      "command": "bunx rimraf dist && bunx tsc -p tsconfig.lib.json && bun load-icons.ts",
       "options": {
         "cwd": "packages/n8n-nodes-orq"
       }

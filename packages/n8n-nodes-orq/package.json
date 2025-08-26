@@ -54,7 +54,6 @@
     ]
   },
   "devDependencies": {
-    "gulp": "^5.0.1",
     "n8n-workflow": "^1.103.0"
   },
   "peerDependencies": {
