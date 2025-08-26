@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/evaluators",
-  "version": "1.0.0-12",
+  "version": "1.0.7",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -50,6 +50,6 @@
     "tslib": "^2.3.0"
   },
   "peerDependencies": {
-    "@orq-ai/evaluatorq": "^1.0.0"
+    "@orq-ai/evaluatorq": "^1.0.7"
   }
 }
