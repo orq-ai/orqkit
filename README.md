@@ -13,6 +13,7 @@ This monorepo contains the following open-source packages:
 | Package | Description | Docs | Version |
 | ------- | ----------- | ---- | ------- |
 | [`@orq-ai/evaluatorq`](./packages/evaluatorq) | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | [README](./packages/evaluatorq/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq) |
+| [`@orq-ai/evaluators`](./packages/evaluators) | Reusable evaluators for AI evaluation frameworks | [README](./packages/evaluators/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/evaluators) |
 | [`@orq-ai/cli`](./packages/cli) | Command-line interface for discovering and running evaluation files | [README](./packages/cli/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/cli) |
 | [`@orq-ai/vercel-provider`](./packages/vercel-provider) | Vercel AI SDK provider for seamless integration with Orq AI platform | [README](./packages/vercel-provider/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/vercel-provider) |
 | [`@orq-ai/n8n-nodes-orq`](./packages/n8n-nodes-orq) | n8n community nodes for integrating Orq AI deployments and knowledge bases | [README](./packages/n8n-nodes-orq/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/n8n-nodes-orq) |

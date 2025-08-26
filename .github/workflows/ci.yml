@@ -26,17 +26,16 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         id: cache-node-modules
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('bun.lock') }}
+          path: |
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
       - name: Cache Nx
@@ -48,7 +47,7 @@ jobs:
             ${{ runner.os }}-nx-
 
       - name: Check code quality with Biome
-        run: bunx biome check
+        run: bun biome check
 
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         id: setSHAs
@@ -60,4 +59,4 @@ jobs:
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
       - name: Run affected typecheck and build
-        run: bunx nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+        run: bun nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
