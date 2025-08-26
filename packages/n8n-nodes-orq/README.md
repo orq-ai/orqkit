@@ -20,7 +20,7 @@ Follow the [n8n community nodes installation guide](https://docs.n8n.io/integrat
 ### Manual Installation
 
 ```bash
-npm install @orq-ai/n8n-nodes-orq
+bun add @orq-ai/n8n-nodes-orq
 ```
 
 ### Docker Installation
@@ -167,7 +167,7 @@ bunx nx build n8n-nodes-orq
 bunx nx dev n8n-nodes-orq
 
 # Test locally with n8n
-npm run test:local
+bun run test:local
 ```
 
 ## Resources
