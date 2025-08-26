@@ -215,7 +215,7 @@ We release all packages to npm using nx under one version number.
 ```bash
 # Publish the packages using nx. this will run the release workflow, increment the version, build the libraries and publish the packages to npm.
 # check the docs for more details: https://nx.dev/recipes/nx-release/release-npm-packages
-nx release publish
+nx release
 ```
 
 ### Have an idea?
