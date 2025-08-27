@@ -65,7 +65,6 @@ export type Job = (
  * @param jobs - The jobs to run.
  * @param parallelism - The number of jobs to run in parallel. If not provided, we will run the jobs sequentially.
  * @param print - Whether to print the results in a table format to the console. Defaults to true.
- * @param sendResults - Whether to send the results to Orq platform. Defaults to true when ORQ_API_KEY is set, false otherwise.
  * @param description - Optional description for the evaluation run.
  */
 export interface EvaluatorParams {
@@ -78,7 +77,6 @@ export interface EvaluatorParams {
   jobs: Job[];
   parallelism?: number;
   print?: boolean;
-  sendResults?: boolean;
   description?: string;
 }
 

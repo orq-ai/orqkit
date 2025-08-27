@@ -178,17 +178,12 @@ await evaluatorq("my-evaluation", {
   data: [...],
   jobs: [...],
   evaluators: [...],
-  sendResults: true, // Enabled by default when ORQ_API_KEY environment variable is set
 });
 ```
 
-#### Configuration Options
-
-- `sendResults`: Boolean flag to control result sending (defaults to `true` when `ORQ_API_KEY` is set)
-
 #### What Gets Sent
 
-When enabled, the following information is sent to Orq:
+When the `ORQ_API_KEY` is set, the following information is sent to Orq:
 - Evaluation name
 - Dataset ID (when using Orq datasets)
 - Job results with outputs and errors
