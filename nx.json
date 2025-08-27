@@ -21,6 +21,14 @@
   "targetDefaults": {
     "nx-release-publish": {
       "dependsOn": ["build"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "if [ -f {projectRoot}/tsconfig.spec.json ]; then bun test; fi"
+        ]
+      }
     }
   },
   "plugins": [

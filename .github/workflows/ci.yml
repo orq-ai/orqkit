@@ -59,4 +59,4 @@ jobs:
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
       - name: Run affected typecheck and build
-        run: bun nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+        run: bun nx affected --target=typecheck,build,test --base=${{ steps.setSHAs.outputs.base }} --parallel=3

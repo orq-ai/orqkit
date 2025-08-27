@@ -31,6 +31,8 @@ This monorepo contains the following open-source packages:
 | [`@orq-ai/cli`](./packages/cli)                         | Command-line interface for discovering and running evaluation files                          | [README](./packages/cli/README.md)             | [![npm](https://img.shields.io/npm/v/@orq-ai/cli)](https://www.npmjs.com/package/@orq-ai/cli)                         |
 | [`@orq-ai/vercel-provider`](./packages/vercel-provider) | Vercel AI SDK provider for seamless integration with Orq AI platform                         | [README](./packages/vercel-provider/README.md) | [![npm](https://img.shields.io/npm/v/@orq-ai/vercel-provider)](https://www.npmjs.com/package/@orq-ai/vercel-provider) |
 | [`@orq-ai/n8n-nodes-orq`](./packages/n8n-nodes-orq)     | n8n community nodes for integrating Orq AI deployments and knowledge bases                   | [README](./packages/n8n-nodes-orq/README.md)   | [![npm](https://img.shields.io/npm/v/@orq-ai/n8n-nodes-orq)](https://www.npmjs.com/package/@orq-ai/n8n-nodes-orq)     |
+| [`@orq-ai/tiny-di`](./packages/tiny-di)                 | Minimal dependency injection container with TypeScript support                               | [README](./packages/tiny-di/README.md)         | [![npm](https://img.shields.io/npm/v/@orq-ai/tiny-di)](https://www.npmjs.com/package/@orq-ai/tiny-di)                 |
+
 
 ## 🚀 Quick Start
 
