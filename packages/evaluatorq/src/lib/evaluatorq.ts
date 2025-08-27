@@ -77,7 +77,6 @@ export async function evaluatorq(
     jobs,
     parallelism = 1,
     print = true,
-    sendResults,
     description,
   } = params;
 
@@ -88,9 +87,6 @@ export async function evaluatorq(
     orqClient = await setupOrqClient(orqApiKey);
   }
 
-  // Default sendResults to true when API key is available
-  const shouldSendResults =
-    sendResults !== undefined ? sendResults : Boolean(orqApiKey);
   const startTime = new Date();
 
   let dataPromises: (Promise<DataPoint> | DataPoint)[];
@@ -147,8 +143,8 @@ export async function evaluatorq(
     print
       ? Effect.tap((results) => displayResultsTableEffect(results))
       : Effect.tap(() => Effect.void),
-    // Conditionally send results to Orq
-    shouldSendResults && orqApiKey
+    // Send results to Orq when API key is available
+    orqApiKey
       ? Effect.tap((results) =>
           sendResultsToOrqEffect(
             orqApiKey,
@@ -182,7 +178,6 @@ export const evaluatorqEffect = (
     jobs,
     parallelism = 1,
     print = true,
-    sendResults,
     description,
   } = params;
 
@@ -233,7 +228,6 @@ export const evaluatorqEffect = (
           jobs,
           parallelism,
           print,
-          sendResults,
           description,
           _name,
           data.datasetId,
@@ -251,7 +245,6 @@ export const evaluatorqEffect = (
     jobs,
     parallelism,
     print,
-    sendResults,
     description,
     _name,
     undefined,
@@ -267,17 +260,14 @@ const runEvaluationEffect = (
   jobs: Job[],
   parallelism: number,
   print: boolean,
-  sendResults: boolean | undefined,
   description: string | undefined,
   evaluationName: string,
   datasetId: string | undefined,
   apiKey: string | undefined,
   startTime: Date,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
-  // Default sendResults to true when API key is available
+  // Use API key from parameter or environment
   const orqApiKey = apiKey || process.env.ORQ_API_KEY;
-  const shouldSendResults =
-    sendResults !== undefined ? sendResults : Boolean(orqApiKey);
 
   return pipe(
     Effect.gen(function* (_) {
@@ -316,8 +306,8 @@ const runEvaluationEffect = (
     print
       ? Effect.tap((results) => displayResultsTableEffect(results))
       : Effect.tap(() => Effect.void),
-    // Conditionally send results to Orq
-    shouldSendResults && orqApiKey
+    // Send results to Orq when API key is available
+    orqApiKey
       ? Effect.tap((results) =>
           sendResultsToOrqEffect(
             orqApiKey,
