@@ -60,12 +60,12 @@
     },
     "packages/n8n-nodes-orq": {
       "name": "@orq-ai/n8n-nodes-orq",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "devDependencies": {
         "n8n-workflow": "^1.103.0",
       },
       "peerDependencies": {
-        "n8n-workflow": "^1.99.1",
+        "n8n-workflow": "*",
       },
     },
     "packages/vercel-provider": {
