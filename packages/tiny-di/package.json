@@ -1,0 +1,52 @@
+{
+  "name": "@orq-ai/tiny-di",
+  "version": "1.0.7",
+  "description": "Minimal dependency injection container with TypeScript support",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bun test",
+          "cwd": "{projectRoot}"
+        }
+      }
+    }
+  },
+  "dependencies": {},
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "dependency-injection",
+    "di",
+    "ioc",
+    "container",
+    "typescript",
+    "minimal"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orq-ai/orqkit.git",
+    "directory": "packages/tiny-di"
+  },
+  "bugs": {
+    "url": "https://github.com/orq-ai/orqkit/issues"
+  },
+  "homepage": "https://github.com/orq-ai/orqkit/tree/main/packages/tiny-di#readme"
+}

@@ -28,7 +28,6 @@ const results = await evaluatorq("test-job-helper", {
   jobs: [successfulJob, failingJob, anotherFailingJob],
   parallelism: 1,
   print: true,
-  sendResults: true, // Send results to see the payload
 });
 
 // Display the results to show job names are preserved

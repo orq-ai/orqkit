@@ -1,6 +1,20 @@
 # 🚀 OrqKit
 
-Open source tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines. This monorepo contains TypeScript packages designed to help developers evaluate, test, and improve their AI applications.
+Tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines, online or offline. The monorepo contains utilities for running evaluations, building with LLMs while optionally integrating with the orq.ai platform.
+
+## 🎯 Why OrqKit?
+
+**The Problem:** Testing LLM applications is hard. You need to:
+- Run evaluations across multiple prompts and models
+- Track performance over time
+- Ensure model updates don't break existing functionality
+- Integrate evaluation into CI/CD pipelines
+
+**The Solution:** OrqKit provides tools to:
+- **Evaluate at Scale** - Run parallel evaluations across datasets with built-in retry logic
+- **Test Like You Deploy** - Use the same evaluation framework locally and in CI/CD
+- **Measure What Matters** - Pre-built evaluators for common LLM metrics (coming soon)
+- **Track Results** - Automatic result tracking when connected to the orq platform, otherwise build it to your own dashboard
 
 ## 🌟 About Orq AI
 
@@ -10,19 +24,15 @@ Open source tools from [Orq AI](https://orq.ai) for building robust AI evaluatio
 
 This monorepo contains the following open-source packages:
 
-| Package | Description | Docs | Version |
-| ------- | ----------- | ---- | ------- |
-| [`@orq-ai/evaluatorq`](./packages/evaluatorq) | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | [README](./packages/evaluatorq/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq) |
-| [`@orq-ai/cli`](./packages/cli) | Command-line interface for discovering and running evaluation files | [README](./packages/cli/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/cli) |
-| [`@orq-ai/vercel-provider`](./packages/vercel-provider) | Vercel AI SDK provider for seamless integration with Orq AI platform | [README](./packages/vercel-provider/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/vercel-provider) |
-| [`@orq-ai/n8n-nodes-orq`](./packages/n8n-nodes-orq) | n8n community nodes for integrating Orq AI deployments and knowledge bases | [README](./packages/n8n-nodes-orq/README.md) | ![npm](https://img.shields.io/npm/v/@orq-ai/n8n-nodes-orq) |
+| Package                                                 | Description                                                                                  | Docs                                           | Version                                                                                                               |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [`@orq-ai/evaluatorq`](./packages/evaluatorq)           | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | [README](./packages/evaluatorq/README.md)      | [![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq)](https://www.npmjs.com/package/@orq-ai/evaluatorq)           |
+| [`@orq-ai/evaluators`](./packages/evaluators)           | Reusable evaluators for AI evaluation frameworks                                             | [README](./packages/evaluators/README.md)      | [![npm](https://img.shields.io/npm/v/@orq-ai/evaluators)](https://www.npmjs.com/package/@orq-ai/evaluators)           |
+| [`@orq-ai/cli`](./packages/cli)                         | Command-line interface for discovering and running evaluation files                          | [README](./packages/cli/README.md)             | [![npm](https://img.shields.io/npm/v/@orq-ai/cli)](https://www.npmjs.com/package/@orq-ai/cli)                         |
+| [`@orq-ai/vercel-provider`](./packages/vercel-provider) | Vercel AI SDK provider for seamless integration with Orq AI platform                         | [README](./packages/vercel-provider/README.md) | [![npm](https://img.shields.io/npm/v/@orq-ai/vercel-provider)](https://www.npmjs.com/package/@orq-ai/vercel-provider) |
+| [`@orq-ai/n8n-nodes-orq`](./packages/n8n-nodes-orq)     | n8n community nodes for integrating Orq AI deployments and knowledge bases                   | [README](./packages/n8n-nodes-orq/README.md)   | [![npm](https://img.shields.io/npm/v/@orq-ai/n8n-nodes-orq)](https://www.npmjs.com/package/@orq-ai/n8n-nodes-orq)     |
+| [`@orq-ai/tiny-di`](./packages/tiny-di)                 | Minimal dependency injection container with TypeScript support                               | [README](./packages/tiny-di/README.md)         | [![npm](https://img.shields.io/npm/v/@orq-ai/tiny-di)](https://www.npmjs.com/package/@orq-ai/tiny-di)                 |
 
-## 🎯 Why OrqKit?
-
-- **Developer-Friendly**: Full TypeScript support with comprehensive type definitions
-- **Reusability**: Giving back to the community by sharing reusable tools and examples that we wrote initially for in-house use
-- **Platform Integration**: Seamlessly works with Orq AI platform, but fully functional standalone
-- **Continuous Integration**: Make it part of your CI/CD pipeline in order to run evaluations on every commit or pull request
 
 ## 🚀 Quick Start
 
@@ -92,25 +102,6 @@ orq evaluate example-llm.eval.ts
 bun run example-llm.eval.ts
 ```
 
-### Use Vercel AI SDK Provider
-
-```typescript
-// ai-integration.ts
-import { createOrqAiProvider } from "@orq-ai/vercel-provider";
-import { generateText } from "ai";
-
-const orq = createOrqAiProvider({
-  apiKey: process.env.ORQ_API_KEY,
-});
-
-const { text } = await generateText({
-  model: orq("gpt-4"),
-  messages: [{ role: "user", content: "Hello!" }],
-});
-
-console.log(text);
-```
-
 #### Output
 
 ```bash
@@ -173,6 +164,26 @@ await evaluatorq("platform-eval", {
 });
 ```
 
+### Use Vercel AI SDK Provider
+
+```typescript
+// ai-integration.ts
+import { createOrqAiProvider } from "@orq-ai/vercel-provider";
+import { generateText } from "ai";
+
+const orq = createOrqAiProvider({
+  apiKey: process.env.ORQ_API_KEY,
+});
+
+const { text } = await generateText({
+  model: orq("gpt-4"),
+  messages: [{ role: "user", content: "Hello!" }],
+});
+
+console.log(text);
+```
+
+
 ## 🛠️ Development
 
 This is an Nx-based monorepo using Bun as the package manager.
@@ -214,17 +225,13 @@ We release all packages to npm using nx under one version number.
 ```bash
 # Publish the packages using nx. this will run the release workflow, increment the version, build the libraries and publish the packages to npm.
 # check the docs for more details: https://nx.dev/recipes/nx-release/release-npm-packages
-nx release publish
+nx release
 ```
 
 ### Have an idea?
 
 - **Create an issue**: If you have ideas for improvements or new features, please [create an issue](https://github.com/orq-ai/orqkit/issues/new) to discuss it
 - **Check the roadmap**: Take a look at our [public roadmap](https://github.com/orgs/orq-ai/projects/3) to see what we're working on and what's planned
-
-## 📄 License
-
-This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.
 
 ---
 

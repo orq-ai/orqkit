@@ -8,6 +8,7 @@ import type {
   EmbeddingModelV2,
   ImageModelV2,
   LanguageModelV2,
+  ProviderV2,
 } from "@ai-sdk/provider";
 import {
   type FetchFunction,
@@ -22,8 +23,9 @@ export interface OrqAiProviderSettings {
   headers?: Record<string, string>;
 }
 
-export interface OrqAiProvider {
+export interface OrqAiProvider extends ProviderV2 {
   (modelId: string): LanguageModelV2;
+  languageModel(modelId: string): LanguageModelV2;
   chatModel(modelId: string): LanguageModelV2;
   completionModel(modelId: string): LanguageModelV2;
   textEmbeddingModel(modelId: string): EmbeddingModelV2<string>;
@@ -77,8 +79,17 @@ export function createOrqAiProvider(
   const createImageModel = (modelId: string) =>
     new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
 
-  const provider = (modelId: string) => createChatModel(modelId);
+  const provider = function (modelId: string) {
+    if (new.target) {
+      throw new Error(
+        "The model factory function cannot be called with the new keyword.",
+      );
+    }
 
+    return createChatModel(modelId);
+  };
+
+  provider.languageModel = createChatModel;
   provider.completionModel = createCompletionModel;
   provider.chatModel = createChatModel;
   provider.textEmbeddingModel = createTextEmbeddingModel;

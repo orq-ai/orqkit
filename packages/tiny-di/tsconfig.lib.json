@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "src",
@@ -10,12 +10,6 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    {
-      "path": "../packages/evaluators/tsconfig.lib.json"
-    },
-    {
-      "path": "../packages/evaluatorq/tsconfig.lib.json"
-    }
-  ]
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": []
 }

@@ -30,32 +30,66 @@ npm install ai
 
 ## 🚀 Quick Start
 
+### Importing the Provider
+```typescript
+import { createOrqAiProvider } from "@orq-ai/vercel-provider";
+
+const orq = createOrqAiProvider({
+  apiKey: "your-api-key", // Replace with your Orq API key
+});
+```
+
 ### Basic Usage
 
 ```typescript
-import { createOrqAiProvider } from "@orq-ai/vercel-provider";
 import { generateText } from "ai";
 
-const orq = createOrqAiProvider({
-  apiKey: process.env.ORQ_API_KEY,
-});
-
 const { text } = await generateText({
-  model: orq("gpt-4"),
-  messages: [{ role: "user", content: "Hello!" }],
+    model: orq("openai/gpt-4o"),
+    prompt: "Hello world",
+});
+```
+#### Or use the provider directly:
+```typescript
+const { content } = await orq("openai/gpt-4o").doGenerate({
+    prompt: [{ role: "user", content: [{ type: "text", text: "Hello world" }] }],
 });
 ```
 
 ### Chat Conversations
 
 ```typescript
+import { generateText } from "ai";
+
 const { text } = await generateText({
-  model: orq("gpt-4"),
-  messages: [
-    { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: "What is 2+2?" },
-  ],
+    model: orq("openai/gpt-4o"),
+    system: "You are a helpful assistant that translates English to French.",
+    prompt: "Hello world",
 });
+```
+#### Or use the provider directly:
+```typescript
+const { content } = await orq("openai/gpt-4o").doGenerate({
+    prompt: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: [{ type: "text", text: "What is 2+2?" }] },
+    ],
+});
+```
+
+### Completion Models
+
+```typescript
+const { content } = await orq
+    .completionModel("openai/gpt-3.5-turbo-instruct")
+    .doGenerate({
+        prompt: [
+            {
+                role: "user",
+                content: [{ type: "text", text: "If you want to make a cake" }],
+            },
+        ],
+    });
 ```
 
 ### Advanced Features
@@ -67,13 +101,26 @@ Stream responses for real-time interaction:
 ```typescript
 import { streamText } from "ai";
 
-const { textStream } = await streamText({
-  model: orq("gpt-4"),
-  messages: [{ role: "user", content: "Tell me a story" }],
+const result = streamText({
+    model: orq("openai/gpt-4o"),
+    prompt: "Invent a new holiday and describe its traditions.",
 });
 
-for await (const chunk of textStream) {
-  process.stdout.write(chunk);
+// example: use textStream as an async iterable
+for await (const textPart of result.textStream) {
+    console.log(textPart);
+}
+```
+#### Or use the provider directly:
+```typescript
+const result2 = await orq("openai/gpt-4o").doStream({
+    prompt: [
+        { role: "user", content: [{ type: "text", text: "Tell me a story" }] },
+    ],
+});
+
+for await (const textPart of result2.stream) {
+    console.log(textPart);
 }
 ```
 
@@ -84,10 +131,19 @@ Generate embeddings for semantic search and similarity:
 ```typescript
 import { embed } from "ai";
 
+// 'embedding' is a single embedding object (number[])
 const { embedding } = await embed({
-  model: orq.textEmbeddingModel("text-embedding-ada-002"),
-  value: "Hello world",
+    model: orq.textEmbeddingModel("openai/text-embedding-ada-002"),
+    value: "sunny day at the beach",
 });
+```
+#### Or use the provider directly:
+```typescript
+const { embedding } = await orq
+    .textEmbeddingModel("openai/text-embedding-ada-002")
+    .doEmbed({
+        values: ["Hello world", "Bonjour le monde"],
+    });
 ```
 
 #### Image Generation
@@ -95,42 +151,30 @@ const { embedding } = await embed({
 Create images using AI models:
 
 ```typescript
-const result = await orq.imageModel("dall-e-3").generate({
-  prompt: "A futuristic city at sunset",
-  size: "1024x1024",
-  quality: "hd",
+import { experimental_generateImage as generateImage } from "ai";
+
+const { image } = await generateImage({
+    model: orq.imageModel("openai/dall-e-3"),
+    prompt: "Santa Claus driving a Cadillac",
 });
-
-console.log(result.images[0].url);
 ```
-
-#### Tool Calling
-
-Integrate function calling capabilities:
-
+#### Or use the provider directly:
 ```typescript
-const { text } = await generateText({
-  model: orq("gpt-4"),
-  messages: [{ role: "user", content: "What's the weather in San Francisco?" }],
-  tools: {
-    getWeather: {
-      description: "Get the current weather for a location",
-      parameters: z.object({
-        location: z.string().describe("The city and state"),
-      }),
-      execute: async ({ location }) => {
-        return `The weather in ${location} is 72°F and sunny.`;
-      },
+const { images } = await orq.imageModel("openai/dall-e-3").doGenerate({
+    prompt: "A futuristic city at sunset",
+    size: "1024x1024",
+    n: 1,
+    seed: 1,
+    aspectRatio: "1:1",
+    providerOptions: {
+        openai: {
+            style: "vivid",
+        },
     },
-  },
 });
 ```
 
 ## 🔧 Configuration
-
-### Environment Variables
-
-- `ORQ_API_KEY`: API key for Orq platform authentication
 
 ### Provider Options
 
@@ -177,14 +221,6 @@ interface OrqAiProviderOptions {
   baseURL?: string;
   headers?: Record<string, string>;
 }
-
-type OrqAiProvider = {
-  (modelName: string): LanguageModel;
-  chatModel: (modelName: string) => LanguageModel;
-  completionModel: (modelName: string) => LanguageModel;
-  textEmbeddingModel: (modelName: string) => EmbeddingModel<string>;
-  imageModel: (modelName: string) => ImageModel;
-};
 ```
 
 ## 🛠️ Development
@@ -193,7 +229,3 @@ type OrqAiProvider = {
 # Build the package
 bunx nx build vercel-provider
 ```
-
-## 📄 License
-
-This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.
