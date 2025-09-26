@@ -1,12 +1,12 @@
 {
   "name": "@orq-ai/cli",
-  "version": "1.0.0-12",
+  "version": "1.0.7",
   "description": "Command-line interface for discovering and running evaluation files with @orq-ai/evaluatorq, and working with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "license": "UNLICENSE",
+  "license": "MIT",
   "keywords": [
     "cli",
     "ai",

@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "../packages/evaluators"
+    },
+    {
       "path": "../packages/evaluatorq"
     },
     {

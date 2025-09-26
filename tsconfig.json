@@ -17,6 +17,12 @@
     },
     {
       "path": "./packages/n8n-nodes-orq"
+    },
+    {
+      "path": "./packages/evaluators"
+    },
+    {
+      "path": "./packages/tiny-di"
     }
   ]
 }

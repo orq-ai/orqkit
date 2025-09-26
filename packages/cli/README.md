@@ -174,7 +174,3 @@ bunx nx typecheck cli
 # Run locally without installing
 bunx tsx packages/cli/src/bin/cli.ts evaluate "**/*.eval.ts"
 ```
-
-## 📄 License
-
-This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.

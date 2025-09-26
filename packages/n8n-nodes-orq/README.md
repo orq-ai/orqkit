@@ -176,7 +176,3 @@ bun run test:local
 - [n8n Community Nodes](https://docs.n8n.io/integrations/community-nodes/)
 - [Orq AI Documentation](https://docs.orq.ai)
 - [Orq AI Platform](https://orq.ai)
-
-## License
-
-This is free and unencumbered software released into the public domain. See [UNLICENSE](https://unlicense.org) for details.
