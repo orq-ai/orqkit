@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/tiny-di",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Minimal dependency injection container with TypeScript support",
   "type": "module",
   "main": "./dist/index.js",
