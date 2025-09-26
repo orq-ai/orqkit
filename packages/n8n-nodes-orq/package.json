@@ -57,6 +57,6 @@
     "n8n-workflow": "^1.103.0"
   },
   "peerDependencies": {
-    "n8n-workflow": "*",
+    "n8n-workflow": "*"
   }
 }
