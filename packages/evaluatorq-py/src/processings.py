@@ -134,7 +134,7 @@ async def process_job(
     # Process evaluators if any and job was successful
     evaluator_scores: list[EvaluatorScore] = []
 
-    if evaluators and len(evaluators) > 0:
+    if evaluators:
         # Update phase to evaluating
         if progress_service:
             await progress_service.update_progress(phase="evaluating")
