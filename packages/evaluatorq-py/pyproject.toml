@@ -1,0 +1,15 @@
+[project]
+name = "evaluatorq-py"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.0",
+    "httpx >= 0.28.1",
+    "rich>=14.2.0",
+]
+
+[tool.basedpyright]
+reportIncompatibleVariableOverride = "none"
+reportExplicitAny = "none"
