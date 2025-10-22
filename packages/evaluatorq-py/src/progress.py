@@ -1,7 +1,7 @@
-from collections.abc import Awaitable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal
+from types import CoroutineType
+from typing import Any
 
 from rich.console import Console
 from rich.spinner import Spinner
@@ -9,7 +9,7 @@ from rich.live import Live
 from rich.text import Text
 from rich.columns import Columns
 
-from src.types import DataPointResult
+from src.types import EvaluatorqResult
 
 
 class Phase(str, Enum):
@@ -130,7 +130,7 @@ class ProgressService:
             # Reserve space by printing newlines
             self.console.print("\n\n\n")
             # Move cursor up 3 lines
-            self.console.file.write("\x1b[3A")
+            self.console.print("\x1b[3A")
 
             self.live = Live(
                 self._get_renderable(),
@@ -182,7 +182,7 @@ class ProgressService:
 
 
 async def with_progress(
-    coroutine: Awaitable[DataPointResult],
+    coroutine: CoroutineType[Any, Any, EvaluatorqResult],
     progress_service: ProgressService,
     show_progress: bool = True,
 ):

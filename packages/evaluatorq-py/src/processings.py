@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Awaitable
-from typing import Any
+from typing import Any, cast
 from .progress import ProgressService, Phase
 
 from .types import (
@@ -40,16 +40,16 @@ async def process_data_point(
     try:
         # Resolve the data point (await if it's a coroutine/future, otherwise use directly)
         if asyncio.isfuture(data_promise) or asyncio.iscoroutine(data_promise):
-            data_point = await data_promise
+            data_point = await cast(Awaitable[DataPoint], data_promise)
         else:
-            data_point = data_promise
+            data_point = cast(DataPoint, data_promise)
 
         progress_service = ProgressService()
 
         # Update progress for this data point
 
         await progress_service.update_progress(
-            current_data_point=row_index, phase=Phase.INITIALIZING
+            current_data_point=row_index, phase=Phase.PROCESSING
         )
 
         # Process jobs with concurrency control
@@ -57,9 +57,7 @@ async def process_data_point(
 
         async def run_job_with_semaphore(job: Job) -> JobResult:
             async with semaphore:
-                return await process_job(
-                    job, data_point, row_index, evaluators, progress_service
-                )
+                return await process_job(job, data_point, row_index, evaluators)
 
         # Execute all jobs with controlled parallelism
         job_results = await asyncio.gather(
@@ -90,8 +88,7 @@ async def process_job(
     job: Job,
     data_point: DataPoint,
     row_index: int,
-    evaluators: list[Evaluator],
-    progress_service: Any = None,
+    evaluators: list[Evaluator] | None = None,
 ) -> JobResult:
     """
     Process a single job and optionally run evaluators on its output.
@@ -109,6 +106,7 @@ async def process_job(
     job_name = "job"  # Default name
     output: Output = None
     error: str | None = None
+    progress_service = ProgressService()
 
     try:
         # Execute the job
@@ -140,12 +138,11 @@ async def process_job(
     if evaluators:
         # Update phase to evaluating
         if progress_service:
-            await progress_service.update_progress(phase="evaluating")
+            await progress_service.update_progress(phase=Phase.EVALUATING)
 
         # Run all evaluators concurrently (unbounded concurrency)
         evaluator_tasks = [
-            process_evaluator(evaluator, data_point, output, progress_service)
-            for evaluator in evaluators
+            process_evaluator(evaluator, data_point, output) for evaluator in evaluators
         ]
 
         evaluator_scores = await asyncio.gather(*evaluator_tasks)
@@ -162,7 +159,6 @@ async def process_evaluator(
     evaluator: Evaluator,
     data_point: DataPoint,
     output: Output,
-    progress_service: Any = None,
 ) -> EvaluatorScore:
     """
     Process a single evaluator.
@@ -177,6 +173,7 @@ async def process_evaluator(
         EvaluatorScore with the evaluation result or error
     """
     evaluator_name = evaluator["name"]
+    progress_service = ProgressService()
 
     try:
         # Update current evaluator in progress
