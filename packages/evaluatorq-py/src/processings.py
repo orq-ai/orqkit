@@ -22,6 +22,7 @@ async def process_data_point(
     jobs: list[Job],
     evaluators: list[Evaluator] | None,
     parallelism: int,
+    progress_service: ProgressService | None = None,
 ) -> list[DataPointResult]:
     """
     Process a single data point through all jobs and evaluators.
@@ -44,20 +45,20 @@ async def process_data_point(
         else:
             data_point = cast(DataPoint, data_promise)
 
-        progress_service = ProgressService()
-
         # Update progress for this data point
-
-        await progress_service.update_progress(
-            current_data_point=row_index, phase=Phase.PROCESSING
-        )
+        if progress_service:
+            await progress_service.update_progress(
+                current_data_point=row_index + 1, phase=Phase.PROCESSING
+            )
 
         # Process jobs with concurrency control
         semaphore = asyncio.Semaphore(parallelism)
 
         async def run_job_with_semaphore(job: Job) -> JobResult:
             async with semaphore:
-                return await process_job(job, data_point, row_index, evaluators)
+                return await process_job(
+                    job, data_point, row_index, evaluators, progress_service
+                )
 
         # Execute all jobs with controlled parallelism
         job_results = await asyncio.gather(
@@ -89,6 +90,7 @@ async def process_job(
     data_point: DataPoint,
     row_index: int,
     evaluators: list[Evaluator] | None = None,
+    progress_service: ProgressService | None = None,
 ) -> JobResult:
     """
     Process a single job and optionally run evaluators on its output.
@@ -106,7 +108,6 @@ async def process_job(
     job_name = "job"  # Default name
     output: Output = None
     error: str | None = None
-    progress_service = ProgressService()
 
     try:
         # Execute the job
@@ -119,9 +120,6 @@ async def process_job(
             await progress_service.update_progress(current_job=job_name)
 
     except Exception as e:
-        # Extract job name from error if available
-        if hasattr(e, "job_name"):
-            job_name = e.job_name  # type: ignore
         error = str(e)
 
         # Return early with error if job failed
@@ -142,7 +140,8 @@ async def process_job(
 
         # Run all evaluators concurrently (unbounded concurrency)
         evaluator_tasks = [
-            process_evaluator(evaluator, data_point, output) for evaluator in evaluators
+            process_evaluator(evaluator, data_point, output, progress_service)
+            for evaluator in evaluators
         ]
 
         evaluator_scores = await asyncio.gather(*evaluator_tasks)
@@ -159,6 +158,7 @@ async def process_evaluator(
     evaluator: Evaluator,
     data_point: DataPoint,
     output: Output,
+    progress_service: ProgressService | None = None,
 ) -> EvaluatorScore:
     """
     Process a single evaluator.
@@ -173,7 +173,6 @@ async def process_evaluator(
         EvaluatorScore with the evaluation result or error
     """
     evaluator_name = evaluator["name"]
-    progress_service = ProgressService()
 
     try:
         # Update current evaluator in progress

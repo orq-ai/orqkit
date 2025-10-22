@@ -75,11 +75,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
         for index, data_promise in enumerate(data_promises):
             result = await process_data_point(
-                data_promise,
-                index,
-                jobs,
-                evaluators,
-                parallelism,
+                data_promise, index, jobs, evaluators, parallelism, progress
             )
             results.extend(result)
 

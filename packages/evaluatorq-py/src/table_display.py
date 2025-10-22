@@ -2,12 +2,13 @@
 
 import shutil
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 from rich.panel import Panel
+from rich import box
 
 from .types import EvaluatorqResult
 
@@ -32,8 +33,8 @@ def create_summary_display(results: EvaluatorqResult, console: Console) -> Table
         round(((total_jobs - failed_jobs) / total_jobs) * 100) if total_jobs > 0 else 0
     )
 
-    # Create summary table
-    table = Table(show_header=True, header_style="bold", box=None)
+    # Create summary table with borders
+    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
     table.add_column("Metric", style="white", width=20)
     table.add_column("Value", width=15)
 
@@ -64,7 +65,7 @@ def create_summary_display(results: EvaluatorqResult, console: Console) -> Table
     return table
 
 
-def calculate_evaluator_averages(results: EvaluatorqResult) -> dict:
+def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
     """
     Calculate averages for evaluator scores across all data points.
 
@@ -163,8 +164,8 @@ def create_results_display(results: EvaluatorqResult, console: Console) -> Table
         table.add_row(Text("No job results or evaluators found.", style="yellow"))
         return table
 
-    # Create table with dynamic columns
-    table = Table(show_header=True, header_style="bold", box=None)
+    # Create table with dynamic columns and borders
+    table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
 
     # Add evaluator column
     table.add_column("Evaluators", style="white", width=20)
@@ -250,4 +251,8 @@ async def display_results_table(results: EvaluatorqResult):
 
     # Show tip
     console.print("[dim]💡 Tip: Use print=False to get raw JSON results.[/dim]")
+    console.print()
+
+    # Success message (shown after table, matching TypeScript)
+    console.print("[green]✓ Evaluation completed successfully[/green]")
     console.print()

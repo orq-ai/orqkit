@@ -35,7 +35,7 @@ class DataPoint(BaseModel):
     """
 
     inputs: dict[str, Any]
-    expected_output: Output | None
+    expected_output: Output | None = None
 
 
 class DataPointResult(BaseModel):

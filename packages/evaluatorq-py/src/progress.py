@@ -127,11 +127,6 @@ class ProgressService:
     async def start_spinner(self):
         """Start the progress spinner"""
         if not self.live:
-            # Reserve space by printing newlines
-            self.console.print("\n\n\n")
-            # Move cursor up 3 lines
-            self.console.print("\x1b[3A")
-
             self.live = Live(
                 self._get_renderable(),
                 console=self.console,
@@ -144,14 +139,6 @@ class ProgressService:
         """Stop the progress spinner"""
         if self.live:
             self.live.stop()
-
-            if self.state.phase == Phase.COMPLETED:
-                success_text = Text()
-                success_text = success_text.append(
-                    "✓ Evaluation completed successfully", style="green"
-                )
-
-                self.console.print(success_text)
 
             # Add newline for spacing
             self.console.print()
