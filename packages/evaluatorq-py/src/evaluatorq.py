@@ -1,7 +1,10 @@
-from typing import Awaitable
-from .types import DataPoint, EvaluatorParams, EvaluatorqResult, Job
+from collections.abc import Awaitable
+
+from src.table_display import display_results_table
+from .types import DataPoint, DataPointResult, EvaluatorParams
 import os
 import time
+from .processings import process_data_point
 
 
 def setup_orq_client(api_key: str):
@@ -12,7 +15,7 @@ def fetch_dataset_as_datapoints(orq_client, dataset_id: str):
     pass
 
 
-def evaluatorq(name: str, params: EvaluatorParams):
+async def evaluatorq(name: str, params: EvaluatorParams):
     # Destructure with .get() for defaults
     data = params["data"]
     evaluators = params.get("evaluators", [])
@@ -44,13 +47,18 @@ def evaluatorq(name: str, params: EvaluatorParams):
     # Initialize progress
     # progress.UpdateProgress(0)
     #
+    results: list[DataPointResult] = []
 
-    for data_promise, index in enumerate(data_promises):
-        # Process each data point
+    for index, data_promise in enumerate(data_promises):
+        results.extend(
+            await process_data_point(data_promise, index, jobs, evaluators, parallelism)
+        )
         pass
 
-    ## Add table display
-    #
+    # Add table display
+    if print_results:
+        await display_results_table(results)
+
     if orq_api_key:
         # Upload results to Orq platform
         pass

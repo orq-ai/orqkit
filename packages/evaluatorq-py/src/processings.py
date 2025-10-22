@@ -1,5 +1,7 @@
 import asyncio
+from collections.abc import Awaitable
 from typing import Any
+from .progress import ProgressService, Phase
 
 from .types import (
     DataPoint,
@@ -15,12 +17,11 @@ from .types import (
 
 
 async def process_data_point(
-    data_promise: DataPoint | asyncio.Future[DataPoint],
+    data_promise: DataPoint | Awaitable[DataPoint],
     row_index: int,
     jobs: list[Job],
-    evaluators: list[Evaluator],
+    evaluators: list[Evaluator] | None,
     parallelism: int,
-    progress_service: Any = None,
 ) -> list[DataPointResult]:
     """
     Process a single data point through all jobs and evaluators.
@@ -37,17 +38,19 @@ async def process_data_point(
         List containing a single DataPointResult with job results and evaluator scores
     """
     try:
-        # Await the data point if it's a promise/future
+        # Resolve the data point (await if it's a coroutine/future, otherwise use directly)
         if asyncio.isfuture(data_promise) or asyncio.iscoroutine(data_promise):
             data_point = await data_promise
         else:
             data_point = data_promise
 
+        progress_service = ProgressService()
+
         # Update progress for this data point
-        if progress_service:
-            await progress_service.update_progress(
-                current_data_point=row_index + 1, phase="processing"
-            )
+
+        await progress_service.update_progress(
+            current_data_point=row_index, phase=Phase.INITIALIZING
+        )
 
         # Process jobs with concurrency control
         semaphore = asyncio.Semaphore(parallelism)

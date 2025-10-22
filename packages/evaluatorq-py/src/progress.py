@@ -1,3 +1,4 @@
+from collections.abc import Awaitable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Literal
@@ -7,6 +8,8 @@ from rich.spinner import Spinner
 from rich.live import Live
 from rich.text import Text
 from rich.columns import Columns
+
+from src.types import DataPointResult
 
 
 class Phase(str, Enum):
@@ -94,8 +97,7 @@ class ProgressService:
         current_data_point: int | None = None,
         current_job: str | None = None,
         current_evaluator: str | None = None,
-        phase: Literal["initializing", "processing", "evaluating", "completed"]
-        | None = None,
+        phase: Phase | None = None,
     ):
         """
         Update the progress state.
@@ -180,7 +182,7 @@ class ProgressService:
 
 
 async def with_progress(
-    coroutine,
+    coroutine: Awaitable[DataPointResult],
     progress_service: ProgressService,
     show_progress: bool = True,
 ):
@@ -216,7 +218,7 @@ async def with_progress(
         result = await coroutine
 
         # Update to completed state
-        await progress_service.update_progress(phase="completed")
+        await progress_service.update_progress(phase=Phase.COMPLETED)
 
         # Stop spinner with success
         await progress_service.stop_spinner()
