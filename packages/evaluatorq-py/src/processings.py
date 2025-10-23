@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Awaitable
-from typing import Any, cast
+from inspect import isawaitable
 from .progress import ProgressService, Phase
 
 from .types import (
@@ -39,11 +39,11 @@ async def process_data_point(
         List containing a single DataPointResult with job results and evaluator scores
     """
     try:
-        # Resolve the data point (await if it's a coroutine/future, otherwise use directly)
-        if asyncio.isfuture(data_promise) or asyncio.iscoroutine(data_promise):
-            data_point = await cast(Awaitable[DataPoint], data_promise)
+        # Resolve the data point (await if it's awaitable, otherwise use directly)
+        if isawaitable(data_promise):
+            data_point = await data_promise
         else:
-            data_point = cast(DataPoint, data_promise)
+            data_point = data_promise
 
         # Update progress for this data point
         if progress_service:
@@ -69,7 +69,7 @@ async def process_data_point(
         return [
             DataPointResult(
                 data_point=data_point,
-                job_results=list(job_results),
+                job_results=job_results,
                 error=None,
             )
         ]
@@ -139,12 +139,15 @@ async def process_job(
             await progress_service.update_progress(phase=Phase.EVALUATING)
 
         # Run all evaluators concurrently (unbounded concurrency)
-        evaluator_tasks = [
-            process_evaluator(evaluator, data_point, output, progress_service)
+        # Using create_task for better event loop scheduling
+        tasks = [
+            asyncio.create_task(
+                process_evaluator(evaluator, data_point, output, progress_service)
+            )
             for evaluator in evaluators
         ]
 
-        evaluator_scores = await asyncio.gather(*evaluator_tasks)
+        evaluator_scores = await asyncio.gather(*tasks)
 
     return JobResult(
         job_name=job_name,

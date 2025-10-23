@@ -1,4 +1,5 @@
 from collections.abc import Awaitable
+import asyncio
 import os
 import time
 
@@ -48,11 +49,11 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
     # Handle dataset_id case
     if "dataset_id" in data:
-        if not orq_api_key or not orq_client:
-            raise ValueError(
-                "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
-            )
-        pass
+        raise ValueError("Integration with Orq platform is not supported yet.")
+        # if not orq_api_key or not orq_client:
+        #     raise ValueError(
+        #         "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
+        #     )
         # dataset_id = data["dataset_id"]
         # data_promises = fetch_dataset_as_datapoints(orq_client, dataset_id)
     else:
@@ -70,14 +71,32 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
             phase=Phase.INITIALIZING,
         )
 
-        # Process all data points
-        results: EvaluatorqResult = []
+        # Process data points with controlled concurrency
+        # Use a semaphore to limit concurrent data points to avoid overwhelming the system
+        # This allows parallelism within each data point (controlled by the parallelism param)
+        # while also having multiple data points in flight
+        data_point_semaphore = asyncio.Semaphore(max(1, parallelism // len(jobs)))
 
-        for index, data_promise in enumerate(data_promises):
-            result = await process_data_point(
-                data_promise, index, jobs, evaluators, parallelism, progress
-            )
-            results.extend(result)
+        async def process_with_semaphore(
+            index: int, data_promise: Awaitable[DataPoint] | DataPoint
+        ):
+            async with data_point_semaphore:
+                return await process_data_point(
+                    data_promise, index, jobs, evaluators, parallelism, progress
+                )
+
+        tasks = [
+            process_with_semaphore(index, data_promise)
+            for index, data_promise in enumerate(data_promises)
+        ]
+
+        # Gather all results
+        results_nested = await asyncio.gather(*tasks)
+
+        # Flatten results (each process_data_point returns a list)
+        results: EvaluatorqResult = []
+        for result_list in results_nested:
+            results.extend(result_list)
 
         return results
 
