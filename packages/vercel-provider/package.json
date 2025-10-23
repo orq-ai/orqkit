@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/vercel-provider",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Vercel AI SDK provider for seamless integration with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
