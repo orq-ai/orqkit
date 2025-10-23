@@ -5,9 +5,11 @@ dist
 tmp
 out-tsc
 *.tsbuildinfo
+**/__pycache__/**
 
 # dependencies
 node_modules
+uv.lock
 
 # IDEs and editors
 /.idea
@@ -44,4 +46,5 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 .npmrc
+.venv
 **/*.tsbuildinfo
