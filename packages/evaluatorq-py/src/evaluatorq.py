@@ -1,20 +1,62 @@
 from collections.abc import Awaitable
 import asyncio
-import os
-import time
+from typing import cast
+from datetime import datetime, UTC
+
+from src.send_results import send_results_to_orq
+
 
 from .table_display import display_results_table
 from .types import DataPoint, EvaluatorParams, EvaluatorqResult
 from src.processings import process_data_point
 from src.progress import ProgressService, with_progress, Phase
 
-
-def setup_orq_client(api_key: str):
-    pass
+from orq_ai_sdk import Orq
 
 
-def fetch_dataset_as_datapoints(orq_client, dataset_id: str):
-    pass
+def setup_orq_client(api_key: str) -> Orq:
+    try:
+        client = Orq(api_key=api_key, server_url="https://my.staging.orq.ai")
+
+        return client
+    except Exception as e:
+        # if modeule not found throw specific error stating how to install
+        if isinstance(e, ModuleNotFoundError):
+            raise ModuleNotFoundError(
+                "Orq client not found. Please install it with `pip install evaluatorq-py[orq]`"
+            )
+
+        raise Exception(f"Error setting up Orq client: {e}")
+
+
+async def fetch_dataset_as_datapoints(
+    orq_client: Orq, dataset_id: str
+) -> list[DataPoint]:
+    """
+    Fetch dataset from Orq platform and convert to DataPoint objects.
+
+    Args:
+        orq_client: Orq client instance
+        dataset_id: ID of the dataset to fetch
+
+    Returns:
+        List of DataPoint objects with inputs and expected_output
+    """
+    try:
+        response = await orq_client.datasets.list_datapoints_async(
+            dataset_id=dataset_id
+        )
+
+        if response and response.data:
+            return [
+                DataPoint(inputs=point.inputs, expected_output=point.expected_output)
+                for point in response.data
+            ]
+        else:
+            raise Exception(f"Dataset {dataset_id} not found or has no data")
+
+    except Exception as e:
+        raise Exception(f"Failed to fetch dataset {dataset_id}: {e}")
 
 
 async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
@@ -42,22 +84,21 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
     if orq_api_key:
         orq_client = setup_orq_client(orq_api_key)
 
-    start_time = time.time()
+    start_time = datetime.now(UTC)
 
-    data_promises: list[Awaitable[DataPoint] | DataPoint]
+    data_promises: list[DataPoint]
     dataset_id: str | None = None
 
     # Handle dataset_id case
-    if "dataset_id" in data:
-        raise ValueError("Integration with Orq platform is not supported yet.")
-        # if not orq_api_key or not orq_client:
-        #     raise ValueError(
-        #         "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
-        #     )
-        # dataset_id = data["dataset_id"]
-        # data_promises = fetch_dataset_as_datapoints(orq_client, dataset_id)
+    if isinstance(data, dict) and "dataset_id" in data:
+        if not orq_api_key or not orq_client:
+            raise ValueError(
+                "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
+            )
+        dataset_id = data["dataset_id"]
+        data_promises = await fetch_dataset_as_datapoints(orq_client, dataset_id)
     else:
-        data_promises = data
+        data_promises = cast(list[DataPoint], data)
 
     # Create progress service
     progress = ProgressService()
@@ -111,7 +152,14 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
     # Upload results to Orq platform if API key is available
     if orq_api_key:
-        # TODO: Upload results to Orq platform
-        pass
+        _ = await send_results_to_orq(
+            orq_api_key,
+            name,
+            description,
+            dataset_id,
+            results,
+            start_time,
+            datetime.now(UTC),
+        )
 
     return results
