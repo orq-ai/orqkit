@@ -29,6 +29,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 norecursedirs = [".venv", "dist", "*.egg-info"]
 
+orq = [
+    "orq-ai-sdk>=3.13.16",
+]
+
 [tool.basedpyright]
 reportIncompatibleVariableOverride = "none"
 reportExplicitAny = "none"
