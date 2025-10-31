@@ -14,7 +14,7 @@ from .types import DataPoint, EvaluationResult, EvaluatorqResult, Output
 class SerializedEvaluatorScore(BaseModel):
     """Serialized evaluator score for API transmission."""
 
-    evaluator_name: str
+    evaluator_name: str = Field(serialization_alias="evaluatorName")
     score: EvaluationResult
     error: str | None = None
 
@@ -22,18 +22,22 @@ class SerializedEvaluatorScore(BaseModel):
 class SerializedJobResult(BaseModel):
     """Serialized job result for API transmission."""
 
-    job_name: str
+    job_name: str = Field(serialization_alias="jobName")
     output: Output
     error: str | None = None
-    evaluator_scores: list[SerializedEvaluatorScore] | None = None
+    evaluator_scores: list[SerializedEvaluatorScore] | None = Field(
+        default=None, serialization_alias="evaluatorScores"
+    )
 
 
 class SerializedDataPointResult(BaseModel):
     """Serialized data point result for API transmission."""
 
-    data_point: DataPoint
+    data_point: DataPoint = Field(serialization_alias="dataPoint")
     error: str | None = None
-    job_results: list[SerializedJobResult] | None = None
+    job_results: list[SerializedJobResult] | None = Field(
+        default=None, serialization_alias="jobResults"
+    )
 
 
 class SendResultsPayload(BaseModel):

@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Awaitable
 from inspect import isawaitable
 from .progress import ProgressService, Phase
+from .job_helper import JobError
 
 from .types import (
     DataPoint,
@@ -119,6 +120,18 @@ async def process_job(
         if progress_service:
             await progress_service.update_progress(current_job=job_name)
 
+    except JobError as e:
+        # Extract job name from JobError
+        job_name = e.job_name
+        error = str(e.original_error)
+
+        # Return early with error if job failed
+        return JobResult(
+            job_name=job_name,
+            output=None,
+            error=error,
+            evaluator_scores=[],
+        )
     except Exception as e:
         error = str(e)
 
