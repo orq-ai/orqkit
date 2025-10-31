@@ -36,8 +36,6 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
     start_time = datetime.now(UTC)
 
-    start_time = datetime.now(UTC)
-
     data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
     dataset_id: str | None = None
 
@@ -54,6 +52,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
             )
         dataset_id = data["dataset_id"]
         data_promises = await fetch_dataset_as_datapoints(orq_client, dataset_id)
+
     else:
         data_promises = cast(list[DataPoint], data)
 
