@@ -36,17 +36,12 @@ def job(
 
     Example:
         ```python
-        from evaluatorq import job, DataPoint
+        # Define a job:
+        async def process(row, data):
+            do_something(data)
 
-        # Without helper - manual format:
-        async def my_job(data: DataPoint, row: int):
-            result = await do_something(data)
-            return {"name": "my-job", "output": result}
-
-        # With helper - cleaner:
-        my_job = job("my-job", async def process(data, row):
-            return await do_something(data)
-        )
+        # Register the job
+        my_job = job("my-job", process)
 
         # Or with lambda for simple cases:
         my_job = job("uppercase", lambda data, row: data.inputs["text"].upper())

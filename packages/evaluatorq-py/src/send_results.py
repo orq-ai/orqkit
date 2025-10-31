@@ -87,17 +87,17 @@ async def send_results_to_orq(
         end_time: When the evaluation ended
     """
     try:
-        # Convert Error objects to strings for JSON serialization
-        serialized_results: list[SerializedDataPointResult] = []
-
-        for result in results:
-            job_results_serialized = []
-            if result.job_results:
-                job_results_serialized: list[SerializedJobResult] = []
-                for job_result in result.job_results:
-                    evaluator_scores_serialized = None
-                    if job_result.evaluator_scores:
-                        evaluator_scores_serialized = [
+        # Convert results to serialized format using list comprehensions
+        serialized_results: list[SerializedDataPointResult] = [
+            SerializedDataPointResult(
+                data_point=result.data_point,
+                error=result.error,
+                job_results=[
+                    SerializedJobResult(
+                        job_name=job_result.job_name,
+                        output=job_result.output,
+                        error=job_result.error,
+                        evaluator_scores=[
                             SerializedEvaluatorScore(
                                 evaluator_name=score.evaluator_name,
                                 score=score.score,
@@ -105,23 +105,16 @@ async def send_results_to_orq(
                             )
                             for score in job_result.evaluator_scores
                         ]
-
-                    job_results_serialized.append(
-                        SerializedJobResult(
-                            job_name=job_result.job_name,
-                            output=job_result.output,
-                            error=job_result.error,
-                            evaluator_scores=evaluator_scores_serialized,
-                        )
+                        if job_result.evaluator_scores
+                        else None,
                     )
-
-            serialized_results.append(
-                SerializedDataPointResult(
-                    data_point=result.data_point,
-                    error=result.error,
-                    job_results=job_results_serialized,
-                )
+                    for job_result in result.job_results
+                ]
+                if result.job_results
+                else None,
             )
+            for result in results
+        ]
 
         # Calculate duration in milliseconds
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
@@ -138,14 +131,11 @@ async def send_results_to_orq(
         )
 
         # Get base URL from environment or use default
-        base_url = os.getenv("ORQ_BASE_URL", "https://my.staging.orq.ai")
+        base_url = os.getenv("ORQ_BASE_URL", "https://api.orq.ai")
         orq_debug = os.getenv("ORQ_DEBUG", "false").lower() == "true"
 
         # Serialize with aliases for API field names
         payload_dict = payload.model_dump(mode="json", exclude_none=True, by_alias=True)
-
-        if orq_debug:
-            print("Sending payload:", json.dumps(payload_dict, indent=2))
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
