@@ -39,7 +39,7 @@ class SerializedDataPointResult(BaseModel):
 class SendResultsPayload(BaseModel):
     """The payload format expected by the Orq API."""
 
-    model_config = {"populate_by_name": True}
+    model_config: dict[str, bool] = {"populate_by_name": True}
 
     name: str = Field(serialization_alias="_name")
     description: str | None = Field(default=None, serialization_alias="_description")
