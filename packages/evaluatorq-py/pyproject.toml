@@ -10,6 +10,22 @@ dependencies = [
     "rich>=14.2.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+norecursedirs = [".venv", "dist", "*.egg-info"]
+
 [tool.basedpyright]
 reportIncompatibleVariableOverride = "none"
 reportExplicitAny = "none"
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.2.0",
+    "ruff>=0.14.3",
+]

@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Set
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from rich.panel import Panel
 from rich import box
 
 from .types import EvaluatorqResult
