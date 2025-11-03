@@ -79,7 +79,10 @@ def calculate_evaluator_averages(
     Calculate averages for evaluator scores across all data points.
 
     Returns:
-        Dictionary with job_names, evaluator_names, and averages
+        EvaluatorAverages with:
+        - job_names: sorted list of job names
+        - evaluator_names: sorted list of evaluator names
+        - averages: dict mapping evaluator_name -> job_name -> (display_value, style)
     """
     all_job_names: set[str] = set()
     all_evaluator_names: set[str] = set()

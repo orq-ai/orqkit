@@ -30,16 +30,16 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
     jobs = params["jobs"]
     parallelism = params.get("parallelism", 1)
     print_results = params.get("print", True)
-    description = params.get("description")
+    description = params.get("description")  # pyright: ignore[reportUnusedVariable]
 
     orq_api_key = os.environ.get("ORQ_API_KEY")
 
     start_time = datetime.now(UTC)
 
-    start_time = time.time()
+    start_time = time.time()  # pyright: ignore[reportUnusedVariable]
 
     data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
-    dataset_id: str | None = None
+    dataset_id: str | None = None  # pyright: ignore[reportUnusedVariable]
 
     # Handle dataset_id case
     if isinstance(data, dict) and "dataset_id" in data:
