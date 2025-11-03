@@ -1,7 +1,6 @@
 """EvaluatorQ Python - An evaluation framework for LLM applications."""
 
 from .evaluatorq import evaluatorq
-from .job_helper import job
 from .types import (
     DataPoint,
     DataPointResult,

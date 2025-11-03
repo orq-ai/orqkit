@@ -2,7 +2,16 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "production": ["default"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/*_test.py",
+      "!{projectRoot}/**/*.md",
+      "!{projectRoot}/.venv/**/*",
+      "!{projectRoot}/**/__pycache__/**/*",
+      "!{projectRoot}/**/*.egg-info/**/*"
+    ],
     "sharedGlobals": []
   },
   "release": {
@@ -26,7 +35,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "if [ -f {projectRoot}/tsconfig.spec.json ]; then bun test; fi"
+          "if [ -f {projectRoot}/tsconfig.spec.json ]; then bun test; elif [ -f {projectRoot}/pyproject.toml ]; then uv run pytest; fi"
         ]
       }
     }

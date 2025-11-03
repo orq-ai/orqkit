@@ -6,6 +6,8 @@ tmp
 out-tsc
 *.tsbuildinfo
 **/__pycache__/**
+*.egg-info/
+*.egg
 
 # dependencies
 node_modules
