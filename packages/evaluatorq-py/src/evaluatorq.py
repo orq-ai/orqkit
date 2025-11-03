@@ -9,15 +9,15 @@ from src.processings import process_data_point
 from src.progress import ProgressService, with_progress, Phase
 
 
-def setup_orq_client(api_key: str):
+def setup_orq_client(api_key: str):  # pyright: ignore[reportUnusedParameter]
     pass
 
 
-def fetch_dataset_as_datapoints(orq_client, dataset_id: str):
+def fetch_dataset_as_datapoints(orq_client, dataset_id: str):  # pyright: ignore[reportUnusedParameter,reportMissingParameterType,reportUnknownParameterType]
     pass
 
 
-async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
+async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:  # pyright: ignore[reportUnusedParameter]
     """
     Run an evaluation with the given parameters.
 
@@ -34,18 +34,18 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
     jobs = params["jobs"]
     parallelism = params.get("parallelism", 1)
     print_results = params.get("print", True)
-    description = params.get("description")
+    description = params.get("description")  # pyright: ignore[reportUnusedVariable]
 
-    orq_client = None
+    orq_client = None  # pyright: ignore[reportUnusedVariable]
     orq_api_key = os.environ.get("ORQ_API_KEY")
 
     if orq_api_key:
-        orq_client = setup_orq_client(orq_api_key)
+        orq_client = setup_orq_client(orq_api_key)  # pyright: ignore[reportUnusedVariable]
 
-    start_time = time.time()
+    start_time = time.time()  # pyright: ignore[reportUnusedVariable]
 
     data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
-    dataset_id: str | None = None
+    dataset_id: str | None = None  # pyright: ignore[reportUnusedVariable]
 
     # Handle dataset_id case
     if "dataset_id" in data:

@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Awaitable
 from inspect import isawaitable
+from typing import cast
 from .progress import ProgressService, Phase
 
 from .types import (
@@ -112,8 +113,8 @@ async def process_job(
     try:
         # Execute the job
         result = await job(data_point, row_index)
-        job_name = result["name"]
-        output = result["output"]
+        job_name = cast(str, result["name"])
+        output = cast(Output, result["output"])
 
         # Update progress with current job name
         if progress_service:

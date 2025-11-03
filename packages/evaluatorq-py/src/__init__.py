@@ -20,8 +20,6 @@ from .types import (
 __all__ = [
     # Main function
     "evaluatorq",
-    # Helper
-    "job",
     # Types
     "DataPoint",
     "DataPointResult",
