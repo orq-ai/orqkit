@@ -1,4 +1,4 @@
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Sequence
 import asyncio
 from typing import cast
 from datetime import datetime, UTC
@@ -36,7 +36,9 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
     start_time = datetime.now(UTC)
 
-    data_promises: list[DataPoint]
+    start_time = time.time()
+
+    data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
     dataset_id: str | None = None
 
     # Handle dataset_id case

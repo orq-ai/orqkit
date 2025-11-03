@@ -55,8 +55,8 @@ class JobReturn(TypedDict):
     output: Output
 
 
-Job = Callable[[DataPoint, int], Awaitable[JobReturn]]
-"""Job function type"""
+Job = Callable[[DataPoint, int], Awaitable[dict[str, Any]]]
+"""Job function type - returns a dict with 'name' and 'output' keys"""
 
 
 class ScorerParameter(TypedDict):
