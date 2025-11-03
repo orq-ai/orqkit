@@ -39,4 +39,5 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "basedpyright>=1.21.0",
     "ruff>=0.14.3",
+    "basedpyright>=1.21.0",
 ]
