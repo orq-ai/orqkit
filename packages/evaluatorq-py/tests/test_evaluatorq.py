@@ -111,7 +111,6 @@ async def test_evaluatorq_with_parallelism():
 
 
 @pytest.mark.asyncio
-@pytest.mark.slow
 async def test_evaluatorq_stress():
     """Stress test with larger dataset."""
     data_points = generate_test_data(300)
