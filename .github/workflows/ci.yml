@@ -51,7 +51,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           cd packages/evaluatorq-py
-          uv sync --frozen
+          uv sync --frozen --all-groups
 
       - name: Cache Nx
         uses: actions/cache@v4
