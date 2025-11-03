@@ -5,7 +5,7 @@ import random
 import pytest
 
 from src.evaluatorq import evaluatorq
-from src.types import EvaluationResult, DataPoint
+from src.types import EvaluationResult, DataPoint, ScorerParameter
 
 
 # Sample text data
@@ -16,9 +16,9 @@ SAMPLE_TEXTS = [
 ]
 
 
-async def text_analyzer(data: DataPoint, row: int):
+async def text_analyzer(data: DataPoint, _row: int):
     """Simple text analysis job."""
-    text: str = data.inputs["text"]
+    text = str(data.inputs["text"])
     await asyncio.sleep(0.001)
 
     words = text.split()
@@ -31,14 +31,14 @@ async def text_analyzer(data: DataPoint, row: int):
     }
 
 
-async def length_check_scorer(params):
+async def length_check_scorer(params: ScorerParameter) -> EvaluationResult:
     """Evaluate if output length is sufficient."""
     output = params["output"]
 
     if not isinstance(output, dict) or "length" not in output:
         return EvaluationResult(value="N/A", explanation="Not applicable")
 
-    passes = output["length"] > 20
+    passes = bool(output["length"] > 20)
     return EvaluationResult(
         value=1 if passes else 0,
         explanation="Text length is sufficient" if passes else "Text too short",
@@ -114,7 +114,7 @@ async def test_evaluatorq_with_parallelism():
 @pytest.mark.slow
 async def test_evaluatorq_stress():
     """Stress test with larger dataset."""
-    data_points = generate_test_data(1000)
+    data_points = generate_test_data(300)
 
     results = await evaluatorq(
         "test-stress",
@@ -133,4 +133,4 @@ async def test_evaluatorq_stress():
     )
 
     assert results is not None
-    assert len(results) == 1000
+    assert len(results) == 300

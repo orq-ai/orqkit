@@ -1,5 +1,5 @@
 from typing import Any, Callable, TypedDict
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Sequence
 from pydantic import BaseModel
 
 Output = str | int | float | bool | dict[str, Any] | None
@@ -76,7 +76,14 @@ class DatasetIdInput(TypedDict):
     dataset_id: str
 
 
-class EvaluatorParams(TypedDict):
+class _EvaluatorParamsRequired(TypedDict):
+    """Required parameters for evaluation."""
+
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
+    jobs: list[Job]
+
+
+class EvaluatorParams(_EvaluatorParamsRequired, total=False):
     """
     Parameters for running an evaluation.
 
@@ -90,9 +97,7 @@ class EvaluatorParams(TypedDict):
         description: Optional description for the evaluation run.
     """
 
-    data: DatasetIdInput | list[Awaitable[DataPoint] | DataPoint]
     evaluators: list[Evaluator] | None
-    jobs: list[Job]
     parallelism: int
     print: bool
     description: str | None
