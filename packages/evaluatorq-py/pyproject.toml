@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "evaluatorq-py"
 version = "0.1.0"
@@ -15,6 +19,9 @@ dependencies = [
 orq = [
     "orq-ai-sdk>=3.13.16",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.basedpyright]
 reportIncompatibleVariableOverride = "none"
