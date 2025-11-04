@@ -26,9 +26,6 @@ orq = [
     "orq-ai-sdk>=3.13.16",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
