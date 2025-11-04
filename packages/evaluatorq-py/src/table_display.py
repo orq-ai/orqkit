@@ -28,13 +28,17 @@ def get_terminal_width() -> int:
 def create_summary_display(results: EvaluatorqResult) -> Table:
     """Create a summary table of evaluation results"""
     total_data_points = len(results)
-    failed_data_points = sum(1 for r in results if r.error)
+    failed_data_points = 0
+    total_jobs = 0
+    failed_jobs = 0
 
-    total_jobs = sum(len(r.job_results) if r.job_results else 0 for r in results)
-    failed_jobs = sum(
-        sum(1 for j in r.job_results if j.error) if r.job_results else 0
-        for r in results
-    )
+    for r in results:
+        if r.error:
+            failed_data_points += 1
+
+        if r.job_results:
+            total_jobs += len(r.job_results)
+            failed_jobs += sum(1 for job_result in r.job_results if job_result.error)
 
     success_rate = (
         round(((total_jobs - failed_jobs) / total_jobs) * 100) if total_jobs > 0 else 0

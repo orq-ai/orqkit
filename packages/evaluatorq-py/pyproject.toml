@@ -23,15 +23,11 @@ orq = [
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 norecursedirs = [".venv", "dist", "*.egg-info"]
 
-orq = [
-    "orq-ai-sdk>=3.13.16",
-]
 
 [tool.basedpyright]
 reportIncompatibleVariableOverride = "none"
@@ -43,5 +39,4 @@ dev = [
     "pytest-asyncio>=1.2.0",
     "basedpyright>=1.21.0",
     "ruff>=0.14.3",
-    "basedpyright>=1.21.0",
 ]
