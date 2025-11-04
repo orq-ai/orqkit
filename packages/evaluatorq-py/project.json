@@ -3,9 +3,16 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/evaluatorq-py/src",
+  "release": {
+    "version": {
+      "versionActions": "@nxlv/python/src/release/version-actions"
+    }
+  },
+  "tags": ["python", "library", "evaluatorq"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "dependsOn": ["install"],
       "options": {
         "cwd": "packages/evaluatorq-py",
         "command": "uv build"
@@ -17,11 +24,13 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/evaluatorq-py",
-        "command": "uv sync"
-      }
+        "command": "uv sync --frozen --all-groups"
+      },
+      "cache": true
     },
     "test": {
       "executor": "nx:run-commands",
+      "dependsOn": ["install"],
       "options": {
         "cwd": "packages/evaluatorq-py",
         "command": "uv run pytest"
@@ -30,6 +39,7 @@
     },
     "lint": {
       "executor": "nx:run-commands",
+      "dependsOn": ["install"],
       "options": {
         "cwd": "packages/evaluatorq-py",
         "command": "uv run ruff check src"
@@ -37,6 +47,7 @@
     },
     "format": {
       "executor": "nx:run-commands",
+      "dependsOn": ["install"],
       "options": {
         "cwd": "packages/evaluatorq-py",
         "command": "uv run ruff format src"
@@ -44,6 +55,7 @@
     },
     "typecheck": {
       "executor": "nx:run-commands",
+      "dependsOn": ["install"],
       "options": {
         "cwd": "packages/evaluatorq-py",
         "command": "uv run basedpyright"
@@ -57,12 +69,6 @@
         "cwd": "packages/evaluatorq-py",
         "command": "uv publish"
       }
-    }
-  },
-  "tags": ["python", "library", "evaluator"],
-  "release": {
-    "version": {
-      "generator": "@nx/js:release-version"
     }
   }
 }

@@ -48,11 +48,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install Python dependencies
-        run: |
-          cd packages/evaluatorq-py
-          uv sync --frozen --all-groups
-
       - name: Cache Nx
         uses: actions/cache@v4
         with:
