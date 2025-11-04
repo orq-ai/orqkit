@@ -13,11 +13,11 @@ An evaluation framework library for Python that provides a flexible way to run p
 ## 📥 Installation
 
 ```bash
-pip install evaluatorq-py
+pip install evaluatorq
 # or
-uv add evaluatorq-py
+uv add evaluatorq
 # or
-poetry add evaluatorq-py
+poetry add evaluatorq
 ```
 
 ### Optional Dependencies
