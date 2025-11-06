@@ -1,7 +1,11 @@
 """Fetch data from Orq platform."""
 
+from typing import TYPE_CHECKING
+
 from .types import DataPoint
-from orq_ai_sdk import Orq
+
+if TYPE_CHECKING:
+    from orq_ai_sdk import Orq
 
 
 def setup_orq_client(api_key: str) -> Orq:
@@ -19,17 +23,20 @@ def setup_orq_client(api_key: str) -> Orq:
         Exception: If client setup fails
     """
     try:
+        # lazy import for orq integration
+        from orq_ai_sdk import Orq
+
         client = Orq(api_key=api_key, server_url="https://my.staging.orq.ai")
         return client
+    except ModuleNotFoundError as e:
+        raise Exception(
+            """orq_ai_sdk is not installed.
+            Please install it using:
+                * pip install orq_ai_sdk.
+                * uv add orq_ai_sdk
+                * poetry add orq_ai_sdk"""
+        ) from e
     except Exception as e:
-        if isinstance(e, ModuleNotFoundError):
-            raise Exception(
-                """orq_ai_sdk is not installed.
-                Please install it using:
-                    * pip install orq_ai_sdk.
-                    * uv add orq_ai_sdk
-                    * poetry add orq_ai_sdk"""
-            )
         raise Exception(f"Error setting up Orq client: {e}")
 
 
@@ -56,7 +63,10 @@ async def fetch_dataset_as_datapoints(
 
         if response and response.data:
             return [
-                DataPoint(inputs=point.inputs, expected_output=point.expected_output)
+                DataPoint(
+                    inputs=point.inputs if point.inputs is not None else {},
+                    expected_output=point.expected_output,
+                )
                 for point in response.data
             ]
         else:

@@ -30,7 +30,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
     jobs = params["jobs"]
     parallelism = params.get("parallelism", 1)
     print_results = params.get("print", True)
-    description = params.get("description")  # pyright: ignore[reportUnusedVariable]
+    description = params.get("description")
 
     orq_api_key = os.environ.get("ORQ_API_KEY")
 

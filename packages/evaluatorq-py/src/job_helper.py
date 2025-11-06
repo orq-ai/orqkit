@@ -1,9 +1,9 @@
 """Helper function for creating named jobs with error handling."""
 
 from collections.abc import Awaitable
-from typing import Callable, Union, overload
+from typing import Any, Callable, overload
 from inspect import isawaitable
-from .types import DataPoint, Job, Output, JobReturn
+from .types import DataPoint, Job, Output
 
 
 class JobError(Exception):
@@ -34,10 +34,8 @@ def job(
 
 def job(
     name: str,
-    fn: Union[Callable[[DataPoint, int], Awaitable[Output] | Output], None] = None,
-) -> Union[
-    Job, Callable[[Callable[[DataPoint, int], Awaitable[Output] | Output]], Job]
-]:
+    fn: Callable[[DataPoint, int], Awaitable[Output] | Output] | None = None,
+) -> Job | Callable[[Callable[[DataPoint, int], Awaitable[Output] | Output]], Job]:
     """
     Helper function/decorator to create a named job that ensures the job name is preserved
     even when errors occur during execution.
@@ -72,7 +70,7 @@ def job(
     def create_wrapper(
         func: Callable[[DataPoint, int], Awaitable[Output] | Output],
     ) -> Job:
-        async def wrapper(data: DataPoint, row: int) -> JobReturn:
+        async def wrapper(data: DataPoint, row: int) -> dict[str, Any]:
             try:
                 # Execute the job function
                 result = func(data, row)
@@ -83,10 +81,12 @@ def job(
                 else:
                     output = result  # type: ignore
 
-                return {
+                job_return: dict[str, Any] = {
                     "name": name,
                     "output": output,
                 }
+                return job_return
+
             except Exception as error:
                 # Wrap error with job name for better tracking
                 # This allows process_job to extract the name even on failure

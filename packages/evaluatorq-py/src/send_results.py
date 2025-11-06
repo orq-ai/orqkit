@@ -1,6 +1,5 @@
 """Send evaluation results to Orq platform."""
 
-import json
 import os
 from datetime import datetime
 
@@ -161,8 +160,7 @@ async def send_results_to_orq(
 
                 return  # Return early but don't raise
 
-            result_data = response.json()
-            orq_result = OrqResponse(**result_data)
+            orq_result = OrqResponse.model_validate(response.json())
 
             print(
                 f"✅ Results sent to Orq: {orq_result.experiment_name} ({orq_result.rows_created} rows created)"
