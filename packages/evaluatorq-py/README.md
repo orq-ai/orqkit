@@ -34,8 +34,9 @@ pip install orq-ai-sdk
 
 ```python
 import asyncio
-from evaluatorq import evaluatorq, DataPoint, EvaluationResult
+from evaluatorq import evaluatorq, job, DataPoint, EvaluationResult
 
+@job("text-analyzer")
 async def text_analyzer(data: DataPoint, row: int):
     """Analyze text data and return analysis results."""
     text = data.inputs["text"]
@@ -45,7 +46,7 @@ async def text_analyzer(data: DataPoint, row: int):
         "uppercase": text.upper(),
     }
 
-    return {"name": "text-analyzer", "output": analysis}
+    return analysis
 
 async def length_check_scorer(params):
     """Evaluate if output length is sufficient."""
@@ -84,12 +85,13 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from evaluatorq import evaluatorq, DataPoint
+from evaluatorq import evaluatorq, job, DataPoint, EvaluationResult
 
+@job("processor")
 async def processor(data: DataPoint, row: int):
     """Process each data point from the dataset."""
     result = await process_data(data)
-    return {"name": "processor", "output": result}
+    return result
 
 async def accuracy_scorer(params):
     """Calculate accuracy by comparing output with expected results."""
@@ -133,17 +135,22 @@ if __name__ == "__main__":
 Run multiple jobs in parallel for each data point:
 
 ```python
+from evaluatorq import job
+
+@job("preprocessor")
 async def preprocessor(data: DataPoint, row: int):
     result = await preprocess(data)
-    return {"name": "preprocessor", "output": result}
+    return result
 
+@job("analyzer")
 async def analyzer(data: DataPoint, row: int):
     result = await analyze(data)
-    return {"name": "analyzer", "output": result}
+    return result
 
+@job("transformer")
 async def transformer(data: DataPoint, row: int):
     result = await transform(data)
-    return {"name": "transformer", "output": result}
+    return result
 
 await evaluatorq("multi-job-eval", {
     "data": [...],
@@ -152,23 +159,60 @@ await evaluatorq("multi-job-eval", {
 })
 ```
 
-#### Custom Error Handling
+#### The `@job()` Decorator
+
+The `@job()` decorator provides two key benefits:
+
+1. **Eliminates boilerplate** - No need to manually wrap returns with `{"name": ..., "output": ...}`
+2. **Preserves job names in errors** - When a job fails, the error will include the job name for better debugging
+
+**Decorator pattern (recommended):**
+```python
+from evaluatorq import job
+
+@job("text-processor")
+async def process_text(data: DataPoint, row: int):
+    # Clean return - just the data!
+    return {"result": data.inputs["text"].upper()}
+```
+
+**Functional pattern (for lambdas):**
+```python
+from evaluatorq import job
+
+# Simple transformations with lambda
+uppercase_job = job("uppercase", lambda data, row: data.inputs["text"].upper())
+word_count_job = job("word-count", lambda data, row: len(data.inputs["text"].split()))
+```
+
+**Manual pattern (not recommended):**
+```python
+# Without decorator - requires manual wrapper every time
+async def process_text(data: DataPoint, row: int):
+    return {"name": "text-processor", "output": {"result": data.inputs["text"].upper()}}
+```
+
+#### Automatic Error Handling
+
+The `@job()` decorator automatically preserves job names even when errors occur:
 
 ```python
-from evaluatorq-py import job
+from evaluatorq import job
 
-async def risky_func(data: DataPoint, row: int):
-    """Errors are captured and included in evaluation results."""
-    result = await risky_operation(data)
-    return {"name": "risky-job", "output": result}
-
-risky_job = job("risky-job", risky_func)
+@job("risky-job")
+async def risky_operation(data: DataPoint, row: int):
+    # If this raises an error, the job name "risky-job" will be preserved
+    result = await potentially_failing_operation(data)
+    return result
 
 await evaluatorq("error-handling", {
     "data": [...],
-    "jobs": [risky_job],
+    "jobs": [risky_operation],
     "evaluators": [...],
 })
+
+# Error output will show: "Job 'risky-job' failed: <error details>"
+# Without @job decorator, you'd only see: "<error details>"
 ```
 
 #### Async Data Sources

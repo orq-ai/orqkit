@@ -1,7 +1,7 @@
 """Helper function for creating named jobs with error handling."""
 
 from collections.abc import Awaitable
-from typing import Callable
+from typing import Callable, Union, overload
 from inspect import isawaitable
 from .types import DataPoint, Job, Output, JobReturn
 
@@ -15,57 +15,88 @@ class JobError(Exception):
         super().__init__(str(original_error))
 
 
+@overload
+def job(
+    name: str,
+) -> Callable[[Callable[[DataPoint, int], Awaitable[Output] | Output]], Job]:
+    """Decorator form: @job("name")"""
+    ...
+
+
+@overload
 def job(
     name: str,
     fn: Callable[[DataPoint, int], Awaitable[Output] | Output],
 ) -> Job:
+    """Functional form: job("name", fn)"""
+    ...
+
+
+def job(
+    name: str,
+    fn: Union[Callable[[DataPoint, int], Awaitable[Output] | Output], None] = None,
+) -> Union[
+    Job, Callable[[Callable[[DataPoint, int], Awaitable[Output] | Output]], Job]
+]:
     """
-    Helper function to create a named job that ensures the job name is preserved
+    Helper function/decorator to create a named job that ensures the job name is preserved
     even when errors occur during execution.
 
     This wrapper:
     - Automatically formats the return value as {"name": ..., "output": ...}
     - Attaches the job name to errors for better error tracking
+    - Can be used as a decorator (@job("name")) or function (job("name", fn))
 
     Args:
         name: The name of the job
-        fn: The job function that returns the output
+        fn: The job function that returns the output (optional when used as decorator)
 
     Returns:
         A Job function that always includes the job name
 
     Example:
         ```python
-        # Define a job:
-        async def process(row, data):
-            do_something(data)
+        # As a decorator:
+        @job("text-analyzer")
+        async def analyze_text(data: DataPoint, row: int):
+            return {"length": len(data.inputs["text"])}
 
-        # Register the job
-        my_job = job("my-job", process)
+        # As a function wrapper:
+        my_job = job("my-job", async_function)
 
-        # Or with lambda for simple cases:
-        my_job = job("uppercase", lambda data, row: data.inputs["text"].upper())
+        # With lambda for simple cases:
+        uppercase_job = job("uppercase", lambda data, row: data.inputs["text"].upper())
         ```
     """
 
-    async def wrapper(data: DataPoint, row: int) -> JobReturn:
-        try:
-            # Execute the job function
-            result = fn(data, row)
+    def create_wrapper(
+        func: Callable[[DataPoint, int], Awaitable[Output] | Output],
+    ) -> Job:
+        async def wrapper(data: DataPoint, row: int) -> JobReturn:
+            try:
+                # Execute the job function
+                result = func(data, row)
 
-            # Await if it's a coroutine, otherwise use directly
-            if isawaitable(result):
-                output: Output = await result
-            else:
-                output = result  # type: ignore
+                # Await if it's a coroutine, otherwise use directly
+                if isawaitable(result):
+                    output: Output = await result
+                else:
+                    output = result  # type: ignore
 
-            return {
-                "name": name,
-                "output": output,
-            }
-        except Exception as error:
-            # Wrap error with job name for better tracking
-            # This allows process_job to extract the name even on failure
-            raise JobError(name, error) from error
+                return {
+                    "name": name,
+                    "output": output,
+                }
+            except Exception as error:
+                # Wrap error with job name for better tracking
+                # This allows process_job to extract the name even on failure
+                raise JobError(name, error) from error
 
-    return wrapper
+        return wrapper
+
+    # If fn is provided, use functional form
+    if fn is not None:
+        return create_wrapper(fn)
+
+    # Otherwise, return decorator
+    return create_wrapper
