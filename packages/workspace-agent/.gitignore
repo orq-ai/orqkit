@@ -1,0 +1,4 @@
+
+# Streamlit checkpoints and cache
+checkpoints/
+.streamlit/secrets.toml

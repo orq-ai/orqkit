@@ -45,3 +45,4 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 .npmrc
 **/*.tsbuildinfo
+**/__pycache__
