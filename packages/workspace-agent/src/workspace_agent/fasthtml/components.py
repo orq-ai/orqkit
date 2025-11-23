@@ -5,7 +5,6 @@ from typing import Dict, Any, Optional
 
 from ..shared import (
     PRESETS,
-    DEFAULT_WORKSPACE_KEY,
     DEFAULT_PROJECT_PATH,
     DEFAULT_API_KEY,
     AVAILABLE_MODELS,
@@ -791,9 +790,14 @@ def render_page(content, step: int = 1):
 
 
 def render_header():
-    """Render the page header with chat button in top right."""
+    """Render the page header with logo and chat button in top right."""
     return Div(cls="header")(
         Div(cls="header-content")(
+            Img(
+                src="/static/orq-logo.svg",
+                alt="Orq.ai",
+                style="width: 48px; height: 48px; margin-bottom: 0.75rem;",
+            ),
             H1("Workspace Agent", cls="header-title"),
             P("Set up your AI workspace in minutes", cls="header-subtitle"),
         ),
@@ -801,8 +805,8 @@ def render_header():
             A(
                 "💬 Chat",
                 href="/chat",
-                cls="btn btn-secondary",
-                style="font-size: 0.875rem; padding: 0.5rem 1rem;",
+                cls="btn",
+                style="font-size: 0.875rem; padding: 0.5rem 1rem; background: var(--text-primary); color: white; border: none;",
             ),
         ),
     )
@@ -855,9 +859,7 @@ def render_step_indicator(current: int, skipped: list = None, hx_swap_oob: str =
     if hx_swap_oob:
         container_attrs["hx_swap_oob"] = hx_swap_oob
 
-    return Div(**container_attrs)(
-        *[make_step_item(step, name) for step, name in steps]
-    )
+    return Div(**container_attrs)(*[make_step_item(step, name) for step, name in steps])
 
 
 # =============================================================================
@@ -941,26 +943,14 @@ def render_config_form():
                 Span("Advanced Settings", cls="card-title", style="margin-bottom: 0"),
             ),
             Div(cls="collapsible-content")(
-                Div(cls="form-grid")(
-                    Div(cls="form-group")(
-                        Label("Workspace Key", cls="form-label", fr="workspace_key"),
-                        Input(
-                            type="text",
-                            name="workspace_key",
-                            id="workspace_key",
-                            value=DEFAULT_WORKSPACE_KEY,
-                            cls="form-input",
-                        ),
-                    ),
-                    Div(cls="form-group")(
-                        Label("Project Path", cls="form-label", fr="project_path"),
-                        Input(
-                            type="text",
-                            name="project_path",
-                            id="project_path",
-                            value=DEFAULT_PROJECT_PATH,
-                            cls="form-input",
-                        ),
+                Div(cls="form-group")(
+                    Label("Project Path", cls="form-label", fr="project_path"),
+                    Input(
+                        type="text",
+                        name="project_path",
+                        id="project_path",
+                        value=DEFAULT_PROJECT_PATH,
+                        cls="form-input",
                     ),
                 ),
                 Div(cls="form-group")(
@@ -1066,7 +1056,9 @@ def render_clarifying_state():
     )
 
 
-def render_clarification_questions(questions: list, answers: dict, reasoning: Optional[str] = None):
+def render_clarification_questions(
+    questions: list, answers: dict, reasoning: Optional[str] = None
+):
     """Render the 3 clarification questions with tabs and option buttons.
 
     Args:
@@ -1748,11 +1740,27 @@ def render_prompt_edit_form(p: dict, index: int):
                 Div(cls="form-group")(
                     Label("Model", cls="form-label"),
                     Select(
-                        Option("gpt-4o-mini", value="gpt-4o-mini", selected=(model == "gpt-4o-mini")),
+                        Option(
+                            "gpt-4o-mini",
+                            value="gpt-4o-mini",
+                            selected=(model == "gpt-4o-mini"),
+                        ),
                         Option("gpt-4o", value="gpt-4o", selected=(model == "gpt-4o")),
-                        Option("gpt-4-turbo", value="gpt-4-turbo", selected=(model == "gpt-4-turbo")),
-                        Option("google/gemini-2.5-flash", value="google/gemini-2.5-flash", selected=(model == "google/gemini-2.5-flash")),
-                        Option("anthropic/claude-sonnet-4-20250514", value="anthropic/claude-sonnet-4-20250514", selected=(model == "anthropic/claude-sonnet-4-20250514")),
+                        Option(
+                            "gpt-4-turbo",
+                            value="gpt-4-turbo",
+                            selected=(model == "gpt-4-turbo"),
+                        ),
+                        Option(
+                            "google/gemini-2.5-flash",
+                            value="google/gemini-2.5-flash",
+                            selected=(model == "google/gemini-2.5-flash"),
+                        ),
+                        Option(
+                            "anthropic/claude-sonnet-4-20250514",
+                            value="anthropic/claude-sonnet-4-20250514",
+                            selected=(model == "anthropic/claude-sonnet-4-20250514"),
+                        ),
                         name="model",
                         cls="form-select",
                     ),
@@ -1797,7 +1805,11 @@ def render_dataset_planning_state():
             Div("Generating Datasets & Datapoints", cls="card-title"),
             render_progress_stepper(DATASET_PLANNING_STEPS, "dataset-planning"),
             # Datapoint progress bar (shown during datapoint generation)
-            Div(id="datapoint-progress", cls="progress-bar-container", style="display: none")(
+            Div(
+                id="datapoint-progress",
+                cls="progress-bar-container",
+                style="display: none",
+            )(
                 Div(cls="progress-bar-label")(
                     Span("Generating datapoints...", cls="progress-bar-text"),
                     Span("0 / 0", id="progress-bar-count", cls="progress-bar-count"),
@@ -2258,7 +2270,7 @@ def render_plan_preview(plan: Dict[str, Any]):
         # Action Buttons
         Div(cls="btn-group", style="justify-content: center")(
             Button(
-                "Execute Plan",
+                "Create Now",
                 hx_post="/execute",
                 hx_target="#main-content",
                 cls="btn btn-success",
@@ -2328,7 +2340,11 @@ def render_executing_state():
             Div("Saving to Workspace", cls="card-title"),
             render_progress_stepper(EXECUTION_STEPS, "execute"),
             # Progress bar for persistence (shown during SDK writes)
-            Div(id="datapoint-progress", cls="progress-bar-container", style="display: none")(
+            Div(
+                id="datapoint-progress",
+                cls="progress-bar-container",
+                style="display: none",
+            )(
                 Div(cls="progress-bar-label")(
                     Span("Saving resources...", cls="progress-bar-text"),
                     Span("0 / 0", id="progress-bar-count", cls="progress-bar-count"),
@@ -2353,7 +2369,6 @@ def render_results(result: Dict[str, Any], form_data: Optional[Dict[str, Any]] =
     datasets_created = result.get("datasets_created", [])
     prompts_created = result.get("prompts_created", [])
     errors = result.get("errors", [])
-    workspace_key = result.get("workspace_key", "")
 
     # Build configuration summary if form_data provided
     config_summary = None
@@ -2373,10 +2388,6 @@ def render_results(result: Dict[str, Any], form_data: Optional[Dict[str, Any]] =
                     Div("Model", cls="config-item-label"),
                     Div(form_data.get("model", "N/A"), cls="config-item-value"),
                 ),
-                Div(cls="config-item")(
-                    Div("Workspace Key", cls="config-item-label"),
-                    Div(workspace_key or form_data.get("workspace_key", "N/A"), cls="config-item-value"),
-                ),
             ),
         )
 
@@ -2388,9 +2399,14 @@ def render_results(result: Dict[str, Any], form_data: Optional[Dict[str, Any]] =
             Div(cls="result-item")(
                 Div(cls="result-item-header")(
                     Span("✓", cls="result-item-icon"),
-                    Span(f"Dataset: {d.name}", style="color: var(--sand-100); font-weight: 500"),
+                    Span(
+                        f"Dataset: {d.name}",
+                        style="color: var(--sand-100); font-weight: 500",
+                    ),
                 ),
-                Div(description, cls="result-item-description") if description else None,
+                Div(description, cls="result-item-description")
+                if description
+                else None,
                 Div(f"ID: {d.id}", cls="result-item-id"),
             )
         )
@@ -2403,9 +2419,14 @@ def render_results(result: Dict[str, Any], form_data: Optional[Dict[str, Any]] =
             Div(cls="result-item")(
                 Div(cls="result-item-header")(
                     Span("✓", cls="result-item-icon"),
-                    Span(f"Prompt: {p.name}", style="color: var(--sand-100); font-weight: 500"),
+                    Span(
+                        f"Prompt: {p.name}",
+                        style="color: var(--sand-100); font-weight: 500",
+                    ),
                 ),
-                Div(description, cls="result-item-description") if description else None,
+                Div(description, cls="result-item-description")
+                if description
+                else None,
                 Div(f"ID: {p.id}", cls="result-item-id"),
             )
         )

@@ -34,7 +34,6 @@ class WorkspaceState(BaseModel):
     company_type: str = ""
     industry: str = ""
     specific_instructions: str = ""
-    workspace_key: str
     customer_orq_api_key: str  # Customer's API key for their workspace
     num_dataset_rows: int = 5
     project_path: str = "Example"  # Project/directory path in workspace

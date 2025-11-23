@@ -44,7 +44,6 @@ class WorkspaceSetupRequest(BaseModel):
     specific_instructions: str = Field(
         default="", description="Additional setup instructions"
     )
-    workspace_key: str = Field(..., description="Unique workspace identifier")
     customer_orq_api_key: str = Field(
         ..., description="Customer's Orq API key for their workspace"
     )

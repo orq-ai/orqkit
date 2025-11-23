@@ -4,7 +4,7 @@ import streamlit as st
 from typing import Dict, Any
 
 from ..log import logger
-from ..shared import PRESETS, DEFAULT_WORKSPACE_KEY, DEFAULT_PROJECT_PATH, DEFAULT_API_KEY
+from ..shared import PRESETS, DEFAULT_PROJECT_PATH, DEFAULT_API_KEY
 from ..shared.presets import AVAILABLE_MODELS
 
 
@@ -41,13 +41,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
             st.divider()
 
             # API Keys
-            workspace_key = st.text_input(
-                "Workspace Key (UUID)",
-                value=DEFAULT_WORKSPACE_KEY,
-                type="default",
-                help="Your workspace UUID",
-            )
-
             customer_api_key = st.text_input(
                 "Customer API Key",
                 value=DEFAULT_API_KEY,
@@ -105,8 +98,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
                     errors.append("Company Type is required")
                 if not industry:
                     errors.append("Industry is required")
-                if not workspace_key:
-                    errors.append("Workspace Key is required")
                 if not customer_api_key:
                     errors.append("Customer API Key is required")
                 elif not customer_api_key.startswith("ey"):
@@ -124,7 +115,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
                     "company_type": company_type,
                     "industry": industry,
                     "instructions": instructions,
-                    "workspace_key": workspace_key,
                     "customer_api_key": customer_api_key,
                     "num_rows": num_rows,
                     "num_datasets": num_datasets,

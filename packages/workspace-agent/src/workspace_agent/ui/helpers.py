@@ -7,7 +7,6 @@ from ..log import logger
 
 
 # Default configuration
-DEFAULT_WORKSPACE_KEY = "orq-research"
 DEFAULT_PROJECT_PATH = "WorkspaceAgent"
 DEFAULT_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcnEuYWkiLCJ3b3Jrc3BhY2VfaWQiOiI2MjRjY2JiZC1hNDgyLTQwZTItYjNkOS0zNjIxZTA5ZGExZjgiLCJwcm9qZWN0cyI6WyIwMTlhYTgyZS0wZmFjLTcwMDAtOTk0MS02NmZiNGZjNzMyNTQiXSwiaWF0IjoxNzYzNzU4MjI5fQ.BAMNYIE9xBKTZV7hGQoKA6FCT4dIOso-SDrf7jbg6TM"
 
@@ -69,13 +68,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
             st.divider()
 
             # API Keys
-            workspace_key = st.text_input(
-                "Workspace Key (UUID)",
-                value=DEFAULT_WORKSPACE_KEY,
-                type="default",
-                help="Your workspace UUID",
-            )
-
             customer_api_key = st.text_input(
                 "Customer API Key",
                 value=DEFAULT_API_KEY,
@@ -117,8 +109,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
                     errors.append("Company Type is required")
                 if not industry:
                     errors.append("Industry is required")
-                if not workspace_key:
-                    errors.append("Workspace Key is required")
                 if not customer_api_key:
                     errors.append("Customer API Key is required")
                 elif not customer_api_key.startswith("ey"):
@@ -136,7 +126,6 @@ def render_sidebar_form() -> Dict[str, Any] | None:
                     "company_type": company_type,
                     "industry": industry,
                     "instructions": instructions,
-                    "workspace_key": workspace_key,
                     "customer_api_key": customer_api_key,
                     "num_rows": num_rows,
                     "project_path": project_path,

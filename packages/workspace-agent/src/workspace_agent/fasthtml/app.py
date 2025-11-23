@@ -8,7 +8,10 @@ Run with:
 """
 
 import json
+from pathlib import Path
 from fasthtml.common import *
+from starlette.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 from ..shared import PRESETS
 from ..log import logger
@@ -59,11 +62,21 @@ sse_extension = Script(
     crossorigin="anonymous",
 )
 
+# Favicon link
+favicon_link = Link(rel="icon", type="image/svg+xml", href="/static/orq-logo.svg")
+
 # Create app with headers
 app, rt = fast_app(
-    hdrs=(sse_extension,),
+    hdrs=(sse_extension, favicon_link),
     secret_key="workspace-agent-secret-key-change-in-production",
+    title="Orq Workspace Agent",
 )
+
+# Static files directory
+static_dir = Path(__file__).parent / "static"
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 def _get_step_number(status: str) -> int:
@@ -222,7 +235,6 @@ async def post(session, request):
         "company_type": form.get("company_type", ""),
         "industry": form.get("industry", ""),
         "instructions": form.get("instructions", ""),
-        "workspace_key": form.get("workspace_key", ""),
         "customer_api_key": form.get("customer_api_key", ""),
         "num_rows": form.get("num_rows", "5"),
         "num_datasets": form.get("num_datasets", "2"),

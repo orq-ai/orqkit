@@ -11,7 +11,11 @@ from fasthtml.common import sse_message
 from ..config import LLMConfig, PlatformConfig
 from ..agents import WorkspaceAgentFactory
 from ..log import logger
+from ..tracing import traced, tracer, init_tracing
 from .chat_components import render_chat_message, render_typing_indicator
+
+# Initialize tracing on module load
+init_tracing(service_name="workspace-agent-chat")
 
 
 # =============================================================================
@@ -139,6 +143,7 @@ def add_tool_message(
 # =============================================================================
 
 
+@traced(name="execute_chat_message", type="agent")
 async def execute_chat_message(
     chat: ChatState,
     user_message: str,
@@ -167,13 +172,9 @@ async def execute_chat_message(
             "error": "Missing platform API key",
         }
 
-    # SDK tools require customer API key to manage their workspace
-    if not use_mcp and not chat.customer_api_key:
-        return {
-            "response": "Customer API key not configured. Please enter your API key in the sidebar to use SDK tools.",
-            "tool_calls": [],
-            "error": "Missing customer API key",
-        }
+    # SDK tools use customer API key to manage their workspace
+    # Fall back to platform API key if not provided
+    sdk_api_key = chat.customer_api_key or platform_api_key
 
     factory = None
     try:
@@ -320,73 +321,87 @@ When using tools, explain what you're doing and report the results clearly."""
 
 async def chat_stream_generator(chat: ChatState, user_message: str, platform_config: PlatformConfig):
     """Generator for SSE streaming during chat response."""
-    try:
-        chat.is_processing = True
-        chat.error = None
+    # Use tracer context for the entire stream lifecycle
+    with tracer.start_as_current_span("chat_stream") as span:
+        span.set_attribute("chat.id", chat.chat_id[:8])
+        span.set_attribute("chat.model", chat.config.get("model", "unknown"))
+        span.set_attribute("chat.use_mcp", chat.use_mcp)
 
-        # Add user message immediately
-        user_msg = add_user_message(chat, user_message)
-        yield sse_message(
-            render_chat_message(user_msg),
-            event="user_message",
-        )
+        try:
+            chat.is_processing = True
+            chat.error = None
 
-        # Show typing indicator
-        yield sse_message(
-            render_typing_indicator(),
-            event="typing",
-        )
-
-        # Execute the chat in background (use MCP tools if configured)
-        result = await execute_chat_message(chat, user_message, platform_config, use_mcp=chat.use_mcp)
-
-        # Remove typing indicator (send empty div to replace)
-        yield sse_message(
-            "",
-            event="typing_done",
-        )
-
-        # Add tool call messages - show all tool interactions
-        for tc in result.get("tool_calls", []):
-            tool_msg = add_tool_message(
-                chat,
-                tool_name=tc.get("name", "unknown"),
-                tool_args=tc.get("args", {}),
-                tool_result=tc.get("result"),
-            )
+            # Add user message immediately
+            user_msg = add_user_message(chat, user_message)
+            span.set_attribute("chat.user_message_length", len(user_message))
             yield sse_message(
-                render_chat_message(tool_msg),
-                event="tool_message",
+                render_chat_message(user_msg),
+                event="user_message",
             )
-            await asyncio.sleep(0.05)  # Small delay between messages
 
-        # Add assistant response
-        if result.get("response"):
-            assistant_msg = add_assistant_message(chat, result["response"])
+            # Show typing indicator
             yield sse_message(
-                render_chat_message(assistant_msg),
-                event="assistant_message",
+                render_typing_indicator(),
+                event="typing",
             )
 
-        # Handle errors
-        if result.get("error"):
-            chat.error = result["error"]
+            # Execute the chat in background (use MCP tools if configured)
+            result = await execute_chat_message(chat, user_message, platform_config, use_mcp=chat.use_mcp)
 
-        # Signal completion
-        yield sse_message("", event="done")
+            # Remove typing indicator (send empty div to replace)
+            yield sse_message(
+                "",
+                event="typing_done",
+            )
 
-    except Exception as e:
-        logger.error(f"[Chat {chat.chat_id[:8]}] Stream error: {e}")
-        chat.error = str(e)
-        error_msg = add_assistant_message(chat, f"Sorry, an error occurred: {str(e)}")
-        yield sse_message(
-            render_chat_message(error_msg),
-            event="error",
-        )
-        yield sse_message("", event="done")
+            # Add tool call messages - show all tool interactions
+            tool_calls = result.get("tool_calls", [])
+            span.set_attribute("chat.tool_calls_count", len(tool_calls))
+            for tc in tool_calls:
+                tool_msg = add_tool_message(
+                    chat,
+                    tool_name=tc.get("name", "unknown"),
+                    tool_args=tc.get("args", {}),
+                    tool_result=tc.get("result"),
+                )
+                yield sse_message(
+                    render_chat_message(tool_msg),
+                    event="tool_message",
+                )
+                await asyncio.sleep(0.05)  # Small delay between messages
 
-    finally:
-        chat.is_processing = False
+            # Add assistant response
+            if result.get("response"):
+                assistant_msg = add_assistant_message(chat, result["response"])
+                span.set_attribute("chat.response_length", len(result["response"]))
+                yield sse_message(
+                    render_chat_message(assistant_msg),
+                    event="assistant_message",
+                )
+
+            # Handle errors
+            if result.get("error"):
+                chat.error = result["error"]
+                span.set_attribute("chat.error", result["error"])
+
+            # Signal completion
+            span.set_attribute("chat.status", "success" if not chat.error else "error")
+            yield sse_message("", event="done")
+
+        except Exception as e:
+            logger.error(f"[Chat {chat.chat_id[:8]}] Stream error: {e}")
+            chat.error = str(e)
+            span.set_attribute("chat.error", str(e))
+            span.set_attribute("chat.status", "exception")
+            error_msg = add_assistant_message(chat, f"Sorry, an error occurred: {str(e)}")
+            yield sse_message(
+                render_chat_message(error_msg),
+                event="error",
+            )
+            yield sse_message("", event="done")
+
+        finally:
+            chat.is_processing = False
 
 
 # =============================================================================

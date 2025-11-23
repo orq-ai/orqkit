@@ -18,9 +18,8 @@ from orq_ai_sdk.models.createdatasetitemop import (
 )
 from orq_ai_sdk.models.createpromptop import (
     CreatePromptRequestBody,
-    PromptConfiguration,
-    CreatePromptMessages,
-    ModelParameters,
+    PromptInput,
+    CreatePromptMessagesSystemMessage,
 )
 
 from .log import logger
@@ -38,6 +37,10 @@ class CreateDatasetInput(BaseModel):
 
     display_name: str = Field(description="Name of the dataset")
     description: str = Field(default="", description="Description of the dataset")
+    path: Optional[str] = Field(
+        default=None,
+        description="Organizational path for the dataset. If not provided, uses the default project path.",
+    )
 
 
 class ListDatasetsInput(BaseModel):
@@ -69,7 +72,9 @@ class ListDatapointsInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dataset_id: str = Field(description="ID of the dataset to list datapoints from")
-    limit: int = Field(default=10, description="Maximum number of datapoints to return (1-50)")
+    limit: int = Field(
+        default=10, description="Maximum number of datapoints to return (1-50)"
+    )
 
 
 class GetDatasetInput(BaseModel):
@@ -107,10 +112,12 @@ class CreatePromptInput(BaseModel):
     system_prompt: str = Field(
         description="The system prompt that defines the AI's role and behavior"
     )
-    model: str = Field(
-        default="gpt-4o-mini", description="Model to use for this prompt"
-    )
+    model: Optional[str] = Field(default=None, description="Model to use for this prompt. If not provided, no model is set.")
     temperature: float = Field(default=0.7, description="Temperature setting (0.0-2.0)")
+    path: Optional[str] = Field(
+        default=None,
+        description="Organizational path for the prompt. If not provided, uses the default project path.",
+    )
 
 
 class ListPromptsInput(BaseModel):
@@ -136,8 +143,12 @@ class UpdatePromptInput(BaseModel):
 
     prompt_id: str = Field(description="ID of the prompt to update")
     model: Optional[str] = Field(default=None, description="New model to use")
-    temperature: Optional[float] = Field(default=None, description="New temperature setting (0.0-2.0)")
-    max_tokens: Optional[int] = Field(default=None, description="New maximum tokens setting")
+    temperature: Optional[float] = Field(
+        default=None, description="New temperature setting (0.0-2.0)"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None, description="New maximum tokens setting"
+    )
 
 
 # =============================================================================
@@ -164,19 +175,37 @@ class OrqSDKTools:
     # Dataset Operations
     # -------------------------------------------------------------------------
 
-    def _create_dataset(self, display_name: str, description: str = "") -> str:
+    def _create_dataset(
+        self, display_name: str, description: str = "", path: Optional[str] = None
+    ) -> str:
         """Create a new dataset using native SDK models."""
         try:
+            final_path = path if path is not None else self.project_path
+            logger.debug(f"Creating dataset: display_name={display_name}, path={final_path}")
+
             request = CreateDatasetRequestBody(
                 display_name=display_name,
-                path=self.project_path,
+                path=final_path,
             )
+            logger.debug("CreateDatasetRequestBody created successfully")
+
             result = self.client.datasets.create(request=request)
-            dataset_id = result.id if hasattr(result, "id") else str(result)
+            logger.debug(f"SDK datasets.create() returned: {type(result)}")
+
+            # Log full result for debugging
+            if result is not None:
+                if hasattr(result, "model_dump"):
+                    logger.debug(f"Result dump: {result.model_dump()}")
+                elif hasattr(result, "__dict__"):
+                    logger.debug(f"Result dict: {result.__dict__}")
+
+            dataset_id = result.id if result and hasattr(result, "id") else str(result)
             logger.success(f"Created dataset: {display_name} (ID: {dataset_id})")
             return dataset_id
         except Exception as e:
             logger.error(f"Failed to create dataset: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise
 
     def _list_datasets(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -215,14 +244,30 @@ class OrqSDKTools:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
                 if role == "user":
-                    sdk_messages.append(CreateDatasetItemMessagesUserMessage(role="user", content=content))
+                    sdk_messages.append(
+                        CreateDatasetItemMessagesUserMessage(
+                            role="user", content=content
+                        )
+                    )
                 elif role == "system":
-                    sdk_messages.append(CreateDatasetItemMessagesSystemMessage(role="system", content=content))
+                    sdk_messages.append(
+                        CreateDatasetItemMessagesSystemMessage(
+                            role="system", content=content
+                        )
+                    )
                 elif role == "assistant":
-                    sdk_messages.append(CreateDatasetItemMessagesAssistantMessage(role="assistant", content=content))
+                    sdk_messages.append(
+                        CreateDatasetItemMessagesAssistantMessage(
+                            role="assistant", content=content
+                        )
+                    )
                 else:
                     # Default to user message for unknown roles
-                    sdk_messages.append(CreateDatasetItemMessagesUserMessage(role="user", content=content))
+                    sdk_messages.append(
+                        CreateDatasetItemMessagesUserMessage(
+                            role="user", content=content
+                        )
+                    )
 
             datapoint = DatapointRequestBody(
                 inputs=inputs,
@@ -242,10 +287,14 @@ class OrqSDKTools:
             logger.error(f"Failed to add datapoint: {e}")
             raise
 
-    def _list_datapoints(self, dataset_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def _list_datapoints(
+        self, dataset_id: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """List datapoints in a dataset."""
         try:
-            result = self.client.datasets.list_datapoints(dataset_id=dataset_id, limit=limit)
+            result = self.client.datasets.list_datapoints(
+                dataset_id=dataset_id, limit=limit
+            )
             if result is None:
                 return []
             datapoints = []
@@ -341,39 +390,58 @@ class OrqSDKTools:
         self,
         display_name: str,
         system_prompt: str,
-        model: str = "gpt-4o-mini",
+        model: Optional[str] = None,
         temperature: float = 0.7,
+        path: Optional[str] = None,
     ) -> str:
         """Create a new prompt using native SDK models."""
         try:
-            # Build messages with just the system prompt
+            final_path = path if path is not None else self.project_path
+            logger.debug(f"Creating prompt: display_name={display_name}, model={model}, temp={temperature}, path={final_path}")
+
+            # Build typed system message (new API)
             sdk_messages = [
-                CreatePromptMessages(role="system", content=system_prompt),
+                CreatePromptMessagesSystemMessage(role="system", content=system_prompt),
             ]
+            logger.debug(f"System prompt length: {len(system_prompt)} chars")
 
-            # Build model parameters
-            model_parameters = ModelParameters(temperature=temperature)
+            # Build prompt input (new API - replaces deprecated prompt_config)
+            prompt_input_kwargs: Dict[str, Any] = {
+                "messages": sdk_messages,
+            }
+            if model is not None:
+                prompt_input_kwargs["model"] = model
+            if temperature is not None:
+                prompt_input_kwargs["temperature"] = temperature
 
-            # Build prompt config
-            prompt_config = PromptConfiguration(
-                messages=sdk_messages,
-                model=model,
-                model_parameters=model_parameters,
-            )
+            prompt_input = PromptInput(**prompt_input_kwargs)
+            logger.debug("PromptInput created successfully")
 
-            # Build request
+            # Build request using 'prompt' field (new API)
             request = CreatePromptRequestBody(
                 display_name=display_name,
-                path=self.project_path,
-                prompt_config=prompt_config,
+                path=final_path,
+                prompt=prompt_input,
             )
+            logger.debug("CreatePromptRequestBody created successfully")
 
             result = self.client.prompts.create(request=request)
-            prompt_id = result.id if hasattr(result, "id") else str(result)
+            logger.debug(f"SDK prompts.create() returned: {type(result)}")
+
+            # Log full result for debugging
+            if result is not None:
+                if hasattr(result, "model_dump"):
+                    logger.debug(f"Result dump: {result.model_dump()}")
+                elif hasattr(result, "__dict__"):
+                    logger.debug(f"Result dict: {result.__dict__}")
+
+            prompt_id = result.id if result and hasattr(result, "id") else str(result)
             logger.success(f"Created prompt: {display_name} (ID: {prompt_id})")
             return prompt_id
         except Exception as e:
             logger.error(f"Failed to create prompt: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise
 
     def _list_prompts(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -462,9 +530,9 @@ class OrqSDKTools:
         """Get all dataset-related tools."""
         return [
             StructuredTool.from_function(
-                func=lambda display_name, description="": self._create_dataset(
-                    display_name, description
-                ),
+                func=lambda display_name,
+                description="",
+                path=None: self._create_dataset(display_name, description, path),
                 name="create_dataset",
                 description="Create a new dataset in the workspace. Returns the dataset ID.",
                 args_schema=CreateDatasetInput,
@@ -499,13 +567,17 @@ class OrqSDKTools:
                 args_schema=AddDatapointInput,
             ),
             StructuredTool.from_function(
-                func=lambda dataset_id, limit=10: self._list_datapoints(dataset_id, limit),
+                func=lambda dataset_id, limit=10: self._list_datapoints(
+                    dataset_id, limit
+                ),
                 name="list_datapoints",
                 description="List all datapoints in a specific dataset. Returns datapoint IDs, inputs, messages, and expected outputs.",
                 args_schema=ListDatapointsInput,
             ),
             StructuredTool.from_function(
-                func=lambda dataset_id, datapoint_id: self._get_datapoint(dataset_id, datapoint_id),
+                func=lambda dataset_id, datapoint_id: self._get_datapoint(
+                    dataset_id, datapoint_id
+                ),
                 name="get_datapoint",
                 description="Get a specific datapoint by ID. Returns datapoint details including inputs, messages, and expected output.",
                 args_schema=GetDatapointInput,
@@ -518,9 +590,10 @@ class OrqSDKTools:
             StructuredTool.from_function(
                 func=lambda display_name,
                 system_prompt,
-                model="gpt-4o-mini",
-                temperature=0.7: self._create_prompt(
-                    display_name, system_prompt, model, temperature
+                model=None,
+                temperature=0.7,
+                path=None: self._create_prompt(
+                    display_name, system_prompt, model, temperature, path
                 ),
                 name="create_prompt",
                 description="Create a new prompt in the workspace. Returns the prompt ID.",
@@ -539,7 +612,10 @@ class OrqSDKTools:
                 args_schema=GetPromptInput,
             ),
             StructuredTool.from_function(
-                func=lambda prompt_id, model=None, temperature=None, max_tokens=None: self._update_prompt(
+                func=lambda prompt_id,
+                model=None,
+                temperature=None,
+                max_tokens=None: self._update_prompt(
                     prompt_id, model, temperature, max_tokens
                 ),
                 name="update_prompt",

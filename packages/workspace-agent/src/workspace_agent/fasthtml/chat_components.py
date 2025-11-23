@@ -7,10 +7,62 @@ from ..shared import AVAILABLE_MODELS
 
 
 # =============================================================================
+# Helper Components
+# =============================================================================
+
+
+# Base64 encoded Orq logo SVG
+ORQ_LOGO_DATA_URL = "data:image/svg+xml;base64,PHN2ZyBjbGFzcz0idy0xMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGggZD0iTTgyLjkyNjggMjcuODA0OUM4Mi45MjY4IDMwLjg3ODMgODIuOTI2OCAzMi40MTUxIDgyLjMyODcgMzMuNTg5QzgxLjgwMjYgMzQuNjIxNiA4MC45NjMgMzUuNDYxMSA3OS45MzA0IDM1Ljk4NzJDNzguNzU2NSAzNi41ODU0IDc3LjIxOTggMzYuNTg1NCA3NC4xNDYzIDM2LjU4NTRINzIuMTk1MUM2OS4xMjE3IDM2LjU4NTQgNjcuNTg0OSAzNi41ODU0IDY2LjQxMSAzNS45ODcyQzY1LjM3ODQgMzUuNDYxMSA2NC41Mzg5IDM0LjYyMTYgNjQuMDEyOCAzMy41ODlDNjMuNDE0NiAzMi40MTUxIDYzLjQxNDYgMzAuODc4MyA2My40MTQ2IDI3LjgwNDlWMjUuNjA5OEM2My40MTQ2IDIyLjc2NjIgNjMuNDE0NiAyMS4zNDQ0IDYyLjkwMDUgMjAuMjQxN0M2Mi4zNTUyIDE5LjA3MjQgNjEuNDE1NCAxOC4xMzI2IDYwLjI0NjEgMTcuNTg3M0M1OS4xNDM0IDE3LjA3MzIgNTcuNzIxNiAxNy4wNzMyIDU0Ljg3ODEgMTcuMDczMkM1Mi4wMzQ1IDE3LjA3MzIgNTAuNjEyNyAxNy4wNzMyIDQ5LjUxIDE2LjU1OUM0OC4zNDA3IDE2LjAxMzcgNDcuNDAwOSAxNS4wNzM5IDQ2Ljg1NTYgMTMuOTA0NkM0Ni4zNDE1IDEyLjgwMiA0Ni4zNDE1IDExLjM4MDIgNDYuMzQxNSA4LjUzNjU5QzQ2LjM0MTUgNS42OTI5OSA0Ni4zNDE1IDQuMjcxMTkgNDYuODU1NiAzLjE2ODU2QzQ3LjQwMDkgMS45OTkyNCA0OC4zNDA3IDEuMDU5NDMgNDkuNTEgMC41MTQxNjVDNTAuNjEyNyAwIDUyLjA0NDYgMCA1NC45MDg0IDBDNTcuNzcyMyAwIDU5LjIwNDIgMCA2MC4zMDY4IDAuNTE0MTY1QzYxLjQ3NjEgMS4wNTk0MyA2Mi40MTU5IDEuOTk5MjQgNjIuOTYxMiAzLjE2ODU2QzYzLjQ3NTQgNC4yNzExOSA2My40NzU0IDUuNjkyOTkgNjMuNDc1NCA4LjUzNjU5QzYzLjQ3NTQgMTEuMzgwMiA2My40NzU0IDEyLjgwMiA2My45ODk1IDEzLjkwNDZDNjQuNTM0OCAxNS4wNzM5IDY1LjQ3NDYgMTYuMDEzNyA2Ni42NDM5IDE2LjU1OUM2Ny43NDY2IDE3LjA3MzIgNjkuMTY4NCAxNy4wNzMyIDcyLjAxMiAxNy4wNzMySDc0LjE0NjNDNzcuMjE5OCAxNy4wNzMyIDc4Ljc1NjUgMTcuMDczMiA3OS45MzA0IDE3LjY3MTNDODAuOTYzIDE4LjE5NzQgODEuODAyNiAxOS4wMzcgODIuMzI4NyAyMC4wNjk2QzgyLjkyNjggMjEuMjQzNSA4Mi45MjY4IDIyLjc4MDIgODIuOTI2OCAyNS44NTM3VjI3LjgwNDlaIiBmaWxsPSIjMTQxMzE5Ii8+CiAgPHBhdGggZD0iTTI3LjgwNDkgMTcuMDczMkMzMC44NzgzIDE3LjA3MzIgMzIuNDE1MSAxNy4wNzMyIDMzLjU4OSAxNy42NzEzQzM0LjYyMTYgMTguMTk3NCAzNS40NjExIDE5LjAzNyAzNS45ODcyIDIwLjA2OTZDMzYuNTg1NCAyMS4yNDM1IDM2LjU4NTQgMjIuNzgwMiAzNi41ODU0IDI1Ljg1MzdWMjcuODA0OUMzNi41ODU0IDMwLjg3ODMgMzYuNTg1NCAzMi40MTUxIDM1Ljk4NzIgMzMuNTg5QzM1LjQ2MTEgMzQuNjIxNiAzNC42MjE2IDM1LjQ2MTEgMzMuNTg5IDM1Ljk4NzJDMzIuNDE1MSAzNi41ODU0IDMwLjg3ODMgMzYuNTg1NCAyNy44MDQ5IDM2LjU4NTRMMjUuNjA5OCAzNi41ODU0QzIyLjc2NjIgMzYuNTg1NCAyMS4zNDQ0IDM2LjU4NTQgMjAuMjQxNyAzNy4wOTk1QzE5LjA3MjQgMzcuNjQ0OCAxOC4xMzI2IDM4LjU4NDYgMTcuNTg3MyAzOS43NTM5QzE3LjA3MzIgNDAuODU2NiAxNy4wNzMyIDQyLjI3ODQgMTcuMDczMiA0NS4xMjJDMTcuMDczMiA0Ny45NjU2IDE3LjA3MzIgNDkuMzg3NCAxNi41NTkgNTAuNDlDMTYuMDEzNyA1MS42NTkzIDE1LjA3MzkgNTIuNTk5MSAxMy45MDQ2IDUzLjE0NDRDMTIuODAyIDUzLjY1ODUgMTEuMzgwMiA1My42NTg1IDguNTM2NTkgNTMuNjU4NUM1LjY5Mjk5IDUzLjY1ODUgNC4yNzExOSA1My42NTg1IDMuMTY4NTYgNTMuMTQ0NEMxLjk5OTI0IDUyLjU5OTEgMS4wNTk0MyA1MS42NTkzIDAuNTE0MTY1IDUwLjQ5QzEuODE3MjFlLTA3IDQ5LjM4NzQgMS4yNTMwNmUtMDcgNDcuOTU1NCAxLjIzNmUtMTAgNDUuMDkxNkMtMS4yNTA1OWUtMDcgNDIuMjI3NyAtMS44MTcyMWUtMDcgNDAuNzk1OCAwLjUxNDE2NCAzOS42OTMyQzEuMDU5NDMgMzguNTIzOSAxLjk5OTI0IDM3LjU4NDEgMy4xNjg1NiAzNy4wMzg4QzQuMjcxMTkgMzYuNTI0NiA1LjY5Mjk5IDM2LjUyNDYgOC41MzY1OCAzNi41MjQ2QzExLjM4MDIgMzYuNTI0NiAxMi44MDIgMzYuNTI0NiAxMy45MDQ2IDM2LjAxMDVDMTUuMDczOSAzNS40NjUyIDE2LjAxMzcgMzQuNTI1NCAxNi41NTkgMzMuMzU2MUMxNy4wNzMyIDMyLjI1MzQgMTcuMDczMiAzMC44MzE2IDE3LjA3MzIgMjcuOTg4VjI1Ljg1MzdDMTcuMDczMiAyMi43ODAyIDE3LjA3MzIgMjEuMjQzNSAxNy42NzEzIDIwLjA2OTZDMTguMTk3NCAxOS4wMzcgMTkuMDM3IDE4LjE5NzQgMjAuMDY5NiAxNy42NzEzQzIxLjI0MzUgMTcuMDczMiAyMi43ODAyIDE3LjA3MzIgMjUuODUzNyAxNy4wNzMySDI3LjgwNDlaIiBmaWxsPSIjMTQxMzE5Ii8+CiAgPHBhdGggZD0iTTM2LjU4NTQgOTEuNDYzNEMzNi41ODU0IDg4LjYxOTggMzYuNTg1NCA4Ny4xOTggMzYuMDcxMiA4Ni4wOTU0QzM1LjUyNTkgODQuOTI2MSAzNC41ODYxIDgzLjk4NjMgMzMuNDE2OCA4My40NDFDMzIuMzE0MiA4Mi45MjY4IDMwLjg5MjQgODIuOTI2OCAyOC4wNDg4IDgyLjkyNjhIMjUuODUzN0MyMi43ODAyIDgyLjkyNjggMjEuMjQzNSA4Mi45MjY4IDIwLjA2OTYgODIuMzI4N0MxOS4wMzcgODEuODAyNiAxOC4xOTc0IDgwLjk2MyAxNy42NzEzIDc5LjkzMDRDMTcuMDczMiA3OC43NTY1IDE3LjA3MzIgNzcuMjE5OCAxNy4wNzMyIDc0LjE0NjNWNzIuMTk1MUMxNy4wNzMyIDY5LjEyMTcgMTcuMDczMiA2Ny41ODQ5IDE3LjY3MTMgNjYuNDExQzE4LjE5NzQgNjUuMzc4NCAxOS4wMzcgNjQuNTM4OSAyMC4wNjk2IDY0LjAxMjhDMjEuMjQzNSA2My40MTQ2IDIyLjc4MDIgNjMuNDE0NiAyNS44NTM3IDYzLjQxNDZMMjcuODA0OSA2My40MTQ2QzMwLjg3ODMgNjMuNDE0NiAzMi40MTUxIDYzLjQxNDYgMzMuNTg5IDY0LjAxMjhDMzQuNjIxNiA2NC41Mzg5IDM1LjQ2MTEgNjUuMzc4NCAzNS45ODcyIDY2LjQxMUMzNi41ODU0IDY3LjU4NDkgMzYuNTg1NCA2OS4xMjE3IDM2LjU4NTQgNzIuMTk1MVY3NC4zMjk1QzM2LjU4NTQgNzcuMTczMSAzNi41ODU0IDc4LjU5NDkgMzcuMDk5NSA3OS42OTc1QzM3LjY0NDggODAuODY2OSAzOC41ODQ2IDgxLjgwNjcgMzkuNzUzOSA4Mi4zNTE5QzQwLjg1NjYgODIuODY2MSA0Mi4yNzgzIDgyLjg2NjEgNDUuMTIxOSA4Mi44NjYxQzQ3Ljk2NTUgODIuODY2MSA0OS4zODczIDgyLjg2NjEgNTAuNDkgODMuMzgwM0M1MS42NTkzIDgzLjkyNTUgNTIuNTk5MSA4NC44NjUzIDUzLjE0NDQgODYuMDM0N0M1My42NTg1IDg3LjEzNzMgNTMuNjU4NSA4OC41NjkyIDUzLjY1ODUgOTEuNDMzQzUzLjY1ODUgOTQuMjk2OSA1My42NTg1IDk1LjcyODggNTMuMTQ0NCA5Ni44MzE0QzUyLjU5OTEgOTguMDAwOCA1MS42NTkzIDk4Ljk0MDYgNTAuNDkgOTkuNDg1OEM0OS4zODczIDEwMCA0Ny45NjU2IDEwMCA0NS4xMjIgMTAwQzQyLjI3ODQgMTAwIDQwLjg1NjYgMTAwIDM5Ljc1MzkgOTkuNDg1OEMzOC41ODQ2IDk4Ljk0MDYgMzcuNjQ0OCA5OC4wMDA4IDM3LjA5OTUgOTYuODMxNEMzNi41ODU0IDk1LjcyODggMzYuNTg1NCA5NC4zMDcgMzYuNTg1NCA5MS40NjM0WiIgZmlsbD0iIzE0MTMxOSIvPgogIDxwYXRoIGQ9Ik03Mi4xOTUxIDgyLjkyNjhDNjkuMTIxNyA4Mi45MjY4IDY3LjU4NDkgODIuOTI2OCA2Ni40MTEgODIuMzI4N0M2NS4zNzg0IDgxLjgwMjYgNjQuNTM4OSA4MC45NjMgNjQuMDEyOCA3OS45MzA0QzYzLjQxNDYgNzguNzU2NSA2My40MTQ2IDc3LjIxOTggNjMuNDE0NiA3NC4xNDYzVjcyLjE5NTFDNjMuNDE0NiA2OS4xMjE3IDYzLjQxNDYgNjcuNTg0OSA2NC4wMTI4IDY2LjQxMUM2NC41Mzg5IDY1LjM3ODQgNjUuMzc4NCA2NC41Mzg5IDY2LjQxMSA2NC4wMTI4QzY3LjU4NDkgNjMuNDE0NiA2OS4xMjE3IDYzLjQxNDYgNzIuMTk1MSA2My40MTQ2SDc0LjM5MDJDNzcuMjMzOCA2My40MTQ2IDc4LjY1NTYgNjMuNDE0NiA3OS43NTgzIDYyLjkwMDVDODAuOTI3NiA2Mi4zNTUyIDgxLjg2NzQgNjEuNDE1NCA4Mi40MTI3IDYwLjI0NjFDODIuOTI2OCA1OS4xNDM0IDgyLjkyNjggNTcuNzIxNiA4Mi45MjY4IDU0Ljg3ODFDODIuOTI2OCA1Mi4wMzQ1IDgyLjkyNjggNTAuNjEyNyA4My40NDEgNDkuNTFDODMuOTg2MyA0OC4zNDA3IDg0LjkyNjEgNDcuNDAwOSA4Ni4wOTU0IDQ2Ljg1NTZDODcuMTk4IDQ2LjM0MTUgODguNjE5OCA0Ni4zNDE1IDkxLjQ2MzQgNDYuMzQxNUM5NC4zMDcgNDYuMzQxNSA5NS43Mjg4IDQ2LjM0MTUgOTYuODMxNCA0Ni44NTU2Qzk4LjAwMDggNDcuNDAwOSA5OC45NDA2IDQ4LjM0MDcgOTkuNDg1OCA0OS41MUMxMDAgNTAuNjEyNyAxMDAgNTIuMDQ0NiAxMDAgNTQuOTA4NEMxMDAgNTcuNzcyMyAxMDAgNTkuMjA0MiA5OS40ODU4IDYwLjMwNjhDOTguOTQwNiA2MS40NzYxIDk4LjAwMDggNjIuNDE1OSA5Ni44MzE0IDYyLjk2MTJDOTUuNzI4OCA2My40NzU0IDk0LjMwNyA2My40NzU0IDkxLjQ2MzQgNjMuNDc1NEM4OC42MTk4IDYzLjQ3NTQgODcuMTk4IDYzLjQ3NTQgODYuMDk1NCA2My45ODk1Qzg0LjkyNjEgNjQuNTM0OCA4My45ODYzIDY1LjQ3NDYgODMuNDQxIDY2LjY0MzlDODIuOTI2OCA2Ny43NDY2IDgyLjkyNjggNjkuMTY4NCA4Mi45MjY4IDcyLjAxMlY3NC4xNDYzQzgyLjkyNjggNzcuMjE5OCA4Mi45MjY4IDc4Ljc1NjUgODIuMzI4NyA3OS45MzA0QzgxLjgwMjYgODAuOTYzIDgwLjk2MyA4MS44MDI2IDc5LjkzMDQgODIuMzI4N0M3OC43NTY1IDgyLjkyNjggNzcuMjE5OCA4Mi45MjY4IDc0LjE0NjMgODIuOTI2OEg3Mi4xOTUxWiIgZmlsbD0iIzE0MTMxOSIvPgogIDxwYXRoIGQ9Ik01MCA1OC41MzY2QzQ3LjQ0MzkgNTguNTM2NiA0Ni4xNjU5IDU4LjUzNjYgNDUuMTUwNCA1OC4xNDAzQzQzLjY0MTcgNTcuNTUxNiA0Mi40NDgzIDU2LjM1ODMgNDEuODU5NiA1NC44NDk2QzQxLjQ2MzQgNTMuODM0IDQxLjQ2MzQgNTIuNTU2IDQxLjQ2MzQgNTBDNDEuNDYzNCA0Ny40NDQgNDEuNDYzNCA0Ni4xNjYgNDEuODU5NiA0NS4xNTA0QzQyLjQ0ODMgNDMuNjQxNyA0My42NDE3IDQyLjQ0ODQgNDUuMTUwNCA0MS44NTk3QzQ2LjE2NTkgNDEuNDYzNCA0Ny40NDM5IDQxLjQ2MzQgNTAgNDEuNDYzNEM1Mi41NTYgNDEuNDYzNCA1My44MzQgNDEuNDYzNCA1NC44NDk1IDQxLjg1OTdDNTYuMzU4MiA0Mi40NDg0IDU3LjU1MTYgNDMuNjQxNyA1OC4xNDAzIDQ1LjE1MDRDNTguNTM2NSA0Ni4xNjYgNTguNTM2NSA0Ny40NDQgNTguNTM2NSA1MEM1OC41MzY1IDUyLjU1NiA1OC41MzY1IDUzLjgzNCA1OC4xNDAzIDU0Ljg0OTZDNTcuNTUxNiA1Ni4zNTgzIDU2LjM1ODIgNTcuNTUxNiA1NC44NDk1IDU4LjE0MDNDNTMuODM0IDU4LjUzNjYgNTIuNTU2IDU4LjUzNjYgNTAgNTguNTM2NloiIGZpbGw9IiMxNDEzMTkiLz4KPC9zdmc+Cg=="
+
+
+def render_orq_logo(size: str = "24px") -> Img:
+    """Render the Orq logo at specified size."""
+    return Img(
+        src=ORQ_LOGO_DATA_URL,
+        alt="Orq.ai",
+        style=f"width: {size}; height: {size}; border-radius: 4px;",
+    )
+
+
+# =============================================================================
 # Chat CSS Styles
 # =============================================================================
 
 CHAT_STYLES = Style("""
+/* CSS Variables */
+:root {
+    /* Primary - Orq Orange */
+    --primary-400: #df5325;
+    --primary-500: #b73e1c;
+    --primary-600: #922f15;
+
+    /* Accent - Light Orange */
+    --accent-100: #fff3e9;
+    --accent-200: #ffd7b5;
+    --accent-300: #ff8f34;
+    --accent-400: #df5325;
+
+    /* Ink - Backgrounds and borders (light theme) */
+    --ink-400: #9b9b9b;
+    --ink-500: #767676;
+    --ink-600: #e0e0e0;
+    --ink-700: #f5f5f5;
+    --ink-750: #f0f0f0;
+    --ink-800: #ffffff;
+    --ink-900: #f6f2f0;
+
+    /* Text colors - dark for readability */
+    --text-primary: #111111;
+    --text-secondary: #222222;
+    --text-muted: #222222;
+    --white: #ffffff;
+
+    /* Status colors */
+    --success-green: #22c55e;
+    --error-400: #d92d20;
+    --error-red: #ef4444;
+}
+
 /* Full Page Chat Layout */
 .chat-page {
     display: flex;
@@ -762,7 +814,7 @@ def render_chat_messages(messages: List[Dict[str, Any]]) -> Div:
     if not messages:
         return Div(cls="chat-messages", id="chat-messages")(
             Div(cls="chat-empty")(
-                Span("🤖", cls="icon"),
+                render_orq_logo("48px"),
                 P("Chat with the Workspace Assistant"),
                 P(
                     "I can help you create datasets, prompts, and manage your workspace.",
@@ -954,7 +1006,7 @@ def render_chat_input() -> Div:
                 required=True,
             ),
             Button("➤", type="submit", cls="chat-send-btn"),
-        )
+        ),
     )
 
 
@@ -980,7 +1032,7 @@ def render_chat_panel(
         # Header
         Div(cls="chat-header")(
             Div(cls="chat-header-title")(
-                Span("🤖", cls="icon"),
+                render_orq_logo("24px"),
                 Span("Workspace Assistant"),
             ),
             Button(
@@ -1041,7 +1093,7 @@ def render_chat_page(
     use_mcp: bool = False,
     customer_api_key: str = "",
     error: Optional[str] = None,
-) -> Div:
+):
     """Render a full-page chat interface with sidebar."""
     messages = messages or []
 
@@ -1061,40 +1113,8 @@ def render_chat_page(
     });
     """)
 
-    # Base styles (CSS variables) - matches components.py theme
+    # Base reset styles
     base_styles = Style("""
-    :root {
-        /* Primary - Orq Orange */
-        --primary-400: #df5325;
-        --primary-500: #b73e1c;
-        --primary-600: #922f15;
-
-        /* Accent - Light Orange */
-        --accent-100: #fff3e9;
-        --accent-200: #ffd7b5;
-        --accent-300: #ff8f34;
-        --accent-400: #df5325;
-
-        /* Ink - Backgrounds and borders (light theme) */
-        --ink-400: #9b9b9b;
-        --ink-500: #767676;
-        --ink-600: #e0e0e0;
-        --ink-700: #f5f5f5;
-        --ink-750: #f0f0f0;
-        --ink-800: #ffffff;
-        --ink-900: #f6f2f0;
-
-        /* Text colors */
-        --text-primary: #141319;
-        --text-secondary: #4a4a4a;
-        --text-muted: #767676;
-        --white: #ffffff;
-
-        /* Status colors */
-        --success-green: #22c55e;
-        --error-400: #d92d20;
-        --error-red: #ef4444;
-    }
     * { box-sizing: border-box; }
     body {
         margin: 0;
@@ -1107,14 +1127,15 @@ def render_chat_page(
         status_div = Div(f"Error: {error}", cls="chat-status error")
 
     return Div(cls="chat-page")(
+        # Styles first
+        CHAT_STYLES,
+        base_styles,
         marked_script,
         markdown_init_script,
-        base_styles,
-        CHAT_STYLES,
         # Header with navigation
         Div(cls="chat-page-header")(
             Div(cls="chat-page-title")(
-                Span("🤖", cls="icon"),
+                render_orq_logo("28px"),
                 Span("Workspace Assistant"),
             ),
             Div(cls="chat-page-nav")(

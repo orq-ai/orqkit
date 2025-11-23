@@ -134,8 +134,6 @@ def validate_form_data(form_data: Dict[str, Any]) -> list[str]:
         errors.append("Company Type is required")
     if not form_data.get("industry"):
         errors.append("Industry is required")
-    if not form_data.get("workspace_key"):
-        errors.append("Workspace Key is required")
 
     api_key = form_data.get("customer_api_key", "")
     if not api_key:
@@ -163,7 +161,6 @@ async def execute_planning_async(task: TaskState) -> Dict[str, Any]:
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),
@@ -223,7 +220,6 @@ async def execute_setup_async(task: TaskState) -> Dict[str, Any]:
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),
@@ -279,7 +275,6 @@ async def execute_clarification_async(task: TaskState) -> Dict[str, Any]:
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),
@@ -323,7 +318,6 @@ async def execute_clarification_summary_async(task: TaskState) -> Dict[str, Any]
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),
@@ -633,7 +627,6 @@ async def execute_prompt_planning_async(task: TaskState) -> list:
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),
@@ -691,7 +684,6 @@ async def execute_dataset_planning_async(task: TaskState) -> Dict[str, Any]:
         company_type=form_data.get("company_type", ""),
         industry=form_data.get("industry", ""),
         specific_instructions=form_data.get("instructions", ""),
-        workspace_key=form_data.get("workspace_key", ""),
         customer_orq_api_key=form_data.get("customer_api_key", ""),
         num_dataset_rows=int(form_data.get("num_rows", 5)),
         num_datasets=int(form_data.get("num_datasets", 2)),

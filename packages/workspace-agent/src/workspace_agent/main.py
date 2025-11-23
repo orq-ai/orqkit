@@ -329,7 +329,6 @@ Call create_dataset first, then return your result with the dataset_id and datap
 
             agent_input = {
                 "messages": [{"role": "user", "content": planner_prompt}],
-                "workspace_key": request.workspace_key,
                 "customer_orq_api_key": request.customer_orq_api_key,
                 "project_path": request.project_path,
                 "company_type": request.company_type,
@@ -614,7 +613,6 @@ Then call report_prompt_results with the created prompts."""
 
         agent_input = {
             "messages": [{"role": "user", "content": prompt_prompt}],
-            "workspace_key": request.workspace_key,
             "customer_orq_api_key": request.customer_orq_api_key,
             "project_path": request.project_path,
             "company_type": request.company_type,
@@ -758,7 +756,6 @@ Then call report_prompt_results with the created prompts."""
         # Return results
         return {
             "status": "complete",
-            "workspace_key": request.workspace_key,
             "datasets_created": state["datasets_created"],
             "prompts_created": state["prompts_created"],
             "errors": state["errors"],
@@ -1167,7 +1164,6 @@ async def main():
         company_type = input("Company type: ").strip()
         industry = input("Industry: ").strip()
         instructions = input("Special instructions (optional): ").strip()
-        workspace_key = input("Workspace key: ").strip()
         customer_api_key = input("Customer API key: ").strip()
         project_path = input("Project path (default 'Example'): ").strip() or "Example"
         num_rows = int(input("Dataset rows (default 10): ").strip() or "10")
@@ -1176,7 +1172,6 @@ async def main():
             company_type=company_type,
             industry=industry,
             specific_instructions=instructions,
-            workspace_key=workspace_key,
             customer_orq_api_key=customer_api_key,
             project_path=project_path,
             num_dataset_rows=num_rows,
