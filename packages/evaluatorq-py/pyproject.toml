@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/evaluatorq"]
+include = ["src/evaluatorq/py.typed"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
