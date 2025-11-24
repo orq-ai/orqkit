@@ -1,16 +1,15 @@
-from collections.abc import Awaitable, Sequence
 import asyncio
-from typing import cast
-from datetime import datetime, UTC
 import os
+from collections.abc import Awaitable, Sequence
+from datetime import UTC, datetime
+from typing import cast
 
-from src.send_results import send_results_to_orq
-from src.fetch_data import setup_orq_client, fetch_dataset_as_datapoints
-
+from .fetch_data import fetch_dataset_as_datapoints, setup_orq_client
+from .processings import process_data_point
+from .progress import Phase, ProgressService, with_progress
+from .send_results import send_results_to_orq
 from .table_display import display_results_table
 from .types import DataPoint, EvaluatorParams, EvaluatorqResult
-from src.processings import process_data_point
-from src.progress import ProgressService, with_progress, Phase
 
 
 async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
