@@ -96,7 +96,7 @@ wheels = [
 ]
 
 [[package]]
-name = "evaluatorq-py"
+name = "evaluatorq"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -9,7 +9,7 @@ include = ["src/**/*.py"]
 sources = ["src"]
 
 [project]
-name = "evaluatorq-py"
+name = "evaluatorq"
 version = "0.1.0"
 description = "An evaluation framework library for Python that provides a flexible way to run parallel evaluations and optionally integrate with the Orq AI platform."
 readme = "README.md"
