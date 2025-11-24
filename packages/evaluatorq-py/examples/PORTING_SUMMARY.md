@@ -43,7 +43,7 @@ This document provides a complete mapping of all TypeScript examples to their Py
   import { evaluatorq, job } from "@orq-ai/evaluatorq";
   ```
   ```python
-  from evaluatorq_py import evaluatorq, job
+  from evaluatorq import evaluatorq, job
   ```
 
 - **Async/Await**: JavaScript promises → Python asyncio

@@ -195,7 +195,7 @@ python cli/example_llm.py  # Requires ANTHROPIC_API_KEY
 Jobs are async functions that process data points. They can be defined using the `@job` decorator:
 
 ```python
-from evaluatorq_py import job, DataPoint
+from evaluatorq import job, DataPoint
 
 @job("my-job-name")
 async def my_job(data: DataPoint, row: int) -> str:
@@ -216,7 +216,7 @@ Evaluators score the outputs of jobs. They can be defined as:
 
 2. **Using the Evaluator class**:
 ```python
-from evaluatorq_py import Evaluator
+from evaluatorq import Evaluator
 
 evaluator = Evaluator(name="my-evaluator", scorer=my_scorer_function)
 ```
@@ -225,7 +225,7 @@ evaluator = Evaluator(name="my-evaluator", scorer=my_scorer_function)
 Data points contain inputs and optional expected outputs:
 
 ```python
-from evaluatorq_py import DataPoint
+from evaluatorq import DataPoint
 
 data = DataPoint(
     inputs={"query": "What is Python?"},
