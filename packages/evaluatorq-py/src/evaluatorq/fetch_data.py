@@ -41,7 +41,7 @@ def setup_orq_client(api_key: str) -> "Orq":
 
 
 async def fetch_dataset_as_datapoints(
-    orq_client: Orq, dataset_id: str
+    orq_client: "Orq", dataset_id: str
 ) -> list[DataPoint]:
     """
     Fetch dataset from Orq platform and convert to DataPoint objects.
