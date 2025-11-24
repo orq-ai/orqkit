@@ -127,15 +127,17 @@ async def run_simulated_delay_example():
     # Run evaluation
     result = await evaluatorq(
         "simulated-llm-evaluation",
-        data=data_points,
-        jobs=[llm_response, context_retrieval],
-        evaluators=[
-            {"name": "accuracy-checker", "scorer": accuracy_checker},
-            {"name": "response-validator", "scorer": response_validator},
-            {"name": "latency-scorer", "scorer": latency_scorer},
-        ],
-        parallelism=2,  # Process 2 data points at a time
-        print_results=True,  # Display the table
+        {
+            "data": data_points,
+            "jobs": [llm_response, context_retrieval],
+            "evaluators": [
+                {"name": "accuracy-checker", "scorer": accuracy_checker},
+                {"name": "response-validator", "scorer": response_validator},
+                {"name": "latency-scorer", "scorer": latency_scorer},
+            ],
+            "parallelism": 2,  # Process 2 data points at a time
+            "print": True,  # Display the table
+        },
     )
 
     return result
