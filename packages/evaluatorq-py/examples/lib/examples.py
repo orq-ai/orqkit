@@ -7,11 +7,11 @@ parallel job execution and evaluation.
 
 import asyncio
 
-from .example_runners import run_simulated_delay_example
+from example_runners import run_simulated_delay_example
 
 
 async def main():
-    await run_simulated_delay_example()
+    _ = await run_simulated_delay_example()
 
 
 if __name__ == "__main__":

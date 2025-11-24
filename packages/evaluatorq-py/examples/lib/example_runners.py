@@ -7,8 +7,9 @@ to show how evaluatorq handles concurrent operations.
 
 import asyncio
 import random
+from typing import Any
 
-from evaluatorq import DataPoint, evaluatorq, job
+from evaluatorq import DataPoint, ScorerParameter, evaluatorq, job
 
 
 async def run_simulated_delay_example():
@@ -70,7 +71,7 @@ async def run_simulated_delay_example():
         return f"Retrieved context for user {user_id}"
 
     # Evaluator 1: Accuracy checker
-    async def accuracy_checker(input_data):
+    async def accuracy_checker(input_data: ScorerParameter) -> dict[str, Any]:
         # Simulate evaluator processing time (100-400ms)
         await asyncio.sleep(0.1 + random.random() * 0.3)
 
@@ -89,7 +90,7 @@ async def run_simulated_delay_example():
         }
 
     # Evaluator 2: Response validator
-    async def response_validator(input_data):
+    async def response_validator(input_data: ScorerParameter) -> dict[str, Any]:
         # Simulate validation processing time (150-350ms)
         await asyncio.sleep(0.15 + random.random() * 0.2)
 
@@ -113,7 +114,7 @@ async def run_simulated_delay_example():
         }
 
     # Evaluator 3: Latency scorer
-    async def latency_scorer(input_data):
+    async def latency_scorer(input_data: ScorerParameter) -> dict[str, Any]:
         # Simulate scoring based on response time (50-150ms)
         await asyncio.sleep(0.05 + random.random() * 0.1)
 
