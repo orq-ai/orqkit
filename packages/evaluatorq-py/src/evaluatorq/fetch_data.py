@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from orq_ai_sdk import Orq
 
 
-def setup_orq_client(api_key: str) -> Orq:
+def setup_orq_client(api_key: str) -> "Orq":
     """
     Setup and return an Orq client instance.
 
