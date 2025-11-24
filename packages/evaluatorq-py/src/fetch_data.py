@@ -26,7 +26,7 @@ def setup_orq_client(api_key: str) -> Orq:
         # lazy import for orq integration
         from orq_ai_sdk import Orq
 
-        client = Orq(api_key=api_key, server_url="https://my.staging.orq.ai")
+        client = Orq(api_key=api_key)
         return client
     except ModuleNotFoundError as e:
         raise Exception(
