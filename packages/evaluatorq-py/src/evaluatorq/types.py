@@ -1,5 +1,6 @@
-from typing import Any, Callable, TypedDict
 from collections.abc import Awaitable, Sequence
+from typing import Any, Callable, TypedDict
+
 from pydantic import BaseModel
 
 Output = str | int | float | bool | dict[str, Any] | None
@@ -64,7 +65,7 @@ class ScorerParameter(TypedDict):
     output: Output
 
 
-Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult]]
+Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult | dict[str, Any]]]
 
 
 class Evaluator(TypedDict):
