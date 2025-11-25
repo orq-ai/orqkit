@@ -25,12 +25,12 @@ Run with: python example_cosine_similarity.py
 
 import asyncio
 
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 
 from evaluatorq import DataPoint, evaluatorq, job
 
 # Initialize Anthropic client
-claude = Anthropic()
+claude = AsyncAnthropic()
 
 
 @job("translate-to-french")
@@ -106,40 +106,44 @@ async def main():
     print("    This example shows the structure without the actual evaluators.\n")
 
     # Run evaluation with translation examples
-    await evaluatorq(
+    _ await evaluatorq(
         "translation-evaluation",
-        data=[
-            DataPoint(inputs={"text": "Hello, how are you?"}),
-            DataPoint(inputs={"text": "The sky is blue"}),
-            DataPoint(inputs={"text": "Good morning"}),
-        ],
-        jobs=[translate_to_french],
-        evaluators=[
-            # TODO: Add cosine similarity evaluators here
-            # simple_cosine_similarity("Bonjour, comment allez-vous?"),
-            # cosine_similarity_threshold("Le ciel est bleu", 0.85, "exact-translation-match"),
-        ],
-        parallelism=2,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(inputs={"text": "Hello, how are you?"}),
+                DataPoint(inputs={"text": "The sky is blue"}),
+                DataPoint(inputs={"text": "Good morning"}),
+            ],
+            "jobs": [translate_to_french],
+            "evaluators": [
+                # TODO: Add cosine similarity evaluators here
+                # simple_cosine_similarity("Bonjour, comment allez-vous?"),
+                # cosine_similarity_threshold("Le ciel est bleu", 0.85, "exact-translation-match"),
+            ],
+            "parallelism": 2,
+            "print": True,
+        },
     )
 
     print("\n🗺️ Running capital city evaluation...\n")
 
     # Run evaluation with capital city descriptions
-    await evaluatorq(
+    _ = await evaluatorq(
         "capital-evaluation",
-        data=[
-            DataPoint(inputs={"country": "France"}),
-            DataPoint(inputs={"country": "Germany"}),
-            DataPoint(inputs={"country": "Japan"}),
-        ],
-        jobs=[describe_capital],
-        evaluators=[
-            # TODO: Add cosine similarity evaluators here
-            # cosine_similarity_threshold("The capital of France is Paris", 0.7, "capital-semantic-match"),
-        ],
-        parallelism=2,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(inputs={"country": "France"}),
+                DataPoint(inputs={"country": "Germany"}),
+                DataPoint(inputs={"country": "Japan"}),
+            ],
+            "jobs": [describe_capital],
+            "evaluators": [
+                # TODO: Add cosine similarity evaluators here
+                # cosine_similarity_threshold("The capital of France is Paris", 0.7, "capital-semantic-match"),
+            ],
+            "parallelism": 2,
+            "print": True,
+        },
     )
 
     print("\n✅ Cosine similarity evaluation examples completed!")

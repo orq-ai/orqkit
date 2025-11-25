@@ -7,14 +7,13 @@ and LLM-based evaluators from the command line.
 
 import asyncio
 
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 
 from evaluatorq import DataPoint, evaluatorq, job
-
-from ..evals import contains_name_validator, is_it_polite_llm_eval
+from examples.lib.evals import contains_name_validator, is_it_polite_llm_eval
 
 # Initialize Anthropic client
-claude = Anthropic()
+claude = AsyncAnthropic()
 
 
 @job("greet")
@@ -40,17 +39,19 @@ async def greet(data: DataPoint, _row: int = 0) -> str:
 
 async def main():
     """Run the LLM evaluation example from CLI."""
-    await evaluatorq(
+    _ = await evaluatorq(
         "dataset-evaluation",
-        data=[
-            DataPoint(inputs={"name": "Alice"}),
-            DataPoint(inputs={"name": "Bob"}),
-            DataPoint(inputs={"name": "Márk"}),
-        ],
-        jobs=[greet],
-        evaluators=[contains_name_validator, is_it_polite_llm_eval],
-        parallelism=2,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(inputs={"name": "Alice"}),
+                DataPoint(inputs={"name": "Bob"}),
+                DataPoint(inputs={"name": "Márk"}),
+            ],
+            "jobs": [greet],
+            "evaluators": [contains_name_validator, is_it_polite_llm_eval],
+            "parallelism": 2,
+            "print": True,
+        },
     )
 
 

@@ -20,23 +20,23 @@ fi
 echo ""
 echo "Running Example 1: Text Analysis"
 echo "------------------------------------------"
-python example_using_cli.py
+python -m examples.lib.cli.example_using_cli
 
 echo ""
 echo "Running Example 2: Text Analysis (variant)"
 echo "------------------------------------------"
-python example_using_cli_two.py
+python -m examples.lib.cli.example_using_cli_two
 
 if [ -n "$ANTHROPIC_API_KEY" ]; then
     echo ""
     echo "Running Example 3: LLM Evaluation"
     echo "------------------------------------------"
-    python example_llm.py
+    python -m examples.lib.cli.example_llm
 
     echo ""
     echo "Running Example 4: Cosine Similarity (placeholder)"
     echo "------------------------------------------"
-    python example_cosine_similarity.py
+    python -m examples.lib.cli.example_cosine_similarity
 else
     echo ""
     echo "⏭️  Skipping LLM examples (ANTHROPIC_API_KEY not set)"

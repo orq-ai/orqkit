@@ -7,12 +7,13 @@ with a simple text analysis job and output validator.
 
 import asyncio
 import re
+from typing import Any
 
-from evaluatorq import DataPoint, evaluatorq, job
+from evaluatorq import DataPoint, ScorerParameter, evaluatorq, job
 
 
 @job("text-analyzer")
-async def text_analyzer(data: DataPoint, _row: int = 0) -> dict:
+async def text_analyzer(data: DataPoint, _row: int = 0) -> dict[str, Any]:
     """Analyze text input and return statistics."""
     text = data.inputs.get("text") or data.inputs.get("input") or ""
     text_str = str(text)
@@ -27,7 +28,7 @@ async def text_analyzer(data: DataPoint, _row: int = 0) -> dict:
     return analysis
 
 
-async def output_validator(input_data):
+async def output_validator(input_data: ScorerParameter):
     """Validate that output matches expected structure."""
     data = input_data["data"]
     output = input_data["output"]
@@ -77,25 +78,27 @@ async def output_validator(input_data):
 
 async def main():
     """Run the CLI evaluation example."""
-    await evaluatorq(
+    _ = await evaluatorq(
         "dataset-evaluation",
-        data=[
-            DataPoint(
-                inputs={"text": "Hello joke"},
-                expected_output={
-                    "length": 10,
-                    "wordCount": 2,
-                    "hasNumbers": False,
-                    "hasSpecialChars": False,
-                },
-            ),
-        ],
-        jobs=[text_analyzer],
-        evaluators=[
-            {"name": "output-validator", "scorer": output_validator},
-        ],
-        parallelism=2,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(
+                    inputs={"text": "Hello joke"},
+                    expected_output={
+                        "length": 10,
+                        "wordCount": 2,
+                        "hasNumbers": False,
+                        "hasSpecialChars": False,
+                    },
+                ),
+            ],
+            "jobs": [text_analyzer],
+            "evaluators": [
+                {"name": "output-validator", "scorer": output_validator},
+            ],
+            "parallelism": 2,
+            "print": True,
+        },
     )
 
 
