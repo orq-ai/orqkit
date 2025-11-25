@@ -9,14 +9,15 @@ This example shows how to:
 
 import asyncio
 import re
+from typing import Any
 
-from evaluatorq import DataPoint, evaluatorq, job
+from evaluatorq import DataPoint, ScorerParameter, evaluatorq, job
 
 
 async def main():
     # Job 1: Text analysis job
     @job("text-analyzer")
-    async def text_analyzer(data: DataPoint, _row: int) -> dict:
+    async def text_analyzer(data: DataPoint, _row: int) -> dict[str, Any]:
         text = data.inputs.get("text") or data.inputs.get("input") or ""
         text_str = str(text)
 
@@ -43,7 +44,7 @@ async def main():
         return transformed
 
     # Evaluator 1: Output validator
-    async def output_validator(input_data):
+    async def output_validator(input_data: ScorerParameter):
         data = input_data["data"]
         output = input_data["output"]
 
@@ -90,7 +91,7 @@ async def main():
         }
 
     # Evaluator 2: Performance scorer
-    async def performance_scorer(input_data):
+    async def performance_scorer(input_data: ScorerParameter):
         output = input_data["output"]
 
         # Simple performance score based on output characteristics
@@ -120,7 +121,7 @@ async def main():
         }
 
     # Evaluator 3: Contains the word joke
-    async def contains_joke(input_data):
+    async def contains_joke(input_data: ScorerParameter):
         output = input_data["output"]
         data = input_data["data"]
 
@@ -141,19 +142,21 @@ async def main():
         }
 
     # Run evaluation with dataset from Orq AI platform
-    await evaluatorq(
+    _ = await evaluatorq(
         "dataset-evaluation",
-        data={
-            "datasetId": "01K1B6PRNRZ4YWS81H017VECS4",
+        {
+            "data": {
+                "dataset_id": "01KAX39A6Z7KZ72TH9QMDB5SNJ",
+            },
+            "jobs": [text_analyzer, text_normalizer],
+            "evaluators": [
+                {"name": "output-validator", "scorer": output_validator},
+                {"name": "performance-scorer", "scorer": performance_scorer},
+                {"name": "contains the word joke", "scorer": contains_joke},
+            ],
+            "parallelism": 2,
+            "print": True,
         },
-        jobs=[text_analyzer, text_normalizer],
-        evaluators=[
-            {"name": "output-validator", "scorer": output_validator},
-            {"name": "performance-scorer", "scorer": performance_scorer},
-            {"name": "contains the word joke", "scorer": contains_joke},
-        ],
-        parallelism=2,
-        print_results=True,
     )
 
 

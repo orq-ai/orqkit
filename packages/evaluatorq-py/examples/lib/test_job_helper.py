@@ -44,14 +44,16 @@ async def main():
 
     results = await evaluatorq(
         "test-job-helper",
-        data=[
-            DataPoint(inputs={"name": "Alice"}),
-            DataPoint(inputs={"name": "FailMe"}),
-            DataPoint(inputs={"name": "Bob"}),
-        ],
-        jobs=[successful_job, failing_job, another_failing_job],
-        parallelism=1,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(inputs={"name": "Alice"}),
+                DataPoint(inputs={"name": "FailMe"}),
+                DataPoint(inputs={"name": "Bob"}),
+            ],
+            "jobs": [successful_job, failing_job, another_failing_job],
+            "parallelism": 1,
+            "print": True,
+        },
     )
 
     # Display the results to show job names are preserved

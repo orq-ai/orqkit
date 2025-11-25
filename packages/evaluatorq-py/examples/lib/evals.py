@@ -9,9 +9,9 @@ and LLM-based evaluators.
 import json
 from typing import Any
 
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 
-from evaluatorq import Evaluator
+from evaluatorq import Evaluator, ScorerParameter
 
 
 def max_length_validator(max_length: int) -> Evaluator:
@@ -25,7 +25,7 @@ def max_length_validator(max_length: int) -> Evaluator:
             Evaluator that validates length constraint
     """
 
-    async def scorer(input_data) -> dict[str, Any]:
+    async def scorer(input_data: ScorerParameter) -> dict[str, Any]:
         output = input_data["output"]
 
         if output is None:
@@ -60,7 +60,7 @@ def min_length_validator(min_length: int) -> Evaluator:
             Evaluator that validates minimum length constraint
     """
 
-    async def scorer(input_data: ScorerInput) -> dict:
+    async def scorer(input_data: ScorerParameter) -> dict[str, Any]:
         output = input_data["output"]
 
         if output is None:
@@ -86,7 +86,7 @@ def min_length_validator(min_length: int) -> Evaluator:
     return Evaluator(name=f"min-length-{min_length}", scorer=scorer)
 
 
-async def contains_name_scorer(input_data: ScorerInput) -> dict:
+async def contains_name_scorer(input_data: ScorerParameter) -> dict[str, Any]:
     """
     Scorer function that checks if output contains the name from input data.
 
@@ -123,10 +123,10 @@ contains_name_validator = Evaluator(name="contains-name", scorer=contains_name_s
 
 
 # Initialize Anthropic client for LLM-based evaluation
-claude = Anthropic()
+claude = AsyncAnthropic()
 
 
-async def is_it_polite_scorer(input_data: ScorerInput) -> dict:
+async def is_it_polite_scorer(input_data: ScorerParameter) -> dict[str, Any]:
     """
     LLM-based scorer that evaluates politeness of the output.
 

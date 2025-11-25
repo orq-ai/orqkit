@@ -9,13 +9,13 @@ This example shows how to:
 
 import asyncio
 
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 from evals import contains_name_validator, is_it_polite_llm_eval, min_length_validator
 
 from evaluatorq import DataPoint, evaluatorq, job
 
 # Initialize Anthropic client
-claude = Anthropic()
+claude = AsyncAnthropic()
 
 
 # Job 1: Polite greeter (lazy and sarcastic for testing)
@@ -86,21 +86,23 @@ async def calculator(data: DataPoint, _row: int = 0) -> str:
 
 async def main():
     """Run evaluation with multiple LLM jobs and evaluators."""
-    await evaluatorq(
+    _ = await evaluatorq(
         "llm-eval-with-results",
-        data=[
-            DataPoint(inputs={"name": "Alice"}),
-            DataPoint(inputs={"name": "Bob"}),
-            DataPoint(inputs={"name": "Márk"}),
-        ],
-        jobs=[greet, joker, calculator],
-        evaluators=[
-            contains_name_validator,
-            is_it_polite_llm_eval,
-            min_length_validator(70),
-        ],
-        parallelism=4,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(inputs={"name": "Alice"}),
+                DataPoint(inputs={"name": "Bob"}),
+                DataPoint(inputs={"name": "Márk"}),
+            ],
+            "jobs": [greet, joker, calculator],
+            "evaluators": [
+                contains_name_validator,
+                is_it_polite_llm_eval,
+                min_length_validator(70),
+            ],
+            "parallelism": 4,
+            "print": True,
+        },
     )
 
 

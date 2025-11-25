@@ -7,15 +7,16 @@ reused across multiple evaluations, promoting code modularity.
 
 import asyncio
 import re
+from typing import Any
+
+from evals import max_length_validator
 
 from evaluatorq import DataPoint, evaluatorq, job
-
-from .evals import max_length_validator
 
 
 # Define a reusable job for text analysis
 @job("text-analyzer")
-async def text_analysis_job(data: DataPoint, _row: int = 0) -> dict:
+async def text_analysis_job(data: DataPoint, _row: int = 0) -> dict[str, Any]:
     """Analyze text input and return statistics."""
     text = data.inputs.get("text") or data.inputs.get("input") or ""
     text_str = str(text)
@@ -32,23 +33,25 @@ async def text_analysis_job(data: DataPoint, _row: int = 0) -> dict:
 
 async def main():
     """Run evaluation with reusable job and evaluator."""
-    await evaluatorq(
+    _ = await evaluatorq(
         "dataset-evaluation",
-        data=[
-            DataPoint(
-                inputs={"text": "Hello joke"},
-                expected_output={
-                    "length": 10,
-                    "wordCount": 2,
-                    "hasNumbers": False,
-                    "hasSpecialChars": False,
-                },
-            ),
-        ],
-        jobs=[text_analysis_job],
-        evaluators=[max_length_validator(10)],
-        parallelism=2,
-        print_results=True,
+        {
+            "data": [
+                DataPoint(
+                    inputs={"text": "Hello joke"},
+                    expected_output={
+                        "length": 10,
+                        "wordCount": 2,
+                        "hasNumbers": False,
+                        "hasSpecialChars": False,
+                    },
+                ),
+            ],
+            "jobs": [text_analysis_job],
+            "evaluators": [max_length_validator(10)],
+            "parallelism": 2,
+            "print": True,
+        },
     )
 
 
