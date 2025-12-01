@@ -1,8 +1,9 @@
 """Helper function for creating named jobs with error handling."""
 
 from collections.abc import Awaitable
-from typing import Any, Callable, overload
 from inspect import isawaitable
+from typing import Any, Callable, overload
+
 from .types import DataPoint, Job, Output
 
 

@@ -2,11 +2,11 @@
 
 import asyncio
 import random
+
 import pytest
 
-from src.evaluatorq import evaluatorq
-from src.types import EvaluationResult, DataPoint, ScorerParameter
-
+from evaluatorq import evaluatorq
+from evaluatorq.types import DataPoint, EvaluationResult, ScorerParameter
 
 # Sample text data
 SAMPLE_TEXTS = [
