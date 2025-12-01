@@ -21,7 +21,7 @@ from .types import (
 __all__ = [
     # Main function
     "evaluatorq",
-    # Helper
+    # Helper functions
     "job",
     # Types
     "DataPoint",

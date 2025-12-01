@@ -2,15 +2,28 @@
 
 import shutil
 from collections import defaultdict
-from typing import Any, Dict, List, Set
+from typing import TypedDict
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from rich.panel import Panel
-from rich import box
 
 from .types import EvaluatorqResult
+
+ScoreValue = float | bool | str
+"""Score value type - can be numeric, boolean, or string"""
+
+ScoresByEvaluatorAndJob = dict[str, dict[str, list[ScoreValue]]]
+"""Mapping of evaluator_name -> job_name -> list of score values"""
+
+
+class EvaluatorAverages(TypedDict):
+    """Type for evaluator averages calculation result."""
+
+    job_names: list[str]
+    evaluator_names: list[str]
+    averages: dict[str, dict[str, tuple[str, str]]]
 
 
 def get_terminal_width() -> int:
@@ -18,16 +31,20 @@ def get_terminal_width() -> int:
     return shutil.get_terminal_size(fallback=(80, 24)).columns
 
 
-def create_summary_display(results: EvaluatorqResult, console: Console) -> Table:
+def create_summary_display(results: EvaluatorqResult) -> Table:
     """Create a summary table of evaluation results"""
     total_data_points = len(results)
-    failed_data_points = sum(1 for r in results if r.error)
+    failed_data_points = 0
+    total_jobs = 0
+    failed_jobs = 0
 
-    total_jobs = sum(len(r.job_results) if r.job_results else 0 for r in results)
-    failed_jobs = sum(
-        sum(1 for j in r.job_results if j.error) if r.job_results else 0
-        for r in results
-    )
+    for r in results:
+        if r.error:
+            failed_data_points += 1
+
+        if r.job_results:
+            total_jobs += len(r.job_results)
+            failed_jobs += sum(1 for job_result in r.job_results if job_result.error)
 
     success_rate = (
         round(((total_jobs - failed_jobs) / total_jobs) * 100) if total_jobs > 0 else 0
@@ -65,19 +82,24 @@ def create_summary_display(results: EvaluatorqResult, console: Console) -> Table
     return table
 
 
-def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
+def calculate_evaluator_averages(
+    results: EvaluatorqResult,
+) -> EvaluatorAverages:
     """
     Calculate averages for evaluator scores across all data points.
 
     Returns:
-        Dictionary with job_names, evaluator_names, and averages
+        EvaluatorAverages with:
+        - job_names: sorted list of job names
+        - evaluator_names: sorted list of evaluator names
+        - averages: dict mapping evaluator_name -> job_name -> (display_value, style)
     """
-    all_job_names: Set[str] = set()
-    all_evaluator_names: Set[str] = set()
+    all_job_names: set[str] = set()
+    all_evaluator_names: set[str] = set()
 
     # Store all scores per evaluator per job
-    scores_by_evaluator_and_job: Dict[str, Dict[str, List[float | bool | str]]] = (
-        defaultdict(lambda: defaultdict(list))
+    scores_by_evaluator_and_job: ScoresByEvaluatorAndJob = defaultdict(
+        lambda: defaultdict(list)
     )
 
     # Collect scores
@@ -103,10 +125,10 @@ def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
     evaluator_names = sorted(all_evaluator_names)
 
     # Calculate averages
-    averages: Dict[str, Dict[str, tuple[str, str]]] = {}
+    averages: dict[str, dict[str, tuple[str, str]]] = {}
 
     for evaluator_name in evaluator_names:
-        evaluator_averages: Dict[str, tuple[str, str]] = {}
+        evaluator_averages: dict[str, tuple[str, str]] = {}
 
         for job_name in job_names:
             scores = scores_by_evaluator_and_job[evaluator_name].get(job_name, [])
@@ -116,12 +138,7 @@ def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
             else:
                 first_score = scores[0]
 
-                if isinstance(first_score, (int, float)):
-                    # Calculate average for numeric scores
-                    avg = sum(float(s) for s in scores) / len(scores)
-                    evaluator_averages[job_name] = (f"{avg:.2f}", "yellow")
-
-                elif isinstance(first_score, bool):
+                if isinstance(first_score, bool):
                     # Calculate pass rate for boolean scores
                     pass_count = sum(1 for s in scores if s is True)
                     pass_rate = (pass_count / len(scores)) * 100
@@ -134,6 +151,11 @@ def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
                         style = "red"
 
                     evaluator_averages[job_name] = (f"{pass_rate:.1f}%", style)
+
+                elif isinstance(first_score, (int, float)):
+                    # Calculate average for numeric scores
+                    avg = sum(float(s) for s in scores) / len(scores)
+                    evaluator_averages[job_name] = (f"{avg:.2f}", "yellow")
 
                 else:
                     # For strings, show placeholder
@@ -148,7 +170,7 @@ def calculate_evaluator_averages(results: EvaluatorqResult) -> dict[str, Any]:
     }
 
 
-def create_results_display(results: EvaluatorqResult, console: Console) -> Table:
+def create_results_display(results: EvaluatorqResult) -> Table:
     """Create the main results table showing evaluator averages per job"""
     if not results:
         return Table()
@@ -176,7 +198,7 @@ def create_results_display(results: EvaluatorqResult, console: Console) -> Table
 
     # Add rows for each evaluator
     for evaluator_name in evaluator_names:
-        row_data = [evaluator_name]
+        row_data = [Text(evaluator_name)]
 
         for job_name in job_names:
             avg_value, avg_style = averages[evaluator_name].get(job_name, ("-", "dim"))
@@ -187,9 +209,9 @@ def create_results_display(results: EvaluatorqResult, console: Console) -> Table
     return table
 
 
-def collect_errors(results: EvaluatorqResult) -> List[str]:
+def collect_errors(results: EvaluatorqResult) -> list[str]:
     """Collect and format error messages from results"""
-    errors: List[str] = []
+    errors: list[str] = []
 
     for idx, result in enumerate(results):
         if result.error:
@@ -210,7 +232,7 @@ def collect_errors(results: EvaluatorqResult) -> List[str]:
     return errors
 
 
-async def display_results_table(results: EvaluatorqResult):
+async def display_results_table(results: EvaluatorqResult) -> None:
     """
     Display evaluation results in formatted tables.
 
@@ -231,13 +253,13 @@ async def display_results_table(results: EvaluatorqResult):
 
     # Summary section
     console.print("[bold white]Summary:[/bold white]")
-    summary_table = create_summary_display(results, console)
+    summary_table = create_summary_display(results)
     console.print(summary_table)
     console.print()
 
     # Detailed results section
     console.print("[bold white]Detailed Results:[/bold white]")
-    results_table = create_results_display(results, console)
+    results_table = create_results_display(results)
     console.print(results_table)
     console.print()
 

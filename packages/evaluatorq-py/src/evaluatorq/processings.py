@@ -1,13 +1,15 @@
 import asyncio
 from collections.abc import Awaitable
-from typing import Any, cast
-from .progress import ProgressService, Phase
+from inspect import isawaitable
+from typing import cast
 
+from .job_helper import JobError
+from .progress import Phase, ProgressService
 from .types import (
     DataPoint,
     DataPointResult,
-    Evaluator,
     EvaluationResult,
+    Evaluator,
     EvaluatorScore,
     Job,
     JobResult,
@@ -39,11 +41,11 @@ async def process_data_point(
         List containing a single DataPointResult with job results and evaluator scores
     """
     try:
-        # Resolve the data point (await if it's a coroutine/future, otherwise use directly)
-        if asyncio.isfuture(data_promise) or asyncio.iscoroutine(data_promise):
-            data_point = await cast(Awaitable[DataPoint], data_promise)
+        # Resolve the data point (await if it's awaitable, otherwise use directly)
+        if isawaitable(data_promise):
+            data_point = await data_promise
         else:
-            data_point = cast(DataPoint, data_promise)
+            data_point = data_promise
 
         # Update progress for this data point
         if progress_service:
@@ -69,7 +71,7 @@ async def process_data_point(
         return [
             DataPointResult(
                 data_point=data_point,
-                job_results=list(job_results),
+                job_results=job_results,
                 error=None,
             )
         ]
@@ -112,13 +114,25 @@ async def process_job(
     try:
         # Execute the job
         result = await job(data_point, row_index)
-        job_name = result["name"]
-        output = result["output"]
+        job_name = cast(str, result["name"])
+        output = cast(Output, result["output"])
 
         # Update progress with current job name
         if progress_service:
             await progress_service.update_progress(current_job=job_name)
 
+    except JobError as e:
+        # Extract job name from JobError
+        job_name = e.job_name
+        error = str(e.original_error)
+
+        # Return early with error if job failed
+        return JobResult(
+            job_name=job_name,
+            output=None,
+            error=error,
+            evaluator_scores=[],
+        )
     except Exception as e:
         error = str(e)
 
@@ -139,12 +153,15 @@ async def process_job(
             await progress_service.update_progress(phase=Phase.EVALUATING)
 
         # Run all evaluators concurrently (unbounded concurrency)
-        evaluator_tasks = [
-            process_evaluator(evaluator, data_point, output, progress_service)
+        # Using create_task for better event loop scheduling
+        tasks = [
+            asyncio.create_task(
+                process_evaluator(evaluator, data_point, output, progress_service)
+            )
             for evaluator in evaluators
         ]
 
-        evaluator_scores = await asyncio.gather(*evaluator_tasks)
+        evaluator_scores = await asyncio.gather(*tasks)
 
     return JobResult(
         job_name=job_name,
@@ -185,7 +202,13 @@ async def process_evaluator(
             "output": output,
         }
 
-        score: EvaluationResult = await evaluator["scorer"](scorer_param)
+        result = await evaluator["scorer"](scorer_param)
+
+        # Convert dict to EvaluationResult if needed
+        if isinstance(result, dict):
+            score = EvaluationResult(**result)
+        else:
+            score = result
 
         return EvaluatorScore(
             evaluator_name=evaluator_name,

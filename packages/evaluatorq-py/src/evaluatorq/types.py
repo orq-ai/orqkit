@@ -1,6 +1,7 @@
+from collections.abc import Awaitable, Sequence
 from typing import Any, Callable, TypedDict
-from collections.abc import Awaitable
-from pydantic import BaseModel
+
+from pydantic import BaseModel, Field
 
 Output = str | int | float | bool | dict[str, Any] | None
 """Output type alias"""
@@ -12,16 +13,18 @@ class EvaluationResult(BaseModel):
 
 
 class EvaluatorScore(BaseModel):
-    evaluator_name: str
+    evaluator_name: str = Field(serialization_alias="evaluatorName")
     score: EvaluationResult
     error: str | None = None
 
 
 class JobResult(BaseModel):
-    job_name: str
+    job_name: str = Field(serialization_alias="jobName")
     output: Output
     error: str | None = None
-    evaluator_scores: list[EvaluatorScore] | None = None
+    evaluator_scores: list[EvaluatorScore] | None = Field(
+        default=None, serialization_alias="evaluatorScores"
+    )
 
 
 class DataPoint(BaseModel):
@@ -39,9 +42,11 @@ class DataPoint(BaseModel):
 
 
 class DataPointResult(BaseModel):
-    data_point: DataPoint
+    data_point: DataPoint = Field(serialization_alias="dataPoint")
     error: str | None = None
-    job_results: list[JobResult] | None = None
+    job_results: list[JobResult] | None = Field(
+        default=None, serialization_alias="jobResults"
+    )
 
 
 EvaluatorqResult = list[DataPointResult]
@@ -55,8 +60,8 @@ class JobReturn(TypedDict):
     output: Output
 
 
-Job = Callable[[DataPoint, int], Awaitable[JobReturn]]
-"""Job function type"""
+Job = Callable[[DataPoint, int], Awaitable[dict[str, Any]]]
+"""Job function type - returns a dict with 'name' and 'output' keys"""
 
 
 class ScorerParameter(TypedDict):
@@ -64,7 +69,7 @@ class ScorerParameter(TypedDict):
     output: Output
 
 
-Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult]]
+Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult | dict[str, Any]]]
 
 
 class Evaluator(TypedDict):
@@ -76,7 +81,14 @@ class DatasetIdInput(TypedDict):
     dataset_id: str
 
 
-class EvaluatorParams(TypedDict):
+class _EvaluatorParamsRequired(TypedDict):
+    """Required parameters for evaluation."""
+
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
+    jobs: list[Job]
+
+
+class EvaluatorParams(_EvaluatorParamsRequired, total=False):
     """
     Parameters for running an evaluation.
 
@@ -90,9 +102,7 @@ class EvaluatorParams(TypedDict):
         description: Optional description for the evaluation run.
     """
 
-    data: DatasetIdInput | list[Awaitable[DataPoint] | DataPoint]
     evaluators: list[Evaluator] | None
-    jobs: list[Job]
     parallelism: int
     print: bool
     description: str | None

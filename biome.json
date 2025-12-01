@@ -15,7 +15,10 @@
       "!node_modules",
       "!**/*.generated.ts",
       "!**/.claude",
-      "!**/.taskmaster"
+      "!**/.taskmaster",
+      "!**/.venv",
+      "!**/__pycache__",
+      "!**/*.egg-info"
     ]
   },
   "formatter": {

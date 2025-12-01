@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from types import CoroutineType
 from typing import Any
 
-from rich.console import Console
-from rich.spinner import Spinner
-from rich.live import Live
-from rich.text import Text
 from rich.columns import Columns
+from rich.console import Console
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.text import Text
 
-from src.types import EvaluatorqResult
+from .types import EvaluatorqResult
 
 
 class Phase(str, Enum):

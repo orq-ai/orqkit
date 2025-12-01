@@ -16,6 +16,8 @@
     }
   },
   "dependencies": {
+    "@orq-ai/evaluatorq": "workspace:*",
+    "@orq-ai/evaluators": "workspace:*",
     "tslib": "^2.3.0"
   }
 }
