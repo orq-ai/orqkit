@@ -11,6 +11,12 @@ from rich.text import Text
 
 from .types import EvaluatorqResult
 
+ScoreValue = float | bool | str
+"""Score value type - can be numeric, boolean, or string"""
+
+ScoresByEvaluatorAndJob = dict[str, dict[str, list[ScoreValue]]]
+"""Mapping of evaluator_name -> job_name -> list of score values"""
+
 
 class EvaluatorAverages(TypedDict):
     """Type for evaluator averages calculation result."""
@@ -92,8 +98,8 @@ def calculate_evaluator_averages(
     all_evaluator_names: set[str] = set()
 
     # Store all scores per evaluator per job
-    scores_by_evaluator_and_job: dict[str, dict[str, list[float | bool | str]]] = (
-        defaultdict(lambda: defaultdict(list))
+    scores_by_evaluator_and_job: ScoresByEvaluatorAndJob = defaultdict(
+        lambda: defaultdict(list)
     )
 
     # Collect scores
