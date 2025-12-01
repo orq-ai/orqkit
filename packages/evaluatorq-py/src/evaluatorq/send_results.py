@@ -6,37 +6,7 @@ from datetime import datetime
 import httpx
 from pydantic import BaseModel, Field
 
-from .types import DataPoint, EvaluationResult, EvaluatorqResult, Output
-
-
-# Same structure as EvaluatorqResult but with Error objects converted to strings for JSON serialization
-class SerializedEvaluatorScore(BaseModel):
-    """Serialized evaluator score for API transmission."""
-
-    evaluator_name: str = Field(serialization_alias="evaluatorName")
-    score: EvaluationResult
-    error: str | None = None
-
-
-class SerializedJobResult(BaseModel):
-    """Serialized job result for API transmission."""
-
-    job_name: str = Field(serialization_alias="jobName")
-    output: Output
-    error: str | None = None
-    evaluator_scores: list[SerializedEvaluatorScore] | None = Field(
-        default=None, serialization_alias="evaluatorScores"
-    )
-
-
-class SerializedDataPointResult(BaseModel):
-    """Serialized data point result for API transmission."""
-
-    data_point: DataPoint = Field(serialization_alias="dataPoint")
-    error: str | None = None
-    job_results: list[SerializedJobResult] | None = Field(
-        default=None, serialization_alias="jobResults"
-    )
+from .types import DataPointResult, EvaluatorqResult
 
 
 class SendResultsPayload(BaseModel):
@@ -50,7 +20,7 @@ class SendResultsPayload(BaseModel):
     ended_at: str = Field(serialization_alias="_endedAt")
     evaluation_duration: int = Field(serialization_alias="_evaluationDuration")
     dataset_id: str | None = Field(default=None, serialization_alias="datasetId")
-    results: list[SerializedDataPointResult]
+    results: list[DataPointResult]
 
 
 class OrqResponse(BaseModel):
@@ -86,39 +56,10 @@ async def send_results_to_orq(
         end_time: When the evaluation ended
     """
     try:
-        # Convert results to serialized format using list comprehensions
-        serialized_results: list[SerializedDataPointResult] = [
-            SerializedDataPointResult(
-                data_point=result.data_point,
-                error=result.error,
-                job_results=[
-                    SerializedJobResult(
-                        job_name=job_result.job_name,
-                        output=job_result.output,
-                        error=job_result.error,
-                        evaluator_scores=[
-                            SerializedEvaluatorScore(
-                                evaluator_name=score.evaluator_name,
-                                score=score.score,
-                                error=score.error,
-                            )
-                            for score in job_result.evaluator_scores
-                        ]
-                        if job_result.evaluator_scores
-                        else None,
-                    )
-                    for job_result in result.job_results
-                ]
-                if result.job_results
-                else None,
-            )
-            for result in results
-        ]
-
         # Calculate duration in milliseconds
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
-        # Build payload
+        # Build payload - results already have serialization aliases defined
         payload = SendResultsPayload(
             name=evaluation_name,
             description=evaluation_description,
@@ -126,7 +67,7 @@ async def send_results_to_orq(
             ended_at=end_time.isoformat(),
             evaluation_duration=duration_ms,
             dataset_id=dataset_id,
-            results=serialized_results,
+            results=results,
         )
 
         # Get base URL from environment or use default
