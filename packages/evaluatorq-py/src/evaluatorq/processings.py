@@ -2,14 +2,14 @@ import asyncio
 from collections.abc import Awaitable
 from inspect import isawaitable
 from typing import cast
-from .progress import ProgressService, Phase
-from .job_helper import JobError
 
+from .job_helper import JobError
+from .progress import Phase, ProgressService
 from .types import (
     DataPoint,
     DataPointResult,
-    Evaluator,
     EvaluationResult,
+    Evaluator,
     EvaluatorScore,
     Job,
     JobResult,
@@ -202,7 +202,13 @@ async def process_evaluator(
             "output": output,
         }
 
-        score: EvaluationResult = await evaluator["scorer"](scorer_param)
+        result = await evaluator["scorer"](scorer_param)
+
+        # Convert dict to EvaluationResult if needed
+        if isinstance(result, dict):
+            score = EvaluationResult(**result)
+        else:
+            score = result
 
         return EvaluatorScore(
             evaluator_name=evaluator_name,

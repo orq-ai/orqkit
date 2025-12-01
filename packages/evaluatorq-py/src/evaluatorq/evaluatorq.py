@@ -1,7 +1,7 @@
 import asyncio
 import os
 from collections.abc import Awaitable, Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import cast
 
 from .fetch_data import fetch_dataset_as_datapoints, setup_orq_client
@@ -33,7 +33,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
 
     orq_api_key = os.environ.get("ORQ_API_KEY")
 
-    start_time = datetime.now(UTC)
+    start_time = datetime.now().astimezone()
 
     data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
     dataset_id: str | None = None
@@ -114,7 +114,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
             dataset_id,
             results,
             start_time,
-            datetime.now(UTC),
+            datetime.now().astimezone(),
         )
 
     return results

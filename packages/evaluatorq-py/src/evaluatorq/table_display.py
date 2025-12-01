@@ -4,10 +4,10 @@ import shutil
 from collections import defaultdict
 from typing import TypedDict
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from rich import box
 
 from .types import EvaluatorqResult
 
