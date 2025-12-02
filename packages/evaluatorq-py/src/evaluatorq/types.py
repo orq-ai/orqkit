@@ -1,7 +1,7 @@
 from collections.abc import Awaitable, Sequence
 from typing import Any, Callable
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import TypedDict
 
 Output = str | int | float | bool | dict[str, Any] | None
@@ -98,7 +98,7 @@ class EvaluatorParams(BaseModel):
         description: Optional description for the evaluation run.
     """
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config: ConfigDict = {"arbitrary_types_allowed": True}
 
     data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
     jobs: list[Job]

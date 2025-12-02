@@ -206,7 +206,7 @@ async def process_evaluator(
 
         # Convert dict to EvaluationResult if needed
         if isinstance(result, dict):
-            score = EvaluationResult(**result)
+            score = EvaluationResult.model_validate(result)
         else:
             score = result
 
