@@ -5,6 +5,7 @@ from .job_helper import job
 from .types import (
     DataPoint,
     DataPointResult,
+    DatasetIdInput,
     EvaluationResult,
     Evaluator,
     EvaluatorParams,
@@ -26,6 +27,7 @@ __all__ = [
     # Types
     "DataPoint",
     "DataPointResult",
+    "DatasetIdInput",
     "EvaluationResult",
     "Evaluator",
     "EvaluatorParams",

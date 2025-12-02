@@ -69,7 +69,7 @@ async def test_evaluatorq_basic():
                 },
             ],
             "parallelism": 5,
-            "print": False,
+            "print_results": False,
         },
     )
 
@@ -102,7 +102,7 @@ async def test_evaluatorq_with_parallelism():
                 },
             ],
             "parallelism": 10,
-            "print": False,
+            "print_results": False,
         },
     )
 
@@ -127,7 +127,7 @@ async def test_evaluatorq_stress():
                 },
             ],
             "parallelism": 10,
-            "print": False,
+            "print_results": False,
         },
     )
 

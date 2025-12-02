@@ -6,7 +6,7 @@ An evaluation framework library for Python that provides a flexible way to run p
 
 - **Parallel Execution**: Run multiple evaluation jobs concurrently with progress tracking
 - **Flexible Data Sources**: Support for inline data, async iterables, and Orq platform datasets
-- **Type-safe**: Fully typed with Python type hints and Pydantic models
+- **Type-safe**: Fully typed with Python type hints and Pydantic models with runtime validation
 - **Rich Terminal UI**: Beautiful progress indicators and result tables powered by Rich
 - **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI (optional)
 
@@ -253,7 +253,7 @@ results = await evaluatorq("silent-eval", {
     "data": [...],
     "jobs": [...],
     "evaluators": [...],
-    "print": False,  # Disable progress and table display
+    "print_results": False,  # Disable progress and table display
 })
 
 # Process results programmatically
@@ -271,16 +271,36 @@ for result in results:
 
 ### Evaluation Parameters
 
+Parameters are validated at runtime using Pydantic. You can pass either a dict or an `EvaluatorParams` instance:
+
 ```python
-{
-    "data": list[DataPoint] | list[Awaitable[DataPoint]] | {"dataset_id": str},
-    "jobs": list[Job],
-    "evaluators": list[Evaluator] | None,  # Optional
-    "parallelism": int,  # Default: 1
-    "print": bool,  # Default: True
-    "description": str | None,  # Optional description
-}
+from evaluatorq import EvaluatorParams
+
+# Using a dict (validated at runtime)
+await evaluatorq("my-eval", {
+    "data": [...],
+    "jobs": [...],
+    "parallelism": 5,
+})
+
+# Using EvaluatorParams directly
+await evaluatorq("my-eval", EvaluatorParams(
+    data=[...],
+    jobs=[...],
+    parallelism=5,
+))
 ```
+
+#### Parameter Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `data` | `list[DataPoint]` \| `list[Awaitable[DataPoint]]` \| `DatasetIdInput` | **required** | Data to evaluate |
+| `jobs` | `list[Job]` | **required** | Jobs to run on each data point |
+| `evaluators` | `list[Evaluator]` \| `None` | `None` | Evaluators to score job outputs |
+| `parallelism` | `int` (≥1) | `1` | Number of concurrent jobs |
+| `print_results` | `bool` | `True` | Display progress and results table |
+| `description` | `str` \| `None` | `None` | Optional evaluation description |
 
 ## 📊 Orq Platform Integration
 
@@ -325,19 +345,19 @@ The Orq platform provides:
 
 ## 📚 API Reference
 
-### `evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult`
+### `evaluatorq(name: str, params: EvaluatorParams | dict) -> EvaluatorqResult`
 
 Main async function to run evaluations.
 
 #### Parameters:
 
 - `name`: String identifier for the evaluation run
-- `params`: `EvaluatorParams` TypedDict with:
-  - `data`: List of DataPoint objects, awaitables, or Orq dataset config
+- `params`: `EvaluatorParams` instance or dict (validated at runtime) with:
+  - `data`: List of DataPoint objects, awaitables, or `DatasetIdInput`
   - `jobs`: List of job functions to run on each data point
   - `evaluators`: Optional list of evaluator configurations
-  - `parallelism`: Number of concurrent jobs (default: 1)
-  - `print`: Whether to display progress and results (default: True)
+  - `parallelism`: Number of concurrent jobs (default: 1, must be ≥1)
+  - `print_results`: Whether to display progress and results (default: True)
   - `description`: Optional description for the evaluation run
 
 #### Returns:
@@ -347,8 +367,9 @@ Main async function to run evaluations.
 ### Types
 
 ```python
-from typing import TypedDict, Callable, Awaitable
-from pydantic import BaseModel
+from typing import Any, Callable, Awaitable
+from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 
 # Output type alias
 Output = str | int | float | bool | dict[str, Any] | None
@@ -384,6 +405,19 @@ class DataPointResult(BaseModel):
 
 # Type aliases
 EvaluatorqResult = list[DataPointResult]
+
+class DatasetIdInput(BaseModel):
+    """Input for fetching a dataset from Orq platform."""
+    dataset_id: str
+
+class EvaluatorParams(BaseModel):
+    """Parameters for running an evaluation (validated at runtime)."""
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
+    jobs: list[Job]
+    evaluators: list[Evaluator] | None = None
+    parallelism: int = Field(default=1, ge=1)
+    print_results: bool = True
+    description: str | None = None
 
 class JobReturn(TypedDict):
     """Job return structure."""
