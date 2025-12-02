@@ -1,45 +1,52 @@
 import asyncio
 import os
 from collections.abc import Awaitable, Sequence
-from datetime import UTC, datetime
-from typing import cast
+from datetime import datetime, timezone
+from typing import Any, cast
 
 from .fetch_data import fetch_dataset_as_datapoints, setup_orq_client
 from .processings import process_data_point
 from .progress import Phase, ProgressService, with_progress
 from .send_results import send_results_to_orq
 from .table_display import display_results_table
-from .types import DataPoint, EvaluatorParams, EvaluatorqResult
+from .types import DataPoint, DatasetIdInput, EvaluatorParams, EvaluatorqResult
 
 
-async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
+async def evaluatorq(
+    name: str, params: EvaluatorParams | dict[str, Any]
+) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
 
     Args:
         name: Name of the evaluation run
         params: Evaluation parameters including data, jobs, evaluators, etc.
+                Can be an EvaluatorParams instance or a dict.
 
     Returns:
         List of DataPointResult objects
     """
-    # Destructure with .get() for defaults
-    data = params["data"]
-    evaluators = params.get("evaluators", [])
-    jobs = params["jobs"]
-    parallelism = params.get("parallelism", 1)
-    print_results = params.get("print", True)
-    description = params.get("description")
+    # Validate params if passed as dict
+    if isinstance(params, dict):
+        params = EvaluatorParams.model_validate(params)
+
+    # Access validated params directly
+    data = params.data
+    evaluators = params.evaluators or []
+    jobs = params.jobs
+    parallelism = params.parallelism
+    print_results = params.print_results
+    description = params.description
 
     orq_api_key = os.environ.get("ORQ_API_KEY")
 
-    start_time = datetime.now(UTC)
+    start_time = datetime.now(timezone.utc)
 
     data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
     dataset_id: str | None = None
 
     # Handle dataset_id case
-    if isinstance(data, dict) and "dataset_id" in data:
+    if isinstance(data, DatasetIdInput):
         orq_client = None
 
         if orq_api_key:
@@ -49,7 +56,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
             raise ValueError(
                 "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
             )
-        dataset_id = data["dataset_id"]
+        dataset_id = data.dataset_id
         data_promises = await fetch_dataset_as_datapoints(orq_client, dataset_id)
 
     else:
@@ -114,7 +121,7 @@ async def evaluatorq(name: str, params: EvaluatorParams) -> EvaluatorqResult:
             dataset_id,
             results,
             start_time,
-            datetime.now(UTC),
+            datetime.now(timezone.utc),
         )
 
     return results

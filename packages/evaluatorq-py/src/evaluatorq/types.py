@@ -1,7 +1,8 @@
 from collections.abc import Awaitable, Sequence
-from typing import Any, Callable, TypedDict
+from typing import Any, Callable
 
 from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 
 Output = str | int | float | bool | dict[str, Any] | None
 """Output type alias"""
@@ -77,32 +78,31 @@ class Evaluator(TypedDict):
     scorer: Scorer
 
 
-class DatasetIdInput(TypedDict):
+class DatasetIdInput(BaseModel):
+    """Input for fetching a dataset from Orq platform."""
+
     dataset_id: str
 
 
-class _EvaluatorParamsRequired(TypedDict):
-    """Required parameters for evaluation."""
-
-    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
-    jobs: list[Job]
-
-
-class EvaluatorParams(_EvaluatorParamsRequired, total=False):
+class EvaluatorParams(BaseModel):
     """
     Parameters for running an evaluation.
 
     Args:
-        data: The data to evaluate. Either a dataset_id dict to fetch from Orq platform,
-              or a list of DataPoint instances/promises.
-        evaluators: The evaluators to use. If not provided, only jobs will run.
+        data: The data to evaluate. Either a DatasetIdInput to fetch from Orq platform,
+              or a list of DataPoint instances/awaitables.
         jobs: The jobs to run on the data.
+        evaluators: The evaluators to use. If not provided, only jobs will run.
         parallelism: Number of jobs to run in parallel. Defaults to 1 (sequential).
-        print: Whether to print results table to console. Defaults to True.
+        print_results: Whether to print results table to console. Defaults to True.
         description: Optional description for the evaluation run.
     """
 
-    evaluators: list[Evaluator] | None
-    parallelism: int
-    print: bool
-    description: str | None
+    model_config = {"arbitrary_types_allowed": True}
+
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint]
+    jobs: list[Job]
+    evaluators: list[Evaluator] | None = None
+    parallelism: int = Field(default=1, ge=1)
+    print_results: bool = Field(default=True)
+    description: str | None = None
