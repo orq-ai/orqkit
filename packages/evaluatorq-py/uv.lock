@@ -156,7 +156,7 @@ wheels = [
 
 [[package]]
 name = "evaluatorq"
-version = "0.1.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -172,6 +172,7 @@ orq = [
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
+    { name = "orq-ai-sdk" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -189,6 +190,7 @@ provides-extras = ["orq"]
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright", specifier = ">=1.21.0" },
+    { name = "orq-ai-sdk", specifier = ">=3.13.16" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
     { name = "ruff", specifier = ">=0.14.3" },
