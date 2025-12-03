@@ -9,34 +9,88 @@ from .processings import process_data_point
 from .progress import Phase, ProgressService, with_progress
 from .send_results import send_results_to_orq
 from .table_display import display_results_table
-from .types import DataPoint, DatasetIdInput, EvaluatorParams, EvaluatorqResult
+from .types import (
+    DataPoint,
+    DatasetIdInput,
+    Evaluator,
+    EvaluatorParams,
+    EvaluatorqResult,
+    Job,
+)
 
 
 async def evaluatorq(
-    name: str, params: EvaluatorParams | dict[str, Any]
+    name: str,
+    params: EvaluatorParams | dict[str, Any] | None = None,
+    *,
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint] | None = None,
+    jobs: list[Job] | None = None,
+    evaluators: list[Evaluator] | None = None,
+    parallelism: int = 1,
+    print_results: bool = True,
+    description: str | None = None,
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
 
+    Can be called with either a params dict/object or keyword arguments:
+
+        # Using keyword arguments (recommended):
+        await evaluatorq("name", data=[...], jobs=[...], parallelism=5)
+
+        # Using a dict:
+        await evaluatorq("name", {"data": [...], "jobs": [...], "parallelism": 5})
+
+        # Using EvaluatorParams:
+        await evaluatorq("name", EvaluatorParams(data=[...], jobs=[...]))
+
     Args:
         name: Name of the evaluation run
-        params: Evaluation parameters including data, jobs, evaluators, etc.
-                Can be an EvaluatorParams instance or a dict.
+        params: Optional EvaluatorParams instance or dict with all parameters.
+        data: The data to evaluate. Either a DatasetIdInput to fetch from Orq platform,
+              or a list of DataPoint instances/awaitables.
+        jobs: The jobs to run on the data.
+        evaluators: The evaluators to use. If not provided, only jobs will run.
+        parallelism: Number of jobs to run in parallel. Defaults to 1 (sequential).
+        print_results: Whether to print results table to console. Defaults to True.
+        description: Optional description for the evaluation run.
 
     Returns:
         List of DataPointResult objects
-    """
-    # Validate params if passed as dict
-    if isinstance(params, dict):
-        params = EvaluatorParams.model_validate(params)
 
-    # Access validated params directly
-    data = params.data
-    evaluators = params.evaluators or []
-    jobs = params.jobs
-    parallelism = params.parallelism
-    print_results = params.print_results
-    description = params.description
+    Raises:
+        ValidationError: If parameters fail validation.
+        ValueError: If neither params nor required kwargs are provided.
+    """
+    # Handle params dict/object vs kwargs
+    if params is not None:
+        # Validate params if passed as dict
+        if isinstance(params, dict):
+            validated = EvaluatorParams.model_validate(params)
+        else:
+            validated = params
+    elif data is not None and jobs is not None:
+        # Use kwargs
+        validated = EvaluatorParams(
+            data=data,
+            jobs=jobs,
+            evaluators=evaluators,
+            parallelism=parallelism,
+            print_results=print_results,
+            description=description,
+        )
+    else:
+        raise ValueError(
+            "Either 'params' or both 'data' and 'jobs' keyword arguments are required"
+        )
+
+    # Extract validated values
+    data = validated.data
+    jobs = validated.jobs
+    evaluators_list = validated.evaluators or []
+    parallelism = validated.parallelism
+    print_results = validated.print_results
+    description = validated.description
 
     orq_api_key = os.environ.get("ORQ_API_KEY")
 
@@ -85,7 +139,7 @@ async def evaluatorq(
         ):
             async with data_point_semaphore:
                 return await process_data_point(
-                    data_promise, index, jobs, evaluators, parallelism, progress
+                    data_promise, index, jobs, evaluators_list, parallelism, progress
                 )
 
         tasks = [

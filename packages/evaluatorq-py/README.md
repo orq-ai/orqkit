@@ -63,19 +63,20 @@ async def length_check_scorer(params):
     )
 
 async def main():
-    await evaluatorq("text-analysis", {
-        "data": [
+    await evaluatorq(
+        "text-analysis",
+        data=[
             DataPoint(inputs={"text": "Hello world"}),
             DataPoint(inputs={"text": "Testing evaluation"}),
         ],
-        "jobs": [text_analyzer],
-        "evaluators": [
+        jobs=[text_analyzer],
+        evaluators=[
             {
                 "name": "length-check",
                 "scorer": length_check_scorer,
             }
         ],
-    })
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -111,18 +112,17 @@ async def accuracy_scorer(params):
 
 async def main():
     # Requires ORQ_API_KEY environment variable
-    await evaluatorq("dataset-evaluation", {
-        "data": {
-            "dataset_id": "your-dataset-id",  # From Orq platform
-        },
-        "jobs": [processor],
-        "evaluators": [
+    await evaluatorq(
+        "dataset-evaluation",
+        data={"dataset_id": "your-dataset-id"},  # From Orq platform
+        jobs=[processor],
+        evaluators=[
             {
                 "name": "accuracy",
                 "scorer": accuracy_scorer,
             }
         ],
-    })
+    )
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -152,11 +152,12 @@ async def transformer(data: DataPoint, row: int):
     result = await transform(data)
     return result
 
-await evaluatorq("multi-job-eval", {
-    "data": [...],
-    "jobs": [preprocessor, analyzer, transformer],
-    "evaluators": [...],
-})
+await evaluatorq(
+    "multi-job-eval",
+    data=[...],
+    jobs=[preprocessor, analyzer, transformer],
+    evaluators=[...],
+)
 ```
 
 #### The `@job()` Decorator
@@ -205,11 +206,12 @@ async def risky_operation(data: DataPoint, row: int):
     result = await potentially_failing_operation(data)
     return result
 
-await evaluatorq("error-handling", {
-    "data": [...],
-    "jobs": [risky_operation],
-    "evaluators": [...],
-})
+await evaluatorq(
+    "error-handling",
+    data=[...],
+    jobs=[risky_operation],
+    evaluators=[...],
+)
 
 # Error output will show: "Job 'risky-job' failed: <error details>"
 # Without @job decorator, you'd only see: "<error details>"
@@ -227,34 +229,37 @@ async def get_data_point(i: int) -> DataPoint:
 
 data_promises = [get_data_point(i) for i in range(1000)]
 
-await evaluatorq("async-eval", {
-    "data": data_promises,
-    "jobs": [...],
-    "evaluators": [...],
-})
+await evaluatorq(
+    "async-eval",
+    data=data_promises,
+    jobs=[...],
+    evaluators=[...],
+)
 ```
 
 #### Controlling Parallelism
 
 ```python
-await evaluatorq("parallel-eval", {
-    "data": [...],
-    "jobs": [...],
-    "evaluators": [...],
-    "parallelism": 10,  # Run up to 10 jobs concurrently
-})
+await evaluatorq(
+    "parallel-eval",
+    data=[...],
+    jobs=[...],
+    evaluators=[...],
+    parallelism=10,  # Run up to 10 jobs concurrently
+)
 ```
 
 #### Disable Progress Display
 
 ```python
 # Get raw results without terminal output
-results = await evaluatorq("silent-eval", {
-    "data": [...],
-    "jobs": [...],
-    "evaluators": [...],
-    "print_results": False,  # Disable progress and table display
-})
+results = await evaluatorq(
+    "silent-eval",
+    data=[...],
+    jobs=[...],
+    evaluators=[...],
+    print_results=False,  # Disable progress and table display
+)
 
 # Process results programmatically
 for result in results:
@@ -271,19 +276,27 @@ for result in results:
 
 ### Evaluation Parameters
 
-Parameters are validated at runtime using Pydantic. You can pass either a dict or an `EvaluatorParams` instance:
+Parameters are validated at runtime using Pydantic. The `evaluatorq` function supports three calling styles:
 
 ```python
-from evaluatorq import EvaluatorParams
+from evaluatorq import evaluatorq, EvaluatorParams
 
-# Using a dict (validated at runtime)
+# 1. Keyword arguments (recommended)
+await evaluatorq(
+    "my-eval",
+    data=[...],
+    jobs=[...],
+    parallelism=5,
+)
+
+# 2. Dict style
 await evaluatorq("my-eval", {
     "data": [...],
     "jobs": [...],
     "parallelism": 5,
 })
 
-# Using EvaluatorParams directly
+# 3. EvaluatorParams instance
 await evaluatorq("my-eval", EvaluatorParams(
     data=[...],
     jobs=[...],
@@ -309,13 +322,13 @@ await evaluatorq("my-eval", EvaluatorParams(
 When the `ORQ_API_KEY` environment variable is set, evaluatorq automatically sends evaluation results to the Orq platform for visualization and analysis.
 
 ```python
-
 # Results are automatically sent when ORQ_API_KEY is set
-await evaluatorq("my-evaluation", {
-    "data": [...],
-    "jobs": [...],
-    "evaluators": [...],
-})
+await evaluatorq(
+    "my-evaluation",
+    data=[...],
+    jobs=[...],
+    evaluators=[...],
+)
 ```
 
 #### What Gets Sent
@@ -345,20 +358,38 @@ The Orq platform provides:
 
 ## 📚 API Reference
 
-### `evaluatorq(name: str, params: EvaluatorParams | dict) -> EvaluatorqResult`
+### `evaluatorq(name, params?, *, data?, jobs?, evaluators?, parallelism?, print_results?, description?) -> EvaluatorqResult`
 
 Main async function to run evaluations.
+
+#### Signature:
+
+```python
+async def evaluatorq(
+    name: str,
+    params: EvaluatorParams | dict[str, Any] | None = None,
+    *,
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint] | None = None,
+    jobs: list[Job] | None = None,
+    evaluators: list[Evaluator] | None = None,
+    parallelism: int = 1,
+    print_results: bool = True,
+    description: str | None = None,
+) -> EvaluatorqResult
+```
 
 #### Parameters:
 
 - `name`: String identifier for the evaluation run
-- `params`: `EvaluatorParams` instance or dict (validated at runtime) with:
-  - `data`: List of DataPoint objects, awaitables, or `DatasetIdInput`
-  - `jobs`: List of job functions to run on each data point
-  - `evaluators`: Optional list of evaluator configurations
-  - `parallelism`: Number of concurrent jobs (default: 1, must be ≥1)
-  - `print_results`: Whether to display progress and results (default: True)
-  - `description`: Optional description for the evaluation run
+- `params`: (Optional) `EvaluatorParams` instance or dict with evaluation parameters
+- `data`: List of DataPoint objects, awaitables, or `DatasetIdInput`
+- `jobs`: List of job functions to run on each data point
+- `evaluators`: Optional list of evaluator configurations
+- `parallelism`: Number of concurrent jobs (default: 1, must be ≥1)
+- `print_results`: Whether to display progress and results (default: True)
+- `description`: Optional description for the evaluation run
+
+> **Note:** Parameters can be passed either via the `params` argument (as dict or `EvaluatorParams`) or as keyword arguments. Keyword arguments take precedence over `params` values.
 
 #### Returns:
 
