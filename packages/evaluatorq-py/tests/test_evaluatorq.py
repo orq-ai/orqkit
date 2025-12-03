@@ -59,18 +59,16 @@ async def test_evaluatorq_basic():
 
     results = await evaluatorq(
         "test-basic",
-        {
-            "data": data_points,
-            "jobs": [text_analyzer],
-            "evaluators": [
-                {
-                    "name": "length-check",
-                    "scorer": length_check_scorer,
-                },
-            ],
-            "parallelism": 5,
-            "print_results": False,
-        },
+        data=data_points,
+        jobs=[text_analyzer],
+        evaluators=[
+            {
+                "name": "length-check",
+                "scorer": length_check_scorer,
+            },
+        ],
+        parallelism=5,
+        print_results=False,
     )
 
     # Verify evaluatorq returns results
@@ -92,18 +90,16 @@ async def test_evaluatorq_with_parallelism():
 
     results = await evaluatorq(
         "test-parallelism",
-        {
-            "data": data_points,
-            "jobs": [text_analyzer],
-            "evaluators": [
-                {
-                    "name": "length-check",
-                    "scorer": length_check_scorer,
-                },
-            ],
-            "parallelism": 10,
-            "print_results": False,
-        },
+        data=data_points,
+        jobs=[text_analyzer],
+        evaluators=[
+            {
+                "name": "length-check",
+                "scorer": length_check_scorer,
+            },
+        ],
+        parallelism=10,
+        print_results=False,
     )
 
     assert results is not None
@@ -117,18 +113,16 @@ async def test_evaluatorq_stress():
 
     results = await evaluatorq(
         "test-stress",
-        {
-            "data": data_points,
-            "jobs": [text_analyzer],
-            "evaluators": [
-                {
-                    "name": "length-check",
-                    "scorer": length_check_scorer,
-                },
-            ],
-            "parallelism": 10,
-            "print_results": False,
-        },
+        data=data_points,
+        jobs=[text_analyzer],
+        evaluators=[
+            {
+                "name": "length-check",
+                "scorer": length_check_scorer,
+            },
+        ],
+        parallelism=10,
+        print_results=False,
     )
 
     assert results is not None
