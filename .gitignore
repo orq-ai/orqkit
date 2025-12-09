@@ -5,6 +5,9 @@ dist
 tmp
 out-tsc
 *.tsbuildinfo
+**/__pycache__/**
+*.egg-info/
+*.egg
 
 # dependencies
 node_modules
@@ -44,4 +47,5 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 .npmrc
+.venv
 **/*.tsbuildinfo
