@@ -20,8 +20,9 @@ import type {
 async function setupOrqClient(apiKey: string) {
   try {
     const client = await import("@orq-ai/node");
+    const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
 
-    return new client.Orq({ apiKey });
+    return new client.Orq({ apiKey, serverURL });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
     if (
