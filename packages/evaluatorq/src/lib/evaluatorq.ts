@@ -53,6 +53,7 @@ async function fetchDatasetAsDataPoints(
     return response.data.map((datapoint) =>
       Promise.resolve({
         inputs: datapoint.inputs || {},
+        messages: datapoint.messages,
         expectedOutput: datapoint.expectedOutput,
       } as DataPoint),
     );

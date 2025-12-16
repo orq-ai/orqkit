@@ -69,6 +69,7 @@ async def fetch_dataset_as_datapoints(
                 DataPoint(
                     inputs=point.inputs if point.inputs is not None else {},
                     expected_output=point.expected_output,
+                    messages=point.messages,
                 )
                 for point in response.data
             ]

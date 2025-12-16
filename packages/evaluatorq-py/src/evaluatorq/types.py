@@ -1,11 +1,18 @@
 from collections.abc import Awaitable, Sequence
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import TypedDict
 
 Output = str | int | float | bool | dict[str, Any] | None
 """Output type alias"""
+
+
+class Message(BaseModel):
+    """A chat message."""
+
+    role: Literal["system", "user"]
+    content: str
 
 
 class EvaluationResult(BaseModel):
@@ -34,11 +41,13 @@ class DataPoint(BaseModel):
 
     Args:
         inputs: The inputs to pass to the job.
+        messages: Optional array of chat messages associated with the data point.
         expected_output: The expected output of the data point.
                         Used for evaluation and comparing the output of the job.
     """
 
     inputs: dict[str, Any]
+    messages: list[Message] | None = None
     expected_output: Output | None = Field(
         default=None, serialization_alias="expectedOutput"
     )
