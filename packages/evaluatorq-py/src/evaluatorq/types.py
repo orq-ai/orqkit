@@ -11,7 +11,7 @@ Output = str | int | float | bool | dict[str, Any] | None
 class Message(BaseModel):
     """A chat message."""
 
-    role: Literal["system", "user"]
+    role: Literal["system", "user", "assistant", "tool", "developer"]
     content: str
 
 

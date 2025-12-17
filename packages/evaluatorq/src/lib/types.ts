@@ -1,7 +1,7 @@
 export type Output = string | number | boolean | Record<string, unknown> | null;
 
 export interface Message {
-  role: "system" | "user";
+  role: "system" | "user" | "assistant" | "tool" | "developer";
   content: string;
 }
 

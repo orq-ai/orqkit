@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from .types import DataPoint
+from .types import DataPoint, Message
 
 if TYPE_CHECKING:
     from orq_ai_sdk import Orq
@@ -69,7 +69,15 @@ async def fetch_dataset_as_datapoints(
                 DataPoint(
                     inputs=point.inputs if point.inputs is not None else {},
                     expected_output=point.expected_output,
-                    messages=point.messages,
+                    messages=[
+                        Message(
+                            role=msg.role,
+                            content=str(msg.content) if msg.content else "",
+                        )
+                        for msg in point.messages
+                    ]
+                    if point.messages
+                    else None,
                 )
                 for point in response.data
             ]
