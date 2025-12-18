@@ -48,15 +48,44 @@ async function fetchDatasetAsDataPoints(
   datasetId: string,
 ): Promise<Promise<DataPoint>[]> {
   try {
-    const response = await orqClient.datasets.listDatapoints({ datasetId });
+    const allDatapoints: DataPoint[] = [];
+    let startingAfter: string | undefined;
 
-    return response.data.map((datapoint) =>
-      Promise.resolve({
-        inputs: datapoint.inputs || {},
-        messages: datapoint.messages,
-        expectedOutput: datapoint.expectedOutput,
-      } as DataPoint),
-    );
+    while (true) {
+      const response = await orqClient.datasets.listDatapoints({
+        datasetId,
+        limit: 50, // Max limit per request
+        startingAfter,
+      });
+
+      if (!response.data || response.data.length === 0) {
+        if (allDatapoints.length === 0) {
+          throw new Error(`Dataset ${datasetId} not found or has no data`);
+        }
+        break;
+      }
+
+      // Convert and append datapoints
+      for (const datapoint of response.data) {
+        allDatapoints.push({
+          inputs: datapoint.inputs || {},
+          messages: datapoint.messages,
+          expectedOutput: datapoint.expectedOutput,
+        } as DataPoint);
+
+        // Track the last ID for pagination
+        startingAfter =
+          (datapoint as unknown as { _id?: string })._id ??
+          (datapoint as unknown as { id?: string }).id;
+      }
+
+      // Check if there are more pages
+      if (!response.hasMore) {
+        break;
+      }
+    }
+
+    return allDatapoints.map((dp) => Promise.resolve(dp));
   } catch (error) {
     throw new Error(
       `Failed to fetch dataset ${datasetId}: ${error instanceof Error ? error.message : String(error)}`,

@@ -48,6 +48,7 @@ async def fetch_dataset_as_datapoints(
 ) -> list[DataPoint]:
     """
     Fetch dataset from Orq platform and convert to DataPoint objects.
+    Handles pagination to fetch all datapoints.
 
     Args:
         orq_client: Orq client instance
@@ -60,29 +61,50 @@ async def fetch_dataset_as_datapoints(
         Exception: If dataset fetch fails or dataset not found
     """
     try:
-        response = await orq_client.datasets.list_datapoints_async(
-            dataset_id=dataset_id
-        )
+        all_datapoints: list[DataPoint] = []
+        starting_after: str | None = None
+        last_id: str | None = None
 
-        if response and response.data:
-            return [
-                DataPoint(
-                    inputs=point.inputs if point.inputs is not None else {},
-                    expected_output=point.expected_output,
-                    messages=[
-                        Message(
-                            role=msg.role,
-                            content=str(msg.content) if msg.content else "",
-                        )
-                        for msg in point.messages
-                    ]
-                    if point.messages
-                    else None,
+        while True:
+            response = await orq_client.datasets.list_datapoints_async(
+                dataset_id=dataset_id,
+                limit=50,
+                starting_after=starting_after,
+            )
+
+            if not response or not response.data:
+                if not all_datapoints:
+                    raise Exception(f"Dataset {dataset_id} not found or has no data")
+                break
+
+            # Convert and append datapoints
+            for point in response.data:
+                all_datapoints.append(
+                    DataPoint(
+                        inputs=point.inputs if point.inputs is not None else {},
+                        expected_output=point.expected_output,
+                        messages=[
+                            Message(
+                                role=msg.role,
+                                content=str(msg.content) if msg.content else "",
+                            )
+                            for msg in point.messages
+                        ]
+                        if point.messages
+                        else None,
+                    )
                 )
-                for point in response.data
-            ]
-        else:
-            raise Exception(f"Dataset {dataset_id} not found or has no data")
+                # Track the last ID for pagination
+                last_id = getattr(point, "_id", None) or getattr(point, "id", None)
+
+            # Check if there are more pages
+            if not getattr(response, "has_more", False):
+                break
+
+            # Set cursor for next page
+            starting_after = last_id
+
+        return all_datapoints
 
     except Exception as e:
         raise Exception(f"Failed to fetch dataset {dataset_id}: {e}")
