@@ -1,10 +1,5 @@
 export type Output = string | number | boolean | Record<string, unknown> | null;
 
-export interface Message {
-  role: "system" | "user" | "assistant" | "tool" | "developer";
-  content: string;
-}
-
 type EvaluationResult<T> = {
   value: T;
   explanation?: string;
@@ -33,12 +28,10 @@ export type EvaluatorqResult = DataPointResult[];
 
 /**
  * @param inputs - The inputs to pass to the job.
- * @param messages - Optional array of chat messages associated with the data point.
  * @param expectedOutput - The expected output of the data point. Used for evaluation and comparing the output of the job.
  */
 export interface DataPoint {
   inputs: Record<string, unknown>;
-  messages?: Message[];
   expectedOutput?: Output;
 }
 
