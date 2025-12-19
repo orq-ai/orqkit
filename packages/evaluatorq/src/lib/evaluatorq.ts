@@ -69,7 +69,6 @@ async function fetchDatasetAsDataPoints(
       for (const datapoint of response.data) {
         allDatapoints.push({
           inputs: datapoint.inputs || {},
-          messages: datapoint.messages,
           expectedOutput: datapoint.expectedOutput,
         } as DataPoint);
 

@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from .types import DataPoint, Message
+from .types import DataPoint
 
 if TYPE_CHECKING:
     from orq_ai_sdk import Orq
@@ -83,15 +83,6 @@ async def fetch_dataset_as_datapoints(
                     DataPoint(
                         inputs=point.inputs if point.inputs is not None else {},
                         expected_output=point.expected_output,
-                        messages=[
-                            Message(
-                                role=msg.role,
-                                content=str(msg.content) if msg.content else "",
-                            )
-                            for msg in point.messages
-                        ]
-                        if point.messages
-                        else None,
                     )
                 )
                 # Track the last ID for pagination
