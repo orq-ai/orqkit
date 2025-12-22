@@ -8,7 +8,7 @@ export interface ProgressState {
   currentDataPoint: number;
   currentJob?: string;
   currentEvaluator?: string;
-  phase: "initializing" | "processing" | "evaluating" | "completed";
+  phase: "initializing" | "fetching" | "processing" | "evaluating" | "completed";
 }
 
 // Progress service interface
@@ -47,6 +47,15 @@ const makeProgressService = (): ProgressService => {
     switch (state.phase) {
       case "initializing":
         text = chalk.cyan("Initializing evaluation...");
+        break;
+      case "fetching":
+        if (state.totalDataPoints > 0) {
+          text = chalk.yellow(
+            `Fetching dataset... (${state.totalDataPoints} datapoints loaded)`,
+          );
+        } else {
+          text = chalk.yellow("Fetching dataset...");
+        }
         break;
       case "processing":
         text = chalk.cyan(

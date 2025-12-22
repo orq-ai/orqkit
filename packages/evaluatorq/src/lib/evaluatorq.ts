@@ -43,53 +43,77 @@ async function setupOrqClient(apiKey: string) {
   }
 }
 
-async function fetchDatasetAsDataPoints(
+interface DataPointBatch {
+  datapoints: DataPoint[];
+  hasMore: boolean;
+  batchNumber: number;
+}
+
+async function* fetchDatasetBatches(
   orqClient: Orq,
   datasetId: string,
-): Promise<Promise<DataPoint>[]> {
-  try {
-    const allDatapoints: DataPoint[] = [];
-    let startingAfter: string | undefined;
+): AsyncGenerator<DataPointBatch> {
+  let startingAfter: string | undefined;
+  let batchNumber = 0;
+  let hasYielded = false;
 
+  try {
     while (true) {
       const response = await orqClient.datasets.listDatapoints({
         datasetId,
-        limit: 50, // Max limit per request
+        limit: 50,
         startingAfter,
       });
 
       if (!response.data || response.data.length === 0) {
-        if (allDatapoints.length === 0) {
+        if (!hasYielded) {
           throw new Error(`Dataset ${datasetId} not found or has no data`);
         }
         break;
       }
 
-      // Convert and append datapoints
+      const batchDatapoints: DataPoint[] = [];
       for (const datapoint of response.data) {
-        allDatapoints.push({
+        batchDatapoints.push({
           inputs: datapoint.inputs || {},
           expectedOutput: datapoint.expectedOutput,
         } as DataPoint);
 
-        // Track the last ID for pagination
         startingAfter =
           (datapoint as unknown as { _id?: string })._id ??
           (datapoint as unknown as { id?: string }).id;
       }
 
-      // Check if there are more pages
-      if (!response.hasMore) {
+      batchNumber++;
+      const hasMore = response.hasMore ?? false;
+
+      yield {
+        datapoints: batchDatapoints,
+        hasMore,
+        batchNumber,
+      };
+      hasYielded = true;
+
+      if (!hasMore) {
         break;
       }
     }
-
-    return allDatapoints.map((dp) => Promise.resolve(dp));
   } catch (error) {
     throw new Error(
       `Failed to fetch dataset ${datasetId}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+async function fetchDatasetAsDataPoints(
+  orqClient: Orq,
+  datasetId: string,
+): Promise<Promise<DataPoint>[]> {
+  const allDatapoints: DataPoint[] = [];
+  for await (const batch of fetchDatasetBatches(orqClient, datasetId)) {
+    allDatapoints.push(...batch.datapoints);
+  }
+  return allDatapoints.map((dp) => Promise.resolve(dp));
 }
 
 /**
@@ -119,10 +143,9 @@ export async function evaluatorq(
 
   const startTime = new Date();
 
-  let dataPromises: (Promise<DataPoint> | DataPoint)[];
   let datasetId: string | undefined;
 
-  // Handle datasetId case
+  // Handle datasetId case - use streaming fetch
   if ("datasetId" in data) {
     if (!orqApiKey || !orqClient) {
       throw new Error(
@@ -130,12 +153,102 @@ export async function evaluatorq(
       );
     }
     datasetId = data.datasetId;
-    dataPromises = await fetchDatasetAsDataPoints(orqClient, data.datasetId);
-  } else {
-    dataPromises = data;
+
+    // Stream fetch and process batches concurrently
+    const streamingProgram = pipe(
+      Effect.gen(function* (_) {
+        const progress = yield* _(ProgressService);
+
+        // Initialize progress with unknown total (streaming mode)
+        yield* _(
+          progress.updateProgress({
+            totalDataPoints: 0,
+            currentDataPoint: 0,
+            phase: "fetching",
+          }),
+        );
+
+        // Fetch and process batches using async function wrapped in Effect
+        const allResults = yield* _(
+          Effect.promise(async () => {
+            const results: EvaluatorqResult = [];
+            const processingPromises: Promise<EvaluatorqResult>[] = [];
+            let totalDatapoints = 0;
+            let datapointIndex = 0;
+
+            for await (const batch of fetchDatasetBatches(
+              orqClient,
+              datasetId!,
+            )) {
+              totalDatapoints += batch.datapoints.length;
+
+              // Start processing this batch immediately
+              for (const datapoint of batch.datapoints) {
+                const currentIndex = datapointIndex++;
+                const promise = Effect.runPromise(
+                  pipe(
+                    processDataPointEffect(
+                      Promise.resolve(datapoint),
+                      currentIndex,
+                      jobs,
+                      evaluators,
+                      parallelism,
+                    ),
+                    Effect.provide(ProgressServiceLive),
+                  ),
+                );
+                processingPromises.push(promise);
+              }
+            }
+
+            // Wait for all processing to complete
+            const resultsNested = await Promise.all(processingPromises);
+            for (const resultList of resultsNested) {
+              results.push(...resultList);
+            }
+
+            return results;
+          }),
+        );
+
+        yield* _(
+          progress.updateProgress({
+            phase: "processing",
+          }),
+        );
+
+        return allResults;
+      }),
+      // Conditionally add table display
+      print
+        ? Effect.tap((results) => displayResultsTableEffect(results))
+        : Effect.tap(() => Effect.void),
+      // Send results to Orq when API key is available
+      orqApiKey
+        ? Effect.tap((results) =>
+            sendResultsToOrqEffect(
+              orqApiKey,
+              _name,
+              description,
+              datasetId,
+              results,
+              startTime,
+              new Date(),
+            ),
+          )
+        : Effect.tap(() => Effect.void),
+      // Provide the progress service
+      Effect.provide(ProgressServiceLive),
+      // Wrap with progress tracking
+      (effect) => withProgress(effect, print),
+    );
+
+    return Effect.runPromise(streamingProgram);
   }
 
-  // Create Effect for processing all data points
+  // Non-streaming case: process all data at once
+  const dataPromises = data;
+
   const program = pipe(
     Effect.gen(function* (_) {
       const progress = yield* _(ProgressService);
