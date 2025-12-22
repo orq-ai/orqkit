@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Sequence
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from .fetch_data import fetch_dataset_as_datapoints, setup_orq_client
+from .fetch_data import fetch_dataset_batches, setup_orq_client
 from .processings import process_data_point
 from .progress import Phase, ProgressService, with_progress
 from .send_results import send_results_to_orq
@@ -96,10 +96,12 @@ async def evaluatorq(
 
     start_time = datetime.now(timezone.utc)
 
-    data_promises: Sequence[Awaitable[DataPoint] | DataPoint]
     dataset_id: str | None = None
 
-    # Handle dataset_id case
+    # Create progress service
+    progress = ProgressService()
+
+    # Handle dataset_id case - use streaming fetch
     if isinstance(data, DatasetIdInput):
         orq_client = None
 
@@ -111,56 +113,115 @@ async def evaluatorq(
                 "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
             )
         dataset_id = data.dataset_id
-        data_promises = await fetch_dataset_as_datapoints(orq_client, dataset_id)
 
-    else:
-        data_promises = cast(list[DataPoint], data)
+        # Stream fetch and process batches concurrently
+        async def run_streaming_evaluation() -> EvaluatorqResult:
+            all_results: EvaluatorqResult = []
+            processing_tasks: list[asyncio.Task[list[Any]]] = []
+            total_datapoints = 0
+            datapoint_index = 0
 
-    # Create progress service
-    progress = ProgressService()
+            # Semaphore for controlling parallelism
+            data_point_semaphore = asyncio.Semaphore(parallelism)
 
-    # Define the main evaluation coroutine
-    async def run_evaluation() -> EvaluatorqResult:
-        # Initialize progress
-        await progress.update_progress(
-            total_data_points=len(data_promises),
-            current_data_point=0,
-            phase=Phase.INITIALIZING,
-        )
+            async def process_with_semaphore(
+                index: int, data_promise: DataPoint
+            ) -> list[Any]:
+                async with data_point_semaphore:
+                    return await process_data_point(
+                        data_promise,
+                        index,
+                        jobs,
+                        evaluators_list,
+                        parallelism,
+                        progress,
+                    )
 
-        # Process data points with controlled concurrency
-        # Use a semaphore to limit concurrent data points to avoid overwhelming the system
-        # This allows parallelism within each data point (controlled by the parallelism param)
-        # while also having multiple data points in flight
-        data_point_semaphore = asyncio.Semaphore(max(1, parallelism // len(jobs)))
+            # Initialize progress with unknown total (streaming mode)
+            await progress.update_progress(
+                total_data_points=0,
+                current_data_point=0,
+                phase=Phase.FETCHING,
+            )
 
-        async def process_with_semaphore(
-            index: int, data_promise: Awaitable[DataPoint] | DataPoint
-        ):
-            async with data_point_semaphore:
-                return await process_data_point(
-                    data_promise, index, jobs, evaluators_list, parallelism, progress
+            # Fetch and process batches
+            async for batch in fetch_dataset_batches(orq_client, dataset_id):
+                total_datapoints += len(batch.datapoints)
+
+                # Update progress with new total
+                await progress.update_progress(
+                    total_data_points=total_datapoints,
+                    phase=Phase.PROCESSING if not batch.has_more else Phase.FETCHING,
                 )
 
-        tasks = [
-            process_with_semaphore(index, data_promise)
-            for index, data_promise in enumerate(data_promises)
-        ]
+                # Start processing this batch immediately
+                for datapoint in batch.datapoints:
+                    task = asyncio.create_task(
+                        process_with_semaphore(datapoint_index, datapoint)
+                    )
+                    processing_tasks.append(task)
+                    datapoint_index += 1
 
-        # Gather all results
-        results_nested = await asyncio.gather(*tasks)
+            # Wait for all processing tasks to complete
+            await progress.update_progress(phase=Phase.PROCESSING)
+            results_nested = await asyncio.gather(*processing_tasks)
 
-        # Flatten results (each process_data_point returns a list)
-        results: EvaluatorqResult = []
-        for result_list in results_nested:
-            results.extend(result_list)
+            # Flatten results
+            for result_list in results_nested:
+                all_results.extend(result_list)
 
-        return results
+            return all_results
 
-    # Run evaluation with progress tracking
-    results = await with_progress(
-        run_evaluation(), progress, show_progress=print_results
-    )
+        results = await with_progress(
+            run_streaming_evaluation(), progress, show_progress=print_results
+        )
+
+    else:
+        # Non-streaming case: process all data at once
+        data_promises = cast(list[DataPoint], data)
+
+        async def run_evaluation() -> EvaluatorqResult:
+            # Initialize progress
+            await progress.update_progress(
+                total_data_points=len(data_promises),
+                current_data_point=0,
+                phase=Phase.INITIALIZING,
+            )
+
+            # Process data points with controlled concurrency
+            data_point_semaphore = asyncio.Semaphore(max(1, parallelism // len(jobs)))
+
+            async def process_with_semaphore(
+                index: int, data_promise: Awaitable[DataPoint] | DataPoint
+            ) -> list[Any]:
+                async with data_point_semaphore:
+                    return await process_data_point(
+                        data_promise,
+                        index,
+                        jobs,
+                        evaluators_list,
+                        parallelism,
+                        progress,
+                    )
+
+            tasks = [
+                process_with_semaphore(index, data_promise)
+                for index, data_promise in enumerate(data_promises)
+            ]
+
+            # Gather all results
+            results_nested = await asyncio.gather(*tasks)
+
+            # Flatten results
+            results: EvaluatorqResult = []
+            for result_list in results_nested:
+                results.extend(result_list)
+
+            return results
+
+        results = await with_progress(
+            run_evaluation(), progress, show_progress=print_results
+        )
 
     # Display results table
     if print_results:

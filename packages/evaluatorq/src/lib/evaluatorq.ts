@@ -154,12 +154,20 @@ export async function evaluatorq(
     }
     datasetId = data.datasetId;
 
+    // Shared progress state that can be updated from within Effect.promise
+    const progressRef = {
+      totalDataPoints: 0,
+      processedDataPoints: 0,
+      phase: "fetching" as "fetching" | "processing",
+      done: false,
+    };
+
     // Stream fetch and process batches concurrently
     const streamingProgram = pipe(
       Effect.gen(function* (_) {
         const progress = yield* _(ProgressService);
 
-        // Initialize progress with unknown total (streaming mode)
+        // Initialize progress with fetching phase
         yield* _(
           progress.updateProgress({
             totalDataPoints: 0,
@@ -168,35 +176,80 @@ export async function evaluatorq(
           }),
         );
 
-        // Fetch and process batches using async function wrapped in Effect
+        // Start a polling loop to update progress from progressRef
+        const progressInterval = setInterval(() => {
+          Effect.runPromise(
+            progress.updateProgress({
+              totalDataPoints: progressRef.totalDataPoints,
+              currentDataPoint: progressRef.processedDataPoints,
+              phase: progressRef.phase,
+            }),
+          );
+        }, 100);
+
+        // Fetch and process batches with streaming
         const allResults = yield* _(
           Effect.promise(async () => {
             const results: EvaluatorqResult = [];
             const processingPromises: Promise<EvaluatorqResult>[] = [];
-            let totalDatapoints = 0;
             let datapointIndex = 0;
 
             for await (const batch of fetchDatasetBatches(
               orqClient,
               datasetId!,
             )) {
-              totalDatapoints += batch.datapoints.length;
+              // Update total as we fetch
+              progressRef.totalDataPoints += batch.datapoints.length;
+              progressRef.phase = "processing";
 
               // Start processing this batch immediately
               for (const datapoint of batch.datapoints) {
                 const currentIndex = datapointIndex++;
-                const promise = Effect.runPromise(
-                  pipe(
-                    processDataPointEffect(
-                      Promise.resolve(datapoint),
-                      currentIndex,
-                      jobs,
-                      evaluators,
-                      parallelism,
-                    ),
-                    Effect.provide(ProgressServiceLive),
-                  ),
-                );
+                const promise = (async () => {
+                  // Process datapoint directly without Effect to avoid progress conflicts
+                  const jobResults = await Promise.all(
+                    jobs.map(async (job) => {
+                      try {
+                        const result = await job(datapoint, currentIndex);
+                        // Run evaluators for this job
+                        const evaluatorScores = await Promise.all(
+                          evaluators.map(async (evaluator) => {
+                            try {
+                              const score = await evaluator.scorer({
+                                data: datapoint,
+                                output: result.output,
+                              });
+                              return {
+                                evaluatorName: evaluator.name,
+                                score,
+                              };
+                            } catch (error) {
+                              return {
+                                evaluatorName: evaluator.name,
+                                score: { value: "" as string },
+                                error: error as Error,
+                              };
+                            }
+                          }),
+                        );
+                        return {
+                          jobName: result.name,
+                          output: result.output,
+                          evaluatorScores,
+                        };
+                      } catch (error) {
+                        const err = error as Error & { jobName?: string };
+                        return {
+                          jobName: err.jobName || "Unknown",
+                          output: null,
+                          error: error as Error,
+                        };
+                      }
+                    }),
+                  );
+                  progressRef.processedDataPoints++;
+                  return [{ dataPoint: datapoint, jobResults }] as EvaluatorqResult;
+                })();
                 processingPromises.push(promise);
               }
             }
@@ -211,8 +264,14 @@ export async function evaluatorq(
           }),
         );
 
+        // Stop the progress polling
+        clearInterval(progressInterval);
+
+        // Final progress update with correct counts
         yield* _(
           progress.updateProgress({
+            totalDataPoints: progressRef.totalDataPoints,
+            currentDataPoint: progressRef.processedDataPoints,
             phase: "processing",
           }),
         );

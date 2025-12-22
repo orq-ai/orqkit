@@ -1,11 +1,21 @@
 """Fetch data from Orq platform."""
 
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from .types import DataPoint
 
 if TYPE_CHECKING:
     from orq_ai_sdk import Orq
+
+
+class DataPointBatch:
+    """A batch of datapoints with pagination info."""
+
+    def __init__(self, datapoints: list[DataPoint], has_more: bool, batch_number: int):
+        self.datapoints: list[DataPoint] = datapoints
+        self.has_more: bool = has_more
+        self.batch_number: int = batch_number
 
 
 def setup_orq_client(api_key: str) -> "Orq":
@@ -43,28 +53,29 @@ def setup_orq_client(api_key: str) -> "Orq":
         raise Exception(f"Error setting up Orq client: {e}")
 
 
-async def fetch_dataset_as_datapoints(
+async def fetch_dataset_batches(
     orq_client: "Orq", dataset_id: str
-) -> list[DataPoint]:
+) -> AsyncGenerator[DataPointBatch, None]:
     """
-    Fetch dataset from Orq platform and convert to DataPoint objects.
-    Handles pagination to fetch all datapoints.
+    Fetch dataset from Orq platform in batches, yielding each batch as it arrives.
+    This allows processing to start before all data is fetched.
 
     Args:
         orq_client: Orq client instance
         dataset_id: ID of the dataset to fetch
 
-    Returns:
-        List of DataPoint objects with inputs and expected_output
+    Yields:
+        DataPointBatch objects containing datapoints and pagination info
 
     Raises:
         Exception: If dataset fetch fails or dataset not found
     """
-    try:
-        all_datapoints: list[DataPoint] = []
-        starting_after: str | None = None
-        last_id: str | None = None
+    starting_after: str | None = None
+    last_id: str | None = None
+    batch_number = 0
+    has_yielded = False
 
+    try:
         while True:
             response = await orq_client.datasets.list_datapoints_async(
                 dataset_id=dataset_id,
@@ -73,13 +84,14 @@ async def fetch_dataset_as_datapoints(
             )
 
             if not response or not response.data:
-                if not all_datapoints:
+                if not has_yielded:
                     raise Exception(f"Dataset {dataset_id} not found or has no data")
                 break
 
-            # Convert and append datapoints
+            # Convert datapoints for this batch
+            batch_datapoints: list[DataPoint] = []
             for point in response.data:
-                all_datapoints.append(
+                batch_datapoints.append(
                     DataPoint(
                         inputs=point.inputs if point.inputs is not None else {},
                         expected_output=point.expected_output,
@@ -88,14 +100,43 @@ async def fetch_dataset_as_datapoints(
                 # Track the last ID for pagination
                 last_id = getattr(point, "_id", None) or getattr(point, "id", None)
 
+            has_more = getattr(response, "has_more", False)
+            batch_number += 1
+
+            # Yield this batch immediately
+            yield DataPointBatch(
+                datapoints=batch_datapoints,
+                has_more=has_more,
+                batch_number=batch_number,
+            )
+            has_yielded = True
+
             # Check if there are more pages
-            if not getattr(response, "has_more", False):
+            if not has_more:
                 break
 
             # Set cursor for next page
             starting_after = last_id
 
-        return all_datapoints
-
     except Exception as e:
         raise Exception(f"Failed to fetch dataset {dataset_id}: {e}")
+
+
+async def fetch_dataset_as_datapoints(
+    orq_client: "Orq", dataset_id: str
+) -> list[DataPoint]:
+    """
+    Fetch all dataset datapoints at once (legacy function).
+    For streaming, use fetch_dataset_batches instead.
+
+    Args:
+        orq_client: Orq client instance
+        dataset_id: ID of the dataset to fetch
+
+    Returns:
+        List of DataPoint objects with inputs and expected_output
+    """
+    all_datapoints: list[DataPoint] = []
+    async for batch in fetch_dataset_batches(orq_client, dataset_id):
+        all_datapoints.extend(batch.datapoints)
+    return all_datapoints
