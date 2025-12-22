@@ -183,7 +183,7 @@ async def evaluatorq(
             finally:
                 # Stop the polling task
                 stop_polling = True
-                polling_task.cancel()
+                _ = polling_task.cancel()
                 try:
                     await polling_task
                 except asyncio.CancelledError:
