@@ -163,6 +163,14 @@ export async function evaluatorq(
       done: false,
     };
 
+    // Shared progress state that can be updated from within Effect.promise
+    const progressRef = {
+      totalDataPoints: 0,
+      processedDataPoints: 0,
+      phase: "fetching" as "fetching" | "processing",
+      done: false,
+    };
+
     // Stream fetch and process batches concurrently
     const streamingProgram = pipe(
       Effect.gen(function* (_) {
