@@ -8,7 +8,12 @@ export interface ProgressState {
   currentDataPoint: number;
   currentJob?: string;
   currentEvaluator?: string;
-  phase: "initializing" | "fetching" | "processing" | "evaluating" | "completed";
+  phase:
+    | "initializing"
+    | "fetching"
+    | "processing"
+    | "evaluating"
+    | "completed";
 }
 
 // Progress service interface
