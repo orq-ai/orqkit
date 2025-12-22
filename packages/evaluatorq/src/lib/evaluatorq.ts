@@ -153,7 +153,8 @@ export async function evaluatorq(
       );
     }
 
-    const datasetIdValue = data.datasetId;
+    datasetId = data.datasetId;
+    const datasetIdValue = datasetId; // Capture for use in callbacks
 
     // Shared progress state that can be updated from within Effect.promise
     const progressRef = {
@@ -189,13 +190,26 @@ export async function evaluatorq(
         }, 100);
 
         // Fetch and process batches with streaming
-        const allResults = yield* _(
-          Effect.promise(async () => {
-            const results: EvaluatorqResult = [];
-            const processingPromises: Promise<EvaluatorqResult>[] = [];
-            let datapointIndex = 0;
+        let allResults: EvaluatorqResult = [];
+        let fetchError: Error | null = null;
 
-            for await (const batch of fetchDatasetBatches(
+        try {
+          allResults = yield* _(
+            Effect.promise(async () => {
+              const results: EvaluatorqResult = [];
+              const processingPromises: Promise<EvaluatorqResult>[] = [];
+              let datapointIndex = 0;
+              let activeCount = 0;
+
+              // Simple semaphore for parallelism control
+              const waitForSlot = async () => {
+                while (activeCount >= parallelism) {
+                  await new Promise((resolve) => setTimeout(resolve, 10));
+                }
+                activeCount++;
+              };
+
+              for await (const batch of fetchDatasetBatches(
               orqClient,
               datasetIdValue,
             )) {
@@ -206,69 +220,84 @@ export async function evaluatorq(
               // Start processing this batch immediately
               for (const datapoint of batch.datapoints) {
                 const currentIndex = datapointIndex++;
+
+                // Wait for available slot
+                await waitForSlot();
+
                 const promise = (async () => {
-                  // Process datapoint directly without Effect to avoid progress conflicts
-                  const jobResults = await Promise.all(
-                    jobs.map(async (job) => {
-                      try {
-                        const result = await job(datapoint, currentIndex);
-                        // Run evaluators for this job
-                        const evaluatorScores = await Promise.all(
-                          evaluators.map(async (evaluator) => {
-                            try {
-                              const score = await evaluator.scorer({
-                                data: datapoint,
-                                output: result.output,
-                              });
-                              return {
-                                evaluatorName: evaluator.name,
-                                score,
-                              };
-                            } catch (error) {
-                              return {
-                                evaluatorName: evaluator.name,
-                                score: { value: "" as string },
-                                error: error as Error,
-                              };
-                            }
-                          }),
-                        );
-                        return {
-                          jobName: result.name,
-                          output: result.output,
-                          evaluatorScores,
-                        };
-                      } catch (error) {
-                        const err = error as Error & { jobName?: string };
-                        return {
-                          jobName: err.jobName || "Unknown",
-                          output: null,
-                          error: error as Error,
-                        };
-                      }
-                    }),
-                  );
-                  progressRef.processedDataPoints++;
-                  return [
-                    { dataPoint: datapoint, jobResults },
-                  ] as EvaluatorqResult;
+                  try {
+                    // Process datapoint directly without Effect to avoid progress conflicts
+                    const jobResults = await Promise.all(
+                      jobs.map(async (job) => {
+                        try {
+                          const result = await job(datapoint, currentIndex);
+                          // Run evaluators for this job
+                          const evaluatorScores = await Promise.all(
+                            evaluators.map(async (evaluator) => {
+                              try {
+                                const score = await evaluator.scorer({
+                                  data: datapoint,
+                                  output: result.output,
+                                });
+                                return {
+                                  evaluatorName: evaluator.name,
+                                  score,
+                                };
+                              } catch (error) {
+                                return {
+                                  evaluatorName: evaluator.name,
+                                  score: { value: "" as string },
+                                  error: error as Error,
+                                };
+                              }
+                            }),
+                          );
+                          return {
+                            jobName: result.name,
+                            output: result.output,
+                            evaluatorScores,
+                          };
+                        } catch (error) {
+                          const err = error as Error & { jobName?: string };
+                          return {
+                            jobName: err.jobName || "Unknown",
+                            output: null,
+                            error: error as Error,
+                          };
+                        }
+                      }),
+                    );
+                    progressRef.processedDataPoints++;
+                    return [
+                      { dataPoint: datapoint, jobResults },
+                    ] as EvaluatorqResult;
+                  } finally {
+                    activeCount--;
+                  }
                 })();
                 processingPromises.push(promise);
               }
             }
 
-            // Wait for all processing to complete
-            const resultsNested = await Promise.all(processingPromises);
-            for (const resultList of resultsNested) {
-              results.push(...resultList);
-            }
+              // Wait for all processing to complete
+              const resultsNested = await Promise.all(processingPromises);
+              for (const resultList of resultsNested) {
+                results.push(...resultList);
+              }
 
-            return results;
-          }),
-        );
+              return results;
+            }),
+          );
+        } catch (error) {
+          fetchError = error as Error;
+        } finally {
+          // Always stop the progress polling
+          clearInterval(progressInterval);
+        }
 
-        // Stop the progress polling
-        clearInterval(progressInterval);
+        if (fetchError) {
+          throw fetchError;
+        }
 
         // Final progress update with correct counts
         yield* _(
