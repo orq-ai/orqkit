@@ -121,6 +121,9 @@ async def evaluatorq(
             total_datapoints = 0
             datapoint_index = 0
 
+            # Shared progress state for tracking processed count
+            progress_ref = {"processed": 0}
+
             # Semaphore for controlling parallelism
             data_point_semaphore = asyncio.Semaphore(parallelism)
 
@@ -128,14 +131,16 @@ async def evaluatorq(
                 index: int, data_promise: DataPoint
             ) -> list[Any]:
                 async with data_point_semaphore:
-                    return await process_data_point(
+                    result = await process_data_point(
                         data_promise,
                         index,
                         jobs,
                         evaluators_list,
                         parallelism,
-                        progress,
+                        None,  # Don't pass progress in streaming mode - use polling instead
                     )
+                    progress_ref["processed"] += 1
+                    return result
 
             # Initialize progress with unknown total (streaming mode)
             await progress.update_progress(
@@ -144,27 +149,52 @@ async def evaluatorq(
                 phase=Phase.FETCHING,
             )
 
-            # Fetch and process batches
-            async for batch in fetch_dataset_batches(orq_client, dataset_id):
-                total_datapoints += len(batch.datapoints)
+            # Start a background task to poll and update progress
+            stop_polling = False
 
-                # Update progress with new total
-                await progress.update_progress(
-                    total_data_points=total_datapoints,
-                    phase=Phase.PROCESSING if not batch.has_more else Phase.FETCHING,
-                )
-
-                # Start processing this batch immediately
-                for datapoint in batch.datapoints:
-                    task = asyncio.create_task(
-                        process_with_semaphore(datapoint_index, datapoint)
+            async def poll_progress():
+                while not stop_polling:
+                    await progress.update_progress(
+                        total_data_points=total_datapoints,
+                        current_data_point=progress_ref["processed"],
+                        phase=Phase.PROCESSING
+                        if progress_ref["processed"] > 0
+                        else Phase.FETCHING,
                     )
-                    processing_tasks.append(task)
-                    datapoint_index += 1
+                    await asyncio.sleep(0.1)
 
-            # Wait for all processing tasks to complete
-            await progress.update_progress(phase=Phase.PROCESSING)
-            results_nested = await asyncio.gather(*processing_tasks)
+            polling_task = asyncio.create_task(poll_progress())
+
+            try:
+                # Fetch and process batches
+                async for batch in fetch_dataset_batches(orq_client, dataset_id):
+                    total_datapoints += len(batch.datapoints)
+
+                    # Start processing this batch immediately
+                    for datapoint in batch.datapoints:
+                        task = asyncio.create_task(
+                            process_with_semaphore(datapoint_index, datapoint)
+                        )
+                        processing_tasks.append(task)
+                        datapoint_index += 1
+
+                # Wait for all processing tasks to complete
+                results_nested = await asyncio.gather(*processing_tasks)
+            finally:
+                # Stop the polling task
+                stop_polling = True
+                polling_task.cancel()
+                try:
+                    await polling_task
+                except asyncio.CancelledError:
+                    pass
+
+            # Final progress update
+            await progress.update_progress(
+                total_data_points=total_datapoints,
+                current_data_point=progress_ref["processed"],
+                phase=Phase.PROCESSING,
+            )
 
             # Flatten results
             for result_list in results_nested:
