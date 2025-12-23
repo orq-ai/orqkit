@@ -136,8 +136,25 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
       ? Math.round(((totalJobs - failedJobs) / totalJobs) * 100)
       : 0;
 
+  // Calculate pass rate for evaluators that use the pass field
+  let totalWithPass = 0;
+  let totalPassed = 0;
+
+  results.forEach((result) => {
+    result.jobResults?.forEach((job) => {
+      job.evaluatorScores?.forEach((score) => {
+        if (score.score.pass !== undefined) {
+          totalWithPass++;
+          if (score.score.pass === true) {
+            totalPassed++;
+          }
+        }
+      });
+    });
+  });
+
   const headers = ["Metric", "Value"];
-  const rows = [
+  const rows: Array<{ main: string[]; details?: string[] }> = [
     { main: ["Total Data Points", chalk.cyan(String(totalDataPoints))] },
     {
       main: [
@@ -167,6 +184,21 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
       ],
     },
   ];
+
+  // Add pass rate row if any evaluators use the pass field
+  if (totalWithPass > 0) {
+    const passRate = Math.round((totalPassed / totalWithPass) * 100);
+    rows.push({
+      main: [
+        "Pass Rate",
+        passRate === 100
+          ? chalk.green(`${passRate}% (${totalPassed}/${totalWithPass})`)
+          : passRate >= 80
+            ? chalk.yellow(`${passRate}% (${totalPassed}/${totalWithPass})`)
+            : chalk.red(`${passRate}% (${totalPassed}/${totalWithPass})`),
+      ],
+    });
+  }
 
   return renderDetailedTable(headers, rows, [20, 15]);
 }
