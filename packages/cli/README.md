@@ -1,23 +1,25 @@
 # @orq-ai/cli
 
-Command-line interface for running evaluations with the @orq-ai/evaluatorq framework. This CLI tool makes it easy to discover and execute evaluation files in your project.
+Command-line interface for interacting with the Orq AI platform. This CLI provides comprehensive access to manage agents, deployments, datasets, knowledge bases, prompts, and more.
 
-## 🎯 Features
+## Features
 
-- **Pattern-based Discovery**: Find and run evaluation files using glob patterns
-- **Batch Execution**: Run multiple evaluation files in sequence
-- **TypeScript Support**: Built-in TypeScript execution with tsx
-- **Clear Output**: Formatted console output with status indicators
-- **Error Handling**: Graceful error handling with detailed error messages
+- **Agent Management**: Create, update, delete, and run AI agents
+- **Deployment Operations**: Invoke and stream deployments, get configurations
+- **Dataset Management**: Full CRUD operations for datasets and datapoints
+- **Knowledge Base**: Manage knowledge bases, datasources, and chunks
+- **File Operations**: Upload, list, and manage files
+- **Prompt Management**: Create and version prompts
+- **Evaluator Integration**: Manage and invoke custom evaluators
+- **Model Discovery**: List available models
+- **Secure Authentication**: Store API keys securely
 
-## 📥 Installation
+## Installation
 
 ### Global Installation
 
 ```bash
 npm install -g @orq-ai/cli
-# or
-yarn global add @orq-ai/cli
 # or
 bun add -g @orq-ai/cli
 ```
@@ -27,142 +29,185 @@ bun add -g @orq-ai/cli
 ```bash
 npm install --save-dev @orq-ai/cli
 # or
-yarn add -D @orq-ai/cli
-# or
 bun add -d @orq-ai/cli
 ```
 
-### Using npx
+## Quick Start
 
 ```bash
-npx @orq-ai/cli evaluate "**/*.eval.ts"
-```
+# Authenticate with Orq AI
+orq auth login
 
-## 🚀 Usage
+# List your agents
+orq agents list
 
-### Basic Commands
+# Invoke a deployment
+orq deployments invoke my-deployment --input "Hello, world!"
 
-```bash
-# Run all evaluation files in your project
+# Run evaluation files
 orq evaluate "**/*.eval.ts"
-
-# Run evaluations in a specific directory
-orq evaluate "src/evaluations/*.eval.ts"
-
-# Run a single evaluation file
-orq evaluate "tests/my-test.eval.ts"
-
-# Show help
-orq --help
-orq evaluate --help
 ```
 
-### Evaluation File Convention
+## Commands
 
-The CLI looks for files ending with `.eval.ts`. These files should export or directly execute evaluatorq functions:
-
-```typescript
-// my-evaluation.eval.ts
-import { evaluatorq } from "@orq-ai/evaluatorq";
-
-await evaluatorq("my-evaluation", {
-  data: [
-    { inputs: { text: "Hello" } },
-    { inputs: { text: "World" } },
-  ],
-  jobs: [
-    async (data) => ({
-      name: "uppercase",
-      output: data.inputs.text.toUpperCase(),
-    }),
-  ],
-  evaluators: [
-    {
-      name: "length-check",
-      scorer: async ({ output }) => ({
-        value: output.length > 3 ? 1 : 0,
-        explanation: output.length > 3 ? "Sufficient length" : "Too short",
-      }),
-    },
-  ],
-});
-```
-
-### Pattern Matching
-
-The CLI uses glob patterns for flexible file matching:
+### Authentication
 
 ```bash
-# All .eval.ts files recursively
-orq evaluate "**/*.eval.ts"
-
-# Only in src directory
-orq evaluate "src/**/*.eval.ts"
-
-# Multiple patterns
-orq evaluate "src/**/*.eval.ts" "tests/**/*.eval.ts"
-
-# Specific subdirectories
-orq evaluate "{src,tests}/**/*.eval.ts"
+orq auth login              # Authenticate with API key
+orq auth login --apiKey <key>   # Authenticate with specific key
+orq auth logout             # Remove stored credentials
+orq auth status             # Check authentication status
 ```
 
-### Output Format
+### Agents
 
-The CLI provides clear, formatted output:
-
-```
-Running evaluations:
-
-⚡ Running basic-test.eval.ts...
-✅ basic-test.eval.ts completed
-
-⚡ Running advanced-test.eval.ts...
-✅ advanced-test.eval.ts completed
-
-All evaluations completed successfully!
+```bash
+orq agents list                          # List all agents
+orq agents list --json                   # Output as JSON
+orq agents get <agent-id>                # Get agent details
+orq agents create --displayName "My Agent"   # Create agent
+orq agents update <agent-id> --displayName "New Name"
+orq agents delete <agent-id>             # Delete agent
+orq agents delete <agent-id> --force     # Skip confirmation
+orq agents run <agent-id> --input "Hello"    # Run agent
 ```
 
-## 🔧 Configuration
+### Deployments
 
-### Environment Variables
+```bash
+orq deployments list                     # List deployments
+orq deployments invoke <key> --input "message"   # Invoke deployment
+orq deployments config <key>             # Get deployment config
+orq deployments stream <key> --input "message"   # Stream response
+```
 
-The CLI respects environment variables used by @orq-ai/evaluatorq:
+### Datasets
 
-- `ORQ_API_KEY`: API key for Orq platform integration
+```bash
+orq datasets list                        # List datasets
+orq datasets get <dataset-id>            # Get dataset details
+orq datasets create --name "My Dataset"  # Create dataset
+orq datasets update <id> --name "New Name"
+orq datasets delete <id>                 # Delete dataset
+orq datasets clear <id>                  # Clear all datapoints
 
-### TypeScript Configuration
+# Datapoints
+orq datasets datapoints list <dataset-id>
+orq datasets datapoints add <dataset-id> --inputs '{"key": "value"}'
+orq datasets datapoints get <dataset-id> <datapoint-id>
+orq datasets datapoints delete <dataset-id> <datapoint-id>
+```
 
-The CLI uses tsx for TypeScript execution, which supports:
-- ESM and CommonJS modules
-- TypeScript out of the box
-- Path aliases from tsconfig.json
-- Node.js built-in modules
+### Knowledge Bases
 
-## 📚 Examples
+```bash
+orq knowledge list                       # List knowledge bases
+orq knowledge get <kb-id>                # Get knowledge base
+orq knowledge create --key my-kb --name "My KB" --embeddingModel "cohere/embed-english-v3.0"
+orq knowledge update <id> --name "New Name"
+orq knowledge delete <id>
+orq knowledge search <kb-id> "query"     # Search knowledge base
 
-### Running Tests in CI/CD
+# Datasources
+orq knowledge datasources list <kb-id>
+orq knowledge datasources create <kb-id> --name "My Source"
+orq knowledge datasources get <kb-id> <ds-id>
+orq knowledge datasources delete <kb-id> <ds-id>
+
+# Chunks
+orq knowledge chunks list <kb-id> <ds-id>
+orq knowledge chunks add <kb-id> <ds-id> --chunks '[{"content": "..."}]'
+orq knowledge chunks count <kb-id> <ds-id>
+```
+
+### Files
+
+```bash
+orq files list                           # List files
+orq files upload ./document.pdf          # Upload a file
+orq files upload ./doc.pdf --name "custom-name.pdf"
+orq files get <file-id>                  # Get file details
+orq files delete <file-id>               # Delete file
+```
+
+### Prompts
+
+```bash
+orq prompts list                         # List prompts
+orq prompts get <prompt-id>              # Get prompt details
+orq prompts create --key my-prompt --name "My Prompt"
+orq prompts create --key my-prompt --name "Prompt" --systemPrompt "You are..."
+orq prompts update <id> --name "New Name"
+orq prompts delete <id>
+orq prompts versions <prompt-id>         # List versions
+orq prompts version <prompt-id> <version-id>   # Get specific version
+```
+
+### Evaluators
+
+```bash
+orq evals list                           # List evaluators
+orq evals create --key my-eval --name "My Eval" --type llm
+orq evals update <id> --name "New Name"
+orq evals delete <id>
+orq evals invoke <id> --input "input" --output "output"
+```
+
+### Models
+
+```bash
+orq models list                          # List all models
+orq models list --type embedding         # Filter by type
+orq models list --provider openai        # Filter by provider
+orq models list --json                   # Output as JSON
+```
+
+### Evaluate (Run Evaluation Files)
+
+```bash
+orq evaluate "**/*.eval.ts"              # Run all evaluation files
+orq evaluate "src/**/*.eval.ts"          # Run in specific directory
+```
+
+## Environment Variables
+
+- `ORQ_API_KEY`: API key for Orq platform (overrides stored credentials)
+- `ORQ_BASE_URL`: Custom API base URL (default: https://api.orq.ai)
+
+## Output Formats
+
+All list commands support `--json` flag for machine-readable output:
+
+```bash
+orq agents list --json
+orq datasets list --json | jq '.[] | .id'
+```
+
+## CI/CD Integration
 
 ```yaml
 # GitHub Actions example
-- name: Run Evaluations
-  run: npx @orq-ai/cli evaluate "**/*.eval.ts"
+- name: Run Orq CLI
+  run: |
+    orq agents list
+    orq deployments invoke my-deployment --input "$INPUT"
   env:
     ORQ_API_KEY: ${{ secrets.ORQ_API_KEY }}
 ```
 
-### Package.json Scripts
+## Package.json Scripts
 
 ```json
 {
   "scripts": {
-    "eval": "orq evaluate \"**/*.eval.ts\"",
-    "eval:unit": "orq evaluate \"tests/unit/**/*.eval.ts\"",
-    "eval:integration": "orq evaluate \"tests/integration/**/*.eval.ts\""
+    "orq:agents": "orq agents list",
+    "orq:eval": "orq evaluate \"**/*.eval.ts\"",
+    "orq:deploy": "orq deployments invoke production"
   }
 }
 ```
 
-## 🛠️ Development
+## Development
 
 ```bash
 # Build the package
@@ -172,5 +217,9 @@ bunx nx build cli
 bunx nx typecheck cli
 
 # Run locally without installing
-bunx tsx packages/cli/src/bin/cli.ts evaluate "**/*.eval.ts"
+bunx tsx packages/cli/src/bin/cli.ts --help
 ```
+
+## License
+
+MIT

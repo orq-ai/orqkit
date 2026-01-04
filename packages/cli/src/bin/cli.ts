@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
+import { defineCommand, runMain } from "citty";
 
-import { evaluate } from "../commands/evaluate.js";
+const main = defineCommand({
+	meta: {
+		name: "orq",
+		version: "1.0.9",
+		description: "CLI for interacting with the Orq AI platform",
+	},
+	subCommands: {
+		agents: () => import("../commands/agents/index.js").then((m) => m.default),
+		deployments: () => import("../commands/deployments/index.js").then((m) => m.default),
+		datasets: () => import("../commands/datasets/index.js").then((m) => m.default),
+		knowledge: () => import("../commands/knowledge/index.js").then((m) => m.default),
+		files: () => import("../commands/files/index.js").then((m) => m.default),
+		prompts: () => import("../commands/prompts/index.js").then((m) => m.default),
+		evals: () => import("../commands/evals/index.js").then((m) => m.default),
+		models: () => import("../commands/models/index.js").then((m) => m.default),
+		auth: () => import("../commands/auth/index.js").then((m) => m.default),
+		evaluate: () => import("../commands/evaluate/index.js").then((m) => m.default),
+	},
+});
 
-const program = new Command();
-
-program
-  .name("orq")
-  .description("CLI for running evaluatorq evaluation files")
-  .version("0.0.1");
-
-program
-  .command("evaluate <pattern>")
-  .description("Run evaluation files matching the glob pattern")
-  // .option("-w, --watch", "Watch for file changes", false)
-  .action(evaluate);
-
-program.parse(process.argv);
+runMain(main);
