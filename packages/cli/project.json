@@ -1,0 +1,33 @@
+{
+	"name": "cli",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/cli/src",
+	"projectType": "application",
+	"targets": {
+		"build": {
+			"command": "bunx rimraf dist && bunx tsc -p tsconfig.lib.json",
+			"options": {
+				"cwd": "packages/cli"
+			}
+		},
+		"dev": {
+			"command": "tsc --watch -p tsconfig.lib.json",
+			"options": {
+				"cwd": "packages/cli"
+			}
+		},
+		"typecheck": {
+			"command": "tsc --noEmit -p tsconfig.lib.json",
+			"options": {
+				"cwd": "packages/cli"
+			}
+		},
+		"run": {
+			"command": "bunx tsx src/bin/cli.ts",
+			"options": {
+				"cwd": "packages/cli"
+			}
+		}
+	},
+	"tags": []
+}
