@@ -52,7 +52,7 @@ export function stringContainsEvaluator(
         : expected;
       const actualNormalized = caseInsensitive ? actual.toLowerCase() : actual;
 
-      const contains = !actualNormalized.includes(expectedNormalized);
+      const contains = actualNormalized.includes(expectedNormalized);
 
       return {
         value: contains ? 1.0 : 0.0,
