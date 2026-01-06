@@ -24,6 +24,30 @@ Provides reusable evaluator functions:
 - `containsNameValidator`: Evaluator that checks if output contains the input name
 - `isItPoliteLLMEval`: LLM-based evaluator that scores politeness (0-1 scale)
 
+### 🧪 Unit Test Examples
+
+#### [country-unit-test.ts](src/lib/country-unit-test.ts)
+A simple "unit test" style example that demonstrates how to quickly validate a deployment against a dataset from the Orq platform:
+
+- Fetches the `countries` dataset from the Orq platform
+- Calls the `unit_test_countries` deployment for each country
+- Uses the `stringContainsEvaluator` from `@orq-ai/evaluators` to validate responses
+
+**Prerequisites:**
+
+1. Configure a dataset with `country` input variable and expected output:
+
+   ![Countries Dataset](assets/dataset.png)
+
+2. Create a deployment that returns the capital city for a given country:
+
+   ![Deployment Configuration](assets/deployment.png)
+
+**Running the example:**
+```bash
+ORQ_API_KEY=your-api-key bun examples/src/lib/country-unit-test.ts
+```
+
 ### ⚡ Specialized Examples
 
 #### [eval-reuse.eval.ts](src/lib/eval-reuse.eval.ts)
