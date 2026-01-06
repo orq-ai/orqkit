@@ -1,0 +1,37 @@
+name: Unit Test
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  country-unit-test:
+    name: Country Unit Test
+    if: github.event.label.name == 'run-unit-test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build packages
+        run: bun nx build evaluatorq evaluators
+
+      - name: Run Country Unit Test
+        env:
+          ORQ_API_KEY: ${{ secrets.ORQ_API_KEY }}
+        run: bun examples/src/lib/country-unit-test.ts
