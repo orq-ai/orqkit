@@ -29,9 +29,9 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build packages
-        run: bunx nx run-many --targets=build --projects=evaluatorq,evaluators
+        run: bunx nx run-many --targets=build --projects=evaluatorq,evaluators,cli
 
       - name: Run Country Unit Test
         env:
           ORQ_API_KEY: ${{ secrets.ORQ_API_KEY }}
-        run: bun examples/src/lib/country-unit-test.ts
+        run: bun packages/cli/dist/bin/cli.js evaluate "examples/src/lib/country-unit-test.eval.ts"

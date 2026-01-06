@@ -24,6 +24,8 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
 
   console.log("Running evaluations:\n");
 
+  let hasFailures = false;
+
   for (const file of evalFiles) {
     const fileName = path.basename(file);
     console.log(`⚡ Running ${fileName}...`);
@@ -36,10 +38,15 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
       });
       console.log(`✅ ${fileName} completed\n`);
     } catch (error) {
+      hasFailures = true;
       console.error(`❌ ${fileName} failed`);
       if (error instanceof Error) {
         console.error(`   Error: ${error.message}\n`);
       }
     }
+  }
+
+  if (hasFailures) {
+    process.exit(1);
   }
 }

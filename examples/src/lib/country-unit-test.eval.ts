@@ -51,4 +51,4 @@ async function run() {
   return results;
 }
 
-run().catch(console.error);
+run();

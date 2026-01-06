@@ -26,7 +26,7 @@ Provides reusable evaluator functions:
 
 ### 🧪 Unit Test Examples
 
-#### [country-unit-test.ts](src/lib/country-unit-test.ts)
+#### [country-unit-test.eval.ts](src/lib/country-unit-test.eval.ts)
 A simple "unit test" style example that demonstrates how to quickly validate a deployment against a dataset from the Orq platform:
 
 - Fetches the `countries` dataset from the Orq platform
@@ -45,7 +45,11 @@ A simple "unit test" style example that demonstrates how to quickly validate a d
 
 **Running the example:**
 ```bash
-ORQ_API_KEY=your-api-key bun examples/src/lib/country-unit-test.ts
+# Using the CLI
+ORQ_API_KEY=your-api-key bunx @orq-ai/cli evaluate "examples/src/lib/country-unit-test.eval.ts"
+
+# Or directly with bun
+ORQ_API_KEY=your-api-key bun examples/src/lib/country-unit-test.eval.ts
 ```
 
 ### ⚡ Specialized Examples
