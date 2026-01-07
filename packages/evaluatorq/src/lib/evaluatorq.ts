@@ -18,6 +18,12 @@ import {
   shutdownTracing,
   type TracingContext,
 } from "./tracing/index.js";
+import {
+  setEvaluationAttributes,
+  setJobNameAttribute,
+  withEvaluationSpan,
+  withJobSpan,
+} from "./tracing/spans.js";
 import type {
   DataPoint,
   EvaluatorParams,
@@ -51,24 +57,77 @@ async function setupOrqClient(apiKey: string) {
   }
 }
 
-async function fetchDatasetAsDataPoints(
+interface DataPointBatch {
+  datapoints: DataPoint[];
+  hasMore: boolean;
+  batchNumber: number;
+}
+
+async function* fetchDatasetBatches(
   orqClient: Orq,
   datasetId: string,
-): Promise<Promise<DataPoint>[]> {
-  try {
-    const response = await orqClient.datasets.listDatapoints({ datasetId });
+): AsyncGenerator<DataPointBatch> {
+  let startingAfter: string | undefined;
+  let batchNumber = 0;
+  let hasYielded = false;
 
-    return response.data.map((datapoint) =>
-      Promise.resolve({
-        inputs: datapoint.inputs || {},
-        expectedOutput: datapoint.expectedOutput,
-      } as DataPoint),
-    );
+  try {
+    while (true) {
+      const response = await orqClient.datasets.listDatapoints({
+        datasetId,
+        limit: 50,
+        startingAfter,
+      });
+
+      if (!response.data || response.data.length === 0) {
+        if (!hasYielded) {
+          throw new Error(`Dataset ${datasetId} not found or has no data`);
+        }
+        break;
+      }
+
+      const batchDatapoints: DataPoint[] = [];
+      for (const datapoint of response.data) {
+        batchDatapoints.push({
+          inputs: datapoint.inputs || {},
+          expectedOutput: datapoint.expectedOutput,
+        } as DataPoint);
+
+        startingAfter =
+          (datapoint as unknown as { _id?: string })._id ??
+          (datapoint as unknown as { id?: string }).id;
+      }
+
+      batchNumber++;
+      const hasMore = response.hasMore ?? false;
+
+      yield {
+        datapoints: batchDatapoints,
+        hasMore,
+        batchNumber,
+      };
+      hasYielded = true;
+
+      if (!hasMore) {
+        break;
+      }
+    }
   } catch (error) {
     throw new Error(
       `Failed to fetch dataset ${datasetId}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+async function fetchDatasetAsDataPoints(
+  orqClient: Orq,
+  datasetId: string,
+): Promise<Promise<DataPoint>[]> {
+  const allDatapoints: DataPoint[] = [];
+  for await (const batch of fetchDatasetBatches(orqClient, datasetId)) {
+    allDatapoints.push(...batch.datapoints);
+  }
+  return allDatapoints.map((dp) => Promise.resolve(dp));
 }
 
 /**
@@ -128,21 +187,249 @@ export async function evaluatorq(
 
   const startTime = new Date();
 
-  let dataPromises: (Promise<DataPoint> | DataPoint)[];
   let datasetId: string | undefined;
 
-  // Handle datasetId case
+  // Handle datasetId case - use streaming fetch
   if ("datasetId" in data) {
     if (!orqApiKey || !orqClient) {
       throw new Error(
         "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform.",
       );
     }
+
     datasetId = data.datasetId;
-    dataPromises = await fetchDatasetAsDataPoints(orqClient, data.datasetId);
-  } else {
-    dataPromises = data;
+    const datasetIdValue = datasetId; // Capture for use in callbacks
+
+    // Shared progress state that can be updated from within Effect.promise
+    const progressRef = {
+      totalDataPoints: 0,
+      processedDataPoints: 0,
+      phase: "fetching" as "fetching" | "processing",
+      done: false,
+    };
+
+    // Stream fetch and process batches concurrently
+    const streamingProgram = pipe(
+      Effect.gen(function* (_) {
+        const progress = yield* _(ProgressService);
+
+        // Initialize progress with fetching phase
+        yield* _(
+          progress.updateProgress({
+            totalDataPoints: 0,
+            currentDataPoint: 0,
+            phase: "fetching",
+          }),
+        );
+
+        // Start a polling loop to update progress from progressRef
+        const progressInterval = setInterval(() => {
+          Effect.runPromise(
+            progress.updateProgress({
+              totalDataPoints: progressRef.totalDataPoints,
+              currentDataPoint: progressRef.processedDataPoints,
+              phase: progressRef.phase,
+            }),
+          );
+        }, 100);
+
+        // Fetch and process batches with streaming
+        let allResults: EvaluatorqResult = [];
+        let fetchError: Error | null = null;
+
+        try {
+          allResults = yield* _(
+            Effect.promise(async () => {
+              const results: EvaluatorqResult = [];
+              const processingPromises: Promise<EvaluatorqResult>[] = [];
+              let datapointIndex = 0;
+              let activeCount = 0;
+
+              // Simple semaphore for parallelism control
+              const waitForSlot = async () => {
+                while (activeCount >= parallelism) {
+                  await new Promise((resolve) => setTimeout(resolve, 10));
+                }
+                activeCount++;
+              };
+
+              for await (const batch of fetchDatasetBatches(
+                orqClient,
+                datasetIdValue,
+              )) {
+                // Update total as we fetch
+                progressRef.totalDataPoints += batch.datapoints.length;
+                progressRef.phase = "processing";
+
+                // Start processing this batch immediately
+                for (const datapoint of batch.datapoints) {
+                  const currentIndex = datapointIndex++;
+
+                  // Wait for available slot
+                  await waitForSlot();
+
+                  const promise = (async () => {
+                    try {
+                      // Process datapoint directly without Effect to avoid progress conflicts
+                      const jobResults = await Promise.all(
+                        jobs.map(async (job) => {
+                          try {
+                            // Wrap the job + evaluators in a job span for tracing
+                            return await withJobSpan(
+                              {
+                                runId: tracingContext?.runId || "",
+                                rowIndex: currentIndex,
+                                parentContext: tracingContext?.parentContext,
+                              },
+                              async (jobSpan) => {
+                                const result = await job(datapoint, currentIndex);
+                                setJobNameAttribute(jobSpan, result.name);
+
+                                // Run evaluators for this job
+                                const evaluatorScores = await Promise.all(
+                                  evaluators.map(async (evaluator) => {
+                                    try {
+                                      // Wrap evaluator in evaluation span (child of job span)
+                                      const score = await withEvaluationSpan(
+                                        {
+                                          runId: tracingContext?.runId || "",
+                                          evaluatorName: evaluator.name,
+                                        },
+                                        async (evalSpan) => {
+                                          const evalResult =
+                                            await evaluator.scorer({
+                                              data: datapoint,
+                                              output: result.output,
+                                            });
+
+                                          setEvaluationAttributes(
+                                            evalSpan,
+                                            evalResult.value,
+                                            evalResult.explanation,
+                                            evalResult.pass,
+                                          );
+
+                                          return evalResult;
+                                        },
+                                      );
+                                      return {
+                                        evaluatorName: evaluator.name,
+                                        score,
+                                      };
+                                    } catch (error) {
+                                      return {
+                                        evaluatorName: evaluator.name,
+                                        score: { value: "" as string },
+                                        error: error as Error,
+                                      };
+                                    }
+                                  }),
+                                );
+                                return {
+                                  jobName: result.name,
+                                  output: result.output,
+                                  evaluatorScores,
+                                };
+                              },
+                            );
+                          } catch (error) {
+                            const err = error as Error & { jobName?: string };
+                            return {
+                              jobName: err.jobName || "Unknown",
+                              output: null,
+                              error: error as Error,
+                            };
+                          }
+                        }),
+                      );
+                      progressRef.processedDataPoints++;
+                      return [
+                        { dataPoint: datapoint, jobResults },
+                      ] as EvaluatorqResult;
+                    } finally {
+                      activeCount--;
+                    }
+                  })();
+                  processingPromises.push(promise);
+                }
+              }
+
+              // Wait for all processing to complete
+              const resultsNested = await Promise.all(processingPromises);
+              for (const resultList of resultsNested) {
+                results.push(...resultList);
+              }
+
+              return results;
+            }),
+          );
+        } catch (error) {
+          fetchError = error as Error;
+        } finally {
+          // Always stop the progress polling
+          clearInterval(progressInterval);
+        }
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // Final progress update with correct counts
+        yield* _(
+          progress.updateProgress({
+            totalDataPoints: progressRef.totalDataPoints,
+            currentDataPoint: progressRef.processedDataPoints,
+            phase: "processing",
+          }),
+        );
+
+        return allResults;
+      }),
+      // Conditionally add table display
+      print
+        ? Effect.tap((results) => displayResultsTableEffect(results))
+        : Effect.tap(() => Effect.void),
+      // Send results to Orq when API key is available
+      orqApiKey
+        ? Effect.tap((results) =>
+            sendResultsToOrqEffect(
+              orqApiKey,
+              _name,
+              description,
+              datasetId,
+              results,
+              startTime,
+              new Date(),
+            ),
+          )
+        : Effect.tap(() => Effect.void),
+      // Provide the progress service
+      Effect.provide(ProgressServiceLive),
+      // Wrap with progress tracking
+      (effect) => withProgress(effect, print),
+    );
+
+    // Execute the streaming program
+    const streamingResults = await Effect.runPromise(streamingProgram);
+
+    // Shutdown tracing gracefully for streaming case
+    if (tracingEnabled) {
+      await flushTracing();
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await shutdownTracing();
+    }
+
+    // Check for pass failures
+    const hasStreamingFailures = checkPassFailures(streamingResults);
+    if (hasStreamingFailures) {
+      process.exit(1);
+    }
+
+    return streamingResults;
   }
+
+  // Non-streaming case: process all data at once
+  const dataPromises = data;
 
   // Execute evaluation with optional tracing
   const executeEvaluation = async (): Promise<EvaluatorqResult> => {
