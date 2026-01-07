@@ -95,9 +95,13 @@ export async function initTracingIfNeeded(): Promise<boolean> {
   if (!isTracingEnabled()) {
     if (process.env.ORQ_DEBUG) {
       if (isTracingExplicitlyDisabled()) {
-        console.debug("[evaluatorq] OTEL tracing disabled via ORQ_DISABLE_TRACING");
+        console.debug(
+          "[evaluatorq] OTEL tracing disabled via ORQ_DISABLE_TRACING",
+        );
       } else {
-        console.debug("[evaluatorq] OTEL tracing not enabled (no ORQ_API_KEY or OTEL_EXPORTER_OTLP_ENDPOINT)");
+        console.debug(
+          "[evaluatorq] OTEL tracing not enabled (no ORQ_API_KEY or OTEL_EXPORTER_OTLP_ENDPOINT)",
+        );
       }
     }
     return false;
@@ -171,7 +175,9 @@ export async function initTracingIfNeeded(): Promise<boolean> {
       console.debug(`[evaluatorq] OTEL endpoint: ${tracesEndpoint}`);
       console.debug(`[evaluatorq] OTEL endpoint source: ${source}`);
       if (headers.Authorization) {
-        console.debug(`[evaluatorq] Authorization: Bearer ***${apiKey?.slice(-8) || ""}`);
+        console.debug(
+          `[evaluatorq] Authorization: Bearer ***${apiKey?.slice(-8) || ""}`,
+        );
       }
     }
 

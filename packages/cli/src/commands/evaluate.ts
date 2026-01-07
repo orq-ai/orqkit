@@ -15,19 +15,29 @@ interface EvalResult {
   error?: string;
 }
 
-function writeGitHubSummary(results: EvalResult[]) {
+function writeGitHubSummaryHeader() {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+
+  const markdown = `# Evaluation Results\n\n## Individual Evaluations\n\n`;
+  fs.appendFileSync(summaryPath, markdown);
+}
+
+function writeGitHubSummaryFooter(results: EvalResult[]) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) return;
 
   const passed = results.filter((r) => r.passed).length;
   const failed = results.filter((r) => !r.passed).length;
   const total = results.length;
+  const totalDuration = results.reduce((acc, r) => acc + r.duration, 0);
 
   const statusEmoji = failed > 0 ? "❌" : "✅";
-  const statusText = failed > 0 ? "Some tests failed" : "All tests passed";
+  const statusText =
+    failed > 0 ? "Some evaluations failed" : "All evaluations passed";
 
-  let markdown = `## ${statusEmoji} Evaluation Results\n\n`;
-  markdown += `**${statusText}** - ${passed}/${total} passed\n\n`;
+  let markdown = `## ${statusEmoji} Overall Summary\n\n`;
+  markdown += `**${statusText}** - ${passed}/${total} passed in ${(totalDuration / 1000).toFixed(2)}s\n\n`;
   markdown += `| File | Status | Duration |\n`;
   markdown += `|------|--------|----------|\n`;
 
@@ -38,7 +48,7 @@ function writeGitHubSummary(results: EvalResult[]) {
   }
 
   if (failed > 0) {
-    markdown += `\n### Errors\n\n`;
+    markdown += `\n### Execution Errors\n\n`;
     for (const result of results.filter((r) => !r.passed && r.error)) {
       markdown += `**${result.file}:**\n\`\`\`\n${result.error}\n\`\`\`\n\n`;
     }
@@ -63,6 +73,9 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
   }
 
   console.log("Running evaluations:\n");
+
+  // Write header to GitHub summary
+  writeGitHubSummaryHeader();
 
   const results: EvalResult[] = [];
 
@@ -98,8 +111,8 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
     }
   }
 
-  // Write GitHub Actions summary if running in CI
-  writeGitHubSummary(results);
+  // Write overall summary footer to GitHub Actions
+  writeGitHubSummaryFooter(results);
 
   const hasFailures = results.some((r) => !r.passed);
   if (hasFailures) {

@@ -282,7 +282,10 @@ export async function evaluatorq(
                                 parentContext: tracingContext?.parentContext,
                               },
                               async (jobSpan) => {
-                                const result = await job(datapoint, currentIndex);
+                                const result = await job(
+                                  datapoint,
+                                  currentIndex,
+                                );
                                 setJobNameAttribute(jobSpan, result.name);
 
                                 // Run evaluators for this job
@@ -387,7 +390,7 @@ export async function evaluatorq(
       }),
       // Conditionally add table display
       print
-        ? Effect.tap((results) => displayResultsTableEffect(results))
+        ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
       orqApiKey
@@ -470,7 +473,7 @@ export async function evaluatorq(
       }),
       // Conditionally add table display
       print
-        ? Effect.tap((results) => displayResultsTableEffect(results))
+        ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
       orqApiKey
@@ -654,7 +657,9 @@ const runEvaluationEffect = (
     }),
     // Conditionally add table display
     print
-      ? Effect.tap((results) => displayResultsTableEffect(results))
+      ? Effect.tap((results) =>
+          displayResultsTableEffect(results, evaluationName),
+        )
       : Effect.tap(() => Effect.void),
     // Send results to Orq when API key is available
     orqApiKey
@@ -684,5 +689,5 @@ export const evaluatorqWithTableEffect = (
 ): Effect.Effect<EvaluatorqResult, Error, never> =>
   pipe(
     evaluatorqEffect(name, params),
-    Effect.tap((results) => displayResultsTableEffect(results)),
+    Effect.tap((results) => displayResultsTableEffect(results, name)),
   );

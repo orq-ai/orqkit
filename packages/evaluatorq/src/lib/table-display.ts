@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 import chalk from "chalk";
 import { Effect } from "effect";
 import stripAnsi from "strip-ansi";
@@ -377,13 +379,125 @@ function collectErrors(results: EvaluatorqResult): string[] {
   return errors;
 }
 
+/**
+ * Write detailed evaluation results to GitHub Actions step summary.
+ * Only writes when GITHUB_STEP_SUMMARY environment variable is set.
+ */
+function writeGitHubStepSummary(
+  evaluationName: string,
+  results: EvaluatorqResult,
+): void {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+
+  const totalDataPoints = results.length;
+  const failedDataPoints = results.filter((r) => r.error).length;
+  const totalJobs = results.reduce(
+    (acc, r) => acc + (r.jobResults?.length || 0),
+    0,
+  );
+  const failedJobs = results.reduce((acc, r) => {
+    return acc + (r.jobResults?.filter((j) => j.error).length || 0);
+  }, 0);
+
+  // Calculate pass rate for evaluators
+  let totalWithPass = 0;
+  let totalPassed = 0;
+
+  results.forEach((result) => {
+    result.jobResults?.forEach((job) => {
+      job.evaluatorScores?.forEach((score) => {
+        if (score.score.pass !== undefined) {
+          totalWithPass++;
+          if (score.score.pass === true) {
+            totalPassed++;
+          }
+        }
+      });
+    });
+  });
+
+  const passRate =
+    totalWithPass > 0 ? Math.round((totalPassed / totalWithPass) * 100) : null;
+  const statusEmoji =
+    passRate !== null
+      ? passRate === 100
+        ? "✅"
+        : "❌"
+      : failedJobs > 0
+        ? "❌"
+        : "✅";
+
+  let markdown = `### ${statusEmoji} ${evaluationName}\n\n`;
+
+  // Summary stats
+  markdown += `| Metric | Value |\n`;
+  markdown += `|--------|-------|\n`;
+  markdown += `| Data Points | ${totalDataPoints} |\n`;
+  markdown += `| Failed Data Points | ${failedDataPoints} |\n`;
+  markdown += `| Total Jobs | ${totalJobs} |\n`;
+  markdown += `| Failed Jobs | ${failedJobs} |\n`;
+
+  if (passRate !== null) {
+    markdown += `| **Pass Rate** | **${passRate}% (${totalPassed}/${totalWithPass})** |\n`;
+  }
+
+  markdown += `\n`;
+
+  // Evaluator results table
+  const { jobNames, evaluatorNames, averages } =
+    calculateEvaluatorAverages(results);
+
+  if (jobNames.length > 0 && evaluatorNames.length > 0) {
+    markdown += `<details>\n<summary>Detailed Results</summary>\n\n`;
+    markdown += `| Evaluator | ${jobNames.join(" | ")} |\n`;
+    markdown += `|-----------|${jobNames.map(() => "-------").join("|")}|\n`;
+
+    evaluatorNames.forEach((evaluatorName) => {
+      const row = [evaluatorName];
+      jobNames.forEach((jobName) => {
+        const avgData = averages.get(evaluatorName)?.get(jobName);
+        row.push(avgData?.value || "-");
+      });
+      markdown += `| ${row.join(" | ")} |\n`;
+    });
+
+    markdown += `\n</details>\n\n`;
+  }
+
+  // Errors
+  const errors = collectErrors(results);
+  if (errors.length > 0) {
+    markdown += `<details>\n<summary>Errors (${errors.length})</summary>\n\n`;
+    markdown += "```\n";
+    errors.forEach((error) => {
+      markdown += `${error}\n`;
+    });
+    markdown += "```\n\n</details>\n\n";
+  }
+
+  markdown += `---\n\n`;
+
+  try {
+    fs.appendFileSync(summaryPath, markdown);
+  } catch {
+    // Silently fail if we can't write to the summary file
+  }
+}
+
 export const displayResultsTableEffect = (
   results: EvaluatorqResult,
+  evaluationName?: string,
 ): Effect.Effect<void, never, never> =>
   Effect.sync(() => {
     if (results.length === 0) {
       console.log(chalk.yellow("\nNo results to display.\n"));
       return;
+    }
+
+    // Write to GitHub step summary if in CI
+    if (evaluationName) {
+      writeGitHubStepSummary(evaluationName, results);
     }
 
     // Clear line and move cursor
