@@ -10,6 +10,20 @@ import {
 } from "./progress.js";
 import { sendResultsToOrqEffect } from "./send-results.js";
 import { displayResultsTableEffect } from "./table-display.js";
+import {
+  captureParentContext,
+  flushTracing,
+  generateRunId,
+  initTracingIfNeeded,
+  shutdownTracing,
+  type TracingContext,
+} from "./tracing/index.js";
+import {
+  setEvaluationAttributes,
+  setJobNameAttribute,
+  withEvaluationSpan,
+  withJobSpan,
+} from "./tracing/spans.js";
 import type {
   DataPoint,
   EvaluatorParams,
@@ -117,6 +131,22 @@ async function fetchDatasetAsDataPoints(
 }
 
 /**
+ * Check if any evaluator returned pass: false
+ */
+function checkPassFailures(results: EvaluatorqResult): boolean {
+  for (const dataPointResult of results) {
+    for (const jobResult of dataPointResult.jobResults || []) {
+      for (const evaluatorScore of jobResult.evaluatorScores || []) {
+        if (evaluatorScore.score.pass === false) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * @param _name - The name of the evaluation run.
  * @param params - The parameters for the evaluation run.
  * @returns The results of the evaluation run.
@@ -133,6 +163,20 @@ export async function evaluatorq(
     print = true,
     description,
   } = params;
+
+  // Initialize tracing if OTEL is configured
+  const tracingEnabled = await initTracingIfNeeded();
+  const parentContext = tracingEnabled
+    ? await captureParentContext()
+    : undefined;
+  const tracingContext: TracingContext | undefined = tracingEnabled
+    ? {
+        runId: generateRunId(),
+        runName: _name,
+        enabled: true,
+        parentContext,
+      }
+    : undefined;
 
   let orqClient: Orq | undefined;
   const orqApiKey = process.env.ORQ_API_KEY;
@@ -230,33 +274,67 @@ export async function evaluatorq(
                       const jobResults = await Promise.all(
                         jobs.map(async (job) => {
                           try {
-                            const result = await job(datapoint, currentIndex);
-                            // Run evaluators for this job
-                            const evaluatorScores = await Promise.all(
-                              evaluators.map(async (evaluator) => {
-                                try {
-                                  const score = await evaluator.scorer({
-                                    data: datapoint,
-                                    output: result.output,
-                                  });
-                                  return {
-                                    evaluatorName: evaluator.name,
-                                    score,
-                                  };
-                                } catch (error) {
-                                  return {
-                                    evaluatorName: evaluator.name,
-                                    score: { value: "" as string },
-                                    error: error as Error,
-                                  };
-                                }
-                              }),
+                            // Wrap the job + evaluators in a job span for tracing
+                            return await withJobSpan(
+                              {
+                                runId: tracingContext?.runId || "",
+                                rowIndex: currentIndex,
+                                parentContext: tracingContext?.parentContext,
+                              },
+                              async (jobSpan) => {
+                                const result = await job(
+                                  datapoint,
+                                  currentIndex,
+                                );
+                                setJobNameAttribute(jobSpan, result.name);
+
+                                // Run evaluators for this job
+                                const evaluatorScores = await Promise.all(
+                                  evaluators.map(async (evaluator) => {
+                                    try {
+                                      // Wrap evaluator in evaluation span (child of job span)
+                                      const score = await withEvaluationSpan(
+                                        {
+                                          runId: tracingContext?.runId || "",
+                                          evaluatorName: evaluator.name,
+                                        },
+                                        async (evalSpan) => {
+                                          const evalResult =
+                                            await evaluator.scorer({
+                                              data: datapoint,
+                                              output: result.output,
+                                            });
+
+                                          setEvaluationAttributes(
+                                            evalSpan,
+                                            evalResult.value,
+                                            evalResult.explanation,
+                                            evalResult.pass,
+                                          );
+
+                                          return evalResult;
+                                        },
+                                      );
+                                      return {
+                                        evaluatorName: evaluator.name,
+                                        score,
+                                      };
+                                    } catch (error) {
+                                      return {
+                                        evaluatorName: evaluator.name,
+                                        score: { value: "" as string },
+                                        error: error as Error,
+                                      };
+                                    }
+                                  }),
+                                );
+                                return {
+                                  jobName: result.name,
+                                  output: result.output,
+                                  evaluatorScores,
+                                };
+                              },
                             );
-                            return {
-                              jobName: result.name,
-                              output: result.output,
-                              evaluatorScores,
-                            };
                           } catch (error) {
                             const err = error as Error & { jobName?: string };
                             return {
@@ -312,7 +390,7 @@ export async function evaluatorq(
       }),
       // Conditionally add table display
       print
-        ? Effect.tap((results) => displayResultsTableEffect(results))
+        ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
       orqApiKey
@@ -334,71 +412,112 @@ export async function evaluatorq(
       (effect) => withProgress(effect, print),
     );
 
-    return Effect.runPromise(streamingProgram);
+    // Execute the streaming program
+    const streamingResults = await Effect.runPromise(streamingProgram);
+
+    // Shutdown tracing gracefully for streaming case
+    if (tracingEnabled) {
+      await flushTracing();
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await shutdownTracing();
+    }
+
+    // Check for pass failures
+    const hasStreamingFailures = checkPassFailures(streamingResults);
+    if (hasStreamingFailures) {
+      process.exit(1);
+    }
+
+    return streamingResults;
   }
 
   // Non-streaming case: process all data at once
   const dataPromises = data;
 
-  const program = pipe(
-    Effect.gen(function* (_) {
-      const progress = yield* _(ProgressService);
+  // Execute evaluation with optional tracing
+  const executeEvaluation = async (): Promise<EvaluatorqResult> => {
+    // Create Effect for processing all data points
+    const program = pipe(
+      Effect.gen(function* (_) {
+        const progress = yield* _(ProgressService);
 
-      // Initialize progress
-      yield* _(
-        progress.updateProgress({
-          totalDataPoints: dataPromises.length,
-          currentDataPoint: 0,
-          phase: "initializing",
-        }),
-      );
+        // Initialize progress
+        yield* _(
+          progress.updateProgress({
+            totalDataPoints: dataPromises.length,
+            currentDataPoint: 0,
+            phase: "initializing",
+          }),
+        );
 
-      // Process data points
-      const results = yield* _(
-        Effect.forEach(
-          dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
-          ({ dataPromise, index }) =>
-            processDataPointEffect(
-              dataPromise instanceof Promise
-                ? dataPromise
-                : Promise.resolve(dataPromise),
-              index,
-              jobs,
-              evaluators,
-              parallelism,
-            ),
-          { concurrency: parallelism },
-        ),
-      );
-
-      return results.flat();
-    }),
-    // Conditionally add table display
-    print
-      ? Effect.tap((results) => displayResultsTableEffect(results))
-      : Effect.tap(() => Effect.void),
-    // Send results to Orq when API key is available
-    orqApiKey
-      ? Effect.tap((results) =>
-          sendResultsToOrqEffect(
-            orqApiKey,
-            _name,
-            description,
-            datasetId,
-            results,
-            startTime,
-            new Date(),
+        // Process data points
+        const results = yield* _(
+          Effect.forEach(
+            dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
+            ({ dataPromise, index }) =>
+              processDataPointEffect(
+                dataPromise instanceof Promise
+                  ? dataPromise
+                  : Promise.resolve(dataPromise),
+                index,
+                jobs,
+                evaluators,
+                parallelism,
+                tracingContext,
+              ),
+            { concurrency: parallelism },
           ),
-        )
-      : Effect.tap(() => Effect.void),
-    // Provide the progress service
-    Effect.provide(ProgressServiceLive),
-    // Wrap with progress tracking
-    (effect) => withProgress(effect, print),
-  );
+        );
 
-  // Run the Effect and convert back to Promise
-  return Effect.runPromise(program);
+        return results.flat();
+      }),
+      // Conditionally add table display
+      print
+        ? Effect.tap((results) => displayResultsTableEffect(results, _name))
+        : Effect.tap(() => Effect.void),
+      // Send results to Orq when API key is available
+      orqApiKey
+        ? Effect.tap((results) =>
+            sendResultsToOrqEffect(
+              orqApiKey,
+              _name,
+              description,
+              datasetId,
+              results,
+              startTime,
+              new Date(),
+            ),
+          )
+        : Effect.tap(() => Effect.void),
+      // Provide the progress service
+      Effect.provide(ProgressServiceLive),
+      // Wrap with progress tracking
+      (effect) => withProgress(effect, print),
+    );
+
+    // Run the Effect and convert back to Promise
+    return Effect.runPromise(program);
+  };
+
+  // Execute evaluation - each job span is independent (no parent evaluation_run span)
+  const results = await executeEvaluation();
+
+  // Shutdown tracing gracefully - flush and shutdown before checking failures
+  if (tracingEnabled) {
+    // Force flush all pending spans
+    await flushTracing();
+    // Give additional time for network operations
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await shutdownTracing();
+  }
+
+  // Check for pass failures and exit if any
+  const hasFailures = checkPassFailures(results);
+  if (hasFailures) {
+    process.exit(1);
+  }
+
+  return results;
 }
 
 // Create an Effect that runs evaluation and optionally displays results
@@ -516,7 +635,7 @@ const runEvaluationEffect = (
         }),
       );
 
-      // Process data points
+      // Process data points (no tracing in Effect variant for now)
       const results = yield* _(
         Effect.forEach(
           dataPromises.map((dataPromise, index) => ({ dataPromise, index })),
@@ -538,7 +657,9 @@ const runEvaluationEffect = (
     }),
     // Conditionally add table display
     print
-      ? Effect.tap((results) => displayResultsTableEffect(results))
+      ? Effect.tap((results) =>
+          displayResultsTableEffect(results, evaluationName),
+        )
       : Effect.tap(() => Effect.void),
     // Send results to Orq when API key is available
     orqApiKey
@@ -568,5 +689,5 @@ export const evaluatorqWithTableEffect = (
 ): Effect.Effect<EvaluatorqResult, Error, never> =>
   pipe(
     evaluatorqEffect(name, params),
-    Effect.tap((results) => displayResultsTableEffect(results)),
+    Effect.tap((results) => displayResultsTableEffect(results, name)),
   );

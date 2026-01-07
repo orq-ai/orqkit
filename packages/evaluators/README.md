@@ -10,15 +10,40 @@ npm install @orq-ai/evaluators
 
 ## Usage
 
+### String Contains Evaluator
+
+Check if the output contains the expected output (case-insensitive by default):
+
+```typescript
+import { stringContainsEvaluator } from "@orq-ai/evaluators";
+
+// Default: case-insensitive matching
+const evaluator = stringContainsEvaluator();
+
+// Case-sensitive matching
+const strictEvaluator = stringContainsEvaluator({
+  caseInsensitive: false
+});
+
+// Custom name
+const namedEvaluator = stringContainsEvaluator({
+  name: "contains-capital-city"
+});
+```
+
+The evaluator compares `output` against `data.expectedOutput` from the dataset and returns:
+- `value: 1.0` and `pass: true` if output contains expected
+- `value: 0.0` and `pass: false` otherwise
+
 ### Cosine Similarity Evaluator
 
 Compare semantic similarity between output and expected text using OpenAI embeddings:
 
 ```typescript
-import { 
-  cosineSimilarityEvaluator, 
+import {
+  cosineSimilarityEvaluator,
   cosineSimilarityThresholdEvaluator,
-  simpleCosineSimilarity 
+  simpleCosineSimilarity
 } from "@orq-ai/evaluators";
 
 // Simple usage - returns similarity score (0-1)

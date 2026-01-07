@@ -8,6 +8,8 @@ An evaluation framework library that provides a flexible way to run parallel eva
 - **Flexible Data Sources**: Support for inline data, promises, and Orq platform datasets
 - **Type-safe**: Fully written in TypeScript
 - **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI (optional)
+- **OpenTelemetry Tracing**: Built-in observability with automatic span creation for jobs and evaluators
+- **Pass/Fail Tracking**: Evaluators can return pass/fail status for CI/CD integration
 
 ## 📥 Installation
 
@@ -25,6 +27,12 @@ If you want to use the Orq platform integration:
 
 ```bash
 npm install @orq-ai/node
+```
+
+For OpenTelemetry tracing (optional):
+
+```bash
+npm install @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions
 ```
 
 ## 🚀 Quick Start
@@ -158,11 +166,56 @@ await evaluatorq("async-eval", {
 });
 ```
 
+#### Deployment Helper
+
+Easily invoke Orq deployments within your evaluation jobs:
+
+```typescript
+import { evaluatorq, job, invoke, deployment } from "@orq-ai/evaluatorq";
+
+// Simple one-liner with invoke()
+const summarizeJob = job("summarizer", async (data) => {
+  const text = data.inputs.text as string;
+  return await invoke("my-deployment", { inputs: { text } });
+});
+
+// Full response with deployment()
+const analyzeJob = job("analyzer", async (data) => {
+  const response = await deployment("my-deployment", {
+    inputs: { text: data.inputs.text },
+    metadata: { source: "evaluatorq" },
+  });
+  console.log("Raw:", response.raw);
+  return response.content;
+});
+
+// Chat-style with messages
+const chatJob = job("chatbot", async (data) => {
+  return await invoke("chatbot", {
+    messages: [{ role: "user", content: data.inputs.question as string }],
+  });
+});
+
+// Thread tracking for conversations
+const conversationJob = job("assistant", async (data) => {
+  return await invoke("assistant", {
+    inputs: { query: data.inputs.query },
+    thread: { id: "conversation-123" },
+  });
+});
+```
+
+The `invoke()` function returns the text content directly, while `deployment()` returns an object with both `content` and `raw` response for more control.
+
 ## 🔧 Configuration
 
 ### Environment Variables
 
-- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results)
+- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results). Also enables automatic OTEL tracing to Orq.
+- `ORQ_BASE_URL`: Base URL for Orq platform (default: `https://my.orq.ai`)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: Custom OpenTelemetry collector endpoint (overrides default Orq endpoint)
+- `OTEL_EXPORTER_OTLP_HEADERS`: Headers for OTEL exporter (format: `key1=value1,key2=value2`)
+- `ORQ_DEBUG`: Enable debug logging for tracing setup
 
 ## 📊 Orq Platform Integration
 
@@ -206,6 +259,62 @@ The Orq platform provides:
 - Performance metrics
 - Historical comparisons
 
+## 🔍 OpenTelemetry Tracing
+
+Evaluatorq automatically creates OpenTelemetry spans for observability into your evaluation runs.
+
+### Span Hierarchy
+
+```
+orq.job (independent root per job execution)
+└── orq.evaluation (child span per evaluator)
+```
+
+### Auto-Enable with Orq
+
+When `ORQ_API_KEY` is set, traces are automatically sent to the Orq platform:
+
+```bash
+ORQ_API_KEY=your-api-key bun run my-eval.ts
+```
+
+### Custom OTEL Endpoint
+
+Send traces to any OpenTelemetry-compatible backend:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=https://your-collector:4318 \
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer token" \
+bun run my-eval.ts
+```
+
+## ✅ Pass/Fail Tracking
+
+Evaluators can return a `pass` field to indicate pass/fail status:
+
+```typescript
+const qualityEvaluator: Evaluator = {
+  name: "quality-check",
+  scorer: async ({ output }) => {
+    const score = calculateQuality(output);
+    return {
+      value: score,
+      pass: score >= 0.8,  // Pass if meets threshold
+      explanation: `Quality score: ${score}`,
+    };
+  },
+};
+```
+
+**CI/CD Integration:** When any evaluator returns `pass: false`, the process exits with code 1. This enables fail-fast behavior in CI/CD pipelines.
+
+**Pass Rate Display:** The summary table shows pass rate when evaluators use the `pass` field:
+
+```
+┌──────────────────────┬─────────────────┐
+│ Pass Rate            │ 75% (3/4)       │
+└──────────────────────┴─────────────────┘
+```
 
 ## 📚 API Reference
 
@@ -270,12 +379,33 @@ type ScorerParameter = {
 type EvaluationResult<T> = {
   value: T;
   explanation?: string;
+  pass?: boolean;  // Optional pass/fail indicator for CI/CD integration
 };
 
 type Scorer =
   | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
   | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
   | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>);
+
+// Deployment helper types
+interface DeploymentOptions {
+  inputs?: Record<string, unknown>;
+  context?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  thread?: { id: string; tags?: string[] };
+  messages?: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+}
+
+interface DeploymentResponse {
+  content: string;  // Text content of the response
+  raw: unknown;     // Raw API response
+}
+
+// Invoke deployment and get text content
+function invoke(key: string, options?: DeploymentOptions): Promise<string>;
+
+// Invoke deployment and get full response
+function deployment(key: string, options?: DeploymentOptions): Promise<DeploymentResponse>;
 ```
 
 ## 🛠️ Development

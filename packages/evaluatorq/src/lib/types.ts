@@ -3,6 +3,7 @@ export type Output = string | number | boolean | Record<string, unknown> | null;
 type EvaluationResult<T> = {
   value: T;
   explanation?: string;
+  pass?: boolean;
 };
 
 export interface EvaluatorScore {

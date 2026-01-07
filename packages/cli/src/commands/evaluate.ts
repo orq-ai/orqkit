@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import { execa } from "execa";
@@ -5,6 +6,55 @@ import { glob } from "glob";
 
 interface EvaluateOptions {
   watch?: boolean;
+}
+
+interface EvalResult {
+  file: string;
+  passed: boolean;
+  duration: number;
+  error?: string;
+}
+
+function writeGitHubSummaryHeader() {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+
+  const markdown = `# Evaluation Results\n\n## Individual Evaluations\n\n`;
+  fs.appendFileSync(summaryPath, markdown);
+}
+
+function writeGitHubSummaryFooter(results: EvalResult[]) {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+
+  const passed = results.filter((r) => r.passed).length;
+  const failed = results.filter((r) => !r.passed).length;
+  const total = results.length;
+  const totalDuration = results.reduce((acc, r) => acc + r.duration, 0);
+
+  const statusEmoji = failed > 0 ? "❌" : "✅";
+  const statusText =
+    failed > 0 ? "Some evaluations failed" : "All evaluations passed";
+
+  let markdown = `## ${statusEmoji} Overall Summary\n\n`;
+  markdown += `**${statusText}** - ${passed}/${total} passed in ${(totalDuration / 1000).toFixed(2)}s\n\n`;
+  markdown += `| File | Status | Duration |\n`;
+  markdown += `|------|--------|----------|\n`;
+
+  for (const result of results) {
+    const status = result.passed ? "✅ Passed" : "❌ Failed";
+    const duration = `${(result.duration / 1000).toFixed(2)}s`;
+    markdown += `| ${result.file} | ${status} | ${duration} |\n`;
+  }
+
+  if (failed > 0) {
+    markdown += `\n### Execution Errors\n\n`;
+    for (const result of results.filter((r) => !r.passed && r.error)) {
+      markdown += `**${result.file}:**\n\`\`\`\n${result.error}\n\`\`\`\n\n`;
+    }
+  }
+
+  fs.appendFileSync(summaryPath, markdown);
 }
 
 export async function evaluate(pattern: string, _options: EvaluateOptions) {
@@ -24,9 +74,16 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
 
   console.log("Running evaluations:\n");
 
+  // Write header to GitHub summary
+  writeGitHubSummaryHeader();
+
+  const results: EvalResult[] = [];
+
   for (const file of evalFiles) {
     const fileName = path.basename(file);
     console.log(`⚡ Running ${fileName}...`);
+
+    const startTime = Date.now();
 
     try {
       await execa("tsx", [file], {
@@ -35,11 +92,30 @@ export async function evaluate(pattern: string, _options: EvaluateOptions) {
         stdio: "inherit",
       });
       console.log(`✅ ${fileName} completed\n`);
+      results.push({
+        file: fileName,
+        passed: true,
+        duration: Date.now() - startTime,
+      });
     } catch (error) {
       console.error(`❌ ${fileName} failed`);
-      if (error instanceof Error) {
-        console.error(`   Error: ${error.message}\n`);
-      }
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`   Error: ${errorMessage}\n`);
+      results.push({
+        file: fileName,
+        passed: false,
+        duration: Date.now() - startTime,
+        error: errorMessage,
+      });
     }
+  }
+
+  // Write overall summary footer to GitHub Actions
+  writeGitHubSummaryFooter(results);
+
+  const hasFailures = results.some((r) => !r.passed);
+  if (hasFailures) {
+    process.exit(1);
   }
 }

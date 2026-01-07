@@ -1,0 +1,81 @@
+name: "Orq Evaluate"
+description: "Run evaluatorq evaluation files using the @orq-ai/cli"
+author: "Orq AI"
+
+branding:
+  icon: "check-circle"
+  color: "purple"
+
+inputs:
+  pattern:
+    description: "Glob pattern for evaluation files (e.g., '**/*.eval.ts')"
+    required: true
+  orq-api-key:
+    description: "Orq API key for authentication and tracing"
+    required: false
+  orq-base-url:
+    description: "Orq API base URL (defaults to https://my.orq.ai)"
+    required: false
+  working-directory:
+    description: "Working directory to run evaluations from"
+    required: false
+    default: "."
+  bun-version:
+    description: "Bun version to use"
+    required: false
+    default: "latest"
+  disable-tracing:
+    description: "Disable OTEL tracing even when API key is set"
+    required: false
+    default: "false"
+  otel-endpoint:
+    description: "Custom OTEL endpoint for traces (overrides auto-detection from orq-base-url)"
+    required: false
+
+outputs:
+  passed:
+    description: "Whether all evaluations passed"
+    value: ${{ steps.evaluate.outputs.passed }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: Cache Bun dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bun install --frozen-lockfile
+
+    - name: Build packages
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bunx nx run-many --targets=build --projects=evaluatorq,evaluators,cli
+
+    - name: Run evaluations
+      id: evaluate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        ORQ_API_KEY: ${{ inputs.orq-api-key }}
+        ORQ_BASE_URL: ${{ inputs.orq-base-url }}
+        ORQ_DISABLE_TRACING: ${{ inputs.disable-tracing }}
+        OTEL_EXPORTER_OTLP_ENDPOINT: ${{ inputs.otel-endpoint }}
+      run: |
+        if bun packages/cli/dist/bin/cli.js evaluate "${{ inputs.pattern }}"; then
+          echo "passed=true" >> $GITHUB_OUTPUT
+        else
+          echo "passed=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
