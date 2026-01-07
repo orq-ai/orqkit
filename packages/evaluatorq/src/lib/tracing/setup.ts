@@ -1,8 +1,19 @@
 /**
  * OpenTelemetry SDK setup with lazy initialization and auto-detection.
  *
- * Tracing is enabled when OTEL_EXPORTER_OTLP_ENDPOINT is set.
- * If ORQ_API_KEY is set without a custom endpoint, traces are sent to the ORQ receiver.
+ * Tracing is automatically enabled when:
+ * 1. OTEL_EXPORTER_OTLP_ENDPOINT is set (explicit endpoint)
+ * 2. ORQ_API_KEY is set (traces sent to Orq platform automatically)
+ *
+ * Tracing can be explicitly disabled by setting:
+ * - ORQ_DISABLE_TRACING=1 or ORQ_DISABLE_TRACING=true
+ *
+ * When ORQ_API_KEY is provided:
+ * - Uses ORQ_BASE_URL to derive the OTEL endpoint (my.*.orq.ai -> api.*.orq.ai/v2/otel)
+ * - Falls back to https://api.orq.ai/v2/otel if ORQ_BASE_URL is not set
+ * - Authorization header is automatically added with the API key
+ *
+ * Set ORQ_DEBUG=1 to enable debug logging for tracing setup.
  */
 
 import type { Tracer } from "@opentelemetry/api";
@@ -14,22 +25,58 @@ let isInitialized = false;
 let initializationAttempted = false;
 
 /**
+ * Check if tracing is explicitly disabled via ORQ_DISABLE_TRACING.
+ */
+function isTracingExplicitlyDisabled(): boolean {
+  const disableValue = process.env.ORQ_DISABLE_TRACING;
+  return disableValue === "1" || disableValue === "true";
+}
+
+/**
  * Check if tracing should be enabled based on environment variables.
+ * Tracing is enabled when ORQ_API_KEY or OTEL_EXPORTER_OTLP_ENDPOINT is set,
+ * unless explicitly disabled via ORQ_DISABLE_TRACING.
  */
 export function isTracingEnabled(): boolean {
+  if (isTracingExplicitlyDisabled()) {
+    return false;
+  }
   return !!(process.env.OTEL_EXPORTER_OTLP_ENDPOINT || process.env.ORQ_API_KEY);
 }
 
 /**
  * Get the default OTLP endpoint based on environment configuration.
+ *
+ * Priority:
+ * 1. OTEL_EXPORTER_OTLP_ENDPOINT - explicit endpoint override
+ * 2. ORQ_BASE_URL - derive API endpoint from base URL (e.g., my.orq.ai -> api.orq.ai)
+ * 3. Default to production api.orq.ai when only ORQ_API_KEY is set
  */
 function getOtlpEndpoint(): string | undefined {
+  // Explicit endpoint takes precedence
   if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     return process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
   }
+
+  // If ORQ_API_KEY is set, derive endpoint from ORQ_BASE_URL or use default
   if (process.env.ORQ_API_KEY) {
+    const baseUrl = process.env.ORQ_BASE_URL;
+    if (baseUrl) {
+      // Transform my.*.orq.ai -> api.*.orq.ai/v2/otel
+      // e.g., https://my.staging.orq.ai -> https://api.staging.orq.ai/v2/otel
+      // e.g., https://my.orq.ai -> https://api.orq.ai/v2/otel
+      try {
+        const url = new URL(baseUrl);
+        const host = url.host.replace(/^my\./, "api.");
+        return `${url.protocol}//${host}/v2/otel`;
+      } catch {
+        // Invalid URL, fall through to default
+      }
+    }
+    // Default to production endpoint
     return "https://api.orq.ai/v2/otel";
   }
+
   return undefined;
 }
 
@@ -46,6 +93,13 @@ export async function initTracingIfNeeded(): Promise<boolean> {
   initializationAttempted = true;
 
   if (!isTracingEnabled()) {
+    if (process.env.ORQ_DEBUG) {
+      if (isTracingExplicitlyDisabled()) {
+        console.debug("[evaluatorq] OTEL tracing disabled via ORQ_DISABLE_TRACING");
+      } else {
+        console.debug("[evaluatorq] OTEL tracing not enabled (no ORQ_API_KEY or OTEL_EXPORTER_OTLP_ENDPOINT)");
+      }
+    }
     return false;
   }
 
@@ -108,13 +162,16 @@ export async function initTracingIfNeeded(): Promise<boolean> {
       : `${endpoint}/v1/traces`;
 
     if (process.env.ORQ_DEBUG) {
-      console.debug("[evaluatorq] OTEL endpoint:", tracesEndpoint);
-      console.debug("[evaluatorq] OTEL headers:", Object.keys(headers));
+      const source = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? "OTEL_EXPORTER_OTLP_ENDPOINT"
+        : process.env.ORQ_BASE_URL
+          ? "ORQ_BASE_URL (derived)"
+          : "default (ORQ_API_KEY)";
+      console.debug(`[evaluatorq] OTEL tracing enabled`);
+      console.debug(`[evaluatorq] OTEL endpoint: ${tracesEndpoint}`);
+      console.debug(`[evaluatorq] OTEL endpoint source: ${source}`);
       if (headers.Authorization) {
-        console.debug(
-          "[evaluatorq] Auth header length:",
-          headers.Authorization.length,
-        );
+        console.debug(`[evaluatorq] Authorization: Bearer ***${apiKey?.slice(-8) || ""}`);
       }
     }
 

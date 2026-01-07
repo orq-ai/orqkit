@@ -13,25 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Run evaluations
+        uses: ./.github/actions/evaluate
         with:
-          bun-version: latest
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build packages
-        run: bunx nx run-many --targets=build --projects=evaluatorq,evaluators,cli
-
-      - name: Run Country Unit Test
-        env:
-          ORQ_API_KEY: ${{ secrets.ORQ_API_KEY }}
-        run: bun packages/cli/dist/bin/cli.js evaluate "examples/src/lib/country-unit-test.eval.ts"
+          pattern: "examples/src/lib/country-unit-test.eval.ts"
+          orq-api-key: ${{ secrets.ORQ_API_KEY }}
