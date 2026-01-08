@@ -31,6 +31,12 @@ dependencies = [ "pydantic>=2.0", "httpx>=0.28.1", "rich>=14.2.0" ]
 
   [project.optional-dependencies]
   orq = [ "orq-ai-sdk>=3.13.16" ]
+  otel = [
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.20.0",
+    "opentelemetry-semantic-conventions>=0.41b0",
+  ]
 
 [project.urls]
 Homepage = "https://github.com/orq-ai/orqkit"

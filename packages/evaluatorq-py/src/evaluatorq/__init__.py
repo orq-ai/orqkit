@@ -1,6 +1,19 @@
 """EvaluatorQ Python - An evaluation framework for LLM applications."""
 
+from .deployment import (
+    DeploymentOptions,
+    DeploymentResponse,
+    MessageDict,
+    ThreadConfig,
+    deployment,
+    invoke,
+)
 from .evaluatorq import evaluatorq
+from .evaluators import (
+    StringContainsConfig,
+    exact_match_evaluator,
+    string_contains_evaluator,
+)
 from .job_helper import job
 from .types import (
     DataPoint,
@@ -24,6 +37,17 @@ __all__ = [
     "evaluatorq",
     # Helper functions
     "job",
+    # Deployment helpers
+    "deployment",
+    "invoke",
+    "DeploymentOptions",
+    "DeploymentResponse",
+    "ThreadConfig",
+    "MessageDict",
+    # Built-in evaluators
+    "string_contains_evaluator",
+    "exact_match_evaluator",
+    "StringContainsConfig",
     # Types
     "DataPoint",
     "DataPointResult",
