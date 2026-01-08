@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 __all__ = [
     "DeploymentOptions",
@@ -193,13 +193,14 @@ async def deployment(
         )
 
     # The SDK accepts list of message dicts directly
+    # Cast to Any because the SDK's type hints are stricter than the actual runtime behavior
     completion = await client.deployments.invoke_async(
         key=key,
         inputs=final_inputs,
         context=final_context,
         metadata=final_metadata,
         thread=sdk_thread,
-        messages=final_messages,  # pyright: ignore[reportArgumentType]
+        messages=cast(Any, final_messages),
     )
 
     # Extract content from the response
@@ -209,7 +210,13 @@ async def deployment(
 
 
 def _extract_content_from_response(completion: object) -> str:
-    """Extract text content from an Orq deployment response."""
+    """
+    Extract text content from an Orq deployment response.
+
+    Uses getattr-based introspection because the Orq SDK returns dynamically
+    typed response objects. This approach handles various response structures
+    (text, multimodal) without requiring tight coupling to specific SDK versions.
+    """
     content = ""
     choices: list[object] | None = getattr(completion, "choices", None)
 

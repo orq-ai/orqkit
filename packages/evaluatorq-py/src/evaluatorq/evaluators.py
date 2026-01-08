@@ -63,6 +63,8 @@ def string_contains_evaluator(
         data = params["data"]
         output = params["output"]
 
+        # Convert to strings for comparison - this is intentional to allow flexible
+        # matching of various output types (dicts, objects, etc.) as their string repr
         expected = str(data.expected_output) if data.expected_output is not None else ""
         actual = str(output) if output is not None else ""
 
@@ -78,18 +80,21 @@ def string_contains_evaluator(
 
         contains = expected_normalized in actual_normalized
 
+        # Truncate strings for readable explanations
+        truncated_expected = expected[:100] + "..." if len(expected) > 100 else expected
+        truncated_actual = actual[:100] + "..." if len(actual) > 100 else actual
+
         if contains:
             return {
                 "value": 1.0,
                 "pass_": True,
-                "explanation": f'Output contains "{expected}"',
+                "explanation": f'Output contains "{truncated_expected}"',
             }
         else:
-            truncated_actual = actual[:100] + "..." if len(actual) > 100 else actual
             return {
                 "value": 0.0,
                 "pass_": False,
-                "explanation": f'Expected "{expected}" not found in: "{truncated_actual}"',
+                "explanation": f'Expected "{truncated_expected}" not found in: "{truncated_actual}"',
             }
 
     return {
@@ -126,6 +131,8 @@ def exact_match_evaluator(
         data = params["data"]
         output = params["output"]
 
+        # Convert to strings for comparison - this is intentional to allow flexible
+        # matching of various output types (dicts, objects, etc.) as their string repr
         expected = str(data.expected_output) if data.expected_output is not None else ""
         actual = str(output) if output is not None else ""
 
@@ -141,6 +148,10 @@ def exact_match_evaluator(
 
         matches = expected_normalized == actual_normalized
 
+        # Truncate strings for readable explanations
+        truncated_expected = expected[:100] + "..." if len(expected) > 100 else expected
+        truncated_actual = actual[:100] + "..." if len(actual) > 100 else actual
+
         if matches:
             return {
                 "value": 1.0,
@@ -151,7 +162,7 @@ def exact_match_evaluator(
             return {
                 "value": 0.0,
                 "pass_": False,
-                "explanation": f'Expected "{expected}" but got "{actual[:50]}{"..." if len(actual) > 50 else ""}"',
+                "explanation": f'Expected "{truncated_expected}" but got "{truncated_actual}"',
             }
 
     return {

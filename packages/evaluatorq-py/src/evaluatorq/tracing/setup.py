@@ -9,7 +9,7 @@ Tracing can be explicitly disabled by setting:
 - ORQ_DISABLE_TRACING=1 or ORQ_DISABLE_TRACING=true
 
 When ORQ_API_KEY is provided:
-- Uses ORQ_BASE_URL to derive the OTEL endpoint (my.*.orq.ai -> api.*.orq.ai/v2/otel)
+- Uses ORQ_BASE_URL with /v2/otel path appended for the OTEL endpoint
 - Falls back to https://api.orq.ai/v2/otel if ORQ_BASE_URL is not set
 - Authorization header is automatically added with the API key
 
@@ -19,9 +19,7 @@ Set ORQ_DEBUG=1 to enable debug logging for tracing setup.
 from __future__ import annotations
 
 import os
-import re
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlparse
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Tracer
@@ -58,7 +56,7 @@ def _get_otlp_endpoint() -> str | None:
 
     Priority:
     1. OTEL_EXPORTER_OTLP_ENDPOINT - explicit endpoint override
-    2. ORQ_BASE_URL - derive API endpoint from base URL (e.g., my.orq.ai -> api.orq.ai)
+    2. ORQ_BASE_URL - use as-is with /v2/otel path appended
     3. Default to production api.orq.ai when only ORQ_API_KEY is set
     """
     # Explicit endpoint takes precedence
@@ -66,20 +64,14 @@ def _get_otlp_endpoint() -> str | None:
     if explicit_endpoint:
         return explicit_endpoint
 
-    # If ORQ_API_KEY is set, derive endpoint from ORQ_BASE_URL or use default
+    # If ORQ_API_KEY is set, use ORQ_BASE_URL or default endpoint
     if os.environ.get("ORQ_API_KEY"):
         base_url = os.environ.get("ORQ_BASE_URL")
         if base_url:
-            try:
-                parsed = urlparse(base_url)
-                # Transform my.*.orq.ai -> api.*.orq.ai/v2/otel
-                # e.g., https://my.staging.orq.ai -> https://api.staging.orq.ai/v2/otel
-                # e.g., https://my.orq.ai -> https://api.orq.ai/v2/otel
-                host = re.sub(r"^my\.", "api.", parsed.netloc)
-                return f"{parsed.scheme}://{host}/v2/otel"
-            except Exception:
-                # Invalid URL, fall through to default
-                pass
+            # Use the base URL as-is, just append the OTEL path
+            # Strip trailing slash if present to avoid double slashes
+            base_url = base_url.rstrip("/")
+            return f"{base_url}/v2/otel"
         # Default to production endpoint
         return "https://api.orq.ai/v2/otel"
 
@@ -123,18 +115,28 @@ async def init_tracing_if_needed() -> bool:
         )
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
         # Service name and version attribute keys
         SERVICE_NAME = "service.name"
         SERVICE_VERSION = "service.version"
 
+        # Ensure endpoint has the traces path
+        traces_endpoint = (
+            endpoint if endpoint.endswith("/v1/traces") else f"{endpoint}/v1/traces"
+        )
+
         # Build headers for the exporter
         headers: dict[str, str] = {}
         api_key = os.environ.get("ORQ_API_KEY")
 
-        # Add Authorization header for any ORQ endpoint (production or staging)
-        if api_key and "orq.ai" in endpoint:
+        # Add Authorization header only for verified orq.ai domains
+        # Use proper domain validation to prevent leaking API keys to malicious endpoints
+        from urllib.parse import urlparse
+
+        parsed_endpoint = urlparse(traces_endpoint)
+        is_orq_domain = parsed_endpoint.netloc.endswith(".orq.ai") or parsed_endpoint.netloc == "orq.ai"
+        if api_key and is_orq_domain:
             headers["Authorization"] = f"Bearer {api_key}"
 
         # Parse OTEL_EXPORTER_OTLP_HEADERS if present
@@ -156,34 +158,27 @@ async def init_tracing_if_needed() -> bool:
             }
         )
 
-        # Ensure endpoint has the traces path
-        traces_endpoint = (
-            endpoint if endpoint.endswith("/v1/traces") else f"{endpoint}/v1/traces"
-        )
-
         if debug:
             if os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT"):
                 source = "OTEL_EXPORTER_OTLP_ENDPOINT"
             elif os.environ.get("ORQ_BASE_URL"):
-                source = "ORQ_BASE_URL (derived)"
+                source = "ORQ_BASE_URL"
             else:
                 source = "default (ORQ_API_KEY)"
             print("[evaluatorq] OTEL tracing enabled")
             print(f"[evaluatorq] OTEL endpoint: {traces_endpoint}")
             print(f"[evaluatorq] OTEL endpoint source: {source}")
             if "Authorization" in headers:
-                print(
-                    f"[evaluatorq] Authorization: Bearer ***{api_key[-8:] if api_key else ''}"
-                )
+                print("[evaluatorq] Authorization: Bearer ***")
 
         exporter = OTLPSpanExporter(
             endpoint=traces_endpoint,
             headers=headers,
-            timeout=30,  # 30 second timeout
+            timeout=5,  # 5 second timeout for telemetry
         )
 
-        # Use SimpleSpanProcessor to send spans immediately as they complete
-        span_processor = SimpleSpanProcessor(exporter)
+        # Use BatchSpanProcessor to export spans asynchronously in batches
+        span_processor = BatchSpanProcessor(exporter)
 
         provider = TracerProvider(resource=resource)
         provider.add_span_processor(span_processor)
