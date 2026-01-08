@@ -11,9 +11,9 @@ from evaluatorq import DataPoint, evaluatorq, job, string_contains_evaluator
 
 
 @job("uppercase-converter")
-async def uppercase_job(data: DataPoint, row: int):
+async def uppercase_job(data: DataPoint, _row: int) -> str:
     """Simple job that converts text to uppercase."""
-    text = data.inputs.get("text", "")
+    text = str(data.inputs.get("text", ""))
     return text.upper()
 
 
@@ -43,4 +43,4 @@ async def run():
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    _ = asyncio.run(run())

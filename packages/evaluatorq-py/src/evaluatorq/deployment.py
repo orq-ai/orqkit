@@ -107,11 +107,11 @@ def _get_or_create_client() -> "Orq":
     except ModuleNotFoundError as e:
         raise ImportError(
             "The orq_ai_sdk package is not installed. To use deployment features, please install it:\n"
-            "  pip install orq-ai-sdk\n"
-            "  # or\n"
-            "  uv add orq-ai-sdk\n"
-            "  # or\n"
-            "  poetry add orq-ai-sdk"
+            + "  pip install orq-ai-sdk\n"
+            + "  # or\n"
+            + "  uv add orq-ai-sdk\n"
+            + "  # or\n"
+            + "  poetry add orq-ai-sdk"
         ) from e
     except Exception as e:
         raise RuntimeError(f"Failed to setup ORQ client: {e}") from e
@@ -211,19 +211,19 @@ async def deployment(
 def _extract_content_from_response(completion: object) -> str:
     """Extract text content from an Orq deployment response."""
     content = ""
-    choices = getattr(completion, "choices", None)
+    choices: list[object] | None = getattr(completion, "choices", None)
 
-    if not choices or not isinstance(choices, list) or len(choices) == 0:
+    if not choices or len(choices) == 0:
         return content
 
-    first_choice = choices[0]
-    message = getattr(first_choice, "message", None)
+    first_choice: object = choices[0]
+    message: object | None = getattr(first_choice, "message", None)
 
     if not message:
         return content
 
-    msg_type = getattr(message, "type", None)
-    msg_content = getattr(message, "content", None)
+    msg_type: str | None = getattr(message, "type", None)
+    msg_content: str | list[object] | None = getattr(message, "content", None)
 
     if msg_type == "content" and isinstance(msg_content, str):
         content = msg_content

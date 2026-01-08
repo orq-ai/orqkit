@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
-    from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.trace import Tracer
 
 # Module-level state
@@ -216,8 +215,8 @@ async def flush_tracing() -> None:
 
     if _sdk is not None:
         try:
-            provider: "TracerProvider" = _sdk
-            provider.force_flush()
+            provider = _sdk  # TracerProvider
+            _ = provider.force_flush()
         except Exception as e:
             if os.environ.get("ORQ_DEBUG"):
                 print(f"[evaluatorq] Error flushing traces: {e}")
@@ -234,7 +233,7 @@ async def shutdown_tracing() -> None:
         try:
             # Force flush before shutdown
             await flush_tracing()
-            provider: "TracerProvider" = _sdk
+            provider = _sdk  # TracerProvider
             provider.shutdown()
         except Exception as e:
             if os.environ.get("ORQ_DEBUG"):

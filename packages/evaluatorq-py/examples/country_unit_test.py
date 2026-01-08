@@ -19,6 +19,7 @@ Usage:
 import asyncio
 
 from evaluatorq import (
+    DataPoint,
     DatasetIdInput,
     evaluatorq,
     invoke,
@@ -31,9 +32,9 @@ DEPLOYMENT_KEY = "unit_test_countries"
 
 
 @job("country-lookup")
-async def country_lookup_job(data, row):
+async def country_lookup_job(data: DataPoint, _row: int) -> str:
     """Job that calls the deployment with the country input."""
-    country = data.inputs.get("country", "")
+    country = str(data.inputs.get("country", ""))
 
     response = await invoke(DEPLOYMENT_KEY, inputs={"country": country})
 
@@ -61,4 +62,4 @@ async def run():
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    _ = asyncio.run(run())
