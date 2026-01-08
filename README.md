@@ -15,6 +15,7 @@ Tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines,
 - **Test Like You Deploy** - Use the same evaluation framework locally and in CI/CD
 - **Measure What Matters** - Pre-built evaluators for common LLM metrics (coming soon)
 - **Track Results** - Automatic result tracking when connected to the orq platform, otherwise build it to your own dashboard
+- **OpenTelemetry Support** - Built-in tracing for observability into your evaluation runs
 
 ## 🌟 About Orq AI
 
@@ -184,6 +185,40 @@ const { text } = await generateText({
 console.log(text);
 ```
 
+### OpenTelemetry Tracing
+
+Evaluatorq has built-in OpenTelemetry support for observability into your evaluation runs. Each job execution creates an independent trace with evaluation spans as children.
+
+**Auto-enable with Orq Platform:**
+```bash
+# When ORQ_API_KEY is set, traces are automatically sent to the Orq platform
+ORQ_API_KEY=your-api-key bun run my-eval.ts
+```
+
+**Custom OTEL endpoint:**
+```bash
+# Use any OpenTelemetry-compatible backend
+OTEL_EXPORTER_OTLP_ENDPOINT=https://your-collector:4318 \
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer your-token" \
+bun run my-eval.ts
+```
+
+**Pass/Fail Tracking:**
+
+Evaluators can return a `pass` field to track pass/fail status:
+
+```typescript
+const myEvaluator: Evaluator = {
+  name: "quality-check",
+  scorer: async ({ output }) => ({
+    value: score,
+    pass: score >= 0.8,  // Pass if score meets threshold
+    explanation: "Quality assessment",
+  }),
+};
+```
+
+When any evaluator returns `pass: false`, the process exits with code 1 - useful for CI/CD pipelines.
 
 ## 🛠️ Development
 

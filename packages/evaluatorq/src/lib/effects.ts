@@ -1,6 +1,13 @@
 import { Effect, pipe } from "effect";
 
 import { ProgressService } from "./progress.js";
+import type { TracingContext } from "./tracing/context.js";
+import {
+  setEvaluationAttributes,
+  setJobNameAttribute,
+  withEvaluationSpan,
+  withJobSpan,
+} from "./tracing/spans.js";
 import type {
   DataPoint,
   DataPointResult,
@@ -15,6 +22,7 @@ export function processDataPointEffect(
   jobs: Job[],
   evaluators: { name: string; scorer: Scorer }[],
   parallelism: number,
+  tracingContext?: TracingContext,
 ): Effect.Effect<DataPointResult[], Error, ProgressService> {
   return pipe(
     Effect.tryPromise({
@@ -37,7 +45,14 @@ export function processDataPointEffect(
         const jobResults = yield* _(
           Effect.forEach(
             jobs,
-            (job) => processJobEffect(job, dataPoint, rowIndex, evaluators),
+            (job) =>
+              processJobEffect(
+                job,
+                dataPoint,
+                rowIndex,
+                evaluators,
+                tracingContext,
+              ),
             { concurrency: parallelism },
           ),
         );
@@ -66,102 +81,119 @@ export function processJobEffect(
   dataPoint: DataPoint,
   rowIndex: number,
   evaluators: { name: string; scorer: Scorer }[],
+  tracingContext?: TracingContext,
 ): Effect.Effect<JobResult, Error, ProgressService> {
   return Effect.gen(function* (_) {
     const progress = yield* _(ProgressService);
 
-    // Update progress with current job
+    // Execute job with tracing
     const jobResult = yield* _(
-      pipe(
-        Effect.Do,
-        Effect.bind("jobName", () =>
-          Effect.sync(() => {
-            // Try to get job name from a test run or use a placeholder
-            return "job";
-          }),
-        ),
-        Effect.tap(({ jobName }) =>
-          progress.updateProgress({
-            currentJob: jobName,
-            phase: "processing",
-          }),
-        ),
-        Effect.bind("result", () =>
-          Effect.tryPromise({
-            try: () => job(dataPoint, rowIndex),
-            catch: (error) => error as Error,
-          }),
-        ),
-        Effect.tap(({ result }) =>
-          progress.updateProgress({
-            currentJob: result.name,
-          }),
-        ),
-        Effect.map(({ result }) => result),
-      ),
-    );
-
-    // Process evaluators if any
-    if (evaluators.length > 0) {
-      // Update phase to evaluating
-      yield* _(progress.updateProgress({ phase: "evaluating" }));
-
-      const evaluatorScores = yield* _(
-        Effect.forEach(
-          evaluators,
-          (evaluator) =>
-            Effect.gen(function* (_) {
-              // Update current evaluator
-              yield* _(
+      Effect.tryPromise({
+        try: async () => {
+          // Wrap the entire job + evaluators in a job span
+          // This ensures evaluator spans are children of the job span
+          return await withJobSpan(
+            {
+              runId: tracingContext?.runId || "",
+              rowIndex,
+              parentContext: tracingContext?.parentContext,
+            },
+            async (jobSpan) => {
+              // Update progress with placeholder
+              await Effect.runPromise(
                 progress.updateProgress({
-                  currentEvaluator: evaluator.name,
+                  currentJob: "job",
+                  phase: "processing",
                 }),
               );
 
-              const score = yield* _(
-                pipe(
-                  Effect.tryPromise({
-                    try: async () => {
-                      const result = await evaluator.scorer({
-                        data: dataPoint,
-                        output: jobResult.output,
-                      });
-                      return result;
-                    },
-                    catch: (error) => error as Error,
-                  }),
-                  Effect.map((score) => ({
-                    evaluatorName: evaluator.name,
-                    score,
-                  })),
-                  Effect.catchAll((error) =>
-                    Effect.succeed({
-                      evaluatorName: evaluator.name,
-                      score: { value: "" as string },
-                      error: error as Error,
-                    }),
-                  ),
-                ),
+              // Execute the job
+              const result = await job(dataPoint, rowIndex);
+
+              // Set job name on span after execution
+              setJobNameAttribute(jobSpan, result.name);
+
+              // Update progress with actual job name
+              await Effect.runPromise(
+                progress.updateProgress({
+                  currentJob: result.name,
+                }),
               );
 
-              return score;
-            }),
-          { concurrency: "unbounded" },
-        ),
-      );
+              // Process evaluators within the job span context
+              if (evaluators.length > 0) {
+                await Effect.runPromise(
+                  progress.updateProgress({ phase: "evaluating" }),
+                );
 
-      return {
-        jobName: jobResult.name,
-        output: jobResult.output,
-        evaluatorScores,
-      };
-    }
+                const evaluatorScores = await Promise.all(
+                  evaluators.map(async (evaluator) => {
+                    // Update current evaluator
+                    await Effect.runPromise(
+                      progress.updateProgress({
+                        currentEvaluator: evaluator.name,
+                      }),
+                    );
 
-    return {
-      jobName: jobResult.name,
-      output: jobResult.output,
-      evaluatorScores: [],
-    };
+                    try {
+                      // Wrap evaluator in evaluation span (child of job span)
+                      const score = await withEvaluationSpan(
+                        {
+                          runId: tracingContext?.runId || "",
+                          evaluatorName: evaluator.name,
+                        },
+                        async (evalSpan) => {
+                          const evalResult = await evaluator.scorer({
+                            data: dataPoint,
+                            output: result.output,
+                          });
+
+                          // Set evaluation attributes on span
+                          setEvaluationAttributes(
+                            evalSpan,
+                            evalResult.value,
+                            evalResult.explanation,
+                            evalResult.pass,
+                          );
+
+                          return evalResult;
+                        },
+                      );
+
+                      return {
+                        evaluatorName: evaluator.name,
+                        score,
+                      };
+                    } catch (error) {
+                      return {
+                        evaluatorName: evaluator.name,
+                        score: { value: "" as string },
+                        error: error as Error,
+                      };
+                    }
+                  }),
+                );
+
+                return {
+                  jobName: result.name,
+                  output: result.output,
+                  evaluatorScores,
+                };
+              }
+
+              return {
+                jobName: result.name,
+                output: result.output,
+                evaluatorScores: [],
+              };
+            },
+          );
+        },
+        catch: (error) => error as Error,
+      }),
+    );
+
+    return jobResult;
   }).pipe(
     Effect.catchAll((error) => {
       // Check if the error has a jobName property (set by our job helper)
