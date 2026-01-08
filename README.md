@@ -166,6 +166,21 @@ await evaluatorq("platform-eval", {
 });
 ```
 
+### Deployment Helper
+
+Use the `deployment` and `invoke` helpers to call Orq deployments directly in your evaluation jobs:
+
+```typescript
+import { evaluatorq, job, invoke, deployment } from "@orq-ai/evaluatorq";
+
+// Simple invocation - returns just the text content
+const myJob = job("summarize", async (data) => {
+  return await invoke("my-summarizer", { inputs: data.inputs });
+});
+```
+
+**Unit Testing Model Changes**: You can use evaluatorq as a "unit test" framework for validating model changes. See the [country-unit-test example](./examples/src/lib/country-unit-test.eval.ts) which demonstrates fetching a dataset from the platform, calling a deployment for each row, and validating responses against expected outputs.
+
 ### Use Vercel AI SDK Provider
 
 ```typescript
