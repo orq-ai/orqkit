@@ -1,141 +1,44 @@
-name: Code Review
+name: Claude Code Review
+
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, ready_for_review, reopened]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+    #   - "src/**/*.js"
+    #   - "src/**/*.jsx"
 
 jobs:
-  review:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required for resolveReviewThread/unresolveReviewThread mutations
-      pull-requests: write
-      actions: read
+      contents: read
+      pull-requests: read
+      issues: read
       id-token: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
-      - name: Make review helper script executable
-        run: chmod +x .github/scripts/review-comment-helper.sh
-
-      - uses: anthropics/claude-code-action@v1
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          use_sticky_comment: true
-          track_progress: true
-          prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
-            PR TITLE: ${{ github.event.pull_request.title }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://code.claude.com/docs/en/cli-reference for available options
 
-            Please review this PR and provide inline feedback using GitHub's review system.
-
-            COMMENT MANAGEMENT:
-            CRITICAL - Before making any comments, you MUST:
-            1. First, use the helper script to get ALL review threads with their resolution status:
-               .github/scripts/review-comment-helper.sh get-review-threads "${{ github.repository_owner }}" "${{ github.event.repository.name }}" ${{ github.event.pull_request.number }}
-
-            2. Check for your own previous comments (author.login == "claude" or "claude[bot]") and their status:
-               - If isResolved: true - DO NOT comment on this issue again, even if the code still seems problematic
-               - If isMinimized: true - The comment was hidden, check minimizedReason
-               - If isResolved: false - You may re-evaluate if still relevant
-
-            3. For resolved threads (isResolved: true):
-               - The developer has explicitly marked this as resolved, meaning they addressed it or disagree
-               - DO NOT bring up the same issue again in subsequent reviews
-               - DO NOT create new comments about the same code/issue
-               - Trust that the developer handled it appropriately
-
-            4. For issues that have been addressed by developers:
-               - If the issue is FIXED and addressed: Use resolve-thread to mark the entire conversation as resolved
-               - DO NOT minimize comments - minimizing just hides them without properly resolving
-               - Only resolve threads where you are the author (author.login == "claude" or "claude[bot]")
-               - Use minimize-comment ONLY for spam/off-topic, NOT for resolved issues
-
-            5. Check for Linear issue links in existing PR comments - Linear bot automatically comments with issue details when referenced
-
-            6. When adding NEW feedback:
-               - Use inline comments for code-specific issues and a summary comment for overall feedback
-               - Only comment on NEW issues that haven't been addressed before
-               - DO NOT repeat feedback that's already been given and is still valid
-               - DO NOT comment on what's good - only mention feedback that can/needs improvement
-
-            7. Check for developer responses:
-               - Read answers on previous comments by other devs
-               - If they disagreed with your previous feedback and resolved the thread, respect their decision
-
-            8. ONLY minimize/resolve your OWN comments/threads (user.login == "claude" or "claude[bot]")
-
-            IMPORTANT: Resolved threads mean the issue is DONE - don't re-comment on them!
-
-            REVIEW COMMENT HELPER SCRIPT:
-            You have access to a restricted helper script (.github/scripts/review-comment-helper.sh) for managing review comments safely.
-
-            Available commands:
-
-            1. Get PR review threads with status:
-            ```bash
-            .github/scripts/review-comment-helper.sh get-review-threads "${{ github.repository_owner }}" "${{ github.event.repository.name }}" ${{ github.event.pull_request.number }}
-            ```
-
-            2. Minimize a comment (RARELY USED - only for spam/off-topic, NOT for resolved issues):
-            ```bash
-            .github/scripts/review-comment-helper.sh minimize-comment "COMMENT_NODE_ID" "OFF_TOPIC"
-            ```
-            Valid classifiers: OUTDATED, RESOLVED, DUPLICATE, OFF_TOPIC
-            DO NOT use this for issues that were fixed - use resolve-thread instead!
-
-            3. Resolve a review thread (USE THIS when developer fixed the issue):
-            ```bash
-            .github/scripts/review-comment-helper.sh resolve-thread "THREAD_ID"
-            ```
-            Use this to mark issues as resolved when developers address your feedback
-
-            4. Unresolve a review thread (only your own):
-            ```bash
-            .github/scripts/review-comment-helper.sh unresolve-thread "THREAD_ID"
-            ```
-
-            IMPORTANT:
-            - ONLY minimize/resolve comments where author.login is "claude" or "claude[bot]"
-            - Use comment/thread node_id from the GraphQL response (global node ID format)
-            - Check isMinimized and isResolved BEFORE acting to avoid redundant operations
-
-            Understanding the difference:
-            - isMinimized: Comment is HIDDEN (use minimize-comment for spam/off-topic ONLY)
-            - isResolved: Thread is RESOLVED (use resolve-thread when issue is FIXED)
-
-            Correct usage:
-            - Issue fixed by developer -> Use resolve-thread (not minimize-comment!)
-            - Comment is spam/off-topic -> Use minimize-comment
-            - NEVER minimize comments just because issue is fixed
-
-            The helper script only allows these specific operations - no other GraphQL access
-
-            REVIEW FOCUS:
-            - Whether there are potential bugs or security issues in these changes
-            - Whether there is incomprehensible logic in these changes
-            - Be concise, brief and to the point, but thorough
-            - Make sure that you check for OWASP Top 10 vulnerabilities
-            - Whether there are potential performance concerns
-            - Check for Linear issue details in the PR comments (Linear bot automatically posts issue details) and validate that the changes align with the requirements
-            - Take time to ensure the changes are correct and aligned with the requirements
-            - If a part is unclear or you are unsure, use the tools available to you to get more context around the codebase and understand how a particular domain works
-
-            WORKFLOW:
-            1. FIRST: Get review threads status using the helper script
-            2. SECOND: For your own previous threads, check if issues are fixed:
-               - If developer addressed the issue: Use resolve-thread command
-               - DO NOT re-comment on threads with isResolved: true
-            3. THIRD: Review the code for NEW issues only
-            4. FOURTH: Add inline comments for new issues and provide summary
-
-            Use inline comments for problematic code snippets and provide a summary comment with overall feedback.
-
-          claude_args: |
-            --allowedTools "Read,Glob,Grep,LS,WebFetch,WebSearch,mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_comments,mcp__github__add_issue_comment,mcp__github_inline_comment__create_inline_comment,Bash(.github/scripts/review-comment-helper.sh:*)"
-
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAX_MCP_OUTPUT_TOKENS: '50000'
