@@ -625,25 +625,30 @@ class Evaluator(TypedDict):
 
 # Deployment helper types
 @dataclass
-class DeploymentOptions:
-    """Options for invoking a deployment."""
-    inputs: dict[str, Any] | None = None
-    context: dict[str, Any] | None = None
-    metadata: dict[str, Any] | None = None
-    thread: dict[str, Any] | None = None  # Must include 'id' key
-    messages: list[dict[str, str]] | None = None
-
-@dataclass
 class DeploymentResponse:
     """Response from a deployment invocation."""
     content: str  # Text content of the response
     raw: Any      # Raw API response
 
 # Invoke deployment and get text content
-async def invoke(key: str, **options) -> str: ...
+async def invoke(
+    key: str,
+    inputs: dict[str, Any] | None = None,
+    context: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+    thread: dict[str, Any] | None = None,  # Must include 'id' key
+    messages: list[dict[str, str]] | None = None,
+) -> str: ...
 
 # Invoke deployment and get full response
-async def deployment(key: str, **options) -> DeploymentResponse: ...
+async def deployment(
+    key: str,
+    inputs: dict[str, Any] | None = None,
+    context: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+    thread: dict[str, Any] | None = None,  # Must include 'id' key
+    messages: list[dict[str, str]] | None = None,
+) -> DeploymentResponse: ...
 
 # Built-in evaluators
 def string_contains_evaluator(

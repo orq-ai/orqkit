@@ -6,26 +6,12 @@ This module provides commonly used evaluators that can be used with the evaluato
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from .types import Evaluator, ScorerParameter
 
 
-@dataclass
-class StringContainsConfig:
-    """Configuration options for the string contains evaluator."""
-
-    case_insensitive: bool = True
-    """Whether the comparison should be case-insensitive. Defaults to True."""
-
-    name: str = "string-contains"
-    """Optional name for the evaluator. Defaults to 'string-contains'."""
-
-
 def string_contains_evaluator(
-    config: StringContainsConfig | None = None,
-    *,
     case_insensitive: bool = True,
     name: str = "string-contains",
 ) -> Evaluator:
@@ -34,7 +20,6 @@ def string_contains_evaluator(
     Uses the data.expected_output from the dataset to compare against.
 
     Args:
-        config: Optional StringContainsConfig object with all settings
         case_insensitive: Whether the comparison should be case-insensitive
         name: Optional name for the evaluator
 
@@ -51,13 +36,6 @@ def string_contains_evaluator(
         # With custom name
         my_evaluator = string_contains_evaluator(name="my-contains-check")
     """
-    # Use config if provided, otherwise use kwargs
-    final_case_insensitive = case_insensitive
-    final_name = name
-
-    if config is not None:
-        final_case_insensitive = config.case_insensitive
-        final_name = config.name
 
     async def scorer(params: ScorerParameter) -> dict[str, Any]:
         data = params["data"]
@@ -75,8 +53,8 @@ def string_contains_evaluator(
                 "explanation": "No expected output defined",
             }
 
-        expected_normalized = expected.lower() if final_case_insensitive else expected
-        actual_normalized = actual.lower() if final_case_insensitive else actual
+        expected_normalized = expected.casefold() if case_insensitive else expected
+        actual_normalized = actual.casefold() if case_insensitive else actual
 
         contains = expected_normalized in actual_normalized
 
@@ -98,7 +76,7 @@ def string_contains_evaluator(
             }
 
     return {
-        "name": final_name,
+        "name": name,
         "scorer": scorer,
     }
 
@@ -143,8 +121,8 @@ def exact_match_evaluator(
                 "explanation": "No expected output defined",
             }
 
-        expected_normalized = expected.lower() if case_insensitive else expected
-        actual_normalized = actual.lower() if case_insensitive else actual
+        expected_normalized = expected.casefold() if case_insensitive else expected
+        actual_normalized = actual.casefold() if case_insensitive else actual
 
         matches = expected_normalized == actual_normalized
 

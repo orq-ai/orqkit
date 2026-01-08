@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 __all__ = [
-    "DeploymentOptions",
     "DeploymentResponse",
     "ThreadConfig",
     "MessageDict",
@@ -42,26 +41,6 @@ class MessageDict(TypedDict, total=False):
     role: Literal["system", "user", "assistant", "developer", "tool"]
     content: str
     name: str | None
-
-
-@dataclass
-class DeploymentOptions:
-    """Options for invoking a deployment."""
-
-    inputs: dict[str, object] | None = None
-    """Input variables for the deployment template"""
-
-    context: dict[str, object] | None = None
-    """Context attributes for routing"""
-
-    metadata: dict[str, object] | None = None
-    """Metadata to attach to the request"""
-
-    thread: ThreadConfig | None = None
-    """Thread configuration for conversation tracking. Must include 'id' key."""
-
-    messages: list[MessageDict] | None = None
-    """Chat messages for conversational deployments"""
 
 
 @dataclass
@@ -119,8 +98,6 @@ def _get_or_create_client() -> "Orq":
 
 async def deployment(
     key: str,
-    options: DeploymentOptions | None = None,
-    *,
     inputs: dict[str, object] | None = None,
     context: dict[str, object] | None = None,
     metadata: dict[str, object] | None = None,
@@ -132,7 +109,6 @@ async def deployment(
 
     Args:
         key: The deployment key (name)
-        options: Optional DeploymentOptions object with all parameters
         inputs: Input variables for the deployment template
         context: Context attributes for routing
         metadata: Metadata to attach to the request
@@ -163,44 +139,25 @@ async def deployment(
     """
     client = _get_or_create_client()
 
-    # Merge options object with kwargs (kwargs take precedence)
-    final_inputs = inputs
-    final_context = context
-    final_metadata = metadata
-    final_thread = thread
-    final_messages = messages
-
-    if options is not None:
-        if final_inputs is None:
-            final_inputs = options.inputs
-        if final_context is None:
-            final_context = options.context
-        if final_metadata is None:
-            final_metadata = options.metadata
-        if final_thread is None:
-            final_thread = options.thread
-        if final_messages is None:
-            final_messages = options.messages
-
     # Convert our types to SDK-compatible types
     from orq_ai_sdk.models import Thread
 
     sdk_thread: Thread | None = None
-    if final_thread is not None:
+    if thread is not None:
         sdk_thread = Thread(
-            id=final_thread.get("id", ""),
-            tags=final_thread.get("tags"),
+            id=thread.get("id", ""),
+            tags=thread.get("tags"),
         )
 
     # The SDK accepts list of message dicts directly
     # Cast to Any because the SDK's type hints are stricter than the actual runtime behavior
     completion = await client.deployments.invoke_async(
         key=key,
-        inputs=final_inputs,
-        context=final_context,
-        metadata=final_metadata,
+        inputs=inputs,
+        context=context,
+        metadata=metadata,
         thread=sdk_thread,
-        messages=cast(Any, final_messages),
+        messages=cast(Any, messages),
     )
 
     # Extract content from the response
@@ -220,7 +177,7 @@ def _extract_content_from_response(completion: object) -> str:
     content = ""
     choices: list[object] | None = getattr(completion, "choices", None)
 
-    if not choices or len(choices) == 0:
+    if not choices:
         return content
 
     first_choice: object = choices[0]
@@ -249,8 +206,6 @@ def _extract_content_from_response(completion: object) -> str:
 
 async def invoke(
     key: str,
-    options: DeploymentOptions | None = None,
-    *,
     inputs: dict[str, object] | None = None,
     context: dict[str, object] | None = None,
     metadata: dict[str, object] | None = None,
@@ -263,7 +218,6 @@ async def invoke(
 
     Args:
         key: The deployment key (name)
-        options: Optional DeploymentOptions object with all parameters
         inputs: Input variables for the deployment template
         context: Context attributes for routing
         metadata: Metadata to attach to the request
@@ -281,7 +235,6 @@ async def invoke(
     """
     response = await deployment(
         key,
-        options,
         inputs=inputs,
         context=context,
         metadata=metadata,
