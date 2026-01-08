@@ -29,7 +29,12 @@
   },
   "targetDefaults": {
     "nx-release-publish": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm publish --access public",
+        "cwd": "{projectRoot}"
+      }
     },
     "test": {
       "executor": "nx:run-commands",
