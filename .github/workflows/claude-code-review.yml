@@ -138,4 +138,4 @@ jobs:
 
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAX_MCP_OUTPUT_TOKENS: '50000'
+          MAX_MCP_OUTPUT_TOKENS: "50000"
