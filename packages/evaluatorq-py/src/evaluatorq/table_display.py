@@ -26,14 +26,6 @@ class EvaluatorAverages(TypedDict):
     averages: dict[str, dict[str, tuple[str, str]]]
 
 
-class EvaluatorAverages(TypedDict):
-    """Type for evaluator averages calculation result."""
-
-    job_names: list[str]
-    evaluator_names: list[str]
-    averages: dict[str, dict[str, tuple[str, str]]]
-
-
 def get_terminal_width() -> int:
     """Get terminal width with fallback"""
     return shutil.get_terminal_size(fallback=(80, 24)).columns
