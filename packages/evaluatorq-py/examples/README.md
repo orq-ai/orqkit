@@ -15,11 +15,12 @@ examples/
     ├── eval_reuse.py                  # Job and evaluator reuse
     ├── llm_eval_with_results.py       # LLM-based evaluation
     ├── test_job_helper.py             # Job error handling
+    ├── pass_fail_simple.py            # Simple pass/fail example
     └── cli/
         ├── example_using_cli.py       # CLI example 1
         ├── example_using_cli_two.py   # CLI example 2
         ├── example_llm.py             # CLI LLM example
-        └── example_cosine_similarity.py  # Cosine similarity (TODO)
+        └── example_cosine_similarity.py  # Cosine similarity evaluation
 ```
 
 ## Prerequisites
@@ -102,25 +103,32 @@ Demonstrates how jobs are named, tracked, and how errors are captured and report
 python test_job_helper.py
 ```
 
+#### 7. **pass_fail_simple.py** - Simple Pass/Fail Example
+The simplest example showing basic evaluation with a calculator job. All tests pass.
+
+```bash
+python pass_fail_simple.py
+```
+
 ### CLI Examples
 
 Examples in the `cli/` subdirectory demonstrate running evaluations from the command line.
 
-#### 7. **example_using_cli.py** - CLI Example 1
+#### 8. **example_using_cli.py** - CLI Example 1
 Simple text analysis evaluation.
 
 ```bash
 python cli/example_using_cli.py
 ```
 
-#### 8. **example_using_cli_two.py** - CLI Example 2
+#### 9. **example_using_cli_two.py** - CLI Example 2
 Similar to example 1 but with different data, showing reusability.
 
 ```bash
 python cli/example_using_cli_two.py
 ```
 
-#### 9. **example_llm.py** - CLI LLM Example
+#### 10. **example_llm.py** - CLI LLM Example
 LLM-based evaluation from the command line.
 
 ```bash
@@ -129,13 +137,12 @@ python cli/example_llm.py
 
 **Requires**: `ANTHROPIC_API_KEY` environment variable
 
-#### 10. **example_cosine_similarity.py** - Cosine Similarity (TODO)
-Demonstrates semantic similarity evaluation using embeddings.
-
-**Note**: This example is a placeholder. Cosine similarity evaluators are not yet implemented in the Python version. You can implement them using:
-- `sentence-transformers` for local embeddings
-- OpenAI embeddings API
-- `sklearn` for cosine similarity calculation
+#### 11. **example_cosine_similarity.py** - Cosine Similarity Evaluation
+Demonstrates semantic similarity evaluation using OpenAI embeddings. Shows:
+- Translation evaluation with cosine similarity scoring
+- Capital city description evaluation with threshold-based pass/fail
+- Using `simple_cosine_similarity()` for raw similarity scores
+- Using `cosine_similarity_threshold_evaluator()` for threshold-based evaluation
 
 ```bash
 python cli/example_cosine_similarity.py

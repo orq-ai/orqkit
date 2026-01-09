@@ -6,31 +6,177 @@ to compare semantic similarity between outputs and expected text
 using OpenAI embeddings.
 
 Prerequisites:
-- Install dependencies: anthropic, orq-ai-sdk (for embeddings)
+- Install dependencies: anthropic, openai
 - Set ANTHROPIC_API_KEY environment variable for Claude
 - Set either ORQ_API_KEY or OPENAI_API_KEY for embeddings
-
-Note: This example requires the evaluators package from Orq AI.
-In Python, you would need to implement similar functionality or
-wait for the Python version of @orq-ai/evaluators to be released.
-
-For now, this is a placeholder showing the structure. You can implement
-custom cosine similarity evaluators using libraries like:
-- sentence-transformers
-- openai embeddings API
-- sklearn for cosine similarity calculation
 
 Run with: python example_cosine_similarity.py
 """
 
 import asyncio
+import math
+import os
+from typing import Any
 
 from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 
-from evaluatorq import DataPoint, evaluatorq, job
+from evaluatorq import DataPoint, ScorerParameter, evaluatorq, job
 
 # Initialize Anthropic client
 claude = AsyncAnthropic()
+
+
+def create_openai_client() -> AsyncOpenAI:
+    """Create OpenAI client configured for Orq proxy or direct API."""
+    orq_api_key = os.environ.get("ORQ_API_KEY")
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+    if orq_api_key:
+        return AsyncOpenAI(
+            base_url="https://api.orq.ai/v2/proxy",
+            api_key=orq_api_key,
+        )
+    if openai_api_key:
+        return AsyncOpenAI(api_key=openai_api_key)
+
+    raise ValueError(
+        "Cosine similarity evaluator requires either ORQ_API_KEY or "
+        + "OPENAI_API_KEY environment variable to be set for embeddings"
+    )
+
+
+def get_embedding_model() -> str:
+    """Get the appropriate embedding model based on the environment."""
+    if os.environ.get("ORQ_API_KEY"):
+        return "openai/text-embedding-3-small"
+    return "text-embedding-3-small"
+
+
+def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
+    """Calculate cosine similarity between two vectors."""
+    if len(vec_a) != len(vec_b):
+        raise ValueError(f"Vector dimensions don't match: {len(vec_a)} vs {len(vec_b)}")
+
+    dot_product = sum(a * b for a, b in zip(vec_a, vec_b))
+    magnitude_a = math.sqrt(sum(a * a for a in vec_a))
+    magnitude_b = math.sqrt(sum(b * b for b in vec_b))
+
+    if magnitude_a == 0 or magnitude_b == 0:
+        return 0.0
+
+    return dot_product / (magnitude_a * magnitude_b)
+
+
+async def get_embedding(client: AsyncOpenAI, text: str, model: str) -> list[float]:
+    """Get embedding vector for text using OpenAI API."""
+    response = await client.embeddings.create(input=text, model=model)
+    return response.data[0].embedding
+
+
+def simple_cosine_similarity(expected_text: str) -> dict[str, Any]:
+    """
+    Create a cosine similarity evaluator that returns the raw similarity score.
+
+    Args:
+        expected_text: The expected text to compare against the output.
+
+    Returns:
+        An evaluator dict with name and scorer function.
+    """
+    # Lazy initialization of client
+    client: AsyncOpenAI | None = None
+
+    async def scorer(input_data: ScorerParameter) -> dict[str, Any]:
+        nonlocal client
+        output = input_data["output"]
+
+        if output is None:
+            return {
+                "value": 0,
+                "explanation": "Output is null or undefined",
+            }
+
+        output_text = str(output)
+
+        if client is None:
+            client = create_openai_client()
+
+        model = get_embedding_model()
+
+        # Get embeddings for both texts
+        output_embedding, expected_embedding = await asyncio.gather(
+            get_embedding(client, output_text, model),
+            get_embedding(client, expected_text, model),
+        )
+
+        # Calculate cosine similarity
+        similarity = cosine_similarity(output_embedding, expected_embedding)
+
+        return {
+            "value": similarity,
+            "explanation": f"Cosine similarity: {similarity:.3f}",
+        }
+
+    return {"name": "cosine-similarity", "scorer": scorer}
+
+
+def cosine_similarity_threshold_evaluator(
+    expected_text: str,
+    threshold: float,
+    name: str = "cosine-similarity-threshold",
+) -> dict[str, Any]:
+    """
+    Create a cosine similarity evaluator that returns pass/fail based on threshold.
+
+    Args:
+        expected_text: The expected text to compare against the output.
+        threshold: Similarity threshold (0-1). Returns True if similarity >= threshold.
+        name: Optional name for the evaluator.
+
+    Returns:
+        An evaluator dict with name and scorer function.
+    """
+    # Lazy initialization of client
+    client: AsyncOpenAI | None = None
+
+    async def scorer(input_data: ScorerParameter) -> dict[str, Any]:
+        nonlocal client
+        output = input_data["output"]
+
+        if output is None:
+            return {
+                "value": False,
+                "explanation": "Output is null or undefined",
+            }
+
+        output_text = str(output)
+
+        if client is None:
+            client = create_openai_client()
+
+        model = get_embedding_model()
+
+        # Get embeddings for both texts
+        output_embedding, expected_embedding = await asyncio.gather(
+            get_embedding(client, output_text, model),
+            get_embedding(client, expected_text, model),
+        )
+
+        # Calculate cosine similarity
+        similarity = cosine_similarity(output_embedding, expected_embedding)
+        meets_threshold = similarity >= threshold
+
+        return {
+            "value": meets_threshold,
+            "explanation": (
+                f"Similarity ({similarity:.3f}) meets threshold ({threshold})"
+                if meets_threshold
+                else f"Similarity ({similarity:.3f}) below threshold ({threshold})"
+            ),
+        }
+
+    return {"name": name, "scorer": scorer}
 
 
 @job("translate-to-french")
@@ -73,37 +219,19 @@ async def describe_capital(data: DataPoint, _row: int = 0) -> str:
     return response.content[0].text if response.content[0].type == "text" else ""
 
 
-# TODO: Implement cosine similarity evaluators
-# These would need to:
-# 1. Get embeddings for both the output and expected text
-# 2. Calculate cosine similarity between embeddings
-# 3. Return a score and explanation
-#
-# Example implementation structure:
-#
-# async def simple_cosine_similarity(expected_text: str):
-#     async def scorer(input_data):
-#         output = input_data["output"]
-#         # Get embeddings using OpenAI/Orq API
-#         # Calculate cosine similarity
-#         # Return score and explanation
-#     return {"name": "cosine-similarity", "scorer": scorer}
-#
-# async def cosine_similarity_threshold(expected_text: str, threshold: float, name: str):
-#     async def scorer(input_data):
-#         output = input_data["output"]
-#         # Get embeddings and calculate similarity
-#         # Return pass/fail based on threshold
-#     return {"name": name, "scorer": scorer}
-
-
 async def main():
     """Run cosine similarity evaluation examples."""
     print("🌍 Running translation evaluation...\n")
-    print(
-        "⚠️  Note: Cosine similarity evaluators not yet implemented in Python version."
+
+    # Create evaluators
+    french_translation_similarity = simple_cosine_similarity(
+        "Bonjour, comment allez-vous?"
     )
-    print("    This example shows the structure without the actual evaluators.\n")
+    exact_translation_threshold = cosine_similarity_threshold_evaluator(
+        expected_text="Le ciel est bleu",
+        threshold=0.85,
+        name="exact-translation-match",
+    )
 
     # Run evaluation with translation examples
     _ = await evaluatorq(
@@ -115,17 +243,20 @@ async def main():
                 DataPoint(inputs={"text": "Good morning"}),
             ],
             "jobs": [translate_to_french],
-            "evaluators": [
-                # TODO: Add cosine similarity evaluators here
-                # simple_cosine_similarity("Bonjour, comment allez-vous?"),
-                # cosine_similarity_threshold("Le ciel est bleu", 0.85, "exact-translation-match"),
-            ],
+            "evaluators": [french_translation_similarity, exact_translation_threshold],
             "parallelism": 2,
             "print": True,
         },
     )
 
     print("\n🗺️ Running capital city evaluation...\n")
+
+    # Create evaluator for capital descriptions
+    capital_description_threshold = cosine_similarity_threshold_evaluator(
+        expected_text="The capital of France is Paris",
+        threshold=0.7,
+        name="capital-semantic-match",
+    )
 
     # Run evaluation with capital city descriptions
     _ = await evaluatorq(
@@ -137,10 +268,7 @@ async def main():
                 DataPoint(inputs={"country": "Japan"}),
             ],
             "jobs": [describe_capital],
-            "evaluators": [
-                # TODO: Add cosine similarity evaluators here
-                # cosine_similarity_threshold("The capital of France is Paris", 0.7, "capital-semantic-match"),
-            ],
+            "evaluators": [capital_description_threshold],
             "parallelism": 2,
             "print": True,
         },
