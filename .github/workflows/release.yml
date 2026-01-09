@@ -91,10 +91,18 @@ jobs:
         run: |
           if [ -n "${{ inputs.custom_version }}" ]; then
             echo "specifier=${{ inputs.custom_version }}" >> $GITHUB_OUTPUT
+            # Check if custom version is a prerelease (contains -)
+            if [[ "${{ inputs.custom_version }}" == *-* ]]; then
+              echo "npm_tag=next" >> $GITHUB_OUTPUT
+            else
+              echo "npm_tag=latest" >> $GITHUB_OUTPUT
+            fi
           elif [[ "${{ inputs.version }}" == pre* ]]; then
             echo "specifier=${{ inputs.version }} --preid rc" >> $GITHUB_OUTPUT
+            echo "npm_tag=next" >> $GITHUB_OUTPUT
           else
             echo "specifier=${{ inputs.version }}" >> $GITHUB_OUTPUT
+            echo "npm_tag=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Run Nx Release (version & changelog)
@@ -108,5 +116,6 @@ jobs:
       - name: Publish all packages
         run: bun nx release publish --yes
         env:
+          NPM_TAG: ${{ steps.version.outputs.npm_tag }}
           NPM_CONFIG_PROVENANCE: true
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
