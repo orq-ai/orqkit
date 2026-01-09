@@ -14,6 +14,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run evaluations
+        uses: orq-ai/cli-evaluate@v1
+        with:
+          pattern: "**/*.eval.ts"
+          orq-api-key: ${{ secrets.ORQ_API_KEY }}
+
+      - name: Run evaluations
         uses: ./.github/actions/evaluate
         with:
           pattern: "examples/src/lib/country-unit-test.eval.ts"
