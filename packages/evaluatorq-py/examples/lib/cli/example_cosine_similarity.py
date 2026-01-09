@@ -106,7 +106,7 @@ async def main():
     print("    This example shows the structure without the actual evaluators.\n")
 
     # Run evaluation with translation examples
-    _ await evaluatorq(
+    _ = await evaluatorq(
         "translation-evaluation",
         {
             "data": [
