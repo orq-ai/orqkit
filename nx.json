@@ -32,7 +32,7 @@
       "dependsOn": ["build"],
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm publish --access public",
+        "command": "npm publish --access public --tag ${NPM_TAG:-latest}",
         "cwd": "{projectRoot}"
       }
     },
