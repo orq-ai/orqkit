@@ -114,7 +114,7 @@ async def run_simulated_delay_example():
         }
 
     # Evaluator 3: Latency scorer
-    async def latency_scorer(input_data: ScorerParameter) -> dict[str, Any]:
+    async def latency_scorer(_input_data: ScorerParameter) -> dict[str, Any]:
         # Simulate scoring based on response time (50-150ms)
         await asyncio.sleep(0.05 + random.random() * 0.1)
 
