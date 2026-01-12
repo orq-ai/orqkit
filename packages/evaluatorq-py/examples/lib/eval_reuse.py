@@ -9,9 +9,9 @@ import asyncio
 import re
 from typing import Any
 
-from evals import max_length_validator
-
 from evaluatorq import DataPoint, evaluatorq, job
+
+from .evals import max_length_validator
 
 
 # Define a reusable job for text analysis

@@ -7,7 +7,7 @@ and LLM-based evaluators.
 """
 
 import json
-from typing import Any
+from typing import Any, Sized, cast
 
 from anthropic import AsyncAnthropic
 
@@ -35,7 +35,12 @@ def max_length_validator(max_length: int) -> Evaluator:
             }
 
         # Check if output has a length attribute
-        has_valid_length = hasattr(output, "__len__") and len(output) <= max_length
+        if not hasattr(output, "__len__"):
+            return {
+                "value": False,
+                "explanation": f"Output type {type(output).__name__} has no length",
+            }
+        has_valid_length = len(cast(Sized, output)) <= max_length
 
         return {
             "value": has_valid_length,
@@ -149,7 +154,9 @@ async def is_it_polite_scorer(input_data: ScorerParameter) -> dict[str, Any]:
                 "role": "user",
                 "content": f"""Evaluate how polite the following response is on a scale from 0 to 1, where 0 is extremely rude and 1 is extremely polite.
 
-Response to evaluate: "{output}"
+<response_to_evaluate>
+{output}
+</response_to_evaluate>
 
 Return ONLY valid JSON in this format:
 {{"score": 0.85, "explanation": "Brief explanation of the score"}}
