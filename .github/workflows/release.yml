@@ -108,7 +108,7 @@ jobs:
           cat $GITHUB_OUTPUT
 
       - name: Run Nx Release (version & changelog)
-        run: bun nx release ${{ steps.version.outputs.specifier }} --yes
+        run: bun nx release ${{ steps.version.outputs.specifier }} --yes --skip-publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -127,4 +127,3 @@ jobs:
         env:
           NPM_TAG: ${{ steps.version.outputs.npm_tag }}
           NPM_CONFIG_PROVENANCE: true
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
