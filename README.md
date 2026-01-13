@@ -8,7 +8,7 @@ Tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines,
 - Run evaluations across multiple prompts and models
 - Track performance over time
 - Ensure model updates don't break existing functionality
-- Integrate evaluation into CI/CD pipelines
+- Integrate evaluation into CI/CD pipeline
 
 **The Solution:** OrqKit provides tools to:
 - **Evaluate at Scale** - Run parallel evaluations across datasets with built-in retry logic
