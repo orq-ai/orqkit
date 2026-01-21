@@ -1,0 +1,1 @@
+{"properties":{"reason":{"type":"string","description":"The reason the response could not be completed."}},"type":"object","required":["reason"],"title":"Incomplete details","description":"Details about why the response was incomplete.","x-readme-ref-name":"IncompleteDetails"}

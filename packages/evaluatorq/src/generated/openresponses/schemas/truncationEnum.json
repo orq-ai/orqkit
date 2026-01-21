@@ -1,0 +1,1 @@
+{"type":"string","enum":["auto","disabled"],"x-enumDescriptions":{"auto":"Let the service decide how to truncate.","disabled":"Disable service truncation. Context over the model's context limit will result in a 400 error."},"x-readme-ref-name":"TruncationEnum"}

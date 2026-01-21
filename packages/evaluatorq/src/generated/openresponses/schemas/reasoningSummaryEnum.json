@@ -1,0 +1,1 @@
+{"type":"string","enum":["concise","detailed","auto"],"x-enumDescriptions":{"auto":"Allow the model to decide when to summarize.","concise":"Emit concise summaries of reasoning content.","detailed":"Emit details summaries of reasoning content."},"x-readme-ref-name":"ReasoningSummaryEnum"}

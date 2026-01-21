@@ -1,0 +1,1 @@
+{"type":"string","enum":["auto","default","flex","priority"],"x-enumDescriptions":{"auto":"Choose a service tier automatically based on current account state.","default":"Choose the default service tier.","flex":"Choose the flex service tier.","priority":"Choose the priority service tier."},"x-readme-ref-name":"ServiceTierEnum"}

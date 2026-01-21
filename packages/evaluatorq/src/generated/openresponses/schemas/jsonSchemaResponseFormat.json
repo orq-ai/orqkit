@@ -1,0 +1,1 @@
+{"properties":{"type":{"type":"string","enum":["json_schema"],"default":"json_schema"},"name":{"type":"string"},"description":{"anyOf":[{"type":"string"},{"type":"null"}]},"schema":{"anyOf":[{"type":"null"}]},"strict":{"type":"boolean"}},"type":"object","required":["type","name","description","schema","strict"],"x-readme-ref-name":"JsonSchemaResponseFormat"}

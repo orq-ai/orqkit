@@ -1,0 +1,1 @@
+{"type":"string","enum":["reasoning.encrypted_content","message.output_text.logprobs"],"description":"","x-enumDescriptions":{"message.output_text.logprobs":"includes sampled logprobs in assistant messages.","reasoning.encrypted_content":"includes encrypted reasoning content so that it may be rehydrated on a subsequent request."},"x-readme-ref-name":"IncludeEnum"}

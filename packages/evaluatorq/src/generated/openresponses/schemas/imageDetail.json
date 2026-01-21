@@ -1,0 +1,1 @@
+{"type":"string","enum":["low","high","auto"],"x-enumDescriptions":{"auto":"Choose the detail level automatically.","high":"Allows the model to \"see\" a higher-resolution version of the image, usually increasing input token costs.","low":"Restricts the model to a lower-resolution version of the image."},"x-readme-ref-name":"ImageDetail"}

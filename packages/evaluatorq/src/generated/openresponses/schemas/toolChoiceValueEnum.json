@@ -1,0 +1,1 @@
+{"type":"string","enum":["none","auto","required"],"x-enumDescriptions":{"auto":"Let the model choose the tools from among the provided set.","none":"Restrict the model from calling any tools.","required":"Require the model to call a tool."},"x-readme-ref-name":"ToolChoiceValueEnum"}

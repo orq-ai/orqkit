@@ -1,0 +1,1 @@
+{"type":"string","enum":["low","medium","high"],"x-enumDescriptions":{"high":"Instruct the model to emit more verbose final responses.","low":"Instruct the model to emit less verbose final responses.","medium":"Use the model's default verbosity setting."},"x-readme-ref-name":"VerbosityEnum"}
