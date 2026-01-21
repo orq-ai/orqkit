@@ -19,7 +19,7 @@ import type {
 } from "./packages/evaluatorq/src/generated/openresponses/types";
 
 const openai = createOpenAI({
-  apiKey: 'OPENAI_API_KEY',
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const weatherAgent = new ToolLoopAgent({
