@@ -16,3 +16,6 @@ export {
   type TracingContext,
 } from "./lib/tracing/index.js";
 export * from "./lib/types.js";
+
+// OpenResponses types
+export * from "./generated/openresponses/index.js";
