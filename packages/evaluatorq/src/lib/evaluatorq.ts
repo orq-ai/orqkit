@@ -91,8 +91,12 @@ async function* fetchDatasetBatches(
       for (const datapoint of response.data) {
         const inputs = { ...(datapoint.inputs || {}) };
         if (options?.includeMessages) {
-          // Merge top-level messages into inputs if not already present
-          if (!("messages" in inputs) && datapoint.messages) {
+          if ("messages" in inputs) {
+            throw new Error(
+              "includeMessages is enabled but the datapoint inputs already contain a 'messages' key. Remove 'messages' from inputs or disable includeMessages.",
+            );
+          }
+          if (datapoint.messages) {
             inputs.messages = datapoint.messages;
           }
         }

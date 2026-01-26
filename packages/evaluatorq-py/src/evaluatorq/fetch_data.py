@@ -93,8 +93,12 @@ async def fetch_dataset_batches(
             for point in response.data:
                 inputs = dict(point.inputs) if point.inputs is not None else {}
                 if include_messages:
-                    # Merge top-level messages into inputs if not already present
-                    if "messages" not in inputs and getattr(point, "messages", None):
+                    if "messages" in inputs:
+                        raise ValueError(
+                            "include_messages is enabled but the datapoint inputs already contain a 'messages' key. "
+                            "Remove 'messages' from inputs or disable include_messages."
+                        )
+                    if getattr(point, "messages", None):
                         inputs["messages"] = point.messages
                 batch_datapoints.append(
                     DataPoint(
