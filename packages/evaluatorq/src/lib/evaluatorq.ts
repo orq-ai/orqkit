@@ -136,7 +136,11 @@ async function fetchDatasetAsDataPoints(
   options?: { includeMessages?: boolean },
 ): Promise<Promise<DataPoint>[]> {
   const allDatapoints: DataPoint[] = [];
-  for await (const batch of fetchDatasetBatches(orqClient, datasetId, options)) {
+  for await (const batch of fetchDatasetBatches(
+    orqClient,
+    datasetId,
+    options,
+  )) {
     allDatapoints.push(...batch.datapoints);
   }
   return allDatapoints.map((dp) => Promise.resolve(dp));
@@ -580,7 +584,10 @@ export const evaluatorqEffect = (
 
       const dataPromises = yield* _(
         Effect.tryPromise({
-          try: () => fetchDatasetAsDataPoints(orqClient, data.datasetId, { includeMessages: data.includeMessages }),
+          try: () =>
+            fetchDatasetAsDataPoints(orqClient, data.datasetId, {
+              includeMessages: data.includeMessages,
+            }),
           catch: (error) =>
             error instanceof Error
               ? error
