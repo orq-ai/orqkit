@@ -66,6 +66,7 @@ interface DataPointBatch {
 async function* fetchDatasetBatches(
   orqClient: Orq,
   datasetId: string,
+  options?: { includeMessages?: boolean },
 ): AsyncGenerator<DataPointBatch> {
   let startingAfter: string | undefined;
   let batchNumber = 0;
@@ -88,8 +89,18 @@ async function* fetchDatasetBatches(
 
       const batchDatapoints: DataPoint[] = [];
       for (const datapoint of response.data) {
+        const inputs = datapoint.inputs || {};
+        if (options?.includeMessages) {
+          // Merge top-level messages into inputs if not already present
+          if (!("messages" in inputs) && datapoint.messages) {
+            inputs.messages = datapoint.messages;
+          }
+        } else {
+          // Strip messages from inputs for backwards compatibility
+          delete inputs.messages;
+        }
         batchDatapoints.push({
-          inputs: datapoint.inputs || {},
+          inputs,
           expectedOutput: datapoint.expectedOutput,
         } as DataPoint);
 
@@ -122,9 +133,10 @@ async function* fetchDatasetBatches(
 async function fetchDatasetAsDataPoints(
   orqClient: Orq,
   datasetId: string,
+  options?: { includeMessages?: boolean },
 ): Promise<Promise<DataPoint>[]> {
   const allDatapoints: DataPoint[] = [];
-  for await (const batch of fetchDatasetBatches(orqClient, datasetId)) {
+  for await (const batch of fetchDatasetBatches(orqClient, datasetId, options)) {
     allDatapoints.push(...batch.datapoints);
   }
   return allDatapoints.map((dp) => Promise.resolve(dp));
@@ -199,6 +211,7 @@ export async function evaluatorq(
 
     datasetId = data.datasetId;
     const datasetIdValue = datasetId; // Capture for use in callbacks
+    const includeMessages = data.includeMessages ?? false;
 
     // Shared progress state that can be updated from within Effect.promise
     const progressRef = {
@@ -256,6 +269,7 @@ export async function evaluatorq(
               for await (const batch of fetchDatasetBatches(
                 orqClient,
                 datasetIdValue,
+                { includeMessages },
               )) {
                 // Update total as we fetch
                 progressRef.totalDataPoints += batch.datapoints.length;
@@ -566,7 +580,7 @@ export const evaluatorqEffect = (
 
       const dataPromises = yield* _(
         Effect.tryPromise({
-          try: () => fetchDatasetAsDataPoints(orqClient, data.datasetId),
+          try: () => fetchDatasetAsDataPoints(orqClient, data.datasetId, { includeMessages: data.includeMessages }),
           catch: (error) =>
             error instanceof Error
               ? error
