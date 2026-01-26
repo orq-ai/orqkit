@@ -89,15 +89,12 @@ async function* fetchDatasetBatches(
 
       const batchDatapoints: DataPoint[] = [];
       for (const datapoint of response.data) {
-        const inputs = datapoint.inputs || {};
+        const inputs = { ...(datapoint.inputs || {}) };
         if (options?.includeMessages) {
           // Merge top-level messages into inputs if not already present
           if (!("messages" in inputs) && datapoint.messages) {
             inputs.messages = datapoint.messages;
           }
-        } else {
-          // Strip messages from inputs for backwards compatibility
-          delete inputs.messages;
         }
         batchDatapoints.push({
           inputs,

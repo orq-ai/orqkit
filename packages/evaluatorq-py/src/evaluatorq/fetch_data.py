@@ -96,9 +96,6 @@ async def fetch_dataset_batches(
                     # Merge top-level messages into inputs if not already present
                     if "messages" not in inputs and getattr(point, "messages", None):
                         inputs["messages"] = point.messages
-                else:
-                    # Strip messages from inputs for backwards compatibility
-                    inputs.pop("messages", None)
                 batch_datapoints.append(
                     DataPoint(
                         inputs=inputs,
