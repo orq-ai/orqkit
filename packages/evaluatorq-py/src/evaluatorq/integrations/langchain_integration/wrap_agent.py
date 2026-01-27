@@ -7,7 +7,6 @@ from typing import Any, Protocol
 from evaluatorq.types import DataPoint
 
 from .convert import convert_to_open_responses
-from .types import AgentJobOptions
 
 
 class LangChainInvocable(Protocol):
@@ -100,9 +99,7 @@ def wrap_langchain_agent(
             )
 
         # Invoke the LangChain agent
-        result = agent.invoke(
-            {"messages": [{"role": "user", "content": prompt}]}
-        )
+        result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
 
         # Extract messages from result
         messages = result.get("messages", [])

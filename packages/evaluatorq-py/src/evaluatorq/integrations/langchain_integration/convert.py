@@ -8,6 +8,24 @@ import time
 import uuid
 from typing import Any
 
+from evaluatorq.openresponses import ResponseResourceDict
+from evaluatorq.openresponses.convert_models import (
+    FunctionCall,
+    FunctionCallOutput,
+    FunctionCallOutputStatusEnum,
+    FunctionCallStatus,
+    FunctionTool,
+    IncompleteDetails,
+    InputTextContent,
+    InputTokensDetails,
+    Message,
+    MessageRole,
+    MessageStatus,
+    OutputTextContent,
+    OutputTokensDetails,
+    Usage,
+)
+
 
 def generate_item_id(prefix: str = "item") -> str:
     """Generate a unique item ID with the given prefix."""
@@ -17,7 +35,7 @@ def generate_item_id(prefix: str = "item") -> str:
 def convert_to_open_responses(
     messages: list[Any],
     tools: list[dict[str, Any]] | None = None,
-) -> dict[str, Any]:
+) -> ResponseResourceDict:
     """
     Convert LangChain agent messages to OpenResponses format.
 
@@ -33,8 +51,8 @@ def convert_to_open_responses(
     """
     now = math.floor(time.time())
 
-    input_items: list[dict[str, Any]] = []
-    output_items: list[dict[str, Any]] = []
+    input_items: list[Message] = []
+    output_items: list[FunctionCall | FunctionCallOutput | Message] = []
 
     # Track usage across all messages
     total_input_tokens = 0
@@ -53,18 +71,14 @@ def convert_to_open_responses(
         if msg_type == "human":
             # User message goes into input
             content_text = _get_content(msg_data)
-            input_items.append({
-                "type": "message",
-                "id": generate_item_id("msg"),
-                "role": "user",
-                "status": "completed",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": content_text,
-                    }
-                ],
-            })
+            input_message = Message(
+                type="message",
+                id=generate_item_id("msg"),
+                role=MessageRole.user,
+                status=MessageStatus.completed,
+                content=[InputTextContent(type="input_text", text=content_text)],
+            )
+            input_items.append(input_message)
 
         elif msg_type == "ai":
             # Extract usage metadata
@@ -91,81 +105,101 @@ def convert_to_open_responses(
                 # AI message with tool calls -> function_call items
                 for tc in tool_calls:
                     call_id = tc.get("id", generate_item_id("call"))
-                    output_items.append({
-                        "type": "function_call",
-                        "id": generate_item_id("fc"),
-                        "call_id": call_id,
-                        "name": tc.get("name", "unknown"),
-                        "arguments": _serialize_args(tc.get("args", {})),
-                        "status": "completed",
-                    })
+                    function_call = FunctionCall(
+                        type="function_call",
+                        id=generate_item_id("fc"),
+                        call_id=call_id,
+                        name=tc.get("name", "unknown"),
+                        arguments=_serialize_args(tc.get("args", {})),
+                        status=FunctionCallStatus.completed,
+                    )
+                    output_items.append(function_call)
             else:
                 # Final AI message with text content -> output message
                 content_text = _get_content(msg_data)
                 if content_text:
-                    output_items.append({
-                        "type": "message",
-                        "id": generate_item_id("msg"),
-                        "role": "assistant",
-                        "status": "completed",
-                        "content": [
-                            {
-                                "type": "output_text",
-                                "text": content_text,
-                                "annotations": [],
-                                "logprobs": [],
-                            }
+                    output_message = Message(
+                        type="message",
+                        id=generate_item_id("msg"),
+                        role=MessageRole.assistant,
+                        status=MessageStatus.completed,
+                        content=[
+                            OutputTextContent(
+                                type="output_text",
+                                text=content_text,
+                                annotations=[],
+                                logprobs=[],
+                            )
                         ],
-                    })
+                    )
+                    output_items.append(output_message)
 
         elif msg_type == "tool":
             # Tool output -> function_call_output
             tool_call_id = _get_tool_call_id(msg_data)
             output_content = _get_content(msg_data)
 
-            output_items.append({
-                "type": "function_call_output",
-                "id": generate_item_id("fco"),
-                "call_id": tool_call_id,
-                "output": output_content,
-                "status": "completed",
-            })
+            function_call_output = FunctionCallOutput(
+                type="function_call_output",
+                id=generate_item_id("fco"),
+                call_id=tool_call_id,
+                output=output_content,
+                status=FunctionCallOutputStatusEnum.completed,
+            )
+            output_items.append(function_call_output)
 
     # Build tools array
-    tools_array: list[dict[str, Any]] = []
+    tools_array: list[FunctionTool] = []
     if tools:
         for tool_def in tools:
-            tools_array.append({
-                "type": "function",
-                "name": tool_def.get("name", "unknown"),
-                "description": tool_def.get("description"),
-                "parameters": tool_def.get("parameters"),
-                "strict": None,
-            })
+            tool = FunctionTool(
+                type="function",
+                name=tool_def.get("name", "unknown"),
+                description=tool_def.get("description"),
+                parameters=tool_def.get("parameters"),
+                strict=None,
+            )
+            tools_array.append(tool)
 
     # Determine status from finish reason
     status = "completed"
-    incomplete_details = None
+    incomplete_details: IncompleteDetails | None = None
     if last_finish_reason == "error":
         status = "failed"
     elif last_finish_reason in ("length", "content-filter"):
         status = "incomplete"
-        incomplete_details = {"reason": last_finish_reason}
+        incomplete_details = IncompleteDetails(reason=last_finish_reason)
 
+    # Build usage
+    usage_data: Usage | None = None
+    if total_tokens > 0:
+        usage_data = Usage(
+            input_tokens=total_input_tokens,
+            output_tokens=total_output_tokens,
+            total_tokens=total_tokens,
+            input_tokens_details=InputTokensDetails(cached_tokens=cached_tokens),
+            output_tokens_details=OutputTokensDetails(
+                reasoning_tokens=reasoning_tokens
+            ),
+        )
+
+    # Serialize Pydantic models to dicts for the response
     return {
         "id": generate_item_id("resp"),
         "object": "response",
         "created_at": now,
         "completed_at": now if status == "completed" else None,
         "status": status,
-        "incomplete_details": incomplete_details,
+        "incomplete_details": incomplete_details.model_dump()
+        if incomplete_details
+        else None,
         "model": model_name,
         "previous_response_id": None,
         "instructions": None,
-        "input": input_items,
-        "output": output_items,
+        "input": [msg.model_dump() for msg in input_items],
+        "output": [item.model_dump() for item in output_items],
         "error": {"message": "Agent execution failed"} if status == "failed" else None,
-        "tools": tools_array,
+        "tools": [tool.model_dump() for tool in tools_array],
         "tool_choice": "auto",
         "truncation": "disabled",
         "parallel_tool_calls": True,
@@ -178,17 +212,7 @@ def convert_to_open_responses(
         "top_logprobs": 0,
         "temperature": 1.0,
         "reasoning": None,
-        "usage": {
-            "input_tokens": total_input_tokens,
-            "output_tokens": total_output_tokens,
-            "total_tokens": total_tokens,
-            "input_tokens_details": {
-                "cached_tokens": cached_tokens,
-            },
-            "output_tokens_details": {
-                "reasoning_tokens": reasoning_tokens,
-            },
-        } if total_tokens > 0 else None,
+        "usage": usage_data.model_dump() if usage_data else None,
         "max_output_tokens": None,
         "max_tool_calls": None,
         "store": False,
@@ -273,11 +297,13 @@ def _get_tool_calls(msg_data: Any) -> list[dict[str, Any]]:
             result.append(tc)
         else:
             # LangChain ToolCall object
-            result.append({
-                "id": getattr(tc, "id", None),
-                "name": getattr(tc, "name", "unknown"),
-                "args": getattr(tc, "args", {}),
-            })
+            result.append(
+                {
+                    "id": getattr(tc, "id", None),
+                    "name": getattr(tc, "name", "unknown"),
+                    "args": getattr(tc, "args", {}),
+                }
+            )
 
     return result
 
