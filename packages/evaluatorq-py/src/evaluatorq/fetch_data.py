@@ -95,8 +95,7 @@ async def fetch_dataset_batches(
                 if include_messages:
                     if "messages" in inputs:
                         raise ValueError(
-                            "include_messages is enabled but the datapoint inputs already contain a 'messages' key. "
-                            "Remove 'messages' from inputs or disable include_messages."
+                            "include_messages is enabled but the datapoint inputs already contain a 'messages' key. Remove 'messages' from inputs or disable include_messages."
                         )
                     if getattr(point, "messages", None):
                         inputs["messages"] = point.messages
@@ -146,6 +145,8 @@ async def fetch_dataset_as_datapoints(
         List of DataPoint objects with inputs and expected_output
     """
     all_datapoints: list[DataPoint] = []
-    async for batch in fetch_dataset_batches(orq_client, dataset_id, include_messages=include_messages):
+    async for batch in fetch_dataset_batches(
+        orq_client, dataset_id, include_messages=include_messages
+    ):
         all_datapoints.extend(batch.datapoints)
     return all_datapoints

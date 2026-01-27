@@ -49,4 +49,4 @@ Thumbs.db
 .npmrc
 .venv
 **/*.tsbuildinfo
-packages/evaluatorq-py/.env
+**/.env
