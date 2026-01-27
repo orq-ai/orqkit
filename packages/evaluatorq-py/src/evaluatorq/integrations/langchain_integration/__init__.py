@@ -6,7 +6,11 @@ to OpenResponses format for use with the evaluatorq framework.
 
 from .convert import convert_to_open_responses, generate_item_id
 from .types import AgentJobOptions
-from .wrap_agent import extract_tools_from_agent, wrap_langchain_agent
+from .wrap_agent import (
+    extract_tools_from_agent,
+    wrap_langchain_agent,
+    wrap_langgraph_agent,
+)
 
 __all__ = [
     "AgentJobOptions",
@@ -14,4 +18,5 @@ __all__ = [
     "extract_tools_from_agent",
     "generate_item_id",
     "wrap_langchain_agent",
+    "wrap_langgraph_agent",
 ]

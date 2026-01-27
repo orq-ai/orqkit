@@ -11,7 +11,13 @@ from .types import AgentJobOptions
 
 
 class LangChainInvocable(Protocol):
-    """Protocol for LangChain agent-like objects with an invoke method."""
+    """Protocol for LangChain/LangGraph objects with an invoke method.
+
+    Compatible with:
+    - LangChain agents (from create_agent)
+    - LangGraph compiled graphs (CompiledStateGraph from StateGraph.compile())
+    - Any runnable with an invoke() method returning {"messages": [...]}
+    """
 
     def invoke(
         self, input: dict[str, Any], config: dict[str, Any] | None = None
@@ -152,3 +158,7 @@ def extract_tools_from_agent(agent: Any) -> list[dict[str, Any]]:
         tools.append(tool_schema)
 
     return tools
+
+
+# Alias for LangGraph users
+wrap_langgraph_agent = wrap_langchain_agent
