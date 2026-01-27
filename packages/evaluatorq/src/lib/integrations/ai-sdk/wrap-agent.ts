@@ -1,7 +1,8 @@
 import type { Agent, ToolSet } from "ai";
+
 import type { DataPoint, Job, Output } from "../../types.js";
-import type { AgentJobOptions } from "./types.js";
 import { convertToOpenResponses } from "./convert.js";
+import type { AgentJobOptions } from "./types.js";
 
 /**
  * Creates an evaluatorq Job from any AI SDK Agent.
@@ -57,28 +58,28 @@ import { convertToOpenResponses } from "./convert.js";
  * ```
  */
 export function wrapAISdkAgent<TOOLS extends ToolSet>(
-	agent: Agent<never, TOOLS, never>,
-	options: AgentJobOptions = {},
+  agent: Agent<never, TOOLS, never>,
+  options: AgentJobOptions = {},
 ): Job {
-	const { name = agent.id ?? "agent", promptKey = "prompt" } = options;
+  const { name = agent.id ?? "agent", promptKey = "prompt" } = options;
 
-	return async (data: DataPoint, _row: number) => {
-		const prompt = data.inputs[promptKey];
+  return async (data: DataPoint, _row: number) => {
+    const prompt = data.inputs[promptKey];
 
-		if (typeof prompt !== "string") {
-			throw new Error(
-				`Expected data.inputs.${promptKey} to be a string, got ${typeof prompt}`,
-			);
-		}
+    if (typeof prompt !== "string") {
+      throw new Error(
+        `Expected data.inputs.${promptKey} to be a string, got ${typeof prompt}`,
+      );
+    }
 
-		const result = await agent.generate({ prompt });
+    const result = await agent.generate({ prompt });
 
-		// Convert to OpenResponses format
-		const openResponsesOutput = convertToOpenResponses(result, agent, prompt);
+    // Convert to OpenResponses format
+    const openResponsesOutput = convertToOpenResponses(result, agent, prompt);
 
-		return {
-			name,
-			output: openResponsesOutput as unknown as Output,
-		};
-	};
+    return {
+      name,
+      output: openResponsesOutput as unknown as Output,
+    };
+  };
 }

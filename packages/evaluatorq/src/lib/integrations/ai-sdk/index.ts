@@ -1,8 +1,9 @@
-export { wrapAISdkAgent } from "./wrap-agent.js";
+// Re-export common utilities for backwards compatibility
+export { generateItemId } from "../common/index.js";
 export {
-	convertToOpenResponses,
-	buildInputFromSteps,
-	buildOpenResponsesFromSteps,
+  buildInputFromSteps,
+  buildOpenResponsesFromSteps,
+  convertToOpenResponses,
 } from "./convert.js";
-export { generateItemId } from "./utils.js";
-export type { StepData, AgentJobOptions } from "./types.js";
+export type { AgentJobOptions, StepData } from "./types.js";
+export { wrapAISdkAgent } from "./wrap-agent.js";
