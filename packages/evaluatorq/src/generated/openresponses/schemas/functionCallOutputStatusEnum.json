@@ -1,0 +1,1 @@
+{"type":"string","enum":["in_progress","completed","incomplete"],"description":"Similar to `FunctionCallStatus`. All three options are allowed here for compatibility, but because in practice these items will be provided by developers, only `completed` should be used.","x-readme-ref-name":"FunctionCallOutputStatusEnum"}

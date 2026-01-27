@@ -1,0 +1,1 @@
+{"oneOf":[{"properties":{"type":{"type":"string","enum":["function"],"description":"The tool to call. Always `function`.","default":"function"},"name":{"type":"string","description":"The name of the function tool to call."}},"type":"object","required":["type","name"],"x-readme-ref-name":"SpecificFunctionParam"}],"x-readme-ref-name":"SpecificToolChoiceParam"}

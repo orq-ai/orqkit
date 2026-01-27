@@ -1,0 +1,1 @@
+{"properties":{"type":{"type":"string","enum":["function"],"default":"function"},"name":{"type":"string"}},"type":"object","required":["type"],"x-readme-ref-name":"FunctionToolChoice"}

@@ -1,0 +1,1 @@
+{"type":"string","enum":["user","assistant","system","developer"],"x-enumDescriptions":{"assistant":"Model-generated content in the conversation.","developer":"Developer-supplied guidance that shapes the assistant’s behavior.","system":"System-level instructions that set global behavior.","user":"End‑user input in the conversation."},"x-readme-ref-name":"MessageRole"}

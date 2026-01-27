@@ -1,0 +1,1 @@
+{"properties":{"type":{"type":"string","enum":["text"],"default":"text"}},"type":"object","required":["type"],"x-readme-ref-name":"TextResponseFormat"}
