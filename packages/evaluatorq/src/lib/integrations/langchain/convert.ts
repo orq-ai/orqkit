@@ -2,6 +2,7 @@
  * Conversion functions from LangChain messages to OpenResponses format.
  */
 
+import { generateItemId, serializeArgs } from "../common/index.js";
 import type {
   FunctionCall,
   FunctionCallOutput,
@@ -10,8 +11,7 @@ import type {
   Message,
   ResponseResource,
   Usage,
-} from "../../../generated/openresponses/index.js";
-import { generateItemId, serializeArgs } from "../common/index.js";
+} from "../openresponses/index.js";
 import type {
   ContentBlock,
   LangChainMessage,

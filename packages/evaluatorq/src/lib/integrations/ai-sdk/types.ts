@@ -1,7 +1,4 @@
-import type {
-  FunctionTool,
-  ResponseResource,
-} from "../../../generated/openresponses/index.js";
+import type { FunctionTool, ResponseResource } from "../openresponses/index.js";
 
 /**
  * Type definition for step data extracted from AI SDK results.

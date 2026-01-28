@@ -1,5 +1,6 @@
 import type { Agent, ToolSet } from "ai";
 
+import { generateItemId } from "../common/index.js";
 import type {
   FunctionCall,
   FunctionCallOutput,
@@ -8,8 +9,7 @@ import type {
   Message,
   ResponseResource,
   Usage,
-} from "../../../generated/openresponses/index.js";
-import { generateItemId } from "../common/index.js";
+} from "../openresponses/index.js";
 import type { StepData } from "./types.js";
 
 /**

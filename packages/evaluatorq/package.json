@@ -41,6 +41,24 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./langchain": {
+      "development": "./src/lib/integrations/langchain/index.ts",
+      "types": "./dist/lib/integrations/langchain/index.d.ts",
+      "import": "./dist/lib/integrations/langchain/index.js",
+      "default": "./dist/lib/integrations/langchain/index.js"
+    },
+    "./ai-sdk": {
+      "development": "./src/lib/integrations/ai-sdk/index.ts",
+      "types": "./dist/lib/integrations/ai-sdk/index.d.ts",
+      "import": "./dist/lib/integrations/ai-sdk/index.js",
+      "default": "./dist/lib/integrations/ai-sdk/index.js"
+    },
+    "./openresponses": {
+      "development": "./src/lib/integrations/openresponses/index.ts",
+      "types": "./dist/lib/integrations/openresponses/index.d.ts",
+      "import": "./dist/lib/integrations/openresponses/index.js",
+      "default": "./dist/lib/integrations/openresponses/index.js"
     }
   },
   "peerDependencies": {
