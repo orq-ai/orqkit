@@ -14,8 +14,9 @@ function createOpenAIClient(): OpenAI {
 
   if (orqApiKey) {
     // Use Orq proxy when ORQ_API_KEY is available
+    const baseUrl = process.env.ORQ_BASE_URL || "https://api.orq.ai";
     return new OpenAI({
-      baseURL: "https://api.orq.ai/v2/proxy",
+      baseURL: `${baseUrl}/v2/proxy`,
       apiKey: orqApiKey,
     });
   }
