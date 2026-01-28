@@ -30,8 +30,19 @@ examples/
 Install the evaluatorq-py package and its dependencies:
 
 ```bash
-cd packages/evaluatorq-py
-pip install -e .
+pip install evaluatorq[orq]
+```
+
+For OpenTelemetry tracing support:
+
+```bash
+pip install evaluatorq[otel]
+```
+
+For LLM-based examples (requires API keys):
+
+```bash
+pip install anthropic openai
 ```
 
 ### API Keys
@@ -57,7 +68,6 @@ export ORQ_API_KEY="your-orq-key"
 Simple entry point that runs the simulated delay example.
 
 ```bash
-cd examples/lib
 python examples.py
 ```
 
@@ -253,24 +263,7 @@ await evaluatorq(
 )
 ```
 
-## Differences from TypeScript Version
-
-The Python examples maintain the same structure and functionality as the TypeScript version, with these adaptations:
-
-1. **Async/Await**: Uses Python's `asyncio` instead of JavaScript promises
-2. **Type Hints**: Uses Python type hints instead of TypeScript types
-3. **Decorators**: Uses `@job` decorator instead of `job()` function wrapper
-4. **Imports**: Uses Python import syntax instead of ES modules
-5. **Naming**: Follows Python naming conventions (snake_case instead of camelCase)
-
 ## Troubleshooting
-
-### Import Errors
-Make sure you've installed the package:
-```bash
-cd packages/evaluatorq-py
-pip install -e .
-```
 
 ### API Key Errors
 Ensure your API keys are set in the environment:
