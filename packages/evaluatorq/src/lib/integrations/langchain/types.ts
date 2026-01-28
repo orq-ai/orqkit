@@ -6,15 +6,15 @@
  * Protocol for LangChain/LangGraph invocable objects.
  *
  * Compatible with:
- * - LangChain agents (from createReactAgent, create_agent)
+ * - LangChain ReactAgent (from createAgent in langchain 1.x)
  * - LangGraph compiled graphs (CompiledStateGraph from StateGraph.compile())
  * - Any runnable with an invoke() method returning {"messages": [...]}
+ *
+ * Note: Using permissive types to accommodate different LangChain versions.
  */
 export interface LangChainInvocable {
-  invoke(
-    input: Record<string, unknown>,
-    config?: Record<string, unknown>,
-  ): Promise<LangChainResult>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  invoke(input: any, config?: any): Promise<any>;
   /** Optional tools property that some agents expose */
   tools?: unknown[];
   /** Optional bound property for accessing nested tools */
