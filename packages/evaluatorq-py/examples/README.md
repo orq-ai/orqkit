@@ -27,19 +27,9 @@ examples/
 
 ### Installation
 
-Install the evaluatorq-py package and its dependencies:
+See the [Installation section](../README.md#-installation) in the main README for installation instructions.
 
-```bash
-pip install evaluatorq[orq]
-```
-
-For OpenTelemetry tracing support:
-
-```bash
-pip install evaluatorq[otel]
-```
-
-For LLM-based examples (requires API keys):
+For LLM-based examples, you'll also need:
 
 ```bash
 pip install anthropic openai
