@@ -2,9 +2,9 @@ import {tool, ToolLoopAgent, type ToolSet, type Agent} from 'ai';
 import {z} from 'zod';
 
 import {createOpenAI} from '@ai-sdk/openai';
-// console.dir(result, { depth: null }); // agent's final answer
+
 import {promises as fs} from 'fs';
-import {evaluatorq} from "./packages/evaluatorq/src/index";
+import {evaluatorq} from "@orq-ai/evaluatorq";
 
 // Import generated OpenResponses types
 import type {
@@ -16,7 +16,7 @@ import type {
   OutputTextContent,
   FunctionTool,
   Usage,
-} from "./packages/evaluatorq/src/generated/openresponses/types";
+} from "@orq-ai/evaluatorq/generated/openresponses/types";
 
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
