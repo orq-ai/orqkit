@@ -12,7 +12,7 @@ import asyncio
 from anthropic import AsyncAnthropic
 
 from evaluatorq import DataPoint, evaluatorq, job
-from examples.lib.evals import (
+from .evals import (
     contains_name_validator,
     is_it_polite_llm_eval,
     min_length_validator,
