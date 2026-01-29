@@ -32,6 +32,15 @@ def generate_item_id(prefix: str = "item") -> str:
     return f"{prefix}_{uuid.uuid4().hex[:24]}"
 
 
+# Map constructor ID to message type (for lc serialization format)
+CONSTRUCTOR_TYPE_MAP = {
+    "HumanMessage": "human",
+    "AIMessage": "ai",
+    "ToolMessage": "tool",
+    "SystemMessage": "system",
+}
+
+
 def convert_to_open_responses(
     messages: list[Any],
     tools: list[dict[str, Any]] | None = None,
@@ -62,6 +71,9 @@ def convert_to_open_responses(
     reasoning_tokens = 0
     model_name = "unknown"
     last_finish_reason = "stop"
+    last_ai_message_id: str | None = None
+    model_provider: str | None = None
+    system_fingerprint: str | None = None
 
     for msg in messages:
         # Handle both message objects and dict format
@@ -92,12 +104,21 @@ def convert_to_open_responses(
                 output_details = usage.get("output_token_details", {})
                 reasoning_tokens += output_details.get("reasoning", 0)
 
-            # Extract model name from response metadata
+            # Extract model name and other metadata from response metadata
             response_metadata = _get_response_metadata(msg_data)
             if response_metadata.get("model_name"):
                 model_name = response_metadata["model_name"]
             if response_metadata.get("finish_reason"):
                 last_finish_reason = response_metadata["finish_reason"]
+            if response_metadata.get("model_provider"):
+                model_provider = response_metadata["model_provider"]
+            if response_metadata.get("system_fingerprint"):
+                system_fingerprint = response_metadata["system_fingerprint"]
+
+            # Extract message ID (e.g., chatcmpl-... from OpenAI)
+            message_id = _get_message_id(msg_data)
+            if message_id:
+                last_ai_message_id = message_id
 
             # Check for tool calls
             tool_calls = _get_tool_calls(msg_data)
@@ -183,9 +204,19 @@ def convert_to_open_responses(
             ),
         )
 
+    # Use the last AI message ID as the response ID if available
+    response_id = last_ai_message_id or generate_item_id("resp")
+
+    # Build metadata with optional fields
+    metadata: dict[str, Any] = {"framework": "langchain"}
+    if model_provider:
+        metadata["model_provider"] = model_provider
+    if system_fingerprint:
+        metadata["system_fingerprint"] = system_fingerprint
+
     # Serialize Pydantic models to dicts for the response
     return {
-        "id": generate_item_id("resp"),
+        "id": response_id,
         "object": "response",
         "created_at": now,
         "completed_at": now if status == "completed" else None,
@@ -218,7 +249,7 @@ def convert_to_open_responses(
         "store": False,
         "background": False,
         "service_tier": "default",
-        "metadata": {},
+        "metadata": metadata,
         "safety_identifier": None,
         "prompt_cache_key": None,
     }
@@ -228,7 +259,27 @@ def _get_message_type(msg: Any) -> str:
     """Extract message type from message object or dict."""
     # Dict format (from messages_to_dict)
     if isinstance(msg, dict):
-        return msg.get("type", "")
+        # Check for constructor format (lc serialization)
+        # Format: { lc: 1, type: "constructor", id: ["langchain_core", "messages", "HumanMessage"], kwargs: {...} }
+        if msg.get("type") == "constructor" and isinstance(msg.get("id"), list):
+            id_array = msg.get("id")
+            # The message type is the last element in the id array (e.g., "HumanMessage")
+            if id_array:
+                constructor_name = id_array[-1]
+                if constructor_name in CONSTRUCTOR_TYPE_MAP:
+                    return CONSTRUCTOR_TYPE_MAP[constructor_name]
+
+        # Check explicit type property (direct message format)
+        msg_type = msg.get("type", "")
+        if msg_type and msg_type != "constructor":
+            return msg_type
+
+        # Check for nested data.type in dict format
+        data = msg.get("data")
+        if isinstance(data, dict) and data.get("type"):
+            return data["type"]
+
+        return "unknown"
 
     # LangChain message objects
     type_attr = getattr(msg, "type", None)
@@ -253,7 +304,16 @@ def _get_message_data(msg: Any) -> dict[str, Any]:
     """Extract message data from message object or dict."""
     # Dict format (from messages_to_dict)
     if isinstance(msg, dict):
-        return msg.get("data", msg)
+        # Constructor format (lc serialization) has data in "kwargs" property
+        # Format: { lc: 1, type: "constructor", id: [...], kwargs: { content, response_metadata, ... } }
+        if msg.get("type") == "constructor" and msg.get("kwargs"):
+            return msg["kwargs"]
+
+        # Dict format has nested "data" property
+        if isinstance(msg.get("data"), dict):
+            return msg["data"]
+
+        return msg
 
     # LangChain message object - convert to dict-like access
     return msg
@@ -320,6 +380,13 @@ def _get_response_metadata(msg_data: Any) -> dict[str, Any]:
     if isinstance(msg_data, dict):
         return msg_data.get("response_metadata", {})
     return getattr(msg_data, "response_metadata", {}) or {}
+
+
+def _get_message_id(msg_data: Any) -> str | None:
+    """Extract message ID from message data."""
+    if isinstance(msg_data, dict):
+        return msg_data.get("id")
+    return getattr(msg_data, "id", None)
 
 
 def _extract_usage(msg_data: Any) -> dict[str, Any] | None:

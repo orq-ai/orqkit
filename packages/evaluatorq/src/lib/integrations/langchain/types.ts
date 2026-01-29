@@ -44,6 +44,13 @@ export interface LangChainMessage {
   response_metadata?: ResponseMetadata;
   /** Token usage metadata */
   usage_metadata?: UsageMetadata;
+  /** Message ID (e.g., chatcmpl-... from OpenAI) */
+  id?: string;
+  /** Constructor format fields (lc serialization) */
+  lc?: number;
+  /** ID array for constructor format (e.g., ["langchain_core", "messages", "HumanMessage"]) */
+  // biome-ignore lint/suspicious/noExplicitAny: LangChain uses dynamic structure
+  kwargs?: any;
 }
 
 /**
@@ -74,6 +81,10 @@ export interface ResponseMetadata {
   model_name?: string;
   /** Finish reason (stop, length, etc.) */
   finish_reason?: string;
+  /** Model provider (e.g., "openai") */
+  model_provider?: string;
+  /** System fingerprint from OpenAI */
+  system_fingerprint?: string;
 }
 
 /**

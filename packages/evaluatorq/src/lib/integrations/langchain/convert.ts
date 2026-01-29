@@ -47,6 +47,9 @@ export function convertToOpenResponses(
   let reasoningTokens = 0;
   let modelName = "unknown";
   let lastFinishReason = "stop";
+  let lastAIMessageId: string | undefined;
+  let modelProvider: string | undefined;
+  let systemFingerprint: string | undefined;
 
   for (const msg of messages) {
     // Handle both message objects and dict format
@@ -75,13 +78,25 @@ export function convertToOpenResponses(
         reasoningTokens += usage.output_token_details?.reasoning ?? 0;
       }
 
-      // Extract model name from response metadata
+      // Extract model name and other metadata from response metadata
       const responseMetadata = getResponseMetadata(msgData);
       if (responseMetadata?.model_name) {
         modelName = responseMetadata.model_name;
       }
       if (responseMetadata?.finish_reason) {
         lastFinishReason = responseMetadata.finish_reason;
+      }
+      if (responseMetadata?.model_provider) {
+        modelProvider = responseMetadata.model_provider;
+      }
+      if (responseMetadata?.system_fingerprint) {
+        systemFingerprint = responseMetadata.system_fingerprint;
+      }
+
+      // Extract message ID (e.g., chatcmpl-... from OpenAI)
+      const messageId = getMessageId(msgData);
+      if (messageId) {
+        lastAIMessageId = messageId;
       }
 
       // Check for tool calls
@@ -181,15 +196,18 @@ export function convertToOpenResponses(
   if (totalTokens > 0) {
     usageData = {
       input_tokens: totalInputTokens,
-      output_tokens: totalOutputTokens,
-      total_tokens: totalTokens,
       input_tokens_details: { cached_tokens: cachedTokens },
+      output_tokens: totalOutputTokens,
       output_tokens_details: { reasoning_tokens: reasoningTokens },
+      total_tokens: totalTokens,
     };
   }
 
+  // Use the last AI message ID as the response ID if available
+  const responseId = lastAIMessageId ?? generateItemId("resp");
+
   return {
-    id: generateItemId("resp"),
+    id: responseId,
     object: "response",
     created_at: now,
     completed_at: status === "completed" ? now : null,
@@ -221,11 +239,25 @@ export function convertToOpenResponses(
     store: false,
     background: false,
     service_tier: "default",
-    metadata: {},
+    metadata: {
+      framework: "langchain",
+      ...(modelProvider && { model_provider: modelProvider }),
+      ...(systemFingerprint && { system_fingerprint: systemFingerprint }),
+    },
     safety_identifier: null,
     prompt_cache_key: null,
   } as ResponseResource;
 }
+
+/**
+ * Map constructor ID to message type.
+ */
+const CONSTRUCTOR_TYPE_MAP: Record<string, string> = {
+  HumanMessage: "human",
+  AIMessage: "ai",
+  ToolMessage: "tool",
+  SystemMessage: "system",
+};
 
 /**
  * Extract message type from message object or dict.
@@ -233,13 +265,25 @@ export function convertToOpenResponses(
 function getMessageType(msg: LangChainMessage): string {
   // Dict format (from messages_to_dict)
   if (typeof msg === "object" && msg !== null) {
-    // Check explicit type property
-    if (msg.type) {
+    const msgDict = msg as Record<string, unknown>;
+
+    // Check for constructor format (lc serialization)
+    // Format: { lc: 1, type: "constructor", id: ["langchain_core", "messages", "HumanMessage"], kwargs: {...} }
+    if (msgDict.type === "constructor" && Array.isArray(msgDict.id)) {
+      const idArray = msgDict.id as string[];
+      // The message type is the last element in the id array (e.g., "HumanMessage")
+      const constructorName = idArray[idArray.length - 1];
+      if (constructorName && CONSTRUCTOR_TYPE_MAP[constructorName]) {
+        return CONSTRUCTOR_TYPE_MAP[constructorName];
+      }
+    }
+
+    // Check explicit type property (direct message format)
+    if (msg.type && msg.type !== "constructor") {
       return msg.type;
     }
 
     // Check for nested data.type in dict format
-    const msgDict = msg as Record<string, unknown>;
     if (
       msgDict.data &&
       typeof msgDict.data === "object" &&
@@ -259,8 +303,15 @@ function getMessageType(msg: LangChainMessage): string {
  * Extract message data from message object or dict.
  */
 function getMessageData(msg: LangChainMessage): LangChainMessage {
-  // Dict format (from messages_to_dict) has nested "data" property
   const msgDict = msg as Record<string, unknown>;
+
+  // Constructor format (lc serialization) has data in "kwargs" property
+  // Format: { lc: 1, type: "constructor", id: [...], kwargs: { content, response_metadata, ... } }
+  if (msgDict.type === "constructor" && msgDict.kwargs) {
+    return msgDict.kwargs as LangChainMessage;
+  }
+
+  // Dict format (from messages_to_dict) has nested "data" property
   if (
     msgDict.data &&
     typeof msgDict.data === "object" &&
@@ -341,6 +392,13 @@ function getResponseMetadata(
   msgData: LangChainMessage,
 ): ResponseMetadata | undefined {
   return msgData.response_metadata;
+}
+
+/**
+ * Extract message ID from message data.
+ */
+function getMessageId(msgData: LangChainMessage): string | undefined {
+  return msgData.id;
 }
 
 /**
