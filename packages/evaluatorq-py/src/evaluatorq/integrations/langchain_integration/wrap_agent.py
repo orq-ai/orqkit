@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from evaluatorq.types import DataPoint
+from langchain_core.messages import BaseMessage
 
 from .convert import convert_to_open_responses
 
@@ -102,7 +103,9 @@ def wrap_langchain_agent(
         result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
 
         # Extract messages from result
-        messages = result.get("messages", [])
+        messages: list[BaseMessage] = result.get("messages", [])
+
+        print("LangChain Agent Messages type:", type(messages))
 
         # Convert to OpenResponses format
         open_responses_output = convert_to_open_responses(messages, tools)

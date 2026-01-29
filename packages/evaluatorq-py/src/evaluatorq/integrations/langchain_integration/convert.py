@@ -8,6 +8,9 @@ import time
 import uuid
 from typing import Any
 
+from langchain_core.messages import BaseMessage, UsageMetadata
+from langchain_core.messages.tool import ToolCall
+
 from evaluatorq.openresponses import ResponseResourceDict
 from evaluatorq.openresponses.convert_models import (
     FunctionCall,
@@ -27,6 +30,10 @@ from evaluatorq.openresponses.convert_models import (
 )
 
 
+# Type alias for message data (can be dict from serialization or BaseMessage object)
+MessageData = dict[str, Any] | BaseMessage
+
+
 def generate_item_id(prefix: str = "item") -> str:
     """Generate a unique item ID with the given prefix."""
     return f"{prefix}_{uuid.uuid4().hex[:24]}"
@@ -42,7 +49,7 @@ CONSTRUCTOR_TYPE_MAP = {
 
 
 def convert_to_open_responses(
-    messages: list[Any],
+    messages: list[BaseMessage],
     tools: list[dict[str, Any]] | None = None,
 ) -> ResponseResourceDict:
     """
@@ -255,52 +262,21 @@ def convert_to_open_responses(
     }
 
 
-def _get_message_type(msg: Any) -> str:
-    """Extract message type from message object or dict."""
-    # Dict format (from messages_to_dict)
-    if isinstance(msg, dict):
-        # Check for constructor format (lc serialization)
-        # Format: { lc: 1, type: "constructor", id: ["langchain_core", "messages", "HumanMessage"], kwargs: {...} }
-        if msg.get("type") == "constructor" and isinstance(msg.get("id"), list):
-            id_array = msg.get("id")
-            # The message type is the last element in the id array (e.g., "HumanMessage")
-            if id_array:
-                constructor_name = id_array[-1]
-                if constructor_name in CONSTRUCTOR_TYPE_MAP:
-                    return CONSTRUCTOR_TYPE_MAP[constructor_name]
-
-        # Check explicit type property (direct message format)
-        msg_type = msg.get("type", "")
-        if msg_type and msg_type != "constructor":
-            return msg_type
-
-        # Check for nested data.type in dict format
-        data = msg.get("data")
-        if isinstance(data, dict) and data.get("type"):
-            return data["type"]
-
-        return "unknown"
-
+def _get_message_type(msg: BaseMessage ) -> str:
     # LangChain message objects
-    type_attr = getattr(msg, "type", None)
+    type_attr: str | None = getattr(msg, "type", None)
     if type_attr:
         return type_attr
 
-    # Fallback: check class name
-    class_name = msg.__class__.__name__.lower()
-    if "human" in class_name:
-        return "human"
-    if "ai" in class_name:
-        return "ai"
-    if "tool" in class_name:
-        return "tool"
-    if "system" in class_name:
-        return "system"
+    # Fallback: check class name using the same map
+    class_name = msg.__class__.__name__
+    if class_name in CONSTRUCTOR_TYPE_MAP:
+        return CONSTRUCTOR_TYPE_MAP[class_name]
 
     return "unknown"
 
 
-def _get_message_data(msg: Any) -> dict[str, Any]:
+def _get_message_data(msg: BaseMessage | dict[str, Any]) -> MessageData:
     """Extract message data from message object or dict."""
     # Dict format (from messages_to_dict)
     if isinstance(msg, dict):
@@ -319,7 +295,7 @@ def _get_message_data(msg: Any) -> dict[str, Any]:
     return msg
 
 
-def _get_content(msg_data: Any) -> str:
+def _get_content(msg_data: MessageData) -> str:
     """Extract content from message data."""
     if isinstance(msg_data, dict):
         content = msg_data.get("content", "")
@@ -341,7 +317,7 @@ def _get_content(msg_data: Any) -> str:
     return str(content) if content else ""
 
 
-def _get_tool_calls(msg_data: Any) -> list[dict[str, Any]]:
+def _get_tool_calls(msg_data: MessageData) -> list[ToolCall]:
     """Extract tool calls from AI message data."""
     if isinstance(msg_data, dict):
         tool_calls = msg_data.get("tool_calls", [])
@@ -368,28 +344,28 @@ def _get_tool_calls(msg_data: Any) -> list[dict[str, Any]]:
     return result
 
 
-def _get_tool_call_id(msg_data: Any) -> str:
+def _get_tool_call_id(msg_data: MessageData) -> str:
     """Extract tool call ID from tool message data."""
     if isinstance(msg_data, dict):
         return msg_data.get("tool_call_id", generate_item_id("call"))
     return getattr(msg_data, "tool_call_id", generate_item_id("call"))
 
 
-def _get_response_metadata(msg_data: Any) -> dict[str, Any]:
+def _get_response_metadata(msg_data: MessageData) -> dict[str, Any]:
     """Extract response metadata from message data."""
     if isinstance(msg_data, dict):
         return msg_data.get("response_metadata", {})
     return getattr(msg_data, "response_metadata", {}) or {}
 
 
-def _get_message_id(msg_data: Any) -> str | None:
+def _get_message_id(msg_data: MessageData) -> str | None:
     """Extract message ID from message data."""
     if isinstance(msg_data, dict):
         return msg_data.get("id")
     return getattr(msg_data, "id", None)
 
 
-def _extract_usage(msg_data: Any) -> dict[str, Any] | None:
+def _extract_usage(msg_data: MessageData) -> UsageMetadata | None:
     """Extract usage metadata from message data."""
     if isinstance(msg_data, dict):
         return msg_data.get("usage_metadata")
