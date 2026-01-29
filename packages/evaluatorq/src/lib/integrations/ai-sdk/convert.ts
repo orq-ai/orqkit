@@ -121,10 +121,10 @@ export function convertToOpenResponses<TOOLS extends ToolSet>(
   prompt?: string,
 ): ResponseResource {
   // Get the last step which contains the final response
-  const lastStep = result.steps[result.steps.length - 1] as unknown as StepData;
+ // const lastStep = result.steps[result.steps.length - 1] as unknown as StepData;
 
   // Check if we have a native OpenResponses body from OpenAI Responses API
-  if (lastStep?.response?.body && typeof lastStep.response.body === "object") {
+/*   if (lastStep?.response?.body && typeof lastStep.response.body === "object") {
     const responseBody = lastStep.response.body as ResponseResource;
 
     // Build the input array from steps (resolves item_reference to actual function_call items)
@@ -133,11 +133,47 @@ export function convertToOpenResponses<TOOLS extends ToolSet>(
     return {
       ...responseBody,
       input,
+      metadata: { ...responseBody.metadata, framework: "vercel-ai-sdk" },
     } as ResponseResource;
-  }
+  } */
 
   // Fallback: manually construct for non-Responses API (e.g., Chat Completions)
   return buildOpenResponsesFromSteps(result, _agent, prompt);
+}
+
+/**
+ * Extended step data type for extracting additional fields from AI SDK.
+ */
+interface ExtendedStepData {
+  text?: string;
+  toolCalls?: Array<{
+    toolCallId: string;
+    toolName: string;
+    args: unknown;
+  }>;
+  toolResults?: Array<{
+    toolCallId: string;
+    toolName: string;
+    result: unknown;
+  }>;
+  request?: {
+    body?: {
+      max_output_tokens?: number;
+      tool_choice?: string;
+      temperature?: number;
+      top_p?: number;
+      presence_penalty?: number;
+      frequency_penalty?: number;
+    };
+  };
+  response?: {
+    timestamp?: string;
+  };
+  providerMetadata?: {
+    openai?: {
+      serviceTier?: string;
+    };
+  };
 }
 
 /**
@@ -150,6 +186,25 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   prompt?: string,
 ): ResponseResource {
   const now = Math.floor(Date.now() / 1000);
+
+  // Extract configuration from first step's request body
+  const firstStep = result.steps[0] as unknown as ExtendedStepData;
+  const lastStep = result.steps[
+    result.steps.length - 1
+  ] as unknown as ExtendedStepData;
+  const requestBody = firstStep?.request?.body;
+
+  // Extract timestamps from response
+  const createdAt = firstStep?.response?.timestamp
+    ? Math.floor(new Date(firstStep.response.timestamp).getTime() / 1000)
+    : now;
+  const completedAt = lastStep?.response?.timestamp
+    ? Math.floor(new Date(lastStep.response.timestamp).getTime() / 1000)
+    : now;
+
+  // Extract service tier from provider metadata
+  const serviceTier =
+    lastStep?.providerMetadata?.openai?.serviceTier ?? "default";
 
   // Convert tools from agent configuration
   const tools: FunctionTool[] = [];
@@ -174,19 +229,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   let callIdCounter = 0;
 
   for (const step of result.steps) {
-    const stepData = step as unknown as {
-      text?: string;
-      toolCalls?: Array<{
-        toolCallId: string;
-        toolName: string;
-        args: unknown;
-      }>;
-      toolResults?: Array<{
-        toolCallId: string;
-        toolName: string;
-        result: unknown;
-      }>;
-    };
+    const stepData = step as unknown as ExtendedStepData;
 
     // Add function calls from this step
     if (stepData.toolCalls && stepData.toolCalls.length > 0) {
@@ -247,18 +290,18 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   const usage: Usage | null = result.totalUsage
     ? {
         input_tokens: result.totalUsage.inputTokens ?? 0,
-        output_tokens: result.totalUsage.outputTokens ?? 0,
-        total_tokens: result.totalUsage.totalTokens ?? 0,
         input_tokens_details: {
           cached_tokens:
             (result.totalUsage as { cachedInputTokens?: number })
               .cachedInputTokens ?? 0,
         },
+        output_tokens: result.totalUsage.outputTokens ?? 0,
         output_tokens_details: {
           reasoning_tokens:
             (result.totalUsage as { reasoningTokens?: number })
               .reasoningTokens ?? 0,
         },
+        total_tokens: result.totalUsage.totalTokens ?? 0,
       }
     : null;
 
@@ -276,8 +319,8 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   return {
     id: result.response.id || generateItemId("resp"),
     object: "response",
-    created_at: now,
-    completed_at: status === "completed" ? now : null,
+    created_at: createdAt,
+    completed_at: status === "completed" ? completedAt : null,
     status,
     incomplete_details:
       status === "incomplete" ? { reason: result.finishReason } : null,
@@ -288,7 +331,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
     output,
     error: status === "failed" ? { message: "Agent execution failed" } : null,
     tools,
-    tool_choice: "auto",
+    tool_choice: requestBody?.tool_choice ?? "auto",
     truncation: "disabled",
     parallel_tool_calls: true,
     text: {
@@ -296,20 +339,20 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
         type: "text",
       },
     },
-    top_p: 1,
-    presence_penalty: 0,
-    frequency_penalty: 0,
+    top_p: requestBody?.top_p ?? 1,
+    presence_penalty: requestBody?.presence_penalty ?? 0,
+    frequency_penalty: requestBody?.frequency_penalty ?? 0,
     top_logprobs: 0,
-    temperature: 1,
+    temperature: requestBody?.temperature ?? 1,
     reasoning: null,
     user: null,
     usage,
-    max_output_tokens: null,
+    max_output_tokens: requestBody?.max_output_tokens ?? null,
     max_tool_calls: null,
     store: false,
     background: false,
-    service_tier: "default",
-    metadata: {},
+    service_tier: serviceTier,
+    metadata: { framework: "vercel-ai-sdk" },
     safety_identifier: null,
     prompt_cache_key: null,
   } as ResponseResource;
