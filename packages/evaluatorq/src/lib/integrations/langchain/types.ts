@@ -2,6 +2,13 @@
  * Type definitions for LangChain/LangGraph integration.
  */
 
+// Type-only imports from @langchain/core (stripped at compile time, no runtime errors if not installed)
+import type { BaseMessage } from "@langchain/core/messages";
+import type { RunnableConfig } from "@langchain/core/runnables";
+
+// Re-export for consumers who want to use the proper LangChain types
+export type { BaseMessage, RunnableConfig };
+
 /**
  * Protocol for LangChain/LangGraph invocable objects.
  *
@@ -10,11 +17,15 @@
  * - LangGraph compiled graphs (CompiledStateGraph from StateGraph.compile())
  * - Any runnable with an invoke() method returning {"messages": [...]}
  *
- * Note: Using permissive types to accommodate different LangChain versions.
+ * Uses types from @langchain/core when available for better type safety.
  */
 export interface LangChainInvocable {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  invoke(input: any, config?: any): Promise<any>;
+  invoke(
+    input:
+      | { messages: BaseMessage[] | LangChainMessage[] }
+      | Record<string, unknown>,
+    config?: RunnableConfig,
+  ): Promise<{ messages: BaseMessage[] | LangChainMessage[] }>;
   /** Optional tools property that some agents expose */
   tools?: unknown[];
   /** Optional bound property for accessing nested tools */
@@ -63,6 +74,7 @@ export interface ContentBlock {
 
 /**
  * Tool call definition from an AI message.
+ * Compatible with LangChainToolCall from @langchain/core/messages.
  */
 export interface ToolCall {
   /** Unique identifier for the tool call */
@@ -71,6 +83,8 @@ export interface ToolCall {
   name: string;
   /** Arguments to pass to the tool */
   args: unknown;
+  /** Type identifier (matches LangChainToolCall) */
+  type?: "tool_call";
 }
 
 /**
@@ -89,13 +103,14 @@ export interface ResponseMetadata {
 
 /**
  * Token usage metadata from the model.
+ * Compatible with UsageMetadata from @langchain/core/messages.
  */
 export interface UsageMetadata {
   input_tokens?: number;
   output_tokens?: number;
   total_tokens?: number;
-  input_token_details?: { cache_read?: number };
-  output_token_details?: { reasoning?: number };
+  input_token_details?: { cache_read?: number; audio?: number };
+  output_token_details?: { reasoning?: number; audio?: number };
 }
 
 /**

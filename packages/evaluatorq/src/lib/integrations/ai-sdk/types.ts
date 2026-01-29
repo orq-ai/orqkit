@@ -1,10 +1,18 @@
+// Type-only imports from ai package (stripped at compile time, no runtime errors if not installed)
+import type { StepResult } from "ai";
+
 import type { FunctionTool, ResponseResource } from "../openresponses/index.js";
+
+// Re-export AI SDK types for consumers
+export type { StepResult };
 
 /**
  * Type definition for step data extracted from AI SDK results.
+ * This interface extends the AI SDK's StepResult type with additional fields
+ * that may be present in certain AI SDK versions or providers.
  */
 export interface StepData {
-  // Content array contains tool-call and tool-result items
+  // Content array contains tool-call and tool-result items (ToolLoopAgent format)
   content?: Array<{
     type: string;
     toolCallId?: string;
@@ -12,17 +20,7 @@ export interface StepData {
     input?: unknown;
     output?: unknown;
   }>;
-  // Alternative: some AI SDK versions use toolCalls/toolResults arrays
-  toolCalls?: Array<{
-    toolCallId: string;
-    toolName: string;
-    args: unknown;
-  }>;
-  toolResults?: Array<{
-    toolCallId: string;
-    toolName: string;
-    result: unknown;
-  }>;
+  // Request/response details that may be present
   request?: {
     body?: {
       input?: unknown[];

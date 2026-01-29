@@ -2,6 +2,8 @@
  * Conversion functions from LangChain messages to OpenResponses format.
  */
 
+import type { BaseMessage } from "@langchain/core/messages";
+
 import { generateItemId, serializeArgs } from "../common/index.js";
 import type {
   FunctionCall,
@@ -22,16 +24,44 @@ import type {
 } from "./types.js";
 
 /**
+ * Union type for message input - accepts both BaseMessage from @langchain/core
+ * and the local LangChainMessage interface for flexibility.
+ */
+export type MessageInput = BaseMessage | LangChainMessage;
+
+/**
+ * Type guard to check if a message is a BaseMessage from @langchain/core.
+ */
+function isBaseMessage(msg: MessageInput): msg is BaseMessage {
+  return (
+    typeof msg === "object" &&
+    msg !== null &&
+    "_getType" in msg &&
+    typeof (msg as BaseMessage)._getType === "function"
+  );
+}
+
+/**
+ * Type guard to check if an object has a specific property.
+ */
+function hasProperty<K extends string>(
+  obj: unknown,
+  key: K,
+): obj is Record<K, unknown> {
+  return typeof obj === "object" && obj !== null && key in obj;
+}
+
+/**
  * Converts LangChain agent messages to OpenResponses format.
  *
- * This function handles both LangChain message objects and dict representations.
+ * This function handles both LangChain message objects (BaseMessage) and dict representations.
  *
- * @param messages - List of LangChain messages from agent execution
+ * @param messages - List of LangChain messages from agent execution (supports BaseMessage or LangChainMessage)
  * @param tools - Optional list of tool definitions used by the agent
  * @returns A ResponseResource in OpenResponses format
  */
 export function convertToOpenResponses(
-  messages: LangChainMessage[],
+  messages: MessageInput[],
   tools?: ToolDefinition[],
 ): ResponseResource {
   const now = Math.floor(Date.now() / 1000);
@@ -262,15 +292,23 @@ const CONSTRUCTOR_TYPE_MAP: Record<string, string> = {
 /**
  * Extract message type from message object or dict.
  */
-function getMessageType(msg: LangChainMessage): string {
+function getMessageType(msg: MessageInput): string {
+  // Handle BaseMessage from @langchain/core (has _getType() method)
+  if (isBaseMessage(msg)) {
+    return msg._getType();
+  }
+
   // Dict format (from messages_to_dict)
   if (typeof msg === "object" && msg !== null) {
-    const msgDict = msg as Record<string, unknown>;
-
     // Check for constructor format (lc serialization)
     // Format: { lc: 1, type: "constructor", id: ["langchain_core", "messages", "HumanMessage"], kwargs: {...} }
-    if (msgDict.type === "constructor" && Array.isArray(msgDict.id)) {
-      const idArray = msgDict.id as string[];
+    if (
+      hasProperty(msg, "type") &&
+      msg.type === "constructor" &&
+      hasProperty(msg, "id") &&
+      Array.isArray(msg.id)
+    ) {
+      const idArray = msg.id as string[];
       // The message type is the last element in the id array (e.g., "HumanMessage")
       const constructorName = idArray[idArray.length - 1];
       if (constructorName && CONSTRUCTOR_TYPE_MAP[constructorName]) {
@@ -279,17 +317,18 @@ function getMessageType(msg: LangChainMessage): string {
     }
 
     // Check explicit type property (direct message format)
-    if (msg.type && msg.type !== "constructor") {
-      return msg.type;
+    const localMsg = msg as LangChainMessage;
+    if (localMsg.type && localMsg.type !== "constructor") {
+      return localMsg.type;
     }
 
     // Check for nested data.type in dict format
     if (
-      msgDict.data &&
-      typeof msgDict.data === "object" &&
-      msgDict.data !== null
+      hasProperty(msg, "data") &&
+      typeof msg.data === "object" &&
+      msg.data !== null
     ) {
-      const data = msgDict.data as Record<string, unknown>;
+      const data = msg.data as Record<string, unknown>;
       if (typeof data.type === "string") {
         return data.type;
       }
@@ -301,27 +340,52 @@ function getMessageType(msg: LangChainMessage): string {
 
 /**
  * Extract message data from message object or dict.
+ * Returns a LangChainMessage-compatible object for uniform processing.
  */
-function getMessageData(msg: LangChainMessage): LangChainMessage {
-  const msgDict = msg as Record<string, unknown>;
+function getMessageData(msg: MessageInput): LangChainMessage {
+  // Handle BaseMessage from @langchain/core
+  if (isBaseMessage(msg)) {
+    // BaseMessage properties map directly to LangChainMessage
+    return {
+      type: msg._getType(),
+      content: msg.content as string | ContentBlock[],
+      tool_calls: hasProperty(msg, "tool_calls")
+        ? (msg.tool_calls as ToolCall[])
+        : undefined,
+      tool_call_id: hasProperty(msg, "tool_call_id")
+        ? (msg.tool_call_id as string)
+        : undefined,
+      response_metadata: hasProperty(msg, "response_metadata")
+        ? (msg.response_metadata as ResponseMetadata)
+        : undefined,
+      usage_metadata: hasProperty(msg, "usage_metadata")
+        ? (msg.usage_metadata as UsageMetadata)
+        : undefined,
+      id: msg.id,
+    };
+  }
 
   // Constructor format (lc serialization) has data in "kwargs" property
   // Format: { lc: 1, type: "constructor", id: [...], kwargs: { content, response_metadata, ... } }
-  if (msgDict.type === "constructor" && msgDict.kwargs) {
-    return msgDict.kwargs as LangChainMessage;
+  if (
+    hasProperty(msg, "type") &&
+    msg.type === "constructor" &&
+    hasProperty(msg, "kwargs")
+  ) {
+    return msg.kwargs as LangChainMessage;
   }
 
   // Dict format (from messages_to_dict) has nested "data" property
   if (
-    msgDict.data &&
-    typeof msgDict.data === "object" &&
-    msgDict.data !== null
+    hasProperty(msg, "data") &&
+    typeof msg.data === "object" &&
+    msg.data !== null
   ) {
-    return msgDict.data as LangChainMessage;
+    return msg.data as LangChainMessage;
   }
 
   // LangChain message object - use directly
-  return msg;
+  return msg as LangChainMessage;
 }
 
 /**

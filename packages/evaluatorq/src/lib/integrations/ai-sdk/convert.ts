@@ -1,4 +1,4 @@
-import type { Agent, ToolSet } from "ai";
+import type { Agent, StepResult, ToolSet } from "ai";
 
 import { generateItemId } from "../common/index.js";
 import type {
@@ -11,6 +11,12 @@ import type {
   Usage,
 } from "../openresponses/index.js";
 import type { StepData } from "./types.js";
+
+/**
+ * Type alias for a step from an Agent result.
+ * Uses the AI SDK's StepResult type with our extended StepData fields.
+ */
+type AgentStep = StepResult<ToolSet> & StepData;
 
 /**
  * Builds the input array for OpenResponses format.
@@ -42,7 +48,7 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
 
   // Collect all function calls and outputs from steps
   for (const step of result.steps) {
-    const stepData = step as unknown as StepData;
+    const stepData = step as AgentStep;
 
     // Primary: Extract from content array (ToolLoopAgent format)
     if (stepData.content && stepData.content.length > 0) {
@@ -81,9 +87,9 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             call_id: toolCall.toolCallId,
             name: toolCall.toolName,
             arguments:
-              typeof toolCall.args === "string"
-                ? toolCall.args
-                : JSON.stringify(toolCall.args),
+              typeof toolCall.input === "string"
+                ? toolCall.input
+                : JSON.stringify(toolCall.input),
           });
         }
       }
@@ -94,9 +100,9 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             type: "function_call_output",
             call_id: toolResult.toolCallId,
             output:
-              typeof toolResult.result === "string"
-                ? toolResult.result
-                : JSON.stringify(toolResult.result),
+              typeof toolResult.output === "string"
+                ? toolResult.output
+                : JSON.stringify(toolResult.output),
           });
         }
       }
@@ -121,10 +127,10 @@ export function convertToOpenResponses<TOOLS extends ToolSet>(
   prompt?: string,
 ): ResponseResource {
   // Get the last step which contains the final response
- // const lastStep = result.steps[result.steps.length - 1] as unknown as StepData;
+  // const lastStep = result.steps[result.steps.length - 1] as unknown as StepData;
 
   // Check if we have a native OpenResponses body from OpenAI Responses API
-/*   if (lastStep?.response?.body && typeof lastStep.response.body === "object") {
+  /*   if (lastStep?.response?.body && typeof lastStep.response.body === "object") {
     const responseBody = lastStep.response.body as ResponseResource;
 
     // Build the input array from steps (resolves item_reference to actual function_call items)
@@ -143,18 +149,19 @@ export function convertToOpenResponses<TOOLS extends ToolSet>(
 
 /**
  * Extended step data type for extracting additional fields from AI SDK.
+ * Uses intersection type to include StepResult properties and additional provider-specific fields.
  */
 interface ExtendedStepData {
   text?: string;
   toolCalls?: Array<{
     toolCallId: string;
     toolName: string;
-    args: unknown;
+    input: unknown;
   }>;
   toolResults?: Array<{
     toolCallId: string;
     toolName: string;
-    result: unknown;
+    output: unknown;
   }>;
   request?: {
     body?: {
@@ -167,7 +174,9 @@ interface ExtendedStepData {
     };
   };
   response?: {
-    timestamp?: string;
+    timestamp?: Date | string;
+    id?: string;
+    modelId?: string;
   };
   providerMetadata?: {
     openai?: {
@@ -188,19 +197,19 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   const now = Math.floor(Date.now() / 1000);
 
   // Extract configuration from first step's request body
-  const firstStep = result.steps[0] as unknown as ExtendedStepData;
-  const lastStep = result.steps[
-    result.steps.length - 1
-  ] as unknown as ExtendedStepData;
+  const firstStep = result.steps[0] as ExtendedStepData;
+  const lastStep = result.steps[result.steps.length - 1] as ExtendedStepData;
   const requestBody = firstStep?.request?.body;
 
-  // Extract timestamps from response
-  const createdAt = firstStep?.response?.timestamp
-    ? Math.floor(new Date(firstStep.response.timestamp).getTime() / 1000)
-    : now;
-  const completedAt = lastStep?.response?.timestamp
-    ? Math.floor(new Date(lastStep.response.timestamp).getTime() / 1000)
-    : now;
+  // Extract timestamps from response (handle both Date and string formats)
+  const getTimestamp = (ts: Date | string | undefined): number => {
+    if (!ts) return now;
+    return Math.floor(
+      (ts instanceof Date ? ts : new Date(ts)).getTime() / 1000,
+    );
+  };
+  const createdAt = getTimestamp(firstStep?.response?.timestamp);
+  const completedAt = getTimestamp(lastStep?.response?.timestamp);
 
   // Extract service tier from provider metadata
   const serviceTier =
@@ -229,7 +238,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   let callIdCounter = 0;
 
   for (const step of result.steps) {
-    const stepData = step as unknown as ExtendedStepData;
+    const stepData = step as ExtendedStepData;
 
     // Add function calls from this step
     if (stepData.toolCalls && stepData.toolCalls.length > 0) {
@@ -240,9 +249,9 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
           call_id: toolCall.toolCallId || `call_${callIdCounter++}`,
           name: toolCall.toolName,
           arguments:
-            typeof toolCall.args === "string"
-              ? toolCall.args
-              : JSON.stringify(toolCall.args),
+            typeof toolCall.input === "string"
+              ? toolCall.input
+              : JSON.stringify(toolCall.input),
           status: "completed",
         };
         output.push(functionCall);
@@ -257,9 +266,9 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
           id: generateItemId("fco"),
           call_id: toolResult.toolCallId,
           output:
-            typeof toolResult.result === "string"
-              ? toolResult.result
-              : JSON.stringify(toolResult.result),
+            typeof toolResult.output === "string"
+              ? toolResult.output
+              : JSON.stringify(toolResult.output),
           status: "completed",
         };
         output.push(functionCallOutput);
