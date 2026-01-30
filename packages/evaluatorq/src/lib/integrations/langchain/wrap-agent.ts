@@ -2,6 +2,8 @@
  * Wrapper functions for LangChain/LangGraph agents to integrate with evaluatorq.
  */
 
+import type { StructuredToolInterface } from "@langchain/core/tools";
+import { toJsonSchema } from "@langchain/core/utils/json_schema";
 import type { DataPoint, Job, Output } from "../../types.js";
 import { convertToOpenResponses } from "./convert.js";
 import type {
@@ -12,23 +14,27 @@ import type {
 
 /**
  * Extract JSON schema parameters from a schema object.
- * Handles both Pydantic v2 (model_json_schema) and v1 (schema) methods.
+ * Handles Zod schemas and plain JSON schema objects.
  */
 function extractSchemaParameters(
   inputSchema: unknown,
 ): Record<string, unknown> | null {
   if (!inputSchema) return null;
-  const schema = inputSchema as {
-    model_json_schema?: () => Record<string, unknown>;
-    schema?: () => Record<string, unknown>;
-  };
-  if (typeof schema.model_json_schema === "function") {
-    return schema.model_json_schema();
+
+  try {
+    // Use toJsonSchema to convert Zod schemas to JSON Schema
+    // This handles both Zod schemas and plain JSON Schema objects
+    const jsonSchema = toJsonSchema(
+      inputSchema as Parameters<typeof toJsonSchema>[0],
+    );
+    return jsonSchema as Record<string, unknown>;
+  } catch {
+    // If conversion fails, check if it's already a plain object
+    if (typeof inputSchema === "object" && !Array.isArray(inputSchema)) {
+      return inputSchema as Record<string, unknown>;
+    }
+    return null;
   }
-  if (typeof schema.schema === "function") {
-    return schema.schema();
-  }
-  return null;
 }
 
 /**
@@ -125,30 +131,104 @@ export function extractToolsFromAgent(
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
 
-  // Try to access tools from common LangChain agent attributes
+  // 1. Try ReactAgent pattern: agent.options.tools (langchain createAgent)
+  const agentWithOptions = agent as {
+    options?: { tools?: unknown[]; middleware?: Array<{ tools?: unknown[] }> };
+  };
+  if (agentWithOptions.options?.tools) {
+    const allTools = [
+      ...(agentWithOptions.options.tools ?? []),
+      ...(agentWithOptions.options.middleware
+        ?.filter((m) => m.tools)
+        .flatMap((m) => m.tools ?? []) ?? []),
+    ];
+
+    for (const tool of allTools) {
+      const toolObj = tool as StructuredToolInterface<unknown, unknown, unknown>;
+      if (!toolObj.name) continue;
+
+      const toolSchema: ToolDefinition = {
+        name: toolObj.name,
+        description: toolObj.description,
+      };
+
+      const parameters = extractSchemaParameters(toolObj.schema);
+      if (parameters) {
+        toolSchema.parameters = parameters;
+      }
+
+      tools.push(toolSchema);
+    }
+
+    if (tools.length > 0) {
+      return tools;
+    }
+  }
+
+  // 2. Try CompiledStateGraph pattern: agent.nodes -> ToolNode
+  const agentWithNodes = agent as {
+    nodes?: Record<string, { bound?: unknown }>;
+  };
+  if (agentWithNodes.nodes) {
+    for (const node of Object.values(agentWithNodes.nodes)) {
+      if (!node.bound) continue;
+
+      // Duck-typing: check if bound has a 'tools' array property (ToolNode or compatible)
+      const boundWithTools = node.bound as { tools?: unknown[] };
+      if (Array.isArray(boundWithTools.tools)) {
+        for (const tool of boundWithTools.tools) {
+          const toolInterface = tool as StructuredToolInterface<
+            unknown,
+            unknown,
+            unknown
+          >;
+          if (!toolInterface.name) continue;
+
+          const toolSchema: ToolDefinition = {
+            name: toolInterface.name,
+            description: toolInterface.description,
+          };
+
+          const parameters = extractSchemaParameters(toolInterface.schema);
+          if (parameters) {
+            toolSchema.parameters = parameters;
+          }
+
+          tools.push(toolSchema);
+        }
+        // Found tools, can break
+        if (tools.length > 0) break;
+      }
+    }
+
+    if (tools.length > 0) {
+      return tools;
+    }
+  }
+
+  // 3. Fallback: direct tools property
   let agentTools: unknown[] | undefined = agent.tools;
   if (!agentTools && agent.bound) {
     agentTools = agent.bound.tools;
   }
 
-  if (!agentTools || !Array.isArray(agentTools)) {
-    return tools;
-  }
+  if (agentTools && Array.isArray(agentTools)) {
+    for (const tool of agentTools) {
+      const toolObj = tool as StructuredToolInterface<unknown, unknown, unknown>;
+      if (!toolObj.name) continue;
 
-  for (const tool of agentTools) {
-    const toolObj = tool as Record<string, unknown>;
-    const toolSchema: ToolDefinition = {
-      name: (toolObj.name as string) ?? "unknown",
-      description: toolObj.description as string | undefined,
-    };
+      const toolSchema: ToolDefinition = {
+        name: toolObj.name,
+        description: toolObj.description,
+      };
 
-    // Try to get the input schema
-    const parameters = extractSchemaParameters(toolObj.args_schema);
-    if (parameters) {
-      toolSchema.parameters = parameters;
+      const parameters = extractSchemaParameters(toolObj.schema);
+      if (parameters) {
+        toolSchema.parameters = parameters;
+      }
+
+      tools.push(toolSchema);
     }
-
-    tools.push(toolSchema);
   }
 
   return tools;

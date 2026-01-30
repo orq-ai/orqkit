@@ -29,6 +29,8 @@ export interface LangChainInvocable {
   tools?: unknown[];
   /** Optional bound property for accessing nested tools */
   bound?: { tools?: unknown[] };
+  /** Optional options property for ReactAgent (langchain createAgent) */
+  options?: { tools?: unknown[]; middleware?: Array<{ tools?: unknown[] }> };
 }
 
 /**

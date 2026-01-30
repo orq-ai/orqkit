@@ -108,7 +108,7 @@ export function convertToOpenResponses(
       const contentText = getContent(msgData);
       const inputMessage: Message = {
         type: "message",
-        id: generateItemId("msg"),
+        id: msg.id ?? generateItemId("msg"),
         role: "user",
         status: "completed",
         content: [{ type: "input_text", text: contentText }],
@@ -154,7 +154,7 @@ export function convertToOpenResponses(
           const callId = tc.id ?? generateItemId("call");
           const functionCall: FunctionCall = {
             type: "function_call",
-            id: generateItemId("fc"),
+            id: tc.id ?? generateItemId("fc"),
             call_id: callId,
             name: tc.name ?? "unknown",
             arguments: serializeArgs(tc.args ?? {}),
@@ -168,7 +168,7 @@ export function convertToOpenResponses(
         if (contentText) {
           const outputMessage: Message = {
             type: "message",
-            id: generateItemId("msg"),
+            id: msg.id ?? generateItemId("msg"),
             role: "assistant",
             status: "completed",
             content: [
@@ -190,7 +190,7 @@ export function convertToOpenResponses(
 
       const functionCallOutput: FunctionCallOutput = {
         type: "function_call_output",
-        id: generateItemId("fco"),
+        id: msg.id ?? generateItemId("fco"),
         call_id: toolCallId,
         output: outputContent,
         status: "completed",
@@ -201,7 +201,7 @@ export function convertToOpenResponses(
       const contentText = getContent(msgData);
       const systemMessage: Message = {
         type: "message",
-        id: generateItemId("msg"),
+        id: msg.id ?? generateItemId("msg"),
         role: "system" as Message["role"],
         status: "completed",
         content: [{ type: "input_text", text: contentText }],
