@@ -24,6 +24,23 @@ import type {
 } from "./types.js";
 
 /**
+ * Determine response status from finish reason.
+ */
+function getResponseStatus(
+  finishReason: string | undefined,
+): ResponseResource["status"] {
+  switch (finishReason) {
+    case "error":
+      return "failed";
+    case "length":
+    case "content-filter":
+      return "incomplete";
+    default:
+      return "completed";
+  }
+}
+
+/**
  * Union type for message input - accepts both BaseMessage from @langchain/core
  * and the local LangChainMessage interface for flexibility.
  */
@@ -194,32 +211,19 @@ export function convertToOpenResponses(
   }
 
   // Build tools array
-  const toolsArray: FunctionTool[] = [];
-  if (tools) {
-    for (const toolDef of tools) {
-      const tool: FunctionTool = {
-        type: "function",
-        name: toolDef.name ?? "unknown",
-        description: toolDef.description ?? null,
-        parameters: toolDef.parameters ?? null,
-        strict: null,
-      };
-      toolsArray.push(tool);
-    }
-  }
+  const toolsArray: FunctionTool[] =
+    tools?.map((toolDef) => ({
+      type: "function" as const,
+      name: toolDef.name ?? "unknown",
+      description: toolDef.description ?? null,
+      parameters: toolDef.parameters ?? null,
+      strict: null,
+    })) ?? [];
 
   // Determine status from finish reason
-  let status: ResponseResource["status"] = "completed";
-  let incompleteDetails: ResponseResource["incomplete_details"] = null;
-  if (lastFinishReason === "error") {
-    status = "failed";
-  } else if (
-    lastFinishReason === "length" ||
-    lastFinishReason === "content-filter"
-  ) {
-    status = "incomplete";
-    incompleteDetails = { reason: lastFinishReason };
-  }
+  const status = getResponseStatus(lastFinishReason);
+  const incompleteDetails: ResponseResource["incomplete_details"] =
+    status === "incomplete" ? { reason: lastFinishReason } : null;
 
   // Build usage
   let usageData: Usage | null = null;

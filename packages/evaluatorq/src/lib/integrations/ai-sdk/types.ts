@@ -1,4 +1,3 @@
-// Type-only imports from ai package (stripped at compile time, no runtime errors if not installed)
 import type { StepResult } from "ai";
 
 import type { FunctionTool, ResponseResource } from "../openresponses/index.js";

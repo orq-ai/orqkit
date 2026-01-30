@@ -11,6 +11,27 @@ import type {
 } from "./types.js";
 
 /**
+ * Extract JSON schema parameters from a schema object.
+ * Handles both Pydantic v2 (model_json_schema) and v1 (schema) methods.
+ */
+function extractSchemaParameters(
+  inputSchema: unknown,
+): Record<string, unknown> | null {
+  if (!inputSchema) return null;
+  const schema = inputSchema as {
+    model_json_schema?: () => Record<string, unknown>;
+    schema?: () => Record<string, unknown>;
+  };
+  if (typeof schema.model_json_schema === "function") {
+    return schema.model_json_schema();
+  }
+  if (typeof schema.schema === "function") {
+    return schema.schema();
+  }
+  return null;
+}
+
+/**
  * Creates an evaluatorq Job from a LangChain agent.
  *
  * The job will:
@@ -122,19 +143,9 @@ export function extractToolsFromAgent(
     };
 
     // Try to get the input schema
-    const inputSchema = toolObj.args_schema as
-      | {
-          model_json_schema?: () => Record<string, unknown>;
-          schema?: () => Record<string, unknown>;
-        }
-      | undefined;
-
-    if (inputSchema) {
-      if (typeof inputSchema.model_json_schema === "function") {
-        toolSchema.parameters = inputSchema.model_json_schema();
-      } else if (typeof inputSchema.schema === "function") {
-        toolSchema.parameters = inputSchema.schema();
-      }
+    const parameters = extractSchemaParameters(toolObj.args_schema);
+    if (parameters) {
+      toolSchema.parameters = parameters;
     }
 
     tools.push(toolSchema);

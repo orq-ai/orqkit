@@ -1,6 +1,6 @@
 import type { Agent, StepResult, ToolSet } from "ai";
 
-import { generateItemId } from "../common/index.js";
+import { generateItemId, serializeArgs } from "../common/index.js";
 import type {
   FunctionCall,
   FunctionCallOutput,
@@ -11,6 +11,24 @@ import type {
   Usage,
 } from "../openresponses/index.js";
 import type { StepData } from "./types.js";
+
+/**
+ * Maps an AI SDK finish reason to an OpenResponses status.
+ */
+function getResponseStatus(finishReason: string): ResponseResource["status"] {
+  switch (finishReason) {
+    case "stop":
+    case "tool-calls":
+      return "completed";
+    case "error":
+      return "failed";
+    case "length":
+    case "content-filter":
+      return "incomplete";
+    default:
+      return "completed";
+  }
+}
 
 /**
  * Type alias for a step from an Agent result.
@@ -59,20 +77,14 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             id: generateItemId("fc"),
             call_id: item.toolCallId,
             name: item.toolName,
-            arguments:
-              typeof item.input === "string"
-                ? item.input
-                : JSON.stringify(item.input),
+            arguments: serializeArgs(item.input),
           });
         }
         if (item.type === "tool-result" && item.toolCallId) {
           input.push({
             type: "function_call_output",
             call_id: item.toolCallId,
-            output:
-              typeof item.output === "string"
-                ? item.output
-                : JSON.stringify(item.output),
+            output: serializeArgs(item.output),
           });
         }
       }
@@ -86,10 +98,7 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             id: generateItemId("fc"),
             call_id: toolCall.toolCallId,
             name: toolCall.toolName,
-            arguments:
-              typeof toolCall.input === "string"
-                ? toolCall.input
-                : JSON.stringify(toolCall.input),
+            arguments: serializeArgs(toolCall.input),
           });
         }
       }
@@ -99,10 +108,7 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
           input.push({
             type: "function_call_output",
             call_id: toolResult.toolCallId,
-            output:
-              typeof toolResult.output === "string"
-                ? toolResult.output
-                : JSON.stringify(toolResult.output),
+            output: serializeArgs(toolResult.output),
           });
         }
       }
@@ -114,37 +120,13 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
 
 /**
  * Converts Vercel AI SDK agent result to OpenResponses format.
- *
- * This converter uses a smart approach:
- * - For OpenAI Responses API: extracts the native response.body from the last step
- *   which already contains the full OpenResponses format with all data
- * - Builds the input array by collecting all function calls and outputs from steps
- *   (resolving item_reference entries to actual function_call items)
  */
 export function convertToOpenResponses<TOOLS extends ToolSet>(
   result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
-  _agent: Agent<never, TOOLS, never>,
+  agent: Agent<never, TOOLS, never>,
   prompt?: string,
 ): ResponseResource {
-  // Get the last step which contains the final response
-  // const lastStep = result.steps[result.steps.length - 1] as unknown as StepData;
-
-  // Check if we have a native OpenResponses body from OpenAI Responses API
-  /*   if (lastStep?.response?.body && typeof lastStep.response.body === "object") {
-    const responseBody = lastStep.response.body as ResponseResource;
-
-    // Build the input array from steps (resolves item_reference to actual function_call items)
-    const input = buildInputFromSteps(result, prompt);
-
-    return {
-      ...responseBody,
-      input,
-      metadata: { ...responseBody.metadata, framework: "vercel-ai-sdk" },
-    } as ResponseResource;
-  } */
-
-  // Fallback: manually construct for non-Responses API (e.g., Chat Completions)
-  return buildOpenResponsesFromSteps(result, _agent, prompt);
+  return buildOpenResponsesFromSteps(result, agent, prompt);
 }
 
 /**
@@ -248,10 +230,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
           id: generateItemId("fc"),
           call_id: toolCall.toolCallId || `call_${callIdCounter++}`,
           name: toolCall.toolName,
-          arguments:
-            typeof toolCall.input === "string"
-              ? toolCall.input
-              : JSON.stringify(toolCall.input),
+          arguments: serializeArgs(toolCall.input),
           status: "completed",
         };
         output.push(functionCall);
@@ -265,10 +244,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
           type: "function_call_output",
           id: generateItemId("fco"),
           call_id: toolResult.toolCallId,
-          output:
-            typeof toolResult.output === "string"
-              ? toolResult.output
-              : JSON.stringify(toolResult.output),
+          output: serializeArgs(toolResult.output),
           status: "completed",
         };
         output.push(functionCallOutput);
@@ -314,16 +290,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
       }
     : null;
 
-  // Determine status from finish reason
-  const status: ResponseResource["status"] =
-    result.finishReason === "stop" || result.finishReason === "tool-calls"
-      ? "completed"
-      : result.finishReason === "error"
-        ? "failed"
-        : result.finishReason === "length" ||
-            result.finishReason === "content-filter"
-          ? "incomplete"
-          : "completed";
+  const status = getResponseStatus(result.finishReason);
 
   return {
     id: result.response.id || generateItemId("resp"),

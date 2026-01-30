@@ -1,16 +1,14 @@
-import {tool, ToolLoopAgent} from 'ai';
-import {z} from 'zod';
+import { createOpenAI } from "@ai-sdk/openai";
+import { ToolLoopAgent, tool } from "ai";
+import { z } from "zod";
 
-import {createOpenAI} from '@ai-sdk/openai';
-
-import {evaluatorq} from "@orq-ai/evaluatorq";
-import {wrapAISdkAgent} from "@orq-ai/evaluatorq/ai-sdk";
-
+import { evaluatorq } from "@orq-ai/evaluatorq";
+import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
 // Import generated OpenResponses types
 import type {
-  ResponseResource,
   Message,
   OutputTextContent,
+  ResponseResource,
 } from "@orq-ai/evaluatorq/generated/openresponses/types";
 
 const openai = createOpenAI({
@@ -22,9 +20,9 @@ const weatherAgent = new ToolLoopAgent({
   maxOutputTokens: 2500,
   tools: {
     weather: tool({
-      description: 'Get the weather in a location (in Fahrenheit)',
+      description: "Get the weather in a location (in Fahrenheit)",
       inputSchema: z.object({
-        location: z.string().describe('The location to get the weather for'),
+        location: z.string().describe("The location to get the weather for"),
       }),
       execute: async ({ location }) => ({
         location,
@@ -32,9 +30,9 @@ const weatherAgent = new ToolLoopAgent({
       }),
     }),
     convertFahrenheitToCelsius: tool({
-      description: 'Convert temperature from Fahrenheit to Celsius',
+      description: "Convert temperature from Fahrenheit to Celsius",
       inputSchema: z.object({
-        temperature: z.number().describe('Temperature in Fahrenheit'),
+        temperature: z.number().describe("Temperature in Fahrenheit"),
       }),
       execute: async ({ temperature }) => {
         const celsius = Math.round((temperature - 32) * (5 / 9));
@@ -64,11 +62,12 @@ await evaluatorq("weather-agent-eval", {
         const result = output as unknown as ResponseResource;
         // Find the final assistant message in the output
         const message = result.output.find(
-          (item): item is Message => item.type === "message"
+          (item): item is Message => item.type === "message",
         );
         // Get text from the first output_text content item
         const textContent = message?.content.find(
-          (c): c is OutputTextContent & { type: "output_text" } => c.type === "output_text"
+          (c): c is OutputTextContent & { type: "output_text" } =>
+            c.type === "output_text",
         );
         const text = textContent?.text ?? "";
         const hasTemp = /\d+/.test(text);

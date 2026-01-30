@@ -2,7 +2,6 @@
  * Type definitions for LangChain/LangGraph integration.
  */
 
-// Type-only imports from @langchain/core (stripped at compile time, no runtime errors if not installed)
 import type { BaseMessage } from "@langchain/core/messages";
 import type { RunnableConfig } from "@langchain/core/runnables";
 
