@@ -34,6 +34,13 @@ from evaluatorq.openresponses.convert_models import (
 MessageData = dict[str, Any] | BaseMessage
 
 
+def _get_attr(msg_data: MessageData, key: str, default: Any = None) -> Any:
+    """Get attribute from dict or object."""
+    if isinstance(msg_data, dict):
+        return msg_data.get(key, default)
+    return getattr(msg_data, key, default)
+
+
 def generate_item_id(prefix: str = "item") -> str:
     """Generate a unique item ID with the given prefix."""
     return f"{prefix}_{uuid.uuid4().hex[:24]}"
@@ -132,7 +139,7 @@ def convert_to_open_responses(
             if tool_calls:
                 # AI message with tool calls -> function_call items
                 for tc in tool_calls:
-                    call_id = tc.get("id", generate_item_id("call"))
+                    call_id: str = tc.get("id") or generate_item_id("call")
                     function_call = FunctionCall(
                         type="function_call",
                         id=generate_item_id("fc"),
@@ -346,30 +353,22 @@ def _get_tool_calls(msg_data: MessageData) -> list[ToolCall]:
 
 def _get_tool_call_id(msg_data: MessageData) -> str:
     """Extract tool call ID from tool message data."""
-    if isinstance(msg_data, dict):
-        return msg_data.get("tool_call_id", generate_item_id("call"))
-    return getattr(msg_data, "tool_call_id", generate_item_id("call"))
+    return _get_attr(msg_data, "tool_call_id", generate_item_id("call"))
 
 
 def _get_response_metadata(msg_data: MessageData) -> dict[str, Any]:
     """Extract response metadata from message data."""
-    if isinstance(msg_data, dict):
-        return msg_data.get("response_metadata", {})
-    return getattr(msg_data, "response_metadata", {}) or {}
+    return _get_attr(msg_data, "response_metadata", {}) or {}
 
 
 def _get_message_id(msg_data: MessageData) -> str | None:
     """Extract message ID from message data."""
-    if isinstance(msg_data, dict):
-        return msg_data.get("id")
-    return getattr(msg_data, "id", None)
+    return _get_attr(msg_data, "id")
 
 
 def _extract_usage(msg_data: MessageData) -> UsageMetadata | None:
     """Extract usage metadata from message data."""
-    if isinstance(msg_data, dict):
-        return msg_data.get("usage_metadata")
-    return getattr(msg_data, "usage_metadata", None)
+    return _get_attr(msg_data, "usage_metadata")
 
 
 def _serialize_args(args: Any) -> str:

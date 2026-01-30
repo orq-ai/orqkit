@@ -2,30 +2,34 @@
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any
 
 from evaluatorq.types import DataPoint
 from langchain_core.messages import BaseMessage
+from langchain_core.tools import BaseTool
+from langgraph.graph.state import CompiledStateGraph
+from pydantic import BaseModel
+from langgraph.prebuilt.tool_node import ToolNode
+from langgraph.pregel._read import PregelNode
 
 from .convert import convert_to_open_responses
 
 
-class LangChainInvocable(Protocol):
-    """Protocol for LangChain/LangGraph objects with an invoke method.
-
-    Compatible with:
-    - LangChain agents (from create_agent)
-    - LangGraph compiled graphs (CompiledStateGraph from StateGraph.compile())
-    - Any runnable with an invoke() method returning {"messages": [...]}
-    """
-
-    def invoke(
-        self, input: dict[str, Any], config: dict[str, Any] | None = None
-    ) -> dict[str, Any]: ...
+def _extract_schema_parameters(
+    schema_obj: type[BaseModel] | dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Extract JSON schema from Pydantic model or dict schema."""
+    if schema_obj is None:
+        return None
+    # Already a dict schema
+    if isinstance(schema_obj, dict):
+        return schema_obj
+    # Pydantic model class - use model_json_schema (Pydantic v2)
+    return schema_obj.model_json_schema()
 
 
 def wrap_langchain_agent(
-    agent: LangChainInvocable,
+    agent: CompiledStateGraph[Any, Any, Any, Any],
     *,
     name: str = "agent",
     prompt_key: str = "prompt",
@@ -105,10 +109,11 @@ def wrap_langchain_agent(
         # Extract messages from result
         messages: list[BaseMessage] = result.get("messages", [])
 
-        print("LangChain Agent Messages type:", type(messages))
+        # Get tools from agent if not provided explicitly
+        resolved_tools = tools if tools is not None else extract_tools_from_agent(agent)
 
         # Convert to OpenResponses format
-        open_responses_output = convert_to_open_responses(messages, tools)
+        open_responses_output = convert_to_open_responses(messages, resolved_tools)
 
         return {
             "name": name,
@@ -118,44 +123,43 @@ def wrap_langchain_agent(
     return job
 
 
-def extract_tools_from_agent(agent: Any) -> list[dict[str, Any]]:
+def extract_tools_from_agent(agent: CompiledStateGraph[Any, Any, Any, Any]) -> list[dict[str, Any]]:
     """
-    Extract tool definitions from a LangChain agent.
+    Extract tool definitions from a LangChain/LangGraph agent.
 
-    This is a helper function to automatically extract tool schemas
-    from a LangChain agent for use in the OpenResponses output.
+    For LangGraph CompiledStateGraph, iterates over nodes to find ToolNodes
+    and extracts tool definitions from them.
 
     Args:
-        agent: A LangChain agent with tools.
+        agent: A LangChain agent or LangGraph compiled graph.
 
     Returns:
-        A list of tool definitions in OpenResponses format.
+        A list of tool definitions in OpenResponses FunctionTool format.
     """
     tools: list[dict[str, Any]] = []
 
-    # Try to access tools from common LangChain agent attributes
-    agent_tools = getattr(agent, "tools", None)
-    if not agent_tools:
-        agent_tools = getattr(agent, "bound", {}).get("tools", [])
+    # CompiledStateGraph has nodes: dict[str, PregelNode]
+    nodes: dict[str, PregelNode] = agent.nodes
 
-    if not agent_tools:
-        return tools
+    # Iterate over nodes to find ToolNodes
+    for node in nodes.values():
+        bound = node.bound
 
-    for tool in agent_tools:
-        tool_schema: dict[str, Any] = {
-            "name": getattr(tool, "name", "unknown"),
-            "description": getattr(tool, "description", None),
-        }
+        # Type guard: check if bound is a ToolNode
+        if not isinstance(bound, ToolNode):
+            continue
 
-        # Try to get the input schema
-        input_schema = getattr(tool, "args_schema", None)
-        if input_schema:
-            if hasattr(input_schema, "model_json_schema"):
-                tool_schema["parameters"] = input_schema.model_json_schema()
-            elif hasattr(input_schema, "schema"):
-                tool_schema["parameters"] = input_schema.schema()
-
-        tools.append(tool_schema)
+        # Now bound is typed as ToolNode, tools_by_name is dict[str, BaseTool]
+        tool_obj: BaseTool
+        for tool_obj in bound.tools_by_name.values():
+            tool_schema: dict[str, Any] = {
+                "type": "function",
+                "name": tool_obj.name,
+                "description": tool_obj.description,
+                "parameters": _extract_schema_parameters(tool_obj.args_schema),
+                "strict": True,
+            }
+            tools.append(tool_schema)
 
     return tools
 
