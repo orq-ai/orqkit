@@ -4,7 +4,11 @@
 
 import type { BaseMessage } from "@langchain/core/messages";
 
-import { generateItemId, serializeArgs } from "../common/index.js";
+import {
+  generateItemId,
+  getResponseStatus,
+  serializeArgs,
+} from "../common/index.js";
 import type {
   FunctionCall,
   FunctionCallOutput,
@@ -22,23 +26,6 @@ import type {
   ToolDefinition,
   UsageMetadata,
 } from "./types.js";
-
-/**
- * Determine response status from finish reason.
- */
-function getResponseStatus(
-  finishReason: string | undefined,
-): ResponseResource["status"] {
-  switch (finishReason) {
-    case "error":
-      return "failed";
-    case "length":
-    case "content-filter":
-      return "incomplete";
-    default:
-      return "completed";
-  }
-}
 
 /**
  * Union type for message input - accepts both BaseMessage from @langchain/core
@@ -116,7 +103,7 @@ export function convertToOpenResponses(
       inputItems.push(inputMessage);
     } else if (msgType === "ai") {
       // Extract usage metadata
-      const usage = extractUsage(msgData);
+      const usage = msgData.usage_metadata;
       if (usage) {
         totalInputTokens += usage.input_tokens ?? 0;
         totalOutputTokens += usage.output_tokens ?? 0;
@@ -126,7 +113,7 @@ export function convertToOpenResponses(
       }
 
       // Extract model name and other metadata from response metadata
-      const responseMetadata = getResponseMetadata(msgData);
+      const responseMetadata = msgData.response_metadata;
       if (responseMetadata?.model_name) {
         modelName = responseMetadata.model_name;
       }
@@ -141,9 +128,8 @@ export function convertToOpenResponses(
       }
 
       // Extract message ID (e.g., chatcmpl-... from OpenAI)
-      const messageId = getMessageId(msgData);
-      if (messageId) {
-        lastAIMessageId = messageId;
+      if (msgData.id) {
+        lastAIMessageId = msgData.id;
       }
 
       // Check for tool calls
@@ -185,7 +171,7 @@ export function convertToOpenResponses(
       }
     } else if (msgType === "tool") {
       // Tool output -> function_call_output
-      const toolCallId = getToolCallId(msgData);
+      const toolCallId = msgData.tool_call_id ?? generateItemId("call");
       const outputContent = getContent(msgData);
 
       const functionCallOutput: FunctionCallOutput = {
@@ -444,34 +430,4 @@ function getToolCalls(msgData: LangChainMessage): ToolCall[] {
   }
 
   return result;
-}
-
-/**
- * Extract tool call ID from tool message data.
- */
-function getToolCallId(msgData: LangChainMessage): string {
-  return msgData.tool_call_id ?? generateItemId("call");
-}
-
-/**
- * Extract response metadata from message data.
- */
-function getResponseMetadata(
-  msgData: LangChainMessage,
-): ResponseMetadata | undefined {
-  return msgData.response_metadata;
-}
-
-/**
- * Extract message ID from message data.
- */
-function getMessageId(msgData: LangChainMessage): string | undefined {
-  return msgData.id;
-}
-
-/**
- * Extract usage metadata from message data.
- */
-function extractUsage(msgData: LangChainMessage): UsageMetadata | undefined {
-  return msgData.usage_metadata;
 }

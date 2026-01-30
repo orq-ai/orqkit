@@ -4,13 +4,18 @@
 
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { toJsonSchema } from "@langchain/core/utils/json_schema";
+
 import type { DataPoint, Job, Output } from "../../types.js";
+import { extractPromptFromData } from "../common/index.js";
 import { convertToOpenResponses } from "./convert.js";
 import type {
   AgentJobOptions,
   LangChainInvocable,
   ToolDefinition,
 } from "./types.js";
+
+/** Type alias for the verbose StructuredToolInterface type */
+type ToolLike = StructuredToolInterface<unknown, unknown, unknown>;
 
 /**
  * Extract JSON schema parameters from a schema object.
@@ -35,6 +40,22 @@ function extractSchemaParameters(
     }
     return null;
   }
+}
+
+/**
+ * Convert a tool object to a ToolDefinition.
+ * Returns null if the tool doesn't have a name.
+ */
+function convertToolToDefinition(tool: unknown): ToolDefinition | null {
+  const toolObj = tool as ToolLike;
+  if (!toolObj.name) return null;
+
+  const parameters = extractSchemaParameters(toolObj.schema);
+  return {
+    name: toolObj.name,
+    description: toolObj.description,
+    ...(parameters && { parameters }),
+  };
 }
 
 /**
@@ -88,13 +109,7 @@ export function wrapLangChainAgent(
   const { name = "agent", promptKey = "prompt", tools } = options;
 
   return async (data: DataPoint, _row: number) => {
-    const prompt = data.inputs[promptKey];
-
-    if (typeof prompt !== "string") {
-      throw new Error(
-        `Expected data.inputs.${promptKey} to be a string, got ${typeof prompt}`,
-      );
-    }
+    const prompt = extractPromptFromData(data, promptKey);
 
     // Invoke the LangChain agent with messages format
     const result = await agent.invoke({
@@ -144,20 +159,8 @@ export function extractToolsFromAgent(
     ];
 
     for (const tool of allTools) {
-      const toolObj = tool as StructuredToolInterface<unknown, unknown, unknown>;
-      if (!toolObj.name) continue;
-
-      const toolSchema: ToolDefinition = {
-        name: toolObj.name,
-        description: toolObj.description,
-      };
-
-      const parameters = extractSchemaParameters(toolObj.schema);
-      if (parameters) {
-        toolSchema.parameters = parameters;
-      }
-
-      tools.push(toolSchema);
+      const def = convertToolToDefinition(tool);
+      if (def) tools.push(def);
     }
 
     if (tools.length > 0) {
@@ -177,24 +180,8 @@ export function extractToolsFromAgent(
       const boundWithTools = node.bound as { tools?: unknown[] };
       if (Array.isArray(boundWithTools.tools)) {
         for (const tool of boundWithTools.tools) {
-          const toolInterface = tool as StructuredToolInterface<
-            unknown,
-            unknown,
-            unknown
-          >;
-          if (!toolInterface.name) continue;
-
-          const toolSchema: ToolDefinition = {
-            name: toolInterface.name,
-            description: toolInterface.description,
-          };
-
-          const parameters = extractSchemaParameters(toolInterface.schema);
-          if (parameters) {
-            toolSchema.parameters = parameters;
-          }
-
-          tools.push(toolSchema);
+          const def = convertToolToDefinition(tool);
+          if (def) tools.push(def);
         }
         // Found tools, can break
         if (tools.length > 0) break;
@@ -214,20 +201,8 @@ export function extractToolsFromAgent(
 
   if (agentTools && Array.isArray(agentTools)) {
     for (const tool of agentTools) {
-      const toolObj = tool as StructuredToolInterface<unknown, unknown, unknown>;
-      if (!toolObj.name) continue;
-
-      const toolSchema: ToolDefinition = {
-        name: toolObj.name,
-        description: toolObj.description,
-      };
-
-      const parameters = extractSchemaParameters(toolObj.schema);
-      if (parameters) {
-        toolSchema.parameters = parameters;
-      }
-
-      tools.push(toolSchema);
+      const def = convertToolToDefinition(tool);
+      if (def) tools.push(def);
     }
   }
 

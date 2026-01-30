@@ -38,14 +38,14 @@ export const functionCallStatusEnum = {
 export type FunctionCallStatus =
   (typeof functionCallStatusEnum)[keyof typeof functionCallStatusEnum];
 
-export const functionCallOutputStatusEnumEnum = {
+export const functionCallOutputStatusEnum = {
   in_progress: "in_progress",
   completed: "completed",
   incomplete: "incomplete",
 } as const;
 
 export type FunctionCallOutputStatusEnum =
-  (typeof functionCallOutputStatusEnumEnum)[keyof typeof functionCallOutputStatusEnumEnum];
+  (typeof functionCallOutputStatusEnum)[keyof typeof functionCallOutputStatusEnum];
 
 // =============================================================================
 // Content Types

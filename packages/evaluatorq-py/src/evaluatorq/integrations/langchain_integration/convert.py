@@ -120,14 +120,10 @@ def convert_to_open_responses(
 
             # Extract model name and other metadata from response metadata
             response_metadata = _get_response_metadata(msg_data)
-            if response_metadata.get("model_name"):
-                model_name = response_metadata["model_name"]
-            if response_metadata.get("finish_reason"):
-                last_finish_reason = response_metadata["finish_reason"]
-            if response_metadata.get("model_provider"):
-                model_provider = response_metadata["model_provider"]
-            if response_metadata.get("system_fingerprint"):
-                system_fingerprint = response_metadata["system_fingerprint"]
+            model_name = response_metadata.get("model_name") or model_name
+            last_finish_reason = response_metadata.get("finish_reason") or last_finish_reason
+            model_provider = response_metadata.get("model_provider") or model_provider
+            system_fingerprint = response_metadata.get("system_fingerprint") or system_fingerprint
 
             # Extract message ID (e.g., chatcmpl-... from OpenAI)
             message_id = _get_message_id(msg_data)
@@ -184,17 +180,16 @@ def convert_to_open_responses(
             output_items.append(function_call_output)
 
     # Build tools array
-    tools_array: list[FunctionTool] = []
-    if tools:
-        for tool_def in tools:
-            tool = FunctionTool(
-                type="function",
-                name=tool_def.get("name") or "unknown",
-                description=tool_def.get("description"),
-                parameters=tool_def.get("parameters"),
-                strict=None,
-            )
-            tools_array.append(tool)
+    tools_array: list[FunctionTool] = [
+        FunctionTool(
+            type="function",
+            name=tool_def.get("name") or "unknown",
+            description=tool_def.get("description"),
+            parameters=tool_def.get("parameters"),
+            strict=None,
+        )
+        for tool_def in (tools or [])
+    ]
 
     # Determine status from finish reason
     status = "completed"

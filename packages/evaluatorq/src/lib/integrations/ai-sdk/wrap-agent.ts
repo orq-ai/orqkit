@@ -1,6 +1,7 @@
 import type { Agent, ToolSet } from "ai";
 
 import type { DataPoint, Job, Output } from "../../types.js";
+import { extractPromptFromData } from "../common/index.js";
 import { convertToOpenResponses } from "./convert.js";
 import type { AgentJobOptions } from "./types.js";
 
@@ -64,14 +65,7 @@ export function wrapAISdkAgent<TOOLS extends ToolSet>(
   const { name = agent.id ?? "agent", promptKey = "prompt" } = options;
 
   return async (data: DataPoint, _row: number) => {
-    const prompt = data.inputs[promptKey];
-
-    if (typeof prompt !== "string") {
-      throw new Error(
-        `Expected data.inputs.${promptKey} to be a string, got ${typeof prompt}`,
-      );
-    }
-
+    const prompt = extractPromptFromData(data, promptKey);
     const result = await agent.generate({ prompt });
 
     // Convert to OpenResponses format

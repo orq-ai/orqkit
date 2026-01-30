@@ -27,15 +27,14 @@ class MessageStatus(Enum):
 
 
 class FunctionCallStatus(Enum):
+    """Status for function calls and function call outputs."""
     in_progress = "in_progress"
     completed = "completed"
     incomplete = "incomplete"
 
 
-class FunctionCallOutputStatusEnum(Enum):
-    in_progress = "in_progress"
-    completed = "completed"
-    incomplete = "incomplete"
+# Alias for backwards compatibility - both function calls and outputs use the same status values
+FunctionCallOutputStatusEnum = FunctionCallStatus
 
 
 class InputTextContent(BaseModel):

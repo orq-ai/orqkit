@@ -1,6 +1,10 @@
 import type { Agent, StepResult, ToolSet } from "ai";
 
-import { generateItemId, serializeArgs } from "../common/index.js";
+import {
+  generateItemId,
+  getResponseStatus,
+  serializeArgs,
+} from "../common/index.js";
 import type {
   FunctionCall,
   FunctionCallOutput,
@@ -11,24 +15,6 @@ import type {
   Usage,
 } from "../openresponses/index.js";
 import type { StepData } from "./types.js";
-
-/**
- * Maps an AI SDK finish reason to an OpenResponses status.
- */
-function getResponseStatus(finishReason: string): ResponseResource["status"] {
-  switch (finishReason) {
-    case "stop":
-    case "tool-calls":
-      return "completed";
-    case "error":
-      return "failed";
-    case "length":
-    case "content-filter":
-      return "incomplete";
-    default:
-      return "completed";
-  }
-}
 
 /**
  * Type alias for a step from an Agent result.
