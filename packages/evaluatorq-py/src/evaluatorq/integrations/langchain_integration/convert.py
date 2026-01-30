@@ -43,7 +43,7 @@ def _get_attr(msg_data: MessageData, key: str, default: Any = None) -> Any:
 
 def generate_item_id(prefix: str = "item") -> str:
     """Generate a unique item ID with the given prefix."""
-    return f"{prefix}_{uuid.uuid4().hex[:24]}"
+    return f"{prefix}_{uuid.uuid4().hex}"
 
 
 # Map constructor ID to message type (for lc serialization format)
@@ -99,7 +99,7 @@ def convert_to_open_responses(
             content_text = _get_content(msg_data)
             input_message = Message(
                 type="message",
-                id=generate_item_id("msg"),
+                id=msg.id or generate_item_id("msg"),
                 role=MessageRole.user,
                 status=MessageStatus.completed,
                 content=[InputTextContent(type="input_text", text=content_text)],
@@ -155,7 +155,7 @@ def convert_to_open_responses(
                 if content_text:
                     output_message = Message(
                         type="message",
-                        id=generate_item_id("msg"),
+                        id=msg.id or generate_item_id("msg"),
                         role=MessageRole.assistant,
                         status=MessageStatus.completed,
                         content=[
@@ -176,7 +176,7 @@ def convert_to_open_responses(
 
             function_call_output = FunctionCallOutput(
                 type="function_call_output",
-                id=generate_item_id("fco"),
+                id=msg.id or generate_item_id("fco"),
                 call_id=tool_call_id,
                 output=output_content,
                 status=FunctionCallOutputStatusEnum.completed,
@@ -189,7 +189,7 @@ def convert_to_open_responses(
         for tool_def in tools:
             tool = FunctionTool(
                 type="function",
-                name=tool_def.get("name", "unknown"),
+                name=tool_def.get("name") or "unknown",
                 description=tool_def.get("description"),
                 parameters=tool_def.get("parameters"),
                 strict=None,
