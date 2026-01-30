@@ -149,7 +149,7 @@ async def with_evaluation_span(
 
 def set_evaluation_attributes(
     span: "Span | None",
-    score: str | int | float | bool,
+    score: str | int | float | bool | dict[str, Any],
     explanation: str | None = None,
     pass_: bool | None = None,
 ) -> None:
@@ -165,7 +165,11 @@ def set_evaluation_attributes(
     if span is None:
         return
 
-    span.set_attribute("orq.score", str(score))
+    import json
+
+    span.set_attribute(
+        "orq.score", json.dumps(score) if isinstance(score, dict) else str(score)
+    )
     if explanation is not None:
         span.set_attribute("orq.explanation", explanation)
     if pass_ is not None:

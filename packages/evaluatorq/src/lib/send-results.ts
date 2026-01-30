@@ -6,7 +6,11 @@ import type { DataPoint, EvaluatorqResult, Output } from "./types.js";
 export interface SerializedEvaluatorScore {
   evaluatorName: string;
   score: {
-    value: number | boolean | string;
+    value:
+      | number
+      | boolean
+      | string
+      | { type: string; value: Record<string, unknown> };
     explanation?: string;
   };
   error?: string; // Error serialized to string

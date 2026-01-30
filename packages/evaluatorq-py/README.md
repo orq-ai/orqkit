@@ -321,6 +321,20 @@ await evaluatorq(
 )
 ```
 
+#### Structured Evaluation Results
+
+Evaluators can return structured, multi-dimensional metrics using `EvaluationResultCell`. This is useful for metrics like BERT scores, ROUGE-N scores, or any evaluation that produces multiple sub-scores.
+
+See the runnable TypeScript examples in the `examples/` directory (the Python API mirrors them):
+
+- [`structured-rubric.eval.ts`](../../examples/src/lib/structured-rubric.eval.ts) - Multi-criteria quality rubric (relevance, coherence, fluency)
+- [`structured-sentiment.eval.ts`](../../examples/src/lib/structured-sentiment.eval.ts) - Sentiment distribution breakdown (positive, negative, neutral)
+- [`structured-safety.eval.ts`](../../examples/src/lib/structured-safety.eval.ts) - Toxicity/safety severity scores with pass/fail tracking
+
+For a BERT score example using the Orq platform, see [`llm-eval-with-results.ts`](../../examples/src/lib/llm-eval-with-results.ts).
+
+> **Note:** Structured results display as `[structured]` in the terminal summary table but are preserved in full when sent to the Orq platform and OpenTelemetry spans.
+
 #### Controlling Parallelism
 
 ```python
@@ -563,9 +577,16 @@ class DataPoint(BaseModel):
     inputs: dict[str, Any]
     expected_output: Output | None = None
 
+EvaluationResultCellValue = str | float | dict[str, "str | float | dict[str, str | float]"]
+
+class EvaluationResultCell(BaseModel):
+    """Structured evaluation result with multi-dimensional metrics."""
+    type: str
+    value: dict[str, EvaluationResultCellValue]
+
 class EvaluationResult(BaseModel):
     """Result from an evaluator."""
-    value: str | float | bool
+    value: str | float | bool | EvaluationResultCell
     explanation: str | None = None
     pass_: bool | None = None  # Optional pass/fail indicator for CI/CD integration
 
@@ -616,7 +637,7 @@ class ScorerParameter(TypedDict):
     data: DataPoint
     output: Output
 
-Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult]]
+Scorer = Callable[[ScorerParameter], Awaitable[EvaluationResult | dict[str, Any]]]
 
 class Evaluator(TypedDict):
     """Evaluator configuration."""
