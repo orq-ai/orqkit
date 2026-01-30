@@ -8,7 +8,7 @@ Output = str | int | float | bool | dict[str, Any] | None
 """Output type alias"""
 
 
-EvaluationResultCellValue = str | float | dict[str, "str | float | dict[str, str | float]"]
+EvaluationResultCellValue = str | int | float | dict[str, "str | float | dict[str, str | float]"]
 
 
 class EvaluationResultCell(BaseModel):

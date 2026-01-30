@@ -7,6 +7,7 @@ Span hierarchy:
       ├── [User's instrumented code becomes child spans]
       └── orq.evaluation (per evaluator - child of its job)
 """
+import json
 
 from __future__ import annotations
 
@@ -164,8 +165,6 @@ def set_evaluation_attributes(
     """
     if span is None:
         return
-
-    import json
 
     span.set_attribute(
         "orq.score", json.dumps(score) if isinstance(score, dict) else str(score)
