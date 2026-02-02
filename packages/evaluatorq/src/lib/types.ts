@@ -1,13 +1,13 @@
 export type Output = string | number | boolean | Record<string, unknown> | null;
 
 export type EvaluationResultCellValue =
-	| string
-	| number
-	| Record<string, string | number | Record<string, string | number>>;
+  | string
+  | number
+  | Record<string, string | number | Record<string, string | number>>;
 
 export type EvaluationResultCell = {
-	type: string;
-	value: Record<string, EvaluationResultCellValue>;
+  type: string;
+  value: Record<string, EvaluationResultCellValue>;
 };
 
 type EvaluationResult<T> = {

@@ -201,7 +201,11 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
     const passRate = Math.round((totalPassed / totalWithPass) * 100);
     const passLabel = `${passRate}% (${totalPassed}/${totalWithPass})`;
     const passColor =
-      passRate === 100 ? chalk.green : passRate >= 80 ? chalk.yellow : chalk.red;
+      passRate === 100
+        ? chalk.green
+        : passRate >= 80
+          ? chalk.yellow
+          : chalk.red;
     rows.push({
       main: ["Pass Rate", passColor(passLabel)],
     });
@@ -295,7 +299,13 @@ export function calculateEvaluatorAverages(results: EvaluatorqResult): {
                   ? chalk.yellow
                   : chalk.red,
           });
-        } else if (typeof firstScore === "object" && firstScore !== null) {
+        } else if (
+          typeof firstScore === "object" &&
+          firstScore !== null &&
+          !Array.isArray(firstScore) &&
+          "type" in firstScore &&
+          "value" in firstScore
+        ) {
           // For structured data (e.g., BERT score, ROUGE_N), show placeholder
           evaluatorAverages.set(jobName, {
             value: "[structured]",

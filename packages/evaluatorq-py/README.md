@@ -410,11 +410,11 @@ async def safety_scorer(params):
     )
 ```
 
-See also the runnable TypeScript examples in the `examples/` directory:
+See the runnable Python examples in the `examples/` directory:
 
-- [`structured-rubric.eval.ts`](../../examples/src/lib/structured-rubric.eval.ts) - Multi-criteria quality rubric
-- [`structured-sentiment.eval.ts`](../../examples/src/lib/structured-sentiment.eval.ts) - Sentiment distribution breakdown
-- [`structured-safety.eval.ts`](../../examples/src/lib/structured-safety.eval.ts) - Safety scores with pass/fail tracking
+- [`structured_rubric_eval.py`](examples/structured_rubric_eval.py) - Multi-criteria quality rubric
+- [`structured_sentiment_eval.py`](examples/structured_sentiment_eval.py) - Sentiment distribution breakdown
+- [`structured_safety_eval.py`](examples/structured_safety_eval.py) - Safety scores with pass/fail tracking
 
 > **Note:** Structured results display as `[structured]` in the terminal summary table but are preserved in full when sent to the Orq platform and OpenTelemetry spans.
 

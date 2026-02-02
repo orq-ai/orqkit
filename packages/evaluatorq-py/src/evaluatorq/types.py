@@ -17,7 +17,7 @@ class EvaluationResultCell(BaseModel):
 
 
 class EvaluationResult(BaseModel):
-    value: str | float | bool | EvaluationResultCell
+    value: str | int | float | bool | EvaluationResultCell
     explanation: str | None = None
     pass_: bool | None = Field(default=None, serialization_alias="pass")
 

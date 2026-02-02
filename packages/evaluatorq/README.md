@@ -406,11 +406,11 @@ type EvaluationResult<T> = {
   pass?: boolean;  // Optional pass/fail indicator for CI/CD integration
 };
 
-type Scorer =
-  | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<EvaluationResultCell>>);
+type Scorer = (
+  params: ScorerParameter,
+) => Promise<
+  EvaluationResult<string | number | boolean | EvaluationResultCell>
+>;
 
 // Deployment helper types
 interface DeploymentOptions {

@@ -8,7 +8,11 @@
  *       └── orq.evaluation (per evaluator - child of its job)
  */
 
-import type { Context, Span, SpanStatusCode as SpanStatusCodeType } from "@opentelemetry/api";
+import type {
+  Context,
+  Span,
+  SpanStatusCode as SpanStatusCodeType,
+} from "@opentelemetry/api";
 
 import { getTracer } from "./setup.js";
 
@@ -180,7 +184,9 @@ export function setEvaluationAttributes(
 
   span.setAttribute(
     "orq.score",
-    typeof score === "object" ? JSON.stringify(score) : String(score),
+    typeof score === "object" && score !== null
+      ? JSON.stringify(score)
+      : String(score),
   );
   if (explanation !== undefined) {
     span.setAttribute("orq.explanation", explanation);

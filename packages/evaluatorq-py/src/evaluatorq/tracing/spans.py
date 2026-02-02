@@ -7,9 +7,9 @@ Span hierarchy:
       ├── [User's instrumented code becomes child spans]
       └── orq.evaluation (per evaluator - child of its job)
 """
-import json
-
 from __future__ import annotations
+
+import json
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
