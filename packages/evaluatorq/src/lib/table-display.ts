@@ -4,7 +4,21 @@ import chalk from "chalk";
 import { Effect } from "effect";
 import stripAnsi from "strip-ansi";
 
-import type { EvaluatorqResult } from "./types.js";
+import type { EvaluationResultCell, EvaluatorqResult } from "./types.js";
+
+function isEvaluationResultCell(value: unknown): value is EvaluationResultCell {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    "type" in value &&
+    typeof value.type === "string" &&
+    "value" in value &&
+    typeof value.value === "object" &&
+    value.value !== null &&
+    !Array.isArray(value.value)
+  );
+}
 
 // Color a percentage value: green >= 80%, yellow >= 50%, red below
 function colorRate(rate: number): string {
@@ -299,13 +313,7 @@ export function calculateEvaluatorAverages(results: EvaluatorqResult): {
                   ? chalk.yellow
                   : chalk.red,
           });
-        } else if (
-          typeof firstScore === "object" &&
-          firstScore !== null &&
-          !Array.isArray(firstScore) &&
-          "type" in firstScore &&
-          "value" in firstScore
-        ) {
+        } else if (isEvaluationResultCell(firstScore)) {
           // For structured data (e.g., BERT score, ROUGE_N), show placeholder
           evaluatorAverages.set(jobName, {
             value: "[structured]",

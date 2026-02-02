@@ -12,7 +12,7 @@ from rich.text import Text
 from .types import EvaluationResultCell, EvaluatorqResult
 
 ScoreValue = float | bool | str | EvaluationResultCell
-"""Score value type - can be numeric, boolean, string or EvaluationResultCell""""
+"""Score value type - can be numeric, boolean, string or EvaluationResultCell"""
 
 ScoresByEvaluatorAndJob = dict[str, dict[str, list[ScoreValue]]]
 """Mapping of evaluator_name -> job_name -> list of score values"""
