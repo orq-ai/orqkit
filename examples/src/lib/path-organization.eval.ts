@@ -4,8 +4,14 @@
  * Demonstrates how to use the `path` parameter to organize experiment
  * results into specific projects and folders on the Orq platform.
  *
- * The `path` parameter accepts a string in the format "Project/Folder"
- * which determines where the experiment results will be stored.
+ * The `path` parameter accepts a string in the format "Project/Folder/Subfolder"
+ * where the first segment is the project name and subsequent segments are
+ * folders/subfolders within that project.
+ *
+ * Examples:
+ *   - "MyProject" - places results in MyProject (root level)
+ *   - "MyProject/Evaluations" - places results in the Evaluations folder of MyProject
+ *   - "MyProject/Evaluations/Unit Tests" - nested subfolder
  *
  * Prerequisites:
  *   - Set ORQ_API_KEY environment variable
@@ -63,6 +69,8 @@ const dataPoints: DataPoint[] = [
 async function run() {
   console.log("\n📁 Path Organization Example\n");
   console.log("Experiment results will be stored in: MyProject/TextProcessing");
+  console.log("  - Project: MyProject");
+  console.log("  - Folder: TextProcessing");
   console.log("------------------------------------------\n");
 
   const results = await evaluatorq("text-processor-eval", {
@@ -71,7 +79,8 @@ async function run() {
     evaluators: [matchesExpected],
     print: true,
     description: "Text processing evaluation with path organization",
-    // The path parameter organizes results into a project and folder
+    // The path parameter: first segment is project, rest are folders
+    // Format: "Project/Folder/Subfolder/..."
     path: "MyProject/TextProcessing",
   });
 

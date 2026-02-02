@@ -4,8 +4,14 @@ Path Organization Example
 Demonstrates how to use the `path` parameter to organize experiment
 results into specific projects and folders on the Orq platform.
 
-The `path` parameter accepts a string in the format "Project/Folder"
-which determines where the experiment results will be stored.
+The `path` parameter accepts a string in the format "Project/Folder/Subfolder"
+where the first segment is the project name and subsequent segments are
+folders/subfolders within that project.
+
+Examples:
+  - "MyProject" - places results in MyProject (root level)
+  - "MyProject/Evaluations" - places results in the Evaluations folder of MyProject
+  - "MyProject/Evaluations/Unit Tests" - nested subfolder
 
 Prerequisites:
   - Set ORQ_API_KEY environment variable
@@ -16,10 +22,17 @@ Usage:
 
 import asyncio
 
-from evaluatorq import DataPoint, EvaluationResult, evaluatorq, job
+from evaluatorq import (
+    DataPoint,
+    EvaluationResult,
+    Evaluator,
+    ScorerParameter,
+    evaluatorq,
+    job,
+)
 
 
-async def matches_expected_scorer(params: dict) -> EvaluationResult:
+async def matches_expected_scorer(params: ScorerParameter) -> EvaluationResult:
     """Evaluator that checks if output matches expected."""
     data = params["data"]
     output = params["output"]
@@ -31,7 +44,7 @@ async def matches_expected_scorer(params: dict) -> EvaluationResult:
     )
 
 
-matches_expected = {
+matches_expected: Evaluator = {
     "name": "matches-expected",
     "scorer": matches_expected_scorer,
 }
@@ -55,7 +68,9 @@ async def text_processor_job(data: DataPoint, _row: int) -> str:
 async def run():
     """Run the path organization example."""
     print("\n📁 Path Organization Example\n")
-    print("Experiment results will be stored in: evaluatorq")
+    print("Experiment results will be stored in: EU AI Act/Evaluators")
+    print("  - Project: EU AI Act")
+    print("  - Folder: Evaluators")
     print("------------------------------------------\n")
 
     # Test data
@@ -78,8 +93,9 @@ async def run():
         evaluators=[matches_expected],
         print_results=True,
         description="Text processing evaluation with path organization",
-        # The path parameter organizes results into a project and folder
-        path="evaluatorq",
+        # The path parameter: first segment is project, rest are folders
+        # Format: "Project/Folder/Subfolder/..."
+        path="EU AI Act/Evaluators",
     )
 
     print("\n✅ Evaluation complete!")
