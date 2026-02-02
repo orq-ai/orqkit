@@ -20,17 +20,18 @@ export type { BaseMessage, RunnableConfig };
  */
 export interface LangChainInvocable {
   invoke(
-    input:
-      | { messages: BaseMessage[] | LangChainMessage[] }
-      | Record<string, unknown>,
+    input: unknown,
     config?: RunnableConfig,
-  ): Promise<{ messages: BaseMessage[] | LangChainMessage[] }>;
+  ): Promise<{ messages: unknown[] } | Record<string, unknown>>;
   /** Optional tools property that some agents expose */
-  tools?: unknown[];
+  tools?: readonly unknown[];
   /** Optional bound property for accessing nested tools */
-  bound?: { tools?: unknown[] };
+  bound?: { tools?: readonly unknown[] };
   /** Optional options property for ReactAgent (langchain createAgent) */
-  options?: { tools?: unknown[]; middleware?: Array<{ tools?: unknown[] }> };
+  options?: {
+    tools?: readonly unknown[];
+    middleware?: ReadonlyArray<{ tools?: readonly unknown[] }>;
+  };
 }
 
 /**

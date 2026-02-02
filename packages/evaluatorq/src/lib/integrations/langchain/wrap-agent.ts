@@ -7,7 +7,7 @@ import { toJsonSchema } from "@langchain/core/utils/json_schema";
 
 import type { DataPoint, Job, Output } from "../../types.js";
 import { extractPromptFromData } from "../common/index.js";
-import { convertToOpenResponses } from "./convert.js";
+import { convertToOpenResponses, type MessageInput } from "./convert.js";
 import type {
   AgentJobOptions,
   LangChainInvocable,
@@ -122,8 +122,11 @@ export function wrapLangChainAgent(
     // Get tools from agent if not provided explicitly
     const resolvedTools = tools ?? extractToolsFromAgent(agent);
 
-    // Convert to OpenResponses format
-    const openResponsesOutput = convertToOpenResponses(messages, resolvedTools);
+    // Convert to OpenResponses format (cast to MessageInput[] since we know the structure)
+    const openResponsesOutput = convertToOpenResponses(
+      messages as MessageInput[],
+      resolvedTools,
+    );
 
     return {
       name,
@@ -194,7 +197,7 @@ export function extractToolsFromAgent(
   }
 
   // 3. Fallback: direct tools property
-  let agentTools: unknown[] | undefined = agent.tools;
+  let agentTools: readonly unknown[] | undefined = agent.tools;
   if (!agentTools && agent.bound) {
     agentTools = agent.bound.tools;
   }
