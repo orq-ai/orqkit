@@ -23,10 +23,9 @@
   "devDependencies": {
     "@ai-sdk/openai": "^1.0.0",
     "@langchain/core": "^1.0.0",
-    "@langchain/langgraph": "^1.2.0",
+    "@langchain/langgraph": "^1.0.0",
     "@langchain/openai": "^1.0.0",
     "ai": "^4.0.0",
-    "langchain": "^0.3.0",
     "zod": "^3.23.0"
   }
 }
