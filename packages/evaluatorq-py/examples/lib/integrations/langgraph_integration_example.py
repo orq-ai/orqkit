@@ -3,13 +3,14 @@ import re
 from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
+from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from evaluatorq import evaluatorq
+from evaluatorq import ScorerParameter, evaluatorq
 from evaluatorq.integrations.langchain_integration import wrap_langgraph_agent
 
 _ = load_dotenv()
@@ -17,7 +18,7 @@ _ = load_dotenv()
 
 # Define state
 class AgentState(TypedDict):
-    messages: Annotated[list, add_messages]
+    messages: Annotated[list[AIMessage], add_messages]
 
 
 # Define tools
@@ -42,7 +43,7 @@ tools = [weather, convert_fahrenheit_to_celsius]
 model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
 
 
-def call_model(state: AgentState) -> dict:
+def call_model(state: AgentState) -> dict[str, list[AIMessage]]:
     response = model.invoke(state["messages"])
     return {"messages": [response]}
 
@@ -66,8 +67,11 @@ graph.add_edge("tools", "agent")
 agent = graph.compile()
 
 
-async def has_temperature_scorer(params: dict) -> dict:
+async def has_temperature_scorer(params: ScorerParameter) -> dict[str, int | str]:
     output = params["output"]
+    if not isinstance(output, dict):
+        return {"value": 0, "explanation": "Output is not a dict"}
+
     message = next(
         (item for item in output.get("output", []) if item.get("type") == "message"),
         None,

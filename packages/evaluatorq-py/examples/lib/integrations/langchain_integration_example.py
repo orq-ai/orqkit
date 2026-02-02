@@ -6,7 +6,7 @@ from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
-from evaluatorq import evaluatorq
+from evaluatorq import ScorerParameter, evaluatorq
 from evaluatorq.integrations.langchain_integration import wrap_langchain_agent
 
 _ = load_dotenv()
@@ -29,8 +29,11 @@ model = ChatOpenAI(model="gpt-4o")
 agent = create_agent(model, tools=[weather, convert_fahrenheit_to_celsius])
 
 
-async def has_temperature_scorer(params: dict) -> dict:
+async def has_temperature_scorer(params: ScorerParameter) -> dict[str, int | str]:
     output = params["output"]
+    if not isinstance(output, dict):
+        return {"value": 0, "explanation": "Output is not a dict"}
+
     message = next(
         (item for item in output.get("output", []) if item.get("type") == "message"),
         None,
@@ -51,7 +54,7 @@ async def has_temperature_scorer(params: dict) -> dict:
 
 
 async def main():
-    await evaluatorq(
+    _ = await evaluatorq(
         "agent-test",
         data=[
             {"inputs": {"prompt": "What is the weather in San Francisco?"}},

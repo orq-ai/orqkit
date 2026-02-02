@@ -23,6 +23,7 @@ reportUnknownMemberType = "none"
 reportUnknownArgumentType = "none"
 reportUnknownVariableType = "none"
 reportUnknownParameterType = "none"
+reportMissingTypeStubs = "none"
 
 [project]
 name = "evaluatorq"

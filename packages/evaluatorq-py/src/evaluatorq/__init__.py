@@ -15,6 +15,8 @@ from .evaluators import (
 from .job_helper import job
 from .types import (
     DataPoint,
+    DataPointDict,
+    DataPointInput,
     DataPointResult,
     DatasetIdInput,
     EvaluationResult,
@@ -46,6 +48,8 @@ __all__ = [
     "exact_match_evaluator",
     # Types
     "DataPoint",
+    "DataPointDict",
+    "DataPointInput",
     "DataPointResult",
     "DatasetIdInput",
     "EvaluationResult",
