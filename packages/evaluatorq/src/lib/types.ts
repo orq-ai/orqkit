@@ -73,6 +73,7 @@ export interface EvaluatorParams {
   data:
     | {
         datasetId: string;
+        includeMessages?: boolean;
       }
     | (Promise<DataPoint> | DataPoint)[];
   evaluators?: Evaluator[];
