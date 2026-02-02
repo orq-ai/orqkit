@@ -24,6 +24,7 @@ reportUnknownArgumentType = "none"
 reportUnknownVariableType = "none"
 reportUnknownParameterType = "none"
 reportMissingTypeStubs = "none"
+reportUnusedCallResult = "none"
 
 [project]
 name = "evaluatorq"
