@@ -6,6 +6,7 @@ import json
 import math
 import time
 import uuid
+import logging
 from typing import Any
 
 from langchain_core.messages import BaseMessage, UsageMetadata
@@ -370,4 +371,8 @@ def _serialize_args(args: Any) -> str:
     """Serialize tool arguments to JSON string."""
     if isinstance(args, str):
         return args
-    return json.dumps(args)
+    try:
+        return json.dumps(args)
+    except (TypeError, ValueError) as e:
+        logging.error(f"Failed to serialize args: {e}")
+        return json.dumps({"error": f"Serialization failed: {str(e)}"})

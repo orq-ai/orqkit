@@ -12,9 +12,7 @@ import type { ResponseResource } from "../openresponses/index.js";
  * @returns A unique string ID with the given prefix
  */
 export function generateItemId(prefix: string): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 10);
-  return `${prefix}_${timestamp}${random}`;
+  return `${prefix}_${crypto.randomUUID().replace(/-/g, "")}`;
 }
 
 /**
