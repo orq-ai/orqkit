@@ -4,12 +4,11 @@ import { z } from "zod";
 
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
-// Import generated OpenResponses types
 import type {
   Message,
   OutputTextContent,
   ResponseResource,
-} from "@orq-ai/evaluatorq/generated/openresponses/types";
+} from "@orq-ai/evaluatorq/openresponses";
 
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,

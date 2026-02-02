@@ -99,8 +99,7 @@ def wrap_langchain_agent(
 
         if not isinstance(prompt, str):
             raise ValueError(
-                f"Expected data.inputs.{prompt_key} to be a string, "
-                f"got {type(prompt).__name__}"
+                f"Expected data.inputs.{prompt_key} to be a string, got {type(prompt).__name__}"
             )
 
         # Invoke the LangChain agent
