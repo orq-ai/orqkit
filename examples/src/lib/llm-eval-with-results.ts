@@ -80,7 +80,8 @@ const lengthSimilarityEvaluator: Evaluator = {
   },
 };
 
-const ROUGE_N_EVALUATOR_ID = "01KD334H4PVRZFRD0GGE8YNWCH";
+const ROUGE_N_EVALUATOR_ID = "<your-rouge-n-evaluator-id>";
+const BERT_SCORE_EVALUATOR_ID = "<your-bert-score-evaluator-id>";
 
 const rougeNEvaluator: Evaluator = {
   name: "rouge_n",
@@ -122,22 +123,38 @@ const bertScoreEvaluator: Evaluator = {
   name: "bert-score",
   scorer: async ({ data, output }) => {
     const reference = String(data.expectedOutput ?? "");
-    const result = await orq.evals.bertScore({
-      output: String(output),
-      reference,
+    const result = await orq.evals.invoke({
+      id: BERT_SCORE_EVALUATOR_ID,
+      requestBody: {
+        output: String(output),
+        reference,
+      },
     });
 
-    return {
-      value: {
-        type: "bert_score",
+    if (
+      "value" in result &&
+      typeof result.value === "object" &&
+      result.value !== null
+    ) {
+      const val = result.value as {
+        precision: number;
+        recall: number;
+        f1: number;
+      };
+      return {
         value: {
-          precision: result.value.precision,
-          recall: result.value.recall,
-          f1: result.value.f1,
+          type: "bert_score",
+          value: {
+            precision: val.precision,
+            recall: val.recall,
+            f1: val.f1,
+          },
         },
-      },
-      explanation: "BERTScore semantic similarity between output and reference",
-    };
+        explanation:
+          "BERTScore semantic similarity between output and reference",
+      };
+    }
+    return { value: 0, explanation: "Unexpected response format" };
   },
 };
 

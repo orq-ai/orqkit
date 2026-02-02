@@ -25,24 +25,24 @@ def mock_span():
 class TestSetEvaluationAttributes:
     """Mirrors TS setEvaluationAttributes tests."""
 
-    def test_sets_number_score_as_string(self, mock_span):
+    def test_sets_number_score_as_string(self, mock_span: MagicMock):
         set_evaluation_attributes(mock_span, 0.85, "good score", True)
 
         assert mock_span._attributes["orq.score"] == "0.85"
         assert mock_span._attributes["orq.explanation"] == "good score"
         assert mock_span._attributes["orq.pass"] is True
 
-    def test_sets_boolean_score_as_string(self, mock_span):
+    def test_sets_boolean_score_as_string(self, mock_span: MagicMock):
         set_evaluation_attributes(mock_span, True)
 
         assert mock_span._attributes["orq.score"] == "True"
 
-    def test_sets_string_score_directly(self, mock_span):
+    def test_sets_string_score_directly(self, mock_span: MagicMock):
         set_evaluation_attributes(mock_span, "excellent")
 
         assert mock_span._attributes["orq.score"] == "excellent"
 
-    def test_json_serializes_dict_score(self, mock_span):
+    def test_json_serializes_dict_score(self, mock_span: MagicMock):
         cell = {
             "type": "bert_score",
             "value": {"precision": 0.9, "recall": 0.8, "f1": 0.85},
@@ -51,7 +51,7 @@ class TestSetEvaluationAttributes:
 
         assert mock_span._attributes["orq.score"] == json.dumps(cell)
 
-    def test_does_not_set_optional_attributes_when_none(self, mock_span):
+    def test_does_not_set_optional_attributes_when_none(self, mock_span: MagicMock):
         set_evaluation_attributes(mock_span, 1.0)
 
         assert mock_span.set_attribute.call_count == 1

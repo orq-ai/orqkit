@@ -8,11 +8,11 @@
  *   bun examples/src/lib/structured-rubric.eval.ts
  */
 
-import type { Evaluator } from "@orq-ai/evaluatorq";
+import type { Evaluator, Output } from "@orq-ai/evaluatorq";
 import { evaluatorq, job } from "@orq-ai/evaluatorq";
 
-const echoJob = job("echo", async (data) => {
-  return data.inputs.text;
+const echoJob = job("echo", async (data, _row) => {
+  return data.inputs.text as Output;
 });
 
 const rubricEvaluator: Evaluator = {

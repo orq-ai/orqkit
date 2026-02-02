@@ -156,7 +156,7 @@ def calculate_evaluator_averages(
 
                 elif isinstance(first_score, (int, float)):
                     # Calculate average for numeric scores
-                    avg = sum(float(s) for s in scores) / len(scores)
+                    avg = sum(float(s) for s in scores if isinstance(s, (int, float))) / len(scores)
                     evaluator_averages[job_name] = (f"{avg:.2f}", "yellow")
 
                 else:

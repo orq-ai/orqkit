@@ -1,5 +1,8 @@
 """Tests for calculate_evaluator_averages in table_display."""
 
+from collections.abc import Callable
+from typing import Any
+
 import pytest
 
 from evaluatorq.table_display import calculate_evaluator_averages
@@ -19,7 +22,7 @@ def make_result():
 
     def _make(
         job_name: str,
-        scores: list[dict],
+        scores: list[dict[str, Any]],
     ) -> DataPointResult:
         evaluator_scores = [
             EvaluatorScore(
@@ -51,7 +54,7 @@ def make_result():
 class TestCalculateEvaluatorAverages:
     """Mirrors TS calculateEvaluatorAverages tests."""
 
-    def test_calculates_average_for_number_scores(self, make_result):
+    def test_calculates_average_for_number_scores(self, make_result: Callable[..., DataPointResult]):
         results = [
             make_result("job1", [{"evaluator_name": "accuracy", "value": 0.5}]),
             make_result("job1", [{"evaluator_name": "accuracy", "value": 1.0}]),
@@ -61,7 +64,7 @@ class TestCalculateEvaluatorAverages:
         display_value, _ = data["averages"]["accuracy"]["job1"]
         assert display_value == "0.75"
 
-    def test_calculates_pass_rate_for_boolean_scores(self, make_result):
+    def test_calculates_pass_rate_for_boolean_scores(self, make_result: Callable[..., DataPointResult]):
         results = [
             make_result("job1", [{"evaluator_name": "pass_check", "value": True}]),
             make_result("job1", [{"evaluator_name": "pass_check", "value": False}]),
@@ -71,7 +74,7 @@ class TestCalculateEvaluatorAverages:
         display_value, _ = data["averages"]["pass_check"]["job1"]
         assert display_value == "50.0%"
 
-    def test_renders_string_scores_as_string(self, make_result):
+    def test_renders_string_scores_as_string(self, make_result: Callable[..., DataPointResult]):
         results = [
             make_result("job1", [{"evaluator_name": "quality", "value": "good"}]),
         ]
@@ -80,7 +83,7 @@ class TestCalculateEvaluatorAverages:
         display_value, _ = data["averages"]["quality"]["job1"]
         assert display_value == "[string]"
 
-    def test_renders_evaluation_result_cell_as_structured(self, make_result):
+    def test_renders_evaluation_result_cell_as_structured(self, make_result: Callable[..., DataPointResult]):
         cell = EvaluationResultCell(
             type="bert_score",
             value={"precision": 0.9, "recall": 0.8, "f1": 0.85},
@@ -94,7 +97,7 @@ class TestCalculateEvaluatorAverages:
         assert display_value == "[structured]"
         assert style == "dim"
 
-    def test_handles_mixed_evaluator_types(self, make_result):
+    def test_handles_mixed_evaluator_types(self, make_result: Callable[..., DataPointResult]):
         cell_1 = EvaluationResultCell(type="bert_score", value={"f1": 0.9})
         cell_2 = EvaluationResultCell(type="bert_score", value={"f1": 0.7})
 
@@ -139,7 +142,7 @@ class TestCalculateEvaluatorAverages:
         assert data["evaluator_names"] == []
         assert data["averages"] == {}
 
-    def test_shows_dash_for_evaluator_with_errors(self, make_result):
+    def test_shows_dash_for_evaluator_with_errors(self, make_result: Callable[..., DataPointResult]):
         results = [
             make_result(
                 "job1",
@@ -157,7 +160,7 @@ class TestCalculateEvaluatorAverages:
         display_value, _ = data["averages"]["failing"]["job1"]
         assert display_value == "-"
 
-    def test_100_percent_boolean_pass_rate(self, make_result):
+    def test_100_percent_boolean_pass_rate(self, make_result: Callable[..., DataPointResult]):
         results = [
             make_result("job1", [{"evaluator_name": "check", "value": True}]),
             make_result("job1", [{"evaluator_name": "check", "value": True}]),

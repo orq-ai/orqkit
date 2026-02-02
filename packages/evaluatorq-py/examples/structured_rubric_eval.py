@@ -27,12 +27,6 @@ async def echo_job(data: DataPoint, _row: int) -> str:
     return str(data.inputs.get("text", ""))
 
 
-rubric_evaluator: Evaluator = {
-    "name": "rubric",
-    "scorer": None,  # Replaced below
-}
-
-
 async def rubric_scorer(params: ScorerParameter) -> EvaluationResult:
     """Multi-criteria quality rubric scorer."""
     text = str(params["output"])
@@ -49,7 +43,10 @@ async def rubric_scorer(params: ScorerParameter) -> EvaluationResult:
     )
 
 
-rubric_evaluator["scorer"] = rubric_scorer
+rubric_evaluator: Evaluator = {
+    "name": "rubric",
+    "scorer": rubric_scorer,
+}
 
 
 async def run():

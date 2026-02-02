@@ -1,5 +1,8 @@
 """Tests for send_results serialization behavior."""
 
+from collections.abc import Callable
+from typing import Any
+
 import pytest
 from pydantic import BaseModel
 
@@ -45,7 +48,7 @@ def build_results():
     return _build
 
 
-def serialize(results: list[DataPointResult]) -> dict:
+def serialize(results: list[DataPointResult]) -> dict[str, Any]:
     """Serialize results the same way send_results does via Pydantic."""
 
     class Payload(BaseModel):
@@ -54,7 +57,7 @@ def serialize(results: list[DataPointResult]) -> dict:
     return Payload(results=results).model_dump(mode="json", by_alias=True)
 
 
-def extract_score(payload: dict) -> dict:
+def extract_score(payload: dict[str, Any]) -> dict[str, Any]:
     """Extract the first evaluator score from a serialized payload."""
     return payload["results"][0]["jobResults"][0]["evaluatorScores"][0]["score"]
 
@@ -62,22 +65,22 @@ def extract_score(payload: dict) -> dict:
 class TestSendResultsSerialization:
     """Mirrors TS sendResultsToOrqEffect serialization tests."""
 
-    def test_serializes_number_score_value_as_is(self, build_results):
+    def test_serializes_number_score_value_as_is(self, build_results: Callable[..., list[DataPointResult]]):
         payload = serialize(build_results(0.85))
         score = extract_score(payload)
         assert score["value"] == 0.85
 
-    def test_serializes_boolean_score_value_as_is(self, build_results):
+    def test_serializes_boolean_score_value_as_is(self, build_results: Callable[..., list[DataPointResult]]):
         payload = serialize(build_results(True))
         score = extract_score(payload)
         assert score["value"] is True
 
-    def test_serializes_string_score_value_as_is(self, build_results):
+    def test_serializes_string_score_value_as_is(self, build_results: Callable[..., list[DataPointResult]]):
         payload = serialize(build_results("good"))
         score = extract_score(payload)
         assert score["value"] == "good"
 
-    def test_serializes_evaluation_result_cell_correctly(self, build_results):
+    def test_serializes_evaluation_result_cell_correctly(self, build_results: Callable[..., list[DataPointResult]]):
         cell = EvaluationResultCell(
             type="bert_score",
             value={"precision": 0.9, "recall": 0.8, "f1": 0.85},
@@ -89,7 +92,7 @@ class TestSendResultsSerialization:
             "value": {"precision": 0.9, "recall": 0.8, "f1": 0.85},
         }
 
-    def test_serializes_error_strings(self, build_results):
+    def test_serializes_error_strings(self, build_results: Callable[..., list[DataPointResult]]):
         payload = serialize(build_results(0.5, error="eval failed"))
         eval_score = payload["results"][0]["jobResults"][0]["evaluatorScores"][0]
         assert eval_score["error"] == "eval failed"

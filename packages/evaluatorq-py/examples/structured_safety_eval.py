@@ -9,11 +9,13 @@ Usage:
 """
 
 import asyncio
+from typing import cast
 
 from evaluatorq import (
     DataPoint,
     EvaluationResult,
     EvaluationResultCell,
+    EvaluationResultCellValue,
     Evaluator,
     ScorerParameter,
     evaluatorq,
@@ -40,7 +42,7 @@ async def safety_scorer(params: ScorerParameter) -> EvaluationResult:
     return EvaluationResult(
         value=EvaluationResultCell(
             type="safety",
-            value=categories,
+            value=cast(dict[str, EvaluationResultCellValue], categories),
         ),
         pass_=all(score < 0.5 for score in categories.values()),
         explanation="Content safety severity scores per category",
