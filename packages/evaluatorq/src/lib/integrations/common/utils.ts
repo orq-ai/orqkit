@@ -25,7 +25,19 @@ export function serializeArgs(args: unknown): string {
   if (typeof args === "string") {
     return args;
   }
-  return JSON.stringify(args);
+  try {
+    return JSON.stringify(args);
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('circular')) {
+      console.error('Circular reference detected in arguments');
+      return JSON.stringify({ error: "Circular reference in arguments" });
+    }
+    console.error('Failed to serialize arguments:', error);
+    return JSON.stringify({ 
+      error: "Serialization failed", 
+      type: error instanceof Error ? error.name : "Unknown"
+    });
+  }
 }
 
 /**

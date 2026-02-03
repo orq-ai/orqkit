@@ -40,6 +40,9 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
   // Add the initial user message
   if (prompt) {
     input.push({
+      type: "message",
+      id: generateItemId("msg"),
+      status: "completed",
       role: "user",
       content: [
         {
@@ -64,13 +67,16 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             call_id: item.toolCallId,
             name: item.toolName,
             arguments: serializeArgs(item.input),
+            status: "completed",
           });
         }
         if (item.type === "tool-result" && item.toolCallId) {
           input.push({
             type: "function_call_output",
+            id: generateItemId("fco"),
             call_id: item.toolCallId,
             output: serializeArgs(item.output),
+            status: "completed",
           });
         }
       }
@@ -85,6 +91,7 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
             call_id: toolCall.toolCallId,
             name: toolCall.toolName,
             arguments: serializeArgs(toolCall.input),
+            status: "completed",
           });
         }
       }
@@ -93,8 +100,10 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
         for (const toolResult of stepData.toolResults) {
           input.push({
             type: "function_call_output",
+            id: generateItemId("fco"),
             call_id: toolResult.toolCallId,
             output: serializeArgs(toolResult.output),
+            status: "completed",
           });
         }
       }

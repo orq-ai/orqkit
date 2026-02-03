@@ -9,8 +9,6 @@ from langchain_core.messages import BaseMessage
 from langchain_core.tools import BaseTool
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel
-from langgraph.prebuilt.tool_node import ToolNode
-from langgraph.pregel._read import PregelNode
 
 from .convert import convert_to_open_responses
 
@@ -137,28 +135,30 @@ def extract_tools_from_agent(agent: CompiledStateGraph[Any, Any, Any, Any]) -> l
     """
     tools: list[dict[str, Any]] = []
 
-    # CompiledStateGraph has nodes: dict[str, PregelNode]
-    nodes: dict[str, PregelNode] = agent.nodes
+    # CompiledStateGraph has nodes attribute
+    if not hasattr(agent, "nodes"):
+        return tools
 
-    # Iterate over nodes to find ToolNodes
-    for node in nodes.values():
-        bound = node.bound
-
-        # Type guard: check if bound is a ToolNode
-        if not isinstance(bound, ToolNode):
+    for node in agent.nodes.values():
+        bound = getattr(node, "bound", None)
+        if bound is None:
             continue
 
-        # Now bound is typed as ToolNode, tools_by_name is dict[str, BaseTool]
-        tool_obj: BaseTool
-        for tool_obj in bound.tools_by_name.values():
-            tool_schema: dict[str, Any] = {
-                "type": "function",
-                "name": tool_obj.name,
-                "description": tool_obj.description,
-                "parameters": _extract_schema_parameters(tool_obj.args_schema),
-                "strict": True,
-            }
-            tools.append(tool_schema)
+        # Check for tools_by_name attribute (works for both ToolNode and _ToolNode)
+        tools_by_name = getattr(bound, "tools_by_name", None)
+        if not tools_by_name:
+            continue
+
+        for tool_obj in tools_by_name.values():
+            if isinstance(tool_obj, BaseTool):
+                tool_schema: dict[str, Any] = {
+                    "type": "function",
+                    "name": tool_obj.name,
+                    "description": tool_obj.description,
+                    "parameters": _extract_schema_parameters(tool_obj.args_schema),
+                    "strict": True,
+                }
+                tools.append(tool_schema)
 
     return tools
 
