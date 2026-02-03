@@ -10,7 +10,9 @@ This script:
 """
 
 import os
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from dotenv import load_dotenv
@@ -21,11 +23,11 @@ from evaluatorq.types import DataPoint, DatasetIdInput
 
 # Load .env from the package root
 env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(env_path)
+_ = load_dotenv(env_path)
 
 
 @pytest.fixture
-def orq_client():
+def orq_client() -> Orq:
     """Create Orq client from .env API key and base URL."""
     api_key = os.environ.get("ORQ_API_KEY")
     if not api_key:
@@ -35,7 +37,7 @@ def orq_client():
 
 
 @pytest.fixture
-def test_dataset(orq_client):
+def test_dataset(orq_client: Orq) -> Generator[str, None, None]:
     """Create a temporary dataset and clean it up after the test."""
     dataset = orq_client.datasets.create(
         request={
@@ -43,6 +45,7 @@ def test_dataset(orq_client):
             "path": "evaluatorq-test",
         }
     )
+    assert dataset is not None, "Failed to create dataset"
     dataset_id = dataset.id
 
     yield dataset_id
@@ -60,12 +63,14 @@ def test_dataset(orq_client):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_include_messages_conflict_raises_error(orq_client, test_dataset):
+async def test_include_messages_conflict_raises_error(
+    orq_client: Orq, test_dataset: str
+) -> None:
     """Test that includeMessages raises error when inputs already contain 'messages' key."""
     dataset_id = test_dataset
 
     # Add a datapoint with 'messages' in BOTH inputs and top-level
-    orq_client.datasets.create_datapoint(
+    _ = orq_client.datasets.create_datapoint(
         dataset_id=dataset_id,
         request_body=[
             {
@@ -80,12 +85,12 @@ async def test_include_messages_conflict_raises_error(orq_client, test_dataset):
         ],
     )
 
-    async def dummy_job(data: DataPoint, row: int):
+    async def dummy_job(data: DataPoint, _row: int) -> dict[str, Any]:
         return {"name": "dummy", "output": str(data.inputs)}
 
     # Run evaluatorq with include_messages=True - should raise error
     with pytest.raises(Exception) as exc_info:
-        await evaluatorq(
+        _ = await evaluatorq(
             "test-conflict",
             data=DatasetIdInput(dataset_id=dataset_id, include_messages=True),
             jobs=[dummy_job],
@@ -101,12 +106,14 @@ async def test_include_messages_conflict_raises_error(orq_client, test_dataset):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_include_messages_works_without_conflict(orq_client, test_dataset):
+async def test_include_messages_works_without_conflict(
+    orq_client: Orq, test_dataset: str
+) -> None:
     """Test that includeMessages works when there's no conflict."""
     dataset_id = test_dataset
 
     # Add a datapoint with top-level messages but NO messages in inputs
-    orq_client.datasets.create_datapoint(
+    _ = orq_client.datasets.create_datapoint(
         dataset_id=dataset_id,
         request_body=[
             {
@@ -118,14 +125,14 @@ async def test_include_messages_works_without_conflict(orq_client, test_dataset)
         ],
     )
 
-    captured_inputs = []
+    captured_inputs: list[dict[str, Any]] = []
 
-    async def capture_job(data: DataPoint, row: int):
+    async def capture_job(data: DataPoint, _row: int) -> dict[str, Any]:
         captured_inputs.append(data.inputs)
         return {"name": "capture", "output": "done"}
 
     # Run evaluatorq with include_messages=True - should work
-    await evaluatorq(
+    _ = await evaluatorq(
         "test-no-conflict",
         data=DatasetIdInput(dataset_id=dataset_id, include_messages=True),
         jobs=[capture_job],

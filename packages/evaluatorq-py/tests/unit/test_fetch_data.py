@@ -1,5 +1,6 @@
 """Tests for the fetch_data module, specifically includeMessages functionality."""
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -10,12 +11,17 @@ from evaluatorq.fetch_data import fetch_dataset_as_datapoints, fetch_dataset_bat
 class MockDatapoint:
     """Mock datapoint returned from Orq API."""
 
+    inputs: dict[str, Any]
+    messages: list[Any] | None
+    _id: str
+    expected_output: dict[str, Any] | None
+
     def __init__(
         self,
-        inputs: dict,
-        messages: list | None = None,
+        inputs: dict[str, Any],
+        messages: list[Any] | None = None,
         _id: str = "test-id",
-        expected_output: dict | None = None,
+        expected_output: dict[str, Any] | None = None,
     ):
         self.inputs = inputs
         self.messages = messages
@@ -25,6 +31,9 @@ class MockDatapoint:
 
 class MockResponse:
     """Mock response from Orq API."""
+
+    data: list[MockDatapoint]
+    has_more: bool
 
     def __init__(self, data: list[MockDatapoint], has_more: bool = False):
         self.data = data
@@ -273,7 +282,7 @@ async def test_fetch_dataset_as_datapoints_conflict_raises_error():
     )
 
     with pytest.raises(Exception) as exc_info:
-        await fetch_dataset_as_datapoints(
+        _ = await fetch_dataset_as_datapoints(
             mock_client, "test-dataset", include_messages=True
         )
 
