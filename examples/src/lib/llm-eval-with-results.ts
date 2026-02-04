@@ -15,6 +15,10 @@ const orq = new Orq({
   serverURL: process.env.ORQ_BASE_URL || "https://my.orq.ai",
 });
 
+const ROUGE_N_EVALUATOR_ID = "<your-rouge-n-evaluator-id>";
+
+const BERT_SCORE_EVALUATOR_ID = "<your-bert-score-evaluator-id>";
+
 const greet = job("greet", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
@@ -79,9 +83,6 @@ const lengthSimilarityEvaluator: Evaluator = {
     };
   },
 };
-
-const ROUGE_N_EVALUATOR_ID = "<your-rouge-n-evaluator-id>";
-const BERT_SCORE_EVALUATOR_ID = "<your-bert-score-evaluator-id>";
 
 const rougeNEvaluator: Evaluator = {
   name: "rouge_n",
