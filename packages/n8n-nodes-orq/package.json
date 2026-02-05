@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/n8n-nodes-orq",
-  "version": "1.2.0-rc.0",
+  "version": "1.2.0-rc.1",
   "description": "n8n community node for Orq.ai - AI deployment and prompt management platform",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/evaluatorq",
-  "version": "1.2.0-rc.0",
+  "version": "1.2.0-rc.1",
   "description": "Evaluation framework with Effect-based architecture for running parallel AI evaluations",
   "type": "module",
   "main": "./dist/index.js",
