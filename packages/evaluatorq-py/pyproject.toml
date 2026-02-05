@@ -26,7 +26,7 @@ reportUnknownParameterType = "none"
 
 [project]
 name = "evaluatorq"
-version = "1.1.0-rc.4"
+version = "1.1.0"
 description = "An evaluation framework library for Python that provides a flexible way to run parallel evaluations and optionally integrate with the Orq AI platform."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -56,6 +56,8 @@ dev = [
   "basedpyright>=1.21.0",
   "ruff>=0.14.3",
   "orq-ai-sdk>=3.13.16",
+  "anthropic>=0.75.0",
+  "openai>=1.0.0",
   "opentelemetry-api>=1.20.0",
   "opentelemetry-sdk>=1.20.0",
   "opentelemetry-exporter-otlp-proto-http>=1.20.0"

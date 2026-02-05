@@ -77,6 +77,7 @@ export type Job = (
  * @param parallelism - The number of jobs to run in parallel. If not provided, we will run the jobs sequentially.
  * @param print - Whether to print the results in a table format to the console. Defaults to true.
  * @param description - Optional description for the evaluation run.
+ * @param path - Optional path (e.g. "MyProject/MyFolder") to place the experiment in a specific project and folder on the Orq platform.
  */
 export interface EvaluatorParams {
   data:
@@ -90,6 +91,7 @@ export interface EvaluatorParams {
   parallelism?: number;
   print?: boolean;
   description?: string;
+  path?: string;
 }
 
 export type Evaluator = {
