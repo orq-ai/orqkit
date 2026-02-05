@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint, Build & Typecheck
+    name: Lint, Build, Typecheck & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -69,4 +69,7 @@ jobs:
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
       - name: Run affected typecheck and build
-        run: bun nx affected --target=typecheck,build,test --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+        run: bun nx affected --target=typecheck,build --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+
+      - name: Run affected tests
+        run: bun nx affected --target=test --base=${{ steps.setSHAs.outputs.base }} --parallel=3

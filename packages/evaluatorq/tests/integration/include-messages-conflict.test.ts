@@ -1,17 +1,10 @@
 /**
  * Integration tests for includeMessages conflict error.
  *
- * These tests use the real Orq API and require ORQ_API_KEY in .env
+ * These tests use the real Orq API and require ORQ_API_KEY in the environment.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { resolve } from "node:path";
-
-import { config } from "dotenv";
-
-// Load .env from package root
-config({ path: resolve(import.meta.dir, "../../.env") });
-
 const apiKey = process.env.ORQ_API_KEY;
 const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
 
@@ -26,7 +19,9 @@ describe("includeMessages integration tests", () => {
 
   beforeAll(async () => {
     if (!apiKey) {
-      console.warn("Skipping integration tests: ORQ_API_KEY not set in .env");
+      console.warn(
+        "Skipping integration tests: ORQ_API_KEY not set in the environment",
+      );
       return;
     }
 

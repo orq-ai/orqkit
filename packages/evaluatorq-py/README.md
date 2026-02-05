@@ -781,3 +781,15 @@ uv run ruff format
 # Lint code
 uv run ruff check
 ```
+
+## ✅ Tests
+
+```bash
+# Run tests
+uv run pytest
+
+# Or via Nx (loads .env automatically)
+bunx nx test @orq-ai/evaluatorq-py
+```
+
+Nx loads environment variables from `packages/evaluatorq-py/.env` for test targets. If you run pytest directly, set `ORQ_API_KEY` in your environment.

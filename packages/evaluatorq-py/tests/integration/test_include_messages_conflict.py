@@ -11,27 +11,20 @@ This script:
 
 import os
 from collections.abc import Generator
-from pathlib import Path
 from typing import Any
 
 import pytest
-from dotenv import load_dotenv
 from orq_ai_sdk import Orq
 
 from evaluatorq import evaluatorq
 from evaluatorq.types import DataPoint, DatasetIdInput
 
-# Load .env from the package root
-env_path = Path(__file__).parent.parent.parent / ".env"
-_ = load_dotenv(env_path)
-
-
 @pytest.fixture
 def orq_client() -> Orq:
-    """Create Orq client from .env API key and base URL."""
+    """Create Orq client from environment API key and base URL."""
     api_key = os.environ.get("ORQ_API_KEY")
     if not api_key:
-        pytest.skip("ORQ_API_KEY not set in .env file")
+        pytest.skip("ORQ_API_KEY not set in the environment")
     base_url = os.environ.get("ORQ_BASE_URL", "https://my.orq.ai")
     return Orq(api_key=api_key, server_url=base_url)
 

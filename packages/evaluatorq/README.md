@@ -442,3 +442,12 @@ bunx nx build evaluatorq
 # Run type checking
 bunx nx typecheck evaluatorq
 ```
+
+## ✅ Tests
+
+```bash
+# Run tests
+bunx nx test @orq-ai/evaluatorq
+```
+
+Nx loads environment variables from `packages/evaluatorq/.env` for test targets. If you run tests directly (e.g., `bun test`), set `ORQ_API_KEY` in your environment.

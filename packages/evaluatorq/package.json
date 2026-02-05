@@ -43,6 +43,17 @@
       "default": "./dist/index.js"
     }
   },
+  "nx": {
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "bun test",
+          "cwd": "{projectRoot}"
+        }
+      }
+    }
+  },
   "peerDependencies": {
     "@orq-ai/node": "^3.9.26",
     "@opentelemetry/api": "^1.9.0",
@@ -88,7 +99,6 @@
     "@opentelemetry/resources": "^1.30.1",
     "@opentelemetry/sdk-node": "^0.57.2",
     "@opentelemetry/sdk-trace-base": "^1.30.1",
-    "@opentelemetry/semantic-conventions": "^1.28.0",
-    "dotenv": "^17.2.3"
+    "@opentelemetry/semantic-conventions": "^1.28.0"
   }
 }
