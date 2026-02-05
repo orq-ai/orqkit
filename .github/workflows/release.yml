@@ -113,3 +113,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TAG: ${{ steps.version.outputs.npm_tag }}
           NPM_CONFIG_PROVENANCE: true
+          NX_SKIP_NX_CACHE: true
