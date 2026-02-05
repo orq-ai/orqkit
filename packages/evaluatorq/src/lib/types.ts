@@ -1,5 +1,15 @@
 export type Output = string | number | boolean | Record<string, unknown> | null;
 
+export type EvaluationResultCellValue =
+  | string
+  | number
+  | Record<string, string | number | Record<string, string | number>>;
+
+export type EvaluationResultCell = {
+  type: string;
+  value: Record<string, EvaluationResultCellValue>;
+};
+
 type EvaluationResult<T> = {
   value: T;
   explanation?: string;
@@ -8,7 +18,7 @@ type EvaluationResult<T> = {
 
 export interface EvaluatorScore {
   evaluatorName: string;
-  score: EvaluationResult<number | boolean | string>;
+  score: EvaluationResult<number | boolean | string | EvaluationResultCell>;
   error?: Error;
 }
 
@@ -94,7 +104,8 @@ export type ScorerParameter = {
   output: Output;
 };
 
-export type Scorer =
-  | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>);
+export type Scorer = (
+  params: ScorerParameter,
+) => Promise<
+  EvaluationResult<string | number | boolean | EvaluationResultCell>
+>;
