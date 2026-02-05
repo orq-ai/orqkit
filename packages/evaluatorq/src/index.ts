@@ -5,6 +5,8 @@ export {
   invoke,
 } from "./lib/deployment-helper.js";
 export * from "./lib/evaluatorq.js";
+// OpenResponses types
+export * from "./lib/integrations/openresponses/index.js";
 export { job } from "./lib/job-helper.js";
 export { sendResultsToOrqEffect } from "./lib/send-results.js";
 export { displayResultsTableEffect } from "./lib/table-display.js";

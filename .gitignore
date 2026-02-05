@@ -52,4 +52,4 @@ Thumbs.db
 .npmrc
 .venv
 **/*.tsbuildinfo
-**/.env
+*.env

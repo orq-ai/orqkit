@@ -41,10 +41,31 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./langchain": {
+      "development": "./src/lib/integrations/langchain/index.ts",
+      "types": "./dist/lib/integrations/langchain/index.d.ts",
+      "import": "./dist/lib/integrations/langchain/index.js",
+      "default": "./dist/lib/integrations/langchain/index.js"
+    },
+    "./ai-sdk": {
+      "development": "./src/lib/integrations/ai-sdk/index.ts",
+      "types": "./dist/lib/integrations/ai-sdk/index.d.ts",
+      "import": "./dist/lib/integrations/ai-sdk/index.js",
+      "default": "./dist/lib/integrations/ai-sdk/index.js"
+    },
+    "./openresponses": {
+      "development": "./src/lib/integrations/openresponses/index.ts",
+      "types": "./dist/lib/integrations/openresponses/index.d.ts",
+      "import": "./dist/lib/integrations/openresponses/index.js",
+      "default": "./dist/lib/integrations/openresponses/index.js"
     }
   },
   "peerDependencies": {
     "@orq-ai/node": "^3.9.26",
+    "@langchain/core": ">=1.0.0",
+    "@langchain/langgraph": ">=1.0.0",
+    "ai": ">=6.0.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-node": "^0.200.0",
     "@opentelemetry/sdk-trace-base": "^2.0.0",
@@ -54,6 +75,15 @@
   },
   "peerDependenciesMeta": {
     "@orq-ai/node": {
+      "optional": true
+    },
+    "@langchain/core": {
+      "optional": true
+    },
+    "@langchain/langgraph": {
+      "optional": true
+    },
+    "ai": {
       "optional": true
     },
     "@opentelemetry/api": {
@@ -83,6 +113,9 @@
     "tslib": "^2.8.0"
   },
   "devDependencies": {
+    "@langchain/core": "^1.0.0",
+    "@langchain/langgraph": "^1.0.0",
+    "ai": "^6.0.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-node": "^0.57.2",
     "@opentelemetry/sdk-trace-base": "^1.30.1",
