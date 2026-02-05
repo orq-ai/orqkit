@@ -236,7 +236,6 @@ export function convertToOpenResponses(
     model: modelName,
     previous_response_id: null,
     instructions: null,
-    input: inputItems as ItemField[],
     output: outputItems as ItemField[],
     error: status === "failed" ? { message: "Agent execution failed" } : null,
     tools: toolsArray,

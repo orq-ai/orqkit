@@ -1,4 +1,12 @@
-export type Output = string | number | boolean | Record<string, unknown> | null;
+import type { ResponseResource } from "./integrations/openresponses/index.js";
+
+export type Output =
+  | string
+  | number
+  | boolean
+  | ResponseResource
+  | Record<string, unknown>
+  | null;
 
 type EvaluationResult<T> = {
   value: T;

@@ -4,7 +4,9 @@ from typing import Any, Callable, ClassVar
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import TypedDict
 
-Output = str | int | float | bool | dict[str, Any] | None
+from evaluatorq.openresponses import ResponseResourceDict
+
+Output = str | int | float | bool | ResponseResourceDict | dict[str, Any] | None
 """Output type alias"""
 
 

@@ -237,7 +237,6 @@ def convert_to_open_responses(
         "model": model_name,
         "previous_response_id": None,
         "instructions": None,
-        "input": [msg.model_dump() for msg in input_items],
         "output": [item.model_dump() for item in output_items],
         "error": {"message": "Agent execution failed"} if status == "failed" else None,
         "tools": [tool.model_dump() for tool in tools_array],

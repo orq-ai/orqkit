@@ -8,7 +8,9 @@ and their outputs.
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any
+
+from typing_extensions import TypedDict
 
 
 class OutputTextContent(TypedDict, total=False):
@@ -85,7 +87,6 @@ class ResponseResourceDict(TypedDict, total=False):
     model: str
     previous_response_id: str | None
     instructions: str | None
-    input: list[dict[str, Any]]
     output: list[dict[str, Any]]
     error: dict[str, Any] | None
     tools: list[dict[str, Any]]
