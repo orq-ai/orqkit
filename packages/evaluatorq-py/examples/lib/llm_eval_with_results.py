@@ -130,15 +130,15 @@ async def _rouge_n_scorer(params: ScorerParameter) -> dict[str, Any]:
         output=str(output),
         reference=str(data.expected_output or ""),
     )
-    if hasattr(result, "value") and isinstance(result.value, dict):
+    if hasattr(result, "value") and hasattr(result.value, "rouge_1"):
         val = result.value
         return {
             "value": {
                 "type": "rouge_n",
                 "value": {
-                    "rouge_1": val.get("rouge1", {"precision": 0, "recall": 0, "f1": 0}),
-                    "rouge_2": val.get("rouge2", {"precision": 0, "recall": 0, "f1": 0}),
-                    "rouge_l": val.get("rougeL", {"precision": 0, "recall": 0, "f1": 0}),
+                    "rouge_1": {"precision": val.rouge_1.precision, "recall": val.rouge_1.recall, "f1": val.rouge_1.f1},
+                    "rouge_2": {"precision": val.rouge_2.precision, "recall": val.rouge_2.recall, "f1": val.rouge_2.f1},
+                    "rouge_l": {"precision": val.rouge_l.precision, "recall": val.rouge_l.recall, "f1": val.rouge_l.f1},
                 },
             },
             "explanation": "ROUGE-N similarity scores between output and reference",
@@ -161,15 +161,15 @@ async def _bert_score_scorer(params: ScorerParameter) -> dict[str, Any]:
         output=str(output),
         reference=str(data.expected_output or ""),
     )
-    if hasattr(result, "value") and isinstance(result.value, dict):
+    if hasattr(result, "value") and hasattr(result.value, "f1"):
         val = result.value
         return {
             "value": {
                 "type": "bert_score",
                 "value": {
-                    "precision": val.get("precision", 0),
-                    "recall": val.get("recall", 0),
-                    "f1": val.get("f1", 0),
+                    "precision": val.precision,
+                    "recall": val.recall,
+                    "f1": val.f1,
                 },
             },
             "explanation": "BERTScore semantic similarity between output and reference",
