@@ -13,6 +13,7 @@ from typing import Any
 
 from anthropic import AsyncAnthropic
 from orq_ai_sdk import Orq
+from orq_ai_sdk.models.invokeevalop import BERTScore, RougeN
 
 from evaluatorq import DataPoint, Evaluator, ScorerParameter, evaluatorq, job
 
@@ -130,7 +131,7 @@ async def _rouge_n_scorer(params: ScorerParameter) -> dict[str, Any]:
         output=str(output),
         reference=str(data.expected_output or ""),
     )
-    if hasattr(result, "value") and hasattr(result.value, "rouge_1"):
+    if isinstance(result, RougeN):
         val = result.value
         return {
             "value": {
@@ -161,7 +162,7 @@ async def _bert_score_scorer(params: ScorerParameter) -> dict[str, Any]:
         output=str(output),
         reference=str(data.expected_output or ""),
     )
-    if hasattr(result, "value") and hasattr(result.value, "f1"):
+    if isinstance(result, BERTScore):
         val = result.value
         return {
             "value": {
