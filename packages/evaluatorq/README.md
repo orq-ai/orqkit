@@ -10,6 +10,7 @@ An evaluation framework library that provides a flexible way to run parallel eva
 - **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI (optional)
 - **OpenTelemetry Tracing**: Built-in observability with automatic span creation for jobs and evaluators
 - **Pass/Fail Tracking**: Evaluators can return pass/fail status for CI/CD integration
+- **Integrations**: LangChain, LangGraph, and Vercel AI SDK agent integration
 
 ## 📥 Installation
 
@@ -33,6 +34,18 @@ For OpenTelemetry tracing (optional):
 
 ```bash
 npm install @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions
+```
+
+For LangChain/LangGraph integration:
+
+```bash
+npm install langchain @langchain/core @langchain/langgraph
+```
+
+For Vercel AI SDK integration:
+
+```bash
+npm install ai 
 ```
 
 ## 🚀 Quick Start
@@ -220,6 +233,38 @@ const conversationJob = job("assistant", async (data) => {
 ```
 
 The `invoke()` function returns the text content directly, while `deployment()` returns an object with both `content` and `raw` response for more control.
+
+## 🔗 LangChain Integration
+
+Evaluatorq provides integration with LangChain and LangGraph agents, converting their outputs to the OpenResponses format for standardized evaluation.
+
+The LangChain integration allows you to:
+- Wrap LangChain agents created with `createAgent()` for use in evaluatorq jobs
+- Wrap LangGraph compiled graphs for stateful agent evaluation
+- Automatically convert agent outputs to OpenResponses format
+- Evaluate agent behavior using standard evaluatorq evaluators
+
+### Examples
+
+Complete examples are available in the examples folder:
+
+- **LangChain Agent**: [`examples/src/lib/integrations/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain-agent-eval.ts)
+- **LangGraph Agent**: [`examples/src/lib/integrations/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langgraph-agent-eval.ts)
+
+## 🤖 Vercel AI SDK Integration
+
+Evaluatorq integrates with the Vercel AI SDK, allowing you to wrap AI SDK agents and evaluate them using the standard evaluatorq framework.
+
+The Vercel AI SDK integration allows you to:
+- Wrap Vercel AI SDK `ToolLoopAgent` instances for use in evaluatorq jobs
+- Automatically convert agent outputs to OpenResponses format
+- Evaluate agent behavior using standard evaluatorq evaluators
+
+### Examples
+
+Complete examples are available in the examples folder:
+
+- **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts)
 
 ## 🔧 Configuration
 
@@ -411,6 +456,11 @@ type Scorer = (
 ) => Promise<
   EvaluationResult<string | number | boolean | EvaluationResultCell>
 >;
+
+// Integration wrappers
+import { wrapLangChainAgent, wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
+import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
+import type { ResponseResource } from "@orq-ai/evaluatorq/openresponses";
 
 // Deployment helper types
 interface DeploymentOptions {
