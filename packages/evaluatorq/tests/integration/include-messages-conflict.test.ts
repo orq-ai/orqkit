@@ -5,7 +5,9 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+
 import { Orq } from "@orq-ai/node";
+
 import { evaluatorq, job } from "../../src/index.js";
 
 const apiKey = process.env.ORQ_API_KEY;
