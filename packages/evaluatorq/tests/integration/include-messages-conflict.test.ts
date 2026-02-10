@@ -5,12 +5,6 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { resolve } from "node:path";
-
-import { config } from "dotenv";
-
-// Load .env from package root
-config({ path: resolve(import.meta.dir, "../../.env") });
 
 const apiKey = process.env.ORQ_API_KEY;
 const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";

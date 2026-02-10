@@ -11,19 +11,13 @@ This script:
 
 import os
 from collections.abc import Generator
-from pathlib import Path
 from typing import Any
 
 import pytest
-from dotenv import load_dotenv
 from orq_ai_sdk import Orq
 
 from evaluatorq import evaluatorq
 from evaluatorq.types import DataPoint, DatasetIdInput
-
-# Load .env from the package root
-env_path = Path(__file__).parent.parent.parent / ".env"
-_ = load_dotenv(env_path)
 
 
 @pytest.fixture
