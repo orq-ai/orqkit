@@ -8,9 +8,39 @@
  *       └── orq.evaluation (per evaluator - child of its job)
  */
 
-import type { Context, Span } from "@opentelemetry/api";
+import type {
+  Context,
+  Span,
+  SpanStatusCode as SpanStatusCodeType,
+} from "@opentelemetry/api";
 
 import { getTracer } from "./setup.js";
+
+/**
+ * Execute a callback within a span, handling status and error recording.
+ */
+async function executeWithSpan<T>(
+  span: Span,
+  SpanStatusCode: typeof SpanStatusCodeType,
+  fn: (span: Span) => Promise<T>,
+): Promise<T> {
+  try {
+    const result = await fn(span);
+    span.setStatus({ code: SpanStatusCode.OK });
+    return result;
+  } catch (error) {
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    span.recordException(
+      error instanceof Error ? error : new Error(String(error)),
+    );
+    throw error;
+  } finally {
+    span.end();
+  }
+}
 
 export interface EvaluationRunSpanOptions {
   runId: string;
@@ -64,24 +94,7 @@ export async function withEvaluationRunSpan<T>(
         },
       },
       parentCtx,
-      async (span) => {
-        try {
-          const result = await fn(span);
-          span.setStatus({ code: SpanStatusCode.OK });
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          throw error;
-        } finally {
-          span.end();
-        }
-      },
+      (span) => executeWithSpan(span, SpanStatusCode, fn),
     );
   } catch {
     // OTEL not available, run without span
@@ -118,24 +131,7 @@ export async function withJobSpan<T>(
         },
       },
       parentCtx,
-      async (span) => {
-        try {
-          const result = await fn(span);
-          span.setStatus({ code: SpanStatusCode.OK });
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          throw error;
-        } finally {
-          span.end();
-        }
-      },
+      (span) => executeWithSpan(span, SpanStatusCode, fn),
     );
   } catch {
     // OTEL not available, run without span
@@ -167,24 +163,7 @@ export async function withEvaluationSpan<T>(
           "orq.evaluator_name": options.evaluatorName,
         },
       },
-      async (span) => {
-        try {
-          const result = await fn(span);
-          span.setStatus({ code: SpanStatusCode.OK });
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          throw error;
-        } finally {
-          span.end();
-        }
-      },
+      (span) => executeWithSpan(span, SpanStatusCode, fn),
     );
   } catch {
     // OTEL not available, run without span
@@ -197,13 +176,18 @@ export async function withEvaluationSpan<T>(
  */
 export function setEvaluationAttributes(
   span: Span | undefined,
-  score: string | number | boolean,
+  score: string | number | boolean | Record<string, unknown>,
   explanation?: string,
   pass?: boolean,
 ): void {
   if (!span) return;
 
-  span.setAttribute("orq.score", String(score));
+  span.setAttribute(
+    "orq.score",
+    typeof score === "object" && score !== null
+      ? JSON.stringify(score)
+      : String(score),
+  );
   if (explanation !== undefined) {
     span.setAttribute("orq.explanation", explanation);
   }

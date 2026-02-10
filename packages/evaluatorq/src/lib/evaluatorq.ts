@@ -179,6 +179,7 @@ export async function evaluatorq(
     parallelism = 1,
     print = true,
     description,
+    path,
   } = params;
 
   // Initialize tracing if OTEL is configured
@@ -422,6 +423,7 @@ export async function evaluatorq(
               results,
               startTime,
               new Date(),
+              path,
             ),
           )
         : Effect.tap(() => Effect.void),
@@ -505,6 +507,7 @@ export async function evaluatorq(
               results,
               startTime,
               new Date(),
+              path,
             ),
           )
         : Effect.tap(() => Effect.void),
@@ -551,6 +554,7 @@ export const evaluatorqEffect = (
     parallelism = 1,
     print = true,
     description,
+    path,
   } = params;
 
   const startTime = new Date();
@@ -608,6 +612,7 @@ export const evaluatorqEffect = (
           data.datasetId,
           apiKey,
           startTime,
+          path,
         ),
       );
     });
@@ -625,6 +630,7 @@ export const evaluatorqEffect = (
     undefined,
     undefined,
     startTime,
+    path,
   );
 };
 
@@ -640,6 +646,7 @@ const runEvaluationEffect = (
   datasetId: string | undefined,
   apiKey: string | undefined,
   startTime: Date,
+  path: string | undefined,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
   // Use API key from parameter or environment
   const orqApiKey = apiKey || process.env.ORQ_API_KEY;
@@ -694,6 +701,7 @@ const runEvaluationEffect = (
             results,
             startTime,
             new Date(),
+            path,
           ),
         )
       : Effect.tap(() => Effect.void),

@@ -4,7 +4,52 @@ import chalk from "chalk";
 import { Effect } from "effect";
 import stripAnsi from "strip-ansi";
 
-import type { EvaluatorqResult } from "./types.js";
+import type { EvaluationResultCell, EvaluatorqResult } from "./types.js";
+
+function isEvaluationResultCell(value: unknown): value is EvaluationResultCell {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    "type" in value &&
+    typeof value.type === "string" &&
+    "value" in value &&
+    typeof value.value === "object" &&
+    value.value !== null &&
+    !Array.isArray(value.value)
+  );
+}
+
+// Color a percentage value: green >= 80%, yellow >= 50%, red below
+function colorRate(rate: number): string {
+  if (rate >= 80) return chalk.green(`${rate}%`);
+  if (rate >= 50) return chalk.yellow(`${rate}%`);
+  return chalk.red(`${rate}%`);
+}
+
+// Count evaluator scores that use the pass field
+function countPassStats(results: EvaluatorqResult): {
+  totalWithPass: number;
+  totalPassed: number;
+} {
+  let totalWithPass = 0;
+  let totalPassed = 0;
+
+  for (const result of results) {
+    for (const job of result.jobResults ?? []) {
+      for (const score of job.evaluatorScores ?? []) {
+        if (score.score.pass !== undefined) {
+          totalWithPass++;
+          if (score.score.pass === true) {
+            totalPassed++;
+          }
+        }
+      }
+    }
+  }
+
+  return { totalWithPass, totalPassed };
+}
 
 // Truncate string to fit within maxWidth (accounting for ANSI codes)
 function truncate(str: string, maxWidth: number): string {
@@ -138,22 +183,7 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
       ? Math.round(((totalJobs - failedJobs) / totalJobs) * 100)
       : 0;
 
-  // Calculate pass rate for evaluators that use the pass field
-  let totalWithPass = 0;
-  let totalPassed = 0;
-
-  results.forEach((result) => {
-    result.jobResults?.forEach((job) => {
-      job.evaluatorScores?.forEach((score) => {
-        if (score.score.pass !== undefined) {
-          totalWithPass++;
-          if (score.score.pass === true) {
-            totalPassed++;
-          }
-        }
-      });
-    });
-  });
+  const { totalWithPass, totalPassed } = countPassStats(results);
 
   const headers = ["Metric", "Value"];
   const rows: Array<{ main: string[]; details?: string[] }> = [
@@ -176,29 +206,22 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
     {
       main: [
         "Success Rate",
-        failedJobs === 0
-          ? chalk.green("100%")
-          : successRate >= 80
-            ? chalk.green(`${successRate}%`)
-            : successRate >= 50
-              ? chalk.yellow(`${successRate}%`)
-              : chalk.red(`${successRate}%`),
+        failedJobs === 0 ? chalk.green("100%") : colorRate(successRate),
       ],
     },
   ];
 
-  // Add pass rate row if any evaluators use the pass field
   if (totalWithPass > 0) {
     const passRate = Math.round((totalPassed / totalWithPass) * 100);
+    const passLabel = `${passRate}% (${totalPassed}/${totalWithPass})`;
+    const passColor =
+      passRate === 100
+        ? chalk.green
+        : passRate >= 80
+          ? chalk.yellow
+          : chalk.red;
     rows.push({
-      main: [
-        "Pass Rate",
-        passRate === 100
-          ? chalk.green(`${passRate}% (${totalPassed}/${totalWithPass})`)
-          : passRate >= 80
-            ? chalk.yellow(`${passRate}% (${totalPassed}/${totalWithPass})`)
-            : chalk.red(`${passRate}% (${totalPassed}/${totalWithPass})`),
-      ],
+      main: ["Pass Rate", passColor(passLabel)],
     });
   }
 
@@ -206,7 +229,7 @@ function createSummaryDisplay(results: EvaluatorqResult): string {
 }
 
 // Calculate averages for evaluator scores across all data points
-function calculateEvaluatorAverages(results: EvaluatorqResult): {
+export function calculateEvaluatorAverages(results: EvaluatorqResult): {
   jobNames: string[];
   evaluatorNames: string[];
   averages: Map<
@@ -221,7 +244,7 @@ function calculateEvaluatorAverages(results: EvaluatorqResult): {
   // Store all scores per evaluator per job
   const scoresByEvaluatorAndJob = new Map<
     string,
-    Map<string, (number | boolean | string)[]>
+    Map<string, (number | boolean | string | Record<string, unknown>)[]>
   >();
 
   results.forEach((result) => {
@@ -290,6 +313,12 @@ function calculateEvaluatorAverages(results: EvaluatorqResult): {
                   ? chalk.yellow
                   : chalk.red,
           });
+        } else if (isEvaluationResultCell(firstScore)) {
+          // For structured data (e.g., BERT score, ROUGE_N), show placeholder
+          evaluatorAverages.set(jobName, {
+            value: "[structured]",
+            color: chalk.gray,
+          });
         } else {
           // For strings, we ignore as per requirements
           evaluatorAverages.set(jobName, {
@@ -320,11 +349,8 @@ function createResultsDisplay(results: EvaluatorqResult): string {
   // Build headers: ["Evaluators"] + job names
   const headers = ["Evaluators", ...jobNames];
 
-  // Calculate column widths
-  const minColWidths = [20]; // First column for evaluator names
-  jobNames.forEach(() => {
-    minColWidths.push(15);
-  }); // Job columns
+  // Calculate column widths: evaluator name column + one per job
+  const minColWidths = [20, ...jobNames.map(() => 15)];
 
   const rows: Array<{ main: string[]; details?: string[] }> = [];
 
@@ -400,23 +426,7 @@ function writeGitHubStepSummary(
     return acc + (r.jobResults?.filter((j) => j.error).length || 0);
   }, 0);
 
-  // Calculate pass rate for evaluators
-  let totalWithPass = 0;
-  let totalPassed = 0;
-
-  results.forEach((result) => {
-    result.jobResults?.forEach((job) => {
-      job.evaluatorScores?.forEach((score) => {
-        if (score.score.pass !== undefined) {
-          totalWithPass++;
-          if (score.score.pass === true) {
-            totalPassed++;
-          }
-        }
-      });
-    });
-  });
-
+  const { totalWithPass, totalPassed } = countPassStats(results);
   const passRate =
     totalWithPass > 0 ? Math.round((totalPassed / totalWithPass) * 100) : null;
   const statusEmoji =

@@ -19,6 +19,7 @@ from .tracing import (
 )
 from .types import (
     DataPoint,
+    DataPointInput,
     DatasetIdInput,
     Evaluator,
     EvaluatorParams,
@@ -51,12 +52,13 @@ async def evaluatorq(
     name: str,
     params: EvaluatorParams | dict[str, Any] | None = None,
     *,
-    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPoint] | None = None,
+    data: DatasetIdInput | Sequence[Awaitable[DataPoint] | DataPointInput] | None = None,
     jobs: list[Job] | None = None,
     evaluators: list[Evaluator] | None = None,
     parallelism: int = 1,
     print_results: bool = True,
     description: str | None = None,
+    path: str | None = None,
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
@@ -82,6 +84,8 @@ async def evaluatorq(
         parallelism: Number of jobs to run in parallel. Defaults to 1 (sequential).
         print_results: Whether to print results table to console. Defaults to True.
         description: Optional description for the evaluation run.
+        path: Optional path (e.g. "MyProject/MyFolder") to place the experiment
+              in a specific project and folder on the Orq platform.
 
     Returns:
         List of DataPointResult objects
@@ -106,6 +110,7 @@ async def evaluatorq(
             parallelism=parallelism,
             print_results=print_results,
             description=description,
+            path=path,
         )
     else:
         raise ValueError(
@@ -119,6 +124,7 @@ async def evaluatorq(
     parallelism = validated.parallelism
     print_results = validated.print_results
     description = validated.description
+    path = validated.path
 
     # Initialize tracing if OTEL is configured
     tracing_enabled = await init_tracing_if_needed()
@@ -310,6 +316,7 @@ async def evaluatorq(
             results,
             start_time,
             datetime.now(timezone.utc),
+            path=path,
         )
 
     # Shutdown tracing gracefully

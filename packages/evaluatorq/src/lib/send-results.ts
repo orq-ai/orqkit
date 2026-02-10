@@ -6,7 +6,11 @@ import type { DataPoint, EvaluatorqResult, Output } from "./types.js";
 export interface SerializedEvaluatorScore {
   evaluatorName: string;
   score: {
-    value: number | boolean | string;
+    value:
+      | number
+      | boolean
+      | string
+      | { type: string; value: Record<string, unknown> };
     explanation?: string;
   };
   error?: string; // Error serialized to string
@@ -33,6 +37,7 @@ export interface SendResultsPayload {
   _endedAt: string;
   _evaluationDuration: number;
   datasetId?: string;
+  path?: string;
   results: SerializedDataPointResult[];
 }
 
@@ -53,6 +58,7 @@ export const sendResultsToOrqEffect = (
   results: EvaluatorqResult,
   startTime: Date,
   endTime: Date,
+  path: string | undefined,
 ): Effect.Effect<void, never, never> =>
   Effect.gen(function* (_) {
     // Convert Error objects to strings for JSON serialization
@@ -84,6 +90,7 @@ export const sendResultsToOrqEffect = (
       _endedAt: endTime.toISOString(),
       _evaluationDuration: endTime.getTime() - startTime.getTime(),
       ...(datasetId && { datasetId }),
+      ...(path && { path }),
       results: serializedResults,
     };
 

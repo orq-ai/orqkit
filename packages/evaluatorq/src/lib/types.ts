@@ -1,4 +1,22 @@
-export type Output = string | number | boolean | Record<string, unknown> | null;
+import type { ResponseResource } from "./integrations/openresponses/index.js";
+
+export type Output =
+  | string
+  | number
+  | boolean
+  | ResponseResource
+  | Record<string, unknown>
+  | null;
+
+export type EvaluationResultCellValue =
+  | string
+  | number
+  | Record<string, string | number | Record<string, string | number>>;
+
+export type EvaluationResultCell = {
+  type: string;
+  value: Record<string, EvaluationResultCellValue>;
+};
 
 type EvaluationResult<T> = {
   value: T;
@@ -8,7 +26,7 @@ type EvaluationResult<T> = {
 
 export interface EvaluatorScore {
   evaluatorName: string;
-  score: EvaluationResult<number | boolean | string>;
+  score: EvaluationResult<number | boolean | string | EvaluationResultCell>;
   error?: Error;
 }
 
@@ -67,6 +85,7 @@ export type Job = (
  * @param parallelism - The number of jobs to run in parallel. If not provided, we will run the jobs sequentially.
  * @param print - Whether to print the results in a table format to the console. Defaults to true.
  * @param description - Optional description for the evaluation run.
+ * @param path - Optional path (e.g. "MyProject/MyFolder") to place the experiment in a specific project and folder on the Orq platform.
  */
 export interface EvaluatorParams {
   data:
@@ -80,6 +99,7 @@ export interface EvaluatorParams {
   parallelism?: number;
   print?: boolean;
   description?: string;
+  path?: string;
 }
 
 export type Evaluator = {
@@ -92,7 +112,8 @@ export type ScorerParameter = {
   output: Output;
 };
 
-export type Scorer =
-  | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>);
+export type Scorer = (
+  params: ScorerParameter,
+) => Promise<
+  EvaluationResult<string | number | boolean | EvaluationResultCell>
+>;

@@ -10,6 +10,7 @@ An evaluation framework library that provides a flexible way to run parallel eva
 - **Orq Platform Integration**: Seamlessly fetch and evaluate datasets from Orq AI (optional)
 - **OpenTelemetry Tracing**: Built-in observability with automatic span creation for jobs and evaluators
 - **Pass/Fail Tracking**: Evaluators can return pass/fail status for CI/CD integration
+- **Integrations**: LangChain, LangGraph, and Vercel AI SDK agent integration
 
 ## 📥 Installation
 
@@ -33,6 +34,18 @@ For OpenTelemetry tracing (optional):
 
 ```bash
 npm install @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions
+```
+
+For LangChain/LangGraph integration:
+
+```bash
+npm install langchain @langchain/core @langchain/langgraph
+```
+
+For Vercel AI SDK integration:
+
+```bash
+npm install ai 
 ```
 
 ## 🚀 Quick Start
@@ -166,6 +179,20 @@ await evaluatorq("async-eval", {
 });
 ```
 
+#### Structured Evaluation Results
+
+Evaluators can return structured, multi-dimensional metrics using `EvaluationResultCell`. This is useful for metrics like BERT scores, ROUGE-N scores, or any evaluation that produces multiple sub-scores.
+
+See the runnable examples in the `examples/` directory:
+
+- [`structured-rubric.eval.ts`](../../examples/src/lib/structured-rubric.eval.ts) - Multi-criteria quality rubric (relevance, coherence, fluency)
+- [`structured-sentiment.eval.ts`](../../examples/src/lib/structured-sentiment.eval.ts) - Sentiment distribution breakdown (positive, negative, neutral)
+- [`structured-safety.eval.ts`](../../examples/src/lib/structured-safety.eval.ts) - Toxicity/safety severity scores with pass/fail tracking
+
+For a BERT score example using the Orq platform, see [`llm-eval-with-results.ts`](../../examples/src/lib/llm-eval-with-results.ts).
+
+> **Note:** Structured results display as `[structured]` in the terminal summary table but are preserved in full when sent to the Orq platform and OpenTelemetry spans.
+
 #### Deployment Helper
 
 Easily invoke Orq deployments within your evaluation jobs:
@@ -206,6 +233,38 @@ const conversationJob = job("assistant", async (data) => {
 ```
 
 The `invoke()` function returns the text content directly, while `deployment()` returns an object with both `content` and `raw` response for more control.
+
+## 🔗 LangChain Integration
+
+Evaluatorq provides integration with LangChain and LangGraph agents, converting their outputs to the OpenResponses format for standardized evaluation.
+
+The LangChain integration allows you to:
+- Wrap LangChain agents created with `createAgent()` for use in evaluatorq jobs
+- Wrap LangGraph compiled graphs for stateful agent evaluation
+- Automatically convert agent outputs to OpenResponses format
+- Evaluate agent behavior using standard evaluatorq evaluators
+
+### Examples
+
+Complete examples are available in the examples folder:
+
+- **LangChain Agent**: [`examples/src/lib/integrations/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain-agent-eval.ts)
+- **LangGraph Agent**: [`examples/src/lib/integrations/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langgraph-agent-eval.ts)
+
+## 🤖 Vercel AI SDK Integration
+
+Evaluatorq integrates with the Vercel AI SDK, allowing you to wrap AI SDK agents and evaluate them using the standard evaluatorq framework.
+
+The Vercel AI SDK integration allows you to:
+- Wrap Vercel AI SDK `ToolLoopAgent` instances for use in evaluatorq jobs
+- Automatically convert agent outputs to OpenResponses format
+- Evaluate agent behavior using standard evaluatorq evaluators
+
+### Examples
+
+Complete examples are available in the examples folder:
+
+- **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts)
 
 ## 🔧 Configuration
 
@@ -351,9 +410,19 @@ interface JobResult {
   evaluatorScores?: EvaluatorScore[];
 }
 
+type EvaluationResultCellValue =
+  | string
+  | number
+  | Record<string, string | number | Record<string, string | number>>;
+
+type EvaluationResultCell = {
+  type: string;
+  value: Record<string, EvaluationResultCellValue>;
+};
+
 interface EvaluatorScore {
   evaluatorName: string;
-  score: EvaluationResult<number | boolean | string>;
+  score: EvaluationResult<number | boolean | string | EvaluationResultCell>;
   error?: Error;
 }
 
@@ -382,10 +451,16 @@ type EvaluationResult<T> = {
   pass?: boolean;  // Optional pass/fail indicator for CI/CD integration
 };
 
-type Scorer =
-  | ((params: ScorerParameter) => Promise<EvaluationResult<string>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<number>>)
-  | ((params: ScorerParameter) => Promise<EvaluationResult<boolean>>);
+type Scorer = (
+  params: ScorerParameter,
+) => Promise<
+  EvaluationResult<string | number | boolean | EvaluationResultCell>
+>;
+
+// Integration wrappers
+import { wrapLangChainAgent, wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
+import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
+import type { ResponseResource } from "@orq-ai/evaluatorq/openresponses";
 
 // Deployment helper types
 interface DeploymentOptions {
