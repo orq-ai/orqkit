@@ -5,17 +5,14 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { Orq } from "@orq-ai/node";
+import { evaluatorq, job } from "../../src/index.js";
 
 const apiKey = process.env.ORQ_API_KEY;
 const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
 
-// Dynamic imports to avoid issues when modules aren't available
-let Orq: typeof import("@orq-ai/node").Orq;
-let evaluatorq: typeof import("../../src/index.js").evaluatorq;
-let job: typeof import("../../src/index.js").job;
-
 describe("includeMessages integration tests", () => {
-  let client: InstanceType<typeof Orq>;
+  let client: Orq;
   let datasetId: string | undefined;
 
   beforeAll(async () => {
@@ -23,14 +20,6 @@ describe("includeMessages integration tests", () => {
       console.warn("Skipping integration tests: ORQ_API_KEY not set in .env");
       return;
     }
-
-    // Dynamic imports
-    const orqModule = await import("@orq-ai/node");
-    Orq = orqModule.Orq;
-
-    const evaluatorqModule = await import("../../src/index.js");
-    evaluatorq = evaluatorqModule.evaluatorq;
-    job = evaluatorqModule.job;
 
     client = new Orq({ apiKey, serverURL });
   });
