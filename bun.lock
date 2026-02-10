@@ -41,7 +41,7 @@
     },
     "packages/cli": {
       "name": "@orq-ai/cli",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
       "bin": {
         "orq": "./dist/bin/cli.js",
       },
@@ -56,7 +56,7 @@
     },
     "packages/evaluatorq": {
       "name": "@orq-ai/evaluatorq",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
       "dependencies": {
         "chalk": "^5.4.1",
         "effect": "^3.17.4",
@@ -73,6 +73,8 @@
         "@opentelemetry/sdk-node": "^0.57.2",
         "@opentelemetry/sdk-trace-base": "^1.30.1",
         "@opentelemetry/semantic-conventions": "^1.28.0",
+        "ai": "^6.0.0",
+        "dotenv": "^17.2.3",
       },
       "peerDependencies": {
         "@langchain/core": ">=1.0.0",
@@ -101,7 +103,7 @@
     },
     "packages/evaluators": {
       "name": "@orq-ai/evaluators",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
       "dependencies": {
         "openai": "^5.12.2",
         "tslib": "^2.3.0",
@@ -112,7 +114,7 @@
     },
     "packages/n8n-nodes-orq": {
       "name": "@orq-ai/n8n-nodes-orq",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
       "devDependencies": {
         "n8n-workflow": "^1.103.0",
       },
@@ -122,11 +124,11 @@
     },
     "packages/tiny-di": {
       "name": "@orq-ai/tiny-di",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
     },
     "packages/vercel-provider": {
       "name": "@orq-ai/vercel-provider",
-      "version": "1.0.9",
+      "version": "1.2.0-rc.3",
       "dependencies": {
         "@ai-sdk/openai-compatible": "^1.0.1",
         "@ai-sdk/provider": "^2.0.0",
