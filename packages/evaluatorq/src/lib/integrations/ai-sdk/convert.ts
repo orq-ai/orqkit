@@ -169,7 +169,7 @@ interface ExtendedStepData {
 export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
   agent: Agent<never, TOOLS, never>,
-  prompt?: string,
+  _prompt?: string,
 ): ResponseResource {
   const now = Math.floor(Date.now() / 1000);
 
