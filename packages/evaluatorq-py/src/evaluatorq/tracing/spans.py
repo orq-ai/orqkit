@@ -24,6 +24,18 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class EvaluationRunSpanOptions:
+    """Options for creating an evaluation run span."""
+
+    run_id: str
+    run_name: str
+    data_points_count: int
+    jobs_count: int
+    evaluators_count: int
+    parent_context: Any | None = None
+
+
+@dataclass
 class JobSpanOptions:
     """Options for creating a job span."""
 
@@ -39,6 +51,58 @@ class EvaluationSpanOptions:
 
     run_id: str
     evaluator_name: str
+
+
+@asynccontextmanager
+async def with_evaluation_run_span(
+    options: EvaluationRunSpanOptions,
+) -> AsyncGenerator["Span | None", None]:
+    """
+    Execute code within an orq.evaluation_run span.
+    This is the root span for an evaluation run.
+
+    Args:
+        options: Evaluation run span configuration
+
+    Yields:
+        The span if tracing is enabled, None otherwise
+    """
+    tracer = get_tracer()
+    if tracer is None:
+        yield None
+        return
+
+    # Import OTEL dependencies first, before entering the span.
+    # This keeps the ImportError handler narrow — it only catches
+    # missing OTEL packages, never errors from user code inside the span.
+    try:
+        from opentelemetry import context as otel_context
+        from opentelemetry.trace import SpanKind, Status, StatusCode
+    except ImportError:
+        yield None
+        return
+
+    parent_ctx = options.parent_context or otel_context.get_current()
+
+    with tracer.start_as_current_span(
+        "orq.evaluation_run",
+        context=parent_ctx,
+        kind=SpanKind.INTERNAL,
+        attributes={
+            "orq.run_id": options.run_id,
+            "orq.run_name": options.run_name,
+            "orq.data_points_count": options.data_points_count,
+            "orq.jobs_count": options.jobs_count,
+            "orq.evaluators_count": options.evaluators_count,
+        },
+    ) as span:
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
 
 
 @asynccontextmanager

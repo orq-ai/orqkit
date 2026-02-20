@@ -23,6 +23,7 @@ from .setup import (
 from .spans import (
     set_evaluation_attributes,
     set_job_name_attribute,
+    with_evaluation_run_span,
     with_evaluation_span,
     with_job_span,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "capture_parent_context",
     "generate_run_id",
     # Span functions
+    "with_evaluation_run_span",
     "with_job_span",
     "with_evaluation_span",
     "set_evaluation_attributes",

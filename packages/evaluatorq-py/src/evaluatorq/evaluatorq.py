@@ -16,7 +16,9 @@ from .tracing import (
     generate_run_id,
     init_tracing_if_needed,
     shutdown_tracing,
+    with_evaluation_run_span,
 )
+from .tracing.spans import EvaluationRunSpanOptions
 from .types import (
     DataPoint,
     DataPointInput,
@@ -144,163 +146,196 @@ async def evaluatorq(
 
     dataset_id: str | None = None
 
-    # Create progress service
-    progress = ProgressService()
-
-    # Handle dataset_id case - use streaming fetch
+    # Determine data point count for the run span
     if isinstance(data, DatasetIdInput):
-        orq_client = None
-
-        if orq_api_key:
-            orq_client = setup_orq_client(orq_api_key)
-
-        if not orq_api_key or not orq_client:
-            raise ValueError(
-                "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
-            )
-        dataset_id = data.dataset_id
-        include_messages = data.include_messages
-
-        # Stream fetch and process batches concurrently
-        async def run_streaming_evaluation() -> EvaluatorqResult:
-            all_results: EvaluatorqResult = []
-            processing_tasks: list[asyncio.Task[list[Any]]] = []
-            total_datapoints = 0
-            datapoint_index = 0
-
-            # Shared progress state for tracking processed count
-            progress_ref = {"processed": 0}
-
-            # Semaphore for controlling parallelism
-            data_point_semaphore = asyncio.Semaphore(parallelism)
-
-            async def process_with_semaphore(
-                index: int, data_promise: DataPoint
-            ) -> list[Any]:
-                async with data_point_semaphore:
-                    result = await process_data_point(
-                        data_promise,
-                        index,
-                        jobs,
-                        evaluators_list,
-                        parallelism,
-                        None,  # Don't pass progress in streaming mode - use polling instead
-                        tracing_context,
-                    )
-                    progress_ref["processed"] += 1
-                    return result
-
-            # Initialize progress with unknown total (streaming mode)
-            await progress.update_progress(
-                total_data_points=0,
-                current_data_point=0,
-                phase=Phase.FETCHING,
-            )
-
-            # Start a background task to poll and update progress
-            stop_polling = False
-
-            async def poll_progress():
-                while not stop_polling:
-                    await progress.update_progress(
-                        total_data_points=total_datapoints,
-                        current_data_point=progress_ref["processed"],
-                        phase=Phase.PROCESSING
-                        if progress_ref["processed"] > 0
-                        else Phase.FETCHING,
-                    )
-                    await asyncio.sleep(0.1)
-
-            polling_task = asyncio.create_task(poll_progress())
-
-            try:
-                # Fetch and process batches
-                async for batch in fetch_dataset_batches(orq_client, dataset_id, include_messages=include_messages):
-                    total_datapoints += len(batch.datapoints)
-
-                    # Start processing this batch immediately
-                    for datapoint in batch.datapoints:
-                        task = asyncio.create_task(
-                            process_with_semaphore(datapoint_index, datapoint)
-                        )
-                        processing_tasks.append(task)
-                        datapoint_index += 1
-
-                # Wait for all processing tasks to complete
-                results_nested = await asyncio.gather(*processing_tasks)
-            finally:
-                # Stop the polling task
-                stop_polling = True
-                _ = polling_task.cancel()
-                try:
-                    await polling_task
-                except asyncio.CancelledError:
-                    pass
-
-            # Final progress update
-            await progress.update_progress(
-                total_data_points=total_datapoints,
-                current_data_point=progress_ref["processed"],
-                phase=Phase.PROCESSING,
-            )
-
-            # Flatten results
-            for result_list in results_nested:
-                all_results.extend(result_list)
-
-            return all_results
-
-        results = await with_progress(
-            run_streaming_evaluation(), progress, show_progress=print_results
-        )
-
+        data_points_count = 0  # Unknown upfront for streaming
     else:
-        # Non-streaming case: process all data at once
-        data_promises = cast(list[DataPoint], data)
+        data_points_count = len(cast(list[DataPoint], data))
 
-        async def run_evaluation() -> EvaluatorqResult:
-            # Initialize progress
-            await progress.update_progress(
-                total_data_points=len(data_promises),
-                current_data_point=0,
-                phase=Phase.INITIALIZING,
+    # Wrap the entire execution in an evaluation run span
+    run_span_options = EvaluationRunSpanOptions(
+        run_id=tracing_context.run_id if tracing_context else "",
+        run_name=name,
+        data_points_count=data_points_count,
+        jobs_count=len(jobs),
+        evaluators_count=len(evaluators_list),
+        parent_context=tracing_context.parent_context if tracing_context else None,
+    ) if tracing_context else None
+
+    async def _run_core() -> EvaluatorqResult:
+        nonlocal dataset_id
+
+        # If inside a run span, update the tracing context's parent to the
+        # now-active context so downstream job spans become children of the run span.
+        # At this point we are inside with_evaluation_run_span, so OTEL is confirmed available.
+        if tracing_context and run_span_options:
+            from opentelemetry import context as otel_context
+            tracing_context.parent_context = otel_context.get_current()
+
+        # Create progress service
+        progress = ProgressService()
+
+        # Handle dataset_id case - use streaming fetch
+        if isinstance(data, DatasetIdInput):
+            orq_client = None
+
+            if orq_api_key:
+                orq_client = setup_orq_client(orq_api_key)
+
+            if not orq_api_key or not orq_client:
+                raise ValueError(
+                    "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
+                )
+            dataset_id = data.dataset_id
+            include_messages = data.include_messages
+
+            # Stream fetch and process batches concurrently
+            async def run_streaming_evaluation() -> EvaluatorqResult:
+                all_results: EvaluatorqResult = []
+                processing_tasks: list[asyncio.Task[list[Any]]] = []
+                total_datapoints = 0
+                datapoint_index = 0
+
+                # Shared progress state for tracking processed count
+                progress_ref = {"processed": 0}
+
+                # Semaphore for controlling parallelism
+                data_point_semaphore = asyncio.Semaphore(parallelism)
+
+                async def process_with_semaphore(
+                    index: int, data_promise: DataPoint
+                ) -> list[Any]:
+                    async with data_point_semaphore:
+                        result = await process_data_point(
+                            data_promise,
+                            index,
+                            jobs,
+                            evaluators_list,
+                            parallelism,
+                            None,  # Don't pass progress in streaming mode - use polling instead
+                            tracing_context,
+                        )
+                        progress_ref["processed"] += 1
+                        return result
+
+                # Initialize progress with unknown total (streaming mode)
+                await progress.update_progress(
+                    total_data_points=0,
+                    current_data_point=0,
+                    phase=Phase.FETCHING,
+                )
+
+                # Start a background task to poll and update progress
+                stop_polling = False
+
+                async def poll_progress():
+                    while not stop_polling:
+                        await progress.update_progress(
+                            total_data_points=total_datapoints,
+                            current_data_point=progress_ref["processed"],
+                            phase=Phase.PROCESSING
+                            if progress_ref["processed"] > 0
+                            else Phase.FETCHING,
+                        )
+                        await asyncio.sleep(0.1)
+
+                polling_task = asyncio.create_task(poll_progress())
+
+                try:
+                    # Fetch and process batches
+                    async for batch in fetch_dataset_batches(orq_client, dataset_id, include_messages=include_messages):
+                        total_datapoints += len(batch.datapoints)
+
+                        # Start processing this batch immediately
+                        for datapoint in batch.datapoints:
+                            task = asyncio.create_task(
+                                process_with_semaphore(datapoint_index, datapoint)
+                            )
+                            processing_tasks.append(task)
+                            datapoint_index += 1
+
+                    # Wait for all processing tasks to complete
+                    results_nested = await asyncio.gather(*processing_tasks)
+                finally:
+                    # Stop the polling task
+                    stop_polling = True
+                    _ = polling_task.cancel()
+                    try:
+                        await polling_task
+                    except asyncio.CancelledError:
+                        pass
+
+                # Final progress update
+                await progress.update_progress(
+                    total_data_points=total_datapoints,
+                    current_data_point=progress_ref["processed"],
+                    phase=Phase.PROCESSING,
+                )
+
+                # Flatten results
+                for result_list in results_nested:
+                    all_results.extend(result_list)
+
+                return all_results
+
+            return await with_progress(
+                run_streaming_evaluation(), progress, show_progress=print_results
             )
 
-            # Process data points with controlled concurrency
-            data_point_semaphore = asyncio.Semaphore(parallelism)
+        else:
+            # Non-streaming case: process all data at once
+            data_promises = cast(list[DataPoint], data)
 
-            async def process_with_semaphore(
-                index: int, data_promise: Awaitable[DataPoint] | DataPoint
-            ) -> list[Any]:
-                async with data_point_semaphore:
-                    return await process_data_point(
-                        data_promise,
-                        index,
-                        jobs,
-                        evaluators_list,
-                        parallelism,
-                        progress,
-                        tracing_context,
-                    )
+            async def run_evaluation() -> EvaluatorqResult:
+                # Initialize progress
+                await progress.update_progress(
+                    total_data_points=len(data_promises),
+                    current_data_point=0,
+                    phase=Phase.INITIALIZING,
+                )
 
-            tasks = [
-                process_with_semaphore(index, data_promise)
-                for index, data_promise in enumerate(data_promises)
-            ]
+                # Process data points with controlled concurrency
+                data_point_semaphore = asyncio.Semaphore(parallelism)
 
-            # Gather all results
-            results_nested = await asyncio.gather(*tasks)
+                async def process_with_semaphore(
+                    index: int, data_promise: Awaitable[DataPoint] | DataPoint
+                ) -> list[Any]:
+                    async with data_point_semaphore:
+                        return await process_data_point(
+                            data_promise,
+                            index,
+                            jobs,
+                            evaluators_list,
+                            parallelism,
+                            progress,
+                            tracing_context,
+                        )
 
-            # Flatten results
-            results: EvaluatorqResult = []
-            for result_list in results_nested:
-                results.extend(result_list)
+                tasks = [
+                    process_with_semaphore(index, data_promise)
+                    for index, data_promise in enumerate(data_promises)
+                ]
 
-            return results
+                # Gather all results
+                results_nested = await asyncio.gather(*tasks)
 
-        results = await with_progress(
-            run_evaluation(), progress, show_progress=print_results
-        )
+                # Flatten results
+                results: EvaluatorqResult = []
+                for result_list in results_nested:
+                    results.extend(result_list)
+
+                return results
+
+            return await with_progress(
+                run_evaluation(), progress, show_progress=print_results
+            )
+
+    # Execute within the evaluation run span (or directly if tracing is off)
+    if run_span_options:
+        async with with_evaluation_run_span(run_span_options):
+            results = await _run_core()
+    else:
+        results = await _run_core()
 
     # Display results table
     if print_results:

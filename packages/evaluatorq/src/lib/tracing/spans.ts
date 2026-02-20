@@ -76,30 +76,36 @@ export async function withEvaluationRunSpan<T>(
     return fn(undefined);
   }
 
+  // Import OTEL dependencies first, before entering the span.
+  // This keeps the catch narrow — it only catches missing OTEL packages,
+  // never errors from user code inside the span callback.
+  let otelApi: typeof import("@opentelemetry/api");
   try {
-    const { context, SpanStatusCode } = await import("@opentelemetry/api");
-
-    // Use parent context if provided, otherwise use active context
-    const parentCtx = options.parentContext || context.active();
-
-    return await tracer.startActiveSpan(
-      "orq.evaluation_run",
-      {
-        attributes: {
-          "orq.run_id": options.runId,
-          "orq.run_name": options.runName,
-          "orq.data_points_count": options.dataPointsCount,
-          "orq.jobs_count": options.jobsCount,
-          "orq.evaluators_count": options.evaluatorsCount,
-        },
-      },
-      parentCtx,
-      (span) => executeWithSpan(span, SpanStatusCode, fn),
-    );
+    otelApi = await import("@opentelemetry/api");
   } catch {
     // OTEL not available, run without span
     return fn(undefined);
   }
+
+  const { context, SpanStatusCode } = otelApi;
+
+  // Use parent context if provided, otherwise use active context
+  const parentCtx = options.parentContext || context.active();
+
+  return await tracer.startActiveSpan(
+    "orq.evaluation_run",
+    {
+      attributes: {
+        "orq.run_id": options.runId,
+        "orq.run_name": options.runName,
+        "orq.data_points_count": options.dataPointsCount,
+        "orq.jobs_count": options.jobsCount,
+        "orq.evaluators_count": options.evaluatorsCount,
+      },
+    },
+    parentCtx,
+    (span) => executeWithSpan(span, SpanStatusCode, fn),
+  );
 }
 
 /**
