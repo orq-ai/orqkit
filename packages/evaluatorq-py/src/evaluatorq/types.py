@@ -1,7 +1,8 @@
+import json
 from collections.abc import Awaitable, Sequence
 from typing import Any, Callable, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from typing_extensions import TypedDict
 
 # Keep output permissive: OpenResponses payloads are dict-shaped and should
@@ -18,12 +19,26 @@ class EvaluationResultCell(BaseModel):
     value: dict[str, EvaluationResultCellValue]
 
 
+def _is_evaluation_result_cell_dict(value: dict[str, Any]) -> bool:
+    return "type" in value and "value" in value
+
+
 class EvaluationResult(BaseModel):
     model_config: ClassVar[ConfigDict] = {"populate_by_name": True}
 
-    value: str | int | float | bool | EvaluationResultCell
+    value: str | int | float | bool | EvaluationResultCell | dict[str, Any]
     explanation: str | None = None
     pass_: bool | None = Field(default=None, alias="pass")
+
+    @field_serializer("value", when_used="json")
+    def serialize_value(
+        self,
+        value: str | int | float | bool | EvaluationResultCell | dict[str, Any],
+    ) -> Any:
+        if isinstance(value, dict) and not _is_evaluation_result_cell_dict(value):
+            return json.dumps(value)
+
+        return value
 
 
 class EvaluatorScore(BaseModel):
@@ -34,11 +49,18 @@ class EvaluatorScore(BaseModel):
 
 class JobResult(BaseModel):
     job_name: str = Field(serialization_alias="jobName")
-    output: Output
+    output: Output = Field(union_mode="left_to_right")
     error: str | None = None
     evaluator_scores: list[EvaluatorScore] | None = Field(
         default=None, serialization_alias="evaluatorScores"
     )
+
+    @field_serializer("output", when_used="json")
+    def serialize_output(self, output: Output) -> Any:
+        if isinstance(output, dict):
+            return json.dumps(output)
+
+        return output
 
 
 class _DataPointDictRequired(TypedDict):
