@@ -1,6 +1,6 @@
+import type { Context } from "@opentelemetry/api";
 import { Effect, pipe } from "effect";
 
-import type { Context } from "@opentelemetry/api";
 import type { Orq } from "@orq-ai/node";
 
 import { processDataPointEffect } from "./effects.js";
@@ -265,7 +265,7 @@ export async function evaluatorq(
               const runSpanFn = async () => {
                 // Capture the active context inside the run span so job spans become children.
                 // Only import OTEL when tracing is enabled to avoid module-not-found errors.
-                let runParentContext: unknown = undefined;
+                let runParentContext: unknown;
                 if (tracingContext) {
                   try {
                     const { context: otelContext } = await import(
@@ -333,30 +333,28 @@ export async function evaluatorq(
                                     evaluators.map(async (evaluator) => {
                                       try {
                                         // Wrap evaluator in evaluation span (child of job span)
-                                        const score =
-                                          await withEvaluationSpan(
-                                            {
-                                              runId:
-                                                tracingContext?.runId || "",
-                                              evaluatorName: evaluator.name,
-                                            },
-                                            async (evalSpan) => {
-                                              const evalResult =
-                                                await evaluator.scorer({
-                                                  data: datapoint,
-                                                  output: result.output,
-                                                });
+                                        const score = await withEvaluationSpan(
+                                          {
+                                            runId: tracingContext?.runId || "",
+                                            evaluatorName: evaluator.name,
+                                          },
+                                          async (evalSpan) => {
+                                            const evalResult =
+                                              await evaluator.scorer({
+                                                data: datapoint,
+                                                output: result.output,
+                                              });
 
-                                              setEvaluationAttributes(
-                                                evalSpan,
-                                                evalResult.value,
-                                                evalResult.explanation,
-                                                evalResult.pass,
-                                              );
+                                            setEvaluationAttributes(
+                                              evalSpan,
+                                              evalResult.value,
+                                              evalResult.explanation,
+                                              evalResult.pass,
+                                            );
 
-                                              return evalResult;
-                                            },
-                                          );
+                                            return evalResult;
+                                          },
+                                        );
                                         return {
                                           evaluatorName: evaluator.name,
                                           score,
@@ -419,8 +417,9 @@ export async function evaluatorq(
                     dataPointsCount: 0, // Unknown upfront for streaming
                     jobsCount: jobs.length,
                     evaluatorsCount: evaluators.length,
-                    parentContext:
-                      tracingContext.parentContext as Context | undefined,
+                    parentContext: tracingContext.parentContext as
+                      | Context
+                      | undefined,
                   },
                   runSpanFn,
                 );
@@ -543,28 +542,31 @@ export async function evaluatorq(
   };
 
   // Execute evaluation within an evaluation_run span (scoped to processing only)
-  const results = tracingContext && rootSpan
-    ? await withEvaluationRunSpan(
-        {
-          runId: tracingContext.runId,
-          runName: tracingContext.runName,
-          dataPointsCount: dataPromises.length,
-          jobsCount: jobs.length,
-          evaluatorsCount: evaluators.length,
-          parentContext: tracingContext.parentContext as Context | undefined,
-        },
-        async () => {
-          // Capture the active context inside the run span so job spans become children
-          try {
-            const { context: otelContext } = await import("@opentelemetry/api");
-            tracingContext.parentContext = otelContext.active();
-          } catch {
-            // OTEL not available, continue without parent context
-          }
-          return processDataPoints();
-        },
-      )
-    : await processDataPoints();
+  const results =
+    tracingContext && rootSpan
+      ? await withEvaluationRunSpan(
+          {
+            runId: tracingContext.runId,
+            runName: tracingContext.runName,
+            dataPointsCount: dataPromises.length,
+            jobsCount: jobs.length,
+            evaluatorsCount: evaluators.length,
+            parentContext: tracingContext.parentContext as Context | undefined,
+          },
+          async () => {
+            // Capture the active context inside the run span so job spans become children
+            try {
+              const { context: otelContext } = await import(
+                "@opentelemetry/api"
+              );
+              tracingContext.parentContext = otelContext.active();
+            } catch {
+              // OTEL not available, continue without parent context
+            }
+            return processDataPoints();
+          },
+        )
+      : await processDataPoints();
 
   // Display results and upload (outside the run span)
   const postProcessProgram = pipe(

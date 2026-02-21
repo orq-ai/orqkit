@@ -249,13 +249,10 @@ describe("rootSpan option", () => {
       },
       async () => {
         executionOrder.push("run-start");
-        await withJobSpan(
-          { runId: "run-with-root", rowIndex: 0 },
-          async () => {
-            executionOrder.push("job-0");
-            return "done";
-          },
-        );
+        await withJobSpan({ runId: "run-with-root", rowIndex: 0 }, async () => {
+          executionOrder.push("job-0");
+          return "done";
+        });
         executionOrder.push("run-end");
         return null;
       },
@@ -355,12 +352,9 @@ describe("span hierarchy (without OTEL)", () => {
           evaluatorsCount: 0,
         },
         async () => {
-          await withJobSpan(
-            { runId: "run-job-err", rowIndex: 0 },
-            async () => {
-              throw new Error("job-level error");
-            },
-          );
+          await withJobSpan({ runId: "run-job-err", rowIndex: 0 }, async () => {
+            throw new Error("job-level error");
+          });
         },
       ),
     ).rejects.toThrow("job-level error");
