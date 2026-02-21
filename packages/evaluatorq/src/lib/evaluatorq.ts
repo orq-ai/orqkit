@@ -182,6 +182,7 @@ export async function evaluatorq(
     print = true,
     description,
     path,
+    rootSpan = false,
   } = params;
 
   // Initialize tracing if OTEL is configured
@@ -263,11 +264,18 @@ export async function evaluatorq(
             Effect.promise(async () => {
               const runSpanFn = async () => {
                 // Capture the active context inside the run span so job spans become children.
-                // At this point we are inside withEvaluationRunSpan, so OTEL is confirmed available.
-                const { context: otelContext } = await import(
-                  "@opentelemetry/api"
-                );
-                const runParentContext: unknown = otelContext.active();
+                // Only import OTEL when tracing is enabled to avoid module-not-found errors.
+                let runParentContext: unknown = undefined;
+                if (tracingContext) {
+                  try {
+                    const { context: otelContext } = await import(
+                      "@opentelemetry/api"
+                    );
+                    runParentContext = otelContext.active();
+                  } catch {
+                    // OTEL not available, continue without parent context
+                  }
+                }
 
                 const results: EvaluatorqResult = [];
                 const processingPromises: Promise<EvaluatorqResult>[] = [];
@@ -402,8 +410,8 @@ export async function evaluatorq(
                 return results;
               };
 
-              // Wrap in evaluation run span if tracing is enabled
-              if (tracingContext) {
+              // Wrap in evaluation run span if tracing is enabled and rootSpan is on
+              if (tracingContext && rootSpan) {
                 return withEvaluationRunSpan(
                   {
                     runId: tracingContext.runId,
@@ -535,7 +543,7 @@ export async function evaluatorq(
   };
 
   // Execute evaluation within an evaluation_run span (scoped to processing only)
-  const results = tracingContext
+  const results = tracingContext && rootSpan
     ? await withEvaluationRunSpan(
         {
           runId: tracingContext.runId,

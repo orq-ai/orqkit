@@ -144,6 +144,7 @@ class TestEvaluatorqTracingIntegration:
             data=[DataPoint(inputs={"text": "hello world"})],
             jobs=[simple_job],
             print_results=False,
+            root_span=True,
         )
 
         span_names = [s.name for s in exporter.spans]
@@ -163,6 +164,7 @@ class TestEvaluatorqTracingIntegration:
             jobs=[simple_job],
             evaluators=[{"name": "length", "scorer": length_scorer}],
             print_results=False,
+            root_span=True,
         )
 
         run_span = next(s for s in exporter.spans if s.name == "orq.evaluation_run")
@@ -185,6 +187,7 @@ class TestEvaluatorqTracingIntegration:
             ],
             jobs=[simple_job],
             print_results=False,
+            root_span=True,
         )
 
         run_span = next(s for s in exporter.spans if s.name == "orq.evaluation_run")
@@ -207,6 +210,7 @@ class TestEvaluatorqTracingIntegration:
             jobs=[simple_job],
             evaluators=[{"name": "length", "scorer": length_scorer}],
             print_results=False,
+            root_span=True,
         )
 
         run_span = next(s for s in exporter.spans if s.name == "orq.evaluation_run")
@@ -239,6 +243,7 @@ class TestEvaluatorqTracingIntegration:
             evaluators=[{"name": "length", "scorer": length_scorer}],
             parallelism=5,
             print_results=False,
+            root_span=True,
         )
 
         run_spans = [s for s in exporter.spans if s.name == "orq.evaluation_run"]
@@ -263,6 +268,45 @@ class TestEvaluatorqTracingIntegration:
             assert eval_span.context.trace_id == trace_id
 
     @pytest.mark.asyncio()
+    async def test_root_span_disabled(self, tracing_env):
+        """When root_span=False, no orq.evaluation_run span should be created."""
+        exporter = tracing_env
+
+        await evaluatorq(
+            "no-root-span-test",
+            data=[
+                DataPoint(inputs={"text": "aaa"}),
+                DataPoint(inputs={"text": "bbb"}),
+            ],
+            jobs=[simple_job],
+            evaluators=[{"name": "length", "scorer": length_scorer}],
+            print_results=False,
+            root_span=False,
+        )
+
+        span_names = [s.name for s in exporter.spans]
+        assert "orq.evaluation_run" not in span_names
+        # Job and evaluation spans should still exist
+        assert "orq.job" in span_names
+        assert "orq.evaluation" in span_names
+
+    @pytest.mark.asyncio()
+    async def test_root_span_enabled(self, tracing_env):
+        """When root_span=True, orq.evaluation_run span should be created."""
+        exporter = tracing_env
+
+        await evaluatorq(
+            "with-root-span-test",
+            data=[DataPoint(inputs={"text": "hello"})],
+            jobs=[simple_job],
+            print_results=False,
+            root_span=True,
+        )
+
+        span_names = [s.name for s in exporter.spans]
+        assert "orq.evaluation_run" in span_names
+
+    @pytest.mark.asyncio()
     async def test_run_span_has_ok_status(self, tracing_env):
         """Successful evaluation should produce a run span with OK status."""
         from opentelemetry.trace import StatusCode
@@ -274,6 +318,7 @@ class TestEvaluatorqTracingIntegration:
             data=[DataPoint(inputs={"text": "ok"})],
             jobs=[simple_job],
             print_results=False,
+            root_span=True,
         )
 
         run_span = next(s for s in exporter.spans if s.name == "orq.evaluation_run")

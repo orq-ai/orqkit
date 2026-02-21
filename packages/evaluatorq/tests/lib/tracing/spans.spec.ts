@@ -212,6 +212,61 @@ describe("withEvaluationSpan", () => {
   });
 });
 
+describe("rootSpan option", () => {
+  test("when rootSpan is false, jobs execute without a run span wrapper", async () => {
+    // Simulates what evaluatorq() does when rootSpan=false:
+    // it skips withEvaluationRunSpan and calls processDataPoints directly.
+    const executionOrder: string[] = [];
+
+    // Without withEvaluationRunSpan, jobs should still work independently
+    const jobResult = await withJobSpan(
+      { runId: "run-no-root", rowIndex: 0 },
+      async () => {
+        executionOrder.push("job-0");
+        const evalResult = await withEvaluationSpan(
+          { runId: "run-no-root", evaluatorName: "test-eval" },
+          async () => {
+            executionOrder.push("eval-0");
+            return { value: 1.0 };
+          },
+        );
+        return { output: "test", evalResult };
+      },
+    );
+
+    expect(executionOrder).toEqual(["job-0", "eval-0"]);
+    expect(jobResult.output).toBe("test");
+  });
+
+  test("when rootSpan is true, jobs execute inside a run span", async () => {
+    const executionOrder: string[] = [];
+
+    await withEvaluationRunSpan(
+      {
+        runId: "run-with-root",
+        runName: "root-test",
+        dataPointsCount: 1,
+        jobsCount: 1,
+        evaluatorsCount: 1,
+      },
+      async () => {
+        executionOrder.push("run-start");
+        await withJobSpan(
+          { runId: "run-with-root", rowIndex: 0 },
+          async () => {
+            executionOrder.push("job-0");
+            return "done";
+          },
+        );
+        executionOrder.push("run-end");
+        return null;
+      },
+    );
+
+    expect(executionOrder).toEqual(["run-start", "job-0", "run-end"]);
+  });
+});
+
 describe("span hierarchy (without OTEL)", () => {
   test("nested spans all execute callbacks correctly", async () => {
     const executionOrder: string[] = [];

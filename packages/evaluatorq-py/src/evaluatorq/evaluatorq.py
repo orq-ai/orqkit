@@ -61,6 +61,7 @@ async def evaluatorq(
     print_results: bool = True,
     description: str | None = None,
     path: str | None = None,
+    root_span: bool = False,
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
@@ -113,6 +114,7 @@ async def evaluatorq(
             print_results=print_results,
             description=description,
             path=path,
+            root_span=root_span,
         )
     else:
         raise ValueError(
@@ -127,6 +129,7 @@ async def evaluatorq(
     print_results = validated.print_results
     description = validated.description
     path = validated.path
+    root_span = validated.root_span
 
     # Initialize tracing if OTEL is configured
     tracing_enabled = await init_tracing_if_needed()
@@ -152,7 +155,7 @@ async def evaluatorq(
     else:
         data_points_count = len(cast(list[DataPoint], data))
 
-    # Wrap the entire execution in an evaluation run span
+    # Wrap the entire execution in an evaluation run span (only when root_span is enabled)
     run_span_options = EvaluationRunSpanOptions(
         run_id=tracing_context.run_id if tracing_context else "",
         run_name=name,
@@ -160,7 +163,7 @@ async def evaluatorq(
         jobs_count=len(jobs),
         evaluators_count=len(evaluators_list),
         parent_context=tracing_context.parent_context if tracing_context else None,
-    ) if tracing_context else None
+    ) if tracing_context and root_span else None
 
     async def _run_core() -> EvaluatorqResult:
         nonlocal dataset_id

@@ -132,34 +132,33 @@ async def with_job_span(
     try:
         from opentelemetry import context as otel_context
         from opentelemetry.trace import SpanKind, Status, StatusCode
-
-        # Use parent context if provided, otherwise use active context
-        parent_ctx = options.parent_context or otel_context.get_current()
-
-        attributes: dict[str, Any] = {
-            "orq.run_id": options.run_id,
-            "orq.row_index": options.row_index,
-        }
-        if options.job_name:
-            attributes["orq.job_name"] = options.job_name
-
-        with tracer.start_as_current_span(
-            "orq.job",
-            context=parent_ctx,
-            kind=SpanKind.INTERNAL,
-            attributes=attributes,
-        ) as span:
-            try:
-                yield span
-                span.set_status(Status(StatusCode.OK))
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
-
     except ImportError:
-        # OTEL not available, run without span
         yield None
+        return
+
+    # Use parent context if provided, otherwise use active context
+    parent_ctx = options.parent_context or otel_context.get_current()
+
+    attributes: dict[str, Any] = {
+        "orq.run_id": options.run_id,
+        "orq.row_index": options.row_index,
+    }
+    if options.job_name:
+        attributes["orq.job_name"] = options.job_name
+
+    with tracer.start_as_current_span(
+        "orq.job",
+        context=parent_ctx,
+        kind=SpanKind.INTERNAL,
+        attributes=attributes,
+    ) as span:
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
 
 
 @asynccontextmanager
@@ -191,26 +190,25 @@ async def with_evaluation_span(
 
     try:
         from opentelemetry.trace import SpanKind, Status, StatusCode
-
-        with tracer.start_as_current_span(
-            "orq.evaluation",
-            kind=SpanKind.INTERNAL,
-            attributes={
-                "orq.run_id": options.run_id,
-                "orq.evaluator_name": options.evaluator_name,
-            },
-        ) as span:
-            try:
-                yield span
-                span.set_status(Status(StatusCode.OK))
-            except Exception as e:
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
-
     except ImportError:
-        # OTEL not available, run without span
         yield None
+        return
+
+    with tracer.start_as_current_span(
+        "orq.evaluation",
+        kind=SpanKind.INTERNAL,
+        attributes={
+            "orq.run_id": options.run_id,
+            "orq.evaluator_name": options.evaluator_name,
+        },
+    ) as span:
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
 
 
 def set_evaluation_attributes(
