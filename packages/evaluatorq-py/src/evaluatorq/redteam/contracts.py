@@ -127,8 +127,11 @@ def normalize_framework(framework: 'Framework | str') -> 'Framework':
 
     OWASP-AGENTIC is an alias for OWASP-ASI.
     """
-    value = str(framework)
-    if value == Framework.OWASP_AGENTIC:
+    if isinstance(framework, Framework):
+        value = framework.value
+    else:
+        value = framework
+    if value == Framework.OWASP_AGENTIC.value:
         return Framework.OWASP_ASI
     return Framework(value)
 
