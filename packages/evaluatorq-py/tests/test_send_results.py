@@ -21,8 +21,9 @@ def build_results():
     """Factory fixture that creates a single DataPointResult with given score and error."""
 
     def _build(
-        score_value: float | bool | str | EvaluationResultCell,
+        score_value: float | bool | str | EvaluationResultCell | dict[str, Any],
         error: str | None = None,
+        output: Any = "result",
     ) -> list[DataPointResult]:
         return [
             DataPointResult(
@@ -30,7 +31,7 @@ def build_results():
                 job_results=[
                     JobResult(
                         job_name="job1",
-                        output="result",
+                        output=output,
                         evaluator_scores=[
                             EvaluatorScore(
                                 evaluator_name="eval1",
@@ -81,6 +82,35 @@ class TestSendResultsSerialization:
         assert score["value"] == "good"
 
     def test_serializes_evaluation_result_cell_correctly(self, build_results: Callable[..., list[DataPointResult]]):
+        cell = EvaluationResultCell(
+            type="bert_score",
+            value={"precision": 0.9, "recall": 0.8, "f1": 0.85},
+        )
+        payload = serialize(build_results(cell))
+        score = extract_score(payload)
+        assert score["value"] == {
+            "type": "bert_score",
+            "value": {"precision": 0.9, "recall": 0.8, "f1": 0.85},
+        }
+
+    def test_stringifies_arbitrary_object_score_values(self, build_results: Callable[..., list[DataPointResult]]):
+        payload = serialize(build_results({"reason": "too long", "tokens": 120}))
+        score = extract_score(payload)
+        assert score["value"] == '{"reason": "too long", "tokens": 120}'
+
+    def test_stringifies_object_job_outputs(self, build_results: Callable[..., list[DataPointResult]]):
+        payload = serialize(
+            build_results(
+                0.9,
+                output={"answer": "hello", "confidence": 0.9},
+            )
+        )
+        output = payload["results"][0]["jobResults"][0]["output"]
+        assert output == '{"answer": "hello", "confidence": 0.9}'
+
+    def test_keeps_evaluation_result_cell_score_value_unchanged_in_serialization(
+        self, build_results: Callable[..., list[DataPointResult]]
+    ):
         cell = EvaluationResultCell(
             type="bert_score",
             value={"precision": 0.9, "recall": 0.8, "f1": 0.85},

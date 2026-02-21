@@ -1,0 +1,16 @@
+{
+  "name": "@orq-ai/evaluatorq",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/evaluatorq/src",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/evaluatorq",
+        "command": "bun test"
+      },
+      "cache": true
+    }
+  }
+}

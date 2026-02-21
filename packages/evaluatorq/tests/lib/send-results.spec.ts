@@ -3,7 +3,7 @@ import { describe, expect, mock, test } from "bun:test";
 import { Effect } from "effect";
 
 import { sendResultsToOrqEffect } from "../../src/lib/send-results.js";
-import type { EvaluatorqResult } from "../../src/lib/types.js";
+import type { EvaluatorqResult, Output } from "../../src/lib/types.js";
 
 describe("sendResultsToOrqEffect serialization", () => {
   const apiKey = "test-key";
@@ -16,8 +16,10 @@ describe("sendResultsToOrqEffect serialization", () => {
       | number
       | boolean
       | string
+      | Record<string, unknown>
       | { type: string; value: Record<string, unknown> },
     error?: Error,
+    output: Output = "result",
   ): EvaluatorqResult {
     return [
       {
@@ -25,7 +27,7 @@ describe("sendResultsToOrqEffect serialization", () => {
         jobResults: [
           {
             jobName: "job1",
-            output: "result",
+            output,
             evaluatorScores: [
               {
                 evaluatorName: "eval1",
@@ -126,6 +128,26 @@ describe("sendResultsToOrqEffect serialization", () => {
       unknown
     >;
     expect(score.value).toEqual(cell);
+  });
+
+  test("serializes arbitrary object score values as JSON strings", async () => {
+    const payload = await capturePayload(
+      buildResults({ reason: "too long", tokens: 120 }),
+    );
+    const score = extractFirstEvalScore(payload).score as Record<
+      string,
+      unknown
+    >;
+    expect(score.value).toBe('{"reason":"too long","tokens":120}');
+  });
+
+  test("serializes object job outputs as JSON strings", async () => {
+    const payload = await capturePayload(
+      buildResults(0.9, undefined, { answer: "hello", confidence: 0.9 }),
+    );
+    const results = payload.results as Array<Record<string, unknown>>;
+    const jobResults = results[0].jobResults as Array<Record<string, unknown>>;
+    expect(jobResults[0].output).toBe('{"answer":"hello","confidence":0.9}');
   });
 
   test("serializes Error objects to strings", async () => {
