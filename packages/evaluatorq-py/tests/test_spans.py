@@ -1,9 +1,12 @@
 """Tests for tracing/spans."""
+# pyright: reportUnannotatedClassAttribute=false, reportMissingParameterType=false, reportUnusedParameter=false, reportPrivateLocalImportUsage=false, reportPrivateUsage=false, reportUnusedImport=false, reportUnknownLambdaType=false
 
 import json
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
+from opentelemetry.sdk.trace.export import SpanExporter
 
 from evaluatorq.tracing.spans import (
     EvaluationRunSpanOptions,
@@ -99,7 +102,9 @@ def _make_test_provider():
 
     exporter = _InMemoryExporter()
     provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    provider.add_span_processor(
+        SimpleSpanProcessor(cast(SpanExporter, cast(object, exporter)))
+    )
     return provider, exporter
 
 

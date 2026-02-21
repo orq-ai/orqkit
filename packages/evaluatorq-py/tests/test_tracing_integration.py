@@ -10,8 +10,10 @@ in-memory exporter, then verify the exported spans form the expected tree:
     │   └── orq.evaluation (evaluator)
     └── ...
 """
+# pyright: reportUnannotatedClassAttribute=false, reportMissingParameterType=false, reportUnusedParameter=false, reportPrivateLocalImportUsage=false, reportPrivateUsage=false, reportUnusedImport=false, reportUnknownLambdaType=false
 
 import asyncio
+from typing import cast
 
 import pytest
 
@@ -20,7 +22,7 @@ from evaluatorq.types import DataPoint, EvaluationResult, ScorerParameter
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExportResult
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +93,9 @@ def tracing_env(monkeypatch):
     """Set up a test TracerProvider with in-memory exporter, patched into evaluatorq."""
     exporter = _InMemoryExporter()
     provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    provider.add_span_processor(
+        SimpleSpanProcessor(cast(SpanExporter, cast(object, exporter)))
+    )
 
     # evaluatorq checks ORQ_API_KEY / OTEL_EXPORTER_OTLP_ENDPOINT to decide if tracing is enabled.
     # We set a dummy endpoint so is_tracing_enabled() returns True.

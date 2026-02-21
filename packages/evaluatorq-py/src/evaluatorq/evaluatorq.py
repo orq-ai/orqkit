@@ -191,7 +191,8 @@ async def evaluatorq(
                 raise ValueError(
                     "ORQ_API_KEY environment variable must be set to fetch datapoints from Orq platform."
                 )
-            dataset_id = data.dataset_id
+            stream_dataset_id = data.dataset_id
+            dataset_id = stream_dataset_id
             include_messages = data.include_messages
 
             # Stream fetch and process batches concurrently
@@ -248,7 +249,9 @@ async def evaluatorq(
 
                 try:
                     # Fetch and process batches
-                    async for batch in fetch_dataset_batches(orq_client, dataset_id, include_messages=include_messages):
+                    async for batch in fetch_dataset_batches(
+                        orq_client, stream_dataset_id, include_messages=include_messages
+                    ):
                         total_datapoints += len(batch.datapoints)
 
                         # Start processing this batch immediately
