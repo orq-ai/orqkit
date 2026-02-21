@@ -28,13 +28,7 @@ from evaluatorq.redteam.contracts import (
     normalize_category,
 )
 
-try:
-    from red_teaming.frameworks.owasp.evaluators import get_evaluator_metadata_for_category
-except ImportError:
-    # TODO(Phase 4): Port OWASP evaluator registry into evaluatorq.redteam
-    def get_evaluator_metadata_for_category(category: str) -> dict[str, Any] | None:  # type: ignore[misc]
-        """Stub returning None when the evaluator registry is not available."""
-        return None
+from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_metadata_for_category
 
 
 # ---------------------------------------------------------------------------

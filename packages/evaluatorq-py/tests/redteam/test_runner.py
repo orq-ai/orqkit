@@ -91,9 +91,19 @@ class TestRedTeamValidation:
             await red_team('agent:test', mode='invalid')
 
     @pytest.mark.asyncio
-    async def test_static_mode_not_implemented(self):
-        with pytest.raises(NotImplementedError, match='not yet available'):
-            await red_team('agent:test', mode='static')
+    async def test_static_mode_dispatches(self):
+        """Static mode dispatches to _run_static (no longer raises NotImplementedError)."""
+        from unittest.mock import AsyncMock, patch
+
+        sentinel = object()
+        with patch(
+            'evaluatorq.redteam._runner._run_static',
+            new_callable=AsyncMock,
+            return_value=sentinel,
+        ) as mock_static:
+            result = await red_team('agent:test', mode='static')
+            assert result is sentinel
+            mock_static.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_hybrid_mode_not_implemented(self):

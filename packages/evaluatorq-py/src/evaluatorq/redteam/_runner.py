@@ -94,10 +94,21 @@ async def red_team(
             llm_client=llm_client,
             description=description,
         )
-    if mode in ('static', 'hybrid'):
+    if mode == 'static':
+        return await _run_static(
+            target=target,
+            categories=categories,
+            evaluator_model=evaluator_model,
+            parallelism=parallelism,
+            max_datapoints=max_datapoints,
+            backend=backend,
+            dataset_path=dataset_path,
+            description=description,
+        )
+    if mode == 'hybrid':
         raise NotImplementedError(
-            f'mode="{mode}" is not yet available. '
-            'Static and hybrid modes will be implemented in Phase 4.'
+            'mode="hybrid" is not yet available. '
+            'Hybrid mode will compose dynamic + static in a single evaluatorq run.'
         )
     msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
     raise ValueError(msg)
@@ -250,3 +261,87 @@ async def _run_dynamic(
             await cleanup_memory_entities(agent_context, entity_ids, memory_cleanup=resolved_memory_cleanup)
 
     return report
+
+
+async def _run_static(
+    *,
+    target: str,
+    categories: list[str] | None,
+    evaluator_model: str,
+    parallelism: int,
+    max_datapoints: int | None,
+    backend: str,
+    dataset_path: Any,
+    description: str | None,
+) -> RedTeamReport:
+    """Run static red teaming via evaluatorq."""
+    from pathlib import Path
+
+    from evaluatorq import evaluatorq
+
+    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
+        create_owasp_evaluator,
+        load_owasp_agentic_dataset,
+    )
+    from evaluatorq.redteam.reports.converters import static_evaluatorq_results_to_reports
+    from evaluatorq.redteam.runtime.jobs import create_model_job
+
+    target_kind, target_value = _parse_target(target)
+    pipeline_start = datetime.now(tz=timezone.utc).astimezone()
+
+    # Load dataset
+    path = Path(dataset_path) if dataset_path is not None else None
+    data = load_owasp_agentic_dataset(
+        num_samples=max_datapoints,
+        categories=categories,
+        path=path,
+    )
+
+    # Create job based on target kind
+    if target_kind == 'agent':
+        model_job = create_model_job(agent_key=target_value)
+    elif target_kind == 'openai':
+        model_job = create_model_job(model=target_value)
+    elif target_kind == 'deployment':
+        model_job = create_model_job(deployment_key=target_value)
+    else:
+        model_job = create_model_job(model=target_value)
+
+    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model)
+
+    # Run evaluatorq
+    logger.info(f'Running static red teaming against {target} (parallelism={parallelism})')
+    results = await evaluatorq(
+        'static-red-team',
+        data=data,
+        jobs=[model_job],
+        evaluators=[evaluator],
+        parallelism=parallelism,
+        print_results=False,
+        description=description or f'Static red teaming for {target}',
+    )
+
+    pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
+
+    # Normalize results — static runs may produce multiple job reports
+    reports = static_evaluatorq_results_to_reports(
+        results=results,
+        agent_model=target_value if target_kind != 'agent' else None,
+        agent_key=target_value if target_kind == 'agent' else None,
+        description=description or f'Static red teaming for {target}',
+    )
+
+    # Return the first (primary) report, or merge if needed
+    if not reports:
+        from evaluatorq.redteam.reports.converters import static_results_to_report
+
+        return static_results_to_report(
+            [],
+            agent_model=target_value if target_kind != 'agent' else None,
+            agent_key=target_value if target_kind == 'agent' else None,
+            description=description,
+        )
+
+    primary_report = next(iter(reports.values()))
+    primary_report.duration_seconds = pipeline_duration
+    return primary_report
