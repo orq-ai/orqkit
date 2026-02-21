@@ -145,3 +145,4 @@ class EvaluatorParams(BaseModel):
     print_results: bool = Field(default=True)
     description: str | None = None
     path: str | None = None
+    root_span: bool = Field(default=False)

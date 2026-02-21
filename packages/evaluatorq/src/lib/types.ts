@@ -100,6 +100,7 @@ export interface EvaluatorParams {
   print?: boolean;
   description?: string;
   path?: string;
+  rootSpan?: boolean;
 }
 
 export type Evaluator = {
