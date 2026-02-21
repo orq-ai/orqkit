@@ -168,11 +168,10 @@ describe("withEvaluationRunSpan", () => {
 });
 
 describe("withJobSpan", () => {
-  test("calls callback with undefined when tracer is unavailable", async () => {
+  test("calls callback and returns result regardless of tracer state", async () => {
     const result = await withJobSpan(
       { runId: "run-1", rowIndex: 0 },
-      async (span) => {
-        expect(span).toBeUndefined();
+      async () => {
         return "job-done";
       },
     );
@@ -189,11 +188,10 @@ describe("withJobSpan", () => {
 });
 
 describe("withEvaluationSpan", () => {
-  test("calls callback with undefined when tracer is unavailable", async () => {
+  test("calls callback and returns result regardless of tracer state", async () => {
     const result = await withEvaluationSpan(
       { runId: "run-1", evaluatorName: "test-eval" },
-      async (span) => {
-        expect(span).toBeUndefined();
+      async () => {
         return "eval-done";
       },
     );

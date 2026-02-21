@@ -555,8 +555,12 @@ export async function evaluatorq(
         },
         async () => {
           // Capture the active context inside the run span so job spans become children
-          const { context: otelContext } = await import("@opentelemetry/api");
-          tracingContext.parentContext = otelContext.active();
+          try {
+            const { context: otelContext } = await import("@opentelemetry/api");
+            tracingContext.parentContext = otelContext.active();
+          } catch {
+            // OTEL not available, continue without parent context
+          }
           return processDataPoints();
         },
       )

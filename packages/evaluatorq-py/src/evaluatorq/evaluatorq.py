@@ -170,10 +170,12 @@ async def evaluatorq(
 
         # If inside a run span, update the tracing context's parent to the
         # now-active context so downstream job spans become children of the run span.
-        # At this point we are inside with_evaluation_run_span, so OTEL is confirmed available.
         if tracing_context and run_span_options:
-            from opentelemetry import context as otel_context
-            tracing_context.parent_context = otel_context.get_current()
+            try:
+                from opentelemetry import context as otel_context
+                tracing_context.parent_context = otel_context.get_current()
+            except ImportError:
+                pass
 
         # Create progress service
         progress = ProgressService()
