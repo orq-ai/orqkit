@@ -352,6 +352,12 @@ class PipelineLLMConfig(BaseModel):
     # Target agent timeout (ms) for ORQ SDK calls
     target_agent_timeout_ms: int = 120_000
 
+    # Adversarial LLM call timeout (ms) — separate from target agent timeout
+    llm_call_timeout_ms: int = 60_000
+
+    # Overall cleanup timeout (ms) — best-effort, should never block the pipeline
+    cleanup_timeout_ms: int = 60_000
+
     # Logging level for the red teaming pipeline
     log_level: str = 'INFO'
 
@@ -617,6 +623,7 @@ class ExecutionDetails(BaseModel):
     """Execution metadata (dynamic pipeline only)."""
 
     turns: int = 1
+    max_turns: int | None = None
     duration_seconds: float | None = None
     objective_achieved: bool | None = Field(
         default=None,
@@ -865,6 +872,16 @@ class DatasetInferenceRow(BaseModel):
     agent_model: str
     error: str | None = None
     error_type: str | None = None
+
+
+class MultiTargetReport(BaseModel):
+    """Result of a multi-target red teaming run."""
+
+    merged: RedTeamReport
+    by_target: dict[str, RedTeamReport] = Field(
+        default_factory=dict,
+        description='Per-target reports keyed by target identifier',
+    )
 
 
 class ReportSnapshot(BaseModel):

@@ -5,6 +5,7 @@ PyRIT dependency. The adversarial LLM generates attack prompts and
 adapts based on agent responses.
 """
 
+import asyncio
 import os
 import time
 from inspect import signature
@@ -24,6 +25,7 @@ from evaluatorq.redteam.contracts import (
     OrchestratorResult,
     TokenUsage,
 )
+from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
 
 _ui_console = Console(stderr=True)
 _progress_lock = Lock()
@@ -303,23 +305,42 @@ class MultiTurnOrchestrator:
         """
         system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=1)
 
-        response = await self.llm_client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': 'Generate a single attack prompt to achieve the objective in one message.'},
-            ],
-            temperature=PIPELINE_CONFIG.adversarial_temperature,
-            max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-            extra_body=PIPELINE_CONFIG.retry_config,
-        )
+        async with with_redteam_span(
+            "orq.redteam.adversarial_llm_call",
+            {
+                "orq.redteam.strategy_name": strategy.name,
+                "orq.redteam.model": self.model,
+            },
+        ) as llm_span:
+            llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
+            response = await asyncio.wait_for(
+                self.llm_client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': 'Generate a single attack prompt to achieve the objective in one message.'},
+                    ],
+                    temperature=PIPELINE_CONFIG.adversarial_temperature,
+                    max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                    extra_body=PIPELINE_CONFIG.retry_config,
+                ),
+                timeout=llm_timeout_s,
+            )
 
-        prompt = response.choices[0].message.content or ''
-        # Strip any objective-achieved markers (shouldn't appear but just in case)
-        prompt = prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
+            usage = _extract_usage_from_completion(response)
+            if usage is not None and llm_span is not None:
+                set_span_attrs(llm_span, {
+                    "orq.redteam.token_usage.prompt_tokens": usage.prompt_tokens or 0,
+                    "orq.redteam.token_usage.completion_tokens": usage.completion_tokens or 0,
+                    "orq.redteam.token_usage.total_tokens": usage.total_tokens or 0,
+                })
+
+            prompt = response.choices[0].message.content or ''
+            # Strip any objective-achieved markers (shouldn't appear but just in case)
+            prompt = prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
 
         logger.info(f'Generated dynamic single-turn prompt for {strategy.name}: {prompt[:100]}...')
-        return prompt, _extract_usage_from_completion(response), system_prompt
+        return prompt, usage, system_prompt
 
     async def run_attack(
         self,
@@ -391,142 +412,222 @@ class MultiTurnOrchestrator:
 
         try:
             for turn in range(max_turns):
-                logger.debug(f'Multi-turn attack: turn {turn + 1}/{max_turns}')
-                if task_id is not None:
-                    _update_shared_progress_task(task_id, completed=turn)
+                async with with_redteam_span(
+                    "orq.redteam.attack_turn",
+                    {"orq.redteam.turn": turn + 1},
+                ) as turn_span:
+                    logger.debug(f'Multi-turn attack: turn {turn + 1}/{max_turns}')
+                    if task_id is not None:
+                        _update_shared_progress_task(task_id, completed=turn)
 
-                # Generate attack prompt from adversarial LLM
-                try:
-                    attack_response = await self.llm_client.chat.completions.create(
-                        model=self.model,
-                        messages=adversarial_messages,
-                        temperature=PIPELINE_CONFIG.adversarial_temperature,
-                        max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-                        extra_body=PIPELINE_CONFIG.retry_config,
-                    )
-                    usage = _extract_usage_from_completion(attack_response)
-                    if usage is not None:
-                        adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
-                        adversarial_completion_tokens += int(usage.completion_tokens or 0)
-                        adversarial_total_tokens += int(usage.total_tokens or 0)
-                        adversarial_calls += int(usage.calls or 0) or 1
-                    attack_prompt = attack_response.choices[0].message.content or ''
-                except Exception as e:
-                    error = f'Adversarial LLM exception: {e}'
-                    error_type = 'llm_error'
-                    error_stage = 'adversarial_generation'
-                    error_code = 'adversarial.llm_exception'
-                    error_details = {
-                        'exception_type': type(e).__name__,
-                        'raw_message': str(e),
-                    }
-                    error_turn = turn + 1
-                    logger.warning(f'Adversarial LLM failed for {strategy.name}: {e}')
-                    break
-
-                # Extract finish_reason for diagnostics
-                choice = attack_response.choices[0] if attack_response.choices else None
-                finish_reason = getattr(choice, 'finish_reason', None) if choice else None
-
-                # Track max_tokens truncation (even when content is non-empty)
-                if finish_reason == 'length':
-                    truncation_warnings.append(turn + 1)
-
-                # Abort if adversarial LLM returned empty content
-                if not attack_prompt.strip():
-                    model_used = getattr(attack_response, 'model', self.model)
-
-                    reason_to_type = {
-                        'content_filter': 'content_filter',
-                        'length': 'max_tokens',
-                    }
-                    error_type = reason_to_type.get(finish_reason, 'empty_response')
-                    error_stage = 'adversarial_generation'
-                    error_code = f'adversarial.{error_type}'
-                    error_details = {
-                        'finish_reason': finish_reason,
-                        'model': model_used,
-                        'turn': turn + 1,
-                    }
-                    error_turn = turn + 1
-                    error = (
-                        f'Empty adversarial prompt: finish_reason={finish_reason}, '
-                        f'model={model_used}, turn={turn + 1}/{max_turns}'
-                    )
-                    logger.warning(f'Empty prompt for {strategy.category}/{strategy.name}: {error}')
-                    break
-
-                # Check if adversarial LLM thinks objective is achieved
-                if 'OBJECTIVE_ACHIEVED' in attack_prompt:
-                    objective_achieved = True
-                    # Extract the actual prompt (remove marker)
-                    attack_prompt = attack_prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
-                    if not attack_prompt:
-                        # Adversarial LLM signaled success but no more prompts needed
-                        logger.info('Adversarial LLM signaled objective achieved')
-                        if task_id is not None:
-                            _update_shared_progress_task(task_id, completed=turn + 1)
-                        break
-
-                # Send attack to target agent
-                try:
-                    agent_response = await target.send_prompt(attack_prompt)
-                    final_response = agent_response
-                    consecutive_agent_errors = 0
-                    consume_usage = getattr(target, 'consume_last_token_usage', None)
-                    if callable(consume_usage):
-                        target_usage = consume_usage()
-                        if target_usage is not None:
-                            target_prompt_tokens += int(target_usage.prompt_tokens or 0)
-                            target_completion_tokens += int(target_usage.completion_tokens or 0)
-                            target_total_tokens += int(target_usage.total_tokens or 0)
-                            target_calls += int(target_usage.calls or 0) or 1
-                except Exception as e:
-                    consecutive_agent_errors += 1
-                    mapped_code, error_msg = self.error_mapper.map_error(e)
-                    agent_response = f'[ERROR: {error_msg}]'
-                    logger.warning(f'Target agent error on turn {turn + 1}/{max_turns}: {error_msg}')
-
-                    if consecutive_agent_errors >= 2:
-                        # Persistent failure — abort to avoid wasting turns
-                        error = (
-                            f'Target agent failed {consecutive_agent_errors} consecutive turns, '
-                            f'last code={mapped_code}, details={error_msg}'
+                    # Generate attack prompt from adversarial LLM
+                    llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
+                    usage: TokenUsage | None = None
+                    try:
+                        attack_response = await asyncio.wait_for(
+                            self.llm_client.chat.completions.create(
+                                model=self.model,
+                                messages=adversarial_messages,
+                                temperature=PIPELINE_CONFIG.adversarial_temperature,
+                                max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                                extra_body=PIPELINE_CONFIG.retry_config,
+                            ),
+                            timeout=llm_timeout_s,
                         )
-                        error_type = 'target_error'
-                        error_stage = 'target_call'
+                        usage = _extract_usage_from_completion(attack_response)
+                        if usage is not None:
+                            adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
+                            adversarial_completion_tokens += int(usage.completion_tokens or 0)
+                            adversarial_total_tokens += int(usage.total_tokens or 0)
+                            adversarial_calls += int(usage.calls or 0) or 1
+                        attack_prompt = attack_response.choices[0].message.content or ''
+                    except asyncio.TimeoutError:
+                        error = f'Adversarial LLM timed out after {llm_timeout_s:.0f}s'
+                        error_type = 'llm_error'
+                        error_stage = 'adversarial_generation'
+                        error_code = 'adversarial.timeout'
+                        error_details = {
+                            'timeout_ms': PIPELINE_CONFIG.llm_call_timeout_ms,
+                        }
+                        error_turn = turn + 1
+                        logger.warning(f'Adversarial LLM timed out for {strategy.name} on turn {turn + 1}')
+                        set_span_attrs(turn_span, {
+                            "orq.redteam.error_type": error_type,
+                            "orq.redteam.finish_reason": "adversarial_timeout",
+                        })
+                        break
+                    except Exception as e:
+                        error = f'Adversarial LLM exception: {e}'
+                        error_type = 'llm_error'
+                        error_stage = 'adversarial_generation'
+                        error_code = 'adversarial.llm_exception'
                         error_details = {
                             'exception_type': type(e).__name__,
                             'raw_message': str(e),
-                            'consecutive_errors': consecutive_agent_errors,
                         }
-                        error_code = mapped_code
                         error_turn = turn + 1
-                        conversation.extend([
-                            {'role': 'user', 'content': attack_prompt},
-                            {'role': 'assistant', 'content': agent_response},
-                        ])
-                        if task_id is not None:
-                            _update_shared_progress_task(task_id, completed=turn + 1)
+                        logger.warning(f'Adversarial LLM failed for {strategy.name}: {e}')
+                        set_span_attrs(turn_span, {
+                            "orq.redteam.error_type": error_type,
+                            "orq.redteam.finish_reason": "adversarial_error",
+                        })
                         break
 
-                # Record conversation
-                conversation.extend([
-                    {'role': 'user', 'content': attack_prompt},
-                    {'role': 'assistant', 'content': agent_response},
-                ])
+                    # Extract finish_reason for diagnostics
+                    choice = attack_response.choices[0] if attack_response.choices else None
+                    finish_reason = getattr(choice, 'finish_reason', None) if choice else None
 
-                # Update adversarial LLM context
-                adversarial_messages.append({'role': 'assistant', 'content': attack_prompt})
+                    # Track max_tokens truncation (even when content is non-empty)
+                    if finish_reason == 'length':
+                        truncation_warnings.append(turn + 1)
 
-                # Feed agent response (including errors) to adversarial LLM so it can adapt
-                analysis_prompt = ADVERSARIAL_ANALYSIS_PROMPT.format(response=agent_response)
-                adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
+                    # Abort if adversarial LLM returned empty content
+                    if not attack_prompt.strip():
+                        model_used = getattr(attack_response, 'model', self.model)
 
-                if task_id is not None:
-                    _update_shared_progress_task(task_id, completed=turn + 1)
+                        reason_to_type = {
+                            'content_filter': 'content_filter',
+                            'length': 'max_tokens',
+                        }
+                        error_type = reason_to_type.get(finish_reason, 'empty_response')
+                        error_stage = 'adversarial_generation'
+                        error_code = f'adversarial.{error_type}'
+                        error_details = {
+                            'finish_reason': finish_reason,
+                            'model': model_used,
+                            'turn': turn + 1,
+                        }
+                        error_turn = turn + 1
+                        error = (
+                            f'Empty adversarial prompt: finish_reason={finish_reason}, '
+                            f'model={model_used}, turn={turn + 1}/{max_turns}'
+                        )
+                        logger.warning(f'Empty prompt for {strategy.category}/{strategy.name}: {error}')
+                        span_finish = 'content_filter' if finish_reason == 'content_filter' else 'empty_prompt'
+                        set_span_attrs(turn_span, {
+                            "orq.redteam.error_type": error_type,
+                            "orq.redteam.finish_reason": span_finish,
+                        })
+                        break
 
-                # Early termination if objective achieved
+                    # Check if adversarial LLM thinks objective is achieved
+                    if 'OBJECTIVE_ACHIEVED' in attack_prompt:
+                        objective_achieved = True
+                        # Extract the actual prompt (remove marker)
+                        attack_prompt = attack_prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
+                        if not attack_prompt:
+                            # Adversarial LLM signaled success but no more prompts needed
+                            logger.info('Adversarial LLM signaled objective achieved')
+                            if task_id is not None:
+                                _update_shared_progress_task(task_id, completed=turn + 1)
+                            set_span_attrs(turn_span, {
+                                "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
+                                "orq.redteam.finish_reason": "objective_achieved",
+                            })
+                            break
+
+                    # Send attack to target agent
+                    target_timeout_s = PIPELINE_CONFIG.target_agent_timeout_ms / 1000.0
+                    try:
+                        agent_response = await asyncio.wait_for(
+                            target.send_prompt(attack_prompt),
+                            timeout=target_timeout_s,
+                        )
+                        final_response = agent_response
+                        consecutive_agent_errors = 0
+                        consume_usage = getattr(target, 'consume_last_token_usage', None)
+                        if callable(consume_usage):
+                            target_usage = consume_usage()
+                            if target_usage is not None:
+                                target_prompt_tokens += int(target_usage.prompt_tokens or 0)
+                                target_completion_tokens += int(target_usage.completion_tokens or 0)
+                                target_total_tokens += int(target_usage.total_tokens or 0)
+                                target_calls += int(target_usage.calls or 0) or 1
+                    except asyncio.TimeoutError:
+                        consecutive_agent_errors += 1
+                        agent_response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
+                        logger.warning(f'Target agent timed out on turn {turn + 1}/{max_turns}')
+
+                        if consecutive_agent_errors >= 2:
+                            error = (
+                                f'Target agent timed out {consecutive_agent_errors} consecutive turns'
+                            )
+                            error_type = 'target_error'
+                            error_stage = 'target_call'
+                            error_code = 'target.timeout'
+                            error_details = {
+                                'timeout_ms': PIPELINE_CONFIG.target_agent_timeout_ms,
+                                'consecutive_errors': consecutive_agent_errors,
+                            }
+                            error_turn = turn + 1
+                            conversation.extend([
+                                {'role': 'user', 'content': attack_prompt},
+                                {'role': 'assistant', 'content': agent_response},
+                            ])
+                            if task_id is not None:
+                                _update_shared_progress_task(task_id, completed=turn + 1)
+                            set_span_attrs(turn_span, {
+                                "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
+                                "orq.redteam.error_type": error_type,
+                                "orq.redteam.finish_reason": "target_timeout",
+                            })
+                            break
+                    except Exception as e:
+                        consecutive_agent_errors += 1
+                        mapped_code, error_msg = self.error_mapper.map_error(e)
+                        agent_response = f'[ERROR: {error_msg}]'
+                        logger.warning(f'Target agent error on turn {turn + 1}/{max_turns}: {error_msg}')
+
+                        if consecutive_agent_errors >= 2:
+                            # Persistent failure — abort to avoid wasting turns
+                            error = (
+                                f'Target agent failed {consecutive_agent_errors} consecutive turns, '
+                                f'last code={mapped_code}, details={error_msg}'
+                            )
+                            error_type = 'target_error'
+                            error_stage = 'target_call'
+                            error_details = {
+                                'exception_type': type(e).__name__,
+                                'raw_message': str(e),
+                                'consecutive_errors': consecutive_agent_errors,
+                            }
+                            error_code = mapped_code
+                            error_turn = turn + 1
+                            conversation.extend([
+                                {'role': 'user', 'content': attack_prompt},
+                                {'role': 'assistant', 'content': agent_response},
+                            ])
+                            if task_id is not None:
+                                _update_shared_progress_task(task_id, completed=turn + 1)
+                            set_span_attrs(turn_span, {
+                                "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
+                                "orq.redteam.error_type": error_type,
+                                "orq.redteam.finish_reason": "target_error",
+                            })
+                            break
+
+                    # Record conversation
+                    conversation.extend([
+                        {'role': 'user', 'content': attack_prompt},
+                        {'role': 'assistant', 'content': agent_response},
+                    ])
+
+                    # Update adversarial LLM context
+                    adversarial_messages.append({'role': 'assistant', 'content': attack_prompt})
+
+                    # Feed agent response (including errors) to adversarial LLM so it can adapt
+                    analysis_prompt = ADVERSARIAL_ANALYSIS_PROMPT.format(response=agent_response)
+                    adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
+
+                    if task_id is not None:
+                        _update_shared_progress_task(task_id, completed=turn + 1)
+
+                    set_span_attrs(turn_span, {
+                        "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
+                        "orq.redteam.finish_reason": "ok",
+                    })
+
+                # Early termination if objective achieved (outside span — span has already closed)
                 if objective_achieved:
                     logger.info(f'Objective achieved at turn {turn + 1}')
                     break

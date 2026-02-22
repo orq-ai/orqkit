@@ -16,9 +16,11 @@ from evaluatorq.redteam.contracts import (
     DeliveryMethod,
     EvaluatedRow,
     ExecutionDetails,
+    Framework,
     JobOutputPayload,
     Message,
     OWASP_CATEGORY_NAMES,
+    Pipeline,
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
@@ -380,8 +382,10 @@ def dynamic_evaluatorq_results_to_report(
             evaluator_name=evaluator_name,
         )
 
+        strategy_max_turns = strategy_payload.get('max_turns') if isinstance(strategy_payload, dict) else None
         execution = ExecutionDetails(
             turns=job_output.turns or 1,
+            max_turns=strategy_max_turns,
             duration_seconds=job_output.duration_seconds,
             objective_achieved=job_output.objective_achieved,
             token_usage=token_usage,
@@ -595,3 +599,72 @@ def _dominant_framework(results: list[RedTeamResult]) -> str | None:
     if len(frameworks) == 1:
         return frameworks.pop()
     return None
+
+
+def merge_reports(
+    *reports: RedTeamReport,
+    description: str | None = None,
+) -> RedTeamReport:
+    """Merge multiple RedTeamReports into a single unified report.
+
+    Concatenates results, unions categories_tested and tested_agents,
+    resolves framework/pipeline labels, and recomputes the summary.
+
+    Args:
+        *reports: One or more RedTeamReport instances to merge.
+        description: Optional description for the merged report.
+
+    Returns:
+        A new RedTeamReport combining all inputs.
+
+    Raises:
+        ValueError: If no reports are provided.
+    """
+    if not reports:
+        msg = 'merge_reports() requires at least one report'
+        raise ValueError(msg)
+
+    if len(reports) == 1:
+        return reports[0]
+
+    all_results: list[RedTeamResult] = []
+    all_categories: set[str] = set()
+    all_agents: set[str] = set()
+    frameworks: set[Framework | None] = set()
+    pipelines: set[Pipeline] = set()
+    agent_context = None
+
+    for report in reports:
+        all_results.extend(report.results)
+        all_categories.update(report.categories_tested)
+        all_agents.update(report.tested_agents)
+        frameworks.add(report.framework)
+        pipelines.add(report.pipeline)
+        if agent_context is None and report.agent_context is not None:
+            agent_context = report.agent_context
+
+    # Resolve framework: use single value if unanimous, else None
+    resolved_framework: Framework | None = None
+    non_none_frameworks = {f for f in frameworks if f is not None}
+    if len(non_none_frameworks) == 1:
+        resolved_framework = non_none_frameworks.pop()
+
+    # Resolve pipeline: use single value if unanimous, else 'mixed'
+    resolved_pipeline: Pipeline = Pipeline.MIXED
+    if len(pipelines) == 1:
+        resolved_pipeline = pipelines.pop()
+
+    summary = compute_report_summary(all_results)
+
+    return RedTeamReport(
+        created_at=datetime.now(tz=timezone.utc).astimezone(),
+        description=description or 'Merged report',
+        pipeline=resolved_pipeline,
+        framework=resolved_framework,
+        categories_tested=sorted(all_categories),
+        tested_agents=sorted(all_agents),
+        total_results=len(all_results),
+        agent_context=agent_context,
+        results=all_results,
+        summary=summary,
+    )

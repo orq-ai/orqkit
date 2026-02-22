@@ -12,6 +12,7 @@ Flow:
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import TYPE_CHECKING, Any, TypedDict
 
@@ -22,10 +23,11 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import AttackStrategy, OrchestratorResult
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AttackStrategy, OrchestratorResult
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
+from evaluatorq.redteam.tracing import record_token_usage, set_span_attrs, with_redteam_span
 
 if TYPE_CHECKING:
     from evaluatorq.types import ScorerParameter
@@ -128,6 +130,11 @@ def create_dynamic_redteam_job(
     objective_achieved, and category. This dict is passed to the scorer
     via params['output'].
 
+    Note:
+        Callers must ensure ``cleanup_memory_entities()`` is called after the
+        evaluatorq run completes. The job itself does not manage memory cleanup —
+        that responsibility belongs to the caller (``_runner.py`` or CLI).
+
     Args:
         agent_key: Agent key to test
         agent_context: Pre-retrieved agent context
@@ -152,100 +159,166 @@ def create_dynamic_redteam_job(
         objective = str(inputs['objective'])
         category = str(inputs['category'])
         memory_entity_id = inputs.get('memory_entity_id')
-
-        target = resolved_factory.create_target(
-            agent_key=agent_key,
-            memory_entity_id=memory_entity_id,
-        )
-        target.reset_conversation()
-
-        if strategy.prompt_template and strategy.turn_type == TurnType.SINGLE:
-            # Fixed template: fill and send directly (no adversarial LLM needed)
-            t0 = time.time()
-            prompt = generate_attack_prompt(strategy, agent_context)
-            error = None
-            error_type = None
-            error_stage = None
-            error_code = None
-            error_details = None
-            token_usage = None
-            try:
-                response = await target.send_prompt(prompt)
-                consume_usage = getattr(target, 'consume_last_token_usage', None)
-                if callable(consume_usage):
-                    token_usage = consume_usage()
-            except Exception as e:
-                mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
-                logger.error(f'Single-turn attack failed for {category}/{strategy.name}: {mapped_msg}')
-                response = f'[ERROR: {mapped_msg}]'
-                error = mapped_msg
-                error_type = 'target_error'
-                error_stage = 'target_call'
-                error_code = mapped_code
-                error_details = {
-                    'exception_type': type(e).__name__,
-                    'raw_message': str(e),
-                }
-            return OrchestratorResult(
-                conversation=[{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': response}],
-                final_response=response,
-                objective_achieved=False,
-                turns=1,
-                duration_seconds=time.time() - t0,
-                token_usage=token_usage,
-                token_usage_adversarial=None,
-                token_usage_target=token_usage,
-                system_prompt=None,
-                error=error,
-                error_type=error_type,
-                error_stage=error_stage,
-                error_code=error_code,
-                error_details=error_details,
-            ).model_dump(mode='json') | {'category': category}
-
-        # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
-        llm_client = attack_llm_client or create_async_llm_client()
-        orchestrator = MultiTurnOrchestrator(
-            llm_client,
-            model=red_team_model,
-            error_mapper=resolved_error_mapper,
-        )
         effective_max_turns = 1 if strategy.turn_type == TurnType.SINGLE else max_turns
 
-        try:
-            result = await orchestrator.run_attack(
-                target=target,
-                strategy=strategy,
-                objective=objective,
-                agent_context=agent_context,
-                max_turns=effective_max_turns,
+        async with with_redteam_span(
+            'orq.redteam.attack',
+            {
+                'orq.redteam.category': category,
+                'orq.redteam.strategy_name': strategy.name,
+                'orq.redteam.turn_type': strategy.turn_type.value,
+                'orq.redteam.max_turns': effective_max_turns,
+            },
+        ) as attack_span:
+            target = resolved_factory.create_target(
+                agent_key=agent_key,
+                memory_entity_id=memory_entity_id,
             )
-        except Exception as e:
-            tb = traceback.format_exc(limit=8)
-            mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
-            logger.error(f'Orchestrator failed for {category}/{strategy.name}: {mapped_msg}\n{tb}')
-            result = OrchestratorResult(
-                conversation=[],
-                final_response='',
-                objective_achieved=False,
-                turns=1,
-                duration_seconds=0.0,
-                token_usage=None,
-                token_usage_adversarial=None,
-                token_usage_target=None,
-                system_prompt=None,
-                error=f'Orchestrator exception: {mapped_msg}',
-                error_type='orchestrator_exception',
-                error_stage='orchestrator',
-                error_code=mapped_code,
-                error_details={
-                    'exception_type': type(e).__name__,
-                    'raw_message': str(e),
-                    'traceback': tb,
-                },
+            target.reset_conversation()
+
+            if strategy.prompt_template and strategy.turn_type == TurnType.SINGLE:
+                # Fixed template: fill and send directly (no adversarial LLM needed)
+                t0 = time.time()
+                prompt = generate_attack_prompt(strategy, agent_context)
+                error = None
+                error_type = None
+                error_stage = None
+                error_code = None
+                error_details = None
+                token_usage = None
+                target_timeout_s = PIPELINE_CONFIG.target_agent_timeout_ms / 1000.0
+                try:
+                    response = await asyncio.wait_for(
+                        target.send_prompt(prompt),
+                        timeout=target_timeout_s,
+                    )
+                    consume_usage = getattr(target, 'consume_last_token_usage', None)
+                    if callable(consume_usage):
+                        token_usage = consume_usage()
+                except asyncio.TimeoutError:
+                    logger.error(f'Single-turn attack timed out for {category}/{strategy.name} after {target_timeout_s:.0f}s')
+                    response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
+                    error = f'Target agent timed out after {target_timeout_s:.0f}s'
+                    error_type = 'target_error'
+                    error_stage = 'target_call'
+                    error_code = 'target.timeout'
+                    error_details = {
+                        'timeout_ms': PIPELINE_CONFIG.target_agent_timeout_ms,
+                    }
+                except Exception as e:
+                    mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
+                    logger.error(f'Single-turn attack failed for {category}/{strategy.name}: {mapped_msg}')
+                    response = f'[ERROR: {mapped_msg}]'
+                    error = mapped_msg
+                    error_type = 'target_error'
+                    error_stage = 'target_call'
+                    error_code = mapped_code
+                    error_details = {
+                        'exception_type': type(e).__name__,
+                        'raw_message': str(e),
+                    }
+                result_dict = OrchestratorResult(
+                    conversation=[{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': response}],
+                    final_response=response,
+                    objective_achieved=False,
+                    turns=1,
+                    duration_seconds=time.time() - t0,
+                    token_usage=token_usage,
+                    token_usage_adversarial=None,
+                    token_usage_target=token_usage,
+                    system_prompt=None,
+                    error=error,
+                    error_type=error_type,
+                    error_stage=error_stage,
+                    error_code=error_code,
+                    error_details=error_details,
+                ).model_dump(mode='json') | {'category': category}
+
+                set_span_attrs(attack_span, {
+                    'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
+                    'orq.redteam.actual_turns': result_dict.get('turns'),
+                    'orq.redteam.duration_seconds': result_dict.get('duration_seconds'),
+                })
+                if result_dict.get('error'):
+                    set_span_attrs(attack_span, {
+                        'orq.redteam.error_type': result_dict.get('error_type'),
+                        'orq.redteam.error_code': result_dict.get('error_code'),
+                    })
+                token_usage_dict = result_dict.get('token_usage')
+                if token_usage_dict:
+                    record_token_usage(
+                        attack_span,
+                        prompt_tokens=token_usage_dict.get('prompt_tokens', 0),
+                        completion_tokens=token_usage_dict.get('completion_tokens', 0),
+                        total_tokens=token_usage_dict.get('total_tokens', 0),
+                        calls=token_usage_dict.get('calls', 0),
+                    )
+                return result_dict
+
+            # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
+            llm_client = attack_llm_client or create_async_llm_client()
+            orchestrator = MultiTurnOrchestrator(
+                llm_client,
+                model=red_team_model,
+                error_mapper=resolved_error_mapper,
             )
 
-        return result.model_dump(mode='json') | {'category': category}
+            try:
+                result = await orchestrator.run_attack(
+                    target=target,
+                    strategy=strategy,
+                    objective=objective,
+                    agent_context=agent_context,
+                    max_turns=effective_max_turns,
+                )
+            except Exception as e:
+                tb = traceback.format_exc(limit=8)
+                mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
+                logger.error(f'Orchestrator failed for {category}/{strategy.name}: {mapped_msg}\n{tb}')
+                result = OrchestratorResult(
+                    conversation=[],
+                    final_response='',
+                    objective_achieved=False,
+                    turns=1,
+                    duration_seconds=0.0,
+                    token_usage=None,
+                    token_usage_adversarial=None,
+                    token_usage_target=None,
+                    system_prompt=None,
+                    error=f'Orchestrator exception: {mapped_msg}',
+                    error_type='orchestrator_exception',
+                    error_stage='orchestrator',
+                    error_code=mapped_code,
+                    error_details={
+                        'exception_type': type(e).__name__,
+                        'raw_message': str(e),
+                        'traceback': tb,
+                    },
+                )
+
+            result_dict = result.model_dump(mode='json') | {'category': category}
+
+            set_span_attrs(attack_span, {
+                'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
+                'orq.redteam.actual_turns': result_dict.get('turns'),
+                'orq.redteam.duration_seconds': result_dict.get('duration_seconds'),
+            })
+            if result_dict.get('error'):
+                set_span_attrs(attack_span, {
+                    'orq.redteam.error_type': result_dict.get('error_type'),
+                    'orq.redteam.error_code': result_dict.get('error_code'),
+                })
+            token_usage_dict = result_dict.get('token_usage')
+            if token_usage_dict:
+                record_token_usage(
+                    attack_span,
+                    prompt_tokens=token_usage_dict.get('prompt_tokens', 0),
+                    completion_tokens=token_usage_dict.get('completion_tokens', 0),
+                    total_tokens=token_usage_dict.get('total_tokens', 0),
+                    calls=token_usage_dict.get('calls', 0),
+                )
+
+            return result_dict
 
     return dynamic_job
 
@@ -276,11 +349,19 @@ def create_dynamic_evaluator(
         final_response = output.get('final_response', '')
         category = output.get('category', '') or data.inputs.get('category', '')
 
-        eval_result = await owasp_evaluator.evaluate(
-            category=category,
-            messages=conversation,
-            response=final_response,
-        )
+        async with with_redteam_span(
+            'orq.redteam.security_evaluation',
+            {
+                'orq.redteam.category': category,
+                'orq.redteam.model': evaluator_model,
+            },
+        ) as eval_span:
+            eval_result = await owasp_evaluator.evaluate(
+                category=category,
+                messages=conversation,
+                response=final_response,
+            )
+            set_span_attrs(eval_span, {'orq.redteam.passed': eval_result.passed})
 
         raw_value = None
         if isinstance(eval_result.raw_output, dict):
@@ -301,9 +382,22 @@ async def cleanup_memory_entities(
     """Delete memory entities created during an evaluatorq red teaming run.
 
     Delegates to provided backend cleanup implementation.
+    Wrapped with an overall timeout — cleanup is best-effort and should never block the pipeline.
     """
-    if memory_cleanup is not None:
-        await memory_cleanup.cleanup_memory(agent_context, entity_ids)
-        return
-    # Default fallback keeps existing ORQ behavior.
-    await resolve_backend('orq').memory_cleanup.cleanup_memory(agent_context, entity_ids)
+    cleanup_timeout_s = PIPELINE_CONFIG.cleanup_timeout_ms / 1000.0
+    try:
+        if memory_cleanup is not None:
+            await asyncio.wait_for(
+                memory_cleanup.cleanup_memory(agent_context, entity_ids),
+                timeout=cleanup_timeout_s,
+            )
+            return
+        # Default fallback keeps existing ORQ behavior.
+        await asyncio.wait_for(
+            resolve_backend('orq').memory_cleanup.cleanup_memory(agent_context, entity_ids),
+            timeout=cleanup_timeout_s,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            f'Memory cleanup timed out after {cleanup_timeout_s:.0f}s for {len(entity_ids)} entities — skipping'
+        )

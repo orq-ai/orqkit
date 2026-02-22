@@ -15,6 +15,7 @@ from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities,
 from evaluatorq.redteam.adaptive.objective_generator import generate_strategies_for_category
 from evaluatorq.redteam.adaptive.strategy_registry import get_strategies_for_category, select_applicable_strategies
 from evaluatorq.redteam.contracts import TurnType
+from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -36,11 +37,18 @@ async def plan_strategies_for_categories(
 ) -> tuple[dict[str, list[AttackStrategy]], dict[str, dict[str, Any]], AgentCapabilities]:
     """Build per-category strategy plans for dynamic red teaming."""
     if llm_client is not None:
-        agent_capabilities = await classify_agent_capabilities(
-            agent_context=agent_context,
-            llm_client=llm_client,
-            model=attack_model,
-        )
+        async with with_redteam_span("orq.redteam.capability_classification", {
+            "orq.redteam.num_tools": len(agent_context.tools) if agent_context.tools else 0,
+            "orq.redteam.model": attack_model,
+        }) as cap_span:
+            agent_capabilities = await classify_agent_capabilities(
+                agent_context=agent_context,
+                llm_client=llm_client,
+                model=attack_model,
+            )
+            set_span_attrs(cap_span, {
+                "orq.redteam.num_capabilities": len(agent_capabilities.all_capabilities()),
+            })
     else:
         agent_capabilities = AgentCapabilities()
         logger.info('Skipping capability classification: no llm_client provided')
@@ -65,37 +73,42 @@ async def plan_strategies_for_categories(
     generated_multi_by_category: dict[str, list[AttackStrategy]] = {category: [] for category in categories}
 
     if generate_additional_strategies and llm_client is not None and generated_strategy_count > 0:
-        effective_parallelism = max(1, generation_parallelism or len(categories) or 1)
-        semaphore = asyncio.Semaphore(effective_parallelism)
+        async with with_redteam_span("orq.redteam.strategy_planning", {
+            "orq.redteam.num_categories": len(categories),
+        }) as strat_span:
+            effective_parallelism = max(1, generation_parallelism or len(categories) or 1)
+            semaphore = asyncio.Semaphore(effective_parallelism)
 
-        async def _generate_for_category(category: str) -> tuple[str, list[AttackStrategy]]:
-            try:
-                async with semaphore:
-                    generated = await generate_strategies_for_category(
-                        category=category,
-                        agent_context=agent_context,
-                        llm_client=llm_client,
-                        model=attack_model,
-                        count=generated_strategy_count,
-                        turn_type=None,
-                        max_turns=max_turns,
-                    )
-                return category, generated
-            except Exception as e:
-                logger.warning(f'Failed to generate strategies for {category}: {e}')
-                return category, []
+            async def _generate_for_category(category: str) -> tuple[str, list[AttackStrategy]]:
+                try:
+                    async with semaphore:
+                        generated = await generate_strategies_for_category(
+                            category=category,
+                            agent_context=agent_context,
+                            llm_client=llm_client,
+                            model=attack_model,
+                            count=generated_strategy_count,
+                            turn_type=None,
+                            max_turns=max_turns,
+                        )
+                    return category, generated
+                except Exception as e:
+                    logger.warning(f'Failed to generate strategies for {category}: {e}')
+                    return category, []
 
-        generation_results = await asyncio.gather(*(_generate_for_category(category) for category in categories))
-        for category, generated in generation_results:
-            generated_by_category[category] = generated
-            generated_single = [s for s in generated if s.turn_type == TurnType.SINGLE]
-            generated_multi = [s for s in generated if s.turn_type == TurnType.MULTI]
-            generated_single_by_category[category] = generated_single
-            generated_multi_by_category[category] = generated_multi
-            logger.info(
-                f'Added {len(generated)} generated strategies for {category} '
-                f'({len(generated_single)} single-turn, {len(generated_multi)} multi-turn)'
-            )
+            generation_results = await asyncio.gather(*(_generate_for_category(category) for category in categories))
+            for category, generated in generation_results:
+                generated_by_category[category] = generated
+                generated_single = [s for s in generated if s.turn_type == TurnType.SINGLE]
+                generated_multi = [s for s in generated if s.turn_type == TurnType.MULTI]
+                generated_single_by_category[category] = generated_single
+                generated_multi_by_category[category] = generated_multi
+                logger.info(
+                    f'Added {len(generated)} generated strategies for {category} '
+                    f'({len(generated_single)} single-turn, {len(generated_multi)} multi-turn)'
+                )
+            total_generated = sum(len(v) for v in generated_by_category.values())
+            set_span_attrs(strat_span, {"orq.redteam.generated_count": total_generated})
 
     for category in categories:
         all_hardcoded = all_hardcoded_by_category[category]
