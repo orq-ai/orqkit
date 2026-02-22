@@ -69,11 +69,8 @@ def print_report_summary(report: RedTeamReport) -> None:
     if summary.total_errors:
         stats.add_row("Errors", Text(str(summary.total_errors), style="red"))
 
-    # Datapoint breakdown from metadata
-    meta = report.metadata or {}
-    if "num_datapoints" in meta:
-        stats.add_row("Datapoints", Text(str(meta["num_datapoints"]), style="cyan"))
-    breakdown = meta.get("breakdown")
+    # Datapoint breakdown (hybrid runs)
+    breakdown = summary.datapoint_breakdown
     if breakdown:
         parts = []
         if breakdown.get("static", 0):
@@ -83,7 +80,7 @@ def print_report_summary(report: RedTeamReport) -> None:
         if breakdown.get("generated_dynamic", 0):
             parts.append(f"{breakdown['generated_dynamic']} generated")
         if parts:
-            stats.add_row("  Breakdown", Text(", ".join(parts), style="cyan"))
+            stats.add_row("Breakdown", Text(", ".join(parts), style="cyan"))
 
     console.print(stats)
     console.print()

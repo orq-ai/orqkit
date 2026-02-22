@@ -705,6 +705,10 @@ class ReportSummary(BaseModel):
     errors_by_type: dict[str, int] = Field(default_factory=dict, description='Error counts grouped by type')
     by_category: dict[str, CategorySummary] = Field(default_factory=dict)
     by_technique: dict[str, int] = Field(default_factory=dict)
+    datapoint_breakdown: dict[str, int] | None = Field(
+        default=None,
+        description='Datapoint counts by source: static, template_dynamic, generated_dynamic (hybrid runs only)',
+    )
 
 
 class RedTeamReport(BaseModel):
@@ -728,7 +732,6 @@ class RedTeamReport(BaseModel):
 
     token_usage_summary: TokenUsage | None = None
     duration_seconds: float | None = None
-    metadata: dict[str, Any] | None = Field(default=None, description='Optional run metadata (e.g. datapoint breakdown)')
 
     @field_validator('framework', mode='before')
     @classmethod

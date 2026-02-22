@@ -12,30 +12,37 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 
-def _save_stage(
-    output_dir: Path | None,
-    filename: str,
-    content: str,
-    *,
-    metadata: dict[str, Any] | None = None,
-) -> None:
+def _save_stage(output_dir: Path | None, filename: str, content: str) -> None:
     """Write a stage artifact to *output_dir* when saving is enabled.
 
     Wraps the raw payload in an envelope with a ``saved_at`` ISO-8601
-    timestamp so every artifact is self-describing.  An optional *metadata*
-    dict is included at the top level when provided.
+    timestamp so every artifact is self-describing.
     """
     if output_dir is None:
         return
     output_dir.mkdir(parents=True, exist_ok=True)
     payload = json.loads(content)
-    envelope: dict[str, Any] = {
+    envelope = {
         "saved_at": datetime.now(tz=timezone.utc).isoformat(),
+        "data": payload,
     }
-    if metadata:
-        envelope["metadata"] = metadata
-    envelope["data"] = payload
     (output_dir / filename).write_text(json.dumps(envelope, indent=2, default=str), encoding="utf-8")
+    logger.info(f"Saved {filename} to {output_dir}")
+
+
+def _save_report(output_dir: Path | None, filename: str, report: RedTeamReport) -> None:
+    """Write a summary report to *output_dir* as flat JSON with ``saved_at``.
+
+    Unlike :func:`_save_stage`, the report is written without an extra
+    envelope layer — ``saved_at`` is injected directly into the top-level
+    dict alongside the existing report fields.
+    """
+    if output_dir is None:
+        return
+    output_dir.mkdir(parents=True, exist_ok=True)
+    data = report.model_dump(mode="json")
+    data["saved_at"] = datetime.now(tz=timezone.utc).isoformat()
+    (output_dir / filename).write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     logger.info(f"Saved {filename} to {output_dir}")
 
 from evaluatorq.redteam.adaptive.strategy_registry import (
@@ -45,35 +52,25 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
 from evaluatorq.redteam.contracts import AgentContext, RedTeamReport
 
 
-def _datapoints_metadata(datapoints: list[Any], *, hybrid: bool = False) -> dict[str, Any]:
-    """Build metadata dict describing a list of datapoints.
-
-    For hybrid runs, includes a breakdown by source (static, template
-    dynamic, generated dynamic).
-    """
-    meta: dict[str, Any] = {"num_datapoints": len(datapoints)}
-    if not hybrid:
-        return meta
-
+def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
+    """Classify datapoints into static, template_dynamic, and generated_dynamic."""
     static = 0
     template_dynamic = 0
     generated_dynamic = 0
     for dp in datapoints:
         inputs = dp.inputs if hasattr(dp, "inputs") else dp
-        source = inputs.get("_hybrid_source", "static")
+        source = inputs.get("_hybrid_source", "")
         if source == "static":
             static += 1
         elif inputs.get("strategy", {}).get("is_generated", False):
             generated_dynamic += 1
         else:
             template_dynamic += 1
-
-    meta["breakdown"] = {
+    return {
         "static": static,
         "template_dynamic": template_dynamic,
         "generated_dynamic": generated_dynamic,
     }
-    return meta
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -448,11 +445,7 @@ async def _run_dynamic(
             msg = 'No datapoints generated. Check categories and agent capabilities.'
             raise ValueError(msg)
 
-        _save_stage(
-            output_dir, "02_datapoints.json",
-            json.dumps([dp.inputs for dp in datapoints], indent=2, default=str),
-            metadata=_datapoints_metadata(datapoints),
-        )
+        _save_stage(output_dir, "02_datapoints.json", json.dumps([dp.inputs for dp in datapoints], indent=2, default=str))
 
         # Confirm callback
         if confirm_callback is not None:
@@ -503,11 +496,7 @@ async def _run_dynamic(
                 ], memory_cleanup=resolved_memory_cleanup)
             raise
 
-        _save_stage(
-            output_dir, "03_attack_results.json",
-            json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str),
-            metadata={"num_results": len(results)},
-        )
+        _save_stage(output_dir, "03_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
         pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
@@ -520,13 +509,8 @@ async def _run_dynamic(
             duration_seconds=pipeline_duration,
             description=description or f'Dynamic red teaming for {target}',
         )
-        report.metadata = _datapoints_metadata(datapoints)
 
-        _save_stage(
-            output_dir, "04_summary_report.json",
-            report.model_dump_json(indent=2),
-            metadata=report.metadata,
-        )
+        _save_report(output_dir, "04_summary_report.json", report)
 
         set_span_attrs(pipeline_span, {
             "orq.redteam.num_datapoints": len(datapoints),
@@ -612,11 +596,7 @@ async def _run_static(
             raise ValueError(msg)
         data = filtered
 
-    _save_stage(
-        output_dir, "01_datapoints.json",
-        json.dumps([dp.inputs for dp in data], indent=2, default=str),
-        metadata=_datapoints_metadata(data),
-    )
+    _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))
 
     # Create job based on target kind
     if target_kind == 'agent':
@@ -642,11 +622,7 @@ async def _run_static(
         description=description or f'Static red teaming for {target}',
     )
 
-    _save_stage(
-        output_dir, "02_attack_results.json",
-        json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str),
-        metadata={"num_results": len(results)},
-    )
+    _save_stage(output_dir, "02_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
@@ -671,12 +647,7 @@ async def _run_static(
 
     primary_report = next(iter(reports.values()))
     primary_report.duration_seconds = pipeline_duration
-    primary_report.metadata = _datapoints_metadata(data)
-    _save_stage(
-        output_dir, "03_summary_report.json",
-        primary_report.model_dump_json(indent=2),
-        metadata=primary_report.metadata,
-    )
+    _save_report(output_dir, "03_summary_report.json", primary_report)
     return primary_report
 
 
@@ -781,11 +752,7 @@ async def _run_hybrid(
     if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
         dynamic_datapoints = dynamic_datapoints[:max_dynamic_datapoints]
 
-    _save_stage(
-        output_dir, "02_dynamic_datapoints.json",
-        json.dumps([dp.inputs for dp in dynamic_datapoints], indent=2, default=str),
-        metadata=_datapoints_metadata(dynamic_datapoints),
-    )
+    _save_stage(output_dir, "02_dynamic_datapoints.json", json.dumps([dp.inputs for dp in dynamic_datapoints], indent=2, default=str))
 
     # Load static datapoints (capped independently)
     path = Path(dataset_path) if dataset_path is not None else None
@@ -795,11 +762,7 @@ async def _run_hybrid(
         path=path,
     )
     static_datapoints: list[DataPoint] = static_data if isinstance(static_data, list) else []
-    _save_stage(
-        output_dir, "03_static_datapoints.json",
-        json.dumps([dp.inputs for dp in static_datapoints], indent=2, default=str),
-        metadata=_datapoints_metadata(static_datapoints),
-    )
+    _save_stage(output_dir, "03_static_datapoints.json", json.dumps([dp.inputs for dp in static_datapoints], indent=2, default=str))
 
     # Tag datapoints with hybrid routing metadata
     for dp in dynamic_datapoints:
@@ -898,11 +861,7 @@ async def _run_hybrid(
         description=description or f'Hybrid red teaming for {target}',
     )
 
-    _save_stage(
-        output_dir, "04_attack_results.json",
-        json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str),
-        metadata={"num_results": len(results)},
-    )
+    _save_stage(output_dir, "04_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
@@ -936,12 +895,8 @@ async def _run_hybrid(
 
     report = merge_reports(*reports_to_merge, description=description or f'Hybrid red teaming for {target}')
     report.duration_seconds = pipeline_duration
-    report.metadata = _datapoints_metadata(all_datapoints, hybrid=True)
-    _save_stage(
-        output_dir, "05_summary_report.json",
-        report.model_dump_json(indent=2),
-        metadata=_datapoints_metadata(all_datapoints, hybrid=True),
-    )
+    report.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
+    _save_report(output_dir, "05_summary_report.json", report)
 
     # Memory cleanup
     if cleanup_memory and agent_context.has_memory:
