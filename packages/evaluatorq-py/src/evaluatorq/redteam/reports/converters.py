@@ -198,6 +198,12 @@ def static_sample_to_result(
         RedTeamResult
     """
     normalized_sample = dict(sample)
+    raw_input = normalized_sample.get('input')
+    if isinstance(raw_input, dict):
+        normalized_input = dict(raw_input)
+        # Normalize free-form dataset techniques before strict schema validation.
+        normalized_input['attack_technique'] = _normalize_attack_technique(normalized_input.get('attack_technique'))
+        normalized_sample['input'] = normalized_input
     raw_eval = normalized_sample.get('evaluation_result')
     if isinstance(raw_eval, dict):
         normalized_eval = dict(raw_eval)

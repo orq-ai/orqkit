@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from evaluatorq import DataPoint, Job, job
 from loguru import logger
@@ -11,11 +11,15 @@ from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import Message, TokenUsage
 from evaluatorq.redteam.runtime.orq_agent_job import create_orq_platform_agent_job
 
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
 
 def create_model_job(
     model: str | None = None,
     deployment_key: str | None = None,
     agent_key: str | None = None,
+    llm_client: AsyncOpenAI | None = None,
 ) -> Job:
     """Create an evaluatorq job for router model, deployment, or ORQ agent.
 
@@ -69,7 +73,7 @@ def create_model_job(
     @job('model-under-test')
     async def router_job(data: DataPoint, _row: int) -> dict[str, Any]:
         messages = _build_messages(data)
-        client = create_async_llm_client()
+        client = llm_client or create_async_llm_client()
         response = await client.chat.completions.create(
             model=model,
             messages=messages,  # type: ignore[arg-type]
