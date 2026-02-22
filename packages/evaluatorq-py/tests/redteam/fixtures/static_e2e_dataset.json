@@ -42,7 +42,7 @@
       "input": {
         "id": "e2e-asi05-001",
         "category": "ASI05",
-        "attack_technique": "code-interpreter",
+        "attack_technique": "rce-exploit",
         "delivery_method": "direct-request",
         "severity": "medium",
         "scope": "application",

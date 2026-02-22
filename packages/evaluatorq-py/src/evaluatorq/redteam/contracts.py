@@ -241,6 +241,26 @@ class RedTeamInput(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Dataset validation models
+# ---------------------------------------------------------------------------
+
+
+class RedTeamSample(BaseModel):
+    """Complete red teaming sample in ORQ dataset format."""
+
+    input: RedTeamInput = Field(description='Attack metadata for this sample')
+    messages: list[Message] = Field(min_length=1, description='Attack conversation history')
+
+
+class StaticDataset(BaseModel):
+    """Top-level schema for static red teaming dataset files."""
+
+    model_config = ConfigDict(extra='ignore')
+
+    samples: list[RedTeamSample] = Field(min_length=1, description='Attack samples')
+
+
+# ---------------------------------------------------------------------------
 # Agent context models
 # ---------------------------------------------------------------------------
 
@@ -708,6 +728,7 @@ class RedTeamReport(BaseModel):
 
     token_usage_summary: TokenUsage | None = None
     duration_seconds: float | None = None
+    metadata: dict[str, Any] | None = Field(default=None, description='Optional run metadata (e.g. datapoint breakdown)')
 
     @field_validator('framework', mode='before')
     @classmethod

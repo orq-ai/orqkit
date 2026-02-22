@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING, Any, TypedDict
 
 from evaluatorq import DataPoint, DatasetIdInput, EvaluationResult
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
+from evaluatorq.redteam.contracts import RedTeamInput, StaticDataset
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 
 if TYPE_CHECKING:
@@ -133,6 +134,19 @@ def create_owasp_evaluator(
     return {'name': 'owasp-agentic-security', 'scorer': scorer}
 
 
+def _validate_platform_datapoint(inputs: dict[str, Any]) -> None:
+    """Validate that an ORQ platform datapoint has required structure.
+
+    Platform datapoints are flat dicts with all fields (including ``messages``)
+    at the top level of ``inputs``.
+    """
+    RedTeamInput.model_validate({k: v for k, v in inputs.items() if k != 'messages'})
+    messages = inputs.get('messages')
+    if not messages or not isinstance(messages, list):
+        msg = f'Datapoint {inputs.get("id", "?")} is missing messages'
+        raise ValueError(msg)
+
+
 def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
     """Fetch all datapoints from an ORQ dataset, handling pagination.
 
@@ -151,6 +165,7 @@ def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
 
     client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
     all_datapoints: list[DataPoint] = []
+    skipped = 0
     cursor: str | None = None
 
     while True:
@@ -160,13 +175,23 @@ def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
             starting_after=cursor,
         )
 
-        all_datapoints.extend(DataPoint(inputs=dict(dp.inputs) if dp.inputs else {}) for dp in response.data)
+        for dp in response.data:
+            inputs = dict(dp.inputs) if dp.inputs else {}
+            try:
+                _validate_platform_datapoint(inputs)
+            except (ValidationError, ValueError):
+                skipped += 1
+                logger.warning(f'Skipping invalid datapoint {inputs.get("id", "unknown")}: validation failed')
+                continue
+            all_datapoints.append(DataPoint(inputs=inputs))
 
         if not response.has_more or not response.data:
             break
         cursor = response.data[-1].id
 
-    logger.info(f'Fetched {len(all_datapoints)} datapoints from dataset {dataset_id}')
+    if skipped:
+        logger.warning(f'Skipped {skipped} invalid datapoints out of {len(all_datapoints) + skipped} total')
+    logger.info(f'Fetched {len(all_datapoints)} valid datapoints from dataset {dataset_id}')
     return all_datapoints
 
 
@@ -178,20 +203,29 @@ def _load_from_file(
     """Load OWASP dataset from a local JSON file in ``{"samples": [...]}`` format."""
     path = Path(path)
     with path.open() as f:
-        data = json.load(f)
+        raw = json.load(f)
 
-    samples = data['samples']
+    dataset = StaticDataset.model_validate(raw)
+    samples = dataset.samples
 
     if categories:
         normalized = {c.upper().replace('OWASP-', '') for c in categories}
-        samples = [s for s in samples if s['input']['category'].upper().replace('OWASP-', '') in normalized]
+        samples = [s for s in samples if s.input.category.upper().replace('OWASP-', '') in normalized]
         logger.info(f'Filtered to categories: {sorted(normalized)} ({len(samples)} samples)')
 
     num_samples = _normalize_num_samples(num_samples)
     if num_samples is not None:
         samples = samples[:num_samples]
 
-    datapoints = [DataPoint(inputs={**sample['input'], 'messages': sample['messages']}) for sample in samples]
+    datapoints = [
+        DataPoint(
+            inputs={
+                **s.input.model_dump(mode='json'),
+                'messages': [m.model_dump(mode='json', exclude_none=True) for m in s.messages],
+            }
+        )
+        for s in samples
+    ]
     logger.info(f'Loaded {len(datapoints)} samples from {path.name}')
     return datapoints
 

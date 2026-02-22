@@ -57,16 +57,19 @@ async def _run(args: argparse.Namespace) -> int:
     if args.base_url:
         os.environ['ORQ_BASE_URL'] = args.base_url
 
-    script_dir = Path(__file__).resolve().parent
-    package_root = script_dir.parent
+    dataset_path: str | None = None
+    if args.dataset is not None:
+        script_dir = Path(__file__).resolve().parent
+        package_root = script_dir.parent
 
-    dataset_path = Path(args.dataset)
-    if not dataset_path.is_absolute():
-        dataset_path = (package_root / dataset_path).resolve()
+        resolved = Path(args.dataset)
+        if not resolved.is_absolute():
+            resolved = (package_root / resolved).resolve()
 
-    if not dataset_path.exists():
-        print(f'Dataset path does not exist: {dataset_path}', file=sys.stderr)
-        return 2
+        if not resolved.exists():
+            print(f'Dataset path does not exist: {resolved}', file=sys.stderr)
+            return 2
+        dataset_path = str(resolved)
 
     report = await red_team(
         args.target,
@@ -81,7 +84,7 @@ async def _run(args: argparse.Namespace) -> int:
         generate_strategies=not args.no_generate_strategies,
         generated_strategy_count=args.generated_strategy_count,
         backend=args.backend,
-        dataset_path=str(dataset_path),
+        dataset_path=dataset_path,
         description='Hybrid red-team E2E test',
         output_dir=args.output_dir,
     )
@@ -117,8 +120,9 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--dataset',
-        default='tests/redteam/fixtures/static_e2e_dataset.json',
-        help='Dataset path relative to packages/evaluatorq-py or absolute path',
+        default=None,
+        help='Dataset path relative to packages/evaluatorq-py or absolute path. '
+             'When omitted, static datapoints are loaded from the ORQ platform.',
     )
     parser.add_argument('--backend', default='orq', choices=['openai', 'orq'])
     parser.add_argument('--parallelism', type=int, default=3)
