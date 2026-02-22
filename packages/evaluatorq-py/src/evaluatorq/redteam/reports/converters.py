@@ -34,6 +34,37 @@ from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_metadat
 
 
 # ---------------------------------------------------------------------------
+# Error classification
+# ---------------------------------------------------------------------------
+
+# Patterns matched against the error string to infer error_type.
+_ERROR_PATTERNS: list[tuple[str, str]] = [
+    ('content_filter', 'content_filter'),
+    ('content management policy', 'content_filter'),
+    ('rate limit', 'rate_limit'),
+    ('429', 'rate_limit'),
+    ('timeout', 'timeout'),
+    ('timed out', 'timeout'),
+    ('connection', 'network_error'),
+    ('Status 5', 'server_error'),
+    ('Status 4', 'client_error'),
+]
+
+
+def _classify_error(error: str | None, *, existing_type: str | None = None) -> str | None:
+    """Infer ``error_type`` from a raw error string when not already set."""
+    if existing_type:
+        return existing_type
+    if not error:
+        return None
+    lower = error.lower()
+    for pattern, etype in _ERROR_PATTERNS:
+        if pattern.lower() in lower:
+            return etype
+    return 'unknown'
+
+
+# ---------------------------------------------------------------------------
 # Static pipeline converters
 # ---------------------------------------------------------------------------
 
@@ -271,7 +302,7 @@ def static_sample_to_result(
         vulnerable=vulnerable,
         execution=None,
         error=row.error,
-        error_type=row.error_type,
+        error_type=_classify_error(row.error, existing_type=row.error_type),
         error_stage=getattr(row, 'error_stage', None),
         error_code=getattr(row, 'error_code', None),
         error_details=getattr(row, 'error_details', None),
@@ -352,7 +383,7 @@ def dynamic_evaluatorq_results_to_report(
                 eval_explanation = score.explanation or ''
 
         error = getattr(result, 'error', None) or job_output.error
-        error_type = job_output.error_type
+        error_type = _classify_error(error, existing_type=job_output.error_type)
         error_stage = job_output.error_stage
         error_code = job_output.error_code
         error_details = job_output.error_details
@@ -499,10 +530,15 @@ def static_evaluatorq_results_to_reports(
                     'token_usage': output_usage,
                 }
 
+            raw_error = dp_error or job_result.error or output_dict.error
             sample = {
                 **base_sample,
                 'response': response,
-                'error': dp_error or job_result.error,
+                'error': raw_error,
+                'error_type': _classify_error(raw_error, existing_type=output_dict.error_type),
+                'error_stage': output_dict.error_stage,
+                'error_code': output_dict.error_code,
+                'error_details': output_dict.error_details,
                 'evaluation_result': eval_result,
             }
             samples_by_job.setdefault(job_name, []).append(sample)
