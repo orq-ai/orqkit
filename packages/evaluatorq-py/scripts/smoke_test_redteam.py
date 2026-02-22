@@ -2,8 +2,8 @@
 """Smoke test for evaluatorq.redteam — calls the library directly for manual testing.
 
 Usage:
-    uv run python scripts/smoke_test_redteam.py --target agent:my-agent --mode dynamic --max-turns 3 --max-datapoints 5
-    uv run python scripts/smoke_test_redteam.py --target agent:a --target agent:b --mode dynamic --max-datapoints 3
+    uv run python scripts/smoke_test_redteam.py --target agent:my-agent --mode dynamic --max-turns 3 --max-dynamic-datapoints 5
+    uv run python scripts/smoke_test_redteam.py --target agent:a --target agent:b --mode dynamic --max-dynamic-datapoints 3
 """
 
 from __future__ import annotations
@@ -21,7 +21,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--max-turns', type=int, default=3)
     parser.add_argument('--categories', nargs='+', default=None)
     parser.add_argument('--parallelism', type=int, default=5)
-    parser.add_argument('--max-datapoints', type=int, default=None)
+    parser.add_argument('--max-dynamic-datapoints', type=int, default=None)
+    parser.add_argument('--max-static-datapoints', type=int, default=None)
     parser.add_argument('--attack-model', default='azure/gpt-5-mini')
     parser.add_argument('--evaluator-model', default='azure/gpt-5-mini')
     parser.add_argument('--dataset-path', default=None)
@@ -40,7 +41,8 @@ async def main() -> None:
         max_turns=args.max_turns,
         categories=args.categories,
         parallelism=args.parallelism,
-        max_datapoints=args.max_datapoints,
+        max_dynamic_datapoints=args.max_dynamic_datapoints,
+        max_static_datapoints=args.max_static_datapoints,
         attack_model=args.attack_model,
         evaluator_model=args.evaluator_model,
         dataset_path=args.dataset_path,

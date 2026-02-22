@@ -144,7 +144,7 @@ async def _run(args: argparse.Namespace) -> int:
         categories=args.categories,
         evaluator_model=args.evaluator_model,
         parallelism=args.parallelism,
-        max_datapoints=args.max_datapoints,
+        max_static_datapoints=args.max_static_datapoints,
         backend=args.backend,
         dataset_path=str(dataset_path),
         llm_client=llm_client,
@@ -186,7 +186,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument('--backend', default='openai', choices=['openai', 'orq'])
     parser.add_argument('--parallelism', type=int, default=2)
-    parser.add_argument('--max-datapoints', type=int, default=None)
+    parser.add_argument('--max-static-datapoints', type=int, default=None)
     parser.add_argument('--evaluator-model', default='e2e-local-evaluator')
     parser.add_argument(
         '--categories',

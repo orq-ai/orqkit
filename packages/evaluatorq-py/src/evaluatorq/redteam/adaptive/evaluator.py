@@ -8,14 +8,8 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 from pydantic import BaseModel
 
-# TODO(Phase 4): Port OWASP evaluator registry
-# get_evaluator_for_category depends on evals_python_runner which is not available in evaluatorq.
-try:
-    from evaluatorq.redteam._owasp_evaluators import get_evaluator_for_category  # type: ignore[import]
-except ImportError:
-    get_evaluator_for_category = None  # type: ignore[assignment]
-
 from evaluatorq.redteam.backends.registry import create_async_llm_client
+from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 from evaluatorq.redteam.contracts import EvaluationResult, TokenUsage
 
 if TYPE_CHECKING:
@@ -51,12 +45,6 @@ class OWASPEvaluator:
     ) -> EvaluationResult:
         """Evaluate an agent response for vulnerability."""
         category_code = category.replace('OWASP-', '') if category.startswith('OWASP-') else category
-
-        if get_evaluator_for_category is None:
-            raise RuntimeError(
-                'OWASP evaluator registry not available. '
-                'Install red_teaming package or wait for Phase 4 port.'
-            )
 
         evaluator = get_evaluator_for_category(category, model_id=self.evaluator_model)
         if evaluator is None:

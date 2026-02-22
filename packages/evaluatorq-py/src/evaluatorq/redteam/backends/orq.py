@@ -9,17 +9,30 @@ want to be backend-agnostic.
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import TYPE_CHECKING
 
-import httpx
 from loguru import logger
 
 try:
     from orq_ai_sdk import Orq
-    from orq_shared.config import get_config
 except ImportError:
     Orq = None  # type: ignore[assignment,misc]
-    get_config = None  # type: ignore[assignment]
+
+
+def _get_orq_api_key() -> str:
+    """Read ORQ_API_KEY from environment."""
+    key = os.environ.get('ORQ_API_KEY', '')
+    if not key:
+        msg = 'ORQ_API_KEY environment variable is not set'
+        raise RuntimeError(msg)
+    return key
+
+
+def _get_orq_server_url() -> str:
+    """Read ORQ_BASE_URL from environment and strip /v2/router for SDK use."""
+    url = os.environ.get('ORQ_BASE_URL', 'https://my.orq.ai')
+    return url.rstrip('/').removesuffix('/v2/router')
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
 from evaluatorq.redteam.contracts import (
@@ -225,12 +238,8 @@ class ORQContextProvider:
             raw_ms_ids = [ms if isinstance(ms, str) else getattr(ms, 'key', str(ms)) for ms in agent_data.memory_stores]
 
         # Enrich knowledge bases and memory stores concurrently
-        api_key = (
-            self.orq_client.sdk_configuration.security.api_key if self.orq_client.sdk_configuration.security else ''
-        )
-
         enrichment_tasks = [self._enrich_knowledge_base(kb_id) for kb_id in raw_kb_ids]
-        enrichment_tasks.extend(self._enrich_memory_store(api_key, ms_id) for ms_id in raw_ms_ids)
+        enrichment_tasks.extend(self._enrich_memory_store(ms_id) for ms_id in raw_ms_ids)
 
         enriched_results = await asyncio.gather(*enrichment_tasks) if enrichment_tasks else []
 
@@ -273,25 +282,21 @@ class ORQContextProvider:
             logger.warning(f'Failed to enrich knowledge base {kb_id}: {e}')
             return KnowledgeBaseInfo(id=kb_id)
 
-    async def _enrich_memory_store(self, api_key: str, ms_id: str) -> MemoryStoreInfo:
-        """Retrieve full memory store details from ORQ API."""
+    async def _enrich_memory_store(self, ms_key: str) -> MemoryStoreInfo:
+        """Retrieve full memory store details via ORQ SDK."""
         try:
-            async with httpx.AsyncClient() as client:
-                r = await client.get(
-                    f'https://api.orq.ai/v2/memory-stores/{ms_id}',
-                    headers={'Authorization': f'Bearer {api_key}'},
-                    timeout=10,
-                )
-                r.raise_for_status()
-                data = r.json()
-                return MemoryStoreInfo(
-                    id=ms_id,
-                    key=data.get('key'),
-                    description=data.get('description') or None,
-                )
+            ms = await asyncio.to_thread(
+                self.orq_client.memory_stores.retrieve,
+                memory_store_key=ms_key,
+            )
+            return MemoryStoreInfo(
+                id=getattr(ms, 'id', ms_key),
+                key=getattr(ms, 'key', ms_key),
+                description=getattr(ms, 'description', None) or None,
+            )
         except Exception as e:
-            logger.warning(f'Failed to enrich memory store {ms_id}: {e}')
-            return MemoryStoreInfo(id=ms_id)
+            logger.warning(f'Failed to enrich memory store {ms_key}: {e}')
+            return MemoryStoreInfo(id=ms_key)
 
 
 class ORQTargetFactory:
@@ -301,10 +306,9 @@ class ORQTargetFactory:
         if orq_client is not None:
             self._orq_client = orq_client
         else:
-            config = get_config()
             self._orq_client = Orq(
-                api_key=config.orq_api_key,
-                server_url=config.orq_server_url,
+                api_key=_get_orq_api_key(),
+                server_url=_get_orq_server_url(),
                 timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
             )
 
@@ -318,28 +322,37 @@ class ORQTargetFactory:
 
 
 class ORQMemoryCleanup:
-    """Cleans up memory entities created during red teaming via ORQ API."""
+    """Cleans up memory entities created during red teaming via ORQ SDK."""
+
+    def __init__(self, orq_client: Orq | None = None):
+        if orq_client is not None:
+            self._orq_client = orq_client
+        else:
+            self._orq_client = Orq(
+                api_key=_get_orq_api_key(),
+                server_url=_get_orq_server_url(),
+                timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
+            )
 
     async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
         """Delete memory entities for each memory store x entity_id combination."""
-        config = get_config()
-        headers = {'Authorization': f'Bearer {config.orq_api_key}'}
-
-        async with httpx.AsyncClient(timeout=10) as client:
-            for ms in agent_context.memory_stores:
-                if not ms.key:
-                    logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
-                    continue
-                for entity_id in entity_ids:
-                    url = f'{config.orq_server_url}/v2/memory-stores/{ms.key}/memories/{entity_id}'
-                    try:
-                        r = await client.delete(url, headers=headers)
-                        if r.status_code == 204:
-                            logger.debug(f'Deleted memory entity {entity_id} from store {ms.key}')
-                        elif r.status_code != 404:
-                            logger.warning(f'Memory cleanup for {ms.key}/{entity_id} returned {r.status_code}')
-                    except Exception as e:
-                        logger.warning(f'Failed to cleanup memory entity {entity_id} from {ms.key}: {e}')
+        for ms in agent_context.memory_stores:
+            if not ms.key:
+                logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
+                continue
+            for entity_id in entity_ids:
+                try:
+                    await asyncio.to_thread(
+                        self._orq_client.memory_stores.delete_memory,
+                        memory_store_key=ms.key,
+                        memory_entity_id=entity_id,
+                    )
+                    logger.debug(f'Deleted memory entity {entity_id} from store {ms.key}')
+                except Exception as e:
+                    error_msg = str(e)
+                    if '404' in error_msg:
+                        continue
+                    logger.warning(f'Failed to cleanup memory entity {entity_id} from {ms.key}: {e}')
 
         logger.info(
             f'Memory cleanup complete ({len(entity_ids)} entities across {len(agent_context.memory_stores)} stores)'
@@ -381,15 +394,14 @@ def create_orq_backend(
         Tuple of (target_factory, context_provider, memory_cleanup)
     """
     if orq_client is None:
-        config = get_config()
         orq_client = Orq(
-            api_key=config.orq_api_key,
-            server_url=config.orq_server_url,
+            api_key=_get_orq_api_key(),
+            server_url=_get_orq_server_url(),
             timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
         )
 
     return (
         ORQTargetFactory(orq_client),
         ORQContextProvider(orq_client),
-        ORQMemoryCleanup(),
+        ORQMemoryCleanup(orq_client),
     )

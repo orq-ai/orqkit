@@ -818,7 +818,8 @@ class DynamicRunMetadata(BaseModel):
     attack_model: str | None = None
     evaluator_model: str | None = None
     categories_tested: list[str] | None = None
-    max_datapoints: int | None = None
+    max_dynamic_datapoints: int | None = None
+    max_static_datapoints: int | None = None
     max_turns: int | None = None
     max_per_category: int | None = None
     generated_strategy_count: int | None = None
