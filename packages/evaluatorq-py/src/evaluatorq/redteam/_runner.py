@@ -104,6 +104,7 @@ async def red_team(
             backend=backend,
             dataset_path=dataset_path,
             description=description,
+            llm_client=llm_client,
         )
     if mode == 'hybrid':
         raise NotImplementedError(
@@ -167,7 +168,7 @@ async def _run_dynamic(
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
     # Resolve backend
-    backend_bundle = resolve_backend(backend)
+    backend_bundle = resolve_backend(backend, llm_client=llm_client)
     resolved_factory = target_factory or backend_bundle.target_factory
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
@@ -213,7 +214,7 @@ async def _run_dynamic(
         error_mapper=resolved_error_mapper,
         attack_llm_client=resolved_llm_client,
     )
-    evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model)
+    evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
     # Stage 3: Run evaluatorq
     logger.info(f'Running {len(datapoints)} attacks against {target} (parallelism={parallelism})')
@@ -273,6 +274,7 @@ async def _run_static(
     backend: str,
     dataset_path: Any,
     description: str | None,
+    llm_client: AsyncOpenAI | None = None,
 ) -> RedTeamReport:
     """Run static red teaming via evaluatorq."""
     from pathlib import Path
@@ -299,15 +301,15 @@ async def _run_static(
 
     # Create job based on target kind
     if target_kind == 'agent':
-        model_job = create_model_job(agent_key=target_value)
+        model_job = create_model_job(agent_key=target_value, llm_client=llm_client)
     elif target_kind == 'openai':
-        model_job = create_model_job(model=target_value)
+        model_job = create_model_job(model=target_value, llm_client=llm_client)
     elif target_kind == 'deployment':
-        model_job = create_model_job(deployment_key=target_value)
+        model_job = create_model_job(deployment_key=target_value, llm_client=llm_client)
     else:
-        model_job = create_model_job(model=target_value)
+        model_job = create_model_job(model=target_value, llm_client=llm_client)
 
-    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model)
+    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=llm_client)
 
     # Run evaluatorq
     logger.info(f'Running static red teaming against {target} (parallelism={parallelism})')

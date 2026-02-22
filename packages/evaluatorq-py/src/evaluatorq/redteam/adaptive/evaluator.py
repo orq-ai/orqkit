@@ -19,6 +19,8 @@ from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import EvaluationResult, TokenUsage
 
 if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
     from evaluatorq.redteam.contracts import Message
 
 
@@ -35,9 +37,10 @@ class OWASPEvaluator:
     def __init__(
         self,
         evaluator_model: str = 'azure/gpt-5-mini',
+        llm_client: AsyncOpenAI | None = None,
     ):
         self.evaluator_model = evaluator_model
-        self.client = create_async_llm_client()
+        self.client = llm_client or create_async_llm_client()
         logger.info(f'Initialized OWASPEvaluator with model: {evaluator_model}')
 
     async def evaluate(

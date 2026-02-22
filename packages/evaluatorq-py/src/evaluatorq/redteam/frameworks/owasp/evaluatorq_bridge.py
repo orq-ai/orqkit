@@ -14,6 +14,8 @@ from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 
 if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
     from evaluatorq.types import ScorerParameter
 
 OWASP_DATASET_ID = '01KFX6FJDDP1J0ADAV0WPGWW3F'
@@ -64,8 +66,14 @@ def load_owasp_agentic_dataset(
 
 def create_owasp_evaluator(
     evaluator_model: str = 'azure/gpt-5-mini',
+    llm_client: AsyncOpenAI | None = None,
 ) -> EvaluatorConfig:
-    """Create an evaluatorq scorer that routes by OWASP category."""
+    """Create an evaluatorq scorer that routes by OWASP category.
+
+    Args:
+        evaluator_model: Model name for evaluation scoring.
+        llm_client: Pre-configured client. Falls back to ``create_async_llm_client()``.
+    """
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
@@ -88,7 +96,7 @@ def create_owasp_evaluator(
             json.dumps(data.inputs['messages'], indent=2),
         )
 
-        client = create_async_llm_client()
+        client = llm_client or create_async_llm_client()
         response = await client.chat.completions.create(
             model=evaluator_model,
             messages=[
