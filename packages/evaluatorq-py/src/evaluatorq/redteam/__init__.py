@@ -66,6 +66,7 @@ from evaluatorq.redteam.contracts import (
 
 from evaluatorq.redteam.runner import red_team
 from evaluatorq.redteam.reports.converters import merge_reports
+from evaluatorq.redteam.reports.display import print_report_summary
 from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories as list_categories,
@@ -75,6 +76,7 @@ __all__ = [
     # Entry points
     "red_team",
     "merge_reports",
+    "print_report_summary",
     # Category introspection
     "list_categories",
     "get_category_info",

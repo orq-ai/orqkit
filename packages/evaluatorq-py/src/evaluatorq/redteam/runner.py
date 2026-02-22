@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
+
+
+def _save_stage(output_dir: Path | None, filename: str, content: str) -> None:
+    """Write a stage artifact to *output_dir* when saving is enabled."""
+    if output_dir is None:
+        return
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / filename).write_text(content, encoding="utf-8")
+    logger.info(f"Saved {filename} to {output_dir}")
 
 from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
@@ -33,7 +44,8 @@ async def red_team(
     parallelism: int = 5,
     generate_strategies: bool = True,
     generated_strategy_count: int = 2,
-    max_datapoints: int | None = None,
+    max_dynamic_datapoints: int | None = None,
+    max_static_datapoints: int | None = None,
     cleanup_memory: bool = True,
     backend: str = 'orq',
     target_factory: AgentTargetFactory | None = None,
@@ -43,6 +55,8 @@ async def red_team(
     description: str | None = None,
     dataset_path: Any = None,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    output_dir: Path | str | None = None,
+    print_results: bool = False,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -63,7 +77,8 @@ async def red_team(
         parallelism: Maximum concurrent evaluatorq jobs.
         generate_strategies: Whether to generate additional LLM-based strategies.
         generated_strategy_count: Number of strategies to generate per category.
-        max_datapoints: Cap total datapoints (None = no cap).
+        max_dynamic_datapoints: Cap dynamic (generated) datapoints (None = no cap).
+        max_static_datapoints: Cap static (dataset) datapoints (None = no cap).
         cleanup_memory: Whether to clean up memory entities after dynamic runs.
         backend: Backend name (``"orq"`` or ``"openai"``).
         target_factory: Custom target factory (overrides backend default).
@@ -74,6 +89,10 @@ async def red_team(
         dataset_path: Path to static dataset (required for static/hybrid modes).
         confirm_callback: Optional callback that receives a summary dict before
             execution. Return ``False`` to cancel the run.
+        output_dir: Optional directory to save intermediate stage artifacts as
+            numbered JSON files. When ``None`` (default), no files are written.
+        print_results: Whether to print a Rich summary table after each run
+            completes. Defaults to ``False``.
 
     Returns:
         RedTeamReport with results and summary statistics.
@@ -82,6 +101,8 @@ async def red_team(
         ValueError: If mode is invalid or required arguments are missing.
         RuntimeError: If confirm_callback returns False.
     """
+    resolved_output_dir = Path(output_dir) if output_dir is not None else None
+
     kwargs: dict[str, Any] = dict(
         mode=mode,
         categories=categories,
@@ -92,7 +113,8 @@ async def red_team(
         parallelism=parallelism,
         generate_strategies=generate_strategies,
         generated_strategy_count=generated_strategy_count,
-        max_datapoints=max_datapoints,
+        max_dynamic_datapoints=max_dynamic_datapoints,
+        max_static_datapoints=max_static_datapoints,
         cleanup_memory=cleanup_memory,
         backend=backend,
         target_factory=target_factory,
@@ -102,6 +124,8 @@ async def red_team(
         description=description,
         dataset_path=dataset_path,
         confirm_callback=confirm_callback,
+        output_dir=resolved_output_dir,
+        print_results=print_results,
     )
 
     targets = [target] if isinstance(target, str) else list(target)
@@ -122,10 +146,16 @@ async def red_team(
         )
         reports.append(report)
 
-    return merge_reports(
+    merged = merge_reports(
         *reports,
         description=description or f'Multi-target red teaming ({len(targets)} targets)',
     )
+
+    if print_results:
+        from evaluatorq.redteam.reports.display import print_report_summary
+        print_report_summary(merged)
+
+    return merged
 
 
 async def _red_team_single(
@@ -140,7 +170,8 @@ async def _red_team_single(
     parallelism: int = 5,
     generate_strategies: bool = True,
     generated_strategy_count: int = 2,
-    max_datapoints: int | None = None,
+    max_dynamic_datapoints: int | None = None,
+    max_static_datapoints: int | None = None,
     cleanup_memory: bool = True,
     backend: str = 'orq',
     target_factory: AgentTargetFactory | None = None,
@@ -150,10 +181,13 @@ async def _red_team_single(
     description: str | None = None,
     dataset_path: Any = None,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    output_dir: Path | None = None,
+    print_results: bool = False,
 ) -> RedTeamReport:
     """Run red teaming against a single target, dispatching by mode."""
+    report: RedTeamReport
     if mode == 'dynamic':
-        return await _run_dynamic(
+        report = await _run_dynamic(
             target=target,
             categories=categories,
             max_turns=max_turns,
@@ -163,7 +197,7 @@ async def _red_team_single(
             parallelism=parallelism,
             generate_strategies=generate_strategies,
             generated_strategy_count=generated_strategy_count,
-            max_datapoints=max_datapoints,
+            max_dynamic_datapoints=max_dynamic_datapoints,
             cleanup_memory=cleanup_memory,
             backend=backend,
             target_factory=target_factory,
@@ -172,21 +206,23 @@ async def _red_team_single(
             llm_client=llm_client,
             description=description,
             confirm_callback=confirm_callback,
+            output_dir=output_dir,
         )
-    if mode == 'static':
-        return await _run_static(
+    elif mode == 'static':
+        report = await _run_static(
             target=target,
             categories=categories,
             evaluator_model=evaluator_model,
             parallelism=parallelism,
-            max_datapoints=max_datapoints,
+            max_static_datapoints=max_static_datapoints,
             backend=backend,
             dataset_path=dataset_path,
             description=description,
             llm_client=llm_client,
+            output_dir=output_dir,
         )
-    if mode == 'hybrid':
-        return await _run_hybrid(
+    elif mode == 'hybrid':
+        report = await _run_hybrid(
             target=target,
             categories=categories,
             max_turns=max_turns,
@@ -196,7 +232,8 @@ async def _red_team_single(
             parallelism=parallelism,
             generate_strategies=generate_strategies,
             generated_strategy_count=generated_strategy_count,
-            max_datapoints=max_datapoints,
+            max_dynamic_datapoints=max_dynamic_datapoints,
+            max_static_datapoints=max_static_datapoints,
             cleanup_memory=cleanup_memory,
             backend=backend,
             target_factory=target_factory,
@@ -206,9 +243,17 @@ async def _red_team_single(
             description=description,
             dataset_path=dataset_path,
             confirm_callback=confirm_callback,
+            output_dir=output_dir,
         )
-    msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
-    raise ValueError(msg)
+    else:
+        msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
+        raise ValueError(msg)
+
+    if print_results:
+        from evaluatorq.redteam.reports.display import print_report_summary
+        print_report_summary(report)
+
+    return report
 
 
 def _parse_target(target: str) -> tuple[str, str]:
@@ -238,7 +283,7 @@ async def _run_dynamic(
     parallelism: int,
     generate_strategies: bool,
     generated_strategy_count: int,
-    max_datapoints: int | None,
+    max_dynamic_datapoints: int | None,
     cleanup_memory: bool,
     backend: str,
     target_factory: AgentTargetFactory | None,
@@ -247,6 +292,7 @@ async def _run_dynamic(
     llm_client: AsyncOpenAI | None,
     description: str | None,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    output_dir: Path | None = None,
 ) -> RedTeamReport:
     """Run dynamic red teaming via evaluatorq."""
     from evaluatorq import evaluatorq
@@ -299,6 +345,8 @@ async def _run_dynamic(
                 "orq.redteam.num_knowledge_bases": len(agent_context.knowledge_bases) if agent_context.knowledge_bases else 0,
             })
 
+        _save_stage(output_dir, "01_agent_context.json", agent_context.model_dump_json(indent=2))
+
         resolved_categories = categories or list_available_categories()
 
         # Create LLM client for strategy generation
@@ -331,11 +379,27 @@ async def _run_dynamic(
             )
             set_span_attrs(dp_span, {"orq.redteam.num_datapoints": len(datapoints)})
 
-        if max_datapoints is not None and max_datapoints > 0:
-            datapoints = datapoints[:max_datapoints]
+        # Warn if generated strategies will be unused due to cap
+        if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
+            template_count = sum(
+                1 for dp in datapoints
+                if not dp.inputs.get('strategy', {}).get('is_generated', False)
+            )
+            if template_count >= max_dynamic_datapoints:
+                logger.warning(
+                    f'max_dynamic_datapoints={max_dynamic_datapoints} is already covered by '
+                    f'{template_count} template strategies — {generated_strategy_count} generated '
+                    f'strategies per category will be unused. Consider increasing '
+                    f'max_dynamic_datapoints or setting --no-generate-strategies.'
+                )
+
+        if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
+            datapoints = datapoints[:max_dynamic_datapoints]
         if not datapoints:
             msg = 'No datapoints generated. Check categories and agent capabilities.'
             raise ValueError(msg)
+
+        _save_stage(output_dir, "02_datapoints.json", json.dumps([dp.inputs for dp in datapoints], indent=2, default=str))
 
         # Confirm callback
         if confirm_callback is not None:
@@ -386,6 +450,8 @@ async def _run_dynamic(
                 ], memory_cleanup=resolved_memory_cleanup)
             raise
 
+        _save_stage(output_dir, "03_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
+
         pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
         # Stage 4: Normalize results
@@ -397,6 +463,8 @@ async def _run_dynamic(
             duration_seconds=pipeline_duration,
             description=description or f'Dynamic red teaming for {target}',
         )
+
+        _save_stage(output_dir, "04_summary_report.json", report.model_dump_json(indent=2))
 
         set_span_attrs(pipeline_span, {
             "orq.redteam.num_datapoints": len(datapoints),
@@ -431,15 +499,14 @@ async def _run_static(
     categories: list[str] | None,
     evaluator_model: str,
     parallelism: int,
-    max_datapoints: int | None,
+    max_static_datapoints: int | None,
     backend: str,
     dataset_path: Any,
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
+    output_dir: Path | None = None,
 ) -> RedTeamReport:
     """Run static red teaming via evaluatorq."""
-    from pathlib import Path
-
     from evaluatorq import evaluatorq
 
     from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
@@ -456,7 +523,7 @@ async def _run_static(
     # Load dataset
     path = Path(dataset_path) if dataset_path is not None else None
     data = load_owasp_agentic_dataset(
-        num_samples=max_datapoints,
+        num_samples=max_static_datapoints,
         categories=categories,
         path=path,
     )
@@ -483,6 +550,8 @@ async def _run_static(
             raise ValueError(msg)
         data = filtered
 
+    _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))
+
     # Create job based on target kind
     if target_kind == 'agent':
         model_job = create_model_job(agent_key=target_value, llm_client=llm_client)
@@ -507,6 +576,8 @@ async def _run_static(
         description=description or f'Static red teaming for {target}',
     )
 
+    _save_stage(output_dir, "02_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
+
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
     # Normalize results — static runs may produce multiple job reports
@@ -530,6 +601,7 @@ async def _run_static(
 
     primary_report = next(iter(reports.values()))
     primary_report.duration_seconds = pipeline_duration
+    _save_stage(output_dir, "03_summary_report.json", primary_report.model_dump_json(indent=2))
     return primary_report
 
 
@@ -544,7 +616,8 @@ async def _run_hybrid(
     parallelism: int,
     generate_strategies: bool,
     generated_strategy_count: int,
-    max_datapoints: int | None,
+    max_dynamic_datapoints: int | None,
+    max_static_datapoints: int | None,
     cleanup_memory: bool,
     backend: str,
     target_factory: AgentTargetFactory | None,
@@ -554,14 +627,13 @@ async def _run_hybrid(
     description: str | None,
     dataset_path: Any,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    output_dir: Path | None = None,
 ) -> RedTeamReport:
     """Run hybrid red teaming — dynamic + static in a single evaluatorq call.
 
     Generates dynamic datapoints and loads static datapoints, tags each with
     routing metadata, then dispatches through a hybrid job and scorer.
     """
-    from pathlib import Path
-
     from evaluatorq import DataPoint, EvaluationResult, evaluatorq, job
 
     from evaluatorq.redteam.backends.base import DefaultErrorMapper
@@ -587,13 +659,15 @@ async def _run_hybrid(
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
     # Resolve backend
-    backend_bundle = resolve_backend(backend)
+    backend_bundle = resolve_backend(backend, llm_client=llm_client)
     resolved_factory = target_factory or backend_bundle.target_factory
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
 
     # Get agent context
     agent_context: AgentContext = await backend_bundle.context_provider.get_agent_context(target_value)
+    _save_stage(output_dir, "01_agent_context.json", agent_context.model_dump_json(indent=2))
+
     resolved_categories = categories or list_available_categories()
 
     # Create LLM client
@@ -614,14 +688,35 @@ async def _run_hybrid(
         parallelism=parallelism,
     )
 
-    # Load static datapoints
+    # Warn if generated strategies will be unused due to cap
+    if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
+        template_count = sum(
+            1 for dp in dynamic_datapoints
+            if not dp.inputs.get('strategy', {}).get('is_generated', False)
+        )
+        if template_count >= max_dynamic_datapoints:
+            logger.warning(
+                f'max_dynamic_datapoints={max_dynamic_datapoints} is already covered by '
+                f'{template_count} template strategies — {generated_strategy_count} generated '
+                f'strategies per category will be unused. Consider increasing '
+                f'max_dynamic_datapoints or setting --no-generate-strategies.'
+            )
+
+    # Cap dynamic datapoints independently
+    if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
+        dynamic_datapoints = dynamic_datapoints[:max_dynamic_datapoints]
+
+    _save_stage(output_dir, "02_dynamic_datapoints.json", json.dumps([dp.inputs for dp in dynamic_datapoints], indent=2, default=str))
+
+    # Load static datapoints (capped independently)
     path = Path(dataset_path) if dataset_path is not None else None
     static_data = load_owasp_agentic_dataset(
-        num_samples=max_datapoints,
+        num_samples=max_static_datapoints,
         categories=categories,
         path=path,
     )
     static_datapoints: list[DataPoint] = static_data if isinstance(static_data, list) else []
+    _save_stage(output_dir, "03_static_datapoints.json", json.dumps([dp.inputs for dp in static_datapoints], indent=2, default=str))
 
     # Tag datapoints with hybrid routing metadata
     for dp in dynamic_datapoints:
@@ -632,8 +727,6 @@ async def _run_hybrid(
         dp.inputs['_hybrid_route'] = 'static'
 
     all_datapoints = dynamic_datapoints + static_datapoints
-    if max_datapoints is not None and max_datapoints > 0:
-        all_datapoints = all_datapoints[:max_datapoints]
     if not all_datapoints:
         msg = 'No datapoints generated for hybrid mode.'
         raise ValueError(msg)
@@ -666,31 +759,45 @@ async def _run_hybrid(
         attack_llm_client=resolved_llm_client,
     )
     if target_kind == 'agent':
-        static_job = create_model_job(agent_key=target_value)
+        static_job = create_model_job(agent_key=target_value, llm_client=resolved_llm_client)
     elif target_kind == 'openai':
-        static_job = create_model_job(model=target_value)
+        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client)
     elif target_kind == 'deployment':
-        static_job = create_model_job(deployment_key=target_value)
+        static_job = create_model_job(deployment_key=target_value, llm_client=resolved_llm_client)
     else:
-        static_job = create_model_job(model=target_value)
+        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client)
 
-    # Build hybrid dispatcher job
+    # Build hybrid dispatcher job — inner jobs are @job-decorated so they
+    # return {"name": ..., "output": ...}. Unwrap to get the raw output.
     @job('hybrid-red-team')
     async def hybrid_job(data: DataPoint, row: int) -> Any:
         route = data.inputs.get('_hybrid_route', 'static')
-        if route == 'dynamic':
-            return await dynamic_job.fn(data, row)
-        return await static_job.fn(data, row)
+        inner = dynamic_job if route == 'dynamic' else static_job
+        result = await inner(data, row)
+        output = result.get('output', result) if isinstance(result, dict) else result
+        # Serialize dynamic dict output to JSON string for evaluatorq persistence
+        # safety (matches research repo pattern).
+        if route == 'dynamic' and isinstance(output, dict):
+            return json.dumps(output, default=str)
+        return output
 
     # Build hybrid scorer
-    dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model)
-    static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model)
+    dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
+    static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
     async def hybrid_scorer(params: Any) -> EvaluationResult:
         data = params['data']
         route = data.inputs.get('_hybrid_route', 'static')
         if route == 'dynamic':
-            return await dynamic_evaluator['scorer'](params)
+            # Dynamic output was JSON-serialized; deserialize for the scorer.
+            raw_output = params.get('output')
+            if isinstance(raw_output, str):
+                try:
+                    raw_output = json.loads(raw_output)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            dynamic_params = dict(params, output=raw_output)
+            return await dynamic_evaluator['scorer'](dynamic_params)
         return await static_evaluator['scorer'](params)
 
     # Run evaluatorq
@@ -707,6 +814,8 @@ async def _run_hybrid(
         print_results=False,
         description=description or f'Hybrid red teaming for {target}',
     )
+
+    _save_stage(output_dir, "04_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
@@ -740,6 +849,7 @@ async def _run_hybrid(
 
     report = merge_reports(*reports_to_merge, description=description or f'Hybrid red teaming for {target}')
     report.duration_seconds = pipeline_duration
+    _save_stage(output_dir, "05_summary_report.json", report.model_dump_json(indent=2))
 
     # Memory cleanup
     if cleanup_memory and agent_context.has_memory:
