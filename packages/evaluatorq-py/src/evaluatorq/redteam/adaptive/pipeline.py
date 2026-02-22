@@ -133,7 +133,7 @@ def create_dynamic_redteam_job(
     Note:
         Callers must ensure ``cleanup_memory_entities()`` is called after the
         evaluatorq run completes. The job itself does not manage memory cleanup —
-        that responsibility belongs to the caller (``_runner.py`` or CLI).
+        that responsibility belongs to the caller (``runner.py`` or CLI).
 
     Args:
         agent_key: Agent key to test

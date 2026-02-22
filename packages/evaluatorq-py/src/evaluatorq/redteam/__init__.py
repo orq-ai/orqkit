@@ -64,7 +64,7 @@ from evaluatorq.redteam.contracts import (
     normalize_framework,
 )
 
-from evaluatorq.redteam._runner import red_team
+from evaluatorq.redteam.runner import red_team
 from evaluatorq.redteam.reports.converters import merge_reports
 from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,

@@ -1,9 +1,9 @@
 """Red teaming span utilities for OpenTelemetry instrumentation.
 
 Span hierarchy:
-- orq.redteam.pipeline (root or child of parent context)      [_runner.py]
-  +-- orq.redteam.context_retrieval                            [_runner.py]
-  +-- orq.redteam.datapoint_generation                         [_runner.py]
+- orq.redteam.pipeline (root or child of parent context)      [runner.py]
+  +-- orq.redteam.context_retrieval                            [runner.py]
+  +-- orq.redteam.datapoint_generation                         [runner.py]
   |   +-- orq.redteam.capability_classification                [strategy_planner.py]
   |   +-- orq.redteam.strategy_planning                        [strategy_planner.py]
   +-- orq.job (framework)                                      [processings.py]
@@ -11,7 +11,7 @@ Span hierarchy:
   |   |   +-- orq.redteam.attack_turn x N                      [orchestrator.py]
   |   +-- orq.evaluation (framework)                           [processings.py]
   |       +-- orq.redteam.security_evaluation                  [pipeline.py]
-  +-- orq.redteam.memory_cleanup                               [_runner.py]
+  +-- orq.redteam.memory_cleanup                               [runner.py]
 
 All red teaming attributes use the ``orq.redteam.*`` namespace.
 """

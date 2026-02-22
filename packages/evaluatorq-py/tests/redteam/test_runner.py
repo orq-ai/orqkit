@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from evaluatorq.redteam import get_category_info, list_categories, red_team
-from evaluatorq.redteam._runner import _parse_target
+from evaluatorq.redteam.runner import _parse_target
 
 
 class TestParseTarget:
@@ -97,7 +97,7 @@ class TestRedTeamValidation:
 
         sentinel = object()
         with patch(
-            'evaluatorq.redteam._runner._run_static',
+            'evaluatorq.redteam.runner._run_static',
             new_callable=AsyncMock,
             return_value=sentinel,
         ) as mock_static:
@@ -112,7 +112,7 @@ class TestRedTeamValidation:
 
         sentinel = object()
         with patch(
-            'evaluatorq.redteam._runner._run_hybrid',
+            'evaluatorq.redteam.runner._run_hybrid',
             new_callable=AsyncMock,
             return_value=sentinel,
         ) as mock_hybrid:
@@ -157,7 +157,7 @@ class TestStaticCoverageGuard:
             patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.create_owasp_evaluator', return_value=MagicMock()),
             patch('evaluatorq.redteam.reports.converters.static_evaluatorq_results_to_reports', return_value={}),
         ):
-            from evaluatorq.redteam._runner import _run_static
+            from evaluatorq.redteam.runner import _run_static
 
             await _run_static(
                 target='agent:test',
@@ -196,7 +196,7 @@ class TestStaticCoverageGuard:
                 return_value=None,
             ),
         ):
-            from evaluatorq.redteam._runner import _run_static
+            from evaluatorq.redteam.runner import _run_static
 
             with pytest.raises(ValueError, match='All datapoints were filtered out'):
                 await _run_static(
@@ -222,7 +222,7 @@ class TestConfirmCallback:
         callback = MagicMock(return_value=False)
 
         with (
-            patch('evaluatorq.redteam._runner._run_dynamic') as mock_dynamic,
+            patch('evaluatorq.redteam.runner._run_dynamic') as mock_dynamic,
         ):
             # Make _run_dynamic propagate the confirm callback behavior
             async def _fake_dynamic(**kwargs):
@@ -249,7 +249,7 @@ class TestConfirmCallback:
         sentinel = object()
 
         with patch(
-            'evaluatorq.redteam._runner._run_dynamic',
+            'evaluatorq.redteam.runner._run_dynamic',
             new_callable=AsyncMock,
             return_value=sentinel,
         ) as mock_dynamic:
@@ -298,7 +298,7 @@ class TestRedTeamMultiTarget:
             )
 
         with patch(
-            'evaluatorq.redteam._runner._red_team_single',
+            'evaluatorq.redteam.runner._red_team_single',
             new_callable=AsyncMock,
         ) as mock_single:
             mock_single.side_effect = make_mock_report
@@ -316,7 +316,7 @@ class TestRedTeamMultiTarget:
 
         sentinel = object()
         with patch(
-            'evaluatorq.redteam._runner._red_team_single',
+            'evaluatorq.redteam.runner._red_team_single',
             new_callable=AsyncMock,
             return_value=sentinel,
         ) as mock_single:
