@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from evaluatorq.redteam import get_category_info, list_categories, red_team
-from evaluatorq.redteam._runner import _parse_target, red_team_multi
+from evaluatorq.redteam._runner import _parse_target
 
 
 class TestParseTarget:
@@ -264,17 +264,17 @@ class TestConfirmCallback:
             assert call_kwargs['confirm_callback'] is callback
 
 
-class TestRedTeamMulti:
-    """Tests for red_team_multi()."""
+class TestRedTeamMultiTarget:
+    """Tests for red_team() with multiple targets."""
 
     @pytest.mark.asyncio
     async def test_empty_targets_raises(self):
         with pytest.raises(ValueError, match='at least one target'):
-            await red_team_multi([])
+            await red_team([])
 
     @pytest.mark.asyncio
-    async def test_multi_creates_per_target_reports(self):
-        """Multi-target runs red_team per target and merges."""
+    async def test_multi_target_runs_each_and_merges(self):
+        """Multi-target calls _red_team_single per target and merges."""
         from datetime import datetime, timezone
         from unittest.mock import AsyncMock, patch
 
@@ -284,7 +284,7 @@ class TestRedTeamMulti:
             ReportSummary,
         )
 
-        def make_mock_report(target: str) -> RedTeamReport:
+        def make_mock_report(target: str, **kwargs) -> RedTeamReport:
             return RedTeamReport(
                 created_at=datetime.now(tz=timezone.utc),
                 description=f'Report for {target}',
@@ -298,15 +298,28 @@ class TestRedTeamMulti:
             )
 
         with patch(
-            'evaluatorq.redteam._runner.red_team',
+            'evaluatorq.redteam._runner._red_team_single',
             new_callable=AsyncMock,
-        ) as mock_rt:
-            mock_rt.side_effect = lambda t, **kwargs: make_mock_report(t)
+        ) as mock_single:
+            mock_single.side_effect = make_mock_report
 
-            result = await red_team_multi(['agent:a', 'agent:b'])
+            result = await red_team(['agent:a', 'agent:b'])
 
-            assert len(result.by_target) == 2
-            assert 'agent:a' in result.by_target
-            assert 'agent:b' in result.by_target
-            assert result.merged is not None
-            assert mock_rt.call_count == 2
+            assert mock_single.call_count == 2
+            # Merged report should have both agents
+            assert set(result.tested_agents) == {'agent:a', 'agent:b'}
+
+    @pytest.mark.asyncio
+    async def test_single_string_target_works(self):
+        """A single string target dispatches directly (no merge)."""
+        from unittest.mock import AsyncMock, patch
+
+        sentinel = object()
+        with patch(
+            'evaluatorq.redteam._runner._red_team_single',
+            new_callable=AsyncMock,
+            return_value=sentinel,
+        ) as mock_single:
+            result = await red_team('agent:test')
+            assert result is sentinel
+            mock_single.assert_awaited_once()

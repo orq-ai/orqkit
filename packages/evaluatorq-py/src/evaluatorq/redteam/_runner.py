@@ -13,7 +13,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories,
 )
-from evaluatorq.redteam.contracts import AgentContext, MultiTargetReport, RedTeamReport
+from evaluatorq.redteam.contracts import AgentContext, RedTeamReport
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 async def red_team(
-    target: str,
+    target: str | list[str],
     *,
     mode: str = 'dynamic',
     categories: list[str] | None = None,
@@ -46,9 +46,13 @@ async def red_team(
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
+    Accepts a single target or a list of targets. When multiple targets are
+    provided, each is run independently and the results are merged into a
+    single report.
+
     Args:
-        target: Target identifier — ``"agent:<key>"`` for ORQ agents, or
-            ``"openai:<model>"`` for direct OpenAI-compatible endpoints.
+        target: Target identifier(s). A single string like ``"agent:<key>"``
+            or ``"openai:<model>"``, or a list of such strings for multi-target runs.
         mode: Execution mode — ``"dynamic"``, ``"static"``, or ``"hybrid"``.
         categories: OWASP categories to test (e.g., ``["ASI01", "ASI03"]``).
             Defaults to all available categories.
@@ -78,6 +82,76 @@ async def red_team(
         ValueError: If mode is invalid or required arguments are missing.
         RuntimeError: If confirm_callback returns False.
     """
+    kwargs: dict[str, Any] = dict(
+        mode=mode,
+        categories=categories,
+        max_turns=max_turns,
+        max_per_category=max_per_category,
+        attack_model=attack_model,
+        evaluator_model=evaluator_model,
+        parallelism=parallelism,
+        generate_strategies=generate_strategies,
+        generated_strategy_count=generated_strategy_count,
+        max_datapoints=max_datapoints,
+        cleanup_memory=cleanup_memory,
+        backend=backend,
+        target_factory=target_factory,
+        error_mapper=error_mapper,
+        memory_cleanup=memory_cleanup,
+        llm_client=llm_client,
+        description=description,
+        dataset_path=dataset_path,
+        confirm_callback=confirm_callback,
+    )
+
+    targets = [target] if isinstance(target, str) else list(target)
+    if not targets:
+        msg = 'red_team() requires at least one target'
+        raise ValueError(msg)
+
+    if len(targets) == 1:
+        return await _red_team_single(targets[0], **kwargs)
+
+    from evaluatorq.redteam.reports.converters import merge_reports
+
+    reports: list[RedTeamReport] = []
+    for t in targets:
+        report = await _red_team_single(
+            t,
+            **{**kwargs, 'description': f'{description or "Multi-target"} ({t})'},
+        )
+        reports.append(report)
+
+    return merge_reports(
+        *reports,
+        description=description or f'Multi-target red teaming ({len(targets)} targets)',
+    )
+
+
+async def _red_team_single(
+    target: str,
+    *,
+    mode: str = 'dynamic',
+    categories: list[str] | None = None,
+    max_turns: int = 5,
+    max_per_category: int | None = None,
+    attack_model: str = 'azure/gpt-5-mini',
+    evaluator_model: str = 'azure/gpt-5-mini',
+    parallelism: int = 5,
+    generate_strategies: bool = True,
+    generated_strategy_count: int = 2,
+    max_datapoints: int | None = None,
+    cleanup_memory: bool = True,
+    backend: str = 'orq',
+    target_factory: AgentTargetFactory | None = None,
+    error_mapper: ErrorMapper | None = None,
+    memory_cleanup: MemoryCleanup | None = None,
+    llm_client: AsyncOpenAI | None = None,
+    description: str | None = None,
+    dataset_path: Any = None,
+    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+) -> RedTeamReport:
+    """Run red teaming against a single target, dispatching by mode."""
     if mode == 'dynamic':
         return await _run_dynamic(
             target=target,
@@ -679,79 +753,3 @@ async def _run_hybrid(
     return report
 
 
-async def red_team_multi(
-    targets: list[str],
-    *,
-    mode: str = 'dynamic',
-    categories: list[str] | None = None,
-    max_turns: int = 5,
-    max_per_category: int | None = None,
-    attack_model: str = 'azure/gpt-5-mini',
-    evaluator_model: str = 'azure/gpt-5-mini',
-    parallelism: int = 5,
-    generate_strategies: bool = True,
-    generated_strategy_count: int = 2,
-    max_datapoints: int | None = None,
-    cleanup_memory: bool = True,
-    backend: str = 'orq',
-    target_factory: AgentTargetFactory | None = None,
-    error_mapper: ErrorMapper | None = None,
-    memory_cleanup: MemoryCleanup | None = None,
-    llm_client: AsyncOpenAI | None = None,
-    description: str | None = None,
-    dataset_path: Any = None,
-    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
-) -> MultiTargetReport:
-    """Run red teaming against multiple targets and return a merged report.
-
-    Each target is run independently via ``red_team()`` and results are
-    merged into a single ``MultiTargetReport`` with per-target breakdown.
-
-    Args:
-        targets: List of target identifiers (e.g., ``["agent:a", "agent:b"]``).
-        **kwargs: All other arguments are forwarded to ``red_team()``.
-
-    Returns:
-        MultiTargetReport with merged report and per-target reports.
-
-    Raises:
-        ValueError: If targets list is empty.
-    """
-    if not targets:
-        msg = 'red_team_multi() requires at least one target'
-        raise ValueError(msg)
-
-    from evaluatorq.redteam.reports.converters import merge_reports
-
-    by_target: dict[str, RedTeamReport] = {}
-    for t in targets:
-        report = await red_team(
-            t,
-            mode=mode,
-            categories=categories,
-            max_turns=max_turns,
-            max_per_category=max_per_category,
-            attack_model=attack_model,
-            evaluator_model=evaluator_model,
-            parallelism=parallelism,
-            generate_strategies=generate_strategies,
-            generated_strategy_count=generated_strategy_count,
-            max_datapoints=max_datapoints,
-            cleanup_memory=cleanup_memory,
-            backend=backend,
-            target_factory=target_factory,
-            error_mapper=error_mapper,
-            memory_cleanup=memory_cleanup,
-            llm_client=llm_client,
-            description=f'{description or "Multi-target"} ({t})',
-            dataset_path=dataset_path,
-            confirm_callback=confirm_callback,
-        )
-        by_target[t] = report
-
-    merged = merge_reports(
-        *by_target.values(),
-        description=description or f'Multi-target red teaming ({len(targets)} targets)',
-    )
-
-    return MultiTargetReport(merged=merged, by_target=by_target)

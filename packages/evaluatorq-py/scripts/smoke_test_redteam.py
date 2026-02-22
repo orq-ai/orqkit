@@ -31,43 +31,21 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     args = parse_args()
 
-    if len(args.target) == 1:
-        from evaluatorq.redteam import red_team
+    from evaluatorq.redteam import red_team
 
-        report = await red_team(
-            args.target[0],
-            mode=args.mode,
-            max_turns=args.max_turns,
-            categories=args.categories,
-            parallelism=args.parallelism,
-            max_datapoints=args.max_datapoints,
-            attack_model=args.attack_model,
-            evaluator_model=args.evaluator_model,
-            dataset_path=args.dataset_path,
-        )
-        print(json.dumps(report.summary.model_dump(mode='json'), indent=2))
-    else:
-        from evaluatorq.redteam import red_team_multi
-
-        result = await red_team_multi(
-            args.target,
-            mode=args.mode,
-            max_turns=args.max_turns,
-            categories=args.categories,
-            parallelism=args.parallelism,
-            max_datapoints=args.max_datapoints,
-            attack_model=args.attack_model,
-            evaluator_model=args.evaluator_model,
-            dataset_path=args.dataset_path,
-        )
-        output = {
-            'merged_summary': result.merged.summary.model_dump(mode='json'),
-            'by_target': {
-                t: r.summary.model_dump(mode='json')
-                for t, r in result.by_target.items()
-            },
-        }
-        print(json.dumps(output, indent=2))
+    target = args.target[0] if len(args.target) == 1 else args.target
+    report = await red_team(
+        target,
+        mode=args.mode,
+        max_turns=args.max_turns,
+        categories=args.categories,
+        parallelism=args.parallelism,
+        max_datapoints=args.max_datapoints,
+        attack_model=args.attack_model,
+        evaluator_model=args.evaluator_model,
+        dataset_path=args.dataset_path,
+    )
+    print(json.dumps(report.summary.model_dump(mode='json'), indent=2))
 
 
 if __name__ == '__main__':

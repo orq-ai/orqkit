@@ -43,7 +43,6 @@ from evaluatorq.redteam.contracts import (
     KnowledgeBaseInfo,
     MemoryStoreInfo,
     Message,
-    MultiTargetReport,
     OrchestratorResult,
     Pipeline,
     PipelineLLMConfig,
@@ -65,7 +64,7 @@ from evaluatorq.redteam.contracts import (
     normalize_framework,
 )
 
-from evaluatorq.redteam._runner import red_team, red_team_multi
+from evaluatorq.redteam._runner import red_team
 from evaluatorq.redteam.reports.converters import merge_reports
 from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
@@ -75,7 +74,6 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
 __all__ = [
     # Entry points
     "red_team",
-    "red_team_multi",
     "merge_reports",
     # Category introspection
     "list_categories",
@@ -120,7 +118,6 @@ __all__ = [
     "CategorySummary",
     "ReportSummary",
     "ReportSnapshot",
-    "MultiTargetReport",
     # Dynamic pipeline row models
     "EvaluatedRowBase",
     "EvaluatedRow",

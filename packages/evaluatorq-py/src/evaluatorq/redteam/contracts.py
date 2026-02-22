@@ -874,16 +874,6 @@ class DatasetInferenceRow(BaseModel):
     error_type: str | None = None
 
 
-class MultiTargetReport(BaseModel):
-    """Result of a multi-target red teaming run."""
-
-    merged: RedTeamReport
-    by_target: dict[str, RedTeamReport] = Field(
-        default_factory=dict,
-        description='Per-target reports keyed by target identifier',
-    )
-
-
 class ReportSnapshot(BaseModel):
     """Concise report summary used by CLI report commands."""
 
