@@ -43,12 +43,11 @@ def retrieve_agent_context_sync(orq_client: Orq, agent_key: str) -> AgentContext
     """
     try:
         asyncio.get_running_loop()
+    except RuntimeError:
+        # No running event loop — safe to use asyncio.run()
+        return asyncio.run(retrieve_agent_context(orq_client, agent_key))
+    else:
         raise RuntimeError(
             'retrieve_agent_context_sync cannot be called from within an async context. '
             'Use `await retrieve_agent_context(...)` instead.'
         )
-    except RuntimeError as e:
-        if 'cannot be called from within an async context' in str(e):
-            raise
-        # No running loop — safe to use asyncio.run()
-        return asyncio.run(retrieve_agent_context(orq_client, agent_key))
