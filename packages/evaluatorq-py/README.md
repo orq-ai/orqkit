@@ -889,6 +889,64 @@ await red_team("deployment:my-deployment-key", mode="static", dataset_path="data
 | `dataset_path` | `str \| None` | `None` | Path to static dataset (required for static mode) |
 | `backend` | `str` | `"orq"` | Backend (`"orq"` or `"openai"`) |
 
+### CLI
+
+The red teaming module includes a CLI for running security tests from the terminal. Install with the `redteam` extra:
+
+```bash
+pip install evaluatorq[redteam]
+```
+
+#### Usage
+
+```bash
+# Show all options
+evaluatorq-redteam --help
+
+# Dynamic red teaming against an ORQ agent
+evaluatorq-redteam --target agent:my-agent-key --mode dynamic --print-results
+
+# Test specific OWASP categories
+evaluatorq-redteam -t agent:my-agent-key --category ASI01 --category ASI03 --print-results
+
+# Static mode with a dataset
+evaluatorq-redteam -t agent:my-agent-key --mode static --dataset ./data/owasp.json --print-results
+
+# Hybrid mode (dynamic + static combined)
+evaluatorq-redteam -t agent:my-agent-key --mode hybrid --dataset ./data/owasp.json --print-results
+
+# Cap datapoints for a quick smoke test
+evaluatorq-redteam -t agent:my-agent-key --max-dynamic-datapoints 5 --no-generate-strategies -y --print-results
+
+# Save the report to a JSON file
+evaluatorq-redteam -t agent:my-agent-key --save-report report.json -y
+
+# Multiple targets
+evaluatorq-redteam -t agent:agent-a -t agent:agent-b --print-results
+
+# Verbose output for debugging (-v info, -vv debug)
+evaluatorq-redteam -t agent:my-agent-key -vv --print-results -y
+
+# Save intermediate stage artifacts
+evaluatorq-redteam -t agent:my-agent-key --output-dir ./artifacts -y --print-results
+```
+
+#### Key Flags
+
+| Flag | Description |
+|------|-------------|
+| `--target` / `-t` | Target identifier (repeatable for multi-target) |
+| `--mode` | `dynamic`, `static`, or `hybrid` (default: `dynamic`) |
+| `--category` / `-c` | OWASP category filter (repeatable) |
+| `--yes` / `-y` | Skip confirmation prompt |
+| `--print-results` | Display Rich summary table after the run |
+| `--save-report` | Write full report JSON to a file |
+| `--no-generate-strategies` | Disable LLM-based strategy generation |
+| `--max-dynamic-datapoints` | Cap dynamic datapoints |
+| `--max-static-datapoints` | Cap static datapoints |
+| `--output-dir` | Save intermediate stage artifacts |
+| `--verbose` / `-v` | Increase log verbosity |
+
 ## 🛠️ Development
 
 ```bash

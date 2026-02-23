@@ -188,13 +188,30 @@ def create_dynamic_redteam_job(
                 token_usage = None
                 target_timeout_s = PIPELINE_CONFIG.target_agent_timeout_ms / 1000.0
                 try:
-                    response = await asyncio.wait_for(
-                        target.send_prompt(prompt),
-                        timeout=target_timeout_s,
-                    )
-                    consume_usage = getattr(target, 'consume_last_token_usage', None)
-                    if callable(consume_usage):
-                        token_usage = consume_usage()
+                    async with with_redteam_span(
+                        "orq.redteam.target_call",
+                        {
+                            "orq.redteam.category": category,
+                            "orq.redteam.strategy_name": strategy.name,
+                            "orq.redteam.turn": 1,
+                            "orq.redteam.input": prompt[:2000],
+                        },
+                    ) as tgt_span:
+                        response = await asyncio.wait_for(
+                            target.send_prompt(prompt),
+                            timeout=target_timeout_s,
+                        )
+                        set_span_attrs(tgt_span, {
+                            "orq.redteam.output": response[:2000] if response else "",
+                        })
+                        consume_usage = getattr(target, 'consume_last_token_usage', None)
+                        if callable(consume_usage):
+                            token_usage = consume_usage()
+                            if token_usage is not None:
+                                set_span_attrs(tgt_span, {
+                                    "gen_ai.usage.input_tokens": token_usage.prompt_tokens or 0,
+                                    "gen_ai.usage.output_tokens": token_usage.completion_tokens or 0,
+                                })
                 except asyncio.TimeoutError:
                     logger.error(f'Single-turn attack timed out for {category}/{strategy.name} after {target_timeout_s:.0f}s')
                     response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
@@ -370,6 +387,7 @@ def create_dynamic_evaluator(
         return EvaluationResult(
             value=raw_value if raw_value is not None else eval_result.passed,
             explanation=eval_result.explanation,
+            pass_=eval_result.passed,
         )
 
     return {'name': 'owasp-dynamic-security', 'scorer': scorer}

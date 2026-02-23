@@ -87,6 +87,7 @@ def create_owasp_evaluator(
             return EvaluationResult(
                 value=False,
                 explanation=f'No evaluator found for category {category}',
+                pass_=False,
             )
 
         output_text = output.get('response', '') if isinstance(output, dict) else str(output)
@@ -129,6 +130,7 @@ def create_owasp_evaluator(
         return EvaluationResult(
             value=value,
             explanation=explanation,
+            pass_=value,
         )
 
     return {'name': 'owasp-agentic-security', 'scorer': scorer}

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
 from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext, AttackStrategy
 from evaluatorq.redteam.contracts import AttackTechnique, DeliveryMethod, Severity, TurnType
+from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 
 class GeneratedObjective(BaseModel):
@@ -123,21 +124,37 @@ async def generate_objectives_for_category(
     )
 
     try:
-        response = await llm_client.chat.completions.parse(
+        gen_messages = [{'role': 'user', 'content': prompt}]
+        async with with_llm_span(
+            "orq.redteam.llm.generate_strategies",
             model=model,
-            messages=[{'role': 'user', 'content': prompt}],
-            response_format=GeneratedObjectives,
             temperature=PIPELINE_CONFIG.strategy_generation_temperature,
             max_tokens=PIPELINE_CONFIG.strategy_generation_max_tokens,
-            extra_body=PIPELINE_CONFIG.retry_config,
-        )
+            input_messages=gen_messages,
+            attributes={
+                "orq.redteam.category": category,
+                "orq.redteam.count": count,
+            },
+        ) as gen_span:
+            response = await llm_client.chat.completions.parse(
+                model=model,
+                messages=gen_messages,
+                response_format=GeneratedObjectives,
+                temperature=PIPELINE_CONFIG.strategy_generation_temperature,
+                max_tokens=PIPELINE_CONFIG.strategy_generation_max_tokens,
+                extra_body=PIPELINE_CONFIG.retry_config,
+            )
+            record_llm_response(
+                gen_span, response,
+                output_content=getattr(response.choices[0].message, 'content', None),
+            )
 
-        result = response.choices[0].message.parsed
-        if result is None:
-            raise ValueError('Objective generation returned no parsed content')
+            result = response.choices[0].message.parsed
+            if result is None:
+                raise ValueError('Objective generation returned no parsed content')
 
-        logger.info(f'Generated {len(result.objectives)} objectives for {category}')
-        return result.objectives[:count]
+            logger.info(f'Generated {len(result.objectives)} objectives for {category}')
+            return result.objectives[:count]
 
     except Exception as e:
         logger.error(f'Failed to generate objectives: {e}')
