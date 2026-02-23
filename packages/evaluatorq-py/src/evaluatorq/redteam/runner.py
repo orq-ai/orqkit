@@ -49,7 +49,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories,
 )
-from evaluatorq.redteam.contracts import AgentContext, RedTeamReport
+from evaluatorq.redteam.contracts import AgentContext, RedTeamReport, TargetConfig
 
 
 def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
@@ -59,7 +59,7 @@ def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
     generated_dynamic = 0
     for dp in datapoints:
         inputs = dp.inputs if hasattr(dp, "inputs") else dp
-        source = inputs.get("_hybrid_source", "")
+        source = inputs.get("hybrid_source", "")
         if source == "static":
             static += 1
         elif inputs.get("strategy", {}).get("is_generated", False):
@@ -103,6 +103,7 @@ async def red_team(
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
     output_dir: Path | str | None = None,
     print_results: bool = False,
+    target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -139,6 +140,8 @@ async def red_team(
             numbered JSON files. When ``None`` (default), no files are written.
         print_results: Whether to print a Rich summary table after each run
             completes. Defaults to ``False``.
+        target_config: Optional backend-agnostic target configuration (e.g.
+            system prompt for OpenAI targets).
 
     Returns:
         RedTeamReport with results and summary statistics.
@@ -172,6 +175,7 @@ async def red_team(
         confirm_callback=confirm_callback,
         output_dir=resolved_output_dir,
         print_results=print_results,
+        target_config=target_config,
     )
 
     targets = [target] if isinstance(target, str) else list(target)
@@ -229,6 +233,7 @@ async def _red_team_single(
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
     output_dir: Path | None = None,
     print_results: bool = False,
+    target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Run red teaming against a single target, dispatching by mode."""
     report: RedTeamReport
@@ -253,6 +258,7 @@ async def _red_team_single(
             description=description,
             confirm_callback=confirm_callback,
             output_dir=output_dir,
+            target_config=target_config,
         )
     elif mode == 'static':
         report = await _run_static(
@@ -266,6 +272,7 @@ async def _red_team_single(
             description=description,
             llm_client=llm_client,
             output_dir=output_dir,
+            target_config=target_config,
         )
     elif mode == 'hybrid':
         report = await _run_hybrid(
@@ -290,6 +297,7 @@ async def _red_team_single(
             dataset_path=dataset_path,
             confirm_callback=confirm_callback,
             output_dir=output_dir,
+            target_config=target_config,
         )
     else:
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
@@ -339,6 +347,7 @@ async def _run_dynamic(
     description: str | None,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
     output_dir: Path | None = None,
+    target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Run dynamic red teaming via evaluatorq."""
     from evaluatorq import evaluatorq
@@ -374,7 +383,7 @@ async def _run_dynamic(
         pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
         # Resolve backend
-        backend_bundle = resolve_backend(backend, llm_client=llm_client)
+        backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
         resolved_factory = target_factory or backend_bundle.target_factory
         resolved_error_mapper = error_mapper or DefaultErrorMapper()
         resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
@@ -551,6 +560,7 @@ async def _run_static(
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
     output_dir: Path | None = None,
+    target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Run static red teaming via evaluatorq."""
     from evaluatorq import evaluatorq
@@ -599,14 +609,15 @@ async def _run_static(
     _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))
 
     # Create job based on target kind
+    _sys_prompt = target_config.system_prompt if target_config else None
     if target_kind == 'agent':
-        model_job = create_model_job(agent_key=target_value, llm_client=llm_client)
+        model_job = create_model_job(agent_key=target_value, llm_client=llm_client, system_prompt=_sys_prompt)
     elif target_kind == 'openai':
-        model_job = create_model_job(model=target_value, llm_client=llm_client)
+        model_job = create_model_job(model=target_value, llm_client=llm_client, system_prompt=_sys_prompt)
     elif target_kind == 'deployment':
-        model_job = create_model_job(deployment_key=target_value, llm_client=llm_client)
+        model_job = create_model_job(deployment_key=target_value, llm_client=llm_client, system_prompt=_sys_prompt)
     else:
-        model_job = create_model_job(model=target_value, llm_client=llm_client)
+        model_job = create_model_job(model=target_value, llm_client=llm_client, system_prompt=_sys_prompt)
 
     evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=llm_client)
 
@@ -674,6 +685,7 @@ async def _run_hybrid(
     dataset_path: Any,
     confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
     output_dir: Path | None = None,
+    target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Run hybrid red teaming — dynamic + static in a single evaluatorq call.
 
@@ -705,7 +717,7 @@ async def _run_hybrid(
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
     # Resolve backend
-    backend_bundle = resolve_backend(backend, llm_client=llm_client)
+    backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
     resolved_factory = target_factory or backend_bundle.target_factory
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
@@ -766,11 +778,9 @@ async def _run_hybrid(
 
     # Tag datapoints with hybrid routing metadata
     for dp in dynamic_datapoints:
-        dp.inputs['_hybrid_source'] = 'dynamic'
-        dp.inputs['_hybrid_route'] = 'dynamic'
+        dp.inputs['hybrid_source'] = 'dynamic'
     for dp in static_datapoints:
-        dp.inputs['_hybrid_source'] = 'static'
-        dp.inputs['_hybrid_route'] = 'static'
+        dp.inputs['hybrid_source'] = 'static'
 
     all_datapoints = dynamic_datapoints + static_datapoints
     if not all_datapoints:
@@ -804,20 +814,23 @@ async def _run_hybrid(
         error_mapper=resolved_error_mapper,
         attack_llm_client=resolved_llm_client,
     )
+    _sys_prompt = target_config.system_prompt if target_config else None
     if target_kind == 'agent':
-        static_job = create_model_job(agent_key=target_value, llm_client=resolved_llm_client)
+        static_job = create_model_job(agent_key=target_value, llm_client=resolved_llm_client, system_prompt=_sys_prompt)
     elif target_kind == 'openai':
-        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client)
+        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client, system_prompt=_sys_prompt)
     elif target_kind == 'deployment':
-        static_job = create_model_job(deployment_key=target_value, llm_client=resolved_llm_client)
+        static_job = create_model_job(deployment_key=target_value, llm_client=resolved_llm_client, system_prompt=_sys_prompt)
     else:
-        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client)
+        static_job = create_model_job(model=target_value, llm_client=resolved_llm_client, system_prompt=_sys_prompt)
 
     # Build hybrid dispatcher job — inner jobs are @job-decorated so they
     # return {"name": ..., "output": ...}. Unwrap to get the raw output.
-    @job('hybrid-red-team')
+    safe_target = ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in target_value).strip('-') or 'unknown'
+
+    @job(f'redteam:hybrid:{safe_target}')
     async def hybrid_job(data: DataPoint, row: int) -> Any:
-        route = data.inputs.get('_hybrid_route', 'static')
+        route = data.inputs.get('hybrid_source', 'static')
         inner = dynamic_job if route == 'dynamic' else static_job
         result = await inner(data, row)
         output = result.get('output', result) if isinstance(result, dict) else result
@@ -833,15 +846,15 @@ async def _run_hybrid(
 
     async def hybrid_scorer(params: Any) -> EvaluationResult:
         data = params['data']
-        route = data.inputs.get('_hybrid_route', 'static')
+        route = data.inputs.get('hybrid_source', 'static')
         if route == 'dynamic':
             # Dynamic output was JSON-serialized; deserialize for the scorer.
             raw_output = params.get('output')
             if isinstance(raw_output, str):
                 try:
                     raw_output = json.loads(raw_output)
-                except (json.JSONDecodeError, TypeError):
-                    pass
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.warning(f'Failed to deserialize dynamic output as JSON: {e}')
             dynamic_params = dict(params, output=raw_output)
             return await dynamic_evaluator['scorer'](dynamic_params)
         return await static_evaluator['scorer'](params)
@@ -851,23 +864,35 @@ async def _run_hybrid(
         f'Running hybrid red teaming against {target} '
         f'({len(dynamic_datapoints)} dynamic + {len(static_datapoints)} static, parallelism={parallelism})'
     )
-    results = await evaluatorq(
-        'hybrid-red-team',
-        data=all_datapoints,
-        jobs=[hybrid_job],
-        evaluators=[{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}],
-        parallelism=parallelism,
-        print_results=False,
-        description=description or f'Hybrid red teaming for {target}',
-    )
+    try:
+        results = await evaluatorq(
+            'hybrid-red-team',
+            data=all_datapoints,
+            jobs=[hybrid_job],
+            evaluators=[{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}],
+            parallelism=parallelism,
+            print_results=False,
+            description=description or f'Hybrid red teaming for {target}',
+        )
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logger.warning('Hybrid run cancelled — attempting memory cleanup')
+        if cleanup_memory and agent_context.has_memory:
+            entity_ids = [
+                dp.inputs['memory_entity_id']
+                for dp in dynamic_datapoints
+                if 'memory_entity_id' in dp.inputs
+            ]
+            if entity_ids:
+                await cleanup_memory_entities(agent_context, entity_ids, memory_cleanup=resolved_memory_cleanup)
+        raise
 
     _save_stage(output_dir, "04_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
     # Split results by source and convert
-    dynamic_results = [r for r in results if getattr(r, 'data_point', None) and r.data_point.inputs.get('_hybrid_route') == 'dynamic']
-    static_results = [r for r in results if getattr(r, 'data_point', None) and r.data_point.inputs.get('_hybrid_route') != 'dynamic']
+    dynamic_results = [r for r in results if getattr(r, 'data_point', None) and r.data_point.inputs.get('hybrid_source') == 'dynamic']
+    static_results = [r for r in results if getattr(r, 'data_point', None) and r.data_point.inputs.get('hybrid_source') != 'dynamic']
 
     reports_to_merge: list[RedTeamReport] = []
     if dynamic_results:

@@ -55,12 +55,16 @@ class OpenAIContextProvider:
     There is no tool/memory/KB metadata in raw model mode.
     """
 
+    def __init__(self, system_prompt: str | None = None):
+        self._system_prompt = system_prompt
+
     async def get_agent_context(self, agent_key: str) -> AgentContext:
         logger.info(f'Using OpenAI model target context for model={agent_key}')
         return AgentContext(
             key=agent_key,
             display_name=agent_key,
             description='OpenAI model target',
+            system_prompt=self._system_prompt,
             tools=[],
             memory_stores=[],
             knowledge_bases=[],
@@ -71,12 +75,13 @@ class OpenAIContextProvider:
 class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
-    def __init__(self, client: AsyncOpenAI):
+    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None):
         self._client = client
+        self._system_prompt = system_prompt
 
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> OpenAIModelTarget:
         _ = memory_entity_id  # OpenAI model target does not support memory entity routing.
-        return OpenAIModelTarget(model_id=agent_key, client=self._client)
+        return OpenAIModelTarget(model_id=agent_key, client=self._client, system_prompt=self._system_prompt)
 
 
 class NoopMemoryCleanup:

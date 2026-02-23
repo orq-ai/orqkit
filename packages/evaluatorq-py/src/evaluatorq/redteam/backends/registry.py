@@ -13,6 +13,7 @@ from evaluatorq.redteam.backends.openai import (
     OpenAIErrorMapper,
     OpenAITargetFactory,
 )
+from evaluatorq.redteam.contracts import TargetConfig
 
 
 ORQ_DEFAULT_BASE_URL = "https://my.orq.ai"
@@ -53,6 +54,7 @@ def create_async_llm_client() -> AsyncOpenAI:
 def resolve_backend(
     backend: str = "orq",
     llm_client: AsyncOpenAI | None = None,
+    target_config: TargetConfig | None = None,
 ) -> BackendBundle:
     """Resolve runtime backend bundle with lazy optional imports.
 
@@ -61,14 +63,16 @@ def resolve_backend(
         llm_client: Pre-configured client for the OpenAI backend.
             When provided, skips ``create_async_llm_client()`` for
             the ``"openai"`` backend.
+        target_config: Optional target configuration (e.g. system prompt).
     """
+    system_prompt = target_config.system_prompt if target_config else None
     normalized = backend.strip().lower()
     if normalized == "openai":
         client = llm_client or create_async_llm_client()
         return BackendBundle(
             name="openai",
-            target_factory=OpenAITargetFactory(client),
-            context_provider=OpenAIContextProvider(),
+            target_factory=OpenAITargetFactory(client, system_prompt=system_prompt),
+            context_provider=OpenAIContextProvider(system_prompt=system_prompt),
             memory_cleanup=NoopMemoryCleanup(),
             error_mapper=OpenAIErrorMapper(),
         )

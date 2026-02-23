@@ -129,11 +129,18 @@ def run(
         Optional[Path],
         typer.Option(help="Path to write the report JSON."),
     ] = None,
+    system_prompt: Annotated[
+        Optional[str],
+        typer.Option("--system-prompt", help="System prompt for the target model/agent."),
+    ] = None,
 ) -> None:
     """Run red teaming against one or more targets."""
     _configure_logging(verbose)
 
     from evaluatorq.redteam import print_report_summary, red_team
+    from evaluatorq.redteam.contracts import TargetConfig
+
+    target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
 
     confirm_callback = None
     if not yes:
@@ -182,6 +189,7 @@ def run(
                 confirm_callback=confirm_callback,
                 output_dir=output_dir,
                 print_results=False,
+                target_config=target_config,
             )
         )
     except RuntimeError as exc:

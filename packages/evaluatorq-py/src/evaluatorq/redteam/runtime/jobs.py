@@ -9,7 +9,7 @@ from loguru import logger
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import Message, TokenUsage
-from evaluatorq.redteam.runtime.orq_agent_job import create_orq_platform_agent_job
+from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name, create_orq_platform_agent_job
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -20,6 +20,7 @@ def create_model_job(
     deployment_key: str | None = None,
     agent_key: str | None = None,
     llm_client: AsyncOpenAI | None = None,
+    system_prompt: str | None = None,
 ) -> Job:
     """Create an evaluatorq job for router model, deployment, or ORQ agent.
 
@@ -38,8 +39,9 @@ def create_model_job(
         return create_orq_platform_agent_job(agent_key)
 
     if deployment_key:
+        safe_key = _sanitize_job_name(deployment_key)
 
-        @job('model-under-test')
+        @job(f'redteam:static:{safe_key}')
         async def deployment_job(data: DataPoint, _row: int) -> dict[str, Any]:
             try:
                 from orq_ai_sdk import Orq
@@ -53,7 +55,10 @@ def create_model_job(
             import os
 
             messages = _build_messages(data)
-            client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
+            api_key = os.environ.get('ORQ_API_KEY')
+            if not api_key:
+                raise RuntimeError('ORQ_API_KEY environment variable is not set')
+            client = Orq(api_key=api_key)
             completion = await client.deployments.invoke_async(
                 key=deployment_key,
                 messages=messages,  # type: ignore[arg-type]
@@ -70,9 +75,13 @@ def create_model_job(
         msg = "Provide one of: 'model', 'deployment_key', or 'agent_key'"
         raise ValueError(msg)
 
-    @job('model-under-test')
+    safe_model = _sanitize_job_name(model)
+
+    @job(f'redteam:static:{safe_model}')
     async def router_job(data: DataPoint, _row: int) -> dict[str, Any]:
         messages = _build_messages(data)
+        if system_prompt:
+            messages = [{'role': 'system', 'content': system_prompt}] + messages
         client = llm_client or create_async_llm_client()
         response = await client.chat.completions.create(
             model=model,
@@ -106,7 +115,8 @@ def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
             try:
                 parsed = Message.model_validate(raw)
                 messages.append(parsed.model_dump(mode='json', exclude_none=True))
-            except Exception:
+            except Exception as e:
+                logger.debug(f'Message validation failed, using raw dict: {e}')
                 messages.append(dict(raw))
             continue
         messages.append({'role': 'user', 'content': str(raw)})

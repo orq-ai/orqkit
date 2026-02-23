@@ -290,6 +290,18 @@ class KnowledgeBaseInfo(BaseModel):
     description: str | None = Field(default=None, description='Knowledge base description')
 
 
+class TargetConfig(BaseModel):
+    """Backend-agnostic target configuration.
+
+    Passed opaquely through the runner to backends/factories.
+    """
+
+    system_prompt: str | None = Field(
+        default=None,
+        description="System prompt for the target model/agent",
+    )
+
+
 class AgentContext(BaseModel):
     """Extended agent information for context-aware attacks.
 
@@ -523,7 +535,7 @@ class EvaluationResult(BaseModel):
         passed=False → VULNERABLE (attack succeeded)
     """
 
-    passed: bool = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded)')
+    passed: bool | None = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated')
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
@@ -562,9 +574,6 @@ class AttackInfo(BaseModel):
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
         if isinstance(value, str):
-            # Use the result_models-style normalize that preserves None
-            if value is None:
-                return value
             return normalize_framework(value)
         return value
 
