@@ -6,6 +6,8 @@ from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
+from pydantic import ValidationError
+
 from evaluatorq.redteam.contracts import (
     AgentContext,
     AgentInfo,
@@ -43,8 +45,10 @@ def _agent_display_name(agent_context: AgentContext | None, *, fallback: str | N
     return fallback
 
 
-def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
+def _coerce_job_output_payload(raw_output: Any, _depth: int = 0) -> JobOutputPayload:
     """Normalize evaluatorq job output into a typed payload."""
+    if _depth > 5:
+        return JobOutputPayload()
 
     def _normalize_output_dict(d: dict[str, Any]) -> dict[str, Any]:
         wrapped = d.get('output')
@@ -55,7 +59,7 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
                     merged[k] = v
             return merged
         if isinstance(wrapped, str):
-            nested = _coerce_job_output_payload(wrapped).model_dump(mode='json')
+            nested = _coerce_job_output_payload(wrapped, _depth + 1).model_dump(mode='json')
             if nested:
                 merged = dict(nested)
                 for k, v in d.items():
@@ -71,7 +75,7 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
 
     model_dump = getattr(raw_output, 'model_dump', None)
     if callable(model_dump):
-        with suppress(Exception):
+        with suppress(ValidationError, TypeError):
             dumped = model_dump(mode='json')
             if isinstance(dumped, dict):
                 return JobOutputPayload.model_validate(dumped)
@@ -84,14 +88,14 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
                 if isinstance(parsed, dict):
                     return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
                 if isinstance(parsed, str):
-                    return _coerce_job_output_payload(parsed)
+                    return _coerce_job_output_payload(parsed, _depth + 1)
             except json.JSONDecodeError:
-                with suppress(Exception):
+                with suppress(ValidationError, TypeError):
                     parsed = ast.literal_eval(text)
                     if isinstance(parsed, dict):
                         return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
                     if isinstance(parsed, str):
-                        return _coerce_job_output_payload(parsed)
+                        return _coerce_job_output_payload(parsed, _depth + 1)
         return JobOutputPayload()
 
     out: dict[str, Any] = {}
@@ -150,15 +154,23 @@ def _normalize_attack_technique(value: str | None) -> str:
     return 'direct-injection'
 
 
+def _safe_int(value: Any) -> int:
+    """Convert a value to int, returning 0 on failure."""
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _normalize_token_usage(raw: Any) -> TokenUsage | None:
     """Normalize flexible usage payloads to TokenUsage."""
     if isinstance(raw, TokenUsage):
         return raw
     if not isinstance(raw, dict):
         return None
-    prompt = int(raw.get('prompt_tokens', raw.get('prompt', 0)) or 0)
-    completion = int(raw.get('completion_tokens', raw.get('completion', 0)) or 0)
-    total = int(raw.get('total_tokens', raw.get('total', prompt + completion)) or 0)
+    prompt = _safe_int(raw.get('prompt_tokens', raw.get('prompt', 0)))
+    completion = _safe_int(raw.get('completion_tokens', raw.get('completion', 0)))
+    total = _safe_int(raw.get('total_tokens', raw.get('total', prompt + completion)))
     return TokenUsage(
         prompt_tokens=prompt,
         completion_tokens=completion,
@@ -326,7 +338,7 @@ def dynamic_evaluatorq_results_to_report(
             continue
 
         inputs = getattr(data_point, 'inputs', {}) or {}
-        strategy_payload = inputs.get('strategy', {})
+        strategy_payload = inputs.get('strategy') or {}
         strategy = AttackStrategy.model_validate(strategy_payload)
         category = normalize_category(inputs.get('category', strategy.category))
 

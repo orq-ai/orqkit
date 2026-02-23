@@ -231,11 +231,14 @@ async def _run_dynamic(
     except (asyncio.CancelledError, KeyboardInterrupt):
         logger.warning('Run cancelled — attempting memory cleanup')
         if cleanup_memory and agent_context.has_memory:
-            await cleanup_memory_entities(agent_context, [
-                dp.inputs['memory_entity_id']
-                for dp in datapoints
-                if 'memory_entity_id' in dp.inputs
-            ], memory_cleanup=resolved_memory_cleanup)
+            try:
+                await cleanup_memory_entities(agent_context, [
+                    dp.inputs['memory_entity_id']
+                    for dp in datapoints
+                    if 'memory_entity_id' in dp.inputs
+                ], memory_cleanup=resolved_memory_cleanup)
+            except Exception:
+                logger.warning('Memory cleanup failed during cancellation')
         raise
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()

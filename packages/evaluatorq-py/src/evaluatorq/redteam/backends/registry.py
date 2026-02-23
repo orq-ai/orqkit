@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import os
 
 from openai import AsyncOpenAI
+
+logger = logging.getLogger(__name__)
 
 from evaluatorq.redteam.backends.base import BackendBundle
 from evaluatorq.redteam.backends.openai import (
@@ -29,6 +32,9 @@ def create_async_llm_client() -> AsyncOpenAI:
     When using ORQ, the router suffix ``/v2/router`` is appended automatically
     to produce the OpenAI-compatible completions endpoint.
     """
+    if os.getenv("ROUTER_BASE_URL") and not os.getenv("ORQ_BASE_URL"):
+        logger.warning("ROUTER_BASE_URL is no longer supported; rename it to ORQ_BASE_URL")
+
     openai_api_key = os.getenv("OPENAI_API_KEY")
     if openai_api_key:
         openai_base_url = os.getenv("OPENAI_BASE_URL")
