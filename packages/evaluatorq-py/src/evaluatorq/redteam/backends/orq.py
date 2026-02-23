@@ -296,6 +296,14 @@ class ORQContextProvider:
             return MemoryStoreInfo(id=ms_id)
 
 
+def _require_orq_sdk() -> None:
+    """Raise a clear error if the ORQ SDK is not installed."""
+    if Orq is None or get_config is None:
+        raise RuntimeError(
+            "ORQ SDK not installed. Install with: pip install 'evaluatorq[orq]'"
+        )
+
+
 class ORQTargetFactory:
     """Creates ORQAgentTarget instances, one per job."""
 
@@ -303,6 +311,7 @@ class ORQTargetFactory:
         if orq_client is not None:
             self._orq_client = orq_client
         else:
+            _require_orq_sdk()
             config = get_config()
             self._orq_client = Orq(
                 api_key=config.orq_api_key,
@@ -323,6 +332,7 @@ class ORQMemoryCleanup:
     """Cleans up memory entities created during red teaming via ORQ API."""
 
     def __init__(self) -> None:
+        _require_orq_sdk()
         config = get_config()
         self._api_key = config.orq_api_key
         self._server_url = config.orq_server_url
@@ -330,6 +340,8 @@ class ORQMemoryCleanup:
     async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
         """Delete memory entities for each memory store x entity_id combination."""
         headers = {'Authorization': f'Bearer {self._api_key}'}
+        failed = 0
+        total = 0
 
         async with httpx.AsyncClient(timeout=10) as client:
             for ms in agent_context.memory_stores:
@@ -337,19 +349,32 @@ class ORQMemoryCleanup:
                     logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
                     continue
                 for entity_id in entity_ids:
+                    total += 1
                     url = f'{self._server_url}/v2/memory-stores/{ms.key}/memories/{entity_id}'
                     try:
                         r = await client.delete(url, headers=headers)
                         if r.status_code == 204:
                             logger.debug(f'Deleted memory entity {entity_id} from store {ms.key}')
-                        elif r.status_code != 404:
+                        elif r.status_code == 404:
+                            logger.debug(f'Memory entity {entity_id} not found in store {ms.key}')
+                        else:
+                            failed += 1
                             logger.warning(f'Memory cleanup for {ms.key}/{entity_id} returned {r.status_code}')
                     except Exception as e:
+                        failed += 1
                         logger.warning(f'Failed to cleanup memory entity {entity_id} from {ms.key}: {e}')
 
-        logger.info(
-            f'Memory cleanup complete ({len(entity_ids)} entities across {len(agent_context.memory_stores)} stores)'
-        )
+        if failed == total and total > 0:
+            logger.error(f'Memory cleanup failed: all {failed} operations failed')
+        elif failed > 0:
+            logger.warning(
+                f'Memory cleanup partially failed: {failed}/{total} operations failed '
+                f'({len(entity_ids)} entities across {len(agent_context.memory_stores)} stores)'
+            )
+        else:
+            logger.info(
+                f'Memory cleanup complete ({len(entity_ids)} entities across {len(agent_context.memory_stores)} stores)'
+            )
 
 
 class ORQErrorMapper:

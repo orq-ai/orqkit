@@ -186,12 +186,13 @@ def _update_shared_progress_summary_locked() -> None:
 
 def _reset_shared_progress_state_locked() -> None:
     """Reset global shared progress state; lock must be held."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished
+    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished, _progress_ui_disabled
     _shared_progress = None
     _shared_progress_summary_task_id = None
     _shared_progress_task_ids.clear()
     _shared_progress_started = 0
     _shared_progress_finished = 0
+    _progress_ui_disabled = False
 
 
 def _build_adversarial_system_prompt(
@@ -385,7 +386,8 @@ class MultiTurnOrchestrator:
                 )
             except Exception as e:
                 # Progress UI must never fail the attack execution path.
-                _progress_ui_disabled = True
+                with _progress_lock:
+                    _progress_ui_disabled = True
                 logger.warning(f'Progress UI disabled due to setup error: {e}')
                 task_id = None
 

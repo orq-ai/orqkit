@@ -494,7 +494,7 @@ class EvaluationResult(BaseModel):
         passed=False → VULNERABLE (attack succeeded)
     """
 
-    passed: bool = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded)')
+    passed: bool | None = Field(default=None, description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated')
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')

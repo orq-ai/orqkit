@@ -59,8 +59,8 @@ class OWASPEvaluator:
         if evaluator is None:
             logger.warning(f'No evaluator found for category {category}')
             return EvaluationResult(
-                passed=True,
-                explanation=f'No evaluator available for category {category}',
+                passed=None,
+                explanation=f'No evaluator available for category {category} — result is inconclusive',
                 evaluator_id='none',
                 raw_output=None,
             )
