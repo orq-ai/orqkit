@@ -106,7 +106,7 @@ class OWASPEvaluator:
         except Exception as e:
             logger.exception(f'Evaluation failed for {category_code}')
             return EvaluationResult(
-                passed=True,
+                passed=None,
                 explanation=f'Evaluation error: {e}',
                 evaluator_id=category_code,
                 raw_output={'error': str(e)},

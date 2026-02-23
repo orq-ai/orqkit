@@ -121,7 +121,6 @@ def extract_status_code(exc: Exception) -> int | None:
         r'\bstatus(?:_code)?\s*[=:]\s*(\d{3})\b',
         r'\bHTTP\s*(\d{3})\b',
         r'\bcode\s*[=:]\s*(\d{3})\b',
-        r'\b(\d{3})\b',
     ]
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)

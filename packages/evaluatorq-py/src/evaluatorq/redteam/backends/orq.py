@@ -228,9 +228,11 @@ class ORQContextProvider:
         api_key = (
             self.orq_client.sdk_configuration.security.api_key if self.orq_client.sdk_configuration.security else ''
         )
+        config = get_config()
+        server_url = config.orq_server_url if config else 'https://api.orq.ai'
 
         enrichment_tasks = [self._enrich_knowledge_base(kb_id) for kb_id in raw_kb_ids]
-        enrichment_tasks.extend(self._enrich_memory_store(api_key, ms_id) for ms_id in raw_ms_ids)
+        enrichment_tasks.extend(self._enrich_memory_store(api_key, server_url, ms_id) for ms_id in raw_ms_ids)
 
         enriched_results = await asyncio.gather(*enrichment_tasks) if enrichment_tasks else []
 
@@ -273,12 +275,12 @@ class ORQContextProvider:
             logger.warning(f'Failed to enrich knowledge base {kb_id}: {e}')
             return KnowledgeBaseInfo(id=kb_id)
 
-    async def _enrich_memory_store(self, api_key: str, ms_id: str) -> MemoryStoreInfo:
+    async def _enrich_memory_store(self, api_key: str, server_url: str, ms_id: str) -> MemoryStoreInfo:
         """Retrieve full memory store details from ORQ API."""
         try:
             async with httpx.AsyncClient() as client:
                 r = await client.get(
-                    f'https://api.orq.ai/v2/memory-stores/{ms_id}',
+                    f'{server_url}/v2/memory-stores/{ms_id}',
                     headers={'Authorization': f'Bearer {api_key}'},
                     timeout=10,
                 )
@@ -320,10 +322,14 @@ class ORQTargetFactory:
 class ORQMemoryCleanup:
     """Cleans up memory entities created during red teaming via ORQ API."""
 
+    def __init__(self) -> None:
+        config = get_config()
+        self._api_key = config.orq_api_key
+        self._server_url = config.orq_server_url
+
     async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
         """Delete memory entities for each memory store x entity_id combination."""
-        config = get_config()
-        headers = {'Authorization': f'Bearer {config.orq_api_key}'}
+        headers = {'Authorization': f'Bearer {self._api_key}'}
 
         async with httpx.AsyncClient(timeout=10) as client:
             for ms in agent_context.memory_stores:
@@ -331,7 +337,7 @@ class ORQMemoryCleanup:
                     logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
                     continue
                 for entity_id in entity_ids:
-                    url = f'{config.orq_server_url}/v2/memory-stores/{ms.key}/memories/{entity_id}'
+                    url = f'{self._server_url}/v2/memory-stores/{ms.key}/memories/{entity_id}'
                     try:
                         r = await client.delete(url, headers=headers)
                         if r.status_code == 204:

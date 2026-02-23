@@ -533,9 +533,6 @@ class AttackInfo(BaseModel):
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
         if isinstance(value, str):
-            # Use the result_models-style normalize that preserves None
-            if value is None:
-                return value
             return normalize_framework(value)
         return value
 
