@@ -81,22 +81,19 @@ def select_applicable_strategies(
                 has_match = _fallback_capability_check(strategy.required_capabilities, agent_context)
                 if not has_match:
                     logger.debug(
-                        f'Skipping {strategy.name}: required capabilities '
-                        f'{strategy.required_capabilities} not met (fallback check)'
+                        f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not met (fallback check)'
                     )
                     continue
             elif not agent_capabilities.has_any(strategy.required_capabilities):
                 logger.debug(
-                    f'Skipping {strategy.name}: required capabilities '
-                    f'{strategy.required_capabilities} not matched by agent capabilities'
+                    f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not matched by agent capabilities'
                 )
                 continue
 
         applicable.append(strategy)
 
     logger.info(
-        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} '
-        f'(agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
+        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} (agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
     )
 
     return applicable
@@ -147,7 +144,7 @@ def get_category_info() -> dict[str, dict[str, Any]]:
     from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
     from evaluatorq.redteam.contracts import TurnType
 
-    info = {}
+    info: dict[str, dict[str, Any]] = {}
     for category in list_available_categories():
         strategies = get_strategies_for_category(category)
         single_turn = sum(1 for s in strategies if s.turn_type == TurnType.SINGLE)

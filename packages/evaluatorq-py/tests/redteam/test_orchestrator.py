@@ -30,7 +30,7 @@ class TestORQAgentTarget:
             orq_client=mock_client,
         )
         assert target.agent_key == 'test_agent'
-        assert target._task_id is None
+        assert target._task_id is None  # pyright: ignore[reportPrivateUsage]
 
     def test_reset_conversation(self):
         """Test resetting conversation state."""
@@ -40,9 +40,9 @@ class TestORQAgentTarget:
             agent_key='test_agent',
             orq_client=mock_client,
         )
-        target._task_id = 'some_task_id'
+        target._task_id = 'some_task_id'  # pyright: ignore[reportPrivateUsage]
         target.reset_conversation()
-        assert target._task_id is None
+        assert target._task_id is None  # pyright: ignore[reportPrivateUsage]
 
     @pytest.mark.asyncio
     async def test_send_prompt(self):
@@ -74,7 +74,7 @@ class TestORQAgentTarget:
             response = await target.send_prompt('Hello')
 
         assert response == 'Agent response'
-        assert target._task_id == 'task_123'
+        assert target._task_id == 'task_123'  # pyright: ignore[reportPrivateUsage]
 
     @pytest.mark.asyncio
     async def test_send_prompt_multi_turn(self):
@@ -94,7 +94,7 @@ class TestORQAgentTarget:
             agent_key='test_agent',
             orq_client=mock_client,
         )
-        target._task_id = 'task_123'  # Simulate existing conversation
+        target._task_id = 'task_123'  # Simulate existing conversation  # pyright: ignore[reportPrivateUsage]
 
         with patch('asyncio.to_thread', new_callable=AsyncMock) as mock_to_thread:
             mock_to_thread.return_value = mock_response

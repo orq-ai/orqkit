@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from evaluatorq import DataPoint, Job, job
@@ -27,8 +28,8 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
     @job(f'redteam:static:{safe_key}')
     async def platform_agent_job(data: DataPoint, _row: int) -> str:
-        messages = list(data.inputs['messages'])
-        sample_id = data.inputs.get('id', 'unknown')
+        messages = list(data.inputs.get('messages', []))
+        sample_id = data.inputs.get('id') or str(uuid.uuid4())
 
         try:
             from orq_ai_sdk.models import A2AMessage, CreateAgentResponseRequestMemory, TextPart

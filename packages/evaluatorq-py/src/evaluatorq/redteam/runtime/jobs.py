@@ -107,7 +107,7 @@ def create_model_job(
 def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
     """Extract messages from a DataPoint and normalize known fields."""
     messages: list[dict[str, Any]] = []
-    for raw in list(data.inputs['messages']):
+    for raw in list(data.inputs.get('messages', [])):
         if isinstance(raw, Message):
             messages.append(raw.model_dump(mode='json', exclude_none=True))
             continue
@@ -143,6 +143,14 @@ def _extract_deployment_content(completion: object) -> str:
     return ''
 
 
+def _safe_int(value: Any) -> int:
+    """Convert to int, returning 0 for non-numeric values."""
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _normalize_usage(raw_usage: Any) -> TokenUsage | None:
     """Normalize usage payloads to TokenUsage."""
     if isinstance(raw_usage, TokenUsage):
@@ -150,9 +158,9 @@ def _normalize_usage(raw_usage: Any) -> TokenUsage | None:
     if not isinstance(raw_usage, dict):
         return None
 
-    prompt = int(raw_usage.get('prompt_tokens', raw_usage.get('prompt', 0)) or 0)
-    completion = int(raw_usage.get('completion_tokens', raw_usage.get('completion', 0)) or 0)
-    total = int(raw_usage.get('total_tokens', raw_usage.get('total', prompt + completion)) or 0)
+    prompt = _safe_int(raw_usage.get('prompt_tokens', raw_usage.get('prompt', 0)))
+    completion = _safe_int(raw_usage.get('completion_tokens', raw_usage.get('completion', 0)))
+    total = _safe_int(raw_usage.get('total_tokens', raw_usage.get('total', prompt + completion)))
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
 
 
