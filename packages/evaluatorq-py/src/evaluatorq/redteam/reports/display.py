@@ -124,13 +124,17 @@ def print_report_summary(report: RedTeamReport) -> None:
 
     # ── Top vulnerable techniques ──────────────────────────────────────
     if summary.by_technique:
-        top_techniques = sorted(summary.by_technique.items(), key=lambda t: t[1], reverse=True)[:5]
+        top_techniques = sorted(
+            summary.by_technique.items(),
+            key=lambda t: t[1].vulnerabilities_found,
+            reverse=True,
+        )[:5]
         tech_table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
         tech_table.add_column("Technique", style="white", min_width=25)
         tech_table.add_column("Vulnerabilities", justify="right", width=16)
 
-        for technique, count in top_techniques:
-            tech_table.add_row(technique, Text(str(count), style="red"))
+        for technique, tech_summary in top_techniques:
+            tech_table.add_row(technique, Text(str(tech_summary.vulnerabilities_found), style="red"))
 
         console.print("[bold white]Top Vulnerable Techniques:[/bold white]")
         console.print(tech_table)

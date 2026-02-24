@@ -14,6 +14,7 @@ from evaluatorq.redteam.contracts import (
     RedTeamResult,
     ReportSummary,
     Severity,
+    TechniqueSummary,
     TurnType,
     UnifiedEvaluationResult,
 )
@@ -63,7 +64,8 @@ def _make_report(
         ]
 
     by_cat: dict[str, CategorySummary] = {}
-    by_technique: dict[str, int] = {}
+    tech_totals: dict[str, int] = {}
+    tech_vulns: dict[str, int] = {}
     errors_by_type: dict[str, int] = {}
     total_errors = 0
 
@@ -78,10 +80,11 @@ def _make_report(
                 resistance_rate=1.0,
             )
         by_cat[cat].total_attacks += 1
+        tech = r.attack.attack_technique
+        tech_totals[tech] = tech_totals.get(tech, 0) + 1
         if r.vulnerable:
             by_cat[cat].vulnerabilities_found += 1
-            tech = r.attack.attack_technique
-            by_technique[tech] = by_technique.get(tech, 0) + 1
+            tech_vulns[tech] = tech_vulns.get(tech, 0) + 1
         if r.error:
             total_errors += 1
             etype = r.error_type or "unknown"
@@ -93,6 +96,16 @@ def _make_report(
         )
         resistant = evaluated - cs.vulnerabilities_found
         cs.resistance_rate = resistant / evaluated if evaluated > 0 else 1.0
+
+    by_technique: dict[str, TechniqueSummary] = {}
+    for tech, t_total in tech_totals.items():
+        t_vulns = tech_vulns.get(tech, 0)
+        by_technique[tech] = TechniqueSummary(
+            total_attacks=t_total,
+            vulnerabilities_found=t_vulns,
+            resistance_rate=(t_total - t_vulns) / t_total if t_total > 0 else 1.0,
+            vulnerability_rate=t_vulns / t_total if t_total > 0 else 0.0,
+        )
 
     evaluated = [r for r in results if r.evaluation and isinstance(r.evaluation.passed, bool)]
     vulns = sum(1 for r in evaluated if r.evaluation and r.evaluation.passed is False)

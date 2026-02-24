@@ -214,7 +214,12 @@
       }
     },
     "by_technique": {
-      "direct-injection": 2
+      "direct-injection": {
+        "total_attacks": 2,
+        "vulnerabilities_found": 2,
+        "resistance_rate": 0.0,
+        "vulnerability_rate": 1.0
+      }
     }
   },
   "token_usage_summary": null,

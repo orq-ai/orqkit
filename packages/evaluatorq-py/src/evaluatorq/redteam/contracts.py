@@ -692,11 +692,71 @@ class CategorySummary(BaseModel):
     category: str
     category_name: str
     total_attacks: int
+    evaluated_attacks: int = 0
+    unevaluated_attacks: int = 0
+    evaluation_coverage: float = 0.0
     total_conversations: int = 0
     total_turns: int = 0
     vulnerabilities_found: int
+    vulnerability_rate: float = 0.0
     resistance_rate: float
+    total_errors: int = 0
     strategies_used: list[str] = Field(default_factory=list)
+
+
+class TechniqueSummary(BaseModel):
+    """Per-technique summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+
+
+class SeveritySummary(BaseModel):
+    """Per-severity summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+
+
+class DeliveryMethodSummary(BaseModel):
+    """Per-delivery-method summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+
+
+class TurnTypeSummary(BaseModel):
+    """Per-turn-type (single vs multi) summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+    average_turns: float = 0.0
+
+
+class ScopeSummary(BaseModel):
+    """Per-scope (model vs application) summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+
+
+class FrameworkSummary(BaseModel):
+    """Per-framework summary statistics (useful for mixed reports)."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
 
 
 class ReportSummary(BaseModel):
@@ -708,12 +768,20 @@ class ReportSummary(BaseModel):
     evaluation_coverage: float = 0.0
     total_conversations: int = 0
     total_turns: int = 0
+    average_turns_per_attack: float = 0.0
     vulnerabilities_found: int = 0
+    vulnerability_rate: float = 0.0
     resistance_rate: float = 1.0
     total_errors: int = 0
     errors_by_type: dict[str, int] = Field(default_factory=dict, description='Error counts grouped by type')
+    token_usage_total: TokenUsage | None = Field(default=None, description='Aggregated token usage across all results')
     by_category: dict[str, CategorySummary] = Field(default_factory=dict)
-    by_technique: dict[str, int] = Field(default_factory=dict)
+    by_technique: dict[str, TechniqueSummary] = Field(default_factory=dict)
+    by_severity: dict[str, SeveritySummary] = Field(default_factory=dict)
+    by_delivery_method: dict[str, DeliveryMethodSummary] = Field(default_factory=dict)
+    by_turn_type: dict[str, TurnTypeSummary] = Field(default_factory=dict)
+    by_scope: dict[str, ScopeSummary] = Field(default_factory=dict)
+    by_framework: dict[str, FrameworkSummary] = Field(default_factory=dict)
     datapoint_breakdown: dict[str, int] | None = Field(
         default=None,
         description='Datapoint counts by source: static, template_dynamic, generated_dynamic (hybrid runs only)',
