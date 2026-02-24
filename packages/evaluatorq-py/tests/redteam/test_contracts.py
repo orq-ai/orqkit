@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -12,9 +13,7 @@ from evaluatorq.redteam.contracts import (
     Framework,
     RedTeamReport,
     RedTeamResult,
-    ReportSummary,
     TokenUsage,
-    UnifiedEvaluationResult,
     infer_framework,
     normalize_category,
     normalize_framework,
@@ -28,7 +27,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 # ---------------------------------------------------------------------------
 
 
-def _load_fixture(name: str) -> dict:
+def _load_fixture(name: str) -> dict[str, Any]:
     path = FIXTURES_DIR / name
     assert path.exists(), f"Fixture not found: {path}"
     return json.loads(path.read_text())
@@ -81,16 +80,16 @@ class TestNormalizeFramework:
 
 class TestDynamicFixture:
     @pytest.fixture()
-    def dynamic_report_data(self) -> dict:
+    def dynamic_report_data(self) -> dict[str, Any]:
         return _load_fixture("dynamic_report.json")
 
-    def test_parses_as_report(self, dynamic_report_data: dict) -> None:
+    def test_parses_as_report(self, dynamic_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(dynamic_report_data)
         assert report.pipeline == "dynamic"
         assert report.version == "2.0.0"
         assert len(report.results) == dynamic_report_data["total_results"]
 
-    def test_agent_context_present(self, dynamic_report_data: dict) -> None:
+    def test_agent_context_present(self, dynamic_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(dynamic_report_data)
         assert report.agent_context is not None
         assert isinstance(report.agent_context, AgentContext)
@@ -98,7 +97,7 @@ class TestDynamicFixture:
         assert report.agent_context.has_tools
         assert report.agent_context.has_memory
 
-    def test_result_attack_info(self, dynamic_report_data: dict) -> None:
+    def test_result_attack_info(self, dynamic_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(dynamic_report_data)
         for result in report.results:
             assert isinstance(result, RedTeamResult)
@@ -106,7 +105,7 @@ class TestDynamicFixture:
             assert result.attack.category in ("ASI01", "ASI05", "ASI06", "LLM01", "LLM02")
             assert result.attack.framework in ("OWASP-ASI", "OWASP-LLM")
 
-    def test_evaluation_semantics(self, dynamic_report_data: dict) -> None:
+    def test_evaluation_semantics(self, dynamic_report_data: dict[str, Any]) -> None:
         """passed=True means RESISTANT, passed=False means VULNERABLE."""
         report = RedTeamReport.model_validate(dynamic_report_data)
         for result in report.results:
@@ -115,14 +114,14 @@ class TestDynamicFixture:
             elif result.evaluation and result.evaluation.passed is True:
                 assert result.vulnerable is False
 
-    def test_has_vulnerable_and_resistant(self, dynamic_report_data: dict) -> None:
+    def test_has_vulnerable_and_resistant(self, dynamic_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(dynamic_report_data)
         has_vuln = any(r.vulnerable for r in report.results)
         has_resistant = any(not r.vulnerable for r in report.results)
         assert has_vuln, "Fixture should have at least one vulnerable result"
         assert has_resistant, "Fixture should have at least one resistant result"
 
-    def test_round_trip_serialization(self, dynamic_report_data: dict) -> None:
+    def test_round_trip_serialization(self, dynamic_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(dynamic_report_data)
         dumped = json.loads(report.model_dump_json())
         report2 = RedTeamReport.model_validate(dumped)
@@ -140,22 +139,22 @@ class TestDynamicFixture:
 
 class TestHybridFixture:
     @pytest.fixture()
-    def hybrid_report_data(self) -> dict:
+    def hybrid_report_data(self) -> dict[str, Any]:
         return _load_fixture("hybrid_report.json")
 
-    def test_parses_as_report(self, hybrid_report_data: dict) -> None:
+    def test_parses_as_report(self, hybrid_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(hybrid_report_data)
         assert report.pipeline == "mixed"
         assert len(report.results) > 0
 
-    def test_mixed_execution_details(self, hybrid_report_data: dict) -> None:
+    def test_mixed_execution_details(self, hybrid_report_data: dict[str, Any]) -> None:
         """Hybrid reports can have results with and without execution details."""
         report = RedTeamReport.model_validate(hybrid_report_data)
         has_execution = [r.execution is not None for r in report.results]
         # At least one should have execution details (dynamic path)
         assert any(has_execution) or len(report.results) > 0
 
-    def test_round_trip_serialization(self, hybrid_report_data: dict) -> None:
+    def test_round_trip_serialization(self, hybrid_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(hybrid_report_data)
         dumped = json.loads(report.model_dump_json())
         report2 = RedTeamReport.model_validate(dumped)

@@ -30,10 +30,9 @@ def create_async_llm_client() -> AsyncOpenAI:
     openai_api_key = os.getenv('OPENAI_API_KEY')
     if openai_api_key:
         openai_base_url = os.getenv('OPENAI_BASE_URL')
-        kwargs: dict[str, str] = {'api_key': openai_api_key}
         if openai_base_url:
-            kwargs['base_url'] = openai_base_url
-        return AsyncOpenAI(**kwargs)
+            return AsyncOpenAI(api_key=openai_api_key, base_url=openai_base_url)
+        return AsyncOpenAI(api_key=openai_api_key)
 
     msg = (
         'Missing LLM credentials. Set either ORQ_API_KEY+ROUTER_BASE_URL '
@@ -61,11 +60,12 @@ def resolve_backend(backend: str = 'orq') -> BackendBundle:
 
     try:
         from evaluatorq.redteam.backends.orq import ORQErrorMapper, create_orq_backend
-    except ImportError as exc:
+
+        target_factory, context_provider, memory_cleanup = create_orq_backend()
+    except (ImportError, RuntimeError) as exc:
         msg = "ORQ backend requested but ORQ dependencies are unavailable. Install ORQ extras or use backend='openai'."
         raise RuntimeError(msg) from exc
 
-    target_factory, context_provider, memory_cleanup = create_orq_backend()
     return BackendBundle(
         name='orq',
         target_factory=target_factory,

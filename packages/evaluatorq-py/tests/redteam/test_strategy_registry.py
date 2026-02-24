@@ -235,7 +235,7 @@ class TestStrategyRegistry:
         for category in ['ASI01', 'ASI05', 'LLM01']:
             strategies = STRATEGY_REGISTRY.get(category, [])
             single_turn = [s for s in strategies if s.turn_type == TurnType.SINGLE]
-            multi_turn = [s for s in strategies if s.turn_type == TurnType.MULTI]
+            _multi_turn = [s for s in strategies if s.turn_type == TurnType.MULTI]
 
             assert len(single_turn) > 0, f'{category} should have single-turn strategies'
             # Multi-turn is optional but should exist for main categories

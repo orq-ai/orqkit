@@ -128,21 +128,21 @@ __all__ = [
 
 
 async def red_team(
-    target: str,
+    _target: str,
     *,
-    mode: str = "dynamic",
-    categories: list[str] | None = None,
-    dataset_path: Any = None,
-    **kwargs: Any,
+    _mode: str = "dynamic",
+    _categories: list[str] | None = None,
+    _dataset_path: Any = None,
+    **_kwargs: Any,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
     Args:
-        target: Target identifier (e.g., "agent:my-agent-key").
-        mode: Execution mode — "dynamic", "static", or "hybrid".
-        categories: OWASP categories to test (e.g., ["ASI01", "ASI03"]).
-        dataset_path: Path to static dataset (required for static/hybrid modes).
-        **kwargs: Additional backend-specific options.
+        _target: Target identifier (e.g., "agent:my-agent-key").
+        _mode: Execution mode — "dynamic", "static", or "hybrid".
+        _categories: OWASP categories to test (e.g., ["ASI01", "ASI03"]).
+        _dataset_path: Path to static dataset (required for static/hybrid modes).
+        **_kwargs: Additional backend-specific options.
 
     Returns:
         RedTeamReport with results and summary.
@@ -151,6 +151,5 @@ async def red_team(
         NotImplementedError: Until Phase 3 implementation is complete.
     """
     raise NotImplementedError(
-        "red_team() is not yet implemented. "
-        "This will be available after Phase 3 of the migration."
+        "red_team() is not yet implemented. This will be available after Phase 3 of the migration."
     )

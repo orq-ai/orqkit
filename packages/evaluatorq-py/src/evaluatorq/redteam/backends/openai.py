@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from loguru import logger
 
@@ -11,6 +11,7 @@ from evaluatorq.redteam.contracts import AgentContext
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+    from openai.types.chat import ChatCompletionMessageParam
 
 
 class OpenAIModelTarget:
@@ -22,9 +23,9 @@ class OpenAIModelTarget:
         client: AsyncOpenAI,
         system_prompt: str | None = None,
     ):
-        self.model_id = model_id
-        self.client = client
-        self.system_prompt = system_prompt or 'You are a helpful assistant.'
+        self.model_id: str = model_id
+        self.client: AsyncOpenAI = client
+        self.system_prompt: str = system_prompt or 'You are a helpful assistant.'
         self._messages: list[dict[str, str]] = [
             {'role': 'system', 'content': self.system_prompt},
         ]
@@ -33,7 +34,7 @@ class OpenAIModelTarget:
         self._messages.append({'role': 'user', 'content': prompt})
         response = await self.client.chat.completions.create(
             model=self.model_id,
-            messages=self._messages,
+            messages=cast('list[ChatCompletionMessageParam]', self._messages),
         )
         content = response.choices[0].message.content or ''
         self._messages.append({'role': 'assistant', 'content': content})
@@ -77,7 +78,7 @@ class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
     def __init__(self, client: AsyncOpenAI):
-        self._client = client
+        self._client: AsyncOpenAI = client
 
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> OpenAIModelTarget:
         _ = memory_entity_id  # OpenAI model target does not support memory entity routing.
