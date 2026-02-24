@@ -93,7 +93,7 @@ def _start_shared_progress_task(description: str, *, total: int) -> int:
     def _description_column() -> TextColumn:
         """Build a Rich TextColumn compatible with multiple Rich versions."""
         init_params = signature(TextColumn.__init__).parameters
-        kwargs: dict[str, object] = {}
+        kwargs: dict[str, Any] = {}
         if 'no_wrap' in init_params:
             kwargs['no_wrap'] = True
         if 'overflow' in init_params:

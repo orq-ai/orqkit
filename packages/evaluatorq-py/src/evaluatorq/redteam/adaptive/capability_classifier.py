@@ -16,6 +16,11 @@ else:
     class StrEnum(str, Enum):  # type: ignore[no-redef]
         """String enum compatible with Python 3.10."""
 
+        pass
+
+
+from typing import Any
+
 from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field

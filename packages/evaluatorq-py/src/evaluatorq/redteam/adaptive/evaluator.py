@@ -43,7 +43,7 @@ class OWASPEvaluator:
     async def evaluate(
         self,
         category: str,
-        messages: list[dict] | list[Message],
+        messages: list[dict[str, Any]] | list[Message],
         response: str,
     ) -> EvaluationResult:
         """Evaluate an agent response for vulnerability."""
@@ -115,7 +115,7 @@ class OWASPEvaluator:
 
 async def evaluate_attack(
     category: str,
-    messages: list[dict] | list[Message],
+    messages: list[dict[str, Any]] | list[Message],
     response: str,
     evaluator_model: str = 'azure/gpt-5-mini',
 ) -> EvaluationResult:
@@ -124,7 +124,7 @@ async def evaluate_attack(
     return await evaluator.evaluate(category, messages, response)
 
 
-def _serialize_messages(messages: list[dict] | list[Message]) -> list[dict[str, Any]]:
+def _serialize_messages(messages: list[dict[str, Any]] | list[Message]) -> list[dict[str, Any]]:
     serialized: list[dict[str, Any]] = []
     for msg in messages:
         if isinstance(msg, dict):
