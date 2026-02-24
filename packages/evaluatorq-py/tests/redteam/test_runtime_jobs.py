@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -177,7 +178,7 @@ class TestNormalizeMessage:
 class TestExtractAgentResponseText:
     """Tests for _extract_agent_response_text()."""
 
-    def _make_response(self, items: list) -> MagicMock:
+    def _make_response(self, items: list[Any]) -> MagicMock:
         """Create a mock response with .output list."""
         response = MagicMock()
         response.output = items
@@ -273,7 +274,7 @@ class TestExtractAgentResponseText:
 class TestBuildMessages:
     """Tests for _build_messages()."""
 
-    def _make_datapoint(self, messages: list) -> MagicMock:
+    def _make_datapoint(self, messages: list[Any]) -> MagicMock:
         """Create a mock DataPoint with an inputs['messages'] list."""
         dp = MagicMock()
         dp.inputs = {"messages": messages}

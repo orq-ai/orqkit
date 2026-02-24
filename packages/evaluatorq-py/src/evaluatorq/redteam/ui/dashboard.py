@@ -10,6 +10,7 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -17,9 +18,18 @@ import streamlit as st
 
 from evaluatorq.redteam.contracts import (
     OWASP_CATEGORY_NAMES,
+    AgentContext,
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
+)
+from evaluatorq.redteam.ui.colors import (
+    COLORS,
+    ORQ_SCALE_HEAT,
+    QUALITATIVE,
+    SEVERITY_COLORS,
+    SEVERITY_ORDER,
+    STATUS_COLORS,
 )
 
 # ---------------------------------------------------------------------------
@@ -33,19 +43,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------------------------------------------------------------------------
-# Color palette
-# ---------------------------------------------------------------------------
-
-SEVERITY_COLORS: dict[str, str] = {
-    "critical": "#991B1B",
-    "high": "#EF4444",
-    "medium": "#FB923C",
-    "low": "#FCD34D",
-}
-
-SEVERITY_ORDER = ["critical", "high", "medium", "low"]
-
 
 def _fmt_category(code: str) -> str:
     name = OWASP_CATEGORY_NAMES.get(code)
@@ -58,6 +55,24 @@ def _status_icon(rate: float) -> str:
     if rate >= 0.8:
         return "\U0001f7e0"
     return "\u274c"
+
+
+def _defense_rate_color(rate: float) -> str:
+    """Interpolate from red_400 through yellow_400 to success_400 (ORQ brand)."""
+    # red_400: #d92d20 (217, 45, 32)
+    # yellow_400: #f2b600 (242, 182, 0)
+    # success_400: #2ebd85 (46, 189, 133)
+    if rate <= 0.5:
+        t = rate / 0.5
+        r = int(217 + (242 - 217) * t)
+        g = int(45 + (182 - 45) * t)
+        b = int(32 + (0 - 32) * t)
+    else:
+        t = (rate - 0.5) / 0.5
+        r = int(242 + (46 - 242) * t)
+        g = int(182 + (189 - 182) * t)
+        b = int(0 + (133 - 0) * t)
+    return f"#{r:02X}{g:02X}{b:02X}"
 
 
 # ---------------------------------------------------------------------------
@@ -77,12 +92,12 @@ def _find_reports(path: Path) -> list[Path]:
 
 
 @st.cache_data
-def _load_report(path: str) -> dict:
+def _load_report(path: str) -> dict[str, Any]:
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def _parse_report(data: dict) -> RedTeamReport:
+def _parse_report(data: dict[str, Any]) -> RedTeamReport:
     return RedTeamReport.model_validate(data)
 
 
@@ -112,6 +127,148 @@ def _compliant_categories(summary: ReportSummary) -> tuple[int, int]:
     total = len(summary.by_category)
     compliant = sum(1 for c in summary.by_category.values() if c.vulnerabilities_found == 0)
     return compliant, total
+
+
+# ---------------------------------------------------------------------------
+# Sidebar agent context
+# ---------------------------------------------------------------------------
+
+_AGENT_CARD_CSS = """
+<style>
+.agent-card {
+    background: linear-gradient(135deg, rgba(2,85,88,0.08), rgba(255,143,52,0.06));
+    border: 1px solid rgba(2,85,88,0.2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+.agent-card h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.05rem;
+}
+.agent-card .agent-desc {
+    color: #888;
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+.agent-card .agent-model {
+    display: inline-block;
+    background: rgba(2,85,88,0.12);
+    border: 1px solid rgba(2,85,88,0.25);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.agent-card .ctx-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 12px 0 10px 0;
+}
+.agent-card .ctx-section-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-bottom: 6px;
+}
+.agent-card .tool-chip {
+    display: inline-block;
+    background: rgba(46,189,133,0.12);
+    border: 1px solid rgba(46,189,133,0.3);
+    color: #2ebd85;
+    border-radius: 14px;
+    padding: 2px 9px;
+    font-size: 0.76rem;
+    font-family: monospace;
+    margin: 2px 2px;
+}
+.agent-card .mem-chip {
+    display: inline-block;
+    background: rgba(126,34,206,0.12);
+    border: 1px solid rgba(126,34,206,0.3);
+    color: #7e22ce;
+    border-radius: 14px;
+    padding: 2px 9px;
+    font-size: 0.76rem;
+    font-family: monospace;
+    margin: 2px 2px;
+}
+.agent-card .kb-chip {
+    display: inline-block;
+    background: rgba(255,143,52,0.12);
+    border: 1px solid rgba(255,143,52,0.3);
+    color: #ff8f34;
+    border-radius: 14px;
+    padding: 2px 9px;
+    font-size: 0.76rem;
+    font-family: monospace;
+    margin: 2px 2px;
+}
+.agent-card .ctx-group {
+    margin-bottom: 8px;
+}
+.agent-card .ctx-group:last-child {
+    margin-bottom: 0;
+}
+</style>
+"""
+
+
+def _render_sidebar_agent_context(ctx: AgentContext) -> None:
+    st.sidebar.markdown(_AGENT_CARD_CSS, unsafe_allow_html=True)
+
+    name = ctx.display_name or ctx.key or "Agent"
+    desc_html = f'<div class="agent-desc">{ctx.description}</div>' if ctx.description else ""
+    model_html = f'<div class="agent-model">{ctx.model}</div>' if ctx.model else ""
+
+    # Build capability sections
+    sections_html = ""
+    has_capabilities = ctx.tools or ctx.memory_stores or ctx.knowledge_bases
+
+    if has_capabilities:
+        sections_html += '<hr class="ctx-divider">'
+
+    if ctx.tools:
+        chips = "".join(f'<span class="tool-chip">{t.name or "unknown"}</span>' for t in ctx.tools)
+        sections_html += (
+            f'<div class="ctx-group">'
+            f'<div class="ctx-section-title">Tools ({len(ctx.tools)})</div>'
+            f'{chips}'
+            f'</div>'
+        )
+
+    if ctx.memory_stores:
+        chips = "".join(f'<span class="mem-chip">{m.key or m.id or "unknown"}</span>' for m in ctx.memory_stores)
+        sections_html += (
+            f'<div class="ctx-group">'
+            f'<div class="ctx-section-title">Memory ({len(ctx.memory_stores)})</div>'
+            f'{chips}'
+            f'</div>'
+        )
+
+    if ctx.knowledge_bases:
+        chips = "".join(
+            f'<span class="kb-chip">{kb.name or kb.key or kb.id or "unknown"}</span>' for kb in ctx.knowledge_bases
+        )
+        sections_html += (
+            f'<div class="ctx-group">'
+            f'<div class="ctx-section-title">Knowledge ({len(ctx.knowledge_bases)})</div>'
+            f'{chips}'
+            f'</div>'
+        )
+
+    st.sidebar.markdown(
+        f'<div class="agent-card">'
+        f'<h3>{name}</h3>'
+        f'{desc_html}'
+        f'{model_html}'
+        f'{sections_html}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -175,25 +332,7 @@ def _render_dashboard() -> None:
     if report.agent_context:
         ctx = report.agent_context
         st.sidebar.divider()
-        st.sidebar.markdown(f"### {ctx.display_name or ctx.key or 'Agent'}")
-        if ctx.description:
-            st.sidebar.caption(ctx.description)
-        if ctx.model:
-            st.sidebar.markdown(f":brain: **Model:** `{ctx.model}`")
-        if ctx.tools:
-            st.sidebar.markdown(":wrench: **Tools**")
-            tool_colors = ["blue", "green", "orange", "red", "violet", "rainbow"]
-            for i, t in enumerate(ctx.tools):
-                color = tool_colors[i % len(tool_colors)]
-                st.sidebar.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;:{color}[`{t.name or 'unknown'}`]")
-        if ctx.memory_stores:
-            st.sidebar.markdown(f":file_cabinet: **Memory:** {len(ctx.memory_stores)} store(s)")
-            for m in ctx.memory_stores:
-                st.sidebar.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;`{m.key or m.id or 'unknown'}`")
-        if ctx.knowledge_bases:
-            st.sidebar.markdown(f":books: **Knowledge:** {len(ctx.knowledge_bases)} base(s)")
-            for kb in ctx.knowledge_bases:
-                st.sidebar.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;`{kb.name or kb.key or kb.id or 'unknown'}`")
+        _render_sidebar_agent_context(ctx)
 
     # Title
     framework_name = report.framework.value if report.framework else "OWASP"
@@ -206,7 +345,7 @@ def _render_dashboard() -> None:
     # Build tabs
     tab_names = ["\U0001f4ca Summary", "\U0001f50d Breakdown", "\U0001f4c2 Explorer"]
     has_usage = summary.token_usage_total is not None or any(
-        r.attack.token_usage is not None or (r.execution and r.execution.token_usage) for r in report.results
+        r.execution and r.execution.token_usage for r in report.results
     )
     if has_usage:
         tab_names.append("\U0001f4b0 Usage")
@@ -269,7 +408,16 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Defense Rate", f"{summary.resistance_rate:.1%}", delta="Target: 100%", delta_color="normal")
+    dr_color = _defense_rate_color(summary.resistance_rate)
+    col1.markdown(
+        f'<div style="background:{dr_color}18;border:1px solid {dr_color}40;border-radius:10px;padding:12px 16px">'
+        f'<div style="font-size:0.82rem;color:#999">Defense Rate</div>'
+        f'<div style="font-size:2rem;font-weight:700;color:{dr_color};line-height:1.2">'
+        f'{summary.resistance_rate:.1%}</div>'
+        f'<div style="font-size:0.75rem;color:#999">Target: 100%</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
     col2.metric(
         "Critical Risk Exposure", f"{critical_count}",
         delta="Release Blocked" if critical_count > 0 else "Clear",
@@ -305,7 +453,7 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
             items = [(k, summary.by_severity[k]) for k in SEVERITY_ORDER if k in summary.by_severity]
             names = [k for k, _ in items]
             vuln_counts = [v.vulnerabilities_found for _, v in items]
-            colors = [SEVERITY_COLORS.get(k, "#94A3B8") for k in names]
+            colors = [SEVERITY_COLORS.get(k, COLORS['sand_400']) for k in names]
 
             if any(c > 0 for c in vuln_counts):
                 fig = go.Figure(go.Bar(
@@ -326,15 +474,26 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     with col_right:
         st.subheader("OWASP Category Defense Status")
         if summary.by_category:
-            rows = []
+            table_html = (
+                '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
+                '<thead><tr>'
+                '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Category</th>'
+                '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">Defense Rate</th>'
+                '</tr></thead><tbody>'
+            )
             for cat in sorted(summary.by_category.values(), key=lambda c: c.category):
-                rows.append({
-                    "Category": _fmt_category(cat.category),
-                    "Status": _status_icon(cat.resistance_rate),
-                    "Defense Rate": f"{cat.resistance_rate:.1%}",
-                })
-            st.dataframe(rows, use_container_width=True, hide_index=True, height=360)
-            st.caption("\u2705 \u226590% | \U0001f7e0 80-90% | \u274c <80%")
+                color = _defense_rate_color(cat.resistance_rate)
+                table_html += (
+                    f'<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">'
+                    f'<td style="padding:6px 10px">{_fmt_category(cat.category)}</td>'
+                    f'<td style="text-align:right;padding:6px 10px">'
+                    f'<span style="background:{color}18;color:{color};border:1px solid {color}40;'
+                    f'border-radius:12px;padding:2px 10px;font-weight:600;font-size:0.82rem">'
+                    f'{cat.resistance_rate:.1%}</span></td>'
+                    f'</tr>'
+                )
+            table_html += '</tbody></table>'
+            st.markdown(table_html, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -370,12 +529,12 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
         fig = go.Figure()
         fig.add_trace(go.Bar(
             y=labels, x=vulnerability, name="Vulnerability Rate",
-            orientation="h", marker_color="#EF4444",
+            orientation="h", marker_color=COLORS['red_400'],
             text=[f"{v:.1f}%" for v in vulnerability], textposition="inside",
         ))
         fig.add_trace(go.Bar(
             y=labels, x=resistance, name="Resistance Rate",
-            orientation="h", marker_color="#22C55E",
+            orientation="h", marker_color=COLORS['success_400'],
             text=[f"{r:.1f}%" for r in resistance], textposition="inside",
         ))
         fig.update_layout(
@@ -417,7 +576,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
                 x=vuln_rates, y=names, orientation="h",
                 labels={"x": "ASR (%)", "y": "Technique"},
                 text=[f"n={n}" for n in totals],
-                color=vuln_rates, color_continuous_scale="Reds",
+                color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
             )
             fig.update_traces(textposition="inside", textfont=dict(color="white", size=10))
             fig.update_layout(
@@ -440,7 +599,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
                 x=vuln_rates, y=names, orientation="h",
                 labels={"x": "ASR (%)", "y": "Delivery Method"},
                 text=[f"n={n}" for n in totals],
-                color=vuln_rates, color_continuous_scale="Reds",
+                color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
             )
             fig.update_traces(textposition="inside", textfont=dict(color="white", size=10))
             fig.update_layout(
@@ -463,7 +622,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             names = [k for k, _ in items]
             vuln_rates = [v.vulnerability_rate * 100 for _, v in items]
             totals = [v.total_attacks for _, v in items]
-            colors = [SEVERITY_COLORS.get(k, "#94A3B8") for k in names]
+            colors = [SEVERITY_COLORS.get(k, COLORS['sand_400']) for k in names]
 
             fig = go.Figure(go.Bar(
                 x=names, y=vuln_rates, marker_color=colors,
@@ -483,7 +642,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             totals = [v.total_attacks for v in summary.by_turn_type.values()]
             fig = go.Figure(go.Pie(
                 labels=names, values=totals,
-                marker_colors=["#3B82F6", "#8B5CF6"],
+                marker_colors=[COLORS['info_400'], COLORS['purple_400']],
                 textinfo="label+value", hole=0.4,
             ))
             fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
@@ -498,7 +657,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             totals = [v.total_attacks for v in summary.by_scope.values()]
             fig = go.Figure(go.Pie(
                 labels=names, values=totals,
-                marker_colors=["#F59E0B", "#06B6D4"],
+                marker_colors=[COLORS['yellow_400'], COLORS['blue_400']],
                 textinfo="label+value", hole=0.4,
             ))
             fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
@@ -519,7 +678,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             x=names, y=vuln_rates,
             labels={"x": "Framework", "y": "ASR (%)"},
             text=[f"{r:.1f}% (n={n})" for r, n in zip(vuln_rates, totals)],
-            color=vuln_rates, color_continuous_scale="Reds",
+            color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
         )
         fig.update_traces(textposition="outside")
         fig.update_layout(
@@ -808,9 +967,9 @@ def _aggregate_token_usage(results: list[RedTeamResult]) -> dict[str, dict[str, 
             agents[key] = {"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0, "calls": 0, "attacks": 0}
         agents[key]["attacks"] += 1
 
-        # Collect from attack-level token usage
-        tu = r.attack.token_usage
-        if tu:
+        # Collect from execution-level token usage
+        if r.execution and r.execution.token_usage:
+            tu = r.execution.token_usage
             agents[key]["total_tokens"] += tu.total_tokens
             agents[key]["prompt_tokens"] += tu.prompt_tokens
             agents[key]["completion_tokens"] += tu.completion_tokens
@@ -854,7 +1013,7 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
 
             fig = go.Figure(go.Bar(
                 x=names, y=tokens,
-                marker_color=["#3B82F6", "#8B5CF6", "#06B6D4", "#F59E0B", "#EF4444"][:len(names)],
+                marker_color=QUALITATIVE[:len(names)],
                 text=[f"{t:,}" for t in tokens], textposition="outside",
             ))
             fig.update_layout(
@@ -877,34 +1036,6 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
                 "API Calls": int(usage["calls"]),
             })
         st.dataframe(rows, use_container_width=True, hide_index=True)
-
-    # Token usage breakdown by role (adversarial vs target)
-    has_breakdown = any(r.attack.token_usage_adversarial or r.attack.token_usage_target for r in report.results)
-    if has_breakdown:
-        st.divider()
-        st.subheader("Adversarial vs Target Usage")
-
-        adv_tokens = 0
-        tgt_tokens = 0
-        for r in report.results:
-            if r.attack.token_usage_adversarial:
-                adv_tokens += r.attack.token_usage_adversarial.total_tokens
-            if r.attack.token_usage_target:
-                tgt_tokens += r.attack.token_usage_target.total_tokens
-
-        fig = go.Figure(go.Pie(
-            labels=["Adversarial", "Target"],
-            values=[adv_tokens, tgt_tokens],
-            marker_colors=["#EF4444", "#3B82F6"],
-            textinfo="label+value+percent", hole=0.4,
-        ))
-        fig.update_layout(title="Tokens by Role", height=350, margin=dict(l=20, r=20, t=40, b=20))
-        st.plotly_chart(fig, width="stretch")
-
-        st.dataframe([
-            {"Role": "Adversarial (attacker LLM)", "Tokens": f"{adv_tokens:,}"},
-            {"Role": "Target (agent under test)", "Tokens": f"{tgt_tokens:,}"},
-        ], use_container_width=True, hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -933,7 +1064,7 @@ def _render_errors_tab(summary: ReportSummary, report: RedTeamReport) -> None:
         fig = px.bar(
             x=counts, y=names, orientation="h",
             labels={"x": "Count", "y": "Error Type"},
-            text=counts, color=counts, color_continuous_scale="Reds",
+            text=counts, color=counts, color_continuous_scale=ORQ_SCALE_HEAT,
         )
         fig.update_traces(textposition="outside")
         fig.update_layout(
@@ -1094,7 +1225,7 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
             fig = go.Figure(go.Bar(
                 x=["Both Resist", f"Only {a1} Fails", f"Only {a2} Fails", "Both Fail"],
                 y=[both_pass, only_a1_fail, only_a2_fail, both_fail],
-                marker_color=["#22C55E", "#FB923C", "#FB923C", "#EF4444"],
+                marker_color=[COLORS['success_400'], COLORS['orange_300'], COLORS['orange_300'], COLORS['red_400']],
                 text=[both_pass, only_a1_fail, only_a2_fail, both_fail],
                 textposition="outside",
             ))

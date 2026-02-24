@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -24,9 +25,9 @@ from evaluatorq.redteam.contracts import (
 # ---------------------------------------------------------------------------
 
 
-def _make_strategy(**overrides: object) -> AttackStrategy:
+def _make_strategy(**overrides: Any) -> AttackStrategy:
     """Create an AttackStrategy with sensible defaults."""
-    defaults: dict[str, object] = {
+    defaults: dict[str, Any] = {
         "category": "ASI01",
         "name": "test-strategy",
         "description": "Test strategy description",
@@ -36,18 +37,18 @@ def _make_strategy(**overrides: object) -> AttackStrategy:
         "objective_template": "Convince {agent_name} to follow instructions",
     }
     defaults.update(overrides)
-    return AttackStrategy(**defaults)  # type: ignore[arg-type]
+    return AttackStrategy(**defaults)
 
 
-def _make_context(**overrides: object) -> AgentContext:
+def _make_context(**overrides: Any) -> AgentContext:
     """Create an AgentContext with sensible defaults."""
-    defaults: dict[str, object] = {
+    defaults: dict[str, Any] = {
         "key": "test-agent",
         "display_name": "Test Agent",
         "description": "A helpful test assistant",
     }
     defaults.update(overrides)
-    return AgentContext(**defaults)  # type: ignore[arg-type]
+    return AgentContext(**defaults)
 
 
 # ===========================================================================
@@ -611,6 +612,7 @@ class TestRunAttack:
         assert result.turns == 3
         # Turn 1 recorded an error message placeholder in the conversation
         turn1_assistant = result.conversation[1]
+        assert turn1_assistant.content is not None
         assert "ERROR" in turn1_assistant.content or "timed out" in turn1_assistant.content.lower()
 
     @pytest.mark.asyncio

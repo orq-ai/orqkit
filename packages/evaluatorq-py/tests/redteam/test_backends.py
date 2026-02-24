@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,26 +22,26 @@ def _make_exc(
     code: str | None = None,
     error_code: str | None = None,
     type_attr: str | None = None,
-    body: dict | None = None,
+    body: dict[str, Any] | None = None,
 ) -> Exception:
     """Create a mock exception with arbitrary structured attributes."""
     exc = Exception(message)
     if response_status_code is not None:
         mock_response = MagicMock()
         mock_response.status_code = response_status_code
-        exc.response = mock_response  # type: ignore[attr-defined]
+        exc.response = mock_response  # pyright: ignore[reportAttributeAccessIssue]
     if status_code is not None:
-        exc.status_code = status_code  # type: ignore[attr-defined]
+        exc.status_code = status_code  # pyright: ignore[reportAttributeAccessIssue]
     if status is not None:
-        exc.status = status  # type: ignore[attr-defined]
+        exc.status = status  # pyright: ignore[reportAttributeAccessIssue]
     if code is not None:
-        exc.code = code  # type: ignore[attr-defined]
+        exc.code = code  # pyright: ignore[reportAttributeAccessIssue]
     if error_code is not None:
-        exc.error_code = error_code  # type: ignore[attr-defined]
+        exc.error_code = error_code  # pyright: ignore[reportAttributeAccessIssue]
     if type_attr is not None:
-        exc.type = type_attr  # type: ignore[attr-defined]
+        exc.type = type_attr  # pyright: ignore[reportAttributeAccessIssue]
     if body is not None:
-        exc.body = body  # type: ignore[attr-defined]
+        exc.body = body  # pyright: ignore[reportAttributeAccessIssue]
     return exc
 
 
@@ -107,7 +108,7 @@ class TestExtractStatusCode:
         exc = _make_exc(message="error")
         mock_response = MagicMock()
         mock_response.status_code = 99
-        exc.response = mock_response  # type: ignore[attr-defined]
+        exc.response = mock_response  # pyright: ignore[reportAttributeAccessIssue]
         # No other code present → should return None
         assert extract_status_code(exc) is None
 
@@ -400,15 +401,14 @@ class TestORQErrorMapper:
         assert code == "orq.rate_limit"
 
     def test_maps_rate_limit_by_429_in_text(self):
-        """When '429' appears in error text, extract_status_code picks it up first,
-        so the result is orq.http.429 rather than orq.rate_limit."""
+        """When '429' appears in error text without a structured status pattern,
+        the ratelimit keyword check catches it as orq.rate_limit."""
         from evaluatorq.redteam.backends.orq import ORQErrorMapper
 
         mapper = ORQErrorMapper()
         exc = Exception("received 429 from server")
         code, msg = mapper.map_error(exc)
-        # extract_status_code regex extracts 429 from the text → orq.http.429
-        assert code == "orq.http.429"
+        assert code == "orq.rate_limit"
 
     def test_maps_unknown_fallback(self):
         from evaluatorq.redteam.backends.orq import ORQErrorMapper

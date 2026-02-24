@@ -18,7 +18,7 @@ markers = [
 ]
 
 [tool.basedpyright]
-exclude = ["examples", ".venv"]
+exclude = ["examples", ".venv", "src/evaluatorq/redteam/ui"]
 reportIncompatibleVariableOverride = "none"
 reportExplicitAny = "none"
 reportMissingImports = "none"
@@ -42,6 +42,7 @@ reportImplicitOverride = "none"
 reportUnusedFunction = "none"
 reportUntypedFunctionDecorator = "none"
 reportUnnecessaryIsInstance = "none"
+reportUnnecessaryTypeIgnoreComment = "none"
 
 [project]
 name = "evaluatorq"
@@ -96,4 +97,5 @@ dev = [
   "langgraph>=0.2.0",
   "loguru",
   "pytest-cov>=7.0.0",
+  "watchdog>=4.0.0",
 ]
