@@ -13,7 +13,7 @@ Flow:
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from evaluatorq import DataPoint, EvaluationResult, Job, job
 from loguru import logger
@@ -22,7 +22,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import AttackStrategy, OrchestratorResult
+from evaluatorq.redteam.contracts import AttackStrategy, Message, OrchestratorResult, TokenUsage
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
@@ -168,12 +168,13 @@ def create_dynamic_redteam_job(
             error_stage = None
             error_code = None
             error_details = None
-            token_usage = None
+            token_usage: TokenUsage | None = None
             try:
                 response = await target.send_prompt(prompt)
                 consume_usage = getattr(target, 'consume_last_token_usage', None)
                 if callable(consume_usage):
-                    token_usage = consume_usage()
+                    raw_usage = consume_usage()
+                    token_usage = raw_usage if isinstance(raw_usage, TokenUsage) else None
             except Exception as e:
                 mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
                 logger.error(f'Single-turn attack failed for {category}/{strategy.name}: {mapped_msg}')
@@ -187,7 +188,10 @@ def create_dynamic_redteam_job(
                     'raw_message': str(e),
                 }
             return OrchestratorResult(
-                conversation=[{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': response}],
+                conversation=[
+                    Message(role='user', content=prompt),
+                    Message(role='assistant', content=response),
+                ],
                 final_response=response,
                 objective_achieved=False,
                 turns=1,
@@ -263,7 +267,7 @@ def create_dynamic_evaluator(
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
-        output: dict[str, Any] = params['output']  # type: ignore[assignment]  # job returns dict
+        output: dict[str, Any] = cast('dict[str, Any]', params['output'])  # job returns dict
 
         # Skip evaluation when the target returned an error
         if output.get('error'):

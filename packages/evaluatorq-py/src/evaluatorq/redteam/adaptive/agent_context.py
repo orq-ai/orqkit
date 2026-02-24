@@ -4,10 +4,8 @@ import asyncio
 from typing import TYPE_CHECKING
 
 try:
-    from orq_ai_sdk import Orq
     from evaluatorq.redteam.backends.orq import ORQContextProvider
 except ImportError:
-    Orq = None  # type: ignore[assignment,misc]
     ORQContextProvider = None  # type: ignore[assignment,misc]
 
 if TYPE_CHECKING:
@@ -30,6 +28,9 @@ async def retrieve_agent_context(orq_client: 'OrqType', agent_key: str) -> Agent
     Returns:
         AgentContext with parsed and enriched agent configuration
     """
+    if ORQContextProvider is None:
+        msg = 'ORQ dependencies are not installed. Install the ORQ extras to use retrieve_agent_context.'
+        raise RuntimeError(msg)
     return await ORQContextProvider(orq_client).get_agent_context(agent_key)
 
 

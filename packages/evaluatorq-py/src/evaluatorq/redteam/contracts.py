@@ -10,10 +10,10 @@ Semantic convention:
 
 import sys
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 if sys.version_info >= (3, 11):
-    from enum import StrEnum
+    from enum import StrEnum  # pyright: ignore[reportUnreachable]
 else:
     from enum import Enum
 
@@ -250,7 +250,7 @@ class ToolInfo(BaseModel):
 
     name: str = Field(description='Tool name/identifier')
     description: str | None = Field(default=None, description='Tool description')
-    parameters: dict | None = Field(default=None, description='Tool parameter schema')
+    parameters: dict[str, Any] | None = Field(default=None, description='Tool parameter schema')
 
 
 class MemoryStoreInfo(BaseModel):
@@ -356,7 +356,7 @@ class PipelineLLMConfig(BaseModel):
     log_level: str = 'INFO'
 
     @property
-    def retry_config(self) -> dict:
+    def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``."""
         return {'retry': {'count': self.retry_count, 'on_codes': self.retry_on_codes}}
 
@@ -482,7 +482,7 @@ class OrchestratorResult(BaseModel):
     )
     error_stage: str | None = Field(default=None, description='Pipeline stage where error occurred')
     error_code: str | None = Field(default=None, description='Provider/stage-specific error code')
-    error_details: dict | None = Field(default=None, description='Structured backend error details')
+    error_details: dict[str, Any] | None = Field(default=None, description='Structured backend error details')
     error_turn: int | None = Field(default=None, description='1-based turn number where the error occurred')
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
@@ -501,7 +501,7 @@ class EvaluationResult(BaseModel):
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
-    raw_output: dict | None = Field(default=None, description='Raw evaluator output')
+    raw_output: dict[str, Any] | None = Field(default=None, description='Raw evaluator output')
 
 
 # ---------------------------------------------------------------------------
@@ -558,7 +558,7 @@ class UnifiedEvaluationResult(BaseModel):
     evaluator_id: str | None = None
     evaluator_name: str | None = None
     token_usage: TokenUsage | None = None
-    raw_output: dict | None = None
+    raw_output: dict[str, Any] | None = None
 
 
 class EvaluationPayload(BaseModel):
@@ -576,7 +576,7 @@ class EvaluationPayload(BaseModel):
 class JobOutputPayload(BaseModel):
     """Normalized evaluatorq job output payload."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra='allow')
 
     conversation: list[Message] = Field(default_factory=list)
     final_response: str | None = None
@@ -593,7 +593,7 @@ class JobOutputPayload(BaseModel):
     error_type: str | None = None
     error_stage: str | None = None
     error_code: str | None = None
-    error_details: dict | None = None
+    error_details: dict[str, Any] | None = None
     error_turn: int | None = None
     truncated_turns: list[int] = Field(default_factory=list)
     finish_reason: str | None = None
@@ -644,7 +644,7 @@ class RedTeamResult(BaseModel):
     error_type: str | None = None
     error_stage: str | None = None
     error_code: str | None = None
-    error_details: dict | None = None
+    error_details: dict[str, Any] | None = None
 
 
 class CategorySummary(BaseModel):
@@ -715,7 +715,7 @@ class RedTeamReport(BaseModel):
 class EvaluatedRowBase(BaseModel):
     """Common row shape for evaluated JSONL outputs."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra='allow')
 
     input: RedTeamInput
     messages: list[Message] = Field(default_factory=list)
@@ -724,7 +724,7 @@ class EvaluatedRowBase(BaseModel):
     error_type: str | None = None
     error_stage: str | None = None
     error_code: str | None = None
-    error_details: dict | None = None
+    error_details: dict[str, Any] | None = None
 
 
 class EvaluatedRow(EvaluatedRowBase):
@@ -745,7 +745,7 @@ class AttackEvaluationRow(BaseModel):
 class DynamicAttackResultRow(BaseModel):
     """Serialized staged dynamic attack result row."""
 
-    model_config = ConfigDict(validate_assignment=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True)
 
     id: str | None = None
     category: str = 'unknown'
@@ -765,7 +765,7 @@ class DynamicAttackResultRow(BaseModel):
     error_type: str | None = None
     error_stage: str | None = None
     error_code: str | None = None
-    error_details: dict | None = None
+    error_details: dict[str, Any] | None = None
     evaluation: AttackEvaluationRow | None = None
     vulnerable: bool | None = None
 
@@ -800,7 +800,7 @@ class DynamicErrorAnalysisRow(BaseModel):
 class DynamicRunMetadata(BaseModel):
     """Run metadata block persisted in staged summaries."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra='allow')
 
     mode: str | None = None
     target: str | None = None
@@ -820,7 +820,7 @@ class DynamicRunMetadata(BaseModel):
 class StrategySelectionRow(BaseModel):
     """Per-category strategy selection details persisted in staged outputs."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra='allow')
 
     count: int = 0
     strategies: list[AttackStrategy] = Field(default_factory=list)
@@ -855,7 +855,7 @@ class DynamicSummaryReportRow(BaseModel):
 class DatasetInferenceRow(BaseModel):
     """Inference output row persisted by dataset mode."""
 
-    model_config = ConfigDict(extra='allow')
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra='allow')
 
     response: str | None = None
     agent_type: str

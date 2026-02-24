@@ -8,7 +8,7 @@ This module provides:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
@@ -81,22 +81,19 @@ def select_applicable_strategies(
                 has_match = _fallback_capability_check(strategy.required_capabilities, agent_context)
                 if not has_match:
                     logger.debug(
-                        f'Skipping {strategy.name}: required capabilities '
-                        f'{strategy.required_capabilities} not met (fallback check)'
+                        f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not met (fallback check)'
                     )
                     continue
             elif not agent_capabilities.has_any(strategy.required_capabilities):
                 logger.debug(
-                    f'Skipping {strategy.name}: required capabilities '
-                    f'{strategy.required_capabilities} not matched by agent capabilities'
+                    f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not matched by agent capabilities'
                 )
                 continue
 
         applicable.append(strategy)
 
     logger.info(
-        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} '
-        f'(agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
+        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} (agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
     )
 
     return applicable
@@ -134,7 +131,7 @@ def list_available_categories() -> list[str]:
     return [k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')]
 
 
-def get_category_info() -> dict[str, dict]:
+def get_category_info() -> dict[str, dict[str, Any]]:
     """Get information about all available categories.
 
     Returns:
@@ -147,7 +144,7 @@ def get_category_info() -> dict[str, dict]:
     from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
     from evaluatorq.redteam.contracts import TurnType
 
-    info = {}
+    info: dict[str, dict[str, Any]] = {}
     for category in list_available_categories():
         strategies = get_strategies_for_category(category)
         single_turn = sum(1 for s in strategies if s.turn_type == TurnType.SINGLE)

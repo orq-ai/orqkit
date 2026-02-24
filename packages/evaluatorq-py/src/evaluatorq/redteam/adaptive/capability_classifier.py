@@ -9,7 +9,7 @@ agent configuration (memory tools / knowledge bases).
 import sys
 
 if sys.version_info >= (3, 11):
-    from enum import StrEnum
+    from enum import StrEnum  # pyright: ignore[reportUnreachable]
 else:
     from enum import Enum
 
@@ -20,6 +20,7 @@ else:
 
 
 from typing import Any
+
 
 from loguru import logger
 from openai import AsyncOpenAI
@@ -182,8 +183,7 @@ async def classify_agent_capabilities(
     for caps in capabilities.values():
         all_caps.update(c.value for c in caps)
     logger.info(
-        f'Classified agent capabilities: {len(capabilities)} resources, '
-        f'{len(all_caps)} unique capabilities: {sorted(all_caps)}'
+        f'Classified agent capabilities: {len(capabilities)} resources, {len(all_caps)} unique capabilities: {sorted(all_caps)}'
     )
 
     return AgentCapabilities(capabilities=capabilities)
