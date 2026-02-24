@@ -30,10 +30,9 @@ def create_async_llm_client() -> AsyncOpenAI:
     openai_api_key = os.getenv('OPENAI_API_KEY')
     if openai_api_key:
         openai_base_url = os.getenv('OPENAI_BASE_URL')
-        kwargs: dict[str, str] = {'api_key': openai_api_key}
         if openai_base_url:
-            kwargs['base_url'] = openai_base_url
-        return AsyncOpenAI(**kwargs)
+            return AsyncOpenAI(api_key=openai_api_key, base_url=openai_base_url)
+        return AsyncOpenAI(api_key=openai_api_key)
 
     msg = (
         'Missing LLM credentials. Set either ORQ_API_KEY+ROUTER_BASE_URL '

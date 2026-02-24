@@ -93,8 +93,7 @@ async def plan_strategies_for_categories(
             generated_single_by_category[category] = generated_single
             generated_multi_by_category[category] = generated_multi
             logger.info(
-                f'Added {len(generated)} generated strategies for {category} '
-                f'({len(generated_single)} single-turn, {len(generated_multi)} multi-turn)'
+                f'Added {len(generated)} generated strategies for {category} ({len(generated_single)} single-turn, {len(generated_multi)} multi-turn)'
             )
 
     for category in categories:

@@ -9,18 +9,20 @@ import os
 import time
 from inspect import signature
 from threading import Lock
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from rich.console import Console
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 from evaluatorq.redteam.backends.base import AgentTarget, DefaultErrorMapper, ErrorMapper
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
     AttackStrategy,
+    Message,
     OrchestratorResult,
     TokenUsage,
 )
@@ -28,8 +30,8 @@ from evaluatorq.redteam.contracts import (
 _ui_console = Console(stderr=True)
 _progress_lock = Lock()
 _shared_progress: Progress | None = None
-_shared_progress_task_ids: set[int] = set()
-_shared_progress_summary_task_id: int | None = None
+_shared_progress_task_ids: set[TaskID] = set()
+_shared_progress_summary_task_id: TaskID | None = None
 _shared_progress_started = 0
 _shared_progress_finished = 0
 _PROGRESS_LABEL_MAX_LEN = 52
@@ -86,14 +88,14 @@ Constraints:
 """
 
 
-def _start_shared_progress_task(description: str, *, total: int) -> int:
+def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
     """Start (or reuse) shared progress and add one attack task."""
     global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started
 
     def _description_column() -> TextColumn:
         """Build a Rich TextColumn compatible with multiple Rich versions."""
         init_params = signature(TextColumn.__init__).parameters
-        kwargs: dict[str, object] = {}
+        kwargs: dict[str, Any] = {}
         if 'no_wrap' in init_params:
             kwargs['no_wrap'] = True
         if 'overflow' in init_params:
@@ -133,7 +135,7 @@ def _progress_label(category: str, strategy_name: str) -> str:
     return raw[: _PROGRESS_LABEL_MAX_LEN - 1] + '…'
 
 
-def _update_shared_progress_task(task_id: int, *, completed: int | None = None) -> None:
+def _update_shared_progress_task(task_id: TaskID, *, completed: int | None = None) -> None:
     """Update one attack task on the shared progress display."""
     with _progress_lock:
         if _shared_progress is None:
@@ -144,7 +146,7 @@ def _update_shared_progress_task(task_id: int, *, completed: int | None = None) 
         _shared_progress.update(task_id, completed=completed)
 
 
-def _stop_shared_progress_task(task_id: int) -> None:
+def _stop_shared_progress_task(task_id: TaskID) -> None:
     """Remove one task and stop shared progress when the last task completes."""
     global _shared_progress, _shared_progress_summary_task_id, _shared_progress_finished
     with _progress_lock:
@@ -279,9 +281,9 @@ class MultiTurnOrchestrator:
             llm_client: OpenAI-compatible async client for adversarial LLM
             model: Model to use for adversarial prompt generation
         """
-        self.llm_client = llm_client
-        self.model = model
-        self.error_mapper = error_mapper or DefaultErrorMapper()
+        self.llm_client: AsyncOpenAI = llm_client
+        self.model: str = model
+        self.error_mapper: ErrorMapper = error_mapper or DefaultErrorMapper()
 
     async def generate_single_prompt(
         self,
@@ -352,13 +354,13 @@ class MultiTurnOrchestrator:
         system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=max_turns)
 
         # Adversarial LLM conversation
-        adversarial_messages = [
+        adversarial_messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=max_turns)},
         ]
 
         # Agent conversation (what we'll return)
-        conversation: list[dict[str, str]] = []
+        conversation: list[Message] = []
 
         objective_achieved = False
         final_response = ''
@@ -370,13 +372,13 @@ class MultiTurnOrchestrator:
         error_type: str | None = None
         error_stage: str | None = None
         error_code: str | None = None
-        error_details: dict | None = None
+        error_details: dict[str, Any] | None = None
         error_turn: int | None = None
         consecutive_agent_errors = 0
         truncation_warnings: list[int] = []  # turns where finish_reason=length
 
         show_progress = max_turns > 1 and _ui_console.is_terminal and _progress_ui_enabled_for_current_run()
-        task_id: int | None = None
+        task_id: TaskID | None = None
         global _progress_ui_disabled
         if show_progress and not _progress_ui_disabled:
             try:
@@ -442,7 +444,7 @@ class MultiTurnOrchestrator:
                         'content_filter': 'content_filter',
                         'length': 'max_tokens',
                     }
-                    error_type = reason_to_type.get(finish_reason, 'empty_response')
+                    error_type = reason_to_type.get(str(finish_reason) if finish_reason is not None else '', 'empty_response')
                     error_stage = 'adversarial_generation'
                     error_code = f'adversarial.{error_type}'
                     error_details = {
@@ -477,7 +479,7 @@ class MultiTurnOrchestrator:
                     consecutive_agent_errors = 0
                     consume_usage = getattr(target, 'consume_last_token_usage', None)
                     if callable(consume_usage):
-                        target_usage = consume_usage()
+                        target_usage = cast(TokenUsage | None, consume_usage())
                         if target_usage is not None:
                             target_prompt_tokens += int(target_usage.prompt_tokens or 0)
                             target_completion_tokens += int(target_usage.completion_tokens or 0)
@@ -505,8 +507,8 @@ class MultiTurnOrchestrator:
                         error_code = mapped_code
                         error_turn = turn + 1
                         conversation.extend([
-                            {'role': 'user', 'content': attack_prompt},
-                            {'role': 'assistant', 'content': agent_response},
+                            Message(role='user', content=attack_prompt),
+                            Message(role='assistant', content=agent_response),
                         ])
                         if task_id is not None:
                             _update_shared_progress_task(task_id, completed=turn + 1)
@@ -514,8 +516,8 @@ class MultiTurnOrchestrator:
 
                 # Record conversation
                 conversation.extend([
-                    {'role': 'user', 'content': attack_prompt},
-                    {'role': 'assistant', 'content': agent_response},
+                    Message(role='user', content=attack_prompt),
+                    Message(role='assistant', content=agent_response),
                 ])
 
                 # Update adversarial LLM context
@@ -537,10 +539,9 @@ class MultiTurnOrchestrator:
                 _stop_shared_progress_task(task_id)
 
         duration = time.time() - start_time
+        error_type_suffix = f', error_type={error_type}' if error_type else ''
         logger.debug(
-            f'Multi-turn attack completed: {len(conversation) // 2} turns, '
-            f'objective_achieved={objective_achieved}, duration={duration:.2f}s'
-            + (f', error_type={error_type}' if error_type else '')
+            f'Multi-turn attack completed: {len(conversation) // 2} turns, objective_achieved={objective_achieved}, duration={duration:.2f}s{error_type_suffix}'
         )
 
         adversarial_usage = (
