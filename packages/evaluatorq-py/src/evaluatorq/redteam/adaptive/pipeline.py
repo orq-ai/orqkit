@@ -286,9 +286,11 @@ def create_dynamic_evaluator(
         raw_value = None
         if isinstance(eval_result.raw_output, dict):
             raw_value = eval_result.raw_output.get('value')
+        value: str | int | float | bool = raw_value if raw_value is not None else (eval_result.passed if eval_result.passed is not None else 'error')
         return EvaluationResult(
-            value=raw_value if raw_value is not None else eval_result.passed,
+            value=value,
             explanation=eval_result.explanation,
+            pass_=eval_result.passed,
         )
 
     return {'name': 'owasp-dynamic-security', 'scorer': scorer}

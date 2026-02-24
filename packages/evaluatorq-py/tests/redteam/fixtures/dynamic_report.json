@@ -96,9 +96,7 @@
         "category": "ASI01",
         "framework": "OWASP-ASI",
         "attack_technique": "indirect-injection",
-        "delivery_methods": [
-          "tool-response"
-        ],
+        "delivery_methods": ["tool-response"],
         "turn_type": "single",
         "severity": "critical",
         "scope": null,
@@ -155,9 +153,7 @@
         "category": "ASI01",
         "framework": "OWASP-ASI",
         "attack_technique": "indirect-injection",
-        "delivery_methods": [
-          "crescendo"
-        ],
+        "delivery_methods": ["crescendo"],
         "turn_type": "multi",
         "severity": "high",
         "scope": null,
@@ -199,9 +195,7 @@
         "category": "ASI05",
         "framework": "OWASP-ASI",
         "attack_technique": "rce-exploit",
-        "delivery_methods": [
-          "direct-request"
-        ],
+        "delivery_methods": ["direct-request"],
         "turn_type": "single",
         "severity": "high",
         "scope": null,
@@ -258,9 +252,7 @@
         "category": "ASI06",
         "framework": "OWASP-ASI",
         "attack_technique": "context-poisoning",
-        "delivery_methods": [
-          "direct-request"
-        ],
+        "delivery_methods": ["direct-request"],
         "turn_type": "single",
         "severity": "high",
         "scope": null,
@@ -317,9 +309,7 @@
         "category": "LLM01",
         "framework": "OWASP-LLM",
         "attack_technique": "direct-injection",
-        "delivery_methods": [
-          "direct-request"
-        ],
+        "delivery_methods": ["direct-request"],
         "turn_type": "single",
         "severity": "high",
         "scope": null,
@@ -376,9 +366,7 @@
         "category": "LLM02",
         "framework": "OWASP-LLM",
         "attack_technique": "social-engineering",
-        "delivery_methods": [
-          "direct-request"
-        ],
+        "delivery_methods": ["direct-request"],
         "turn_type": "single",
         "severity": "high",
         "scope": null,

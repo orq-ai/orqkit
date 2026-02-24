@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from evaluatorq.redteam.contracts import AgentContext
+    from evaluatorq.redteam.contracts import AgentContext, TokenUsage
 
 
 class AgentTarget(Protocol):
@@ -38,7 +38,7 @@ class SupportsClone(Protocol):
 class SupportsTokenUsage(Protocol):
     """Optional hook for exposing token usage from last target call."""
 
-    def consume_last_token_usage(self) -> object:
+    def consume_last_token_usage(self) -> TokenUsage | None:
         """Return and clear usage from last call."""
         ...
 
@@ -121,7 +121,6 @@ def extract_status_code(exc: Exception) -> int | None:
         r'\bstatus(?:_code)?\s*[=:]\s*(\d{3})\b',
         r'\bHTTP\s*(\d{3})\b',
         r'\bcode\s*[=:]\s*(\d{3})\b',
-        r'\b(\d{3})\b',
     ]
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)

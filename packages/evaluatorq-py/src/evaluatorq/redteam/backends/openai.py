@@ -25,20 +25,25 @@ class OpenAIModelTarget:
         self.model_id = model_id
         self.client = client
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
+        self._messages: list[dict[str, str]] = [
+            {'role': 'system', 'content': self.system_prompt},
+        ]
 
     async def send_prompt(self, prompt: str) -> str:
+        self._messages.append({'role': 'user', 'content': prompt})
         response = await self.client.chat.completions.create(
             model=self.model_id,
-            messages=[
-                {'role': 'system', 'content': self.system_prompt},
-                {'role': 'user', 'content': prompt},
-            ],
+            messages=self._messages,
         )
-        return response.choices[0].message.content or ''
+        content = response.choices[0].message.content or ''
+        self._messages.append({'role': 'assistant', 'content': content})
+        return content
 
     def reset_conversation(self) -> None:
-        """Stateless adapter; nothing to reset."""
-        return
+        """Reset conversation history, keeping only the system prompt."""
+        self._messages = [
+            {'role': 'system', 'content': self.system_prompt},
+        ]
 
     def clone(self) -> OpenAIModelTarget:
         """Create a fresh target instance for parallel job safety."""

@@ -40,7 +40,7 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     # Prepare substitution values
     tool_name = agent_context.tools[0].name if agent_context.tools else 'the tool'
     tool_names = ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools'
-    memory_store = agent_context.memory_stores[0].key if agent_context.memory_stores else 'memory'
+    memory_store = (agent_context.memory_stores[0].key or agent_context.memory_stores[0].id) if agent_context.memory_stores else 'memory'
     agent_name = agent_context.display_name or agent_context.key
     agent_description = agent_context.description or 'an AI assistant'
 
