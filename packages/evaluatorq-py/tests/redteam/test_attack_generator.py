@@ -196,7 +196,7 @@ def _make_strategy(**overrides: object) -> AttackStrategy:
         'turn_type': TurnType.SINGLE,
         'objective_template': 'Test',
     }
-    return AttackStrategy(**(defaults | overrides))
+    return AttackStrategy(**(defaults | overrides))  # pyright: ignore[reportArgumentType]
 
 
 def _mock_llm_client(analysis: ToolAnalysis) -> AsyncMock:

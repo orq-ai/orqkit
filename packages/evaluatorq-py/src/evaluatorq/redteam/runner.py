@@ -184,16 +184,14 @@ async def red_team(
         raise ValueError(msg)
 
     if len(targets) == 1:
-        return await _red_team_single(targets[0], **kwargs)
+        return await _red_team_single(targets[0], **kwargs)  # type: ignore[arg-type]
 
     from evaluatorq.redteam.reports.converters import merge_reports
 
     reports: list[RedTeamReport] = []
     for t in targets:
-        report = await _red_team_single(
-            t,
-            **{**kwargs, 'description': f'{description or "Multi-target"} ({t})'},
-        )
+        t_kwargs: dict[str, Any] = {**kwargs, 'description': f'{description or "Multi-target"} ({t})'}
+        report = await _red_team_single(t, **t_kwargs)  # type: ignore[arg-type]
         reports.append(report)
 
     merged = merge_reports(
@@ -493,6 +491,7 @@ async def _run_dynamic(
                 evaluators=[evaluator],
                 parallelism=parallelism,
                 print_results=False,
+                _exit_on_failure=False,
                 description=description or f'Dynamic red teaming for {target}',
             )
         except (asyncio.CancelledError, KeyboardInterrupt):
@@ -591,7 +590,7 @@ async def _run_static(
         from evaluatorq.redteam.contracts import normalize_category
 
         skipped: Counter[str] = Counter()
-        filtered: list = []
+        filtered: list[Any] = []
         for dp in data:
             cat = dp.inputs.get('category', '')
             norm_cat = normalize_category(cat)
@@ -604,9 +603,9 @@ async def _run_static(
         if not filtered and data:
             msg = 'All datapoints were filtered out — no evaluator registered for any category.'
             raise ValueError(msg)
-        data = filtered
+        data = filtered  # type: ignore[assignment]
 
-    _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))
+    _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))  # pyright: ignore[reportAttributeAccessIssue]
 
     # Create job based on target kind
     _sys_prompt = target_config.system_prompt if target_config else None
@@ -621,7 +620,8 @@ async def _run_static(
 
     evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=llm_client)
 
-    # Run evaluatorq
+    # Run evaluatorq with _exit_on_failure=False because in red teaming
+    # "failures" are expected (they represent successfully breached defenses).
     logger.info(f'Running static red teaming against {target} (parallelism={parallelism})')
     results = await evaluatorq(
         'static-red-team',
@@ -630,6 +630,7 @@ async def _run_static(
         evaluators=[evaluator],
         parallelism=parallelism,
         print_results=False,
+        _exit_on_failure=False,
         description=description or f'Static red teaming for {target}',
     )
 
@@ -872,6 +873,7 @@ async def _run_hybrid(
             evaluators=[{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}],
             parallelism=parallelism,
             print_results=False,
+            _exit_on_failure=False,
             description=description or f'Hybrid red teaming for {target}',
         )
     except (asyncio.CancelledError, KeyboardInterrupt):

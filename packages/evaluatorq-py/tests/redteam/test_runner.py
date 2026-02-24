@@ -173,6 +173,7 @@ class TestStaticCoverageGuard:
             # Verify evaluatorq was called with only 2 datapoints (not 3)
             call_args = mock_evaluatorq.call_args
             submitted_data = call_args.kwargs.get('data')
+            assert submitted_data is not None
             assert len(submitted_data) == 2
 
     @pytest.mark.asyncio

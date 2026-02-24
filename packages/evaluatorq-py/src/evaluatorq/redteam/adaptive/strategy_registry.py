@@ -8,7 +8,7 @@ This module provides:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
@@ -134,7 +134,7 @@ def list_available_categories() -> list[str]:
     return [k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')]
 
 
-def get_category_info() -> dict[str, dict]:
+def get_category_info() -> dict[str, dict[str, Any]]:
     """Get information about all available categories.
 
     Returns:

@@ -80,7 +80,7 @@ class TestResolveBackendLlmClient:
         custom_client = MagicMock(spec=AsyncOpenAI)
         bundle = resolve_backend('openai', llm_client=custom_client)
         # The target factory should have been created with our custom client
-        assert bundle.target_factory._client is custom_client
+        assert bundle.target_factory._client is custom_client  # pyright: ignore[reportAttributeAccessIssue]
 
     @patch('evaluatorq.redteam.backends.registry.create_async_llm_client')
     def test_openai_backend_falls_back_to_create(self, mock_create):
@@ -89,7 +89,7 @@ class TestResolveBackendLlmClient:
         mock_create.return_value = MagicMock(spec=AsyncOpenAI)
         bundle = resolve_backend('openai', llm_client=None)
         mock_create.assert_called_once()
-        assert bundle.target_factory._client is mock_create.return_value
+        assert bundle.target_factory._client is mock_create.return_value  # pyright: ignore[reportAttributeAccessIssue]
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +266,7 @@ class TestRedTeamStaticLlmClientForwarding:
         mock_report = MagicMock()
 
         with patch(
-            'evaluatorq.redteam._runner._run_static',
+            'evaluatorq.redteam.runner._run_static',
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_static:
@@ -280,7 +280,7 @@ class TestRedTeamStaticLlmClientForwarding:
         mock_report = MagicMock()
 
         with patch(
-            'evaluatorq.redteam._runner._run_dynamic',
+            'evaluatorq.redteam.runner._run_dynamic',
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_dynamic:

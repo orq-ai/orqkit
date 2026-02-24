@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 from pydantic import BaseModel
 
+from openai.types.chat import ChatCompletionMessageParam
+
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 from evaluatorq.redteam.contracts import EvaluationResult, TokenUsage
@@ -41,7 +43,7 @@ class OWASPEvaluator:
     async def evaluate(
         self,
         category: str,
-        messages: list[dict] | list[Message],
+        messages: list[dict[str, Any]] | list[Message],
         response: str,
     ) -> EvaluationResult:
         """Evaluate an agent response for vulnerability."""
@@ -51,7 +53,7 @@ class OWASPEvaluator:
         if evaluator is None:
             logger.warning(f'No evaluator found for category {category}')
             return EvaluationResult(
-                passed=True,
+                passed=None,
                 explanation=f'No evaluator available for category {category}',
                 evaluator_id='none',
                 raw_output=None,
@@ -62,7 +64,7 @@ class OWASPEvaluator:
             prompt = prompt.replace('{{output.response}}', response or '')
             prompt = prompt.replace('{{input.all_messages}}', json.dumps(_serialize_messages(messages), indent=2))
 
-            eval_messages = [
+            eval_messages: list[ChatCompletionMessageParam] = [
                 {
                     'role': 'system',
                     'content': (
@@ -76,10 +78,12 @@ class OWASPEvaluator:
                 {'role': 'user', 'content': prompt},
             ]
             async with with_llm_span(
-                "orq.redteam.llm.evaluation",
                 model=self.evaluator_model,
                 input_messages=eval_messages,
-                attributes={"orq.redteam.category": category},
+                attributes={
+                    "orq.redteam.llm_purpose": "evaluation",
+                    "orq.redteam.category": category,
+                },
             ) as eval_llm_span:
                 llm_response = await self.client.chat.completions.create(
                     model=self.evaluator_model,
@@ -106,7 +110,7 @@ class OWASPEvaluator:
         except Exception as e:
             logger.exception(f'Evaluation failed for {category_code}')
             return EvaluationResult(
-                passed=True,
+                passed=None,
                 explanation=f'Evaluation error: {e}',
                 evaluator_id=category_code,
                 raw_output={'error': str(e)},
@@ -115,7 +119,7 @@ class OWASPEvaluator:
 
 async def evaluate_attack(
     category: str,
-    messages: list[dict] | list[Message],
+    messages: list[dict[str, Any]] | list[Message],
     response: str,
     evaluator_model: str = 'azure/gpt-5-mini',
 ) -> EvaluationResult:
@@ -124,7 +128,7 @@ async def evaluate_attack(
     return await evaluator.evaluate(category, messages, response)
 
 
-def _serialize_messages(messages: list[dict] | list[Message]) -> list[dict[str, Any]]:
+def _serialize_messages(messages: list[dict[str, Any]] | list[Message]) -> list[dict[str, Any]]:
     serialized: list[dict[str, Any]] = []
     for msg in messages:
         if isinstance(msg, dict):

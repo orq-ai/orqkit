@@ -6,6 +6,7 @@ the agent's tools, memory configuration, and system prompt.
 
 from loguru import logger
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
 from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
@@ -124,14 +125,14 @@ async def generate_objectives_for_category(
     )
 
     try:
-        gen_messages = [{'role': 'user', 'content': prompt}]
+        gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
-            "orq.redteam.llm.generate_strategies",
             model=model,
             temperature=PIPELINE_CONFIG.strategy_generation_temperature,
             max_tokens=PIPELINE_CONFIG.strategy_generation_max_tokens,
             input_messages=gen_messages,
             attributes={
+                "orq.redteam.llm_purpose": "generate_strategies",
                 "orq.redteam.category": category,
                 "orq.redteam.count": count,
             },

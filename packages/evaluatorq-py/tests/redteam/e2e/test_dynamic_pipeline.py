@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from typing import cast
 from unittest.mock import patch
 
 import pytest
+from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.base import BackendBundle
@@ -44,7 +46,7 @@ async def test_full_dynamic_run(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             description="E2E dynamic test",
         )
 
@@ -70,7 +72,7 @@ async def test_dynamic_with_strategy_generation(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             description="E2E dynamic with generation",
         )
 
@@ -95,7 +97,7 @@ async def test_dynamic_datapoint_capping(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         )
 
     assert report.total_results <= 2
@@ -118,9 +120,9 @@ async def test_dynamic_memory_cleanup(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             memory_cleanup=mock_backend_bundle.memory_cleanup,
         )
 
-    cleanup: MockMemoryCleanup = mock_backend_bundle.memory_cleanup  # type: ignore[assignment]
+    cleanup: MockMemoryCleanup = cast(MockMemoryCleanup, mock_backend_bundle.memory_cleanup)
     assert len(cleanup.cleaned_entity_ids) > 0, "Expected memory cleanup to be called"

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from evaluatorq import DataPoint, EvaluationResult, Job, job
 from loguru import logger
@@ -23,7 +23,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AttackStrategy, OrchestratorResult
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AttackStrategy, Message, OrchestratorResult, TokenUsage
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
@@ -147,7 +147,7 @@ def create_dynamic_redteam_job(
     )
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     safe_agent_key = ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in agent_key).strip('-')
-    job_name = f'dynamic:redteam:agent:{safe_agent_key or "agent"}'
+    job_name = f'redteam:dynamic:{safe_agent_key or "agent"}'
 
     @job(job_name)
     async def dynamic_job(data: DataPoint, _row: int) -> dict[str, Any]:
@@ -174,6 +174,9 @@ def create_dynamic_redteam_job(
                 agent_key=agent_key,
                 memory_entity_id=memory_entity_id,
             )
+            # Inject model info for tracing if the target supports it
+            if hasattr(target, 'model') and agent_context.model:
+                object.__setattr__(target, 'model', agent_context.model)  # type: ignore[misc]
             target.reset_conversation()
 
             if strategy.prompt_template and strategy.turn_type == TurnType.SINGLE:
@@ -194,7 +197,8 @@ def create_dynamic_redteam_job(
                             "orq.redteam.category": category,
                             "orq.redteam.strategy_name": strategy.name,
                             "orq.redteam.turn": 1,
-                            "orq.redteam.input": prompt[:2000],
+                            "input": prompt,
+                            "orq.redteam.input": prompt,
                         },
                     ) as tgt_span:
                         response = await asyncio.wait_for(
@@ -202,16 +206,12 @@ def create_dynamic_redteam_job(
                             timeout=target_timeout_s,
                         )
                         set_span_attrs(tgt_span, {
-                            "orq.redteam.output": response[:2000] if response else "",
+                            "output": response or "",
+                            "orq.redteam.output": response or "",
                         })
                         consume_usage = getattr(target, 'consume_last_token_usage', None)
                         if callable(consume_usage):
-                            token_usage = consume_usage()
-                            if token_usage is not None:
-                                set_span_attrs(tgt_span, {
-                                    "gen_ai.usage.input_tokens": token_usage.prompt_tokens or 0,
-                                    "gen_ai.usage.output_tokens": token_usage.completion_tokens or 0,
-                                })
+                            token_usage: TokenUsage | None = cast(TokenUsage | None, consume_usage())
                 except asyncio.TimeoutError:
                     logger.error(f'Single-turn attack timed out for {category}/{strategy.name} after {target_timeout_s:.0f}s')
                     response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
@@ -235,7 +235,7 @@ def create_dynamic_redteam_job(
                         'raw_message': str(e),
                     }
                 result_dict = OrchestratorResult(
-                    conversation=[{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': response}],
+                    conversation=[Message(role='user', content=prompt), Message(role='assistant', content=response)],
                     final_response=response,
                     objective_achieved=False,
                     turns=1,
@@ -250,6 +250,12 @@ def create_dynamic_redteam_job(
                     error_code=error_code,
                     error_details=error_details,
                 ).model_dump(mode='json') | {'category': category}
+
+                # Set input/output on the attack span so the platform can display them
+                set_span_attrs(attack_span, {
+                    'input': prompt,
+                    'output': response or '',
+                })
 
                 set_span_attrs(attack_span, {
                     'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
@@ -315,6 +321,16 @@ def create_dynamic_redteam_job(
 
             result_dict = result.model_dump(mode='json') | {'category': category}
 
+            # Set input/output on the attack span so the platform can display them
+            conversation = result_dict.get('conversation', [])
+            if conversation:
+                first_user = next((m['content'] for m in conversation if m.get('role') == 'user'), None)
+                if first_user:
+                    set_span_attrs(attack_span, {'input': first_user})
+            final_resp = result_dict.get('final_response')
+            if final_resp:
+                set_span_attrs(attack_span, {'output': final_resp})
+
             set_span_attrs(attack_span, {
                 'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
                 'orq.redteam.actual_turns': result_dict.get('turns'),
@@ -353,7 +369,7 @@ def create_dynamic_evaluator(
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
-        output: dict[str, Any] = params['output']  # type: ignore[assignment]  # job returns dict
+        output: dict[str, Any] = cast(dict[str, Any], params['output'])
 
         # Skip evaluation when the target returned an error
         if output.get('error'):
@@ -379,13 +395,18 @@ def create_dynamic_evaluator(
                 messages=conversation,
                 response=final_response,
             )
-            set_span_attrs(eval_span, {'orq.redteam.passed': eval_result.passed})
+            set_span_attrs(eval_span, {
+                'orq.redteam.passed': eval_result.passed,
+                'input': final_response or '',
+                'output': eval_result.explanation or '',
+            })
 
         raw_value = None
         if isinstance(eval_result.raw_output, dict):
             raw_value = eval_result.raw_output.get('value')
+        result_value: str | int | float | bool = raw_value if raw_value is not None else bool(eval_result.passed)
         return EvaluationResult(
-            value=raw_value if raw_value is not None else eval_result.passed,
+            value=result_value,
             explanation=eval_result.explanation,
             pass_=eval_result.passed,
         )
@@ -420,3 +441,5 @@ async def cleanup_memory_entities(
         logger.warning(
             f'Memory cleanup timed out after {cleanup_timeout_s:.0f}s for {len(entity_ids)} entities — skipping'
         )
+    except Exception as e:
+        logger.warning(f'Memory cleanup failed: {e}')

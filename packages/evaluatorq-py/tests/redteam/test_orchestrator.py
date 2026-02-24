@@ -23,6 +23,7 @@ class TestORQAgentTarget:
 
     def test_init(self):
         """Test target initialization."""
+        assert ORQAgentTarget is not None
         mock_client = MagicMock()
         target = ORQAgentTarget(
             agent_key='test_agent',
@@ -33,6 +34,7 @@ class TestORQAgentTarget:
 
     def test_reset_conversation(self):
         """Test resetting conversation state."""
+        assert ORQAgentTarget is not None
         mock_client = MagicMock()
         target = ORQAgentTarget(
             agent_key='test_agent',
@@ -45,6 +47,7 @@ class TestORQAgentTarget:
     @pytest.mark.asyncio
     async def test_send_prompt(self):
         """Test sending a prompt to the agent."""
+        assert ORQAgentTarget is not None
         # Create mock response — parts need 'kind' attr for text extraction
         mock_part = MagicMock()
         mock_part.kind = 'text'
@@ -76,6 +79,7 @@ class TestORQAgentTarget:
     @pytest.mark.asyncio
     async def test_send_prompt_multi_turn(self):
         """Test that task_id is preserved for multi-turn conversations."""
+        assert ORQAgentTarget is not None
         mock_part = MagicMock()
         mock_part.text = 'Response 2'
         mock_output = MagicMock()
@@ -272,7 +276,7 @@ class TestAdversarialSystemPrompt:
 
 def _make_strategy(**overrides: object) -> AttackStrategy:
     """Helper to create a strategy with sensible defaults."""
-    defaults = {
+    defaults: dict[str, object] = {
         'category': 'ASI01',
         'name': 'test',
         'description': 'Test attack',
@@ -282,7 +286,7 @@ def _make_strategy(**overrides: object) -> AttackStrategy:
         'objective_template': 'Test objective',
     }
     defaults.update(overrides)
-    return AttackStrategy(**defaults)  # type: ignore[arg-type]
+    return AttackStrategy(**defaults)  # pyright: ignore[reportArgumentType]
 
 
 class TestTimeoutHandling:

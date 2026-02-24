@@ -7,7 +7,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 import typer
 from dotenv import load_dotenv
@@ -30,7 +30,12 @@ def _configure_logging(verbosity: int) -> None:
     else:
         level = logging.DEBUG
 
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s", force=True)
+    logger = logging.getLogger("evaluatorq")
+    logger.setLevel(level)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        logger.addHandler(handler)
 
     try:
         from loguru import logger as loguru_logger
@@ -145,7 +150,7 @@ def run(
     confirm_callback = None
     if not yes:
 
-        def _confirm(summary: dict) -> bool:
+        def _confirm(summary: dict[str, Any]) -> bool:
             from rich.console import Console
             from rich.table import Table
 

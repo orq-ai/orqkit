@@ -5,23 +5,32 @@ Span hierarchy:
   +-- orq.redteam.context_retrieval                            [runner.py]
   +-- orq.redteam.datapoint_generation                         [runner.py]
   |   +-- orq.redteam.capability_classification                [strategy_planner.py]
-  |   |   +-- orq.redteam.llm.classify_tools                  [capability_classifier.py]
-  |   |   +-- orq.redteam.llm.infer_resources                 [capability_classifier.py]
+  |   |   +-- chat (llm_purpose=classify_tools)                [capability_classifier.py]
+  |   |   +-- chat (llm_purpose=infer_resources)               [capability_classifier.py]
   |   +-- orq.redteam.strategy_planning                        [strategy_planner.py]
-  |       +-- orq.redteam.llm.generate_strategies              [objective_generator.py]
+  |       +-- chat (llm_purpose=generate_strategies)           [objective_generator.py]
   +-- orq.job (framework)                                      [processings.py]
   |   +-- orq.redteam.attack                                   [pipeline.py]
   |   |   +-- orq.redteam.target_call                          [pipeline.py] (single-turn template)
+  |   |   |   +-- agent <key> (llm_purpose=target)             [orq.py] (ORQ agent targets)
+  |   |   |   +-- chat (llm_purpose=target)                    [openai.py] (OpenAI model targets)
   |   |   +-- orq.redteam.attack_turn x N                      [orchestrator.py]
-  |   |       +-- orq.redteam.llm.adversarial                  [orchestrator.py]
+  |   |       +-- orq.redteam.adversarial_generation           [orchestrator.py]
+  |   |       |   +-- chat (llm_purpose=adversarial)           [orchestrator.py]
   |   |       +-- orq.redteam.target_call                      [orchestrator.py]
+  |   |           +-- agent <key> (llm_purpose=target)         [orq.py] (ORQ agent targets)
+  |   |           +-- chat (llm_purpose=target)                [openai.py] (OpenAI model targets)
   |   +-- orq.evaluation (framework)                           [processings.py]
   |       +-- orq.redteam.security_evaluation                  [pipeline.py]
-  |           +-- orq.redteam.llm.evaluation                   [evaluator.py]
+  |           +-- chat (llm_purpose=evaluation)                [evaluator.py]
   +-- orq.redteam.memory_cleanup                               [runner.py]
 
-LLM spans (``orq.redteam.llm.*``) use ``SpanKind.CLIENT`` and carry
-OTel GenAI semantic convention attributes (``gen_ai.*``).
+LLM spans use ``SpanKind.CLIENT`` with span name ``"{operation} {model}"``
+(e.g. ``"chat gpt-5-mini"``) per OTel GenAI semantic conventions and carry
+``gen_ai.*`` attributes. ORQ agent target calls use ``SpanKind.INTERNAL``
+with span name ``"agent {key}"`` so the platform classifies them as agent
+spans (cumulative usage across internal LLM calls).
+The semantic purpose is recorded in ``orq.redteam.llm_purpose``.
 All other red teaming spans use ``SpanKind.INTERNAL``.
 """
 
@@ -76,6 +85,7 @@ async def with_redteam_span(
                 yield span
                 span.set_status(Status(StatusCode.OK))
             except Exception as e:
+                span.set_attribute("error.type", type(e).__name__)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 raise
@@ -86,27 +96,26 @@ async def with_redteam_span(
 
 @asynccontextmanager
 async def with_llm_span(
-    name: str,
     *,
     model: str,
     operation: str = "chat",
     provider: str | None = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
-    input_messages: list[dict[str, Any]] | None = None,
+    input_messages: list[Any] | None = None,
     attributes: dict[str, Any] | None = None,
     parent_context: Any | None = None,
 ) -> AsyncGenerator["Span | None", None]:
     """Execute code within a GenAI LLM span (``SpanKind.CLIENT``).
 
     Follows `OTel GenAI semantic conventions`_ for client inference spans.
+    The span name is auto-derived as ``"{operation} {model}"`` per spec.
 
     The span is created with ``gen_ai.*`` request attributes. After the LLM
     call completes, callers should use :func:`record_llm_response` to set
     response-side attributes (tokens, finish reason, output content).
 
     Args:
-        name: Span name — typically ``"orq.redteam.llm.<purpose>"``.
         model: Model identifier as sent in the request
             (maps to ``gen_ai.request.model``).
         operation: GenAI operation name (default ``"chat"``).
@@ -134,9 +143,11 @@ async def with_llm_span(
         ctx = parent_context or otel_context.get_current()
 
         resolved_provider = provider or _derive_provider(model)
+        span_name = f"{operation} {model}"
 
         genai_attrs: dict[str, Any] = {
             "gen_ai.operation.name": operation,
+            "gen_ai.system": resolved_provider,
             "gen_ai.provider.name": resolved_provider,
             "gen_ai.request.model": model,
         }
@@ -145,15 +156,17 @@ async def with_llm_span(
         if max_tokens is not None:
             genai_attrs["gen_ai.request.max_tokens"] = max_tokens
         if input_messages is not None:
-            genai_attrs["gen_ai.input.messages"] = json.dumps(
+            serialized = json.dumps(
                 _sanitize_messages(input_messages), ensure_ascii=False,
             )
+            genai_attrs["gen_ai.input.messages"] = serialized
+            genai_attrs["input"] = serialized
 
         if attributes:
             genai_attrs.update(attributes)
 
         with tracer.start_as_current_span(
-            name,
+            span_name,
             context=ctx,
             kind=SpanKind.CLIENT,
             attributes=genai_attrs,
@@ -162,6 +175,7 @@ async def with_llm_span(
                 yield span
                 span.set_status(Status(StatusCode.OK))
             except Exception as e:
+                span.set_attribute("error.type", type(e).__name__)
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 raise
@@ -201,28 +215,59 @@ def record_llm_response(
 
     # Finish reasons
     choices = getattr(response, 'choices', None) or []
-    finish_reasons = [
-        getattr(c, 'finish_reason', None)
+    finish_reasons: list[str] = [
+        str(getattr(c, 'finish_reason', ''))
         for c in choices
         if getattr(c, 'finish_reason', None)
     ]
     if finish_reasons:
         span.set_attribute("gen_ai.response.finish_reasons", finish_reasons)
 
-    # Token usage (OTel GenAI attribute names)
+    # Token usage — set both OTel GenAI names and OpenAI-style names
+    # so the ORQ platform can pick up whichever it checks first.
     usage = getattr(response, 'usage', None)
     if usage is not None:
         input_tokens = int(getattr(usage, 'prompt_tokens', 0) or 0)
         output_tokens = int(getattr(usage, 'completion_tokens', 0) or 0)
+        raw_total = getattr(usage, 'total_tokens', None)
+        total = int(raw_total) if raw_total else (input_tokens + output_tokens)
         span.set_attribute("gen_ai.usage.input_tokens", input_tokens)
         span.set_attribute("gen_ai.usage.output_tokens", output_tokens)
+        span.set_attribute("gen_ai.usage.prompt_tokens", input_tokens)
+        span.set_attribute("gen_ai.usage.completion_tokens", output_tokens)
+        span.set_attribute("gen_ai.usage.total_tokens", total)
+        # Bare keys for platform GenericAdapter extraction
+        span.set_attribute("prompt_tokens", input_tokens)
+        span.set_attribute("completion_tokens", output_tokens)
+        span.set_attribute("input_tokens", input_tokens)
+        span.set_attribute("output_tokens", output_tokens)
+        span.set_attribute("total_tokens", total)
+
+        # Cached / detailed token breakdowns
+        prompt_details = getattr(usage, 'prompt_tokens_details', None)
+        if prompt_details is not None:
+            cached = getattr(prompt_details, 'cached_tokens', None)
+            if cached is not None:
+                span.set_attribute(
+                    "gen_ai.usage.prompt_tokens_details.cached_tokens",
+                    int(cached),
+                )
+        completion_details = getattr(usage, 'completion_tokens_details', None)
+        if completion_details is not None:
+            reasoning = getattr(completion_details, 'reasoning_tokens', None)
+            if reasoning is not None:
+                span.set_attribute(
+                    "gen_ai.usage.completion_tokens_details.reasoning_tokens",
+                    int(reasoning),
+                )
 
     # Output content
     if output_content is not None:
-        span.set_attribute(
-            "gen_ai.output.messages",
-            json.dumps([{"role": "assistant", "content": output_content}], ensure_ascii=False),
+        serialized = json.dumps(
+            [{"role": "assistant", "content": output_content}], ensure_ascii=False,
         )
+        span.set_attribute("gen_ai.output.messages", serialized)
+        span.set_attribute("output", serialized)
 
 
 def set_span_attrs(span: "Span | None", attrs: dict[str, Any]) -> None:
@@ -245,10 +290,19 @@ def record_token_usage(
     """Record token usage attributes on a span. Safe no-op when *span* is ``None``."""
     if span is None:
         return
+    computed_total = total_tokens if total_tokens else (prompt_tokens + completion_tokens)
+    # OTel GenAI semantic convention attributes
     span.set_attribute("gen_ai.usage.input_tokens", prompt_tokens)
     span.set_attribute("gen_ai.usage.output_tokens", completion_tokens)
-    span.set_attribute("orq.redteam.token_usage.total_tokens", total_tokens)
-    span.set_attribute("orq.redteam.token_usage.calls", calls)
+    span.set_attribute("gen_ai.usage.prompt_tokens", prompt_tokens)
+    span.set_attribute("gen_ai.usage.completion_tokens", completion_tokens)
+    span.set_attribute("gen_ai.usage.total_tokens", computed_total)
+    # Bare keys for platform GenericAdapter extraction
+    span.set_attribute("prompt_tokens", prompt_tokens)
+    span.set_attribute("completion_tokens", completion_tokens)
+    span.set_attribute("input_tokens", prompt_tokens)
+    span.set_attribute("output_tokens", completion_tokens)
+    span.set_attribute("total_tokens", computed_total)
 
 
 def _derive_provider(model: str) -> str:
@@ -263,7 +317,7 @@ def _derive_provider(model: str) -> str:
 
 
 def _sanitize_messages(
-    messages: list[dict[str, Any]],
+    messages: list[Any],
 ) -> list[dict[str, str]]:
     """Produce a JSON-safe list of {role, content} dicts.
 

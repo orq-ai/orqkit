@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import pytest
+from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.base import BackendBundle
@@ -42,7 +44,7 @@ async def test_full_hybrid_run(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             dataset_path=str(static_dataset_path),
             description="E2E hybrid test",
         )
@@ -77,7 +79,7 @@ async def test_hybrid_independent_caps(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             dataset_path=str(static_dataset_path),
         )
 

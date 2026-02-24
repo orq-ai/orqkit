@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.contracts import RedTeamReport
@@ -136,7 +136,8 @@ async def _run(args: argparse.Namespace) -> int:
         print(f'Dataset path does not exist: {dataset_path}', file=sys.stderr)
         return 2
 
-    llm_client = None if args.live_client else DeterministicAsyncOpenAI()
+    from openai import AsyncOpenAI
+    llm_client: AsyncOpenAI | None = None if args.live_client else cast(AsyncOpenAI, cast(object, DeterministicAsyncOpenAI()))
 
     report = await red_team(
         args.target,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import SimpleNamespace
+from typing import Any
 
 from evaluatorq.redteam.contracts import AgentContext
 from evaluatorq.redteam.reports.converters import (
@@ -14,14 +15,14 @@ from evaluatorq.redteam.reports.converters import (
 
 @dataclass
 class _FakeDataPoint:
-    inputs: dict
+    inputs: dict[str, Any]
 
 
 @dataclass
 class _FakeJobResult:
     job_name: str
     output: object
-    evaluator_scores: list = field(default_factory=list)
+    evaluator_scores: list[Any] = field(default_factory=list)
     error: str | None = None
 
 

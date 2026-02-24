@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.base import BackendBundle
@@ -47,7 +49,7 @@ async def test_confirm_callback_cancels_dynamic(
                 evaluator_model="e2e-evaluator",
                 parallelism=2,
                 backend="openai",
-                llm_client=mock_llm_client,
+                llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
                 confirm_callback=callback,
             )
 
@@ -76,7 +78,7 @@ async def test_confirm_callback_cancels_hybrid(
                 evaluator_model="e2e-evaluator",
                 parallelism=2,
                 backend="openai",
-                llm_client=mock_llm_client,
+                llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
                 dataset_path=str(static_dataset_path),
                 confirm_callback=callback,
             )
@@ -107,7 +109,7 @@ async def test_static_output_artifacts(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         output_dir=output_dir,
     )
 
@@ -141,7 +143,7 @@ async def test_dynamic_output_artifacts(
             evaluator_model="e2e-evaluator",
             parallelism=2,
             backend="openai",
-            llm_client=mock_llm_client,
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
             output_dir=output_dir,
         )
 

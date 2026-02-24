@@ -1,10 +1,11 @@
 """Converters between pipeline-specific formats and unified result models."""
 
-import ast
 import json
 from contextlib import suppress
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
+
+from loguru import logger as _converters_logger
 
 from evaluatorq.redteam.contracts import (
     AgentContext,
@@ -118,13 +119,8 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
                     return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
                 if isinstance(parsed, str):
                     return _coerce_job_output_payload(parsed)
-            except json.JSONDecodeError:
-                with suppress(Exception):
-                    parsed = ast.literal_eval(text)
-                    if isinstance(parsed, dict):
-                        return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
-                    if isinstance(parsed, str):
-                        return _coerce_job_output_payload(parsed)
+            except json.JSONDecodeError as exc:
+                _converters_logger.debug(f'JSON parse failed for job output: {exc}')
         return JobOutputPayload()
 
     out: dict[str, Any] = {}
@@ -170,17 +166,17 @@ def _coerce_job_output_text(raw_output: Any) -> str:
     return str(raw_output)
 
 
-def _normalize_attack_technique(value: str | None) -> str:
+def _normalize_attack_technique(value: str | None) -> AttackTechnique:
     """Normalize free-form/static dataset techniques to supported enum values."""
     raw = str(value or '').strip()
     if not raw:
-        return 'indirect-injection'
+        return AttackTechnique.INDIRECT_INJECTION
     lowered = raw.lower().replace('_', '-').replace(' ', '-')
     supported = {str(item.value) for item in AttackTechnique}
     if lowered in supported:
-        return lowered
+        return AttackTechnique(lowered)
     # Common jailbreak-like labels in LLM datasets map to direct injection.
-    return 'direct-injection'
+    return AttackTechnique.DIRECT_INJECTION
 
 
 def _normalize_token_usage(raw: Any) -> TokenUsage | None:
@@ -254,7 +250,7 @@ def static_sample_to_result(
     attack = AttackInfo(
         id=inp.id,
         category=category,
-        framework=infer_framework(category),
+        framework=cast(Framework, infer_framework(category)),
         attack_technique=_normalize_attack_technique(inp.attack_technique),
         delivery_methods=delivery_methods,
         turn_type=inp.turn_type,
@@ -332,7 +328,7 @@ def static_results_to_report(
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
         description=description,
-        pipeline='static',
+        pipeline=Pipeline.STATIC,
         framework=_dominant_framework(unified),
         categories_tested=categories,
         tested_agents=[agent_key] if agent_key else [],
@@ -400,7 +396,7 @@ def dynamic_evaluatorq_results_to_report(
         attack = AttackInfo(
             id=inputs.get('id', f'{category}-{strategy.name}'),
             category=category,
-            framework=infer_framework(category),
+            framework=cast(Framework, infer_framework(category)),
             attack_technique=strategy.attack_technique,
             delivery_methods=strategy.delivery_methods,
             turn_type=strategy.turn_type,
@@ -457,7 +453,7 @@ def dynamic_evaluatorq_results_to_report(
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
         description=description,
-        pipeline='dynamic',
+        pipeline=Pipeline.DYNAMIC,
         framework=_dominant_framework(unified),
         categories_tested=categories,
         tested_agents=[name] if (name := _agent_display_name(agent_context)) else [],
@@ -633,7 +629,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
     )
 
 
-def _dominant_framework(results: list[RedTeamResult]) -> str | None:
+def _dominant_framework(results: list[RedTeamResult]) -> Framework | None:
     """Return the dominant framework, or None if mixed/empty."""
     if not results:
         return None

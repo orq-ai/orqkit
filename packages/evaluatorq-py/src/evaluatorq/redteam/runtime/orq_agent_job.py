@@ -10,6 +10,11 @@ from loguru import logger
 from evaluatorq.redteam.contracts import Message
 
 
+def _sanitize_job_name(value: str) -> str:
+    """Sanitize a value for use in job names (alphanumeric, dash, underscore)."""
+    return ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in value).strip('-') or 'unknown'
+
+
 def create_orq_platform_agent_job(agent_key: str) -> Job:
     """Create an evaluatorq job that calls an ORQ platform agent.
 
@@ -18,8 +23,9 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
     Requires the ``orq-ai-sdk`` optional dependency.
     """
+    safe_key = _sanitize_job_name(agent_key)
 
-    @job('agent')
+    @job(f'redteam:static:{safe_key}')
     async def platform_agent_job(data: DataPoint, _row: int) -> str:
         messages = list(data.inputs['messages'])
         sample_id = data.inputs.get('id', 'unknown')
@@ -37,7 +43,10 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
         from orq_ai_sdk import Orq
 
-        client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
+        api_key = os.environ.get('ORQ_API_KEY')
+        if not api_key:
+            raise RuntimeError('ORQ_API_KEY environment variable is not set')
+        client = Orq(api_key=api_key)
         task_id: str | None = None
         result_text = ''
         user_turns = 0
@@ -68,8 +77,9 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
                 kwargs['task_id'] = task_id
 
             response = await client.agents.responses.create_async(**kwargs)
-            if getattr(response, 'task_id', None):
-                task_id = response.task_id
+            _task_id = getattr(response, 'task_id', None)
+            if _task_id:
+                task_id = _task_id
             result_text = _extract_agent_response_text(response)
 
         if user_turns == 0:
@@ -103,7 +113,8 @@ def _normalize_message(message: Any) -> Message | dict[str, Any]:
     if isinstance(message, dict):
         try:
             return Message.model_validate(message)
-        except Exception:
+        except Exception as e:
+            logger.debug(f'Message validation failed, using raw dict: {e}')
             return message
     return {'role': 'user', 'content': str(message)}
 

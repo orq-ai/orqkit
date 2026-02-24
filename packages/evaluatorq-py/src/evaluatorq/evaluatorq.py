@@ -59,6 +59,7 @@ async def evaluatorq(
     print_results: bool = True,
     description: str | None = None,
     path: str | None = None,
+    _exit_on_failure: bool = True,
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
@@ -327,7 +328,7 @@ async def evaluatorq(
 
     # Check for pass failures and exit if any
     has_failures = check_pass_failures(results)
-    if has_failures:
+    if has_failures and _exit_on_failure:
         import sys
 
         sys.exit(1)

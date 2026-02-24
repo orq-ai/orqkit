@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timezone
+from typing import Any, cast
 
 import pytest
 from pydantic import ValidationError
@@ -14,6 +15,9 @@ from evaluatorq.redteam.contracts import (
     DynamicSummaryReportRow,
     EvaluatedRow,
     EvaluationPayload,
+    Framework,
+    Message,
+    Pipeline,
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
@@ -39,9 +43,9 @@ def _make_static_sample(
     passed: bool = True,
     with_evaluation: bool = True,
     with_error: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """Create a static pipeline sample dict for testing."""
-    sample: dict = {
+    sample: dict[str, Any] = {
         'input': {
             'id': f'{category}-0001',
             'category': category,
@@ -112,7 +116,7 @@ class TestModelSerialization:
         info = AttackInfo(
             id='ASI01-test-001',
             category='ASI01',
-            framework='OWASP-ASI',
+            framework=Framework.OWASP_ASI,
             attack_technique=AttackTechnique.INDIRECT_INJECTION,
             delivery_methods=[DeliveryMethod.DIRECT_REQUEST, DeliveryMethod.ROLE_PLAY],
             turn_type=TurnType.SINGLE,
@@ -140,7 +144,7 @@ class TestModelSerialization:
             attack=AttackInfo(
                 id='ASI01-test-001',
                 category='ASI01',
-                framework='OWASP-ASI',
+                framework=Framework.OWASP_ASI,
                 attack_technique=AttackTechnique.INDIRECT_INJECTION,
                 delivery_methods=[DeliveryMethod.DIRECT_REQUEST],
                 turn_type=TurnType.SINGLE,
@@ -148,7 +152,7 @@ class TestModelSerialization:
                 source='hardcoded_strategy',
             ),
             agent=AgentInfo(key='test_agent', model='azure/gpt-5-mini'),
-            messages=[{'role': 'user', 'content': 'test'}],
+            messages=cast(list[Message], [{'role': 'user', 'content': 'test'}]),
             response='I refuse.',
             evaluation=UnifiedEvaluationResult(passed=True, explanation='OK', evaluator_id='ASI01'),
             vulnerable=False,
@@ -161,7 +165,7 @@ class TestModelSerialization:
     def test_red_team_report_round_trip(self):
         report = RedTeamReport(
             created_at=datetime.now(timezone.utc),
-            pipeline='dynamic',
+            pipeline=Pipeline.DYNAMIC,
             categories_tested=['ASI01'],
             total_results=1,
             results=[
@@ -169,7 +173,7 @@ class TestModelSerialization:
                     attack=AttackInfo(
                         id='ASI01-x',
                         category='ASI01',
-                        framework='OWASP-ASI',
+                        framework=Framework.OWASP_ASI,
                         attack_technique=AttackTechnique.INDIRECT_INJECTION,
                         delivery_methods=[DeliveryMethod.DIRECT_REQUEST],
                         turn_type=TurnType.SINGLE,

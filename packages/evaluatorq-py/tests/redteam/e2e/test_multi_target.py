@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
+from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 
@@ -24,7 +26,7 @@ async def test_multi_target_static_merge(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         description="E2E multi-target test",
     )
 

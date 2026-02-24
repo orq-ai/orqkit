@@ -30,6 +30,9 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     - {agent_name}: Agent display name (or key)
     - {agent_description}: Agent description (or "an AI assistant")
 
+    Uses a single-pass substitution to prevent double-substitution attacks
+    where agent metadata containing placeholder strings could be re-expanded.
+
     Args:
         template: Template string with {placeholder} variables
         agent_context: Agent context for filling values
@@ -37,20 +40,24 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     Returns:
         Filled template string
     """
-    # Prepare substitution values
-    tool_name = agent_context.tools[0].name if agent_context.tools else 'the tool'
-    tool_names = ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools'
-    memory_store = agent_context.memory_stores[0].key if agent_context.memory_stores else 'memory'
-    agent_name = agent_context.display_name or agent_context.key
-    agent_description = agent_context.description or 'an AI assistant'
+    substitutions = {
+        'tool_name': agent_context.tools[0].name if agent_context.tools else 'the tool',
+        'tool_names': ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools',
+        'memory_store': (agent_context.memory_stores[0].key or 'memory') if agent_context.memory_stores else 'memory',
+        'agent_name': agent_context.display_name or agent_context.key,
+        'agent_description': agent_context.description or 'an AI assistant',
+    }
 
-    # Perform substitutions
-    result = template
-    result = result.replace('{tool_name}', tool_name)
-    result = result.replace('{tool_names}', tool_names)
-    result = result.replace('{memory_store}', memory_store)
-    result = result.replace('{agent_name}', agent_name)
-    return result.replace('{agent_description}', agent_description)
+    # Single-pass substitution via format_map — avoids double-substitution.
+    # _SafeDict returns the original placeholder for missing keys.
+    return template.format_map(_SafeDict(substitutions))
+
+
+class _SafeDict(dict[str, str]):
+    """Dict subclass that returns the original {key} for missing keys."""
+
+    def __missing__(self, key: str) -> str:
+        return '{' + key + '}'
 
 
 def generate_attack_prompt(

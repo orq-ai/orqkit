@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
+from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 
@@ -24,7 +26,7 @@ async def test_full_static_run(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         description="E2E static test",
     )
 
@@ -46,7 +48,7 @@ async def test_static_vulnerability_detection(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 
     results_by_cat = {r.attack.category: r for r in report.results}
@@ -81,7 +83,7 @@ async def test_static_category_filtering(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 
     assert report.total_results >= 1
@@ -103,7 +105,7 @@ async def test_static_datapoint_capping(
         parallelism=2,
         backend="openai",
         dataset_path=str(static_dataset_path),
-        llm_client=mock_llm_client,
+        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 
     assert report.total_results == 1

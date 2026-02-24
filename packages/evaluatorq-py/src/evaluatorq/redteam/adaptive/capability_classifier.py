@@ -18,6 +18,7 @@ else:
 
 from loguru import logger
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
 from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext
@@ -198,13 +199,13 @@ async def _infer_resource_capabilities(
         tool_list=tool_list,
     )
     try:
-        infer_messages = [{'role': 'user', 'content': prompt}]
+        infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
-            "orq.redteam.llm.infer_resources",
             model=model,
             temperature=0.0,
             max_tokens=600,
             input_messages=infer_messages,
+            attributes={"orq.redteam.llm_purpose": "infer_resources"},
         ) as res_span:
             response = await llm_client.chat.completions.parse(
                 model=model,
@@ -253,14 +254,16 @@ async def _classify_tools(
     valid_values = {c.value for c in AgentCapability}
 
     try:
-        classify_messages = [{'role': 'user', 'content': prompt}]
+        classify_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
-            "orq.redteam.llm.classify_tools",
             model=model,
             temperature=PIPELINE_CONFIG.capability_classification_temperature,
             max_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
             input_messages=classify_messages,
-            attributes={"orq.redteam.num_tools": len(agent_context.tools)},
+            attributes={
+                "orq.redteam.llm_purpose": "classify_tools",
+                "orq.redteam.num_tools": len(agent_context.tools),
+            },
         ) as cls_span:
             response = await llm_client.chat.completions.parse(
                 model=model,

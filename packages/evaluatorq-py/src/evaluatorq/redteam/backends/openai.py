@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from openai.types.chat import ChatCompletionMessageParam
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.contracts import AgentContext
+from evaluatorq.redteam.contracts import AgentContext, TokenUsage
+from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -25,16 +27,48 @@ class OpenAIModelTarget:
         self.model_id = model_id
         self.client = client
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
+        self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
-        response = await self.client.chat.completions.create(
+        messages: list[ChatCompletionMessageParam] = [
+            {'role': 'system', 'content': self.system_prompt},
+            {'role': 'user', 'content': prompt},
+        ]
+        async with with_llm_span(
             model=self.model_id,
-            messages=[
-                {'role': 'system', 'content': self.system_prompt},
-                {'role': 'user', 'content': prompt},
-            ],
-        )
-        return response.choices[0].message.content or ''
+            input_messages=messages,
+            attributes={"orq.redteam.llm_purpose": "target"},
+        ) as span:
+            response = await self.client.chat.completions.create(
+                model=self.model_id,
+                messages=messages,
+            )
+            content = response.choices[0].message.content or ''
+            record_llm_response(span, response, output_content=content)
+
+            # Store usage for consume_last_token_usage()
+            usage = getattr(response, 'usage', None)
+            if usage is not None:
+                _prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
+                _completion = int(getattr(usage, 'completion_tokens', 0) or 0)
+                _raw_total = getattr(usage, 'total_tokens', None)
+                _total = int(_raw_total) if _raw_total else (_prompt + _completion)
+                self._last_token_usage = TokenUsage(
+                    prompt_tokens=_prompt,
+                    completion_tokens=_completion,
+                    total_tokens=_total,
+                    calls=1,
+                )
+            else:
+                self._last_token_usage = None
+
+        return content
+
+    def consume_last_token_usage(self) -> TokenUsage | None:
+        """Return and clear usage from last call."""
+        usage = self._last_token_usage
+        self._last_token_usage = None
+        return usage
 
     def reset_conversation(self) -> None:
         """Stateless adapter; nothing to reset."""

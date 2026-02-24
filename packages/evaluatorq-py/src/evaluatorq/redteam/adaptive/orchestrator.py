@@ -10,18 +10,20 @@ import os
 import time
 from inspect import signature
 from threading import Lock
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from rich.console import Console
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 from evaluatorq.redteam.backends.base import AgentTarget, DefaultErrorMapper, ErrorMapper
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
     AttackStrategy,
+    Message,
     OrchestratorResult,
     TokenUsage,
 )
@@ -30,8 +32,8 @@ from evaluatorq.redteam.tracing import record_llm_response, set_span_attrs, with
 _ui_console = Console(stderr=True)
 _progress_lock = Lock()
 _shared_progress: Progress | None = None
-_shared_progress_task_ids: set[int] = set()
-_shared_progress_summary_task_id: int | None = None
+_shared_progress_task_ids: set[TaskID] = set()
+_shared_progress_summary_task_id: TaskID | None = None
 _shared_progress_started = 0
 _shared_progress_finished = 0
 _PROGRESS_LABEL_MAX_LEN = 52
@@ -88,14 +90,14 @@ Constraints:
 """
 
 
-def _start_shared_progress_task(description: str, *, total: int) -> int:
+def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
     """Start (or reuse) shared progress and add one attack task."""
     global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started
 
     def _description_column() -> TextColumn:
         """Build a Rich TextColumn compatible with multiple Rich versions."""
         init_params = signature(TextColumn.__init__).parameters
-        kwargs: dict[str, object] = {}
+        kwargs: dict[str, Any] = {}
         if 'no_wrap' in init_params:
             kwargs['no_wrap'] = True
         if 'overflow' in init_params:
@@ -135,7 +137,7 @@ def _progress_label(category: str, strategy_name: str) -> str:
     return raw[: _PROGRESS_LABEL_MAX_LEN - 1] + '…'
 
 
-def _update_shared_progress_task(task_id: int, *, completed: int | None = None) -> None:
+def _update_shared_progress_task(task_id: TaskID, *, completed: int | None = None) -> None:
     """Update one attack task on the shared progress display."""
     with _progress_lock:
         if _shared_progress is None:
@@ -146,7 +148,7 @@ def _update_shared_progress_task(task_id: int, *, completed: int | None = None) 
         _shared_progress.update(task_id, completed=completed)
 
 
-def _stop_shared_progress_task(task_id: int) -> None:
+def _stop_shared_progress_task(task_id: TaskID) -> None:
     """Remove one task and stop shared progress when the last task completes."""
     global _shared_progress, _shared_progress_summary_task_id, _shared_progress_finished
     with _progress_lock:
@@ -188,12 +190,13 @@ def _update_shared_progress_summary_locked() -> None:
 
 def _reset_shared_progress_state_locked() -> None:
     """Reset global shared progress state; lock must be held."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished
+    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished, _progress_ui_disabled
     _shared_progress = None
     _shared_progress_summary_task_id = None
     _shared_progress_task_ids.clear()
     _shared_progress_started = 0
     _shared_progress_finished = 0
+    _progress_ui_disabled = False
 
 
 def _build_adversarial_system_prompt(
@@ -305,36 +308,42 @@ class MultiTurnOrchestrator:
         """
         system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=1)
 
-        llm_messages = [
+        llm_messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': 'Generate a single attack prompt to achieve the objective in one message.'},
         ]
-        async with with_llm_span(
-            "orq.redteam.llm.adversarial",
-            model=self.model,
-            temperature=PIPELINE_CONFIG.adversarial_temperature,
-            max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-            input_messages=llm_messages,
-            attributes={"orq.redteam.strategy_name": strategy.name},
-        ) as llm_span:
-            llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
-            response = await asyncio.wait_for(
-                self.llm_client.chat.completions.create(
-                    model=self.model,
-                    messages=llm_messages,
-                    temperature=PIPELINE_CONFIG.adversarial_temperature,
-                    max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-                    extra_body=PIPELINE_CONFIG.retry_config,
-                ),
-                timeout=llm_timeout_s,
-            )
+        async with with_redteam_span(
+            "orq.redteam.adversarial_generation",
+            {"orq.redteam.strategy_name": strategy.name},
+        ):
+            async with with_llm_span(
+                model=self.model,
+                temperature=PIPELINE_CONFIG.adversarial_temperature,
+                max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                input_messages=llm_messages,
+                attributes={
+                    "orq.redteam.llm_purpose": "adversarial",
+                    "orq.redteam.strategy_name": strategy.name,
+                },
+            ) as llm_span:
+                llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
+                response = await asyncio.wait_for(
+                    self.llm_client.chat.completions.create(
+                        model=self.model,
+                        messages=llm_messages,
+                        temperature=PIPELINE_CONFIG.adversarial_temperature,
+                        max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                        extra_body=PIPELINE_CONFIG.retry_config,
+                    ),
+                    timeout=llm_timeout_s,
+                )
 
-            usage = _extract_usage_from_completion(response)
-            prompt = response.choices[0].message.content or ''
-            # Strip any objective-achieved markers (shouldn't appear but just in case)
-            prompt = prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
+                usage = _extract_usage_from_completion(response)
+                prompt = response.choices[0].message.content or ''
+                # Strip any objective-achieved markers (shouldn't appear but just in case)
+                prompt = prompt.replace('OBJECTIVE_ACHIEVED', '').strip()
 
-            record_llm_response(llm_span, response, output_content=prompt)
+                record_llm_response(llm_span, response, output_content=prompt)
 
         logger.info(f'Generated dynamic single-turn prompt for {strategy.name}: {prompt[:100]}...')
         return prompt, usage, system_prompt
@@ -369,13 +378,13 @@ class MultiTurnOrchestrator:
         system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=max_turns)
 
         # Adversarial LLM conversation
-        adversarial_messages = [
+        adversarial_messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=max_turns)},
         ]
 
         # Agent conversation (what we'll return)
-        conversation: list[dict[str, str]] = []
+        conversation: list[Message] = []
 
         objective_achieved = False
         final_response = ''
@@ -387,13 +396,13 @@ class MultiTurnOrchestrator:
         error_type: str | None = None
         error_stage: str | None = None
         error_code: str | None = None
-        error_details: dict | None = None
+        error_details: dict[str, Any] | None = None
         error_turn: int | None = None
         consecutive_agent_errors = 0
         truncation_warnings: list[int] = []  # turns where finish_reason=length
 
         show_progress = max_turns > 1 and _ui_console.is_terminal and _progress_ui_enabled_for_current_run()
-        task_id: int | None = None
+        task_id: TaskID | None = None
         global _progress_ui_disabled
         if show_progress and not _progress_ui_disabled:
             try:
@@ -426,35 +435,42 @@ class MultiTurnOrchestrator:
                     llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
                     usage: TokenUsage | None = None
                     try:
-                        async with with_llm_span(
-                            "orq.redteam.llm.adversarial",
-                            model=self.model,
-                            temperature=PIPELINE_CONFIG.adversarial_temperature,
-                            max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-                            input_messages=adversarial_messages,
-                            attributes={
+                        async with with_redteam_span(
+                            "orq.redteam.adversarial_generation",
+                            {
                                 "orq.redteam.turn": turn + 1,
                                 "orq.redteam.strategy_name": strategy.name,
                             },
-                        ) as adv_span:
-                            attack_response = await asyncio.wait_for(
-                                self.llm_client.chat.completions.create(
-                                    model=self.model,
-                                    messages=adversarial_messages,
-                                    temperature=PIPELINE_CONFIG.adversarial_temperature,
-                                    max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
-                                    extra_body=PIPELINE_CONFIG.retry_config,
-                                ),
-                                timeout=llm_timeout_s,
-                            )
-                            usage = _extract_usage_from_completion(attack_response)
-                            if usage is not None:
-                                adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
-                                adversarial_completion_tokens += int(usage.completion_tokens or 0)
-                                adversarial_total_tokens += int(usage.total_tokens or 0)
-                                adversarial_calls += int(usage.calls or 0) or 1
-                            attack_prompt = attack_response.choices[0].message.content or ''
-                            record_llm_response(adv_span, attack_response, output_content=attack_prompt)
+                        ):
+                            async with with_llm_span(
+                                model=self.model,
+                                temperature=PIPELINE_CONFIG.adversarial_temperature,
+                                max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                                input_messages=adversarial_messages,
+                                attributes={
+                                    "orq.redteam.llm_purpose": "adversarial",
+                                    "orq.redteam.turn": turn + 1,
+                                    "orq.redteam.strategy_name": strategy.name,
+                                },
+                            ) as adv_span:
+                                attack_response = await asyncio.wait_for(
+                                    self.llm_client.chat.completions.create(
+                                        model=self.model,
+                                        messages=adversarial_messages,
+                                        temperature=PIPELINE_CONFIG.adversarial_temperature,
+                                        max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                                        extra_body=PIPELINE_CONFIG.retry_config,
+                                    ),
+                                    timeout=llm_timeout_s,
+                                )
+                                usage = _extract_usage_from_completion(attack_response)
+                                if usage is not None:
+                                    adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
+                                    adversarial_completion_tokens += int(usage.completion_tokens or 0)
+                                    adversarial_total_tokens += int(usage.total_tokens or 0)
+                                    adversarial_calls += int(usage.calls or 0) or 1
+                                attack_prompt = attack_response.choices[0].message.content or ''
+                                record_llm_response(adv_span, attack_response, output_content=attack_prompt)
                     except asyncio.TimeoutError:
                         error = f'Adversarial LLM timed out after {llm_timeout_s:.0f}s'
                         error_type = 'llm_error'
@@ -503,7 +519,7 @@ class MultiTurnOrchestrator:
                             'content_filter': 'content_filter',
                             'length': 'max_tokens',
                         }
-                        error_type = reason_to_type.get(finish_reason, 'empty_response')
+                        error_type = reason_to_type.get(finish_reason or '', 'empty_response')
                         error_stage = 'adversarial_generation'
                         error_code = f'adversarial.{error_type}'
                         error_details = {
@@ -548,7 +564,8 @@ class MultiTurnOrchestrator:
                             {
                                 "orq.redteam.turn": turn + 1,
                                 "orq.redteam.strategy_name": strategy.name,
-                                "orq.redteam.input": attack_prompt[:2000],
+                                "input": attack_prompt,
+                                "orq.redteam.input": attack_prompt,
                             },
                         ) as tgt_span:
                             agent_response = await asyncio.wait_for(
@@ -558,20 +575,17 @@ class MultiTurnOrchestrator:
                             final_response = agent_response
                             consecutive_agent_errors = 0
                             set_span_attrs(tgt_span, {
-                                "orq.redteam.output": agent_response[:2000] if agent_response else "",
+                                "output": agent_response or "",
+                                "orq.redteam.output": agent_response or "",
                             })
                             consume_usage = getattr(target, 'consume_last_token_usage', None)
                             if callable(consume_usage):
-                                target_usage = consume_usage()
+                                target_usage: TokenUsage | None = cast(TokenUsage | None, consume_usage())
                                 if target_usage is not None:
                                     target_prompt_tokens += int(target_usage.prompt_tokens or 0)
                                     target_completion_tokens += int(target_usage.completion_tokens or 0)
                                     target_total_tokens += int(target_usage.total_tokens or 0)
                                     target_calls += int(target_usage.calls or 0) or 1
-                                    set_span_attrs(tgt_span, {
-                                        "gen_ai.usage.input_tokens": target_usage.prompt_tokens or 0,
-                                        "gen_ai.usage.output_tokens": target_usage.completion_tokens or 0,
-                                    })
                     except asyncio.TimeoutError:
                         consecutive_agent_errors += 1
                         agent_response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
@@ -590,8 +604,8 @@ class MultiTurnOrchestrator:
                             }
                             error_turn = turn + 1
                             conversation.extend([
-                                {'role': 'user', 'content': attack_prompt},
-                                {'role': 'assistant', 'content': agent_response},
+                                Message(role='user', content=attack_prompt),
+                                Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
                                 _update_shared_progress_task(task_id, completed=turn + 1)
@@ -623,8 +637,8 @@ class MultiTurnOrchestrator:
                             error_code = mapped_code
                             error_turn = turn + 1
                             conversation.extend([
-                                {'role': 'user', 'content': attack_prompt},
-                                {'role': 'assistant', 'content': agent_response},
+                                Message(role='user', content=attack_prompt),
+                                Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
                                 _update_shared_progress_task(task_id, completed=turn + 1)
@@ -637,8 +651,8 @@ class MultiTurnOrchestrator:
 
                     # Record conversation
                     conversation.extend([
-                        {'role': 'user', 'content': attack_prompt},
-                        {'role': 'assistant', 'content': agent_response},
+                        Message(role='user', content=attack_prompt),
+                        Message(role='assistant', content=agent_response),
                     ])
 
                     # Update adversarial LLM context
@@ -652,6 +666,8 @@ class MultiTurnOrchestrator:
                         _update_shared_progress_task(task_id, completed=turn + 1)
 
                     set_span_attrs(turn_span, {
+                        "input": attack_prompt,
+                        "output": agent_response if agent_response else "",
                         "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                         "orq.redteam.finish_reason": "ok",
                     })
