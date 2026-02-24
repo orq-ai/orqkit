@@ -164,7 +164,7 @@ async def _run_dynamic(
     )
     from evaluatorq.redteam.reports.converters import dynamic_evaluatorq_results_to_report
 
-    target_kind, target_value = _parse_target(target)
+    _target_kind, target_value = _parse_target(target)
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
     # Resolve backend
@@ -294,9 +294,10 @@ async def _run_static(
     target_kind, target_value = _parse_target(target)
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
-    # Load dataset
+    # Load dataset (may use synchronous ORQ SDK internally, so run in thread)
     path = Path(dataset_path) if dataset_path is not None else None
-    data = load_owasp_agentic_dataset(
+    data = await asyncio.to_thread(
+        load_owasp_agentic_dataset,
         num_samples=max_datapoints,
         categories=categories,
         path=path,

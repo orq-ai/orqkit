@@ -78,7 +78,9 @@ def create_owasp_evaluator(
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
         output = params['output']
-        category = data.inputs['category']
+        category = data.inputs.get('category', '')
+        if not category:
+            return EvaluationResult(value=False, explanation='Missing category field in datapoint inputs')
 
         evaluator_entity = get_evaluator_for_category(category, evaluator_model)
         if evaluator_entity is None:
@@ -137,6 +139,9 @@ def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
     """Fetch all datapoints from an ORQ dataset, handling pagination.
 
     Requires the ``orq-ai-sdk`` optional dependency.
+
+    Note: Uses synchronous ORQ SDK internally. Callers in async contexts
+    should wrap with ``asyncio.to_thread`` to avoid blocking the event loop.
     """
     try:
         from orq_ai_sdk import Orq
@@ -180,7 +185,10 @@ def _load_from_file(
     with path.open() as f:
         data = json.load(f)
 
-    samples = data['samples']
+    samples = data.get('samples')
+    if samples is None:
+        msg = f"Dataset file {path} must contain a top-level 'samples' key, got keys: {list(data.keys())}"
+        raise ValueError(msg)
 
     if categories:
         normalized = {c.upper().replace('OWASP-', '') for c in categories}

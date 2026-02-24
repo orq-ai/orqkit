@@ -98,7 +98,7 @@ def create_model_job(
 def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
     """Extract messages from a DataPoint and normalize known fields."""
     messages: list[dict[str, Any]] = []
-    for raw in list(data.inputs['messages']):
+    for raw in list(data.inputs.get('messages', [])):
         if isinstance(raw, Message):
             messages.append(raw.model_dump(mode='json', exclude_none=True))
             continue
