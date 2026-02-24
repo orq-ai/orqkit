@@ -27,7 +27,7 @@ from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AttackStrategy, Messag
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
-from evaluatorq.redteam.tracing import record_token_usage, set_span_attrs, with_redteam_span
+from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
 
 if TYPE_CHECKING:
     from evaluatorq.types import ScorerParameter
@@ -267,15 +267,6 @@ def create_dynamic_redteam_job(
                         'orq.redteam.error_type': result_dict.get('error_type'),
                         'orq.redteam.error_code': result_dict.get('error_code'),
                     })
-                token_usage_dict = result_dict.get('token_usage')
-                if token_usage_dict:
-                    record_token_usage(
-                        attack_span,
-                        prompt_tokens=token_usage_dict.get('prompt_tokens', 0),
-                        completion_tokens=token_usage_dict.get('completion_tokens', 0),
-                        total_tokens=token_usage_dict.get('total_tokens', 0),
-                        calls=token_usage_dict.get('calls', 0),
-                    )
                 return result_dict
 
             # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
@@ -341,16 +332,6 @@ def create_dynamic_redteam_job(
                     'orq.redteam.error_type': result_dict.get('error_type'),
                     'orq.redteam.error_code': result_dict.get('error_code'),
                 })
-            token_usage_dict = result_dict.get('token_usage')
-            if token_usage_dict:
-                record_token_usage(
-                    attack_span,
-                    prompt_tokens=token_usage_dict.get('prompt_tokens', 0),
-                    completion_tokens=token_usage_dict.get('completion_tokens', 0),
-                    total_tokens=token_usage_dict.get('total_tokens', 0),
-                    calls=token_usage_dict.get('calls', 0),
-                )
-
             return result_dict
 
     return dynamic_job

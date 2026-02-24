@@ -259,7 +259,6 @@ def _merge_usage(*usages: TokenUsage | None) -> TokenUsage | None:
         prompt_tokens=sum(int(u.prompt_tokens or 0) for u in present),
         completion_tokens=sum(int(u.completion_tokens or 0) for u in present),
         total_tokens=sum(int(u.total_tokens or 0) for u in present),
-        total_cost_usd=round(sum(float(u.total_cost_usd or 0.0) for u in present), 6),
         calls=sum(int(u.calls or 0) for u in present),
     )
 

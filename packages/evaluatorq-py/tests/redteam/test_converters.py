@@ -123,12 +123,12 @@ class TestMergeReports:
         assert merged.summary.vulnerabilities_found == 1
         assert merged.summary.resistance_rate == 0.5
 
-    def test_merge_resolves_pipeline_mixed(self):
+    def test_merge_resolves_pipeline_hybrid(self):
         report_a = _make_report(pipeline=Pipeline.DYNAMIC)
         report_b = _make_report(pipeline=Pipeline.STATIC)
 
         merged = merge_reports(report_a, report_b)
-        assert merged.pipeline == Pipeline.MIXED
+        assert merged.pipeline == Pipeline.HYBRID
 
     def test_merge_resolves_pipeline_same(self):
         report_a = _make_report(pipeline=Pipeline.DYNAMIC)

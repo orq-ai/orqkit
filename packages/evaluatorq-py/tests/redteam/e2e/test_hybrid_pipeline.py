@@ -49,7 +49,7 @@ async def test_full_hybrid_run(
             description="E2E hybrid test",
         )
 
-    errors = validate_report_structure(report, expected_pipeline="mixed", min_results=1)
+    errors = validate_report_structure(report, expected_pipeline="hybrid", min_results=1)
     assert not errors, f"Report validation errors: {errors}"
 
     # Hybrid should have a datapoint_breakdown

@@ -114,7 +114,7 @@ class Pipeline(StrEnum):
 
     STATIC = 'static'
     DYNAMIC = 'dynamic'
-    MIXED = 'mixed'
+    HYBRID = 'hybrid'
 
 
 # ---------------------------------------------------------------------------
@@ -489,7 +489,6 @@ class TokenUsage(BaseModel):
     total_tokens: int = Field(default=0, description='Total tokens used')
     prompt_tokens: int = Field(default=0, description='Prompt/input tokens')
     completion_tokens: int = Field(default=0, description='Completion/output tokens')
-    total_cost_usd: float = Field(default=0.0, description='Total cost in USD')
     calls: int = Field(default=0, description='Number of LLM API calls')
 
 
@@ -794,7 +793,7 @@ class RedTeamReport(BaseModel):
     version: str = '2.0.0'
     created_at: datetime
     description: str | None = None
-    pipeline: Pipeline = Field(description="'static', 'dynamic', or 'mixed'")
+    pipeline: Pipeline = Field(description="'static', 'dynamic', or 'hybrid'")
     framework: Framework | None = None
 
     categories_tested: list[str]
@@ -809,6 +808,13 @@ class RedTeamReport(BaseModel):
 
     token_usage_summary: TokenUsage | None = None
     duration_seconds: float | None = None
+
+    @field_validator('pipeline', mode='before')
+    @classmethod
+    def _normalize_pipeline(cls, value: Any) -> Any:
+        if value == 'mixed':
+            return 'hybrid'
+        return value
 
     @field_validator('framework', mode='before')
     @classmethod

@@ -578,7 +578,6 @@ def _is_vulnerable(r: RedTeamResult) -> bool:
 def _aggregate_token_usage(results: list[RedTeamResult]) -> TokenUsage | None:
     """Sum token usage across all results that have execution details."""
     total = prompt = completion = 0
-    cost = 0.0
     calls = 0
     found = False
     for r in results:
@@ -587,7 +586,6 @@ def _aggregate_token_usage(results: list[RedTeamResult]) -> TokenUsage | None:
             total += u.total_tokens
             prompt += u.prompt_tokens
             completion += u.completion_tokens
-            cost += u.total_cost_usd
             calls += u.calls
             found = True
     if not found:
@@ -596,7 +594,6 @@ def _aggregate_token_usage(results: list[RedTeamResult]) -> TokenUsage | None:
         total_tokens=total,
         prompt_tokens=prompt,
         completion_tokens=completion,
-        total_cost_usd=cost,
         calls=calls,
     )
 
@@ -857,8 +854,8 @@ def merge_reports(
     if len(non_none_frameworks) == 1:
         resolved_framework = non_none_frameworks.pop()
 
-    # Resolve pipeline: use single value if unanimous, else 'mixed'
-    resolved_pipeline: Pipeline = Pipeline.MIXED
+    # Resolve pipeline: use single value if unanimous, else 'hybrid'
+    resolved_pipeline: Pipeline = Pipeline.HYBRID
     if len(pipelines) == 1:
         resolved_pipeline = pipelines.pop()
 

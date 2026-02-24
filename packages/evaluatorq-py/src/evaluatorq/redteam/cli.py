@@ -213,3 +213,53 @@ def run(
         save_report.parent.mkdir(parents=True, exist_ok=True)
         save_report.write_text(json.dumps(report.model_dump(mode="json"), indent=2, default=str))
         typer.echo(f"Report saved to {save_report}")
+
+
+@app.command()
+def ui(
+    report_path: Annotated[
+        Path,
+        typer.Argument(help="Path to report JSON file or directory containing report files."),
+    ],
+    port: Annotated[
+        int,
+        typer.Option(help="Port for the Streamlit server."),
+    ] = 8501,
+    host: Annotated[
+        str,
+        typer.Option(help="Host to bind the Streamlit server to."),
+    ] = "localhost",
+) -> None:
+    """Launch the interactive Streamlit dashboard for a red team report."""
+    import subprocess
+
+    report_path = report_path.resolve()
+    if not report_path.exists():
+        typer.echo(f"Error: {report_path} does not exist.", err=True)
+        raise typer.Exit(code=1)
+
+    dashboard_script = Path(__file__).parent / "ui" / "dashboard.py"
+    if not dashboard_script.exists():
+        typer.echo("Error: Dashboard module not found.", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        import streamlit  # noqa: F401
+    except ImportError:
+        typer.echo(
+            'Streamlit is not installed. Install the ui extras:\n'
+            '  pip install "evaluatorq[ui]"',
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    subprocess.run(
+        [
+            sys.executable, "-m", "streamlit", "run",
+            str(dashboard_script),
+            "--server.port", str(port),
+            "--server.address", host,
+            "--browser.gatherUsageStats", "false",
+            "--", str(report_path),
+        ],
+    )

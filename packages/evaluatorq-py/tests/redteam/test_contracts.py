@@ -146,7 +146,7 @@ class TestHybridFixture:
 
     def test_parses_as_report(self, hybrid_report_data: dict[str, Any]) -> None:
         report = RedTeamReport.model_validate(hybrid_report_data)
-        assert report.pipeline == "mixed"
+        assert report.pipeline == "hybrid"
         assert len(report.results) > 0
 
     def test_mixed_execution_details(self, hybrid_report_data: dict[str, Any]) -> None:
