@@ -95,7 +95,7 @@ def create_owasp_evaluator(
         prompt = prompt.replace('{{output.response}}', output_text)
         prompt = prompt.replace(
             '{{input.all_messages}}',
-            json.dumps(data.inputs['messages'], indent=2),
+            json.dumps(data.inputs.get('messages', []), indent=2),
         )
 
         client = llm_client or create_async_llm_client()
@@ -192,7 +192,7 @@ def _load_from_file(
 
     if categories:
         normalized = {c.upper().replace('OWASP-', '') for c in categories}
-        samples = [s for s in samples if s['input']['category'].upper().replace('OWASP-', '') in normalized]
+        samples = [s for s in samples if (s.get('input') or {}).get('category', '').upper().replace('OWASP-', '') in normalized]
         logger.info(f'Filtered to categories: {sorted(normalized)} ({len(samples)} samples)')
 
     num_samples = _normalize_num_samples(num_samples)

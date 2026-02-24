@@ -22,7 +22,7 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
     @job('agent')
     async def platform_agent_job(data: DataPoint, _row: int) -> str:
-        messages = list(data.inputs['messages'])
+        messages = list(data.inputs.get('messages', []))
         sample_id = data.inputs.get('id') or str(uuid.uuid4())
 
         try:
