@@ -346,21 +346,44 @@ class RichHooks:
         )
 
     def _render_filtering_metadata(self, filtering_metadata: dict[str, Any]) -> None:
-        """Render strategy filtering metadata."""
+        """Render strategy filtering summary per category."""
         from rich import box
         from rich.table import Table
+
+        # filtering_metadata is keyed by category, each value is a dict with
+        # count fields plus full strategy objects — only show the counts.
+        _COUNT_KEYS = (
+            "all_hardcoded_count",
+            "applicable_count",
+            "generated_count",
+            "filtered_count",
+            "total_selected",
+        )
 
         table = Table(
             title="Strategy Filtering",
             show_header=True,
             header_style="bold",
-            box=box.SIMPLE,
+            box=box.ROUNDED,
         )
-        table.add_column("Metric", style="white")
-        table.add_column("Value", style="cyan", justify="right")
+        table.add_column("Category", style="white")
+        table.add_column("Hardcoded", style="cyan", justify="right")
+        table.add_column("Applicable", style="cyan", justify="right")
+        table.add_column("Generated", style="cyan", justify="right")
+        table.add_column("Filtered", style="yellow", justify="right")
+        table.add_column("Selected", style="bold green", justify="right")
 
-        for key, value in filtering_metadata.items():
-            table.add_row(key.replace("_", " ").title(), str(value))
+        for category, info in filtering_metadata.items():
+            if not isinstance(info, dict):
+                continue
+            table.add_row(
+                category.upper(),
+                str(info.get("all_hardcoded_count", "?")),
+                str(info.get("applicable_count", "?")),
+                str(info.get("generated_count", "?")),
+                str(info.get("filtered_count", "?")),
+                str(info.get("total_selected", "?")),
+            )
 
         self._console.print(table)
 
