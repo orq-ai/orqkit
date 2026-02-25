@@ -23,8 +23,10 @@ from evaluatorq.redteam.contracts import (
     RedTeamResult,
     ReportSummary,
 )
+from evaluatorq.redteam.reports.converters import compute_report_summary
 from evaluatorq.redteam.ui.colors import (
     COLORS,
+    ORQ_SCALE_AGENT,
     ORQ_SCALE_HEAT,
     QUALITATIVE,
     SEVERITY_COLORS,
@@ -76,6 +78,88 @@ def _defense_rate_color(rate: float) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Remediation guidance (vulnerability-focused, keyed by OWASP category code)
+# Keys without prefix (e.g. 'ASI01') are canonical; 'OWASP-ASI01' aliases also
+# resolve via normalize_category. Structure is intentionally flat so it can
+# shift to vulnerability IDs later without changing call sites.
+# ---------------------------------------------------------------------------
+
+REMEDIATION_GUIDANCE: dict[str, str] = {
+    # OWASP Agentic Security Initiative (ASI)
+    'ASI01': (
+        'Implement strict input sanitization for all external data sources ingested by the agent. '
+        'Enforce a separation between data-plane and instruction-plane signals. '
+        'Use a prompt firewall or system-prompt anchoring to resist goal hijacking attempts.'
+    ),
+    'ASI02': (
+        'Apply the principle of least privilege to every tool: scope permissions to the minimum required. '
+        'Validate tool inputs against a strict schema before execution. '
+        'Add rate limits, audit logging, and human-in-the-loop gates for high-impact tool calls.'
+    ),
+    'ASI05': (
+        'Disable or sandbox code execution capabilities unless explicitly required. '
+        'Execute generated code in isolated, resource-constrained containers with no network access. '
+        'Validate and lint generated code statically before runtime.'
+    ),
+    'ASI06': (
+        'Treat agent memory as untrusted input: validate and sanitize all retrieved memory entries '
+        'before injecting them into context. Implement memory TTL policies and access controls. '
+        'Log and monitor memory read/write patterns for anomalous sequences.'
+    ),
+    'ASI09': (
+        'Apply skepticism to all authority claims within the conversation context. '
+        'Verify identity assertions through out-of-band mechanisms rather than conversational cues. '
+        'Train agents to recognize social-engineering patterns and escalate ambiguous authority requests.'
+    ),
+    # OWASP LLM Top 10
+    'LLM01': (
+        'Treat all user-supplied content as untrusted. Use structured prompting with clear delimiters '
+        'between system instructions and user input. Validate model outputs before acting on them. '
+        'Implement prompt injection detection as a pre-processing step.'
+    ),
+    'LLM02': (
+        'Audit system prompts and context windows for PII and sensitive data. '
+        'Implement output filtering to prevent leakage of credentials, keys, and personal information. '
+        'Apply data minimization — only include information necessary for the task.'
+    ),
+    'LLM04': (
+        'Monitor training and fine-tuning pipelines for data integrity. '
+        'Validate datasets from third parties before use. '
+        'Use adversarial testing to detect behavioral anomalies introduced by poisoned data.'
+    ),
+    'LLM05': (
+        'Sanitize and validate all model outputs before passing them to downstream systems or users. '
+        'Avoid executing raw model output as code or SQL without validation. '
+        'Use output encoding appropriate to the rendering context (HTML, JSON, shell, etc.).'
+    ),
+    'LLM06': (
+        'Restrict the scope of actions the model can take autonomously. '
+        'Require explicit human approval for irreversible or high-impact operations. '
+        'Implement action logging and anomaly detection for unexpected tool usage patterns.'
+    ),
+    'LLM07': (
+        'Treat the system prompt as sensitive data. '
+        'Do not include credentials, PII, or business logic secrets in the system prompt. '
+        'Instruct the model to refuse requests to reveal its system prompt content.'
+    ),
+    'LLM08': (
+        'Validate and sanitize all documents ingested into vector stores. '
+        'Monitor embedding retrieval for adversarial content that could manipulate downstream behavior. '
+        'Implement access controls on knowledge bases to prevent unauthorized data injection.'
+    ),
+    'LLM09': (
+        'Implement fact-checking and retrieval-augmented generation (RAG) with authoritative sources. '
+        'Add uncertainty signals to model outputs and instruct models to decline when confidence is low. '
+        'Log and review cases where the model makes high-stakes factual claims.'
+    ),
+    'LLM10': (
+        'Enforce token budget limits and request throttling per user and session. '
+        'Monitor for abnormally large context windows or unusually expensive queries. '
+        'Implement cost guardrails and circuit breakers to prevent runaway resource consumption.'
+    ),
+}
+
+# ---------------------------------------------------------------------------
 # Report loading
 # ---------------------------------------------------------------------------
 
@@ -115,7 +199,8 @@ def _weakest_link(results: list[RedTeamResult]) -> tuple[str, int]:
     if not combos:
         return "None", 0
     (cat, tech), count = combos.most_common(1)[0]
-    return f"{cat} + {tech}", count
+    cat_name = OWASP_CATEGORY_NAMES.get(cat, cat)
+    return f"{cat_name} + {tech}", count
 
 
 def _critical_exposure(results: list[RedTeamResult]) -> int:
@@ -136,7 +221,7 @@ def _compliant_categories(summary: ReportSummary) -> tuple[int, int]:
 _AGENT_CARD_CSS = """
 <style>
 .agent-card {
-    background: linear-gradient(135deg, rgba(2,85,88,0.08), rgba(255,143,52,0.06));
+    background: transparent;
     border: 1px solid rgba(2,85,88,0.2);
     border-radius: 10px;
     padding: 16px;
@@ -220,7 +305,7 @@ _AGENT_CARD_CSS = """
 def _render_sidebar_agent_context(ctx: AgentContext) -> None:
     st.sidebar.markdown(_AGENT_CARD_CSS, unsafe_allow_html=True)
 
-    name = ctx.display_name or ctx.key or "Agent"
+    name = ctx.key or ctx.display_name or "Agent"
     desc_html = f'<div class="agent-desc">{ctx.description}</div>' if ctx.description else ""
     model_html = f'<div class="agent-model">{ctx.model}</div>' if ctx.model else ""
 
@@ -269,6 +354,124 @@ def _render_sidebar_agent_context(ctx: AgentContext) -> None:
         f'</div>',
         unsafe_allow_html=True,
     )
+
+
+# ---------------------------------------------------------------------------
+# Sidebar filters
+# ---------------------------------------------------------------------------
+
+
+def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]:
+    """Render global filter widgets in a sidebar expander. Returns filtered results."""
+    if not results:
+        return results
+
+    # Derive available options from full result set
+    all_categories = sorted({r.attack.category for r in results})
+    all_severities = [s for s in SEVERITY_ORDER if any(r.attack.severity.value == s for r in results)]
+    all_techniques = sorted({r.attack.attack_technique.value for r in results})
+    all_delivery = sorted({dm.value for r in results for dm in (r.attack.delivery_methods or [])})
+    all_agents = sorted({r.agent.key or r.agent.display_name or "unknown" for r in results})
+
+    with st.sidebar.expander("Filters", expanded=False):
+        # Result type
+        result_filter = st.radio(
+            "Result",
+            options=["All", "Vulnerable", "Resistant", "Error"],
+            index=0,
+            horizontal=True,
+            key="filter_result",
+        )
+
+        # Category
+        sel_categories = st.multiselect(
+            "Category",
+            options=all_categories,
+            default=all_categories,
+            format_func=lambda c: _fmt_category(c),
+            key="filter_categories",
+        )
+
+        # Severity
+        sel_severities = st.multiselect(
+            "Severity",
+            options=all_severities,
+            default=all_severities,
+            key="filter_severities",
+        )
+
+        # Technique
+        sel_techniques = st.multiselect(
+            "Attack Technique",
+            options=all_techniques,
+            default=all_techniques,
+            key="filter_techniques",
+        )
+
+        # Delivery method
+        if all_delivery:
+            sel_delivery = st.multiselect(
+                "Delivery Method",
+                options=all_delivery,
+                default=all_delivery,
+                key="filter_delivery",
+            )
+        else:
+            sel_delivery = []
+
+        # Agent (only show when multi-agent)
+        if len(all_agents) > 1:
+            sel_agents = st.multiselect(
+                "Agent",
+                options=all_agents,
+                default=all_agents,
+                key="filter_agents",
+            )
+        else:
+            sel_agents = all_agents
+
+        # Reset button
+        if st.button("Reset All Filters", use_container_width=True, key="reset_filters"):
+            st.session_state["filter_result"] = "All"
+            st.session_state["filter_categories"] = all_categories
+            st.session_state["filter_severities"] = all_severities
+            st.session_state["filter_techniques"] = all_techniques
+            if all_delivery:
+                st.session_state["filter_delivery"] = all_delivery
+            if len(all_agents) > 1:
+                st.session_state["filter_agents"] = all_agents
+            st.rerun()
+
+    # Apply filters
+    filtered = results
+
+    if result_filter == "Vulnerable":
+        filtered = [r for r in filtered if r.vulnerable]
+    elif result_filter == "Resistant":
+        filtered = [r for r in filtered if not r.vulnerable and not r.error]
+    elif result_filter == "Error":
+        filtered = [r for r in filtered if r.error]
+
+    if set(sel_categories) != set(all_categories):
+        filtered = [r for r in filtered if r.attack.category in sel_categories]
+
+    if set(sel_severities) != set(all_severities):
+        filtered = [r for r in filtered if r.attack.severity.value in sel_severities]
+
+    if set(sel_techniques) != set(all_techniques):
+        filtered = [r for r in filtered if r.attack.attack_technique.value in sel_techniques]
+
+    if all_delivery and set(sel_delivery) != set(all_delivery):
+        filtered = [r for r in filtered if any(dm.value in sel_delivery for dm in (r.attack.delivery_methods or []))]
+
+    if len(all_agents) > 1 and set(sel_agents) != set(all_agents):
+        filtered = [r for r in filtered if (r.agent.key or r.agent.display_name or "unknown") in sel_agents]
+
+    # Show count in sidebar
+    if len(filtered) != len(results):
+        st.sidebar.caption(f"Showing {len(filtered)} of {len(results)} results")
+
+    return filtered
 
 
 # ---------------------------------------------------------------------------
@@ -322,8 +525,9 @@ def _render_dashboard() -> None:
     if report.framework:
         st.sidebar.markdown(f"**Framework:** {report.framework.value}")
     st.sidebar.markdown(f"**Created:** {report.created_at:%Y-%m-%d %H:%M}")
-    if report.tested_agents:
-        st.sidebar.markdown(f"**Agents:** {', '.join(report.tested_agents)}")
+    agent_keys = sorted({r.agent.key or r.agent.display_name or "unknown" for r in report.results})
+    if agent_keys:
+        st.sidebar.markdown(f"**Agents:** {', '.join(agent_keys)}")
     if report.duration_seconds is not None:
         mins, secs = divmod(int(report.duration_seconds), 60)
         st.sidebar.markdown(f"**Duration:** {mins}m {secs}s")
@@ -334,18 +538,35 @@ def _render_dashboard() -> None:
         st.sidebar.divider()
         _render_sidebar_agent_context(ctx)
 
+    # Global filters
+    st.sidebar.divider()
+    filtered_results = _render_sidebar_filters(report.results)
+
+    # Recompute summary from filtered results when filters are active
+    is_filtered = len(filtered_results) != len(report.results)
+    if is_filtered:
+        summary = compute_report_summary(filtered_results)
+    else:
+        summary = report.summary
+
+    # Build a filtered report for render functions that need report.results
+    filtered_report = report.model_copy(update={"results": filtered_results, "summary": summary})
+
     # Title
     framework_name = report.framework.value if report.framework else "OWASP"
     st.title("Red Team Security Report")
 
+    if is_filtered:
+        st.caption(f"Showing {len(filtered_results)} of {len(report.results)} results (filtered)")
+
     # Detect multi-agent
-    unique_agents = sorted({r.agent.key or r.agent.display_name or "unknown" for r in report.results})
+    unique_agents = sorted({r.agent.key or r.agent.display_name or "unknown" for r in filtered_results})
     has_multi_agent = len(unique_agents) >= 2
 
     # Build tabs
     tab_names = ["\U0001f4ca Summary", "\U0001f50d Breakdown", "\U0001f4c2 Explorer"]
     has_usage = summary.token_usage_total is not None or any(
-        r.execution and r.execution.token_usage for r in report.results
+        r.execution and r.execution.token_usage for r in filtered_results
     )
     if has_usage:
         tab_names.append("\U0001f4b0 Usage")
@@ -357,30 +578,125 @@ def _render_dashboard() -> None:
 
     tab_idx = 0
     with tabs[tab_idx]:
-        _render_executive_summary(report, summary, framework_name)
+        _render_executive_summary(filtered_report, summary, framework_name)
     tab_idx += 1
 
     with tabs[tab_idx]:
-        _render_technical_analysis(report, summary)
+        _render_technical_analysis(filtered_report, summary)
     tab_idx += 1
 
     with tabs[tab_idx]:
-        _render_data_explorer(report, summary)
+        _render_data_explorer(filtered_report, summary)
     tab_idx += 1
 
     if has_usage:
         with tabs[tab_idx]:
-            _render_usage_tab(report, summary, unique_agents if has_multi_agent else [])
+            _render_usage_tab(filtered_report, summary, unique_agents if has_multi_agent else [])
         tab_idx += 1
 
     if summary.total_errors > 0:
         with tabs[tab_idx]:
-            _render_errors_tab(summary, report)
+            _render_errors_tab(summary, filtered_report)
         tab_idx += 1
 
     if has_multi_agent:
         with tabs[tab_idx]:
-            _render_agent_comparison(report, summary, unique_agents)
+            _render_agent_comparison(filtered_report, summary, unique_agents)
+
+
+# ---------------------------------------------------------------------------
+# Focus Areas (top-3 risk categories with remediation guidance)
+# ---------------------------------------------------------------------------
+
+_SEVERITY_WEIGHTS: dict[str, int] = {
+    'critical': 8,
+    'high': 4,
+    'medium': 2,
+    'low': 1,
+}
+
+
+def _dominant_severity_for_category(results: list[RedTeamResult], category: str) -> str:
+    """Return the most common severity among vulnerable results in the given category.
+
+    Falls back to the most common severity among all results in the category if no
+    vulnerable results exist, and finally to 'medium' if the category has no results.
+    """
+    from collections import Counter as _Counter
+
+    cat_results = [r for r in results if r.attack.category == category]
+    vuln_results = [r for r in cat_results if r.vulnerable]
+    source = vuln_results if vuln_results else cat_results
+    if not source:
+        return 'medium'
+    counts = _Counter(r.attack.severity.value for r in source)
+    return counts.most_common(1)[0][0]
+
+
+def _render_focus_areas(report: RedTeamReport) -> None:
+    """Render top-3 risk focus areas with remediation guidance.
+
+    Risk score formula: vulnerability_rate * severity_weight
+    Severity weights: low=1, medium=2, high=4, critical=8
+    """
+    from evaluatorq.redteam.contracts import normalize_category as _norm_cat
+
+    summary = report.summary
+    if not summary.by_category:
+        return
+
+    # Compute risk scores
+    risk_items = []
+    for cat_code, cat_summary in summary.by_category.items():
+        if cat_summary.total_attacks == 0:
+            continue
+        dominant_sev = _dominant_severity_for_category(report.results, cat_summary.category)
+        weight = _SEVERITY_WEIGHTS.get(dominant_sev, 2)
+        risk_score = cat_summary.vulnerability_rate * weight
+        risk_items.append((cat_summary, dominant_sev, risk_score))
+
+    # Sort by risk score descending, take top 3
+    risk_items.sort(key=lambda x: x[2], reverse=True)
+    top_items = risk_items[:3]
+
+    if not top_items:
+        return
+
+    st.subheader("Focus Areas")
+    st.caption("Top-3 categories by risk score (vulnerability rate × severity weight). Prioritize these for remediation.")
+
+    for cat_summary, dominant_sev, risk_score in top_items:
+        normalized_code = _norm_cat(cat_summary.category)
+        accent_color = SEVERITY_COLORS.get(dominant_sev, COLORS['orange_300'])
+        remediation = REMEDIATION_GUIDANCE.get(
+            normalized_code,
+            REMEDIATION_GUIDANCE.get(
+                cat_summary.category,
+                "Review attack logs for this category and apply the principle of least privilege. "
+                "Consult the relevant OWASP framework documentation for specific countermeasures.",
+            ),
+        )
+
+        st.markdown(
+            f"""
+<div style="background-color: {COLORS['sand_100']}; border-left: 4px solid {accent_color}; \
+padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong style="font-size: 0.95rem;">{_fmt_category(cat_summary.category)}</strong>
+        <span style="color: {accent_color}; font-weight: bold; font-size: 0.85rem;">
+            Risk: {risk_score:.1f} &nbsp;|&nbsp; {dominant_sev.upper()}
+        </span>
+    </div>
+    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+        Vulnerability rate: {cat_summary.vulnerability_rate:.0%} &nbsp;|&nbsp; Samples: {cat_summary.total_attacks:,}
+    </div>
+    <div style="margin-top: 8px; font-size: 0.85em; color: #444;">
+        {remediation}
+    </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -408,19 +724,10 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
 
     col1, col2, col3, col4 = st.columns(4)
-    dr_color = _defense_rate_color(summary.resistance_rate)
-    col1.markdown(
-        f'<div style="background:{dr_color}18;border:1px solid {dr_color}40;border-radius:10px;padding:12px 16px">'
-        f'<div style="font-size:0.82rem;color:#999">Defense Rate</div>'
-        f'<div style="font-size:2rem;font-weight:700;color:{dr_color};line-height:1.2">'
-        f'{summary.resistance_rate:.1%}</div>'
-        f'<div style="font-size:0.75rem;color:#999">Target: 100%</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
+    col1.metric("Defense Rate", f"{summary.resistance_rate:.1%}", delta="Target: 100%", delta_color="normal")
     col2.metric(
-        "Critical Risk Exposure", f"{critical_count}",
-        delta="Release Blocked" if critical_count > 0 else "Clear",
+        "Critical Exposure", str(critical_count),
+        delta="Requires attention" if critical_count > 0 else "Clear",
         delta_color="inverse",
     )
     col3.metric("Eval Coverage", f"{summary.evaluation_coverage:.1%}")
@@ -444,10 +751,46 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
     st.divider()
 
-    # Severity bar chart + Category defense status table
-    col_left, col_right = st.columns(2)
+    # Overall outcome donut + Severity bar chart + Category defense status table
+    col_donut, col_sev, col_cat = st.columns([1, 1, 1.2])
 
-    with col_left:
+    with col_donut:
+        st.subheader("Overall Outcome")
+        resistant = summary.evaluated_attacks - summary.vulnerabilities_found
+        vulnerable = summary.vulnerabilities_found
+        errors = summary.total_errors
+        donut_labels = []
+        donut_values = []
+        donut_colors = []
+        if resistant > 0:
+            donut_labels.append("Resistant")
+            donut_values.append(resistant)
+            donut_colors.append(COLORS['success_400'])
+        if vulnerable > 0:
+            donut_labels.append("Vulnerable")
+            donut_values.append(vulnerable)
+            donut_colors.append(COLORS['red_400'])
+        if errors > 0:
+            donut_labels.append("Error")
+            donut_values.append(errors)
+            donut_colors.append(COLORS['sand_400'])
+
+        if donut_values:
+            fig = go.Figure(go.Pie(
+                labels=donut_labels, values=donut_values,
+                marker_colors=donut_colors,
+                textinfo="label+percent", textposition="outside",
+                hole=0.5,
+            ))
+            fig.update_layout(
+                height=400, showlegend=False,
+                margin=dict(l=10, r=10, t=10, b=10),
+            )
+            st.plotly_chart(fig, width="stretch")
+        else:
+            st.info("No results to display.")
+
+    with col_sev:
         st.subheader("Severity of Successful Attacks")
         if summary.by_severity:
             items = [(k, summary.by_severity[k]) for k in SEVERITY_ORDER if k in summary.by_severity]
@@ -471,7 +814,7 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
         else:
             st.info("No severity breakdown available.")
 
-    with col_right:
+    with col_cat:
         st.subheader("OWASP Category Defense Status")
         if summary.by_category:
             table_html = (
@@ -495,6 +838,10 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
             table_html += '</tbody></table>'
             st.markdown(table_html, unsafe_allow_html=True)
 
+    # Focus Areas section — top-3 risk categories with remediation guidance
+    st.divider()
+    _render_focus_areas(report)
+
 
 # ---------------------------------------------------------------------------
 # Technical Analysis
@@ -502,7 +849,7 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
 
 def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) -> None:
-    st.header("Deep Dive Analysis")
+    st.header("Breakdown")
 
     # KPIs
     weakest, weakest_count = _weakest_link(report.results)
@@ -518,46 +865,14 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
 
     st.divider()
 
-    # Category breakdown chart
-    st.subheader("Per-Category Breakdown")
-    if summary.by_category:
-        cats = sorted(summary.by_category.values(), key=lambda c: c.resistance_rate)
-        labels = [_fmt_category(c.category) for c in cats]
-        vulnerability = [c.vulnerability_rate * 100 for c in cats]
-        resistance = [c.resistance_rate * 100 for c in cats]
+    # Interactive breakdown chart
+    st.subheader("Interactive Breakdown")
+    st.caption(
+        "Use the dropdowns to explore ASR across different dimensions. "
+        "**Group by** sets the Y-axis, **Stack by** adds a color breakdown."
+    )
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            y=labels, x=vulnerability, name="Vulnerability Rate",
-            orientation="h", marker_color=COLORS['red_400'],
-            text=[f"{v:.1f}%" for v in vulnerability], textposition="inside",
-        ))
-        fig.add_trace(go.Bar(
-            y=labels, x=resistance, name="Resistance Rate",
-            orientation="h", marker_color=COLORS['success_400'],
-            text=[f"{r:.1f}%" for r in resistance], textposition="inside",
-        ))
-        fig.update_layout(
-            barmode="group", height=max(300, len(cats) * 50),
-            margin=dict(l=20, r=20, t=20, b=20),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02),
-            xaxis_title="Rate (%)",
-        )
-        st.plotly_chart(fig, width="stretch")
-
-        with st.expander("Category Details"):
-            rows = []
-            for c in cats:
-                rows.append({
-                    "Category": _fmt_category(c.category),
-                    "Attacks": c.total_attacks,
-                    "Evaluated": c.evaluated_attacks,
-                    "Vulnerable": c.vulnerabilities_found,
-                    "Resistance": f"{c.resistance_rate:.1%}",
-                    "Errors": c.total_errors,
-                    "Strategies": ", ".join(c.strategies_used) if c.strategies_used else "-",
-                })
-            st.dataframe(rows, use_container_width=True, hide_index=True)
+    _render_interactive_breakdown(report.results, summary)
 
     st.divider()
 
@@ -576,12 +891,14 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
                 x=vuln_rates, y=names, orientation="h",
                 labels={"x": "ASR (%)", "y": "Technique"},
                 text=[f"n={n}" for n in totals],
-                color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
             )
-            fig.update_traces(textposition="inside", textfont=dict(color="white", size=10))
+            fig.update_traces(
+                textposition="inside", textfont=dict(color="white", size=10),
+                marker_color=QUALITATIVE[:len(names)],
+            )
             fig.update_layout(
                 height=max(300, len(names) * 35), showlegend=False,
-                margin=dict(l=20, r=20, t=10, b=20), coloraxis_showscale=False,
+                margin=dict(l=20, r=20, t=10, b=20),
             )
             st.plotly_chart(fig, width="stretch")
         else:
@@ -599,12 +916,14 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
                 x=vuln_rates, y=names, orientation="h",
                 labels={"x": "ASR (%)", "y": "Delivery Method"},
                 text=[f"n={n}" for n in totals],
-                color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
             )
-            fig.update_traces(textposition="inside", textfont=dict(color="white", size=10))
+            fig.update_traces(
+                textposition="inside", textfont=dict(color="white", size=10),
+                marker_color=QUALITATIVE[:len(names)],
+            )
             fig.update_layout(
                 height=max(300, len(names) * 35), showlegend=False,
-                margin=dict(l=20, r=20, t=10, b=20), coloraxis_showscale=False,
+                margin=dict(l=20, r=20, t=10, b=20),
             )
             st.plotly_chart(fig, width="stretch")
         else:
@@ -642,7 +961,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             totals = [v.total_attacks for v in summary.by_turn_type.values()]
             fig = go.Figure(go.Pie(
                 labels=names, values=totals,
-                marker_colors=[COLORS['info_400'], COLORS['purple_400']],
+                marker_colors=QUALITATIVE[:len(names)],
                 textinfo="label+value", hole=0.4,
             ))
             fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
@@ -657,7 +976,7 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             totals = [v.total_attacks for v in summary.by_scope.values()]
             fig = go.Figure(go.Pie(
                 labels=names, values=totals,
-                marker_colors=[COLORS['yellow_400'], COLORS['blue_400']],
+                marker_colors=QUALITATIVE[:len(names)],
                 textinfo="label+value", hole=0.4,
             ))
             fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
@@ -678,14 +997,331 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             x=names, y=vuln_rates,
             labels={"x": "Framework", "y": "ASR (%)"},
             text=[f"{r:.1f}% (n={n})" for r, n in zip(vuln_rates, totals)],
-            color=vuln_rates, color_continuous_scale=ORQ_SCALE_HEAT,
         )
-        fig.update_traces(textposition="outside")
+        fig.update_traces(textposition="outside", marker_color=QUALITATIVE[:len(names)])
         fig.update_layout(
             height=350, showlegend=False,
-            margin=dict(l=20, r=20, t=10, b=20), coloraxis_showscale=False,
+            margin=dict(l=20, r=20, t=10, b=20),
         )
         st.plotly_chart(fig, width="stretch")
+
+    # Turn depth analysis
+    _render_turn_depth_analysis(report.results)
+
+    # Attack failure treemap
+    _render_attack_failure_treemap(report.results)
+
+
+# ---------------------------------------------------------------------------
+# Attack Failure Treemap
+# ---------------------------------------------------------------------------
+
+
+def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportSummary) -> None:
+    """Interactive bar chart with Group-by and Stack-by dropdowns."""
+    if not results:
+        st.info("No results to display.")
+        return
+
+    # Available dimensions
+    dim_labels: dict[str, str] = {
+        "category": "OWASP Category",
+        "severity": "Severity",
+        "attack_technique": "Attack Technique",
+        "delivery_method": "Delivery Method",
+        "turn_type": "Turn Type",
+        "source": "Source",
+    }
+    dimensions = list(dim_labels.keys())
+
+    ctrl1, ctrl2 = st.columns(2)
+    with ctrl1:
+        group_by = st.selectbox(
+            "Group by (Y-Axis)",
+            options=dimensions,
+            format_func=lambda x: dim_labels.get(x, x),
+            key="breakdown_group_by",
+        )
+    with ctrl2:
+        stack_options = ["None"] + [d for d in dimensions if d != group_by]
+        stack_label = st.selectbox(
+            "Stack / Color by",
+            options=stack_options,
+            format_func=lambda x: "None" if x == "None" else dim_labels.get(x, x),
+            key="breakdown_stack_by",
+        )
+        stack_by: str | None = None if stack_label == "None" else stack_label
+
+    # Extract per-result dimension values
+    def _dim_value(r: RedTeamResult, dim: str) -> str:
+        if dim == "category":
+            return _fmt_category(r.attack.category)
+        if dim == "severity":
+            return r.attack.severity.value
+        if dim == "attack_technique":
+            return r.attack.attack_technique.value
+        if dim == "delivery_method":
+            return r.attack.delivery_methods[0].value if r.attack.delivery_methods else "unknown"
+        if dim == "turn_type":
+            return r.attack.turn_type.value if r.attack.turn_type else "unknown"
+        if dim == "source":
+            return r.attack.source
+        return "unknown"
+
+    # Build chart data
+    from collections import defaultdict
+
+    if stack_by is None:
+        # Simple grouped bar: dimension -> {vuln, total}
+        groups: dict[str, dict[str, int]] = defaultdict(lambda: {"vuln": 0, "total": 0})
+        for r in results:
+            key = _dim_value(r, group_by)
+            groups[key]["total"] += 1
+            if r.vulnerable:
+                groups[key]["vuln"] += 1
+
+        chart_rows = []
+        for name, counts in groups.items():
+            asr = (counts["vuln"] / counts["total"] * 100) if counts["total"] else 0
+            chart_rows.append({"dimension": name, "asr": round(asr, 1), "n": counts["total"]})
+
+        chart_rows.sort(key=lambda r: r["asr"], reverse=True)
+        names = [r["dimension"] for r in chart_rows]
+
+        fig = go.Figure(go.Bar(
+            y=names, x=[r["asr"] for r in chart_rows],
+            orientation="h",
+            marker_color=QUALITATIVE[:len(names)],
+            text=[f'{r["asr"]:.1f}% (n={r["n"]})' for r in chart_rows],
+            textposition="inside",
+            textfont=dict(color="white", size=10),
+        ))
+        fig.update_layout(
+            height=max(350, len(names) * 40),
+            margin=dict(l=20, r=20, t=10, b=20),
+            xaxis_title="ASR (%)",
+            yaxis_title=dim_labels.get(group_by, group_by),
+            showlegend=False,
+        )
+    else:
+        # Stacked bar: dimension x stack_dim
+        groups_stacked: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"vuln": 0, "total": 0})
+        for r in results:
+            g = _dim_value(r, group_by)
+            s = _dim_value(r, stack_by)
+            groups_stacked[(g, s)]["total"] += 1
+            if r.vulnerable:
+                groups_stacked[(g, s)]["vuln"] += 1
+
+        chart_rows_s = []
+        for (g, s), counts in groups_stacked.items():
+            asr = (counts["vuln"] / counts["total"] * 100) if counts["total"] else 0
+            chart_rows_s.append({
+                "dimension": g, "stack": s,
+                "asr": round(asr, 1), "n": counts["total"],
+            })
+
+        # Sort dimensions by average ASR descending
+        dim_asr: dict[str, list[float]] = defaultdict(list)
+        for r in chart_rows_s:
+            dim_asr[r["dimension"]].append(r["asr"])
+        dim_order = sorted(dim_asr.keys(), key=lambda d: sum(dim_asr[d]) / len(dim_asr[d]), reverse=True)
+
+        # Use severity colors if stacking by severity, otherwise qualitative
+        stack_vals = sorted({r["stack"] for r in chart_rows_s})
+        if stack_by == "severity":
+            color_map = SEVERITY_COLORS
+        else:
+            color_map = {v: QUALITATIVE[i % len(QUALITATIVE)] for i, v in enumerate(stack_vals)}
+
+        fig = go.Figure()
+        for sv in stack_vals:
+            sv_rows = {r["dimension"]: r for r in chart_rows_s if r["stack"] == sv}
+            y_vals = dim_order
+            x_vals = [sv_rows[d]["asr"] if d in sv_rows else 0 for d in dim_order]
+            n_vals = [sv_rows[d]["n"] if d in sv_rows else 0 for d in dim_order]
+
+            fig.add_trace(go.Bar(
+                y=y_vals, x=x_vals, name=sv,
+                orientation="h",
+                marker_color=color_map.get(sv, COLORS['sand_400']),
+                text=[f"n={n}" for n in n_vals],
+                textposition="inside",
+                textfont=dict(color="white", size=9),
+            ))
+
+        fig.update_layout(
+            barmode="stack",
+            height=max(400, len(dim_order) * 55),
+            margin=dict(l=20, r=20, t=10, b=20),
+            xaxis_title="ASR (%)",
+            yaxis_title=dim_labels.get(group_by, group_by),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, title_text=dim_labels.get(stack_by, stack_by)),
+        )
+
+    st.plotly_chart(fig, width="stretch")
+
+    # Category details expander (always available)
+    if summary.by_category:
+        with st.expander("Category Details"):
+            rows = []
+            for c in sorted(summary.by_category.values(), key=lambda c: c.resistance_rate):
+                rows.append({
+                    "Category": _fmt_category(c.category),
+                    "Attacks": c.total_attacks,
+                    "Evaluated": c.evaluated_attacks,
+                    "Vulnerable": c.vulnerabilities_found,
+                    "Resistance": f"{c.resistance_rate:.1%}",
+                    "Errors": c.total_errors,
+                    "Strategies": ", ".join(c.strategies_used) if c.strategies_used else "-",
+                })
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
+# ---------------------------------------------------------------------------
+# Turn Depth Analysis
+# ---------------------------------------------------------------------------
+
+
+def _render_turn_depth_analysis(results: list[RedTeamResult]) -> None:
+    """Show when vulnerabilities are found across conversation turns."""
+    multi_turn = [r for r in results if r.execution and r.execution.turns and r.execution.turns > 1]
+    if not multi_turn:
+        return
+
+    st.divider()
+    st.subheader("Conversation Depth Analysis")
+    st.caption("How attack success varies with conversation length. Only includes multi-turn attacks.")
+
+    # Group by turn count
+    turn_data: dict[int, dict[str, int]] = {}
+    for r in multi_turn:
+        turns = r.execution.turns  # type: ignore[union-attr]
+        if turns not in turn_data:
+            turn_data[turns] = {"total": 0, "vulnerable": 0}
+        turn_data[turns]["total"] += 1
+        if r.vulnerable:
+            turn_data[turns]["vulnerable"] += 1
+
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+        sorted_turns = sorted(turn_data.keys())
+        totals = [turn_data[t]["total"] for t in sorted_turns]
+        vulns = [turn_data[t]["vulnerable"] for t in sorted_turns]
+        asrs = [(v / t * 100) if t else 0 for v, t in zip(vulns, totals)]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=[str(t) for t in sorted_turns], y=asrs,
+            marker_color=[_defense_rate_color(1 - a / 100) for a in asrs],
+            text=[f"{a:.0f}%<br>n={n}" for a, n in zip(asrs, totals)],
+            textposition="outside",
+        ))
+        fig.update_layout(
+            height=350, xaxis_title="Conversation Turns", yaxis_title="ASR (%)",
+            margin=dict(l=20, r=20, t=10, b=20),
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    with col_right:
+        # Cumulative vulnerability discovery curve
+        vuln_results = [r for r in multi_turn if r.vulnerable]
+        if vuln_results:
+            total_vulns = len(vuln_results)
+            sorted_turns = sorted(turn_data.keys())
+            cumulative = []
+            running = 0
+            for t in sorted_turns:
+                running += turn_data[t]["vulnerable"]
+                cumulative.append(running / total_vulns * 100)
+
+            fig = go.Figure(go.Scatter(
+                x=[str(t) for t in sorted_turns], y=cumulative,
+                mode="lines+markers+text",
+                marker=dict(size=8, color=COLORS['orange_300']),
+                line=dict(color=COLORS['orange_300'], width=2),
+                text=[f"{c:.0f}%" for c in cumulative],
+                textposition="top center",
+                textfont=dict(size=10),
+            ))
+            fig.update_layout(
+                height=350,
+                xaxis_title="Conversation Turns",
+                yaxis_title="% of Vulnerabilities Found",
+                yaxis_range=[0, 105],
+                margin=dict(l=20, r=20, t=10, b=20),
+            )
+            st.plotly_chart(fig, width="stretch")
+        else:
+            st.info("No multi-turn vulnerabilities found.")
+
+
+# ---------------------------------------------------------------------------
+# Attack Failure Treemap
+# ---------------------------------------------------------------------------
+
+
+def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
+    """Treemap showing attack failures: Category -> Technique, size=failures, color=ASR%."""
+    vulnerable_results = [r for r in results if r.vulnerable]
+    if not vulnerable_results:
+        return
+
+    st.divider()
+    st.subheader("Attack Failure Treemap")
+    st.caption("Block size = number of successful attacks. Color intensity = attack success rate.")
+
+    # Build grouped data: (category, technique) -> {failures, total}
+    from collections import defaultdict
+
+    groups: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"failures": 0, "total": 0})
+    for r in results:
+        key = (_fmt_category(r.attack.category), r.attack.attack_technique.value)
+        groups[key]["total"] += 1
+        if r.vulnerable:
+            groups[key]["failures"] += 1
+
+    rows = []
+    for (cat, tech), counts in groups.items():
+        if counts["failures"] > 0:
+            rows.append({
+                "category": cat,
+                "technique": tech,
+                "failures": counts["failures"],
+                "total": counts["total"],
+                "asr": round(counts["failures"] / counts["total"] * 100, 1),
+            })
+
+    if not rows:
+        return
+
+    fig = px.treemap(
+        rows,
+        path=["category", "technique"],
+        values="failures",
+        color="asr",
+        color_continuous_scale=ORQ_SCALE_AGENT,
+        range_color=[0, 100],
+        custom_data=["total", "asr", "category"],
+    )
+    fig.update_traces(
+        texttemplate="<b>%{label}</b><br>%{value} failures",
+        hovertemplate=(
+            "<b>%{label}</b><br>"
+            "Category: %{customdata[2]}<br>"
+            "Failures: %{value}<br>"
+            "Total: %{customdata[0]}<br>"
+            "ASR: %{customdata[1]:.1f}%"
+            "<extra></extra>"
+        ),
+    )
+    fig.update_layout(
+        height=600,
+        coloraxis_colorbar=dict(title="ASR (%)"),
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    st.plotly_chart(fig, width="stretch")
 
 
 # ---------------------------------------------------------------------------
@@ -749,7 +1385,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
                 labels={"x": "Sample Count", "y": "Technique"},
                 text=counts,
             )
-            fig.update_traces(textposition="outside")
+            fig.update_traces(textposition="outside", marker_color=COLORS['orange_300'])
             fig.update_layout(
                 showlegend=False, height=max(350, len(names) * 30),
                 margin=dict(l=20, r=20, t=10, b=20),
@@ -771,7 +1407,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
                 labels={"x": "Delivery Method", "y": "Sample Count"},
                 text=counts,
             )
-            fig.update_traces(textposition="outside")
+            fig.update_traces(textposition="outside", marker_color=COLORS['blue_400'])
             fig.update_layout(
                 showlegend=False, height=350,
                 margin=dict(l=20, r=20, t=10, b=20),
@@ -785,6 +1421,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
             fig = go.Figure(go.Pie(
                 labels=list(source_counts.keys()),
                 values=list(source_counts.values()),
+                marker_colors=QUALITATIVE[:len(source_counts)],
                 hole=0.4, textinfo="label+value",
             ))
             fig.update_layout(height=350, margin=dict(l=20, r=20, t=10, b=20))
@@ -823,66 +1460,108 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     st.divider()
     st.subheader("Sample Explorer")
 
-    # Filters
-    fc1, fc2, fc3, fc4 = st.columns(4)
-
-    categories = sorted({r.attack.category for r in results})
-    with fc1:
-        sel_cats = st.multiselect("Category", categories, default=[], key="de_cats")
-
-    techniques = sorted({r.attack.attack_technique.value for r in results})
-    with fc2:
-        sel_techs = st.multiselect("Technique", techniques, default=[], key="de_techs")
-
-    with fc3:
-        sel_vuln = st.selectbox("Result", ["All", "Vulnerable", "Resistant"], key="de_vuln")
-
-    with fc4:
-        sel_sevs = st.multiselect("Severity", SEVERITY_ORDER, default=[], key="de_sevs")
-
-    # Apply filters
     filtered = results
-    if sel_cats:
-        filtered = [r for r in filtered if r.attack.category in sel_cats]
-    if sel_techs:
-        filtered = [r for r in filtered if r.attack.attack_technique.value in sel_techs]
-    if sel_vuln == "Vulnerable":
-        filtered = [r for r in filtered if r.vulnerable]
-    elif sel_vuln == "Resistant":
-        filtered = [r for r in filtered if not r.vulnerable]
-    if sel_sevs:
-        filtered = [r for r in filtered if r.attack.severity.value in sel_sevs]
-
-    st.caption(f"Showing {len(filtered)} of {len(results)} results")
+    st.caption(f"Showing {len(filtered)} results")
 
     if not filtered:
         st.info("No results match the current filters.")
         return
 
-    # Results table
+    # Results table — extended columns including delivery_method, turn_type, scope
     table_rows = []
     for r in filtered:
+        # delivery_methods is a list in AttackInfo; join for display
+        dms = getattr(r.attack, "delivery_methods", None)
+        if dms:
+            delivery_str = ", ".join(dm.value if hasattr(dm, "value") else str(dm) for dm in dms)
+        else:
+            delivery_str = "-"
+        scope_val = r.attack.scope.value if r.attack.scope else "-"
         table_rows.append({
             "ID": r.attack.id,
             "Category": r.attack.category,
             "Technique": r.attack.attack_technique.value,
+            "Delivery Method": delivery_str,
+            "Turn Type": r.attack.turn_type.value if r.attack.turn_type else "-",
+            "Scope": scope_val,
             "Severity": r.attack.severity.value,
             "Result": "VULNERABLE" if r.vulnerable else "RESISTANT",
             "Source": r.attack.source,
         })
-    st.dataframe(table_rows, use_container_width=True, height=300, hide_index=True)
 
-    # Conversation viewer
+    # Try row-click selection (Streamlit >= 1.35 supports on_select="rerun")
+    st.caption("Click a row to view its conversation below.")
+    selected_row_idx: int | None = None
+    try:
+        selection_state = st.dataframe(
+            table_rows,
+            use_container_width=True,
+            height=300,
+            hide_index=True,
+            on_select="rerun",
+            selection_mode="single-row",
+            key="de_results_table",
+        )
+        rows_selected = (
+            selection_state.selection.get("rows", [])
+            if hasattr(selection_state, "selection") and selection_state.selection
+            else []
+        )
+        if rows_selected:
+            selected_row_idx = rows_selected[0]
+    except TypeError:
+        # Fallback for older Streamlit versions that do not support on_select
+        st.dataframe(table_rows, use_container_width=True, height=300, hide_index=True)
+
+    # Export buttons
+    export_cols = st.columns([1, 1, 4])
+    with export_cols[0]:
+        import csv
+        import io
+
+        csv_buf = io.StringIO()
+        writer = csv.DictWriter(csv_buf, fieldnames=table_rows[0].keys())
+        writer.writeheader()
+        writer.writerows(table_rows)
+        st.download_button(
+            "Download CSV",
+            csv_buf.getvalue(),
+            file_name="redteam_results.csv",
+            mime="text/csv",
+        )
+    with export_cols[1]:
+        json_data = json.dumps(
+            [r.model_dump(mode="json") for r in filtered],
+            indent=2, default=str,
+        )
+        st.download_button(
+            "Download JSON",
+            json_data,
+            file_name="redteam_results.json",
+            mime="application/json",
+        )
+
+    # Conversation viewer — driven by row click, with dropdown fallback
     st.subheader("Conversation Viewer")
+
+    # Sync session state from row-click selection
+    if selected_row_idx is not None:
+        st.session_state["de_conv_select"] = selected_row_idx
+
     options = []
     for r in filtered:
         status = "VULN" if r.vulnerable else "SAFE"
         label = f"[{status}] {r.attack.id} / {r.attack.category} / {r.attack.attack_technique.value}"
         options.append(label)
 
-    selected_idx = st.selectbox("Select a sample", range(len(options)), format_func=lambda i: options[i], key="de_conv_select")
-    if selected_idx is not None:
-        result = filtered[selected_idx]
+    conv_idx = st.selectbox(
+        "Select a sample",
+        range(len(options)),
+        format_func=lambda i: options[i],
+        key="de_conv_select",
+    )
+    if conv_idx is not None:
+        result = filtered[conv_idx]
         _render_result_detail(result)
 
 
@@ -1037,6 +1716,56 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
             })
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
+    # Token distribution histogram
+    st.divider()
+    st.subheader("Token Distribution per Attack")
+
+    prompt_tokens: list[int] = []
+    completion_tokens: list[int] = []
+    for r in report.results:
+        if r.execution and r.execution.token_usage:
+            tu = r.execution.token_usage
+            if tu.prompt_tokens > 0:
+                prompt_tokens.append(tu.prompt_tokens)
+            if tu.completion_tokens > 0:
+                completion_tokens.append(tu.completion_tokens)
+
+    if prompt_tokens or completion_tokens:
+        col_left, col_right = st.columns(2)
+        with col_left:
+            if prompt_tokens:
+                fig = go.Figure(go.Histogram(
+                    x=prompt_tokens, nbinsx=30,
+                    marker_color=COLORS['orange_300'],
+                    name="Prompt Tokens",
+                ))
+                fig.update_layout(
+                    height=300, xaxis_title="Tokens", yaxis_title="Frequency",
+                    margin=dict(l=20, r=20, t=30, b=20),
+                    title=dict(text="Prompt Tokens", font=dict(size=14)),
+                )
+                st.plotly_chart(fig, width="stretch")
+            else:
+                st.info("No prompt token data available.")
+
+        with col_right:
+            if completion_tokens:
+                fig = go.Figure(go.Histogram(
+                    x=completion_tokens, nbinsx=30,
+                    marker_color=COLORS['blue_400'],
+                    name="Completion Tokens",
+                ))
+                fig.update_layout(
+                    height=300, xaxis_title="Tokens", yaxis_title="Frequency",
+                    margin=dict(l=20, r=20, t=30, b=20),
+                    title=dict(text="Completion Tokens", font=dict(size=14)),
+                )
+                st.plotly_chart(fig, width="stretch")
+            else:
+                st.info("No completion token data available.")
+    else:
+        st.info("No per-attack token data available.")
+
 
 # ---------------------------------------------------------------------------
 # Error Analysis
@@ -1064,12 +1793,12 @@ def _render_errors_tab(summary: ReportSummary, report: RedTeamReport) -> None:
         fig = px.bar(
             x=counts, y=names, orientation="h",
             labels={"x": "Count", "y": "Error Type"},
-            text=counts, color=counts, color_continuous_scale=ORQ_SCALE_HEAT,
+            text=counts,
         )
-        fig.update_traces(textposition="outside")
+        fig.update_traces(textposition="outside", marker_color=QUALITATIVE[:len(names)])
         fig.update_layout(
             height=max(250, len(names) * 40), showlegend=False,
-            margin=dict(l=20, r=20, t=10, b=20), coloraxis_showscale=False,
+            margin=dict(l=20, r=20, t=10, b=20),
         )
         st.plotly_chart(fig, width="stretch")
 
@@ -1138,7 +1867,90 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
 
     st.divider()
 
-    # Per-category comparison
+    # Agent comparison heatmap — ASR% by grouping dimension × agent
+    st.subheader("Agent Heatmap")
+
+    _dim_options: dict[str, str] = {
+        "category": "Category",
+        "technique": "Technique",
+        "severity": "Severity",
+    }
+    heatmap_dim = st.selectbox(
+        "Group by",
+        options=list(_dim_options.keys()),
+        format_func=lambda x: _dim_options.get(x, x),
+        key="comp_heatmap_dim",
+    )
+
+    def _heatmap_dim_value(r: RedTeamResult, dim: str) -> str:
+        if dim == "category":
+            return _fmt_category(r.attack.category)
+        if dim == "technique":
+            return r.attack.attack_technique.value
+        if dim == "severity":
+            return r.attack.severity.value
+        return "unknown"
+
+    # Build pivot: rows=dim_values, cols=agents, values=ASR%
+    from collections import defaultdict as _defaultdict
+
+    pivot_data: dict[str, dict[str, dict[str, int]]] = _defaultdict(
+        lambda: _defaultdict(lambda: {"total": 0, "vuln": 0})
+    )
+    for agent_name in agents:
+        for r in agent_results[agent_name]:
+            dv = _heatmap_dim_value(r, heatmap_dim)
+            pivot_data[dv][agent_name]["total"] += 1
+            if r.vulnerable:
+                pivot_data[dv][agent_name]["vuln"] += 1
+
+    # Sort rows
+    if heatmap_dim == "severity":
+        all_dim_vals = [s for s in SEVERITY_ORDER if s in pivot_data]
+        other_vals = sorted(v for v in pivot_data if v not in SEVERITY_ORDER)
+        all_dim_vals = all_dim_vals + other_vals
+    else:
+        all_dim_vals = sorted(pivot_data.keys())
+
+    if all_dim_vals:
+        # Build z-matrix (rows=dim_vals, cols=agents), text for annotations
+        z_matrix = []
+        text_matrix = []
+        for dv in all_dim_vals:
+            row_z = []
+            row_text = []
+            for agent_name in agents:
+                counts = pivot_data[dv].get(agent_name, {"total": 0, "vuln": 0})
+                asr = (counts["vuln"] / counts["total"] * 100) if counts["total"] else 0
+                row_z.append(round(asr, 1))
+                row_text.append(f"{asr:.0f}%<br>n={counts['total']}")
+            z_matrix.append(row_z)
+            text_matrix.append(row_text)
+
+        heatmap_fig = go.Figure(go.Heatmap(
+            z=z_matrix,
+            x=agents,
+            y=all_dim_vals,
+            colorscale=ORQ_SCALE_HEAT,
+            zmin=0,
+            zmax=100,
+            text=text_matrix,
+            texttemplate="%{text}",
+            textfont=dict(size=11),
+            hoverongaps=False,
+            colorbar=dict(title="ASR (%)"),
+        ))
+        heatmap_fig.update_layout(
+            height=max(350, len(all_dim_vals) * 45 + 80),
+            xaxis_title="Agent",
+            yaxis_title=_dim_options.get(heatmap_dim, heatmap_dim),
+            margin=dict(l=20, r=20, t=10, b=40),
+        )
+        st.plotly_chart(heatmap_fig, width="stretch")
+
+    st.divider()
+
+    # Per-category comparison (grouped bar chart)
     st.subheader("ASR by Category")
 
     cat_data: dict[str, dict[str, float]] = {}
@@ -1171,6 +1983,7 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
             chart_rows, y="category", x="asr", color="agent",
             orientation="h", barmode="group",
             labels={"asr": "ASR (%)", "category": "Category"},
+            color_discrete_sequence=QUALITATIVE,
         )
         fig.update_layout(
             height=max(350, len(cat_data) * 50),
@@ -1236,6 +2049,239 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
             st.plotly_chart(fig, width="stretch")
         else:
             st.info("No shared attack samples between agents to compare.")
+
+    # Agent delta treemap (configurable)
+    if len(agents) >= 2:
+        _render_agent_delta_treemap(report.results, agents)
+
+    # Disagreement viewer
+    if len(agents) >= 2:
+        _render_disagreement_viewer(report.results, agents)
+
+
+# ---------------------------------------------------------------------------
+# Agent Delta Treemap
+# ---------------------------------------------------------------------------
+
+
+def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str]) -> None:
+    """Configurable treemap showing attack failures with agent and inner-dimension selectors."""
+    from collections import defaultdict
+
+    st.divider()
+    st.subheader("Attack Failure Treemap (Comparison)")
+    st.caption("Explore how attack failures distribute across agents and dimensions.")
+
+    # Agent selector (filter to one agent's results)
+    treemap_agent = st.selectbox(
+        "Filter to agent",
+        options=["All agents"] + agents,
+        key="comp_treemap_agent",
+    )
+
+    # Inner dimension selector
+    inner_dim_options: dict[str, str] = {
+        "attack_technique": "Attack Technique",
+        "delivery_method": "Delivery Method",
+        "severity": "Severity",
+    }
+    inner_dim = st.selectbox(
+        "Inner dimension",
+        options=list(inner_dim_options.keys()),
+        format_func=lambda x: inner_dim_options.get(x, x),
+        key="comp_treemap_inner_dim",
+    )
+
+    def _inner_dim_val(r: RedTeamResult, dim: str) -> str:
+        if dim == "attack_technique":
+            return r.attack.attack_technique.value
+        if dim == "delivery_method":
+            dms = getattr(r.attack, "delivery_methods", None)
+            if dms:
+                return dms[0].value if hasattr(dms[0], "value") else str(dms[0])
+            return "unknown"
+        if dim == "severity":
+            return r.attack.severity.value
+        return "unknown"
+
+    # Apply agent filter
+    filtered_results = results
+    if treemap_agent != "All agents":
+        filtered_results = [
+            r for r in results if (r.agent.key or r.agent.display_name or "unknown") == treemap_agent
+        ]
+
+    vulnerable_results = [r for r in filtered_results if r.vulnerable]
+    if not vulnerable_results:
+        st.info("No vulnerable results for the selected agent.")
+        return
+
+    # Build grouped data: (category, inner_dim_val) -> {failures, total}
+    groups: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"failures": 0, "total": 0})
+    for r in filtered_results:
+        key = (_fmt_category(r.attack.category), _inner_dim_val(r, inner_dim))
+        groups[key]["total"] += 1
+        if r.vulnerable:
+            groups[key]["failures"] += 1
+
+    rows = []
+    for (cat, dim_val), counts in groups.items():
+        if counts["failures"] > 0:
+            rows.append({
+                "category": cat,
+                "dimension": dim_val,
+                "failures": counts["failures"],
+                "total": counts["total"],
+                "asr": round(counts["failures"] / counts["total"] * 100, 1),
+            })
+
+    if not rows:
+        return
+
+    agent_label = treemap_agent if treemap_agent != "All agents" else "all agents"
+    dim_label = inner_dim_options.get(inner_dim, inner_dim)
+    st.caption(
+        f"Agent: **{agent_label}** | Inner dimension: **{dim_label}**. "
+        "Block size = failures. Color intensity = attack success rate."
+    )
+
+    fig = px.treemap(
+        rows,
+        path=["category", "dimension"],
+        values="failures",
+        color="asr",
+        color_continuous_scale=ORQ_SCALE_HEAT,
+        range_color=[0, 100],
+        custom_data=["total", "asr", "category"],
+    )
+    fig.update_traces(
+        texttemplate="<b>%{label}</b><br>%{value} failures",
+        hovertemplate=(
+            "<b>%{label}</b><br>"
+            "Category: %{customdata[2]}<br>"
+            "Failures: %{value}<br>"
+            "Total: %{customdata[0]}<br>"
+            "ASR: %{customdata[1]:.1f}%"
+            "<extra></extra>"
+        ),
+    )
+    fig.update_layout(
+        height=600,
+        coloraxis_colorbar=dict(title="ASR (%)"),
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    st.plotly_chart(fig, width="stretch")
+
+
+def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str]) -> None:
+    """Side-by-side sample viewer for disagreements between two agents.
+
+    Shows attacks where one agent is vulnerable and another is resistant.
+    Paginated at 10 disagreements per page.
+    """
+    if len(agents) < 2:
+        return
+
+    st.divider()
+    st.subheader("Disagreement Analysis")
+    st.caption(
+        "Attacks where agents disagree — one found vulnerable, the other resistant. "
+        "Select agent pair to compare."
+    )
+
+    # Allow selecting any two agents
+    if len(agents) == 2:
+        a1, a2 = agents[0], agents[1]
+    else:
+        pair_col1, pair_col2 = st.columns(2)
+        with pair_col1:
+            a1 = st.selectbox("Agent A", options=agents, index=0, key="dis_agent_a")
+        with pair_col2:
+            remaining = [ag for ag in agents if ag != a1]
+            a2 = st.selectbox("Agent B", options=remaining, index=0, key="dis_agent_b")
+
+    # Build attack-id -> {agent: result} map
+    from collections import defaultdict as _dd2
+
+    attack_results_map: dict[str, dict[str, RedTeamResult]] = _dd2(dict)
+    for r in results:
+        agent_key = r.agent.key or r.agent.display_name or "unknown"
+        if agent_key in (a1, a2):
+            attack_results_map[r.attack.id][agent_key] = r
+
+    # Find disagreements
+    disagreements: list[tuple[RedTeamResult, RedTeamResult]] = []
+    for aid, agent_map in attack_results_map.items():
+        if a1 not in agent_map or a2 not in agent_map:
+            continue
+        r1, r2 = agent_map[a1], agent_map[a2]
+        if r1.vulnerable != r2.vulnerable:
+            disagreements.append((r1, r2))
+
+    if not disagreements:
+        st.info(f"No disagreements found between **{a1}** and **{a2}**.")
+        return
+
+    PAGE_SIZE = 10
+    total_pages = max(1, (len(disagreements) + PAGE_SIZE - 1) // PAGE_SIZE)
+
+    st.caption(f"Found {len(disagreements)} disagreements between **{a1}** and **{a2}**.")
+
+    page = st.number_input(
+        "Page",
+        min_value=1,
+        max_value=total_pages,
+        value=1,
+        step=1,
+        key="dis_page",
+        help=f"Page 1 of {total_pages} ({PAGE_SIZE} per page)",
+    )
+
+    start = (page - 1) * PAGE_SIZE
+    end = start + PAGE_SIZE
+    page_items = disagreements[start:end]
+
+    for idx, (r1, r2) in enumerate(page_items, start=start + 1):
+        with st.expander(
+            f"#{idx} {r1.attack.id} — {_fmt_category(r1.attack.category)} / {r1.attack.attack_technique.value}",
+            expanded=(idx == start + 1),  # expand first item by default
+        ):
+            col_a, col_b = st.columns(2)
+
+            for col, r, agent_name in [(col_a, r1, a1), (col_b, r2, a2)]:
+                with col:
+                    verdict = "VULNERABLE" if r.vulnerable else "RESISTANT"
+                    verdict_color = COLORS['red_400'] if r.vulnerable else COLORS['success_400']
+                    st.markdown(
+                        f"**{agent_name}** "
+                        f"<span style='color:{verdict_color}; font-weight:bold;'>[{verdict}]</span>",
+                        unsafe_allow_html=True,
+                    )
+
+                    # Show the last user message as the attack prompt
+                    user_msgs = [m for m in r.messages if m.role == "user"]
+                    if user_msgs:
+                        st.markdown("**Attack prompt:**")
+                        prompt_text = user_msgs[-1].content or ""
+                        st.code(
+                            prompt_text[:600] + ("…" if len(prompt_text) > 600 else ""),
+                            language=None,
+                        )
+
+                    # Agent response
+                    if r.response:
+                        st.markdown("**Response:**")
+                        resp = r.response
+                        st.code(
+                            resp[:600] + ("…" if len(resp) > 600 else ""),
+                            language=None,
+                        )
+
+                    # Evaluator explanation
+                    if r.evaluation and r.evaluation.explanation:
+                        st.markdown("**Evaluator:**")
+                        expl = r.evaluation.explanation
+                        st.caption(expl[:400] + ("…" if len(expl) > 400 else ""))
 
 
 # ---------------------------------------------------------------------------

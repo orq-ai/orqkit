@@ -88,7 +88,7 @@ QUALITATIVE: list[str] = [
     COLORS['success_400'],
     COLORS['purple_400'],
     COLORS['orange_400'],
-    COLORS['yellow_400'],
+    COLORS['turquoise_400'],
     COLORS['teal_400'],
     COLORS['info_400'],
 ]
