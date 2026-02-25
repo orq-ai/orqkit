@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 import typer
 from dotenv import load_dotenv
@@ -44,6 +46,62 @@ def _configure_logging(verbosity: int) -> None:
         loguru_logger.add(sys.stderr, level=level)
     except ImportError:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Markdown export helpers (importable for tests)
+# ---------------------------------------------------------------------------
+
+
+def _generate_md_filename(target: str, timestamp: str) -> str:
+    """Generate a safe markdown report filename.
+
+    Sanitizes the target name by replacing characters that are unsafe in
+    filenames (``/``, ``:``, whitespace) with hyphens and collapsing
+    consecutive hyphens.
+
+    Args:
+        target:    Target identifier string (e.g. ``"agent:my/target"``).
+        timestamp: Timestamp string (e.g. ``"20250615_103000"``).
+
+    Returns:
+        Filename string, e.g. ``"redteam-report-agent-my-target-20250615_103000.md"``.
+    """
+    safe_target = re.sub(r"[/:|\s]+", "-", target).strip("-")
+    safe_target = re.sub(r"-{2,}", "-", safe_target)
+    return f"redteam-report-{safe_target}-{timestamp}.md"
+
+
+def write_markdown_report(
+    report: Any,
+    output_dir: Path,
+    target: str,
+) -> Path:
+    """Export ``report`` to a Markdown file inside ``output_dir``.
+
+    The filename is auto-generated from ``target`` and the current timestamp.
+    The directory is created if it does not exist.
+
+    Args:
+        report:     The red team report to export.
+        output_dir: Directory in which to write the file.
+        target:     Target identifier used for filename generation.
+
+    Returns:
+        Path to the written Markdown file.
+    """
+    from evaluatorq.redteam.reports.export_md import export_markdown
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = _generate_md_filename(target=target, timestamp=timestamp)
+    output_path = output_dir / filename
+
+    md_content = export_markdown(report)
+    output_path.write_text(md_content, encoding="utf-8")
+    return output_path
 
 
 @app.command()
@@ -130,6 +188,13 @@ def run(
         Optional[Path],
         typer.Option(help="Path to write the report JSON."),
     ] = None,
+    export_md: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--export-md",
+            help="Directory path to write a Markdown report. Filename is auto-generated.",
+        ),
+    ] = None,
     system_prompt: Annotated[
         Optional[str],
         typer.Option("--system-prompt", help="System prompt for the target model/agent."),
@@ -181,6 +246,11 @@ def run(
         save_report.parent.mkdir(parents=True, exist_ok=True)
         save_report.write_text(json.dumps(report.model_dump(mode="json"), indent=2, default=str))
         typer.echo(f"Report saved to {save_report}")
+
+    if export_md:
+        target_label = targets if isinstance(targets, str) else ", ".join(targets)
+        md_path = write_markdown_report(report, output_dir=export_md, target=target_label)
+        typer.echo(f"Markdown report written to {md_path}")
 
 
 @app.command()
