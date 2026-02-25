@@ -6,10 +6,30 @@ calling create_async_llm_client(), and that the env var priority is correct.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from openai import AsyncOpenAI
+
+
+def _make_report(**kwargs):
+    """Create a minimal RedTeamReport for use in tests."""
+    from evaluatorq.redteam.contracts import Pipeline, RedTeamReport, ReportSummary
+
+    defaults = dict(
+        created_at=datetime.now(tz=timezone.utc),
+        description="Test report",
+        pipeline=Pipeline.DYNAMIC,
+        framework=None,
+        categories_tested=["ASI01"],
+        tested_agents=["agent:test"],
+        total_results=0,
+        results=[],
+        summary=ReportSummary(),
+    )
+    defaults.update(kwargs)
+    return RedTeamReport(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -263,12 +283,11 @@ class TestRedTeamStaticLlmClientForwarding:
     @pytest.mark.asyncio
     async def test_static_mode_forwards_llm_client(self):
         sentinel = MagicMock(spec=AsyncOpenAI)
-        mock_report = MagicMock()
 
         with patch(
             'evaluatorq.redteam.runner._run_static',
             new_callable=AsyncMock,
-            return_value=mock_report,
+            return_value=_make_report(),
         ) as mock_static:
             await red_team('agent:test', mode='static', llm_client=sentinel)
             call_kwargs = mock_static.call_args.kwargs
@@ -277,12 +296,11 @@ class TestRedTeamStaticLlmClientForwarding:
     @pytest.mark.asyncio
     async def test_dynamic_mode_forwards_llm_client(self):
         sentinel = MagicMock(spec=AsyncOpenAI)
-        mock_report = MagicMock()
 
         with patch(
             'evaluatorq.redteam.runner._run_dynamic',
             new_callable=AsyncMock,
-            return_value=mock_report,
+            return_value=_make_report(),
         ) as mock_dynamic:
             await red_team('agent:test', mode='dynamic', llm_client=sentinel)
             call_kwargs = mock_dynamic.call_args.kwargs

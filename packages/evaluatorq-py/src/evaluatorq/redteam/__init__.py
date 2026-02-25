@@ -77,6 +77,12 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories as list_categories,
 )
+from evaluatorq.redteam.hooks import (
+    ConfirmPayload,
+    DefaultHooks,
+    PipelineHooks,
+    RichHooks,
+)
 
 __all__ = [
     # Entry points
@@ -86,6 +92,11 @@ __all__ = [
     # Category introspection
     "list_categories",
     "get_category_info",
+    # Hook system
+    "PipelineHooks",
+    "DefaultHooks",
+    "RichHooks",
+    "ConfirmPayload",
     # Core public types
     "RedTeamReport",
     "RedTeamResult",

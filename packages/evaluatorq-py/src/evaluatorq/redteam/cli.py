@@ -7,7 +7,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Optional
 
 import typer
 from dotenv import load_dotenv
@@ -126,10 +126,6 @@ def run(
         int,
         typer.Option("--verbose", "-v", count=True, help="Increase verbosity (-v info, -vv debug)."),
     ] = 0,
-    print_results: Annotated[
-        bool,
-        typer.Option("--print-results", help="Print a Rich summary table after the run."),
-    ] = False,
     save_report: Annotated[
         Optional[Path],
         typer.Option(help="Path to write the report JSON."),
@@ -142,35 +138,11 @@ def run(
     """Run red teaming against one or more targets."""
     _configure_logging(verbose)
 
-    from evaluatorq.redteam import print_report_summary, red_team
+    from evaluatorq.redteam import red_team
     from evaluatorq.redteam.contracts import TargetConfig
+    from evaluatorq.redteam.hooks import RichHooks
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
-
-    confirm_callback = None
-    if not yes:
-
-        def _confirm(summary: dict[str, Any]) -> bool:
-            from rich.console import Console
-            from rich.table import Table
-
-            console = Console()
-            table = Table(title="Run Summary", show_header=True, header_style="bold")
-            table.add_column("Parameter", style="white")
-            table.add_column("Value", style="cyan")
-            table.add_row("Targets", ", ".join(target))
-            table.add_row("Mode", mode)
-            table.add_row("Datapoints", str(summary.get("num_datapoints", "?")))
-            table.add_row("Categories", str(len(summary.get("categories", []))))
-            table.add_row("Attack Model", summary.get("attack_model", attack_model))
-            table.add_row("Evaluator Model", summary.get("evaluator_model", evaluator_model))
-            table.add_row("Max Turns", str(summary.get("max_turns", max_turns)))
-            table.add_row("Parallelism", str(summary.get("parallelism", parallelism)))
-            console.print(table)
-            return typer.confirm("Proceed with this run?")
-
-        confirm_callback = _confirm
-
     targets = target if len(target) > 1 else target[0]
 
     try:
@@ -191,23 +163,19 @@ def run(
                 cleanup_memory=not no_cleanup_memory,
                 backend=backend,
                 dataset_path=dataset,
-                confirm_callback=confirm_callback,
+                hooks=RichHooks(skip_confirm=yes),
                 output_dir=output_dir,
-                print_results=False,
                 target_config=target_config,
             )
         )
     except RuntimeError as exc:
         if "cancelled" in str(exc).lower():
             typer.echo("Run cancelled.")
-            raise typer.Exit(code=1) from exc
+            raise SystemExit(0)
         raise
     except KeyboardInterrupt:
         typer.echo("\nInterrupted.")
         raise typer.Exit(code=130)
-
-    if print_results:
-        print_report_summary(report)
 
     if save_report:
         save_report.parent.mkdir(parents=True, exist_ok=True)

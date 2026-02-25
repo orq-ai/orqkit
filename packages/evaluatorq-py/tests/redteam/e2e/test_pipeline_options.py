@@ -1,10 +1,10 @@
-"""E2E tests for pipeline options: callbacks, output artifacts, error handling."""
+"""E2E tests for pipeline options: hooks, output artifacts, error handling."""
 
 from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,8 +12,20 @@ from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.base import BackendBundle
+from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks
 
 from .conftest import DeterministicAsyncOpenAI
+
+
+class _CancellingHooks(DefaultHooks):
+    """Hooks implementation that captures the confirm payload and cancels."""
+
+    def __init__(self) -> None:
+        self.confirm_payload: ConfirmPayload | None = None
+
+    def on_confirm(self, payload: ConfirmPayload) -> bool:
+        self.confirm_payload = payload
+        return False
 
 
 @contextmanager
@@ -27,17 +39,17 @@ def _dynamic_patches(mock_backend_bundle: BackendBundle):
 
 
 # ---------------------------------------------------------------------------
-# Confirm callback
+# Hooks — on_confirm cancellation
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_confirm_callback_cancels_dynamic(
+async def test_hooks_on_confirm_cancels_dynamic(
     mock_llm_client: DeterministicAsyncOpenAI,
     mock_backend_bundle: BackendBundle,
 ) -> None:
-    """confirm_callback returning False should raise RuntimeError."""
-    callback = MagicMock(return_value=False)
+    """on_confirm returning False should raise RuntimeError."""
+    hooks = _CancellingHooks()
     with _dynamic_patches(mock_backend_bundle):
         with pytest.raises(RuntimeError, match="cancelled"):
             await red_team(
@@ -50,23 +62,22 @@ async def test_confirm_callback_cancels_dynamic(
                 parallelism=2,
                 backend="openai",
                 llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
-                confirm_callback=callback,
+                hooks=hooks,
             )
 
-    callback.assert_called_once()
-    summary = callback.call_args[0][0]
-    assert "num_datapoints" in summary
-    assert "categories" in summary
+    assert hooks.confirm_payload is not None
+    assert "num_datapoints" in hooks.confirm_payload
+    assert "categories" in hooks.confirm_payload
 
 
 @pytest.mark.asyncio
-async def test_confirm_callback_cancels_hybrid(
+async def test_hooks_on_confirm_cancels_hybrid(
     mock_llm_client: DeterministicAsyncOpenAI,
     mock_backend_bundle: BackendBundle,
     static_dataset_path: Path,
 ) -> None:
-    """confirm_callback returning False in hybrid mode should raise RuntimeError."""
-    callback = MagicMock(return_value=False)
+    """on_confirm returning False in hybrid mode should raise RuntimeError."""
+    hooks = _CancellingHooks()
     with _dynamic_patches(mock_backend_bundle):
         with pytest.raises(RuntimeError, match="cancelled"):
             await red_team(
@@ -80,13 +91,12 @@ async def test_confirm_callback_cancels_hybrid(
                 backend="openai",
                 llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
                 dataset_path=str(static_dataset_path),
-                confirm_callback=callback,
+                hooks=hooks,
             )
 
-    callback.assert_called_once()
-    summary = callback.call_args[0][0]
-    assert "num_dynamic" in summary
-    assert "num_static" in summary
+    assert hooks.confirm_payload is not None
+    assert "num_dynamic" in hooks.confirm_payload
+    assert "num_static" in hooks.confirm_payload
 
 
 # ---------------------------------------------------------------------------

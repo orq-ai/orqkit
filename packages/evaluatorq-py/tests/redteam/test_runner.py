@@ -2,10 +2,30 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
 from evaluatorq.redteam import get_category_info, list_categories, red_team
+from evaluatorq.redteam.contracts import Pipeline, RedTeamReport, ReportSummary
 from evaluatorq.redteam.runner import _parse_target
+
+
+def _make_report(target: str = "agent:test", **kwargs) -> RedTeamReport:
+    """Create a minimal RedTeamReport for use in tests."""
+    defaults = dict(
+        created_at=datetime.now(tz=timezone.utc),
+        description=f"Report for {target}",
+        pipeline=Pipeline.DYNAMIC,
+        framework=None,
+        categories_tested=["ASI01"],
+        tested_agents=[target],
+        total_results=0,
+        results=[],
+        summary=ReportSummary(),
+    )
+    defaults.update(kwargs)
+    return RedTeamReport(**defaults)
 
 
 class TestParseTarget:
@@ -95,14 +115,14 @@ class TestRedTeamValidation:
         """Static mode dispatches to _run_static (no longer raises NotImplementedError)."""
         from unittest.mock import AsyncMock, patch
 
-        sentinel = object()
+        mock_report = _make_report()
         with patch(
             'evaluatorq.redteam.runner._run_static',
             new_callable=AsyncMock,
-            return_value=sentinel,
+            return_value=mock_report,
         ) as mock_static:
             result = await red_team('agent:test', mode='static')
-            assert result is sentinel
+            assert result is mock_report
             mock_static.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -110,14 +130,14 @@ class TestRedTeamValidation:
         """Hybrid mode dispatches to _run_hybrid."""
         from unittest.mock import AsyncMock, patch
 
-        sentinel = object()
+        mock_report = _make_report()
         with patch(
             'evaluatorq.redteam.runner._run_hybrid',
             new_callable=AsyncMock,
-            return_value=sentinel,
+            return_value=mock_report,
         ) as mock_hybrid:
             result = await red_team('agent:test', mode='hybrid')
-            assert result is sentinel
+            assert result is mock_report
             mock_hybrid.assert_awaited_once()
 
 
@@ -213,24 +233,28 @@ class TestStaticCoverageGuard:
 
 
 class TestConfirmCallback:
-    """Tests for confirm_callback support."""
+    """Tests for hooks-based confirm support (replaces legacy confirm_callback)."""
 
     @pytest.mark.asyncio
-    async def test_confirm_callback_aborts_on_false(self):
-        """Confirm callback returning False should abort execution."""
-        from unittest.mock import AsyncMock, MagicMock, patch
+    async def test_hooks_on_confirm_false_aborts(self):
+        """Hooks returning False from on_confirm should abort execution."""
+        from unittest.mock import AsyncMock, patch
 
-        callback = MagicMock(return_value=False)
+        from evaluatorq.redteam.hooks import DefaultHooks
+
+        class FalseConfirmHooks(DefaultHooks):
+            def on_confirm(self, payload) -> bool:
+                return False
 
         with (
             patch('evaluatorq.redteam.runner._run_dynamic') as mock_dynamic,
         ):
-            # Make _run_dynamic propagate the confirm callback behavior
+            # Make _run_dynamic call hooks.on_confirm and raise if False
             async def _fake_dynamic(**kwargs):
-                cb = kwargs.get('confirm_callback')
-                if cb is not None and not cb({'test': True}):
+                hooks = kwargs.get('hooks')
+                if hooks is not None and not hooks.on_confirm({}):
                     raise RuntimeError('Execution cancelled by confirmation callback')
-                return MagicMock()
+                return _make_report()
 
             mock_dynamic.side_effect = _fake_dynamic
 
@@ -238,31 +262,32 @@ class TestConfirmCallback:
                 await red_team(
                     'agent:test',
                     mode='dynamic',
-                    confirm_callback=callback,
+                    hooks=FalseConfirmHooks(),
                 )
 
     @pytest.mark.asyncio
-    async def test_confirm_callback_proceeds_on_true(self):
-        """Confirm callback returning True should allow execution."""
-        from unittest.mock import AsyncMock, MagicMock, patch
+    async def test_hooks_on_confirm_true_proceeds(self):
+        """Hooks returning True from on_confirm should allow execution."""
+        from unittest.mock import AsyncMock, patch
 
-        callback = MagicMock(return_value=True)
-        sentinel = object()
+        from evaluatorq.redteam.hooks import DefaultHooks
+
+        mock_report = _make_report()
 
         with patch(
             'evaluatorq.redteam.runner._run_dynamic',
             new_callable=AsyncMock,
-            return_value=sentinel,
+            return_value=mock_report,
         ) as mock_dynamic:
             result = await red_team(
                 'agent:test',
                 mode='dynamic',
-                confirm_callback=callback,
+                hooks=DefaultHooks(),
             )
-            assert result is sentinel
-            # confirm_callback is passed through to _run_dynamic
+            assert result is mock_report
+            # hooks is passed through to _run_dynamic
             call_kwargs = mock_dynamic.call_args.kwargs
-            assert call_kwargs['confirm_callback'] is callback
+            assert call_kwargs['hooks'] is not None
 
 
 class TestRedTeamMultiTarget:
@@ -315,12 +340,12 @@ class TestRedTeamMultiTarget:
         """A single string target dispatches directly (no merge)."""
         from unittest.mock import AsyncMock, patch
 
-        sentinel = object()
+        mock_report = _make_report()
         with patch(
             'evaluatorq.redteam.runner._red_team_single',
             new_callable=AsyncMock,
-            return_value=sentinel,
+            return_value=mock_report,
         ) as mock_single:
             result = await red_team('agent:test')
-            assert result is sentinel
+            assert result is mock_report
             mock_single.assert_awaited_once()

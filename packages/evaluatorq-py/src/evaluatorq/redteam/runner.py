@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -50,6 +49,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     list_available_categories,
 )
 from evaluatorq.redteam.contracts import AgentContext, RedTeamReport, TargetConfig
+from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 
 
 def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
@@ -100,9 +100,8 @@ async def red_team(
     llm_client: AsyncOpenAI | None = None,
     description: str | None = None,
     dataset_path: Any = None,
-    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    hooks: PipelineHooks | None = None,
     output_dir: Path | str | None = None,
-    print_results: bool = False,
     target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
@@ -134,12 +133,10 @@ async def red_team(
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
         description: Optional description for the report.
         dataset_path: Path to static dataset (required for static/hybrid modes).
-        confirm_callback: Optional callback that receives a summary dict before
-            execution. Return ``False`` to cancel the run.
+        hooks: Optional ``PipelineHooks`` implementation. Defaults to
+            ``DefaultHooks()`` (loguru output, auto-confirm).
         output_dir: Optional directory to save intermediate stage artifacts as
             numbered JSON files. When ``None`` (default), no files are written.
-        print_results: Whether to print a Rich summary table after each run
-            completes. Defaults to ``False``.
         target_config: Optional backend-agnostic target configuration (e.g.
             system prompt for OpenAI targets).
 
@@ -148,8 +145,9 @@ async def red_team(
 
     Raises:
         ValueError: If mode is invalid or required arguments are missing.
-        RuntimeError: If confirm_callback returns False.
+        RuntimeError: If hooks.on_confirm returns False.
     """
+    resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     resolved_output_dir = Path(output_dir) if output_dir is not None else None
 
     kwargs: dict[str, Any] = dict(
@@ -172,9 +170,8 @@ async def red_team(
         llm_client=llm_client,
         description=description,
         dataset_path=dataset_path,
-        confirm_callback=confirm_callback,
+        hooks=resolved_hooks,
         output_dir=resolved_output_dir,
-        print_results=print_results,
         target_config=target_config,
     )
 
@@ -184,25 +181,26 @@ async def red_team(
         raise ValueError(msg)
 
     if len(targets) == 1:
-        return await _red_team_single(targets[0], **kwargs)  # type: ignore[arg-type]
+        report = await _red_team_single(targets[0], **kwargs)  # type: ignore[arg-type]
+        resolved_hooks.on_complete(report)
+        return report
 
     from evaluatorq.redteam.reports.converters import merge_reports
 
     reports: list[RedTeamReport] = []
     for t in targets:
+        resolved_hooks.on_stage_start("target_start", {"target": t})
         t_kwargs: dict[str, Any] = {**kwargs, 'description': f'{description or "Multi-target"} ({t})'}
         report = await _red_team_single(t, **t_kwargs)  # type: ignore[arg-type]
         reports.append(report)
+        resolved_hooks.on_stage_end("target_complete", {"target": t, "report": report})
 
     merged = merge_reports(
         *reports,
         description=description or f'Multi-target red teaming ({len(targets)} targets)',
     )
 
-    if print_results:
-        from evaluatorq.redteam.reports.display import print_report_summary
-        print_report_summary(merged)
-
+    resolved_hooks.on_complete(merged)
     return merged
 
 
@@ -228,12 +226,12 @@ async def _red_team_single(
     llm_client: AsyncOpenAI | None = None,
     description: str | None = None,
     dataset_path: Any = None,
-    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
-    print_results: bool = False,
     target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
     """Run red teaming against a single target, dispatching by mode."""
+    resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     report: RedTeamReport
     if mode == 'dynamic':
         report = await _run_dynamic(
@@ -254,7 +252,7 @@ async def _red_team_single(
             memory_cleanup=memory_cleanup,
             llm_client=llm_client,
             description=description,
-            confirm_callback=confirm_callback,
+            hooks=resolved_hooks,
             output_dir=output_dir,
             target_config=target_config,
         )
@@ -269,6 +267,7 @@ async def _red_team_single(
             dataset_path=dataset_path,
             description=description,
             llm_client=llm_client,
+            hooks=resolved_hooks,
             output_dir=output_dir,
             target_config=target_config,
         )
@@ -293,17 +292,13 @@ async def _red_team_single(
             llm_client=llm_client,
             description=description,
             dataset_path=dataset_path,
-            confirm_callback=confirm_callback,
+            hooks=resolved_hooks,
             output_dir=output_dir,
             target_config=target_config,
         )
     else:
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
         raise ValueError(msg)
-
-    if print_results:
-        from evaluatorq.redteam.reports.display import print_report_summary
-        print_report_summary(report)
 
     return report
 
@@ -343,7 +338,7 @@ async def _run_dynamic(
     memory_cleanup: MemoryCleanup | None,
     llm_client: AsyncOpenAI | None,
     description: str | None,
-    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
@@ -361,6 +356,8 @@ async def _run_dynamic(
     )
     from evaluatorq.redteam.reports.converters import dynamic_evaluatorq_results_to_report
     from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
+
+    resolved_hooks: PipelineHooks = hooks or DefaultHooks()
 
     await init_tracing_if_needed()
     parent_context = await capture_parent_context()
@@ -386,7 +383,8 @@ async def _run_dynamic(
         resolved_error_mapper = error_mapper or DefaultErrorMapper()
         resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
 
-        # Get agent context
+        # Stage: context_retrieval
+        resolved_hooks.on_stage_start("context_retrieval", {"target": target_value})
         async with with_redteam_span(
             "orq.redteam.context_retrieval",
             {"orq.redteam.target": target_value},
@@ -397,6 +395,9 @@ async def _run_dynamic(
                 "orq.redteam.num_memory_stores": len(agent_context.memory_stores) if agent_context.memory_stores else 0,
                 "orq.redteam.num_knowledge_bases": len(agent_context.knowledge_bases) if agent_context.knowledge_bases else 0,
             })
+        resolved_hooks.on_stage_end("context_retrieval", {
+            "num_tools": len(agent_context.tools) if agent_context.tools else 0,
+        })
 
         _save_stage(output_dir, "01_agent_context.json", agent_context.model_dump_json(indent=2))
 
@@ -407,11 +408,15 @@ async def _run_dynamic(
         if resolved_llm_client is None and generate_strategies:
             resolved_llm_client = create_async_llm_client()
 
-        # Stage 1: Generate datapoints
+        # Stage: datapoint_generation
         logger.info(
             f'Generating attack datapoints for {target} '
             f'({len(resolved_categories)} categories, max_turns={max_turns})'
         )
+        resolved_hooks.on_stage_start("datapoint_generation", {
+            "num_categories": len(resolved_categories),
+            "target": target,
+        })
         async with with_redteam_span(
             "orq.redteam.datapoint_generation",
             {
@@ -431,6 +436,7 @@ async def _run_dynamic(
                 parallelism=parallelism,
             )
             set_span_attrs(dp_span, {"orq.redteam.num_datapoints": len(datapoints)})
+        resolved_hooks.on_stage_end("datapoint_generation", {"num_datapoints": len(datapoints)})
 
         # Warn if generated strategies will be unused due to cap
         if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
@@ -454,20 +460,32 @@ async def _run_dynamic(
 
         _save_stage(output_dir, "02_datapoints.json", json.dumps([dp.inputs for dp in datapoints], indent=2, default=str))
 
-        # Confirm callback
-        if confirm_callback is not None:
-            summary = {
-                'agent_context': agent_context.model_dump(mode='json'),
-                'num_datapoints': len(datapoints),
-                'categories': resolved_categories,
-                'attack_model': attack_model,
-                'evaluator_model': evaluator_model,
-                'max_turns': max_turns,
-                'parallelism': parallelism,
-            }
-            if not confirm_callback(summary):
-                msg = 'Execution cancelled by confirmation callback'
-                raise RuntimeError(msg)
+        # Confirm hook
+        confirm_payload: ConfirmPayload = {
+            "agent_context": agent_context.model_dump(mode="json"),
+            "num_datapoints": len(datapoints),
+            "num_dynamic": None,
+            "num_static": None,
+            "categories": resolved_categories,
+            "attack_model": attack_model,
+            "evaluator_model": evaluator_model,
+            "max_turns": max_turns,
+            "parallelism": parallelism,
+            "filtering_metadata": _filtering_metadata if isinstance(_filtering_metadata, dict) else None,
+            "mode": "dynamic",
+            "target": target,
+            "dataset_path": None,
+            "vulnerabilities": None,
+        }
+        if not resolved_hooks.on_confirm(confirm_payload):
+            msg = 'Execution cancelled by confirmation callback'
+            raise RuntimeError(msg)
+
+        # Stage: attack_execution
+        resolved_hooks.on_stage_start("attack_execution", {
+            "num_datapoints": len(datapoints),
+            "target": target,
+        })
 
         # Stage 2: Create job and evaluator
         dynamic_job = create_dynamic_redteam_job(
@@ -504,11 +522,14 @@ async def _run_dynamic(
                 ], memory_cleanup=resolved_memory_cleanup)
             raise
 
+        resolved_hooks.on_stage_end("attack_execution", {"num_results": len(results)})
+
         _save_stage(output_dir, "03_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
         pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
-        # Stage 4: Normalize results
+        # Stage: report_generation
+        resolved_hooks.on_stage_start("report_generation", {"num_results": len(results)})
         logger.info(f'Normalizing results ({pipeline_duration:.1f}s elapsed)')
         report = dynamic_evaluatorq_results_to_report(
             agent_context=agent_context,
@@ -517,6 +538,9 @@ async def _run_dynamic(
             duration_seconds=pipeline_duration,
             description=description or f'Dynamic red teaming for {target}',
         )
+        resolved_hooks.on_stage_end("report_generation", {
+            "resistance_rate": report.summary.resistance_rate,
+        })
 
         _save_report(output_dir, "04_summary_report.json", report)
 
@@ -535,6 +559,7 @@ async def _run_dynamic(
             ]
             if entity_ids:
                 logger.info(f'Cleaning up {len(entity_ids)} memory entities')
+                resolved_hooks.on_stage_start("cleanup", {"num_entities": len(entity_ids)})
                 async with with_redteam_span(
                     "orq.redteam.memory_cleanup",
                     {"orq.redteam.num_entities": len(entity_ids)},
@@ -543,6 +568,7 @@ async def _run_dynamic(
                     set_span_attrs(cleanup_span, {
                         "orq.redteam.num_stores": len(agent_context.memory_stores) if agent_context.memory_stores else 0,
                     })
+                resolved_hooks.on_stage_end("cleanup", {"num_entities_cleaned": len(entity_ids)})
 
         return report
 
@@ -558,6 +584,7 @@ async def _run_static(
     dataset_path: Any,
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
+    hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
@@ -572,6 +599,7 @@ async def _run_static(
     from evaluatorq.redteam.reports.converters import static_evaluatorq_results_to_reports
     from evaluatorq.redteam.runtime.jobs import create_model_job
 
+    resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     target_kind, target_value = _parse_target(target)
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
@@ -607,6 +635,31 @@ async def _run_static(
 
     _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))  # pyright: ignore[reportAttributeAccessIssue]
 
+    # Confirm hook (static mode always gets on_confirm)
+    vulnerabilities: list[str] = list({
+        dp.inputs.get("category", "") for dp in data  # pyright: ignore[reportAttributeAccessIssue]
+        if dp.inputs.get("category")
+    })
+    confirm_payload: ConfirmPayload = {
+        "agent_context": None,
+        "num_datapoints": len(data) if isinstance(data, list) else 0,  # type: ignore[arg-type]
+        "num_dynamic": None,
+        "num_static": len(data) if isinstance(data, list) else 0,  # type: ignore[arg-type]
+        "categories": categories or vulnerabilities,
+        "attack_model": "",
+        "evaluator_model": evaluator_model,
+        "max_turns": 1,
+        "parallelism": parallelism,
+        "filtering_metadata": None,
+        "mode": "static",
+        "target": target,
+        "dataset_path": str(path) if path else None,
+        "vulnerabilities": vulnerabilities,
+    }
+    if not resolved_hooks.on_confirm(confirm_payload):
+        msg = 'Execution cancelled by confirmation callback'
+        raise RuntimeError(msg)
+
     # Create job based on target kind
     _sys_prompt = target_config.system_prompt if target_config else None
     if target_kind == 'agent':
@@ -619,6 +672,12 @@ async def _run_static(
         model_job = create_model_job(model=target_value, llm_client=llm_client, system_prompt=_sys_prompt)
 
     evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=llm_client)
+
+    # Stage: attack_execution
+    resolved_hooks.on_stage_start("attack_execution", {
+        "num_datapoints": len(data) if isinstance(data, list) else 0,  # type: ignore[arg-type]
+        "target": target,
+    })
 
     # Run evaluatorq with _exit_on_failure=False because in red teaming
     # "failures" are expected (they represent successfully breached defenses).
@@ -634,9 +693,14 @@ async def _run_static(
         description=description or f'Static red teaming for {target}',
     )
 
+    resolved_hooks.on_stage_end("attack_execution", {"num_results": len(results)})
+
     _save_stage(output_dir, "02_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
+
+    # Stage: report_generation
+    resolved_hooks.on_stage_start("report_generation", {"num_results": len(results)})
 
     # Normalize results — static runs may produce multiple job reports
     reports = static_evaluatorq_results_to_reports(
@@ -650,15 +714,20 @@ async def _run_static(
     if not reports:
         from evaluatorq.redteam.reports.converters import static_results_to_report
 
-        return static_results_to_report(
+        primary_report = static_results_to_report(
             [],
             agent_model=target_value if target_kind != 'agent' else None,
             agent_key=target_value if target_kind == 'agent' else None,
             description=description,
         )
+    else:
+        primary_report = next(iter(reports.values()))
 
-    primary_report = next(iter(reports.values()))
     primary_report.duration_seconds = pipeline_duration
+    resolved_hooks.on_stage_end("report_generation", {
+        "resistance_rate": primary_report.summary.resistance_rate,
+    })
+
     _save_report(output_dir, "03_summary_report.json", primary_report)
     return primary_report
 
@@ -684,7 +753,7 @@ async def _run_hybrid(
     llm_client: AsyncOpenAI | None,
     description: str | None,
     dataset_path: Any,
-    confirm_callback: Callable[[dict[str, Any]], bool] | None = None,
+    hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
 ) -> RedTeamReport:
@@ -714,6 +783,7 @@ async def _run_hybrid(
     )
     from evaluatorq.redteam.runtime.jobs import create_model_job
 
+    resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     target_kind, target_value = _parse_target(target)
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
@@ -723,8 +793,12 @@ async def _run_hybrid(
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
 
-    # Get agent context
+    # Stage: context_retrieval
+    resolved_hooks.on_stage_start("context_retrieval", {"target": target_value})
     agent_context: AgentContext = await backend_bundle.context_provider.get_agent_context(target_value)
+    resolved_hooks.on_stage_end("context_retrieval", {
+        "num_tools": len(agent_context.tools) if agent_context.tools else 0,
+    })
     _save_stage(output_dir, "01_agent_context.json", agent_context.model_dump_json(indent=2))
 
     resolved_categories = categories or list_available_categories()
@@ -734,8 +808,14 @@ async def _run_hybrid(
     if resolved_llm_client is None and generate_strategies:
         resolved_llm_client = create_async_llm_client()
 
+    # Stage: datapoint_generation
+    resolved_hooks.on_stage_start("datapoint_generation", {
+        "num_categories": len(resolved_categories),
+        "target": target,
+    })
+
     # Generate dynamic datapoints
-    dynamic_datapoints, _ = await generate_dynamic_datapoints(
+    dynamic_datapoints, _filtering_metadata = await generate_dynamic_datapoints(
         agent_context=agent_context,
         categories=resolved_categories,
         max_per_category=max_per_category,
@@ -788,22 +868,32 @@ async def _run_hybrid(
         msg = 'No datapoints generated for hybrid mode.'
         raise ValueError(msg)
 
-    # Confirm callback
-    if confirm_callback is not None:
-        summary = {
-            'agent_context': agent_context.model_dump(mode='json'),
-            'num_datapoints': len(all_datapoints),
-            'num_dynamic': len(dynamic_datapoints),
-            'num_static': len(static_datapoints),
-            'categories': resolved_categories,
-            'attack_model': attack_model,
-            'evaluator_model': evaluator_model,
-            'max_turns': max_turns,
-            'parallelism': parallelism,
-        }
-        if not confirm_callback(summary):
-            msg = 'Execution cancelled by confirmation callback'
-            raise RuntimeError(msg)
+    resolved_hooks.on_stage_end("datapoint_generation", {
+        "num_datapoints": len(all_datapoints),
+        "num_dynamic": len(dynamic_datapoints),
+        "num_static": len(static_datapoints),
+    })
+
+    # Confirm hook
+    confirm_payload: ConfirmPayload = {
+        "agent_context": agent_context.model_dump(mode="json"),
+        "num_datapoints": len(all_datapoints),
+        "num_dynamic": len(dynamic_datapoints),
+        "num_static": len(static_datapoints),
+        "categories": resolved_categories,
+        "attack_model": attack_model,
+        "evaluator_model": evaluator_model,
+        "max_turns": max_turns,
+        "parallelism": parallelism,
+        "filtering_metadata": _filtering_metadata if isinstance(_filtering_metadata, dict) else None,
+        "mode": "hybrid",
+        "target": target,
+        "dataset_path": str(path) if path else None,
+        "vulnerabilities": None,
+    }
+    if not resolved_hooks.on_confirm(confirm_payload):
+        msg = 'Execution cancelled by confirmation callback'
+        raise RuntimeError(msg)
 
     # Create the underlying jobs
     dynamic_job = create_dynamic_redteam_job(
@@ -860,6 +950,12 @@ async def _run_hybrid(
             return await dynamic_evaluator['scorer'](dynamic_params)
         return await static_evaluator['scorer'](params)
 
+    # Stage: attack_execution
+    resolved_hooks.on_stage_start("attack_execution", {
+        "num_datapoints": len(all_datapoints),
+        "target": target,
+    })
+
     # Run evaluatorq
     logger.info(
         f'Running hybrid red teaming against {target} '
@@ -888,9 +984,14 @@ async def _run_hybrid(
                 await cleanup_memory_entities(agent_context, entity_ids, memory_cleanup=resolved_memory_cleanup)
         raise
 
+    resolved_hooks.on_stage_end("attack_execution", {"num_results": len(results)})
+
     _save_stage(output_dir, "04_attack_results.json", json.dumps([r.model_dump(mode='json') for r in results], indent=2, default=str))
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
+
+    # Stage: report_generation
+    resolved_hooks.on_stage_start("report_generation", {"num_results": len(results)})
 
     # Split results by source and convert
     dynamic_results = [r for r in results if getattr(r, 'data_point', None) and r.data_point.inputs.get('hybrid_source') == 'dynamic']
@@ -918,11 +1019,17 @@ async def _run_hybrid(
 
     if not reports_to_merge:
         from evaluatorq.redteam.reports.converters import static_results_to_report
-        return static_results_to_report([], description=description)
+        report = static_results_to_report([], description=description)
+    else:
+        report = merge_reports(*reports_to_merge, description=description or f'Hybrid red teaming for {target}')
 
-    report = merge_reports(*reports_to_merge, description=description or f'Hybrid red teaming for {target}')
     report.duration_seconds = pipeline_duration
     report.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
+
+    resolved_hooks.on_stage_end("report_generation", {
+        "resistance_rate": report.summary.resistance_rate,
+    })
+
     _save_report(output_dir, "05_summary_report.json", report)
 
     # Memory cleanup
@@ -934,8 +1041,8 @@ async def _run_hybrid(
         ]
         if entity_ids:
             logger.info(f'Cleaning up {len(entity_ids)} memory entities')
+            resolved_hooks.on_stage_start("cleanup", {"num_entities": len(entity_ids)})
             await cleanup_memory_entities(agent_context, entity_ids, memory_cleanup=resolved_memory_cleanup)
+            resolved_hooks.on_stage_end("cleanup", {"num_entities_cleaned": len(entity_ids)})
 
     return report
-
-
