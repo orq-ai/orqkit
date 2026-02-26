@@ -8,6 +8,22 @@ from rich.table import Table
 from rich.text import Text
 
 from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES, RedTeamReport
+from evaluatorq.redteam.vulnerability_registry import VULNERABILITY_DEFS, Vulnerability
+
+
+def _format_vulnerability_label(vuln_str: str) -> str:
+    """Format 'goal_hijacking' -> 'Goal Hijacking (ASI01)'."""
+    try:
+        vuln = Vulnerability(vuln_str)
+    except ValueError:
+        return vuln_str
+    vdef = VULNERABILITY_DEFS.get(vuln)
+    if vdef:
+        cats = ', '.join(
+            code for codes in vdef.framework_mappings.values() for code in codes
+        )
+        return f"{vdef.name} ({cats})" if cats else vdef.name
+    return vuln_str
 
 
 def _format_category_label(category: str) -> str:
@@ -27,7 +43,7 @@ def _rate_style(rate: float) -> str:
     return "red"
 
 
-def print_report_summary(report: RedTeamReport) -> None:
+def print_report_summary(report: RedTeamReport, *, console: Console | None = None) -> None:
     """Print a Rich summary of a :class:`RedTeamReport` to the terminal.
 
     Displays:
@@ -36,7 +52,7 @@ def print_report_summary(report: RedTeamReport) -> None:
     * Top vulnerable techniques (if any)
     * Top error causes (if any)
     """
-    console = Console()
+    console = console or Console()
     summary = report.summary
 
     # ── Title ──────────────────────────────────────────────────────────

@@ -9,10 +9,11 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
-from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, OWASP_CATEGORY_NAMES
 from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext, AttackStrategy
 from evaluatorq.redteam.contracts import AttackTechnique, DeliveryMethod, Severity, TurnType
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
+from evaluatorq.redteam.vulnerability_registry import resolve_category_safe, VULNERABILITY_DEFS
 
 
 class GeneratedObjective(BaseModel):
@@ -71,7 +72,7 @@ async def generate_objectives_for_category(
     category: str,
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
-    model: str = 'azure/gpt-5-mini',
+    model: str = DEFAULT_PIPELINE_MODEL,
     count: int = 3,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
@@ -126,6 +127,7 @@ async def generate_objectives_for_category(
 
     try:
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
+        vuln = resolve_category_safe(category.replace('OWASP-', ''))
         async with with_llm_span(
             model=model,
             temperature=PIPELINE_CONFIG.strategy_generation_temperature,
@@ -134,6 +136,7 @@ async def generate_objectives_for_category(
             attributes={
                 "orq.redteam.llm_purpose": "generate_strategies",
                 "orq.redteam.category": category,
+                "orq.redteam.vulnerability": vuln.value if vuln else "",
                 "orq.redteam.count": count,
             },
         ) as gen_span:
@@ -154,7 +157,7 @@ async def generate_objectives_for_category(
             if result is None:
                 raise ValueError('Objective generation returned no parsed content')
 
-            logger.info(f'Generated {len(result.objectives)} objectives for {category}')
+            logger.debug(f'Generated {len(result.objectives)} objectives for {category}')
             return result.objectives[:count]
 
     except Exception as e:
@@ -179,22 +182,12 @@ def create_strategy_from_objective(
     Returns:
         AttackStrategy instance
     """
-    # Determine attack technique based on category
-    category_to_technique = {
-        'ASI01': AttackTechnique.INDIRECT_INJECTION,
-        'ASI02': AttackTechnique.TOOL_ABUSE,
-        'ASI05': AttackTechnique.RCE_EXPLOIT,
-        'ASI06': AttackTechnique.CONTEXT_POISONING,
-        'ASI09': AttackTechnique.SOCIAL_ENGINEERING,
-        'LLM01': AttackTechnique.DIRECT_INJECTION,
-        'LLM02': AttackTechnique.SOCIAL_ENGINEERING,
-        'LLM07': AttackTechnique.SOCIAL_ENGINEERING,
-    }
-
-    technique = category_to_technique.get(
-        category.replace('OWASP-', ''),
-        AttackTechnique.SOCIAL_ENGINEERING,
-    )
+    # Determine attack technique based on category via vulnerability registry
+    vuln = resolve_category_safe(category.replace('OWASP-', ''))
+    if vuln is not None and vuln in VULNERABILITY_DEFS:
+        technique = VULNERABILITY_DEFS[vuln].default_attack_technique
+    else:
+        technique = AttackTechnique.SOCIAL_ENGINEERING
 
     # Create unique name from objective
     objective_text = objective.objective
@@ -208,6 +201,7 @@ def create_strategy_from_objective(
         required_capabilities.extend(['memory_read', 'memory_write'])
 
     return AttackStrategy(
+        vulnerability=vuln,
         category=category,
         name=name,
         description=f'LLM-generated: {objective_text[:100]}...',
@@ -229,7 +223,7 @@ async def generate_strategies_for_category(
     category: str,
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
-    model: str = 'azure/gpt-5-mini',
+    model: str = DEFAULT_PIPELINE_MODEL,
     count: int = 2,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
@@ -278,5 +272,5 @@ async def generate_strategies_for_category(
             )
         )
 
-    logger.info(f'Created {len(strategies)} generated strategies for {category}')
+    logger.debug(f'Created {len(strategies)} generated strategies for {category}')
     return strategies

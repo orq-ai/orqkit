@@ -20,7 +20,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn
 
 from evaluatorq.redteam.backends.base import AgentTarget, DefaultErrorMapper, ErrorMapper
 from evaluatorq.redteam.contracts import (
-    PIPELINE_CONFIG,
+    DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG,
     AgentContext,
     AttackStrategy,
     Message,
@@ -225,8 +225,9 @@ def _build_adversarial_system_prompt(
 def _progress_ui_enabled_for_current_run() -> bool:
     """Enable per-attack live progress only in verbose CLI modes.
 
-    This keeps default terminal output compact (single evaluatorq progress line)
-    while preserving detailed per-attack progress when users opt in with -v/-vv.
+    Controlled by the ``REDTEAM_VERBOSE_LEVEL`` environment variable.
+    Set to any integer > 0 to enable per-attack progress bars in the terminal.
+    Default is ``0`` (disabled), keeping terminal output compact.
     """
     try:
         return int(os.getenv('REDTEAM_VERBOSE_LEVEL', '0')) > 0
@@ -273,7 +274,7 @@ class MultiTurnOrchestrator:
     def __init__(
         self,
         llm_client: AsyncOpenAI,
-        model: str = 'azure/gpt-5-mini',
+        model: str = DEFAULT_PIPELINE_MODEL,
         error_mapper: ErrorMapper | None = None,
     ):
         """Initialize the orchestrator.
@@ -344,7 +345,7 @@ class MultiTurnOrchestrator:
 
                 record_llm_response(llm_span, response, output_content=prompt)
 
-        logger.info(f'Generated dynamic single-turn prompt for {strategy.name}: {prompt[:100]}...')
+        logger.debug(f'Generated dynamic single-turn prompt for {strategy.name}: {prompt[:100]}...')
         return prompt, usage, system_prompt
 
     async def run_attack(
@@ -424,6 +425,7 @@ class MultiTurnOrchestrator:
                         "orq.redteam.max_turns": max_turns,
                         "orq.redteam.strategy_name": strategy.name,
                         "orq.redteam.category": strategy.category,
+                        "orq.redteam.vulnerability": strategy.vulnerability.value if strategy.vulnerability else "",
                     },
                 ) as turn_span:
                     logger.debug(f'Multi-turn attack: turn {turn + 1}/{max_turns}')

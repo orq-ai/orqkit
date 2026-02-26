@@ -12,9 +12,6 @@ from pathlib import Path
 from typing import Annotated, Any, Optional
 
 import typer
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 app = typer.Typer(
     name="evaluatorq-redteam",
@@ -124,6 +121,13 @@ def run(
             help="OWASP categories to test (e.g. ASI01). Repeatable. Defaults to all.",
         ),
     ] = None,
+    vulnerabilities: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--vulnerability",
+            help="Vulnerability IDs to test (e.g. goal_hijacking). Repeatable. Takes precedence over --category.",
+        ),
+    ] = None,
     max_turns: Annotated[
         int,
         typer.Option(help="Maximum conversation turns for multi-turn attacks."),
@@ -135,11 +139,11 @@ def run(
     attack_model: Annotated[
         str,
         typer.Option(help="Model for adversarial prompt generation."),
-    ] = "azure/gpt-5-mini",
+    ] = "azure/gpt-5-mini",  # see contracts.DEFAULT_PIPELINE_MODEL
     evaluator_model: Annotated[
         str,
         typer.Option(help="Model for OWASP evaluation scoring."),
-    ] = "azure/gpt-5-mini",
+    ] = "azure/gpt-5-mini",  # see contracts.DEFAULT_PIPELINE_MODEL
     parallelism: Annotated[
         int,
         typer.Option(help="Maximum concurrent evaluatorq jobs."),
@@ -201,10 +205,14 @@ def run(
     ] = None,
 ) -> None:
     """Run red teaming against one or more targets."""
+    from dotenv import load_dotenv
+
+    load_dotenv(override=True)
     _configure_logging(verbose)
 
     from evaluatorq.redteam import red_team
     from evaluatorq.redteam.contracts import TargetConfig
+    from evaluatorq.redteam.exceptions import CancelledError
     from evaluatorq.redteam.hooks import RichHooks
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
@@ -216,6 +224,7 @@ def run(
                 target=targets,
                 mode=mode,
                 categories=categories,
+                vulnerabilities=vulnerabilities,
                 max_turns=max_turns,
                 max_per_category=max_per_category,
                 attack_model=attack_model,
@@ -233,11 +242,9 @@ def run(
                 target_config=target_config,
             )
         )
-    except RuntimeError as exc:
-        if "cancelled" in str(exc).lower():
-            typer.echo("Run cancelled.")
-            raise SystemExit(0)
-        raise
+    except CancelledError:
+        typer.echo("Run cancelled.")
+        raise typer.Exit(code=0)
     except KeyboardInterrupt:
         typer.echo("\nInterrupted.")
         raise typer.Exit(code=130)

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import TYPE_CHECKING, Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from evaluatorq import DataPoint, EvaluationResult, Job, job
 from loguru import logger
@@ -23,7 +23,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AttackStrategy, Message, OrchestratorResult, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
@@ -41,13 +41,6 @@ if TYPE_CHECKING:
     from evaluatorq.redteam.contracts import AgentContext
 
 
-class EvaluatorConfig(TypedDict):
-    """Minimal evaluatorq evaluator contract."""
-
-    name: str
-    scorer: Any
-
-
 async def generate_dynamic_datapoints(
     agent_context: AgentContext,
     categories: list[str],
@@ -57,7 +50,7 @@ async def generate_dynamic_datapoints(
     generate_additional_strategies: bool = True,
     generated_strategy_count: int = 2,
     llm_client: AsyncOpenAI | None = None,
-    attack_model: str = 'azure/gpt-5-mini',
+    attack_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 5,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming.
@@ -96,6 +89,7 @@ async def generate_dynamic_datapoints(
 
             inputs: dict[str, Any] = {
                 'id': sample_id,
+                'vulnerability': strategy.vulnerability.value if strategy.vulnerability else '',
                 'category': category,
                 'strategy': strategy.model_dump(mode='json'),
                 'objective': objective,
@@ -107,7 +101,7 @@ async def generate_dynamic_datapoints(
 
             datapoints.append(DataPoint(inputs=inputs))
 
-    logger.info(f'Generated {len(datapoints)} dynamic datapoints across {len(categories)} categories')
+    logger.debug(f'Generated {len(datapoints)} dynamic datapoints across {len(categories)} categories')
     return datapoints, filtering_metadata
 
 
@@ -115,7 +109,7 @@ def create_dynamic_redteam_job(
     *,
     agent_key: str,
     agent_context: AgentContext,
-    red_team_model: str = 'azure/gpt-5-mini',
+    red_team_model: str = DEFAULT_PIPELINE_MODEL,
     max_turns: int = 5,
     target_factory: AgentTargetFactory | None = None,
     error_mapper: ErrorMapper | None = None,
@@ -158,6 +152,7 @@ def create_dynamic_redteam_job(
         strategy = AttackStrategy.model_validate(inputs['strategy'])
         objective = str(inputs['objective'])
         category = str(inputs['category'])
+        vulnerability = str(inputs.get('vulnerability', ''))
         memory_entity_id = inputs.get('memory_entity_id')
         effective_max_turns = 1 if strategy.turn_type == TurnType.SINGLE else max_turns
 
@@ -165,6 +160,7 @@ def create_dynamic_redteam_job(
             'orq.redteam.attack',
             {
                 'orq.redteam.category': category,
+                'orq.redteam.vulnerability': vulnerability,
                 'orq.redteam.strategy_name': strategy.name,
                 'orq.redteam.turn_type': strategy.turn_type.value,
                 'orq.redteam.max_turns': effective_max_turns,
@@ -249,7 +245,7 @@ def create_dynamic_redteam_job(
                     error_stage=error_stage,
                     error_code=error_code,
                     error_details=error_details,
-                ).model_dump(mode='json') | {'category': category}
+                ).model_dump(mode='json') | {'category': category, 'vulnerability': vulnerability}
 
                 # Set input/output on the attack span so the platform can display them
                 set_span_attrs(attack_span, {
@@ -310,7 +306,7 @@ def create_dynamic_redteam_job(
                     },
                 )
 
-            result_dict = result.model_dump(mode='json') | {'category': category}
+            result_dict = result.model_dump(mode='json') | {'category': category, 'vulnerability': vulnerability}
 
             # Set input/output on the attack span so the platform can display them
             conversation = result_dict.get('conversation', [])
@@ -338,7 +334,7 @@ def create_dynamic_redteam_job(
 
 
 def create_dynamic_evaluator(
-    evaluator_model: str = 'azure/gpt-5-mini',
+    evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluator that uses OWASPEvaluator on the attack conversation.
@@ -363,11 +359,13 @@ def create_dynamic_evaluator(
         conversation = output.get('conversation', [])
         final_response = output.get('final_response', '')
         category = output.get('category', '') or data.inputs.get('category', '')
+        vulnerability = output.get('vulnerability', '') or data.inputs.get('vulnerability', '')
 
         async with with_redteam_span(
             'orq.redteam.security_evaluation',
             {
                 'orq.redteam.category': category,
+                'orq.redteam.vulnerability': vulnerability,
                 'orq.redteam.model': evaluator_model,
             },
         ) as eval_span:

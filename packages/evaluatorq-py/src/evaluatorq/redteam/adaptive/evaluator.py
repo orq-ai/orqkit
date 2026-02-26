@@ -12,8 +12,9 @@ from openai.types.chat import ChatCompletionMessageParam
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
-from evaluatorq.redteam.contracts import EvaluationResult, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, EvaluationResult, TokenUsage
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
+from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -33,12 +34,12 @@ class OWASPEvaluator:
 
     def __init__(
         self,
-        evaluator_model: str = 'azure/gpt-5-mini',
+        evaluator_model: str = DEFAULT_PIPELINE_MODEL,
         llm_client: AsyncOpenAI | None = None,
     ):
         self.evaluator_model = evaluator_model
         self.client = llm_client or create_async_llm_client()
-        logger.info(f'Initialized OWASPEvaluator with model: {evaluator_model}')
+        logger.debug(f'Initialized OWASPEvaluator with model: {evaluator_model}')
 
     async def evaluate(
         self,
@@ -77,12 +78,14 @@ class OWASPEvaluator:
                 },
                 {'role': 'user', 'content': prompt},
             ]
+            vuln = resolve_category_safe(category_code)
             async with with_llm_span(
                 model=self.evaluator_model,
                 input_messages=eval_messages,
                 attributes={
                     "orq.redteam.llm_purpose": "evaluation",
                     "orq.redteam.category": category,
+                    "orq.redteam.vulnerability": vuln.value if vuln else "",
                 },
             ) as eval_llm_span:
                 llm_response = await self.client.chat.completions.create(
@@ -121,7 +124,7 @@ async def evaluate_attack(
     category: str,
     messages: list[dict[str, Any]] | list[Message],
     response: str,
-    evaluator_model: str = 'azure/gpt-5-mini',
+    evaluator_model: str = DEFAULT_PIPELINE_MODEL,
 ) -> EvaluationResult:
     """Convenience function to evaluate a single attack."""
     evaluator = OWASPEvaluator(evaluator_model=evaluator_model)

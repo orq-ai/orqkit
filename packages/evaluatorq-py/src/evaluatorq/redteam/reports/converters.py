@@ -33,8 +33,16 @@ from evaluatorq.redteam.contracts import (
     TokenUsage,
     TurnTypeSummary,
     UnifiedEvaluationResult,
+    Vulnerability,
+    VulnerabilitySummary,
     infer_framework,
     normalize_category,
+)
+from evaluatorq.redteam.vulnerability_registry import (
+    VULNERABILITY_DEFS,
+    get_framework_categories,
+    get_vulnerability_name,
+    resolve_category_safe,
 )
 
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_metadata_for_category
@@ -247,6 +255,8 @@ def static_sample_to_result(
     inp = row.input
     raw_category = inp.category
     category = normalize_category(raw_category)
+    vuln = resolve_category_safe(category)
+    vulnerability_str = vuln.value if vuln else ''
 
     # Wrap singular delivery_method into list
     dm = inp.delivery_method
@@ -255,6 +265,7 @@ def static_sample_to_result(
 
     attack = AttackInfo(
         id=inp.id,
+        vulnerability=vulnerability_str,
         category=category,
         framework=cast(Framework, infer_framework(category)),
         attack_technique=_normalize_attack_technique(inp.attack_technique),
@@ -364,6 +375,10 @@ def dynamic_evaluatorq_results_to_report(
         strategy_payload = inputs.get('strategy', {})
         strategy = AttackStrategy.model_validate(strategy_payload)
         category = normalize_category(inputs.get('category', strategy.category))
+        vulnerability_str = inputs.get('vulnerability', '')
+        if not vulnerability_str:
+            vuln = resolve_category_safe(category)
+            vulnerability_str = vuln.value if vuln else ''
 
         source = 'llm_generated_strategy' if strategy.is_generated else 'hardcoded_strategy'
 
@@ -401,6 +416,7 @@ def dynamic_evaluatorq_results_to_report(
 
         attack = AttackInfo(
             id=inputs.get('id', f'{category}-{strategy.name}'),
+            vulnerability=vulnerability_str,
             category=category,
             framework=cast(Framework, infer_framework(category)),
             attack_technique=strategy.attack_technique,
@@ -486,9 +502,11 @@ def static_evaluatorq_results_to_reports(
         inputs = getattr(data_point, 'inputs', {}) if data_point is not None else {}
         normalized_category = normalize_category(inputs.get('category', ''))
         evaluator_meta = get_evaluator_metadata_for_category(normalized_category) or {}
+        vuln = resolve_category_safe(normalized_category)
         base_sample = {
             'input': {
                 'id': inputs.get('id', ''),
+                'vulnerability': vuln.value if vuln else '',
                 'category': inputs.get('category', ''),
                 'attack_technique': inputs.get('attack_technique', 'indirect-injection'),
                 'delivery_method': inputs.get('delivery_method', 'direct-request'),
@@ -644,6 +662,30 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
             strategies_used=list({r.attack.strategy_name for r in cat_results if r.attack.strategy_name}),
         )
 
+    # ── Group by vulnerability ────────────────────────────────────────
+    by_vuln: dict[str, list[RedTeamResult]] = {}
+    for r in results:
+        v = r.attack.vulnerability
+        if v:
+            by_vuln.setdefault(v, []).append(r)
+
+    vuln_summaries: dict[str, VulnerabilitySummary] = {}
+    for v, v_results in by_vuln.items():
+        v_eval = [r for r in v_results if _is_evaluated(r)]
+        v_eval_total = len(v_eval)
+        v_vulns = sum(1 for r in v_eval if _is_vulnerable(r))
+        v_resistant = v_eval_total - v_vulns
+        vuln_summaries[v] = VulnerabilitySummary(
+            vulnerability=v,
+            vulnerability_name=get_vulnerability_name(Vulnerability(v)) if v else v,
+            domain=VULNERABILITY_DEFS[Vulnerability(v)].domain.value if v and Vulnerability(v) in VULNERABILITY_DEFS else '',
+            total_attacks=len(v_results),
+            vulnerabilities_found=v_vulns,
+            resistance_rate=_rate(v_resistant, v_eval_total),
+            strategies_used=list({r.attack.strategy_name for r in v_results if r.attack.strategy_name}),
+            framework_categories=get_framework_categories(Vulnerability(v)) if v else {},
+        )
+
     # ── Group by technique ─────────────────────────────────────────────
     tech_totals: dict[str, int] = {}
     tech_vulns: dict[str, int] = {}
@@ -786,6 +828,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
         total_errors=total_errors,
         errors_by_type=errors_by_type,
         token_usage_total=_aggregate_token_usage(results),
+        by_vulnerability=vuln_summaries,
         by_category=cat_summaries,
         by_technique=by_technique,
         by_severity=by_severity,
