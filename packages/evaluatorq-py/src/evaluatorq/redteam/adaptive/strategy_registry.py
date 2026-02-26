@@ -14,7 +14,8 @@ from loguru import logger
 
 from evaluatorq.redteam.frameworks.owasp_asi import ASI_STRATEGIES
 from evaluatorq.redteam.frameworks.owasp_llm import LLM_STRATEGIES
-from evaluatorq.redteam.contracts import AgentContext, AttackStrategy  # noqa: TC001
+from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, Vulnerability  # noqa: TC001
+from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
 
 if TYPE_CHECKING:
     from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities
@@ -27,6 +28,27 @@ STRATEGY_REGISTRY: dict[str, list[AttackStrategy]] = {
 
 # Also support OWASP- prefixed versions
 STRATEGY_REGISTRY.update({f'OWASP-{k}': v for k, v in STRATEGY_REGISTRY.items()})
+
+# Primary registry keyed by vulnerability
+VULNERABILITY_STRATEGY_REGISTRY: dict[Vulnerability, list[AttackStrategy]] = {}
+for _cat, _strategies in STRATEGY_REGISTRY.items():
+    if _cat.startswith('OWASP-'):
+        continue  # skip prefixed duplicates
+    _vuln = CATEGORY_TO_VULNERABILITY.get(_cat)
+    if _vuln is not None:
+        VULNERABILITY_STRATEGY_REGISTRY[_vuln] = _strategies
+
+
+def get_strategies_for_vulnerability(vuln: Vulnerability) -> list[AttackStrategy]:
+    """Get all strategies for a given vulnerability.
+
+    Args:
+        vuln: Vulnerability enum value
+
+    Returns:
+        List of attack strategies for the vulnerability, or empty list if not found
+    """
+    return VULNERABILITY_STRATEGY_REGISTRY.get(vuln, [])
 
 
 def get_strategies_for_category(category: str) -> list[AttackStrategy]:
@@ -92,7 +114,7 @@ def select_applicable_strategies(
 
         applicable.append(strategy)
 
-    logger.info(
+    logger.debug(
         f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} (agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
     )
 
@@ -140,9 +162,12 @@ def get_category_info() -> dict[str, dict[str, Any]]:
         - strategy_count: Number of strategies
         - single_turn_count: Number of single-turn strategies
         - multi_turn_count: Number of multi-turn strategies
+        - vulnerability: Vulnerability enum value (or None if unmapped)
+        - vulnerability_name: Human-readable vulnerability name (or None if unmapped)
     """
     from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
     from evaluatorq.redteam.contracts import TurnType
+    from evaluatorq.redteam.vulnerability_registry import VULNERABILITY_DEFS
 
     info: dict[str, dict[str, Any]] = {}
     for category in list_available_categories():
@@ -150,11 +175,19 @@ def get_category_info() -> dict[str, dict[str, Any]]:
         single_turn = sum(1 for s in strategies if s.turn_type == TurnType.SINGLE)
         multi_turn = sum(1 for s in strategies if s.turn_type == TurnType.MULTI)
 
+        vuln = CATEGORY_TO_VULNERABILITY.get(category)
+        vuln_name: str | None = None
+        if vuln is not None:
+            vdef = VULNERABILITY_DEFS.get(vuln)
+            vuln_name = vdef.name if vdef is not None else vuln.value
+
         info[category] = {
             'name': OWASP_CATEGORY_NAMES.get(category, category),
             'strategy_count': len(strategies),
             'single_turn_count': single_turn,
             'multi_turn_count': multi_turn,
+            'vulnerability': vuln,
+            'vulnerability_name': vuln_name,
         }
 
     return info

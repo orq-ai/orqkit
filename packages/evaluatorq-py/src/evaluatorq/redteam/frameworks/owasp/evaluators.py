@@ -24,7 +24,9 @@ Excluded LLM categories:
 from collections.abc import Callable
 from typing import TypedDict
 
+from evaluatorq.redteam.contracts import Vulnerability
 from evaluatorq.redteam.frameworks.owasp.models import LlmEvaluatorEntity
+from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
 
 from evaluatorq.redteam.frameworks.owasp.agent_evaluators import (
     get_asi01_goal_hijacking_evaluator,
@@ -80,6 +82,17 @@ OWASP_EVALUATOR_REGISTRY: dict[str, EvaluatorGetter] = {
 
 # Backwards compatibility alias
 OWASP_EVALUATOR_REGISTRY_FULL: dict[str, EvaluatorGetter] = OWASP_EVALUATOR_REGISTRY.copy()
+
+# Primary registry keyed by vulnerability
+VULNERABILITY_EVALUATOR_REGISTRY: dict[Vulnerability, EvaluatorGetter] = {}
+for _cat, _getter in _ASI_REGISTRY.items():
+    _vuln = CATEGORY_TO_VULNERABILITY.get(_cat)
+    if _vuln is not None:
+        VULNERABILITY_EVALUATOR_REGISTRY[_vuln] = _getter
+for _cat, _getter in _LLM_REGISTRY.items():
+    _vuln = CATEGORY_TO_VULNERABILITY.get(_cat)
+    if _vuln is not None:
+        VULNERABILITY_EVALUATOR_REGISTRY[_vuln] = _getter
 
 # Category code to display name mappings
 _ASI_CATEGORY_NAMES: dict[str, str] = {
@@ -188,6 +201,48 @@ def get_evaluator_for_category(
     if getter is None:
         return None
     return getter(model_id)
+
+
+def get_evaluator_for_vulnerability(
+    vuln: Vulnerability,
+    model_id: str | None = None,
+) -> LlmEvaluatorEntity | None:
+    """Get the evaluator for a vulnerability.
+
+    Args:
+        vuln: Vulnerability enum value
+        model_id: Optional model ID override
+
+    Returns:
+        LlmEvaluatorEntity or None if no evaluator registered
+    """
+    getter = VULNERABILITY_EVALUATOR_REGISTRY.get(vuln)
+    if getter is None:
+        return None
+    return getter(model_id)
+
+
+def get_evaluator_metadata_for_vulnerability(vuln: Vulnerability) -> EvaluatorMetadata | None:
+    """Return evaluator metadata for a vulnerability."""
+    from evaluatorq.redteam.vulnerability_registry import CANONICAL_EVALUATOR_METADATA
+    mapped = CANONICAL_EVALUATOR_METADATA.get(vuln)
+    if mapped:
+        return {'evaluator_id': mapped['evaluator_id'], 'evaluator_name': mapped['evaluator_name']}
+
+    evaluator = get_evaluator_for_vulnerability(vuln)
+    if evaluator is None:
+        return None
+
+    evaluator_id = str(getattr(evaluator, 'id', '') or '').strip()
+    if not evaluator_id:
+        return None
+
+    evaluator_name = evaluator_id
+    display_name = str(getattr(evaluator, 'display_name', '') or '').strip()
+    if display_name:
+        evaluator_name = display_name
+
+    return {'evaluator_id': evaluator_id, 'evaluator_name': evaluator_name}
 
 
 def list_available_categories() -> list[str]:
