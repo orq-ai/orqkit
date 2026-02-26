@@ -13,8 +13,10 @@ from typing import Annotated, Any, Optional
 
 import typer
 
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL
+
 app = typer.Typer(
-    name="evaluatorq-redteam",
+    name="redteam",
     help="Red teaming CLI for evaluatorq.",
     no_args_is_help=True,
 )
@@ -101,7 +103,7 @@ def write_markdown_report(
     return output_path
 
 
-@app.command()
+@app.command(no_args_is_help=True)
 def run(
     target: Annotated[
         list[str],
@@ -139,11 +141,11 @@ def run(
     attack_model: Annotated[
         str,
         typer.Option(help="Model for adversarial prompt generation."),
-    ] = "azure/gpt-5-mini",  # see contracts.DEFAULT_PIPELINE_MODEL
+    ] = DEFAULT_PIPELINE_MODEL,
     evaluator_model: Annotated[
         str,
         typer.Option(help="Model for OWASP evaluation scoring."),
-    ] = "azure/gpt-5-mini",  # see contracts.DEFAULT_PIPELINE_MODEL
+    ] = DEFAULT_PIPELINE_MODEL,
     parallelism: Annotated[
         int,
         typer.Option(help="Maximum concurrent evaluatorq jobs."),
@@ -207,7 +209,7 @@ def run(
     """Run red teaming against one or more targets."""
     from dotenv import load_dotenv
 
-    load_dotenv(override=True)
+    load_dotenv(override=False)
     _configure_logging(verbose)
 
     from evaluatorq.redteam import red_team

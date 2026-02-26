@@ -12,7 +12,7 @@ Public API:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict, runtime_checkable
 
 from loguru import logger
 
@@ -40,11 +40,6 @@ _STAGE_LABELS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 # ConfirmPayload TypedDict
 # ---------------------------------------------------------------------------
-
-try:
-    from typing import TypedDict
-except ImportError:
-    from typing_extensions import TypedDict  # type: ignore[assignment]
 
 
 class ConfirmPayload(TypedDict, total=False):
@@ -97,11 +92,6 @@ class ConfirmPayload(TypedDict, total=False):
 # PipelineHooks Protocol
 # ---------------------------------------------------------------------------
 
-try:
-    from typing import Protocol, runtime_checkable
-except ImportError:
-    from typing_extensions import Protocol, runtime_checkable  # type: ignore[assignment]
-
 
 @runtime_checkable
 class PipelineHooks(Protocol):
@@ -140,11 +130,12 @@ class PipelineHooks(Protocol):
         """
         ...
 
-    def on_complete(self, report: RedTeamReport) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
         """Called once with the final merged report after all targets complete.
 
         Args:
             report: The final ``RedTeamReport``.
+            output_dir: Directory where the report JSON was saved (if any).
         """
         ...
 
@@ -185,17 +176,28 @@ class DefaultHooks:
         )
         return True
 
-    def on_complete(self, report: RedTeamReport) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
         """Log a brief summary and UI hint."""
+        from pathlib import Path
+
         summary = report.summary
         logger.info(
             f"[redteam] Run complete — resistance_rate={summary.resistance_rate:.0%} "
             f"vulnerabilities={summary.vulnerabilities_found} "
             f"attacks={summary.total_attacks}"
         )
-        logger.info(
-            "[redteam] Tip: visualise results with  evaluatorq redteam ui <report.json>"
-        )
+        if output_dir:
+            try:
+                report_path = str(Path(output_dir, "03_summary_report.json").relative_to(Path.cwd()))
+            except ValueError:
+                report_path = f"{output_dir}/03_summary_report.json"
+            logger.info(
+                f'[redteam] Tip: visualise results with  "evaluatorq redteam ui {report_path}"'
+            )
+        else:
+            logger.info(
+                '[redteam] Tip: visualise results with  "evaluatorq redteam ui <report.json>"'
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -237,8 +239,27 @@ class RichHooks:
     # ------------------------------------------------------------------
 
     def on_stage_end(self, stage: str, meta: dict[str, Any]) -> None:
-        # Intentionally quiet — the next on_stage_start banner signals progress.
-        pass
+        if stage == "context_retrieval":
+            self._render_context_summary(meta)
+
+        elapsed = meta.get("elapsed_s")
+        if elapsed is not None:
+            self._console.print(f"[dim]  completed in {elapsed:.1f}s[/dim]")
+
+    def _render_context_summary(self, meta: dict[str, Any]) -> None:
+        """Print a one-line summary after agent context retrieval."""
+        num_tools = meta.get("num_tools", 0)
+        num_memory = meta.get("num_memory_stores", 0)
+        num_kb = meta.get("num_knowledge_bases", 0)
+
+        parts: list[str] = []
+        parts.append(f"{num_tools} tool{'s' if num_tools != 1 else ''}")
+        if num_memory:
+            parts.append(f"{num_memory} memory store{'s' if num_memory != 1 else ''}")
+        if num_kb:
+            parts.append(f"{num_kb} knowledge base{'s' if num_kb != 1 else ''}")
+
+        self._console.print(f"  Agent context: {', '.join(parts)}")
 
     # ------------------------------------------------------------------
     # on_confirm
@@ -302,7 +323,7 @@ class RichHooks:
 
         import typer
 
-        return typer.confirm("Proceed with this run?")
+        return typer.confirm("Proceed with this run?", default=True)
 
     def _render_agent_capabilities(self, agent_context: dict[str, Any]) -> None:
         """Render an agent capabilities panel."""
@@ -397,12 +418,24 @@ class RichHooks:
     # on_complete
     # ------------------------------------------------------------------
 
-    def on_complete(self, report: RedTeamReport) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
         """Render the full report summary and a UI hint."""
-        print_report_summary(report)
+        from pathlib import Path
+
+        print_report_summary(report, console=self._console)
         self._console.print()
         self._console.rule("[bold green]Run Complete[/bold green]")
-        self._console.print(
-            "[dim]Tip:[/dim] Visualise results interactively with "
-            "[bold cyan]evaluatorq redteam ui <report.json>[/bold cyan]"
-        )
+        if output_dir:
+            try:
+                report_path = str(Path(output_dir, "03_summary_report.json").relative_to(Path.cwd()))
+            except ValueError:
+                report_path = f"{output_dir}/03_summary_report.json"
+            self._console.print(
+                f'[dim]Tip:[/dim] Visualise results interactively with '
+                f'[bold cyan]"evaluatorq redteam ui {report_path}"[/bold cyan]'
+            )
+        else:
+            self._console.print(
+                '[dim]Tip:[/dim] Visualise results interactively with '
+                '[bold cyan]"evaluatorq redteam ui <report.json>"[/bold cyan]'
+            )

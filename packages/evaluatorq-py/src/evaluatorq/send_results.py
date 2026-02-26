@@ -84,8 +84,16 @@ async def send_results_to_orq(
         base_url = re.sub(r"^(https?://)my\.", r"\1api.", raw_url)
         orq_debug = os.getenv("ORQ_DEBUG", "false").lower() == "true"
 
-        # Serialize with aliases for API field names
+        # Serialize with aliases, stripping None on optional fields (the API
+        # rejects null for ``error``, ``explanation``, etc.) but keeping
+        # ``output`` even when None (the API requires it to be present).
         payload_dict = payload.model_dump(mode="json", exclude_none=True, by_alias=True)
+
+        # Restore ``output`` on every job result — exclude_none drops it
+        # when output is None, but the API schema requires the key.
+        for result in payload_dict.get("results", []):
+            for jr in result.get("jobResults") or []:
+                jr.setdefault("output", None)
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -105,8 +113,8 @@ async def send_results_to_orq(
                     f"\n⚠️  Warning: Could not send results to Orq platform ({response.status_code} {response.reason_phrase})"
                 )
 
-                # Only show detailed error in verbose mode or specific error cases
-                if orq_debug or response.status_code >= 500:
+                # Show detailed error for client errors (4xx) and server errors (5xx)
+                if orq_debug or response.status_code >= 400:
                     print(f"   Details: {error_text}")
 
                 return  # Return early but don't raise

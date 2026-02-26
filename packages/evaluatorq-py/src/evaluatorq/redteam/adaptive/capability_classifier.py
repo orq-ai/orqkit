@@ -27,7 +27,7 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AgentContext
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 
@@ -136,7 +136,7 @@ Inference rules:
 async def classify_agent_capabilities(
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
-    model: str = 'azure/gpt-5-mini',
+    model: str = DEFAULT_PIPELINE_MODEL,
 ) -> AgentCapabilities:
     """Classify agent tools and resources into capability tags.
 
@@ -184,7 +184,7 @@ async def classify_agent_capabilities(
     all_caps = set()
     for caps in capabilities.values():
         all_caps.update(c.value for c in caps)
-    logger.info(
+    logger.debug(
         f'Classified agent capabilities: {len(capabilities)} resources, {len(all_caps)} unique capabilities: {sorted(all_caps)}'
     )
 
@@ -207,8 +207,8 @@ async def _infer_resource_capabilities(
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
-            temperature=0.0,
-            max_tokens=600,
+            temperature=PIPELINE_CONFIG.capability_classification_temperature,
+            max_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
             input_messages=infer_messages,
             attributes={"orq.redteam.llm_purpose": "infer_resources"},
         ) as res_span:
@@ -216,8 +216,8 @@ async def _infer_resource_capabilities(
                 model=model,
                 messages=infer_messages,
                 response_format=ResourceCapabilityInference,
-                temperature=0.0,
-                max_tokens=600,
+                temperature=PIPELINE_CONFIG.capability_classification_temperature,
+                max_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
                 extra_body=PIPELINE_CONFIG.retry_config,
             )
             parsed = response.choices[0].message.parsed
@@ -229,7 +229,7 @@ async def _infer_resource_capabilities(
                 raise ValueError('Resource capability inference returned no parsed content')
             return parsed
     except Exception as e:
-        logger.warning(f'Resource capability inference failed, using explicit-resource fallback: {e}')
+        logger.error(f'Capability inference failed, falling back to explicit resource check: {e}')
         return ResourceCapabilityInference(
             memory_read=bool(agent_context.memory_stores),
             memory_write=bool(agent_context.memory_stores),
@@ -297,5 +297,5 @@ async def _classify_tools(
             return capabilities
 
     except Exception as e:
-        logger.warning(f'Tool capability classification failed, returning empty: {e}')
+        logger.error(f'Tool classification failed, no tool-specific attacks will be generated: {e}')
         return {}
