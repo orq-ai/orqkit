@@ -20,7 +20,7 @@ else:
     class StrEnum(str, Enum):  # type: ignore[no-redef]
         """String enum compatible with Python 3.10."""
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +279,17 @@ class RedTeamInput(BaseModel):
         description='Additional metadata that does not fit standard fields (e.g., AgentDojo-specific context)',
     )
 
+    @model_validator(mode='before')
+    @classmethod
+    def _migrate_category_to_vulnerability(cls, data: Any) -> Any:
+        """Auto-resolve vulnerability from category for old-format datasets."""
+        if isinstance(data, dict) and not data.get('vulnerability') and data.get('category'):
+            from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
+            vuln = resolve_category_safe(data['category'])
+            if vuln is not None:
+                data['vulnerability'] = vuln.value
+        return data
+
     @field_validator('framework', mode='before')
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
@@ -352,10 +363,10 @@ class TargetConfig(BaseModel):
 class AgentContext(BaseModel):
     """Extended agent information for context-aware attacks.
 
-    Retrieved from ORQ API via orq_client.agents.retrieve().
+    Describes the target agent's configuration and capabilities.
     """
 
-    key: str = Field(description='ORQ agent key')
+    key: str = Field(description='Agent identifier key')
     display_name: str | None = Field(default=None, description='Agent display name')
     description: str | None = Field(default=None, description='Agent description')
     system_prompt: str | None = Field(default=None, description='Agent system prompt (used by deployments)')
@@ -451,9 +462,8 @@ class PipelineLLMConfig(BaseModel):
 PIPELINE_CONFIG = PipelineLLMConfig()
 
 # Default model used across the red teaming pipeline for adversarial generation
-# and evaluation.  This is an ORQ routing alias — the actual provider/model is
-# resolved at runtime by the ORQ router.
-DEFAULT_PIPELINE_MODEL: str = 'azure/gpt-5-mini'
+# and evaluation.
+DEFAULT_PIPELINE_MODEL: str = 'openai/gpt-5-mini'
 
 
 # ---------------------------------------------------------------------------
