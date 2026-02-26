@@ -664,26 +664,41 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
 
     # ── Group by vulnerability ────────────────────────────────────────
     by_vuln: dict[str, list[RedTeamResult]] = {}
+    _unresolved_vuln_count = 0
     for r in results:
         v = r.attack.vulnerability
         if v:
             by_vuln.setdefault(v, []).append(r)
+        else:
+            _unresolved_vuln_count += 1
+
+    if _unresolved_vuln_count > 0:
+        _converters_logger.warning(
+            '%d result(s) have no vulnerability identifier and are excluded from by_vulnerability.',
+            _unresolved_vuln_count,
+        )
 
     vuln_summaries: dict[str, VulnerabilitySummary] = {}
     for v, v_results in by_vuln.items():
+        try:
+            vuln_enum = Vulnerability(v)
+        except ValueError:
+            _converters_logger.warning('Skipping unknown vulnerability %r in by_vulnerability grouping.', v)
+            continue
+        vdef = VULNERABILITY_DEFS.get(vuln_enum)
         v_eval = [r for r in v_results if _is_evaluated(r)]
         v_eval_total = len(v_eval)
         v_vulns = sum(1 for r in v_eval if _is_vulnerable(r))
         v_resistant = v_eval_total - v_vulns
         vuln_summaries[v] = VulnerabilitySummary(
             vulnerability=v,
-            vulnerability_name=get_vulnerability_name(Vulnerability(v)) if v else v,
-            domain=VULNERABILITY_DEFS[Vulnerability(v)].domain.value if v and Vulnerability(v) in VULNERABILITY_DEFS else '',
+            vulnerability_name=get_vulnerability_name(vuln_enum),
+            domain=vdef.domain.value if vdef else '',
             total_attacks=len(v_results),
             vulnerabilities_found=v_vulns,
             resistance_rate=_rate(v_resistant, v_eval_total),
             strategies_used=list({r.attack.strategy_name for r in v_results if r.attack.strategy_name}),
-            framework_categories=get_framework_categories(Vulnerability(v)) if v else {},
+            framework_categories=get_framework_categories(vuln_enum),
         )
 
     # ── Group by technique ─────────────────────────────────────────────

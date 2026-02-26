@@ -103,15 +103,10 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
 
     # ── Per-category breakdown ─────────────────────────────────────────
     if summary.by_category:
+        # Show worst-first (lowest resistance first, most attacks as tiebreaker)
         sorted_cats = sorted(
             summary.by_category.values(),
-            key=lambda c: (1.0 - c.resistance_rate, -c.total_attacks),
-            reverse=False,
-        )
-        # Show worst-first (lowest resistance first)
-        sorted_cats = sorted(
-            summary.by_category.values(),
-            key=lambda c: c.resistance_rate,
+            key=lambda c: (c.resistance_rate, -c.total_attacks),
         )
 
         cat_table = Table(show_header=True, header_style="bold", box=box.ROUNDED)

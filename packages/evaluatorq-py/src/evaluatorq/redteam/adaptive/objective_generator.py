@@ -4,6 +4,8 @@ This module generates additional attack objectives dynamically by analyzing
 the agent's tools, memory configuration, and system prompt.
 """
 
+import asyncio
+
 from loguru import logger
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
@@ -127,7 +129,7 @@ async def generate_objectives_for_category(
 
     try:
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
-        vuln = resolve_category_safe(category.replace('OWASP-', ''))
+        vuln = resolve_category_safe(category)
         async with with_llm_span(
             model=model,
             temperature=PIPELINE_CONFIG.strategy_generation_temperature,
@@ -160,8 +162,10 @@ async def generate_objectives_for_category(
             logger.debug(f'Generated {len(result.objectives)} objectives for {category}')
             return result.objectives[:count]
 
+    except asyncio.CancelledError:
+        raise
     except Exception as e:
-        logger.error(f'Failed to generate objectives: {e}')
+        logger.error(f'Objective generation failed for category {category!r} ({type(e).__name__}): {e}')
         return []
 
 
@@ -183,10 +187,15 @@ def create_strategy_from_objective(
         AttackStrategy instance
     """
     # Determine attack technique based on category via vulnerability registry
-    vuln = resolve_category_safe(category.replace('OWASP-', ''))
+    vuln = resolve_category_safe(category)
     if vuln is not None and vuln in VULNERABILITY_DEFS:
         technique = VULNERABILITY_DEFS[vuln].default_attack_technique
     else:
+        logger.warning(
+            'Cannot resolve category %r to a known vulnerability — '
+            'defaulting attack_technique to SOCIAL_ENGINEERING.',
+            category,
+        )
         technique = AttackTechnique.SOCIAL_ENGINEERING
 
     # Create unique name from objective
