@@ -316,10 +316,8 @@ class ORQTargetFactory:
         else:
             _require_orq_sdk()
             # After _require_orq_sdk(), Orq and get_config are guaranteed non-None.
-            assert get_config is not None
-            assert Orq is not None
-            config = get_config()
-            self._orq_client = Orq(
+            config = get_config()  # pyright: ignore[reportOptionalCall]
+            self._orq_client = Orq(  # pyright: ignore[reportOptionalCall]
                 api_key=config.orq_api_key,
                 server_url=config.orq_server_url,
                 timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
@@ -340,8 +338,7 @@ class ORQMemoryCleanup:
     def __init__(self) -> None:
         _require_orq_sdk()
         # After _require_orq_sdk(), get_config is guaranteed non-None.
-        assert get_config is not None
-        config = get_config()
+        config = get_config()  # pyright: ignore[reportOptionalCall]
         self._api_key: str = config.orq_api_key
         self._server_url: str = config.orq_server_url
 
@@ -421,10 +418,8 @@ def create_orq_backend(
     if orq_client is None:
         _require_orq_sdk()
         # After _require_orq_sdk(), Orq and get_config are guaranteed non-None.
-        assert get_config is not None
-        assert Orq is not None
-        config = get_config()
-        orq_client = Orq(
+        config = get_config()  # pyright: ignore[reportOptionalCall]
+        orq_client = Orq(  # pyright: ignore[reportOptionalCall]
             api_key=config.orq_api_key,
             server_url=config.orq_server_url,
             timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
