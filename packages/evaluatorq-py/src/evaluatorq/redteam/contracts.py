@@ -10,7 +10,7 @@ Semantic convention:
 
 import sys
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -107,6 +107,52 @@ class Framework(StrEnum):
     FAIRNESS = 'FAIRNESS'
     GDPR = 'GDPR'
     AI_ACT = 'AI-ACT'
+
+
+class VulnerabilityDomain(StrEnum):
+    """Top-level domain for vulnerability grouping.
+
+    All 6 domains are forward-declared. Only AGENTIC_SECURITY and LLM_SECURITY
+    are populated initially — the rest signal future intent.
+    """
+
+    AGENTIC_SECURITY = 'agentic_security'
+    LLM_SECURITY = 'llm_security'
+    RESPONSIBLE_AI = 'responsible_ai'
+    SAFETY = 'safety'
+    DATA_PRIVACY = 'data_privacy'
+    BUSINESS = 'business'
+
+
+class Vulnerability(StrEnum):
+    """Atomic vulnerability identifiers.
+
+    Each value is a stable, framework-agnostic ID. Framework-specific codes
+    (OWASP ASI01, LLM01, etc.) are mapped via the vulnerability registry.
+    """
+
+    # Agentic security (maps to OWASP ASI)
+    GOAL_HIJACKING = 'goal_hijacking'
+    TOOL_MISUSE = 'tool_misuse'
+    IDENTITY_PRIVILEGE_ABUSE = 'identity_privilege_abuse'
+    SUPPLY_CHAIN = 'supply_chain'
+    CODE_EXECUTION = 'code_execution'
+    MEMORY_POISONING = 'memory_poisoning'
+    INTER_AGENT_COMMS = 'inter_agent_comms'
+    CASCADING_FAILURES = 'cascading_failures'
+    TRUST_EXPLOITATION = 'trust_exploitation'
+    ROGUE_AGENTS = 'rogue_agents'
+
+    # LLM security (maps to OWASP LLM Top 10)
+    PROMPT_INJECTION = 'prompt_injection'
+    SENSITIVE_INFO_DISCLOSURE = 'sensitive_info_disclosure'
+    DATA_POISONING = 'data_poisoning'
+    IMPROPER_OUTPUT = 'improper_output'
+    EXCESSIVE_AGENCY = 'excessive_agency'
+    SYSTEM_PROMPT_LEAKAGE = 'system_prompt_leakage'
+    VECTOR_EMBEDDING_WEAKNESS = 'vector_embedding_weakness'
+    MISINFORMATION = 'misinformation'
+    UNBOUNDED_CONSUMPTION = 'unbounded_consumption'
 
 
 class Pipeline(StrEnum):
@@ -217,7 +263,8 @@ class RedTeamInput(BaseModel):
     """Input metadata for a red teaming attack sample."""
 
     id: str = Field(min_length=1, description='Unique sample identifier')
-    category: str = Field(description='Attack category (framework-specific)')
+    vulnerability: str = Field(default='', description='Vulnerability identifier (primary key in new format)')
+    category: str = Field(description='Attack category (framework-specific) — kept for backwards compat')
     attack_technique: AttackTechnique = Field(description='Specific attack technique used')
     delivery_method: DeliveryMethod = Field(description='Jailbreak/delivery technique used')
     severity: Severity = Field(description='Attack severity level')
@@ -403,6 +450,11 @@ class PipelineLLMConfig(BaseModel):
 # Import this in other modules; tests can monkeypatch or pass overrides.
 PIPELINE_CONFIG = PipelineLLMConfig()
 
+# Default model used across the red teaming pipeline for adversarial generation
+# and evaluation.  This is an ORQ routing alias — the actual provider/model is
+# resolved at runtime by the ORQ router.
+DEFAULT_PIPELINE_MODEL: str = 'azure/gpt-5-mini'
+
 
 # ---------------------------------------------------------------------------
 # OWASP category names (self-contained, no external dependency)
@@ -443,17 +495,37 @@ OWASP_CATEGORY_NAMES: dict[str, str] = {
 
 
 # ---------------------------------------------------------------------------
+# Vulnerability definition model
+# ---------------------------------------------------------------------------
+
+
+class VulnerabilityDef(BaseModel):
+    """Definition of a vulnerability with metadata and framework mappings."""
+
+    id: Vulnerability
+    name: str = Field(description='Human-readable name, e.g. "Agent Goal Hijacking"')
+    domain: VulnerabilityDomain
+    description: str = ''
+    default_attack_technique: AttackTechnique
+    framework_mappings: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description='Framework -> category codes, e.g. {"OWASP-ASI": ["ASI01"]}',
+    )
+
+
+# ---------------------------------------------------------------------------
 # Attack strategy model
 # ---------------------------------------------------------------------------
 
 
 class AttackStrategy(BaseModel):
-    """Defines a specific attack strategy for an OWASP category.
+    """Defines a specific attack strategy for a vulnerability.
 
     Strategies can be hardcoded or generated based on agent context.
     """
 
-    category: str = Field(description='OWASP category code (e.g., ASI01, LLM01)')
+    vulnerability: Vulnerability | None = Field(default=None, description='Primary vulnerability identifier')
+    category: str = Field(description='OWASP category code (e.g., ASI01, LLM01) — kept for backwards compat')
     name: str = Field(description='Strategy identifier (e.g., indirect_injection_via_email)')
     description: str = Field(description='Human-readable description of the attack')
     attack_technique: AttackTechnique = Field(description='Primary attack technique')
@@ -553,7 +625,8 @@ class AttackInfo(BaseModel):
     """
 
     id: str = Field(description="Unique identifier (e.g., 'OWASP-ASI01-0153' or 'ASI01-role_confusion-001')")
-    category: str = Field(description="Short-form category code (e.g., 'ASI01', 'LLM01')")
+    vulnerability: str = Field(default='', description='Vulnerability identifier (primary key in new format)')
+    category: str = Field(description="Short-form category code (e.g., 'ASI01', 'LLM01') — kept for backwards compat")
     framework: Framework = Field(description="OWASP framework ('OWASP-ASI' or 'OWASP-LLM')")
     attack_technique: AttackTechnique
     delivery_methods: list[DeliveryMethod] = Field(description='Delivery methods (always a list)')
@@ -685,6 +758,22 @@ class RedTeamResult(BaseModel):
     error_details: dict[str, Any] | None = None
 
 
+class VulnerabilitySummary(BaseModel):
+    """Per-vulnerability summary statistics."""
+
+    vulnerability: str
+    vulnerability_name: str
+    domain: str
+    total_attacks: int
+    vulnerabilities_found: int
+    resistance_rate: float
+    strategies_used: list[str] = Field(default_factory=list)
+    framework_categories: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description='Framework -> category codes this vulnerability maps to',
+    )
+
+
 class CategorySummary(BaseModel):
     """Per-category summary statistics."""
 
@@ -774,6 +863,7 @@ class ReportSummary(BaseModel):
     total_errors: int = 0
     errors_by_type: dict[str, int] = Field(default_factory=dict, description='Error counts grouped by type')
     token_usage_total: TokenUsage | None = Field(default=None, description='Aggregated token usage across all results')
+    by_vulnerability: dict[str, VulnerabilitySummary] = Field(default_factory=dict)
     by_category: dict[str, CategorySummary] = Field(default_factory=dict)
     by_technique: dict[str, TechniqueSummary] = Field(default_factory=dict)
     by_severity: dict[str, SeveritySummary] = Field(default_factory=dict)
@@ -865,6 +955,7 @@ class DynamicAttackResultRow(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
     id: str | None = None
+    vulnerability: str = ''
     category: str = 'unknown'
     strategy: AttackStrategy | None = None
     objective: str | None = None
@@ -980,6 +1071,13 @@ class DatasetInferenceRow(BaseModel):
     agent_model: str
     error: str | None = None
     error_type: str | None = None
+
+
+class EvaluatorConfig(TypedDict):
+    """Minimal evaluatorq evaluator contract."""
+
+    name: str
+    scorer: Any
 
 
 class ReportSnapshot(BaseModel):

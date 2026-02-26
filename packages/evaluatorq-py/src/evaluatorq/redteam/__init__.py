@@ -17,6 +17,7 @@ from typing import Any
 
 from evaluatorq.redteam.contracts import (
     AgentContext,
+    TargetConfig,
     AgentInfo,
     AttackEvaluationRow,
     AttackInfo,
@@ -65,6 +66,10 @@ from evaluatorq.redteam.contracts import (
     TurnType,
     TurnTypeSummary,
     UnifiedEvaluationResult,
+    Vulnerability,
+    VulnerabilityDef,
+    VulnerabilityDomain,
+    VulnerabilitySummary,
     infer_framework,
     normalize_category,
     normalize_framework,
@@ -77,6 +82,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories as list_categories,
 )
+from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
 from evaluatorq.redteam.hooks import (
     ConfirmPayload,
     DefaultHooks,
@@ -101,6 +107,7 @@ __all__ = [
     "RedTeamReport",
     "RedTeamResult",
     "AgentContext",
+    "TargetConfig",
     "TokenUsage",
     # Enums
     "TurnType",
@@ -133,6 +140,11 @@ __all__ = [
     "JobOutputPayload",
     "ExecutionDetails",
     "AgentInfo",
+    # Vulnerability types
+    "Vulnerability",
+    "VulnerabilityDef",
+    "VulnerabilityDomain",
+    "VulnerabilitySummary",
     # Report models
     "CategorySummary",
     "ReportSummary",
@@ -160,4 +172,9 @@ __all__ = [
     "normalize_framework",
     "normalize_category",
     "infer_framework",
+    # Exceptions
+    "RedTeamError",
+    "CredentialError",
+    "BackendError",
+    "CancelledError",
 ]
