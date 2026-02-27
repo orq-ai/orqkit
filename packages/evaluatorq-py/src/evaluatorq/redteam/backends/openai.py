@@ -30,6 +30,7 @@ class OpenAIModelTarget:
         self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
+        """Send a prompt to the OpenAI model and return its response."""
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
             {'role': 'user', 'content': prompt},
@@ -93,7 +94,8 @@ class OpenAIContextProvider:
         self._system_prompt = system_prompt
 
     async def get_agent_context(self, agent_key: str) -> AgentContext:
-        logger.info(f'Using OpenAI model target context for model={agent_key}')
+        """Return agent context for the specified OpenAI model."""
+        logger.debug(f'Using OpenAI model target context for model={agent_key}')
         return AgentContext(
             key=agent_key,
             display_name=agent_key,
@@ -114,6 +116,7 @@ class OpenAITargetFactory:
         self._system_prompt = system_prompt
 
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> OpenAIModelTarget:
+        """Create a new OpenAI model target instance."""
         _ = memory_entity_id  # OpenAI model target does not support memory entity routing.
         return OpenAIModelTarget(model_id=agent_key, client=self._client, system_prompt=self._system_prompt)
 
@@ -122,6 +125,7 @@ class NoopMemoryCleanup:
     """No-op cleanup for backends without managed memory stores."""
 
     async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
+        """No-op cleanup since OpenAI backend does not manage memory stores."""
         _ = (agent_context, entity_ids)
         logger.debug('Skipping memory cleanup: backend has no managed memory API')
 
@@ -130,6 +134,7 @@ class OpenAIErrorMapper:
     """Normalize OpenAI exceptions into runtime error taxonomy."""
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Map an OpenAI exception to a normalized error code and message tuple."""
         name = type(exc).__name__.lower()
         status_code = extract_status_code(exc)
         provider_code = extract_provider_error_code(exc)

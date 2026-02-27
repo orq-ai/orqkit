@@ -81,8 +81,9 @@ class TestCreateAsyncLlmClientPriority:
     @patch.dict('os.environ', {}, clear=True)
     def test_no_keys_raises(self):
         from evaluatorq.redteam.backends.registry import create_async_llm_client
+        from evaluatorq.redteam.exceptions import CredentialError
 
-        with pytest.raises(RuntimeError, match='Missing LLM credentials'):
+        with pytest.raises(CredentialError, match='Missing LLM credentials'):
             create_async_llm_client()
 
 
@@ -149,14 +150,14 @@ class TestCreateDynamicEvaluatorLlmClient:
 
         custom_client = MagicMock(spec=AsyncOpenAI)
         create_dynamic_evaluator(llm_client=custom_client)
-        mock_cls.assert_called_once_with(evaluator_model='azure/gpt-5-mini', llm_client=custom_client)
+        mock_cls.assert_called_once_with(evaluator_model='openai/gpt-5-mini', llm_client=custom_client)
 
     @patch('evaluatorq.redteam.adaptive.pipeline.OWASPEvaluator')
     def test_passes_none_when_no_client(self, mock_cls):
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
 
         create_dynamic_evaluator()
-        mock_cls.assert_called_once_with(evaluator_model='azure/gpt-5-mini', llm_client=None)
+        mock_cls.assert_called_once_with(evaluator_model='openai/gpt-5-mini', llm_client=None)
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +299,7 @@ class TestRedTeamStaticLlmClientForwarding:
         sentinel = MagicMock(spec=AsyncOpenAI)
 
         with patch(
-            'evaluatorq.redteam.runner._run_dynamic',
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
             new_callable=AsyncMock,
             return_value=_make_report(),
         ) as mock_dynamic:

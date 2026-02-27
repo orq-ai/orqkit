@@ -51,7 +51,7 @@ async def plan_strategies_for_categories(
             })
     else:
         agent_capabilities = AgentCapabilities()
-        logger.info('Skipping capability classification: no llm_client provided')
+        logger.debug('Skipping capability classification: no llm_client provided')
 
     all_category_strategies: dict[str, list[AttackStrategy]] = {}
     strategy_selection: dict[str, dict[str, Any]] = {}
@@ -93,7 +93,7 @@ async def plan_strategies_for_categories(
                         )
                     return category, generated
                 except Exception as e:
-                    logger.warning(f'Failed to generate strategies for {category}: {e}')
+                    logger.error(f'Strategy generation failed for {category}, no strategies will be tested for this category: {e}')
                     return category, []
 
             generation_results = await asyncio.gather(*(_generate_for_category(category) for category in categories))
@@ -103,7 +103,7 @@ async def plan_strategies_for_categories(
                 generated_multi = [s for s in generated if s.turn_type == TurnType.MULTI]
                 generated_single_by_category[category] = generated_single
                 generated_multi_by_category[category] = generated_multi
-                logger.info(
+                logger.debug(
                     f'Added {len(generated)} generated strategies for {category} '
                     f'({len(generated_single)} single-turn, {len(generated_multi)} multi-turn)'
                 )

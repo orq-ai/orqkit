@@ -13,35 +13,41 @@ Semantic convention throughout this package:
 
 from __future__ import annotations
 
+
+def _check_redteam_deps() -> None:
+    missing = []
+    for mod in ('openai', 'loguru', 'typer'):
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        raise ImportError(
+            f"Red teaming requires optional dependencies: {', '.join(missing)}. "
+            f"Install with: pip install 'evaluatorq[redteam]'"
+        )
+
+
+_check_redteam_deps()
+
 from typing import Any
 
 from evaluatorq.redteam.contracts import (
     AgentContext,
     TargetConfig,
     AgentInfo,
-    AttackEvaluationRow,
     AttackInfo,
     AttackStrategy,
     AttackTechnique,
     CategorySummary,
-    DatasetInferenceRow,
     DeliveryMethod,
     DeliveryMethodSummary,
-    DynamicAttackResultRow,
-    DynamicCategorySummaryRow,
-    DynamicErrorAnalysisRow,
-    DynamicRunMetadata,
-    DynamicSummaryReportRow,
-    ErrorTypeDetails,
-    EvaluatedRow,
-    EvaluatedRowBase,
     EvaluationPayload,
     EvaluationResult,
     ExecutionDetails,
     Framework,
     FrameworkSummary,
     FunctionCall,
-    GeneratedPromptRow,
     JobOutputPayload,
     KnowledgeBaseInfo,
     MemoryStoreInfo,
@@ -58,7 +64,6 @@ from evaluatorq.redteam.contracts import (
     ScopeSummary,
     Severity,
     SeveritySummary,
-    StrategySelectionRow,
     TechniqueSummary,
     TokenUsage,
     ToolCall,
@@ -70,7 +75,6 @@ from evaluatorq.redteam.contracts import (
     VulnerabilityDef,
     VulnerabilityDomain,
     VulnerabilitySummary,
-    infer_framework,
     normalize_category,
     normalize_framework,
 )
@@ -155,23 +159,9 @@ __all__ = [
     "TurnTypeSummary",
     "ScopeSummary",
     "FrameworkSummary",
-    # Dynamic pipeline row models
-    "EvaluatedRowBase",
-    "EvaluatedRow",
-    "AttackEvaluationRow",
-    "DynamicAttackResultRow",
-    "DynamicCategorySummaryRow",
-    "ErrorTypeDetails",
-    "DynamicErrorAnalysisRow",
-    "DynamicRunMetadata",
-    "StrategySelectionRow",
-    "GeneratedPromptRow",
-    "DynamicSummaryReportRow",
-    "DatasetInferenceRow",
     # Helper functions
     "normalize_framework",
     "normalize_category",
-    "infer_framework",
     # Exceptions
     "RedTeamError",
     "CredentialError",

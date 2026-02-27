@@ -111,7 +111,7 @@ class OWASPEvaluator:
                 },
             )
         except Exception as e:
-            logger.exception(f'Evaluation failed for {category_code}')
+            logger.error(f'Evaluation failed for {category_code}, result will be inconclusive: {e}')
             return EvaluationResult(
                 passed=None,
                 explanation=f'Evaluation error: {e}',

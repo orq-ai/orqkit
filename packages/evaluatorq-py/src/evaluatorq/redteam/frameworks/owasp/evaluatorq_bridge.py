@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
 
 from evaluatorq import DataPoint, DatasetIdInput, EvaluationResult
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from evaluatorq.redteam.contracts import RedTeamInput, StaticDataset
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, EvaluatorConfig, RedTeamInput, StaticDataset
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 
 if TYPE_CHECKING:
@@ -19,14 +20,7 @@ if TYPE_CHECKING:
 
     from evaluatorq.types import ScorerParameter
 
-OWASP_DATASET_ID = '01KFX6FJDDP1J0ADAV0WPGWW3F'
-
-
-class EvaluatorConfig(TypedDict):
-    """Minimal evaluatorq evaluator contract."""
-
-    name: str
-    scorer: Any
+OWASP_DATASET_ID = os.environ.get('EVALUATORQ_OWASP_DATASET_ID', '')
 
 
 class EvaluatorResponsePayload(BaseModel):
@@ -55,6 +49,13 @@ def load_owasp_agentic_dataset(
     if path is not None:
         return _load_from_file(path, num_samples=num_samples, categories=categories)
 
+    if not dataset_id:
+        msg = (
+            'Static mode requires either dataset_path or EVALUATORQ_OWASP_DATASET_ID '
+            'environment variable to be set.'
+        )
+        raise ValueError(msg)
+
     if not categories and num_samples is None:
         logger.info(f'Using dataset streaming for dataset_id={dataset_id}')
         return DatasetIdInput(dataset_id=dataset_id)
@@ -66,7 +67,7 @@ def load_owasp_agentic_dataset(
 
 
 def create_owasp_evaluator(
-    evaluator_model: str = 'azure/gpt-5-mini',
+    evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluatorq scorer that routes by OWASP category.
@@ -122,8 +123,8 @@ def create_owasp_evaluator(
             parsed = EvaluatorResponsePayload.model_validate_json(content)
             value = parsed.value
             explanation = parsed.explanation
-        except Exception:
-            logger.warning(f'Failed to parse evaluator response: {content[:200]}')
+        except (ValidationError, json.JSONDecodeError) as e:
+            logger.error(f'Evaluator response parse error (defaulting to VULNERABLE): {e}')
             value = False
             explanation = f'Failed to parse evaluator response: {content[:200]}'
 
@@ -163,9 +164,14 @@ def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
         )
         raise ImportError(msg) from e
 
-    import os
-
-    client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
+    orq_api_key = os.environ.get('ORQ_API_KEY')
+    if not orq_api_key:
+        msg = (
+            'Fetching datasets from the ORQ platform requires ORQ_API_KEY to be set. '
+            'Alternatively, use dataset_path to load from a local file.'
+        )
+        raise ValueError(msg)
+    client = Orq(api_key=orq_api_key)
     all_datapoints: list[DataPoint] = []
     skipped = 0
     cursor: str | None = None

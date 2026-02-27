@@ -425,19 +425,19 @@ class PipelineLLMConfig(BaseModel):
 
     # Step 1: Capability classification — deterministic analysis of agent tools
     capability_classification_max_tokens: int = 4000
-    capability_classification_temperature: float = 0.0
+    capability_classification_temperature: float = 1.0
 
     # Step 2: Strategy generation — creative but structured strategy/objective creation
     strategy_generation_max_tokens: int = 4000
-    strategy_generation_temperature: float = 0.7
+    strategy_generation_temperature: float = 1.0
 
     # Step 3: Tool adaptation — deterministic rewrite of prompts to target specific tools
     tool_adaptation_max_tokens: int = 4000
-    tool_adaptation_temperature: float = 0.0
+    tool_adaptation_temperature: float = 1.0
 
     # Step 4: Adversarial prompt generation — creative attack message crafting
     adversarial_max_tokens: int = 4000
-    adversarial_temperature: float = 0.8
+    adversarial_temperature: float = 1.0
 
     # Target agent timeout (ms) for ORQ SDK calls
     target_agent_timeout_ms: int = 120_000
@@ -606,6 +606,17 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
+
+
+class AttackOutput(OrchestratorResult):
+    """Typed output from a dynamic red team attack job.
+
+    Extends OrchestratorResult with category and vulnerability fields
+    that are merged in during job execution.
+    """
+
+    category: str = ''
+    vulnerability: str = ''
 
 
 class EvaluationResult(BaseModel):

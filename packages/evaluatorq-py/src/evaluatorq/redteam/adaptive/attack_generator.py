@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from evaluatorq.redteam.contracts import AgentContext, AttackStrategy
 
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG
 
 
 def fill_template(template: str, agent_context: AgentContext) -> str:
@@ -148,7 +148,7 @@ async def adapt_prompt_to_tools(
     strategy: AttackStrategy,
     *,
     llm_client: AsyncOpenAI,
-    model: str = 'azure/gpt-5-mini',
+    model: str = DEFAULT_PIPELINE_MODEL,
 ) -> str:
     """Adapt an attack prompt to leverage specific agent tools.
 
@@ -170,12 +170,12 @@ async def adapt_prompt_to_tools(
 
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = TOOL_CLASSIFICATION_PROMPT.format(
-        attack_technique=strategy.attack_technique.value,
-        strategy_description=strategy.description,
-        base_prompt=base_prompt,
-        tool_list=tool_list,
-    )
+    prompt = TOOL_CLASSIFICATION_PROMPT.format_map(_SafeDict({
+        'attack_technique': strategy.attack_technique.value,
+        'strategy_description': strategy.description,
+        'base_prompt': base_prompt,
+        'tool_list': tool_list,
+    }))
 
     try:
         response = await llm_client.chat.completions.parse(
@@ -204,5 +204,5 @@ async def adapt_prompt_to_tools(
         return base_prompt + tool_reference
 
     except Exception as e:
-        logger.warning(f'Tool classification failed, returning original prompt: {e}')
+        logger.error(f'Tool adaptation failed, using generic prompt without tool-specific targeting: {e}')
         return base_prompt

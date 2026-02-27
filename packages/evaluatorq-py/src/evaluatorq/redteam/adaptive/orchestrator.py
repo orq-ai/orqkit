@@ -211,15 +211,17 @@ def _build_adversarial_system_prompt(
         ', '.join(m.key or m.id for m in agent_context.memory_stores) if agent_context.memory_stores else 'None'
     )
 
-    return ADVERSARIAL_SYSTEM_PROMPT.format(
-        objective=objective,
-        agent_name=agent_context.display_name or agent_context.key,
-        agent_description=agent_context.description or 'An AI assistant',
-        tools=tools_str,
-        memory_stores=memory_str,
-        strategy_description=strategy.description,
-        max_turns=max_turns,
-    )
+    from evaluatorq.redteam.adaptive.attack_generator import _SafeDict
+
+    return ADVERSARIAL_SYSTEM_PROMPT.format_map(_SafeDict({
+        'objective': objective,
+        'agent_name': agent_context.display_name or agent_context.key,
+        'agent_description': agent_context.description or 'An AI assistant',
+        'tools': tools_str,
+        'memory_stores': memory_str,
+        'strategy_description': strategy.description,
+        'max_turns': str(max_turns),
+    }))
 
 
 def _progress_ui_enabled_for_current_run() -> bool:
