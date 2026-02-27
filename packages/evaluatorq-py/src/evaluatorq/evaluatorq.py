@@ -60,6 +60,7 @@ async def evaluatorq(
     description: str | None = None,
     path: str | None = None,
     _exit_on_failure: bool = True,
+    _send_results: bool = True,
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.
@@ -308,7 +309,7 @@ async def evaluatorq(
         await display_results_table(results)
 
     # Upload results to Orq platform if API key is available
-    if orq_api_key:
+    if orq_api_key and _send_results:
         _ = await send_results_to_orq(
             orq_api_key,
             name,

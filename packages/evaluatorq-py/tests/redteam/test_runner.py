@@ -107,7 +107,7 @@ class TestRedTeamValidation:
 
     @pytest.mark.asyncio
     async def test_invalid_mode_raises(self):
-        with pytest.raises(ValueError, match='Invalid mode'):
+        with pytest.raises(ValueError, match='is not a valid Pipeline'):
             await red_team('agent:test', mode='invalid')
 
     @pytest.mark.asyncio
@@ -127,12 +127,12 @@ class TestRedTeamValidation:
 
     @pytest.mark.asyncio
     async def test_hybrid_mode_dispatches(self):
-        """Hybrid mode dispatches to _run_hybrid."""
+        """Hybrid mode dispatches to _run_dynamic_or_hybrid."""
         from unittest.mock import AsyncMock, patch
 
         mock_report = _make_report()
         with patch(
-            'evaluatorq.redteam.runner._run_hybrid',
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_hybrid:
@@ -180,7 +180,7 @@ class TestStaticCoverageGuard:
             from evaluatorq.redteam.runner import _run_static
 
             await _run_static(
-                target='agent:test',
+                targets=['agent:test'],
                 categories=None,
                 evaluator_model='azure/gpt-5-mini',
                 parallelism=5,
@@ -221,7 +221,7 @@ class TestStaticCoverageGuard:
 
             with pytest.raises(ValueError, match='All datapoints were filtered out'):
                 await _run_static(
-                    target='agent:test',
+                    targets=['agent:test'],
                     categories=None,
                     evaluator_model='azure/gpt-5-mini',
                     parallelism=5,
@@ -247,9 +247,9 @@ class TestConfirmCallback:
                 return False
 
         with (
-            patch('evaluatorq.redteam.runner._run_dynamic') as mock_dynamic,
+            patch('evaluatorq.redteam.runner._run_dynamic_or_hybrid') as mock_dynamic,
         ):
-            # Make _run_dynamic call hooks.on_confirm and raise if False
+            # Make _run_dynamic_or_hybrid call hooks.on_confirm and raise if False
             async def _fake_dynamic(**kwargs):
                 hooks = kwargs.get('hooks')
                 if hooks is not None and not hooks.on_confirm({}):
@@ -275,7 +275,7 @@ class TestConfirmCallback:
         mock_report = _make_report()
 
         with patch(
-            'evaluatorq.redteam.runner._run_dynamic',
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_dynamic:
@@ -285,7 +285,7 @@ class TestConfirmCallback:
                 hooks=DefaultHooks(),
             )
             assert result is mock_report
-            # hooks is passed through to _run_dynamic
+            # hooks is passed through to _run_dynamic_or_hybrid
             call_kwargs = mock_dynamic.call_args.kwargs
             assert call_kwargs['hooks'] is not None
 
@@ -299,53 +299,32 @@ class TestRedTeamMultiTarget:
             await red_team([])
 
     @pytest.mark.asyncio
-    async def test_multi_target_runs_each_and_merges(self):
-        """Multi-target calls _red_team_single per target and merges."""
-        from datetime import datetime, timezone
-        from unittest.mock import AsyncMock, patch
-
-        from evaluatorq.redteam.contracts import (
-            Pipeline,
-            RedTeamReport,
-            ReportSummary,
-        )
-
-        def make_mock_report(target: str, **kwargs) -> RedTeamReport:
-            return RedTeamReport(
-                created_at=datetime.now(tz=timezone.utc),
-                description=f'Report for {target}',
-                pipeline=Pipeline.DYNAMIC,
-                framework=None,
-                categories_tested=['ASI01'],
-                tested_agents=[target],
-                total_results=0,
-                results=[],
-                summary=ReportSummary(),
-            )
-
-        with patch(
-            'evaluatorq.redteam.runner._red_team_single',
-            new_callable=AsyncMock,
-        ) as mock_single:
-            mock_single.side_effect = make_mock_report
-
-            result = await red_team(['agent:a', 'agent:b'])
-
-            assert mock_single.call_count == 2
-            # Merged report should have both agents
-            assert set(result.tested_agents) == {'agent:a', 'agent:b'}
-
-    @pytest.mark.asyncio
-    async def test_single_string_target_works(self):
-        """A single string target dispatches directly (no merge)."""
+    async def test_multi_target_dispatches_to_unified_pipeline(self):
+        """Multi-target passes all targets to _run_dynamic_or_hybrid."""
         from unittest.mock import AsyncMock, patch
 
         mock_report = _make_report()
         with patch(
-            'evaluatorq.redteam.runner._red_team_single',
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
             new_callable=AsyncMock,
             return_value=mock_report,
-        ) as mock_single:
+        ) as mock_pipeline:
+            result = await red_team(['agent:a', 'agent:b'])
+            assert result is mock_report
+            call_kwargs = mock_pipeline.call_args.kwargs
+            assert call_kwargs['targets'] == ['agent:a', 'agent:b']
+
+    @pytest.mark.asyncio
+    async def test_single_string_target_works(self):
+        """A single string target dispatches directly."""
+        from unittest.mock import AsyncMock, patch
+
+        mock_report = _make_report()
+        with patch(
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
+            new_callable=AsyncMock,
+            return_value=mock_report,
+        ) as mock_pipeline:
             result = await red_team('agent:test')
             assert result is mock_report
-            mock_single.assert_awaited_once()
+            mock_pipeline.assert_awaited_once()

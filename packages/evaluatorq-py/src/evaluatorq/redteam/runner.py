@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,7 +18,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     list_available_categories,
 )
 from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, Pipeline, RedTeamReport, TargetConfig
-from evaluatorq.redteam.exceptions import CancelledError
+from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 
 
@@ -52,6 +54,63 @@ def _save_report(output_dir: Path | None, filename: str, report: RedTeamReport) 
     data["saved_at"] = datetime.now(tz=timezone.utc).isoformat()
     (output_dir / filename).write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     logger.debug(f"Saved {filename} to {output_dir}")
+
+
+async def _send_cleaned_results(
+    results: list[Any],
+    name: str,
+    description: str,
+    start_time: datetime,
+) -> None:
+    """Strip skipped job results and upload to the Orq platform.
+
+    In multi-target mode each ``DataPointResult`` may contain job results
+    from *all* target jobs, but only the matching target produces a real
+    output — the rest return ``None``.  Before uploading we remove those
+    empty job results so the experiment shows one clean row per datapoint
+    without duplication.
+    """
+    from evaluatorq.send_results import send_results_to_orq
+    from evaluatorq.types import DataPointResult
+
+    api_key = os.environ.get("ORQ_API_KEY")
+    if not api_key:
+        logger.debug("Skipping result upload to Orq platform: ORQ_API_KEY not set")
+        return
+
+    cleaned: list[DataPointResult] = []
+    for result in results:
+        if not result.job_results:
+            continue
+        # Keep only job results with a non-None output
+        real_jobs = [jr for jr in result.job_results if jr.output is not None]
+        if not real_jobs:
+            continue
+        # Shallow-copy the result and replace job_results
+        clean = copy.copy(result)
+        clean.job_results = real_jobs
+        cleaned.append(clean)
+
+    if not cleaned:
+        logger.debug("No cleaned results to send to Orq platform")
+        return
+
+    logger.debug(f"Sending {len(cleaned)} cleaned results to Orq platform (stripped from {len(results)} raw)")
+    try:
+        await send_results_to_orq(
+            api_key=api_key,
+            evaluation_name=name,
+            evaluation_description=description,
+            dataset_id=None,
+            results=cleaned,
+            start_time=start_time,
+            end_time=datetime.now(tz=timezone.utc),
+        )
+    except Exception as e:
+        logger.error(
+            f'Failed to upload {len(cleaned)} results to Orq platform: {e}. '
+            'Results have been saved locally.'
+        )
 
 
 def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
@@ -108,6 +167,7 @@ class PreparedTarget:
     resolved_memory_cleanup: MemoryCleanup
     resolved_llm_client: AsyncOpenAI
     filtering_metadata: dict[str, Any]
+    memory_entity_ids: list[str]  # runtime-accumulated entity IDs for cleanup
 
 
 # ---------------------------------------------------------------------------
@@ -136,7 +196,7 @@ async def red_team(
     memory_cleanup: MemoryCleanup | None = None,
     llm_client: AsyncOpenAI | None = None,
     description: str | None = None,
-    dataset_path: Any = None,
+    dataset_path: Path | str | None = None,
     hooks: PipelineHooks | None = None,
     output_dir: Path | str | None = None,
     target_config: TargetConfig | None = None,
@@ -184,7 +244,7 @@ async def red_team(
 
     Raises:
         ValueError: If mode is invalid or required arguments are missing.
-        RuntimeError: If hooks.on_confirm returns False.
+        CancelledError: If hooks.on_confirm returns False.
     """
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     resolved_output_dir = Path(output_dir) if output_dir is not None else None
@@ -195,6 +255,13 @@ async def red_team(
         raise ValueError(msg)
 
     resolved_mode = Pipeline(mode)
+
+    # Early credential validation — fail fast with a clear message
+    if llm_client is None and not os.getenv('OPENAI_API_KEY') and not os.getenv('ORQ_API_KEY'):
+        raise CredentialError(
+            'Missing LLM credentials. Set either OPENAI_API_KEY (optionally OPENAI_BASE_URL) '
+            'or ORQ_API_KEY (optionally ORQ_BASE_URL).'
+        )
 
     if vulnerabilities:
         from evaluatorq.redteam.vulnerability_registry import (
@@ -343,18 +410,26 @@ async def _prepare_target(
     output_dir: Path | None,
     target_config: TargetConfig | None,
     resolved_categories: list[str],
+    shared_datapoints: list[Any] | None = None,
 ) -> PreparedTarget:
     """Prepare all per-target state for a dynamic or hybrid run.
 
-    Always: parse target, resolve backend, retrieve agent context, generate
-    dynamic datapoints, and tag them with ``target_tag``.
+    Always: parse target, resolve backend, retrieve agent context, and
+    build a job closure for this target.
+
+    When ``shared_datapoints`` is None (default): generate dynamic datapoints
+    from this target's agent context (first-target behaviour).
+
+    When ``shared_datapoints`` is provided: skip datapoint generation and
+    reuse those datapoints directly (subsequent-target behaviour in
+    multi-target runs).
 
     When ``mode == Pipeline.HYBRID`` and ``dataset_path`` is provided: also load the
-    static dataset, tag static datapoints, create a static job, and build a
-    hybrid dispatcher job that routes on ``hybrid_source``.
+    static dataset, create a static job, and build a hybrid dispatcher job
+    that routes on ``hybrid_source``.
 
     When ``mode == 'dynamic'``: skip the static dataset and build a simpler
-    target-tagged dynamic job wrapper.
+    dynamic job wrapper.
 
     Returns:
         A :class:`PreparedTarget` instance with all per-target state.
@@ -381,6 +456,8 @@ async def _prepare_target(
     agent_context: AgentContext = await backend_bundle.context_provider.get_agent_context(target_value)
     hooks.on_stage_end("context_retrieval", {
         "num_tools": len(agent_context.tools) if agent_context.tools else 0,
+        "num_memory_stores": len(agent_context.memory_stores) if agent_context.memory_stores else 0,
+        "num_knowledge_bases": len(agent_context.knowledge_bases) if agent_context.knowledge_bases else 0,
     })
 
     # LLM client
@@ -388,40 +465,51 @@ async def _prepare_target(
     if resolved_llm_client is None and generate_strategies:
         resolved_llm_client = create_async_llm_client()
 
-    # Datapoint generation
-    hooks.on_stage_start("datapoint_generation", {
-        "num_categories": len(resolved_categories),
-        "target": target,
-    })
+    if shared_datapoints is not None:
+        # Reuse datapoints generated by the first target — skip generation
+        dynamic_datapoints = list(shared_datapoints)
+        filtering_metadata: dict[str, Any] = {}
+        hooks.on_stage_start("datapoint_generation", {"target": target})
+        hooks.on_stage_end("datapoint_generation", {
+            "num_datapoints": len(dynamic_datapoints),
+            "shared": True,
+        })
+    else:
+        # Datapoint generation
+        hooks.on_stage_start("datapoint_generation", {
+            "num_categories": len(resolved_categories),
+            "target": target,
+        })
 
-    dynamic_datapoints, filtering_metadata = await generate_dynamic_datapoints(
-        agent_context=agent_context,
-        categories=resolved_categories,
-        max_per_category=max_per_category,
-        max_turns=max_turns,
-        generate_additional_strategies=generate_strategies,
-        generated_strategy_count=generated_strategy_count,
-        llm_client=resolved_llm_client,
-        attack_model=attack_model,
-        parallelism=parallelism,
-    )
-
-    if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
-        template_count = sum(
-            1 for dp in dynamic_datapoints
-            if not dp.inputs.get('strategy', {}).get('is_generated', False)
+        dynamic_datapoints, filtering_metadata = await generate_dynamic_datapoints(
+            agent_context=agent_context,
+            categories=resolved_categories,
+            max_per_category=max_per_category,
+            max_turns=max_turns,
+            generate_additional_strategies=generate_strategies,
+            generated_strategy_count=generated_strategy_count,
+            llm_client=resolved_llm_client,
+            attack_model=attack_model,
+            parallelism=parallelism,
         )
-        if template_count >= max_dynamic_datapoints:
-            logger.warning(
-                f'[{target}] max_dynamic_datapoints={max_dynamic_datapoints} is already covered by '
-                f'{template_count} template strategies — {generated_strategy_count} generated '
-                f'strategies per category will be unused.'
-            )
 
-    if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
-        dynamic_datapoints = dynamic_datapoints[:max_dynamic_datapoints]
+        if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
+            template_count = sum(
+                1 for dp in dynamic_datapoints
+                if not dp.inputs.get('strategy', {}).get('is_generated', False)
+            )
+            if template_count >= max_dynamic_datapoints:
+                logger.warning(
+                    f'[{target}] max_dynamic_datapoints={max_dynamic_datapoints} is already covered by '
+                    f'{template_count} template strategies — {generated_strategy_count} generated '
+                    f'strategies per category will be unused.'
+                )
+
+        if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
+            dynamic_datapoints = dynamic_datapoints[:max_dynamic_datapoints]
 
     # Build the raw dynamic job for this target
+    _memory_entity_ids: list[str] = []
     dynamic_job = create_dynamic_redteam_job(
         agent_key=target_value,
         agent_context=agent_context,
@@ -430,31 +518,43 @@ async def _prepare_target(
         target_factory=resolved_factory,
         error_mapper=resolved_error_mapper,
         attack_llm_client=resolved_llm_client,
+        memory_entity_ids=_memory_entity_ids,
     )
 
     # --- Mode-specific path ---------------------------------------------------
 
     if mode == Pipeline.HYBRID and dataset_path is not None:
-        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
+        if shared_datapoints is not None:
+            # Shared datapoints already contain both dynamic and static (tagged).
+            # Split them back out so PreparedTarget fields stay semantically correct.
+            static_datapoints: list[Any] = [
+                dp for dp in dynamic_datapoints
+                if dp.inputs.get('hybrid_source') == 'static'
+            ]
+            dynamic_datapoints = [
+                dp for dp in dynamic_datapoints
+                if dp.inputs.get('hybrid_source') != 'static'
+            ]
+            all_datapoints = dynamic_datapoints + static_datapoints
+        else:
+            from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
 
-        # Load static datapoints
-        path = Path(dataset_path)
-        static_data = load_owasp_agentic_dataset(
-            num_samples=max_static_datapoints,
-            categories=categories,
-            path=path,
-        )
-        static_datapoints: list[Any] = static_data if isinstance(static_data, list) else []
+            # Load static datapoints
+            path = Path(dataset_path)
+            static_data = load_owasp_agentic_dataset(
+                num_samples=max_static_datapoints,
+                categories=categories,
+                path=path,
+            )
+            static_datapoints = static_data if isinstance(static_data, list) else []
 
-        # Tag with hybrid_source and target_tag
-        for dp in dynamic_datapoints:
-            dp.inputs['hybrid_source'] = 'dynamic'
-            dp.inputs['target_tag'] = safe_target
-        for dp in static_datapoints:
-            dp.inputs['hybrid_source'] = 'static'
-            dp.inputs['target_tag'] = safe_target
+            # Tag with hybrid_source only (no target_tag — datapoints are shared)
+            for dp in dynamic_datapoints:
+                dp.inputs['hybrid_source'] = 'dynamic'
+            for dp in static_datapoints:
+                dp.inputs['hybrid_source'] = 'static'
 
-        all_datapoints = dynamic_datapoints + static_datapoints
+            all_datapoints = dynamic_datapoints + static_datapoints
 
         hooks.on_stage_end("datapoint_generation", {
             "num_datapoints": len(all_datapoints),
@@ -473,30 +573,20 @@ async def _prepare_target(
         async def _target_job(
             data: DataPoint,
             row: int,
-            _tag: str = _safe_target,
             _dyn: Any = dynamic_job,
             _sta: Any = static_job,
         ) -> Any:
-            # Skip datapoints that belong to a different target
-            if data.inputs.get('target_tag') not in (None, _tag):
-                return None
             route = data.inputs.get('hybrid_source', 'static')
             inner = _dyn if route == 'dynamic' else _sta
-            result = await inner(data, row)
-            output = result.get('output', result) if isinstance(result, dict) else result
-            if route == 'dynamic' and isinstance(output, dict):
-                return json.dumps(output, default=str)
-            return output
+            return await inner(data, row)
 
     else:
-        # Dynamic mode: tag datapoints with target_tag only
-        for dp in dynamic_datapoints:
-            dp.inputs['target_tag'] = safe_target
-
+        # Dynamic mode — no target_tag tagging needed, datapoints are shared
         static_datapoints = []
         all_datapoints = dynamic_datapoints
 
-        hooks.on_stage_end("datapoint_generation", {"num_datapoints": len(all_datapoints)})
+        if shared_datapoints is None:
+            hooks.on_stage_end("datapoint_generation", {"num_datapoints": len(all_datapoints)})
 
         # Build the dynamic dispatcher job
         _safe_target = safe_target
@@ -505,17 +595,9 @@ async def _prepare_target(
         async def _target_job(
             data: DataPoint,
             row: int,
-            _tag: str = _safe_target,
             _inner: Any = dynamic_job,
         ) -> Any:
-            # Skip datapoints that belong to a different target
-            if data.inputs.get('target_tag') not in (None, _tag):
-                return None
-            result = await _inner(data, row)
-            output = result.get('output', result) if isinstance(result, dict) else result
-            if isinstance(output, dict):
-                return json.dumps(output, default=str)
-            return output
+            return await _inner(data, row)
 
     return PreparedTarget(
         target=target,
@@ -531,6 +613,7 @@ async def _prepare_target(
         resolved_memory_cleanup=resolved_memory_cleanup_t,
         resolved_llm_client=resolved_llm_client,
         filtering_metadata=filtering_metadata,
+        memory_entity_ids=_memory_entity_ids,
     )
 
 
@@ -567,15 +650,15 @@ async def _run_dynamic_or_hybrid(
     """Run dynamic or hybrid red teaming for multiple targets in a single evaluatorq call.
 
     For each target, :func:`_prepare_target` retrieves agent context, generates
-    agent-specific dynamic datapoints, and produces a tagged job closure.  For
-    hybrid mode an additional static dataset is loaded and a routing job is
-    built.  All datapoints are tagged with ``target_tag`` so each job skips
-    datapoints belonging to other targets.  All jobs are submitted in a single
+    agent-specific dynamic datapoints, and produces a job closure.  The first
+    target generates shared datapoints; subsequent targets reuse them to avoid
+    redundant LLM calls.  For hybrid mode an additional static dataset is loaded
+    and a routing job is built.  All jobs are submitted in a single
     ``evaluatorq()`` call.
 
-    After execution, results are split by ``target_tag`` and converted to
-    per-target :class:`RedTeamReport` instances, which are merged into one
-    unified report.
+    After execution, results are split by ``job_name`` (matching each target's
+    ``safe_target`` slug) and converted to per-target :class:`RedTeamReport`
+    instances, which are merged into one unified report.
 
     Args:
         mode: ``"dynamic"`` or ``"hybrid"``.
@@ -616,43 +699,51 @@ async def _run_dynamic_or_hybrid(
         parent_context=parent_context,
     ) as pipeline_span:
 
-        # Prepare all targets concurrently — context retrieval and datapoint
-        # generation can happen in parallel across targets.
-        prepared_targets: list[PreparedTarget] = await asyncio.gather(
-            *[
-                _prepare_target(
-                    target=t,
-                    mode=mode,
-                    categories=categories,
-                    max_turns=max_turns,
-                    max_per_category=max_per_category,
-                    attack_model=attack_model,
-                    parallelism=parallelism,
-                    generate_strategies=generate_strategies,
-                    generated_strategy_count=generated_strategy_count,
-                    max_dynamic_datapoints=max_dynamic_datapoints,
-                    max_static_datapoints=max_static_datapoints,
-                    backend=backend,
-                    target_factory=target_factory,
-                    error_mapper=error_mapper,
-                    memory_cleanup=memory_cleanup,
-                    llm_client=llm_client,
-                    dataset_path=dataset_path,
-                    hooks=resolved_hooks,
-                    output_dir=output_dir,
-                    target_config=target_config,
-                    resolved_categories=resolved_categories,
-                )
-                for t in targets
-            ]
+        # Step 1: Prepare the first target fully — this generates the shared datapoints.
+        _common_prepare_kwargs: dict[str, Any] = dict(
+            mode=mode,
+            categories=categories,
+            max_turns=max_turns,
+            max_per_category=max_per_category,
+            attack_model=attack_model,
+            parallelism=parallelism,
+            generate_strategies=generate_strategies,
+            generated_strategy_count=generated_strategy_count,
+            max_dynamic_datapoints=max_dynamic_datapoints,
+            max_static_datapoints=max_static_datapoints,
+            backend=backend,
+            target_factory=target_factory,
+            error_mapper=error_mapper,
+            memory_cleanup=memory_cleanup,
+            llm_client=llm_client,
+            dataset_path=dataset_path,
+            hooks=resolved_hooks,
+            output_dir=output_dir,
+            target_config=target_config,
+            resolved_categories=resolved_categories,
         )
+        first_target = await _prepare_target(target=targets[0], **_common_prepare_kwargs)
 
-        # Collect all datapoints and jobs across all targets
-        all_datapoints: list[Any] = []
-        all_jobs: list[Any] = []
-        for pt in prepared_targets:
-            all_datapoints.extend(pt.all_datapoints)
-            all_jobs.append(pt.job)
+        # Step 2: Prepare remaining targets with shared datapoints — skip generation.
+        if len(targets) > 1:
+            other_targets: list[PreparedTarget] = list(await asyncio.gather(
+                *[
+                    _prepare_target(
+                        target=t,
+                        shared_datapoints=first_target.all_datapoints,
+                        **_common_prepare_kwargs,
+                    )
+                    for t in targets[1:]
+                ]
+            ))
+            prepared_targets: list[PreparedTarget] = [first_target] + other_targets
+        else:
+            prepared_targets = [first_target]
+
+        # Step 3: Use the first target's datapoints as THE shared datapoints.
+        # All jobs run on the same set of datapoints for side-by-side comparison.
+        all_datapoints: list[Any] = first_target.all_datapoints
+        all_jobs: list[Any] = [pt.job for pt in prepared_targets]
 
         if not all_datapoints:
             msg = f'No datapoints generated for any target in {mode} multi-target mode.'
@@ -672,8 +763,9 @@ async def _run_dynamic_or_hybrid(
         )
 
         if mode == Pipeline.HYBRID:
-            total_dynamic = sum(len(pt.dynamic_datapoints) for pt in prepared_targets)
-            total_static = sum(len(pt.static_datapoints) for pt in prepared_targets)
+            # Datapoints are shared — use the first target's counts (they're the same for all)
+            total_dynamic = len(first_target.dynamic_datapoints)
+            total_static = len(first_target.static_datapoints)
             confirm_payload: ConfirmPayload = {
                 "agent_context": first_ctx.model_dump(mode="json") if first_ctx is not None else None,
                 "num_datapoints": len(all_datapoints),
@@ -742,8 +834,8 @@ async def _run_dynamic_or_hybrid(
 
             evaluators: list[Any] = [{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}]
             log_label = (
-                f'{sum(len(pt.dynamic_datapoints) for pt in prepared_targets)} dynamic + '
-                f'{sum(len(pt.static_datapoints) for pt in prepared_targets)} static datapoints'
+                f'{len(first_target.dynamic_datapoints)} dynamic + '
+                f'{len(first_target.static_datapoints)} static datapoints'
             )
         else:
             evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
@@ -759,17 +851,14 @@ async def _run_dynamic_or_hybrid(
                 parallelism=parallelism,
                 print_results=False,
                 _exit_on_failure=False,
+                _send_results=False,
                 description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
             )
         except (asyncio.CancelledError, KeyboardInterrupt):
             logger.warning(f'Multi-target {mode} run cancelled — attempting memory cleanup')
             for pt in prepared_targets:
                 if cleanup_memory and pt.agent_context.has_memory:
-                    entity_ids = [
-                        dp.inputs['memory_entity_id']
-                        for dp in pt.dynamic_datapoints
-                        if 'memory_entity_id' in dp.inputs
-                    ]
+                    entity_ids = pt.memory_entity_ids
                     if entity_ids:
                         await cleanup_memory_entities(
                             pt.agent_context, entity_ids, memory_cleanup=pt.resolved_memory_cleanup
@@ -786,15 +875,29 @@ async def _run_dynamic_or_hybrid(
 
         pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
-        # Stage: report_generation — split by target_tag, convert, merge
+        # Stage: report_generation — split by job_name, convert, merge
         resolved_hooks.on_stage_start("report_generation", {"num_results": len(results)})
 
-        # Group raw evaluatorq results by target_tag
+        # Group raw evaluatorq results by target safe_target slug, matching
+        # job_name from each job result (job names are like "redteam:dynamic:<safe_target>").
+        # With shared datapoints each DataPointResult has job_results from ALL targets,
+        # so we create synthetic per-target copies containing only that target's job result.
         results_by_target: dict[str, list[Any]] = {}
         for result in results:
-            data_point = getattr(result, 'data_point', None)
-            tag = (data_point.inputs.get('target_tag') if data_point is not None else None) or '__unknown__'
-            results_by_target.setdefault(tag, []).append(result)
+            if not result.job_results:
+                # No job results — assign to all targets so reports can show the gap
+                for pt in prepared_targets:
+                    results_by_target.setdefault(pt.safe_target, []).append(result)
+                continue
+            for jr in result.job_results:
+                for pt in prepared_targets:
+                    if pt.safe_target in (jr.job_name or ''):
+                        target_result = copy.copy(result)
+                        target_result.job_results = [jr]
+                        results_by_target.setdefault(pt.safe_target, []).append(target_result)
+                        break
+                else:
+                    logger.warning(f'Job result with name {jr.job_name!r} did not match any target — excluded from reports')
 
         per_target_reports: list[RedTeamReport] = []
         for pt in prepared_targets:
@@ -889,20 +992,25 @@ async def _run_dynamic_or_hybrid(
 
         _save_report(output_dir, "03_summary_report.json", merged)
 
+        # Upload cleaned results to Orq platform — strip skipped job results
+        # (jobs return None for datapoints belonging to a different target).
+        await _send_cleaned_results(
+            results=results,
+            name='red-team',
+            description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+            start_time=pipeline_start,
+        )
+
         set_span_attrs(pipeline_span, {
             "orq.redteam.num_datapoints": len(all_datapoints),
             "orq.redteam.num_categories": len(resolved_categories),
             "orq.redteam.duration_seconds": pipeline_duration,
         })
 
-        # Memory cleanup for all targets
+        # Memory cleanup for all targets — use runtime-accumulated entity IDs
         for pt in prepared_targets:
             if cleanup_memory and pt.agent_context.has_memory:
-                entity_ids = [
-                    dp.inputs['memory_entity_id']
-                    for dp in pt.dynamic_datapoints
-                    if 'memory_entity_id' in dp.inputs
-                ]
+                entity_ids = pt.memory_entity_ids
                 if entity_ids:
                     resolved_hooks.on_stage_start("cleanup", {"num_entities": len(entity_ids), "target": pt.target})
                     from evaluatorq.redteam.tracing import with_redteam_span as _wrs
@@ -1039,6 +1147,7 @@ async def _run_static(
         parallelism=parallelism,
         print_results=False,
         _exit_on_failure=False,
+        _send_results=False,
         description=description or f'Static red teaming ({len(targets)} targets)',
     )
 
@@ -1098,4 +1207,14 @@ async def _run_static(
     })
 
     _save_report(output_dir, "03_summary_report.json", merged)
+
+    # Upload results to Orq platform — in static mode all jobs produce real
+    # output for every datapoint, so we send results as-is (no stripping).
+    await _send_cleaned_results(
+        results=results,
+        name='red-team',
+        description=description or f'Static red teaming ({len(targets)} targets)',
+        start_time=pipeline_start,
+    )
+
     return merged

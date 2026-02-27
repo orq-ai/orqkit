@@ -236,7 +236,9 @@ class TestRichHooks:
         report = _make_report()
         with patch("evaluatorq.redteam.hooks.print_report_summary") as mock_print:
             hooks.on_complete(report)
-            mock_print.assert_called_once_with(report)
+            mock_print.assert_called_once()
+            args, kwargs = mock_print.call_args
+            assert args[0] is report
 
     def test_rich_on_complete_renders_ui_hint(self):
         """on_complete should render a hint about 'evaluatorq redteam ui'."""
@@ -309,7 +311,7 @@ class TestHooksIntegration:
             def on_confirm(self, payload) -> bool:
                 return False
 
-        with patch("evaluatorq.redteam.runner._run_dynamic") as mock_dynamic:
+        with patch("evaluatorq.redteam.runner._run_dynamic_or_hybrid") as mock_dynamic:
 
             async def _fake_dynamic(**kwargs):
                 hooks = kwargs.get("hooks")
@@ -346,7 +348,7 @@ class TestHooksIntegration:
             def on_stage_start(self, stage: str, meta: dict) -> None:
                 raise ValueError("Hook exploded!")
 
-        with patch("evaluatorq.redteam.runner._run_dynamic") as mock_dynamic:
+        with patch("evaluatorq.redteam.runner._run_dynamic_or_hybrid") as mock_dynamic:
 
             async def _fake_dynamic(**kwargs):
                 hooks = kwargs.get("hooks")

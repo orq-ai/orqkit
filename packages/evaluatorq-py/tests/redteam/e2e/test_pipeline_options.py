@@ -12,6 +12,7 @@ from openai import AsyncOpenAI
 
 from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.base import BackendBundle
+from evaluatorq.redteam.exceptions import CancelledError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks
 
 from .conftest import DeterministicAsyncOpenAI
@@ -51,7 +52,7 @@ async def test_hooks_on_confirm_cancels_dynamic(
     """on_confirm returning False should raise RuntimeError."""
     hooks = _CancellingHooks()
     with _dynamic_patches(mock_backend_bundle):
-        with pytest.raises(RuntimeError, match="cancelled"):
+        with pytest.raises(CancelledError, match="cancelled"):
             await red_team(
                 "agent:e2e-test-agent",
                 mode="dynamic",
@@ -79,7 +80,7 @@ async def test_hooks_on_confirm_cancels_hybrid(
     """on_confirm returning False in hybrid mode should raise RuntimeError."""
     hooks = _CancellingHooks()
     with _dynamic_patches(mock_backend_bundle):
-        with pytest.raises(RuntimeError, match="cancelled"):
+        with pytest.raises(CancelledError, match="cancelled"):
             await red_team(
                 "agent:e2e-test-agent",
                 mode="hybrid",
@@ -141,7 +142,7 @@ async def test_dynamic_output_artifacts(
     mock_backend_bundle: BackendBundle,
     tmp_path: Path,
 ) -> None:
-    """Dynamic mode should write 01 through 04 artifact files."""
+    """Dynamic mode should write artifact files via the unified pipeline."""
     output_dir = tmp_path / "dynamic_artifacts"
     with _dynamic_patches(mock_backend_bundle):
         await red_team(
@@ -157,10 +158,9 @@ async def test_dynamic_output_artifacts(
             output_dir=output_dir,
         )
 
-    assert (output_dir / "01_agent_context.json").exists()
-    assert (output_dir / "02_datapoints.json").exists()
-    assert (output_dir / "03_attack_results.json").exists()
-    assert (output_dir / "04_summary_report.json").exists()
+    assert (output_dir / "01_all_datapoints.json").exists()
+    assert (output_dir / "02_attack_results.json").exists()
+    assert (output_dir / "03_summary_report.json").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +171,7 @@ async def test_dynamic_output_artifacts(
 @pytest.mark.asyncio
 async def test_invalid_mode_raises() -> None:
     """Invalid mode should raise ValueError."""
-    with pytest.raises(ValueError, match="Invalid mode"):
+    with pytest.raises(ValueError, match="is not a valid Pipeline"):
         await red_team(
             "openai:some-model",
             mode="nonexistent",
