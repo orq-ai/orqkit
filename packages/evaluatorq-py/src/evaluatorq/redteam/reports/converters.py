@@ -38,6 +38,7 @@ from evaluatorq.redteam.contracts import (
     infer_framework,
     normalize_category,
 )
+from evaluatorq.redteam.runtime.jobs import _normalize_usage as _normalize_token_usage
 from evaluatorq.redteam.vulnerability_registry import (
     VULNERABILITY_DEFS,
     get_framework_categories,
@@ -192,21 +193,6 @@ def _normalize_attack_technique(value: str | None) -> AttackTechnique:
     # Common jailbreak-like labels in LLM datasets map to direct injection.
     return AttackTechnique.DIRECT_INJECTION
 
-
-def _normalize_token_usage(raw: Any) -> TokenUsage | None:
-    """Normalize flexible usage payloads to TokenUsage."""
-    if isinstance(raw, TokenUsage):
-        return raw
-    if not isinstance(raw, dict):
-        return None
-    prompt = int(raw.get('prompt_tokens', raw.get('prompt', 0)) or 0)
-    completion = int(raw.get('completion_tokens', raw.get('completion', 0)) or 0)
-    total = int(raw.get('total_tokens', raw.get('total', prompt + completion)) or 0)
-    return TokenUsage(
-        prompt_tokens=prompt,
-        completion_tokens=completion,
-        total_tokens=total,
-    )
 
 
 def _coerce_score_passed(value: Any) -> bool | None:

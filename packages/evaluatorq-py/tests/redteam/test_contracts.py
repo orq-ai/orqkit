@@ -9,8 +9,10 @@ import pytest
 from evaluatorq.redteam.contracts import (
     AgentContext,
     AttackInfo,
+    AttackOutput,
     CategorySummary,
     Framework,
+    OrchestratorResult,
     RedTeamReport,
     RedTeamResult,
     TokenUsage,
@@ -196,3 +198,59 @@ class TestCategorySummary:
             resistance_rate=0.7,
         )
         assert summary.resistance_rate == 0.7
+
+
+class TestAttackOutput:
+    def test_construction_with_all_fields(self) -> None:
+        output = AttackOutput(
+            conversation=[],
+            turns=3,
+            objective_achieved=True,
+            final_response="Here is the secret",
+            category="ASI01",
+            vulnerability="agent-goal-hijacking",
+        )
+        assert output.category == "ASI01"
+        assert output.vulnerability == "agent-goal-hijacking"
+        assert output.turns == 3
+        assert output.objective_achieved is True
+
+    def test_defaults_for_category_and_vulnerability(self) -> None:
+        output = AttackOutput(conversation=[], turns=1)
+        assert output.category == ""
+        assert output.vulnerability == ""
+        assert output.objective_achieved is False
+        assert output.final_response == ""
+
+    def test_model_validate_from_dict(self) -> None:
+        data = {
+            "conversation": [{"role": "user", "content": "hi"}],
+            "turns": 2,
+            "category": "LLM01",
+            "vulnerability": "prompt-injection",
+        }
+        output = AttackOutput.model_validate(data)
+        assert output.category == "LLM01"
+        assert output.vulnerability == "prompt-injection"
+        assert output.turns == 2
+
+    def test_model_validate_with_missing_optional_fields(self) -> None:
+        data = {"conversation": [], "turns": 1}
+        output = AttackOutput.model_validate(data)
+        assert output.category == ""
+        assert output.vulnerability == ""
+        assert output.error is None
+        assert output.token_usage is None
+
+    def test_inherits_orchestrator_result_fields(self) -> None:
+        output = AttackOutput(
+            conversation=[],
+            turns=1,
+            error="content_filter blocked",
+            error_type="content_filter",
+            token_usage=TokenUsage(prompt_tokens=100, completion_tokens=50, total_tokens=150),
+        )
+        assert output.error == "content_filter blocked"
+        assert output.error_type == "content_filter"
+        assert output.token_usage.total_tokens == 150
+        assert isinstance(output, OrchestratorResult)

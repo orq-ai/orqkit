@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
+from pydantic import BaseModel
 
 from evaluatorq.redteam.contracts import (
+    AgentContext,
     AgentInfo,
     AttackInfo,
     AttackTechnique,
@@ -14,6 +17,7 @@ from evaluatorq.redteam.contracts import (
     DeliveryMethod,
     ExecutionDetails,
     Framework,
+    JobOutputPayload,
     Pipeline,
     RedTeamReport,
     RedTeamResult,
@@ -24,7 +28,15 @@ from evaluatorq.redteam.contracts import (
     TurnType,
     UnifiedEvaluationResult,
 )
-from evaluatorq.redteam.reports.converters import compute_report_summary, merge_reports
+from evaluatorq.redteam.reports.converters import (
+    _aggregate_token_usage,
+    _coerce_job_output_payload,
+    compute_report_summary,
+    dynamic_evaluatorq_results_to_report,
+    merge_reports,
+    static_evaluatorq_results_to_reports,
+    static_sample_to_result,
+)
 
 
 def _make_result(
@@ -301,3 +313,482 @@ class TestComputeReportSummary:
         results = [_make_result(), _make_result()]
         summary = compute_report_summary(results)
         assert summary.token_usage_total is None
+
+
+# ---------------------------------------------------------------------------
+# Helpers for new converter tests
+# ---------------------------------------------------------------------------
+
+def _make_dynamic_mock_result(
+    category: str = 'ASI01',
+    score_value: bool = True,
+    score_explanation: str = 'Resisted',
+    final_response: str = 'I cannot help',
+    turns: int = 2,
+    objective_achieved: bool = False,
+    token_usage: dict | None = None,
+    error: str | None = None,
+    output_error: str | None = None,
+    evaluator_scores: list | None = None,
+    strategy_name: str = 'test-strat',
+    attack_technique: str = 'indirect-injection',
+    delivery_methods: list[str] | None = None,
+    turn_type: str = 'single',
+    severity: str = 'medium',
+    is_generated: bool = False,
+) -> SimpleNamespace:
+    """Build a minimal mock evaluatorq DataPointResult for dynamic pipeline tests."""
+    output: dict = {
+        'final_response': final_response,
+        'turns': turns,
+        'conversation': [],
+        'objective_achieved': objective_achieved,
+    }
+    if token_usage is not None:
+        output['token_usage'] = token_usage
+    if output_error is not None:
+        output['error'] = output_error
+
+    if evaluator_scores is None:
+        evaluator_scores = [
+            SimpleNamespace(score=SimpleNamespace(value=score_value, explanation=score_explanation))
+        ]
+
+    return SimpleNamespace(
+        data_point=SimpleNamespace(inputs={
+            'category': category,
+            'strategy': {
+                'name': strategy_name,
+                'category': category,
+                'description': 'Test attack strategy description',
+                'attack_technique': attack_technique,
+                'delivery_methods': delivery_methods or ['direct-request'],
+                'turn_type': turn_type,
+                'severity': severity,
+                'is_generated': is_generated,
+                'objective_template': 'Make the agent {objective}',
+            },
+            'objective': 'test objective',
+        }),
+        job_results=[SimpleNamespace(
+            output=output,
+            evaluator_scores=evaluator_scores,
+        )],
+        error=error,
+    )
+
+
+def _make_static_mock_result(
+    job_name: str = 'target-job',
+    category: str = 'ASI01',
+    score_value: bool = True,
+    score_explanation: str = 'ok',
+    final_response: str = 'denied',
+    token_usage: dict | None = None,
+    dp_error: str | None = None,
+    job_error: str | None = None,
+    attack_technique: str = 'indirect-injection',
+    delivery_method: str = 'direct-request',
+    severity: str = 'medium',
+    scope: str = 'application',
+    framework: str = 'OWASP-ASI',
+    turn_type: str = 'single',
+) -> SimpleNamespace:
+    """Build a minimal mock evaluatorq DataPointResult for static pipeline tests."""
+    output: dict = {'final_response': final_response}
+    if token_usage is not None:
+        output['token_usage'] = token_usage
+
+    return SimpleNamespace(
+        data_point=SimpleNamespace(inputs={
+            'id': 'test-001',
+            'category': category,
+            'attack_technique': attack_technique,
+            'delivery_method': delivery_method,
+            'severity': severity,
+            'scope': scope,
+            'framework': framework,
+            'turn_type': turn_type,
+            'source': 'test',
+            'messages': [],
+        }),
+        job_results=[SimpleNamespace(
+            job_name=job_name,
+            output=output,
+            evaluator_scores=[
+                SimpleNamespace(score=SimpleNamespace(value=score_value, explanation=score_explanation))
+            ],
+            error=job_error,
+        )],
+        error=dp_error,
+    )
+
+
+def _make_agent_context(key: str = 'test-agent', model: str = 'gpt-4o') -> AgentContext:
+    return AgentContext(key=key, model=model, display_name='Test Agent')
+
+
+# ---------------------------------------------------------------------------
+# TestCoerceJobOutputPayload
+# ---------------------------------------------------------------------------
+
+
+class TestCoerceJobOutputPayload:
+    """Tests for _coerce_job_output_payload()."""
+
+    def test_dict_input_with_final_response(self):
+        raw = {'final_response': 'Hello there', 'turns': 3}
+        result = _coerce_job_output_payload(raw)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response == 'Hello there'
+        assert result.turns == 3
+
+    def test_wrapped_dict_unwraps_nested_output(self):
+        raw = {'output': {'final_response': 'hi', 'turns': 1}, 'extra_field': 'value'}
+        result = _coerce_job_output_payload(raw)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response == 'hi'
+        assert result.turns == 1
+
+    def test_json_string_is_parsed(self):
+        raw = '{"final_response": "from json", "turns": 5}'
+        result = _coerce_job_output_payload(raw)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response == 'from json'
+        assert result.turns == 5
+
+    def test_none_returns_empty_payload(self):
+        result = _coerce_job_output_payload(None)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response is None
+        assert result.turns is None
+        assert result.conversation == []
+
+    def test_pydantic_model_is_dumped_and_validated(self):
+        class FakeModel(BaseModel):
+            final_response: str = 'from pydantic'
+            turns: int = 7
+
+        model = FakeModel()
+        result = _coerce_job_output_payload(model)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response == 'from pydantic'
+        assert result.turns == 7
+
+    def test_malformed_json_string_returns_empty_payload(self):
+        result = _coerce_job_output_payload('{bad json here')
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response is None
+
+    def test_object_with_known_attributes_extracted(self):
+        obj = SimpleNamespace(
+            final_response='from namespace',
+            turns=4,
+            objective_achieved=True,
+        )
+        result = _coerce_job_output_payload(obj)
+        assert isinstance(result, JobOutputPayload)
+        assert result.final_response == 'from namespace'
+        assert result.turns == 4
+        assert result.objective_achieved is True
+
+
+# ---------------------------------------------------------------------------
+# TestDynamicConverterValuePropagation
+# ---------------------------------------------------------------------------
+
+
+class TestDynamicConverterValuePropagation:
+    """Tests for dynamic_evaluatorq_results_to_report()."""
+
+    def test_value_field_propagated_to_evaluation(self):
+        mock_result = _make_dynamic_mock_result(score_value=True, score_explanation='Agent resisted')
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        assert len(report.results) == 1
+        result = report.results[0]
+        assert result.evaluation is not None
+        assert result.evaluation.value is True
+        assert result.evaluation.passed is True
+        assert result.evaluation.explanation == 'Agent resisted'
+
+    def test_token_usage_extracted_from_job_output(self):
+        token_usage = {
+            'prompt_tokens': 100,
+            'completion_tokens': 50,
+            'total_tokens': 150,
+            'calls': 1,
+        }
+        mock_result = _make_dynamic_mock_result(token_usage=token_usage)
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        result = report.results[0]
+        assert result.execution is not None
+        assert result.execution.token_usage is not None
+        assert result.execution.token_usage.prompt_tokens == 100
+        assert result.execution.token_usage.total_tokens == 150
+
+    def test_error_from_job_output_classified(self):
+        mock_result = _make_dynamic_mock_result(output_error='rate limit exceeded: 429')
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        result = report.results[0]
+        assert result.error == 'rate limit exceeded: 429'
+        assert result.error_type == 'rate_limit'
+
+    def test_no_evaluator_scores_eval_passed_is_none(self):
+        mock_result = _make_dynamic_mock_result(evaluator_scores=[])
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        result = report.results[0]
+        assert result.evaluation is not None
+        assert result.evaluation.passed is None
+        assert result.evaluation.value is None
+
+    def test_multi_job_results_uses_first(self):
+        first_score = SimpleNamespace(score=SimpleNamespace(value=True, explanation='first'))
+        second_score = SimpleNamespace(score=SimpleNamespace(value=False, explanation='second'))
+
+        mock_result = SimpleNamespace(
+            data_point=SimpleNamespace(inputs={
+                'category': 'ASI01',
+                'strategy': {
+                    'name': 'test-strat',
+                    'category': 'ASI01',
+                    'description': 'Test attack strategy',
+                    'attack_technique': 'indirect-injection',
+                    'delivery_methods': ['direct-request'],
+                    'turn_type': 'single',
+                    'severity': 'medium',
+                    'is_generated': False,
+                    'objective_template': 'Make the agent do {objective}',
+                },
+                'objective': 'test',
+            }),
+            job_results=[
+                SimpleNamespace(
+                    output={'final_response': 'first response', 'turns': 1, 'conversation': []},
+                    evaluator_scores=[first_score],
+                ),
+                SimpleNamespace(
+                    output={'final_response': 'second response', 'turns': 1, 'conversation': []},
+                    evaluator_scores=[second_score],
+                ),
+            ],
+            error=None,
+        )
+
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        result = report.results[0]
+        assert result.evaluation is not None
+        assert result.evaluation.value is True
+        assert result.evaluation.explanation == 'first'
+
+
+# ---------------------------------------------------------------------------
+# TestStaticSampleToResult
+# ---------------------------------------------------------------------------
+
+
+class TestStaticSampleToResult:
+    """Tests for static_sample_to_result()."""
+
+    def _base_sample(self, **overrides) -> dict:
+        sample = {
+            'input': {
+                'id': 'test-001',
+                'category': 'ASI01',
+                'attack_technique': 'indirect-injection',
+                'delivery_method': 'direct-request',
+                'severity': 'medium',
+                'scope': 'application',
+                'framework': 'OWASP-ASI',
+                'turn_type': 'single',
+                'source': 'test',
+            },
+            'messages': [{'role': 'user', 'content': 'hi'}],
+            'response': 'I cannot do that',
+            'evaluation_result': {
+                'value': True,
+                'passed': True,
+                'explanation': 'Resistant',
+            },
+        }
+        sample.update(overrides)
+        return sample
+
+    def test_value_propagated_from_evaluation_result(self):
+        sample = self._base_sample()
+        result = static_sample_to_result(sample, agent_key='my-agent')
+        assert result.evaluation is not None
+        assert result.evaluation.value is True
+        assert result.evaluation.passed is True
+        assert result.evaluation.explanation == 'Resistant'
+
+    def test_no_value_evaluation_value_is_none(self):
+        sample = self._base_sample()
+        sample['evaluation_result'] = {'explanation': 'no score here'}
+        result = static_sample_to_result(sample, agent_key='my-agent')
+        assert result.evaluation is not None
+        assert result.evaluation.value is None
+        assert result.evaluation.passed is None
+
+    def test_token_usage_in_evaluation_result_propagated(self):
+        sample = self._base_sample()
+        sample['evaluation_result'] = {
+            'value': True,
+            'passed': True,
+            'explanation': 'ok',
+            'token_usage': {
+                'prompt_tokens': 30,
+                'completion_tokens': 10,
+                'total_tokens': 40,
+                'calls': 1,
+            },
+        }
+        result = static_sample_to_result(sample, agent_key='my-agent')
+        assert result.evaluation is not None
+        assert result.evaluation.token_usage is not None
+        assert result.evaluation.token_usage.prompt_tokens == 30
+        assert result.evaluation.token_usage.total_tokens == 40
+
+    def test_error_classified(self):
+        sample = self._base_sample()
+        sample['error'] = 'connection refused'
+        sample['evaluation_result'] = {}
+        result = static_sample_to_result(sample, agent_key='my-agent')
+        assert result.error == 'connection refused'
+        assert result.error_type == 'network_error'
+
+    def test_false_value_marks_vulnerable(self):
+        sample = self._base_sample()
+        sample['evaluation_result'] = {
+            'value': False,
+            'passed': False,
+            'explanation': 'Jailbroken',
+        }
+        result = static_sample_to_result(sample, agent_key='my-agent')
+        assert result.vulnerable is True
+        assert result.evaluation is not None
+        assert result.evaluation.value is False
+
+
+# ---------------------------------------------------------------------------
+# TestStaticEvaluatorqResults
+# ---------------------------------------------------------------------------
+
+
+class TestStaticEvaluatorqResults:
+    """Tests for static_evaluatorq_results_to_reports()."""
+
+    def test_value_propagated_via_score_value(self):
+        mock_result = _make_static_mock_result(score_value=True, score_explanation='Passed')
+        reports = static_evaluatorq_results_to_reports(results=[mock_result], agent_key='my-agent')
+        assert 'target-job' in reports
+        report = reports['target-job']
+        assert len(report.results) == 1
+        result = report.results[0]
+        assert result.evaluation is not None
+        assert result.evaluation.value is True
+        assert result.evaluation.passed is True
+
+    def test_multiple_jobs_produce_separate_reports(self):
+        mock_a = _make_static_mock_result(job_name='job-a', final_response='resp-a')
+        mock_b = _make_static_mock_result(job_name='job-b', final_response='resp-b')
+        reports = static_evaluatorq_results_to_reports(results=[mock_a, mock_b], agent_key='my-agent')
+        assert set(reports.keys()) == {'job-a', 'job-b'}
+        assert len(reports['job-a'].results) == 1
+        assert len(reports['job-b'].results) == 1
+
+    def test_multiple_samples_grouped_by_job(self):
+        mock_a1 = _make_static_mock_result(job_name='job-a')
+        mock_a2 = _make_static_mock_result(job_name='job-a', final_response='another')
+        reports = static_evaluatorq_results_to_reports(results=[mock_a1, mock_a2], agent_key='my-agent')
+        assert 'job-a' in reports
+        assert len(reports['job-a'].results) == 2
+
+    def test_token_usage_propagated(self):
+        token_usage = {'prompt_tokens': 20, 'completion_tokens': 10, 'total_tokens': 30, 'calls': 1}
+        mock_result = _make_static_mock_result(token_usage=token_usage)
+        reports = static_evaluatorq_results_to_reports(results=[mock_result], agent_key='my-agent')
+        result = reports['target-job'].results[0]
+        assert result.evaluation is not None
+        assert result.evaluation.token_usage is not None
+        assert result.evaluation.token_usage.total_tokens == 30
+
+
+# ---------------------------------------------------------------------------
+# TestAggregateTokenUsage
+# ---------------------------------------------------------------------------
+
+
+class TestAggregateTokenUsage:
+    """Tests for _aggregate_token_usage()."""
+
+    def test_empty_list_returns_none(self):
+        assert _aggregate_token_usage([]) is None
+
+    def test_all_results_without_token_usage_returns_none(self):
+        results = [
+            _make_result(),
+            _make_result(execution=ExecutionDetails(turns=2)),
+        ]
+        assert _aggregate_token_usage(results) is None
+
+    def test_mixed_results_sums_only_those_with_usage(self):
+        results = [
+            _make_result(
+                execution=ExecutionDetails(
+                    turns=1,
+                    token_usage=TokenUsage(prompt_tokens=100, completion_tokens=40, total_tokens=140, calls=2),
+                )
+            ),
+            _make_result(),  # no execution, no usage
+            _make_result(
+                execution=ExecutionDetails(
+                    turns=2,
+                    token_usage=TokenUsage(prompt_tokens=60, completion_tokens=20, total_tokens=80, calls=1),
+                )
+            ),
+        ]
+        usage = _aggregate_token_usage(results)
+        assert usage is not None
+        assert usage.prompt_tokens == 160
+        assert usage.completion_tokens == 60
+        assert usage.total_tokens == 220
+        assert usage.calls == 3
+
+    def test_single_result_with_usage_returned_directly(self):
+        results = [
+            _make_result(
+                execution=ExecutionDetails(
+                    turns=1,
+                    token_usage=TokenUsage(prompt_tokens=50, completion_tokens=25, total_tokens=75, calls=1),
+                )
+            ),
+        ]
+        usage = _aggregate_token_usage(results)
+        assert usage is not None
+        assert usage.prompt_tokens == 50
+        assert usage.total_tokens == 75
