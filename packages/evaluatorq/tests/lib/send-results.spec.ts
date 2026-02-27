@@ -150,6 +150,20 @@ describe("sendResultsToOrqEffect serialization", () => {
     expect(jobResults[0].output).toBe('{"answer":"hello","confidence":0.9}');
   });
 
+  test("preserves ResponseResource output as-is", async () => {
+    const responseResource = {
+      object: "response" as const,
+      id: "resp_123",
+      model: "gpt-4",
+    };
+    const payload = await capturePayload(
+      buildResults(0.9, undefined, responseResource as unknown as Output),
+    );
+    const results = payload.results as Array<Record<string, unknown>>;
+    const jobResults = results[0].jobResults as Array<Record<string, unknown>>;
+    expect(jobResults[0].output).toEqual(responseResource);
+  });
+
   test("serializes Error objects to strings", async () => {
     const payload = await capturePayload(
       buildResults(0.5, new Error("eval failed")),
