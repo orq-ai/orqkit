@@ -1,6 +1,6 @@
 """Interactive Streamlit dashboard for exploring red team reports.
 
-Launch via CLI:  evaluatorq-redteam ui /path/to/report.json
+Launch via CLI:  evaluatorq redteam ui /path/to/report.json
 Or directly:     streamlit run dashboard.py
 """
 
@@ -429,7 +429,7 @@ def _render_dashboard() -> None:
             st.info(
                 "**Welcome to the Red Team Dashboard**\n\n"
                 "Upload a report JSON file in the sidebar, or launch via CLI:\n\n"
-                "```\nevaluatorq-redteam ui /path/to/report.json\n```"
+                "```\nevaluatorq redteam ui /path/to/report.json\n```"
             )
             st.stop()
     else:
