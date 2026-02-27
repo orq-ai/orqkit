@@ -20,7 +20,7 @@ class EvaluationResultCell(BaseModel):
 
 
 def _is_evaluation_result_cell_dict(value: dict[str, Any]) -> bool:
-    return "type" in value and "value" in value
+    return isinstance(value.get("type"), str) and isinstance(value.get("value"), dict)
 
 
 class EvaluationResult(BaseModel):
@@ -55,7 +55,7 @@ class JobResult(BaseModel):
 
     @field_serializer("output", when_used="json")
     def serialize_output(self, output: Output) -> Any:
-        if isinstance(output, dict):
+        if isinstance(output, dict) and output.get("object") != "response":
             return json.dumps(output)
 
         return output
