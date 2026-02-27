@@ -122,6 +122,12 @@ class TestSendResultsSerialization:
             "value": {"precision": 0.9, "recall": 0.8, "f1": 0.85},
         }
 
+    def test_preserves_response_resource_output_as_is(self, build_results: Callable[..., list[DataPointResult]]):
+        response_resource = {"object": "response", "id": "resp_123", "model": "gpt-4"}
+        payload = serialize(build_results(0.9, output=response_resource))
+        output = payload["results"][0]["jobResults"][0]["output"]
+        assert output == response_resource
+
     def test_serializes_error_strings(self, build_results: Callable[..., list[DataPointResult]]):
         payload = serialize(build_results(0.5, error="eval failed"))
         eval_score = payload["results"][0]["jobResults"][0]["evaluatorScores"][0]
