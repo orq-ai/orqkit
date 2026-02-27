@@ -9,6 +9,7 @@ from evaluatorq import DataPoint, Job, job
 from loguru import logger
 
 from evaluatorq.redteam.contracts import Message
+from evaluatorq.redteam.exceptions import CredentialError
 
 
 def _sanitize_job_name(value: str) -> str:
@@ -46,7 +47,7 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
         api_key = os.environ.get('ORQ_API_KEY')
         if not api_key:
-            raise RuntimeError('ORQ_API_KEY environment variable is not set')
+            raise CredentialError('ORQ_API_KEY environment variable is not set')
         client = Orq(api_key=api_key)
         task_id: str | None = None
         result_text = ''

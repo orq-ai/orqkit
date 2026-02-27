@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 import os
 
 from openai import AsyncOpenAI
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 from evaluatorq.redteam.backends.base import BackendBundle
+from evaluatorq.redteam.exceptions import BackendError, CredentialError
 from evaluatorq.redteam.backends.openai import (
     NoopMemoryCleanup,
     OpenAIContextProvider,
@@ -53,7 +52,7 @@ def create_async_llm_client() -> AsyncOpenAI:
         "Missing LLM credentials. Set either OPENAI_API_KEY (optionally OPENAI_BASE_URL) "
         "or ORQ_API_KEY (optionally ORQ_BASE_URL)."
     )
-    raise RuntimeError(msg)
+    raise CredentialError(msg)
 
 
 def resolve_backend(
@@ -84,13 +83,13 @@ def resolve_backend(
 
     if normalized != "orq":
         msg = f"Unsupported backend: {backend!r}. Expected 'orq' or 'openai'."
-        raise ValueError(msg)
+        raise BackendError(msg)
 
     try:
         from evaluatorq.redteam.backends.orq import ORQErrorMapper, create_orq_backend
     except ImportError as exc:
         msg = "ORQ backend requested but ORQ dependencies are unavailable. Install ORQ extras or use backend='openai'."
-        raise RuntimeError(msg) from exc
+        raise BackendError(msg) from exc
 
     target_factory, context_provider, memory_cleanup = create_orq_backend()
     return BackendBundle(

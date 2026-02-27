@@ -478,14 +478,16 @@ class TestGetOrqApiKey:
 
     def test_raises_runtime_error_when_not_set(self, monkeypatch):
         from evaluatorq.redteam.backends.orq import _get_orq_api_key
+        from evaluatorq.redteam.exceptions import CredentialError
 
         monkeypatch.delenv("ORQ_API_KEY", raising=False)
-        with pytest.raises(RuntimeError, match="ORQ_API_KEY"):
+        with pytest.raises(CredentialError, match="ORQ_API_KEY"):
             _get_orq_api_key()
 
     def test_raises_runtime_error_when_empty_string(self, monkeypatch):
         from evaluatorq.redteam.backends.orq import _get_orq_api_key
+        from evaluatorq.redteam.exceptions import CredentialError
 
         monkeypatch.setenv("ORQ_API_KEY", "")
-        with pytest.raises(RuntimeError, match="ORQ_API_KEY"):
+        with pytest.raises(CredentialError, match="ORQ_API_KEY"):
             _get_orq_api_key()

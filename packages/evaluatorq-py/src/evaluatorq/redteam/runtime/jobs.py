@@ -9,6 +9,7 @@ from loguru import logger
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import Message, TokenUsage
+from evaluatorq.redteam.exceptions import CredentialError
 from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name, create_orq_platform_agent_job
 
 if TYPE_CHECKING:
@@ -57,7 +58,7 @@ def create_model_job(
             messages = _build_messages(data)
             api_key = os.environ.get('ORQ_API_KEY')
             if not api_key:
-                raise RuntimeError('ORQ_API_KEY environment variable is not set')
+                raise CredentialError('ORQ_API_KEY environment variable is not set')
             client = Orq(api_key=api_key)
             completion = await client.deployments.invoke_async(
                 key=deployment_key,

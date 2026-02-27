@@ -15,6 +15,9 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
+from evaluatorq.redteam.backends.registry import ORQ_DEFAULT_BASE_URL
+from evaluatorq.redteam.exceptions import CredentialError
+
 if TYPE_CHECKING:
     from orq_ai_sdk import Orq
 
@@ -30,13 +33,13 @@ def _get_orq_api_key() -> str:
     key = os.environ.get('ORQ_API_KEY', '')
     if not key:
         msg = 'ORQ_API_KEY environment variable is not set'
-        raise RuntimeError(msg)
+        raise CredentialError(msg)
     return key
 
 
 def _get_orq_server_url() -> str:
     """Read ORQ_BASE_URL from environment and strip /v2/router for SDK use."""
-    url = os.environ.get('ORQ_BASE_URL', 'https://my.orq.ai')
+    url = os.environ.get('ORQ_BASE_URL', ORQ_DEFAULT_BASE_URL)
     return url.rstrip('/').removesuffix('/v2/router')
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
@@ -248,7 +251,7 @@ class ORQContextProvider:
 
     async def get_agent_context(self, agent_key: str) -> AgentContext:
         """Retrieve full agent context from ORQ API."""
-        logger.info(f'Retrieving agent context for: {agent_key}')
+        logger.debug(f'Retrieving agent context for: {agent_key}')
 
         agent_data = await asyncio.to_thread(
             self.orq_client.agents.retrieve,
@@ -301,7 +304,7 @@ class ORQContextProvider:
             model=model_id,
         )
 
-        logger.info(
+        logger.debug(
             f'Retrieved context: {len(tools)} tools, {len(memory_stores)} memory stores, '
             f'{len(knowledge_bases)} knowledge bases'
         )
@@ -395,7 +398,7 @@ class ORQMemoryCleanup:
                         continue
                     logger.warning(f'Failed to cleanup memory entity {entity_id} from {ms.key}: {e}')
 
-        logger.info(
+        logger.debug(
             f'Memory cleanup complete ({len(entity_ids)} entities across {len(agent_context.memory_stores)} stores)'
         )
 
