@@ -23,7 +23,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
 from evaluatorq.redteam.contracts import TurnType
@@ -39,6 +39,20 @@ if TYPE_CHECKING:
         MemoryCleanup,
     )
     from evaluatorq.redteam.contracts import AgentContext
+
+
+def _set_attack_span_attrs(span: Any, result: AttackOutput) -> None:
+    """Set common tracing attributes on an attack span from an AttackOutput."""
+    set_span_attrs(span, {
+        'orq.redteam.objective_achieved': result.objective_achieved,
+        'orq.redteam.actual_turns': result.turns,
+        'orq.redteam.duration_seconds': result.duration_seconds,
+    })
+    if result.error:
+        set_span_attrs(span, {
+            'orq.redteam.error_type': result.error_type,
+            'orq.redteam.error_code': result.error_code,
+        })
 
 
 async def generate_dynamic_datapoints(
@@ -114,6 +128,7 @@ def create_dynamic_redteam_job(
     target_factory: AgentTargetFactory | None = None,
     error_mapper: ErrorMapper | None = None,
     attack_llm_client: AsyncOpenAI | None = None,
+    memory_entity_ids: list[str] | None = None,
 ) -> Job:
     """Create an evaluatorq Job that runs a red-team attack.
 
@@ -153,7 +168,15 @@ def create_dynamic_redteam_job(
         objective = str(inputs['objective'])
         category = str(inputs['category'])
         vulnerability = str(inputs.get('vulnerability', ''))
-        memory_entity_id = inputs.get('memory_entity_id')
+        # Generate a fresh memory entity ID per job execution so parallel
+        # targets sharing the same datapoints don't interfere with each other's
+        # memory state.  Falls back to the datapoint value for single-target runs.
+        if agent_context.has_memory:
+            memory_entity_id = f'red-team-{uuid.uuid4().hex[:12]}'
+            if memory_entity_ids is not None:
+                memory_entity_ids.append(memory_entity_id)
+        else:
+            memory_entity_id = inputs.get('memory_entity_id')
         effective_max_turns = 1 if strategy.turn_type == TurnType.SINGLE else max_turns
 
         async with with_redteam_span(
@@ -230,7 +253,7 @@ def create_dynamic_redteam_job(
                         'exception_type': type(e).__name__,
                         'raw_message': str(e),
                     }
-                result_dict = OrchestratorResult(
+                result_dict = AttackOutput(
                     conversation=[Message(role='user', content=prompt), Message(role='assistant', content=response)],
                     final_response=response,
                     objective_achieved=False,
@@ -245,25 +268,13 @@ def create_dynamic_redteam_job(
                     error_stage=error_stage,
                     error_code=error_code,
                     error_details=error_details,
-                ).model_dump(mode='json') | {'category': category, 'vulnerability': vulnerability}
+                    category=category,
+                    vulnerability=vulnerability,
+                )
 
-                # Set input/output on the attack span so the platform can display them
-                set_span_attrs(attack_span, {
-                    'input': prompt,
-                    'output': response or '',
-                })
-
-                set_span_attrs(attack_span, {
-                    'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
-                    'orq.redteam.actual_turns': result_dict.get('turns'),
-                    'orq.redteam.duration_seconds': result_dict.get('duration_seconds'),
-                })
-                if result_dict.get('error'):
-                    set_span_attrs(attack_span, {
-                        'orq.redteam.error_type': result_dict.get('error_type'),
-                        'orq.redteam.error_code': result_dict.get('error_code'),
-                    })
-                return result_dict
+                set_span_attrs(attack_span, {'input': prompt, 'output': response or ''})
+                _set_attack_span_attrs(attack_span, result_dict)
+                return result_dict.model_dump(mode='json')
 
             # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
             llm_client = attack_llm_client or create_async_llm_client()
@@ -306,29 +317,17 @@ def create_dynamic_redteam_job(
                     },
                 )
 
-            result_dict = result.model_dump(mode='json') | {'category': category, 'vulnerability': vulnerability}
+            result_dict = AttackOutput(**result.model_dump(), category=category, vulnerability=vulnerability)
 
             # Set input/output on the attack span so the platform can display them
-            conversation = result_dict.get('conversation', [])
-            if conversation:
-                first_user = next((m['content'] for m in conversation if m.get('role') == 'user'), None)
+            if result_dict.conversation:
+                first_user = next((m.content for m in result_dict.conversation if m.role == 'user'), None)
                 if first_user:
                     set_span_attrs(attack_span, {'input': first_user})
-            final_resp = result_dict.get('final_response')
-            if final_resp:
-                set_span_attrs(attack_span, {'output': final_resp})
-
-            set_span_attrs(attack_span, {
-                'orq.redteam.objective_achieved': result_dict.get('objective_achieved'),
-                'orq.redteam.actual_turns': result_dict.get('turns'),
-                'orq.redteam.duration_seconds': result_dict.get('duration_seconds'),
-            })
-            if result_dict.get('error'):
-                set_span_attrs(attack_span, {
-                    'orq.redteam.error_type': result_dict.get('error_type'),
-                    'orq.redteam.error_code': result_dict.get('error_code'),
-                })
-            return result_dict
+            if result_dict.final_response:
+                set_span_attrs(attack_span, {'output': result_dict.final_response})
+            _set_attack_span_attrs(attack_span, result_dict)
+            return result_dict.model_dump(mode='json')
 
     return dynamic_job
 
@@ -346,20 +345,33 @@ def create_dynamic_evaluator(
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
-        output: dict[str, Any] = cast(dict[str, Any], params['output'])
+        raw_output = params['output']
+        if isinstance(raw_output, AttackOutput):
+            output = raw_output
+        elif isinstance(raw_output, dict):
+            try:
+                output = AttackOutput.model_validate(raw_output)
+            except Exception as e:
+                logger.error(f'Failed to parse job output as AttackOutput: {e}')
+                return EvaluationResult(
+                    value='error',
+                    explanation=f'Failed to parse job output: {e}',
+                )
+        else:
+            logger.warning(f'Unexpected output type {type(raw_output).__name__} from job; treating as empty')
+            output = AttackOutput()
 
         # Skip evaluation when the target returned an error
-        if output.get('error'):
-            error_msg = output.get('error', 'unknown error')
+        if output.error:
             return EvaluationResult(
                 value='error',
-                explanation=f'Skipped: target returned error — {error_msg}',
+                explanation=f'Skipped: target returned error — {output.error}',
             )
 
-        conversation = output.get('conversation', [])
-        final_response = output.get('final_response', '')
-        category = output.get('category', '') or data.inputs.get('category', '')
-        vulnerability = output.get('vulnerability', '') or data.inputs.get('vulnerability', '')
+        conversation = output.conversation
+        final_response = output.final_response
+        category = output.category or data.inputs.get('category', '')
+        vulnerability = output.vulnerability or data.inputs.get('vulnerability', '')
 
         async with with_redteam_span(
             'orq.redteam.security_evaluation',
