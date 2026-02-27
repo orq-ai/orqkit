@@ -292,6 +292,7 @@ def static_sample_to_result(
     if has_eval:
         evaluation_usage = _normalize_token_usage(eval_dict.get('token_usage'))
         evaluation = UnifiedEvaluationResult(
+            value=eval_dict.get('value'),
             passed=eval_dict.get('passed'),
             explanation=eval_dict.get('explanation', ''),
             evaluator_id=eval_dict.get('evaluator_id', evaluator_meta.get('evaluator_id', category)),
@@ -384,6 +385,7 @@ def dynamic_evaluatorq_results_to_report(
 
         job_output = JobOutputPayload()
         eval_passed: bool | None = None
+        eval_value: Any = None
         eval_explanation = ''
         job_result = None
 
@@ -396,6 +398,7 @@ def dynamic_evaluatorq_results_to_report(
             evaluator_scores = getattr(job_result, 'evaluator_scores', None) or []
             if evaluator_scores:
                 score = evaluator_scores[0].score
+                eval_value = score.value
                 eval_passed = _coerce_score_passed(score.value)
                 eval_explanation = score.explanation or ''
 
@@ -431,6 +434,7 @@ def dynamic_evaluatorq_results_to_report(
         )
 
         evaluation = UnifiedEvaluationResult(
+            value=eval_value,
             passed=eval_passed,
             explanation=eval_explanation,
             evaluator_id=evaluator_id,
@@ -537,6 +541,7 @@ def static_evaluatorq_results_to_reports(
             if scores:
                 score = scores[0].score
                 eval_result = {
+                    'value': score.value,
                     'passed': _coerce_score_passed(score.value),
                     'explanation': score.explanation or '',
                     'evaluator_id': evaluator_meta.get('evaluator_id', normalized_category),

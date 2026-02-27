@@ -578,7 +578,10 @@ async def _prepare_target(
         ) -> Any:
             route = data.inputs.get('hybrid_source', 'static')
             inner = _dyn if route == 'dynamic' else _sta
-            return await inner(data, row)
+            result = await inner(data, row)
+            # Inner job is @job-decorated, so it returns {"name": ..., "output": ...}.
+            # Unwrap to avoid double-wrapping since _target_job is also @job-decorated.
+            return result.get('output', result) if isinstance(result, dict) else result
 
     else:
         # Dynamic mode — no target_tag tagging needed, datapoints are shared
@@ -597,7 +600,10 @@ async def _prepare_target(
             row: int,
             _inner: Any = dynamic_job,
         ) -> Any:
-            return await _inner(data, row)
+            result = await _inner(data, row)
+            # Inner job is @job-decorated, so it returns {"name": ..., "output": ...}.
+            # Unwrap to avoid double-wrapping since _target_job is also @job-decorated.
+            return result.get('output', result) if isinstance(result, dict) else result
 
     return PreparedTarget(
         target=target,
@@ -814,7 +820,8 @@ async def _run_dynamic_or_hybrid(
 
         # Build evaluator — hybrid routes on hybrid_source; dynamic uses the
         # dynamic evaluator directly.
-        if mode == Pipeline.HYBRID:
+        has_static = any(pt.static_datapoints for pt in prepared_targets)
+        if mode == Pipeline.HYBRID and has_static:
             dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
             static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
@@ -904,7 +911,7 @@ async def _run_dynamic_or_hybrid(
             safe = pt.safe_target
             target_results = results_by_target.get(safe, [])
 
-            if mode == Pipeline.HYBRID:
+            if mode == Pipeline.HYBRID and has_static:
                 # Split by hybrid_source and convert separately, then merge
                 dynamic_results = [
                     r for r in target_results

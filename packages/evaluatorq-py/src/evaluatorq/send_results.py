@@ -89,9 +89,12 @@ async def send_results_to_orq(
         # ``output`` even when None (the API requires it to be present).
         payload_dict = payload.model_dump(mode="json", exclude_none=True, by_alias=True)
 
-        # Restore fields that exclude_none drops but the API requires.
-        # ``output`` must be present (nullable), ``error`` and
-        # ``explanation`` must be strings (not absent).
+        # Restore fields stripped by exclude_none.  The API schema marks
+        # ``error`` and ``explanation`` as optional strings — they may be
+        # absent, but must never be ``null``.  Defensive: ensure they are
+        # empty strings rather than absent, in case any code path leaks a
+        # ``null`` through nested dicts that exclude_none cannot reach.
+        # ``output`` is required (nullable) so it must always be present.
         for result in payload_dict.get("results", []):
             for jr in result.get("jobResults") or []:
                 jr.setdefault("output", None)
