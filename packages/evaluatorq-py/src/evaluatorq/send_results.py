@@ -89,11 +89,17 @@ async def send_results_to_orq(
         # ``output`` even when None (the API requires it to be present).
         payload_dict = payload.model_dump(mode="json", exclude_none=True, by_alias=True)
 
-        # Restore ``output`` on every job result — exclude_none drops it
-        # when output is None, but the API schema requires the key.
+        # Restore fields that exclude_none drops but the API requires.
+        # ``output`` must be present (nullable), ``error`` and
+        # ``explanation`` must be strings (not absent).
         for result in payload_dict.get("results", []):
             for jr in result.get("jobResults") or []:
                 jr.setdefault("output", None)
+                jr.setdefault("error", "")
+                for es in jr.get("evaluatorScores") or []:
+                    if "score" in es:
+                        es["score"].setdefault("explanation", "")
+                    es.setdefault("error", "")
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
