@@ -55,8 +55,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isEvaluationResultCell = (
   value: unknown,
-): value is { type: unknown; value: unknown } =>
-  isRecord(value) && "type" in value && "value" in value;
+): value is { type: string; value: Record<string, unknown> } =>
+  isRecord(value) &&
+  typeof value.type === "string" &&
+  isRecord(value.value);
 
 const serializeScoreValue = (value: unknown): unknown => {
   if (isRecord(value) && !isEvaluationResultCell(value)) {
@@ -66,8 +68,13 @@ const serializeScoreValue = (value: unknown): unknown => {
   return value;
 };
 
+const isResponseResource = (value: unknown): value is { object: "response" } =>
+  isRecord(value) && value.object === "response";
+
 const serializeOutput = (output: Output): Output =>
-  isRecord(output) ? JSON.stringify(output) : output;
+  isRecord(output) && !isResponseResource(output)
+    ? JSON.stringify(output)
+    : output;
 
 export const sendResultsToOrqEffect = (
   apiKey: string,
