@@ -56,9 +56,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isEvaluationResultCell = (
   value: unknown,
 ): value is { type: string; value: Record<string, unknown> } =>
-  isRecord(value) &&
-  typeof value.type === "string" &&
-  isRecord(value.value);
+  isRecord(value) && typeof value.type === "string" && isRecord(value.value);
 
 const serializeScoreValue = (value: unknown): unknown => {
   if (isRecord(value) && !isEvaluationResultCell(value)) {
