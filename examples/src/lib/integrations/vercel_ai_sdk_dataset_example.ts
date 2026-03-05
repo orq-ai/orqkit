@@ -51,7 +51,11 @@ await evaluatorq("weather-agent-dataset-eval", {
   description: "Weather agent evaluation using a dataset",
   parallelism: 2,
   data: {
-    datasetId: process.env.DATASET_ID ?? "", // Replace with your actual dataset ID
+    datasetId: (() => {
+      if (!process.env.DATASET_ID)
+        throw new Error("DATASET_ID environment variable is required");
+      return process.env.DATASET_ID;
+    })(),
   },
   jobs: [wrapAISdkAgent(weatherAgent, { promptKey: "input" })],
   evaluators: [
