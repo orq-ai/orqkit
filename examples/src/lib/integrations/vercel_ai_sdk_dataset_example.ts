@@ -44,8 +44,9 @@ const weatherAgent = new ToolLoopAgent({
 // ============================================================
 // Usage Example — Dataset-based evaluation
 // ============================================================
-// Upload examples/assets/dataset.csv to the Orq platform, then
+// Upload examples/src/lib/integrations/datasets/vercel_ai_sdk_dataset_example.csv to the Orq platform, then
 // replace the datasetId below with the ID from the platform.
+// Also ensure the ORQ_API_KEY environment variable is set to authenticate with the platform.
 await evaluatorq("weather-agent-dataset-eval", {
   description: "Weather agent evaluation using a dataset",
   parallelism: 2,
@@ -72,6 +73,31 @@ await evaluatorq("weather-agent-dataset-eval", {
           explanation: hasTemp
             ? "Response contains temperature"
             : "No temperature found in response",
+        };
+      },
+    },
+    {
+      name: "matches-expected",
+      scorer: async ({ data, output }) => {
+        const result = output as unknown as ResponseResource;
+        const message = result.output.find(
+          (item): item is Message => item.type === "message",
+        );
+        const textContent = message?.content.find(
+          (c): c is OutputTextContent & { type: "output_text" } =>
+            c.type === "output_text",
+        );
+        const text = textContent?.text ?? "";
+        const expected =
+          (data.inputs as Record<string, string>).expected_output ?? "";
+        if (!expected)
+          return { value: 0, explanation: "No expected output provided" };
+        const matches = text.toLowerCase().includes(expected.toLowerCase());
+        return {
+          value: matches ? 1 : 0,
+          explanation: matches
+            ? "Response matches expected output"
+            : `Expected "${expected}" but got "${text.slice(0, 100)}"`,
         };
       },
     },

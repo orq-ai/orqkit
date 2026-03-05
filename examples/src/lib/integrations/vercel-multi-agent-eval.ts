@@ -15,7 +15,7 @@
  *     and optionally "expected_output" (the expected answer)
  *
  * Usage:
- *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel-complex-eval.ts
+ *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel-multi-agent-eval.ts
  */
 
 import { createOpenAI } from "@ai-sdk/openai";
@@ -302,7 +302,11 @@ await evaluatorq("vercel-complex-multi-agent-eval", {
   path: "Integrations/VercelAI",
   parallelism: 3,
   data: {
-    datasetId: DATASET_ID ?? "",
+    datasetId: (() => {
+      if (!DATASET_ID)
+        throw new Error("DATASET_ID environment variable is required");
+      return DATASET_ID;
+    })(),
   },
   jobs: [
     wrapAISdkAgent(researchAgent, {

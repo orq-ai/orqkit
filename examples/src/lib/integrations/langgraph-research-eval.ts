@@ -16,7 +16,7 @@
  *     and optionally "expected_output" (the expected answer)
  *
  * Usage:
- *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langgraph-complex-eval.ts
+ *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langgraph-research-eval.ts
  */
 
 import type { AIMessage, BaseMessage } from "@langchain/core/messages";
@@ -393,7 +393,11 @@ await evaluatorq("langgraph-complex-research-eval", {
   path: "Integrations/LangGraph",
   parallelism: 3,
   data: {
-    datasetId: DATASET_ID ?? "",
+    datasetId: (() => {
+      if (!DATASET_ID)
+        throw new Error("DATASET_ID environment variable is required");
+      return DATASET_ID;
+    })(),
   },
   jobs: [wrapLangGraphAgent(compiledGraph, { name: "research-graph-agent" })],
   evaluators: [
