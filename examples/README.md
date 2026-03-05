@@ -68,6 +68,32 @@ Shows how to:
 - Implement custom evaluators for validation and scoring
 - Process evaluation results with summary statistics
 
+### 🔗 Framework Integration Examples
+
+The `integrations/` folder contains examples of using evaluatorq with popular AI frameworks.
+
+#### LangChain / LangGraph
+
+- **[langchain-agent-eval.ts](src/lib/integrations/langchain-agent-eval.ts)**: Basic LangChain agent evaluation with `wrapLangChainAgent`
+- **[langgraph-agent-eval.ts](src/lib/integrations/langgraph-agent-eval.ts)**: Basic LangGraph compiled graph evaluation with `wrapLangGraphAgent`
+- **[langgraph-research-eval.ts](src/lib/integrations/langgraph-research-eval.ts)**: Complex multi-tool LangGraph research agent with evaluators for correctness, tool chain, response quality, completeness, and efficiency
+
+#### Vercel AI SDK
+
+- **[vercel_ai_sdk_integration_example.ts](src/lib/integrations/vercel_ai_sdk_integration_example.ts)**: Basic Vercel AI SDK agent evaluation with `wrapAISdkAgent`
+- **[vercel_ai_sdk_dataset_example.ts](src/lib/integrations/vercel_ai_sdk_dataset_example.ts)**: Dataset-based evaluation of a weather agent, demonstrating `expected_output` comparison, temperature detection, and city mention evaluators
+- **[vercel-multi-agent-eval.ts](src/lib/integrations/vercel-multi-agent-eval.ts)**: Complex multi-agent evaluation with research and math agents, scored on correctness, tool usage, quality rubric, and safety
+
+**Running integration examples:**
+```bash
+# Vercel AI SDK (requires OPENAI_API_KEY)
+ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts
+ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel-multi-agent-eval.ts
+
+# LangGraph (requires OPENAI_API_KEY)
+ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/langgraph-research-eval.ts
+```
+
 ### 🖥️ CLI Integration Examples
 
 The `cli/` folder contains examples of using evaluatorq with the Orq CLI:
