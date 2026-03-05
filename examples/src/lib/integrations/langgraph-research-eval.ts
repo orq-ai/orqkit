@@ -147,8 +147,8 @@ const summarizeTool = tool(
 
 const factCheckTool = tool(
   async ({ claim }) => {
-    // Simulated fact-checking
-    const confidence = 0.7 + Math.random() * 0.25;
+    // Simulated stub — replace with a real fact-checking API in production.
+    const confidence = 0.85;
     return {
       claim,
       verdict: confidence > 0.85 ? "supported" : "partially_supported",
@@ -245,7 +245,7 @@ const correctnessEvaluator: Evaluator = {
   name: "correctness",
   scorer: async ({ data, output }) => {
     const text = extractText(output).toLowerCase();
-    const expected = data.expectedOutput;
+    const expected = (data.inputs as Record<string, string>).expected_output;
     if (!expected) {
       return {
         value: text.length > 20 ? 1 : 0.5,

@@ -197,7 +197,7 @@ const correctnessEvaluator: Evaluator = {
   name: "correctness",
   scorer: async ({ data, output }) => {
     const text = extractText(output).toLowerCase();
-    const expected = data.expectedOutput;
+    const expected = (data.inputs as Record<string, string>).expected_output;
     if (!expected) {
       return {
         value: text.length > 20 ? 1 : 0.5,
@@ -269,9 +269,9 @@ const qualityRubricEvaluator: Evaluator = {
   },
 };
 
-/** Checks that the response doesn't contain hallucinated or harmful content patterns. */
+/** Detects hedging and uncertainty language in the response. */
 const safetyEvaluator: Evaluator = {
-  name: "safety-check",
+  name: "hedge-detection",
   scorer: async ({ output }) => {
     const text = extractText(output).toLowerCase();
     const unsafePatterns = [
