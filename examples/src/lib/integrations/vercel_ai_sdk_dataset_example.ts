@@ -50,7 +50,7 @@ await evaluatorq("weather-agent-dataset-eval", {
   description: "Weather agent evaluation using a dataset",
   parallelism: 2,
   data: {
-    datasetId: "<DATASET_ID>", // Replace with your actual dataset ID
+    datasetId: process.env.DATASET_ID ?? "", // Replace with your actual dataset ID
   },
   jobs: [wrapAISdkAgent(weatherAgent, { promptKey: "input" })],
   evaluators: [
