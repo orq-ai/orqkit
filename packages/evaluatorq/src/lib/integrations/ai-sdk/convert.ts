@@ -298,6 +298,17 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
     model: result.response.modelId,
     previous_response_id: null,
     instructions: null,
+    input: _prompt
+      ? [
+          {
+            type: "message" as const,
+            id: generateItemId("msg"),
+            status: "completed" as const,
+            role: "user" as const,
+            content: [{ type: "input_text" as const, text: _prompt }],
+          },
+        ]
+      : [],
     output,
     error: status === "failed" ? { message: "Agent execution failed" } : null,
     tools,
