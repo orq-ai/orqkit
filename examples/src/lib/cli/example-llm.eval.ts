@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 import { type DataPoint, evaluatorq, job } from "@orq-ai/evaluatorq";
 
-import { containsNameValidator, isItPoliteLLMEval } from "../evals.js";
+import { containsNameValidator, isItPoliteLLMEval } from "../utils/evals.js";
 
 const claude = new Anthropic();
 

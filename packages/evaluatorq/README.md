@@ -185,11 +185,11 @@ Evaluators can return structured, multi-dimensional metrics using `EvaluationRes
 
 See the runnable examples in the `examples/` directory:
 
-- [`structured-rubric.eval.ts`](../../examples/src/lib/structured-rubric.eval.ts) - Multi-criteria quality rubric (relevance, coherence, fluency)
-- [`structured-sentiment.eval.ts`](../../examples/src/lib/structured-sentiment.eval.ts) - Sentiment distribution breakdown (positive, negative, neutral)
-- [`structured-safety.eval.ts`](../../examples/src/lib/structured-safety.eval.ts) - Toxicity/safety severity scores with pass/fail tracking
+- [`structured-rubric.eval.ts`](../../examples/src/lib/structured/structured-rubric.eval.ts) - Multi-criteria quality rubric (relevance, coherence, fluency)
+- [`structured-sentiment.eval.ts`](../../examples/src/lib/structured/structured-sentiment.eval.ts) - Sentiment distribution breakdown (positive, negative, neutral)
+- [`structured-safety.eval.ts`](../../examples/src/lib/structured/structured-safety.eval.ts) - Toxicity/safety severity scores with pass/fail tracking
 
-For a BERT score example using the Orq platform, see [`llm-eval-with-results.ts`](../../examples/src/lib/llm-eval-with-results.ts).
+For a BERT score example using the Orq platform, see [`llm-eval-with-results.ts`](../../examples/src/lib/basics/llm-eval-with-results.ts).
 
 > **Note:** Structured results display as `[structured]` in the terminal summary table but are preserved in full when sent to the Orq platform and OpenTelemetry spans.
 
@@ -248,9 +248,9 @@ The LangChain integration allows you to:
 
 Complete examples are available in the examples folder:
 
-- **LangChain Agent**: [`examples/src/lib/integrations/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain-agent-eval.ts)
-- **LangGraph Agent**: [`examples/src/lib/integrations/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langgraph-agent-eval.ts)
-- **LangGraph Research Agent (advanced)**: [`examples/src/lib/integrations/langgraph-research-eval.ts`](../../examples/src/lib/integrations/langgraph-research-eval.ts) — Multi-tool research agent with correctness, tool chain, quality, completeness, and efficiency evaluators
+- **LangChain Agent**: [`examples/src/lib/integrations/langchain/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-agent-eval.ts)
+- **LangGraph Agent**: [`examples/src/lib/integrations/langchain/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-agent-eval.ts)
+- **LangGraph Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langgraph-research-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-research-eval.ts) — Multi-tool research agent with correctness, tool chain, quality, completeness, and efficiency evaluators
 
 ## 🤖 Vercel AI SDK Integration
 
@@ -265,9 +265,9 @@ The Vercel AI SDK integration allows you to:
 
 Complete examples are available in the examples folder:
 
-- **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts)
-- **Vercel AI SDK Dataset Eval**: [`examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts) — Dataset-based weather agent evaluation with expected output comparison
-- **Vercel Multi-Agent Eval (advanced)**: [`examples/src/lib/integrations/vercel-multi-agent-eval.ts`](../../examples/src/lib/integrations/vercel-multi-agent-eval.ts) — Research + math agents scored on correctness, tool usage, quality rubric, and safety
+- **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)
+- **Vercel AI SDK Dataset Eval**: [`examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts`](../../examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts) — Dataset-based weather agent evaluation with expected output comparison
+- **Vercel Multi-Agent Eval (advanced)**: [`examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts`](../../examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts) — Research + math agents scored on correctness, tool usage, quality rubric, and safety
 
 ## 🔧 Configuration
 

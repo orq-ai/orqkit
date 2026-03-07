@@ -1,180 +1,65 @@
-# 📚 @orq-ai/evaluatorq Examples
+# @orq-ai/evaluatorq Examples
 
-This directory contains various examples demonstrating the capabilities of the `@orq-ai/evaluatorq` library.
+This directory contains examples demonstrating the capabilities of the `@orq-ai/evaluatorq` library.
 
-## 🎯 Examples Overview
+## Directory Structure
 
-### 📝 Basic Examples
-
-#### [examples.ts](src/lib/examples.ts)
-Entry point for running different example types. Run with:
-```bash
-bun run src/lib/examples.ts
+```
+examples/src/lib/
+├── basics/                          # Core examples and entry points
+│   ├── examples.ts                  # Main entry point
+│   ├── example-runners.ts           # Simulated delay examples
+│   ├── pass-fail-simple.ts          # Simple pass/fail evaluation
+│   ├── eval-reuse.eval.ts           # Reusable jobs and evaluators
+│   ├── llm-eval-with-results.ts     # LLM-based evaluation
+│   └── test-job-helper.ts           # Job error handling
+├── datasets/                        # Dataset-based evaluations
+│   ├── dataset-example.eval.ts      # Orq platform dataset evaluation
+│   └── country-unit-test.eval.ts    # Unit test style with Orq dataset
+├── structured/                      # Structured evaluation results
+│   ├── structured-rubric.eval.ts    # Multi-criteria quality rubric
+│   ├── structured-sentiment.eval.ts # Sentiment distribution
+│   ├── structured-safety.eval.ts    # Toxicity/safety scoring
+│   └── path-organization.eval.ts    # Path-based dashboard organization
+├── integrations/                    # Framework integrations
+│   ├── langchain/                   # LangChain / LangGraph
+│   │   ├── langchain-agent-eval.ts
+│   │   ├── langgraph-agent-eval.ts
+│   │   └── langgraph-research-eval.ts
+│   ├── vercel/                      # Vercel AI SDK
+│   │   ├── vercel_ai_sdk_integration_example.ts
+│   │   ├── vercel_ai_sdk_dataset_example.ts
+│   │   ├── vercel_ai_sdk_dataset_example.csv
+│   │   └── vercel-multi-agent-eval.ts
+│   └── orq/                         # Orq deployments
+│       └── orq-deployment-eval.ts
+├── cli/                             # CLI integration examples
+│   ├── example-using-cli.eval.ts
+│   ├── example-using-cli-two.eval.ts
+│   ├── example-llm.eval.ts
+│   └── example-cosine-similarity.eval.ts
+└── utils/                           # Shared evaluator utilities
+    └── evals.ts
 ```
 
-#### [example-runners.ts](src/lib/example-runners.ts)
-Contains the simulated delay example implementation:
-- **Simulated Delay Example**: Demonstrates async job processing with simulated LLM responses, context retrieval, and multiple evaluators with realistic delays
-
-### 🛠️ Utility Modules
-
-#### [evals.ts](src/lib/evals.ts)
-Provides reusable evaluator functions:
-- `maxLengthValidator`: Factory function for creating max length validators
-- `containsNameValidator`: Evaluator that checks if output contains the input name
-- `isItPoliteLLMEval`: LLM-based evaluator that scores politeness (0-1 scale)
-
-### 🧪 Unit Test Examples
-
-#### [country-unit-test.eval.ts](src/lib/country-unit-test.eval.ts)
-A simple "unit test" style example that demonstrates how to quickly validate a deployment against a dataset from the Orq platform:
-
-- Fetches the `countries` dataset from the Orq platform
-- Calls the `unit_test_countries` deployment for each country
-- Uses the `stringContainsEvaluator` from `@orq-ai/evaluators` to validate responses
-
-**Prerequisites:**
-
-1. Configure a dataset with `country` input variable and expected output:
-
-   ![Countries Dataset](assets/dataset.png)
-
-2. Create a deployment that returns the capital city for a given country:
-
-   ![Deployment Configuration](assets/deployment.png)
-
-**Running the example:**
-```bash
-# Using the CLI
-ORQ_API_KEY=your-api-key bunx @orq-ai/cli evaluate "examples/src/lib/country-unit-test.eval.ts"
-
-# Or directly with bun
-ORQ_API_KEY=your-api-key bun examples/src/lib/country-unit-test.eval.ts
-```
-
-### ⚡ Specialized Examples
-
-#### [eval-reuse.eval.ts](src/lib/eval-reuse.eval.ts)
-Demonstrates reusable evaluation patterns:
-- Creating reusable evaluator functions (`maxLengthValidator`)
-- Defining reusable job functions (`textAnalysisJob`)
-- Type-safe evaluation with custom validators
-- Using Promise-based data points
-
-#### [dataset-example.eval.ts](src/lib/dataset-example.eval.ts)
-Shows how to:
-- Connect to Orq platform datasets using dataset IDs
-- Run multiple parallel jobs on dataset items
-- Implement custom evaluators for validation and scoring
-- Process evaluation results with summary statistics
-
-### 🔗 Framework Integration Examples
-
-The `integrations/` folder contains examples of using evaluatorq with popular AI frameworks.
-
-#### LangChain / LangGraph
-
-- **[langchain-agent-eval.ts](src/lib/integrations/langchain-agent-eval.ts)**: Basic LangChain agent evaluation with `wrapLangChainAgent`
-- **[langgraph-agent-eval.ts](src/lib/integrations/langgraph-agent-eval.ts)**: Basic LangGraph compiled graph evaluation with `wrapLangGraphAgent`
-- **[langgraph-research-eval.ts](src/lib/integrations/langgraph-research-eval.ts)**: Complex multi-tool LangGraph research agent with evaluators for correctness, tool chain, response quality, completeness, and efficiency
-
-#### Vercel AI SDK
-
-- **[vercel_ai_sdk_integration_example.ts](src/lib/integrations/vercel_ai_sdk_integration_example.ts)**: Basic Vercel AI SDK agent evaluation with `wrapAISdkAgent`
-- **[vercel_ai_sdk_dataset_example.ts](src/lib/integrations/vercel_ai_sdk_dataset_example.ts)**: Dataset-based evaluation of a weather agent, demonstrating `expected_output` comparison, temperature detection, and city mention evaluators
-- **[vercel-multi-agent-eval.ts](src/lib/integrations/vercel-multi-agent-eval.ts)**: Complex multi-agent evaluation with research and math agents, scored on correctness, tool usage, quality rubric, and safety
-
-**Running integration examples:**
-```bash
-# Vercel AI SDK (requires OPENAI_API_KEY)
-ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts
-ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel-multi-agent-eval.ts
-
-# LangGraph (requires OPENAI_API_KEY)
-ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/langgraph-research-eval.ts
-```
-
-### 🖥️ CLI Integration Examples
-
-The `cli/` folder contains examples of using evaluatorq with the Orq CLI:
-
-#### [example-using-cli.eval.ts](src/lib/cli/example-using-cli.eval.ts)
-A simple evaluation script that can be run with the Orq CLI. Tests text analysis with expected outputs.
-
-#### [example-using-cli-two.eval.ts](src/lib/cli/example-using-cli-two.eval.ts)
-Another CLI-compatible evaluation script demonstrating different test data.
-
-#### [example-llm.eval.ts](src/lib/cli/example-llm.eval.ts)
-Demonstrates real LLM integration:
-- Uses Anthropic's Claude API for generating greetings
-- Shows how to mix synchronous and asynchronous data points
-- Implements a name-checking evaluator
-- Implements a politeness LLM-based evaluator
-- Configurable parallelism for concurrent API calls
-
-## 🚀 Running the Examples
-
-### 📋 Prerequisites
-
-For dataset examples, set your Orq API key:
-```bash
-export ORQ_API_KEY="your-api-key"
-```
-
-### ▶️ Running Individual Examples
+## Running Examples
 
 ```bash
-# Run simulated delay example (default)
-bun run src/lib/examples.ts
+# Basics
+bun examples/src/lib/basics/examples.ts
+bun examples/src/lib/basics/pass-fail-simple.ts
 
-# Run reusable patterns example
-bun run src/lib/eval-reuse.eval.ts
+# Datasets (requires ORQ_API_KEY)
+ORQ_API_KEY=... bun examples/src/lib/datasets/dataset-example.eval.ts
 
-# Run dataset example (requires ORQ_API_KEY)
-bun run src/lib/dataset-example.eval.ts
+# Structured
+bun examples/src/lib/structured/structured-rubric.eval.ts
 
-# Run LLM example (requires Anthropic API key)
-bun run src/lib/cli/example-llm.eval.ts
+# Integrations (requires OPENAI_API_KEY)
+ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/langgraph-research-eval.ts
+ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts
+ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts
 
-# Run CLI examples (requires Orq CLI)
-cd src/lib/cli
-./eval-cli.sh
+# CLI (requires Orq CLI)
+bunx @orq-ai/cli evaluate "examples/src/lib/cli/example-using-cli.eval.ts"
 ```
-
-## 💡 Key Concepts Demonstrated
-
-### 1. **Parallel Processing**
-All examples use `parallelism` parameter to process multiple data points concurrently, improving performance.
-
-### 2. **Custom Evaluators**
-Examples show various evaluator types:
-- Boolean scorers (return true/false)
-- Numeric scorers (return 0-1 scores)
-- String scorers (return descriptive results)
-
-### 3. **Error Handling**
-Examples demonstrate graceful error handling with jobs and evaluators that may fail, showing how errors are captured in results.
-
-### 4. **Type Safety**
-All examples use TypeScript for full type safety with `DataPoint`, `Job`, and `Evaluator` types.
-
-### 5. **Real-world Patterns**
-- Simulated API calls with delays
-- Text analysis and transformation
-- Data validation and quality scoring
-- Integration with external platforms
-
-## Customizing Examples
-
-Feel free to modify these examples to match your use cases:
-
-1. **Change Data Points**: Modify the input data structure and expected outputs
-2. **Add Custom Jobs**: Create new job functions for your specific processing needs
-3. **Implement Custom Evaluators**: Design evaluators that match your quality metrics
-4. **Adjust Parallelism**: Tune the `parallelism` parameter based on your workload
-
-## Notes
-
-- The `evaluatorq` function returns detailed results including job outputs and evaluator scores
-- Set `print: true` to display a formatted table of results in the console
-- All async operations are properly handled with Promise support
