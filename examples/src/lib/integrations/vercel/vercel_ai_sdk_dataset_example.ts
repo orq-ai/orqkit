@@ -23,6 +23,9 @@ const weatherAgent = new ToolLoopAgent({
       inputSchema: z.object({
         location: z.string().describe("The location to get the weather for"),
       }),
+      // Returns a random temperature (62–92°F), so the "matches-expected"
+      // evaluator will rarely match the fixed CSV values — this is intentional
+      // to demonstrate both pass and fail evaluation results.
       execute: async ({ location }) => ({
         location,
         temperature: 72 + Math.floor(Math.random() * 21) - 10,
@@ -44,7 +47,7 @@ const weatherAgent = new ToolLoopAgent({
 // ============================================================
 // Usage Example — Dataset-based evaluation
 // ============================================================
-// Upload examples/src/lib/integrations/datasets/vercel_ai_sdk_dataset_example.csv to the Orq platform, then
+// Upload examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.csv to the Orq platform, then
 // replace the datasetId below with the ID from the platform.
 // Also ensure the ORQ_API_KEY environment variable is set to authenticate with the platform.
 await evaluatorq("weather-agent-dataset-eval", {

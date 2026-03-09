@@ -23,6 +23,9 @@ const weatherAgent = new ToolLoopAgent({
       inputSchema: z.object({
         location: z.string().describe("The location to get the weather for"),
       }),
+      // Returns a random temperature (62–92°F), so the "matches-expected"
+      // evaluator will rarely match the fixed CSV values — this is intentional
+      // to demonstrate both pass and fail evaluation results.
       execute: async ({ location }) => ({
         location,
         temperature: 72 + Math.floor(Math.random() * 21) - 10,
