@@ -27,34 +27,45 @@
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
+import { createAgent } from "langchain";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
+import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
 import { evaluatorq, job } from "@orq-ai/evaluatorq";
 import {
   convertToOpenResponses,
   extractToolsFromAgent,
 } from "@orq-ai/evaluatorq/langchain";
+import type {
+  FunctionCall,
+  Message,
+  OutputTextContent,
+  ResponseResource,
+} from "@orq-ai/evaluatorq/openresponses";
 
 // ────────────────────────────────────────────────
 // Helpers — extract text and tool calls from OpenResponses output
 // ────────────────────────────────────────────────
-function extractText(output: unknown): string {
-  const res = output as Record<string, unknown>;
-  const items = (res.output as Array<Record<string, unknown>>) ?? [];
-  const message = items.find((item) => item.type === "message");
-  if (!message) return "";
-  const contentArray = message.content as Array<Record<string, unknown>>;
-  const textContent = contentArray?.find((c) => c.type === "output_text");
-  return (textContent?.text as string) ?? "";
+function extractText(output: Output): string {
+  const res = output as ResponseResource;
+  const message = res.output?.find(
+    (item): item is Message => item.type === "message",
+  );
+  const textContent = message?.content.find(
+    (c): c is OutputTextContent & { type: "output_text" } =>
+      c.type === "output_text",
+  );
+  return textContent?.text ?? "";
 }
 
-function extractToolCalls(output: unknown): Array<Record<string, unknown>> {
-  const res = output as Record<string, unknown>;
-  const items = (res.output as Array<Record<string, unknown>>) ?? [];
-  return items.filter((item) => item.type === "function_call");
+function extractToolCalls(output: Output): FunctionCall[] {
+  const res = output as ResponseResource;
+  return (
+    res.output?.filter(
+      (item): item is FunctionCall => item.type === "function_call",
+    ) ?? []
+  );
 }
 
 // ────────────────────────────────────────────────
@@ -99,13 +110,26 @@ const searchTool = tool(
 
 const calculatorTool = tool(
   async ({ expression }) => {
-    try {
-      const sanitized = expression.replace(/[^0-9+\-*/().%^ ]/g, "");
-      const result = Function(`"use strict"; return (${sanitized})`)();
-      return { expression, result: Number(result), error: null };
-    } catch {
-      return { expression, result: null, error: "Could not evaluate" };
+    // NOTE: Uses a hard-coded lookup for demo purposes.
+    // In production, use a dedicated math expression library instead.
+    const knownExpressions: Record<string, number> = {
+      "2 + 2": 4,
+      "10 * 5": 50,
+      "100 / 4": 25,
+      "3.14 * 2": 6.28,
+      "2 ** 10": 1024,
+      "(5 + 3) * 2": 16,
+      "1000 - 750": 250,
+    };
+    const result = knownExpressions[expression.trim()];
+    if (result !== undefined) {
+      return { expression, result, error: null };
     }
+    return {
+      expression,
+      result: null,
+      error: "Expression not in demo lookup table",
+    };
   },
   {
     name: "calculator",
@@ -121,7 +145,7 @@ const factCheckTool = tool(
     const confidence = 0.85;
     return {
       claim,
-      verdict: confidence > 0.85 ? "supported" : "partially_supported",
+      verdict: confidence >= 0.85 ? "supported" : "partially_supported",
       confidence: Math.round(confidence * 100) / 100,
       sources: [
         `https://example.com/fact-check/${encodeURIComponent(claim.slice(0, 30))}`,
@@ -145,8 +169,8 @@ const tools = [searchTool, calculatorTool, factCheckTool];
 
 const model = new ChatOpenAI({ model: "gpt-4o", temperature: 0 });
 
-const agent = createReactAgent({
-  llm: model,
+const agent = createAgent({
+  model,
   tools,
 });
 
@@ -174,9 +198,7 @@ const researchJob = job("langchain-research-agent", async (data: DataPoint) => {
   // Extract messages from result and convert to OpenResponses format
   const resultMessages = (result.messages ?? []) as BaseMessage[];
   const resolvedTools = extractToolsFromAgent(agent);
-  const openResponse = convertToOpenResponses(resultMessages, resolvedTools);
-
-  return openResponse as unknown as Record<string, unknown>;
+  return convertToOpenResponses(resultMessages, resolvedTools);
 });
 
 // ────────────────────────────────────────────────

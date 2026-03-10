@@ -9,7 +9,7 @@
  *   - Set OPENAI_API_KEY environment variable
  *
  * Usage:
- *   OPENAI_API_KEY=your-key bun examples/src/lib/langchain-agent-eval.ts
+ *   OPENAI_API_KEY=your-key bun examples/src/lib/integrations/langchain/langchain-agent-eval.ts
  */
 
 import { tool } from "@langchain/core/tools";
@@ -17,9 +17,14 @@ import { ChatOpenAI } from "@langchain/openai";
 import { createAgent } from "langchain";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
+import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapLangChainAgent } from "@orq-ai/evaluatorq/langchain";
+import type {
+  Message,
+  OutputTextContent,
+  ResponseResource,
+} from "@orq-ai/evaluatorq/openresponses";
 
 // Define tools
 const weatherTool = tool(
@@ -51,29 +56,31 @@ const convertTool = tool(
   },
 );
 
-// Create the agent using the modern createAgent API
+// Create the agent using LangGraph's createReactAgent
 const model = new ChatOpenAI({ model: "gpt-4o" });
 const agent = createAgent({
   model,
   tools: [weatherTool, convertTool],
 });
 
+// Helper — extract text from OpenResponses output
+function extractText(output: Output): string {
+  const res = output as ResponseResource;
+  const message = res.output?.find(
+    (item): item is Message => item.type === "message",
+  );
+  const textContent = message?.content.find(
+    (c): c is OutputTextContent & { type: "output_text" } =>
+      c.type === "output_text",
+  );
+  return textContent?.text ?? "";
+}
+
 // Evaluator that checks if the response contains a temperature number
 const hasTemperature: Evaluator = {
   name: "has-temperature",
   scorer: async ({ output }) => {
-    const result = output as Record<string, unknown>;
-    const outputItems = (result.output as Array<Record<string, unknown>>) ?? [];
-
-    // Find the final message in the output
-    const message = outputItems.find((item) => item.type === "message");
-
-    let text = "";
-    if (message) {
-      const contentArray = message.content as Array<Record<string, unknown>>;
-      const textContent = contentArray?.find((c) => c.type === "output_text");
-      text = (textContent?.text as string) ?? "";
-    }
+    const text = extractText(output);
 
     // Check if the text contains a number (temperature)
     const hasTemp = /\d+/.test(text);
