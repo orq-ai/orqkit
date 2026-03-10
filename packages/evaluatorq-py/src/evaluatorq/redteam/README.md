@@ -44,43 +44,6 @@ redteam/
     └── owasp_llm.py          #   LLM01–LLM10 (LLM top 10)
 ```
 
-## Quick start
-
-```python
-from evaluatorq import evaluatorq
-from evaluatorq.redteam.adaptive import (
-    generate_dynamic_datapoints,
-    create_dynamic_redteam_job,
-    create_dynamic_evaluator,
-    cleanup_memory_entities,
-)
-from evaluatorq.redteam.adaptive.agent_context import retrieve_agent_context
-
-# 1. Retrieve agent context
-agent_context = await retrieve_agent_context(orq_client, agent_key="my-agent")
-
-# 2. Plan attacks — filters strategies by agent capabilities
-datapoints, metadata = await generate_dynamic_datapoints(
-    agent_context=agent_context,
-    categories=["ASI01", "ASI05", "LLM01"],
-    max_per_category=3,
-    generated_strategy_count=2,
-)
-
-# 3. Run via evaluatorq
-results = await evaluatorq(
-    "red-team-run",
-    data=datapoints,
-    jobs=[create_dynamic_redteam_job(agent_key="my-agent", agent_context=agent_context)],
-    evaluators=[create_dynamic_evaluator()],
-    parallelism=10,
-)
-
-# 4. Cleanup test memory entities
-entity_ids = [dp.inputs["memory_entity_id"] for dp in datapoints if "memory_entity_id" in dp.inputs]
-await cleanup_memory_entities(agent_context, entity_ids)
-```
-
 ## OWASP coverage
 
 | Framework | Categories | Examples |
