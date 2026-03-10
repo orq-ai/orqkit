@@ -278,3 +278,25 @@ export interface ResponseResource {
   /** Prompt cache key if caching was used. */
   prompt_cache_key: string | null;
 }
+
+/**
+ * Extracts the text content from an Output value that is a ResponseResource.
+ *
+ * Finds the first assistant message with `output_text` content and returns its text.
+ * Returns an empty string if the output is not a ResponseResource or contains no text.
+ *
+ * @param output - The output from a job (can be any Output type)
+ * @returns The extracted text string, or empty string if not found
+ */
+export function extractText(output: unknown): string {
+  const res = output as ResponseResource;
+  if (!res?.output) return "";
+  const message = res.output.find(
+    (item): item is Message => item.type === "message",
+  );
+  if (!message) return "";
+  const textContent = message.content.find(
+    (c): c is OutputTextContent => c.type === "output_text",
+  );
+  return textContent?.text ?? "";
+}

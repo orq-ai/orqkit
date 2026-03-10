@@ -307,16 +307,60 @@ The LangChain integration allows you to:
 - Automatically convert agent outputs to OpenResponses format
 - Evaluate agent behavior using standard evaluatorq evaluators
 
+### System Instructions
+
+Use the `instructions` option to inject a system prompt into the agent. It can be a static string or a function that builds instructions dynamically from the dataset row:
+
+```typescript
+import { wrapLangChainAgent } from "@orq-ai/evaluatorq/langchain";
+
+// Static instructions
+const job = wrapLangChainAgent(agent, {
+  name: "my-agent",
+  instructions: "You are a helpful weather assistant.",
+});
+
+// Dynamic instructions from dataset inputs
+const job = wrapLangChainAgent(agent, {
+  name: "research-agent",
+  instructions: (data) =>
+    `Research the topic: ${data.inputs.topic}. Focus on ${data.inputs.focus}.`,
+});
+```
+
+### Input Modes
+
+The wrapper reads the user input from `data.inputs` in three ways:
+
+- **`prompt`** (default): `data.inputs.prompt` — a single string, sent as one user message.
+- **`messages`**: `data.inputs.messages` — an array of `{ role, content }` objects, sent as-is.
+- **Both**: when both are present, `messages` are sent first, followed by `prompt` as a final user message.
+
+Change the prompt key with the `promptKey` option (e.g., `{ promptKey: "question" }`).
+
+### Extracting Text
+
+Agent wrappers return a full OpenResponses object. Use `extractText()` to pull out the assistant's reply:
+
+```typescript
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
+
+const scorer = async ({ output }) => {
+  const text = extractText(output);
+  return { value: text.length > 0 ? 1 : 0 };
+};
+```
+
 ### Examples
 
 Complete examples are available in the examples folder:
 
 - **LangChain Agent**: [`examples/src/lib/integrations/langchain/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-agent-eval.ts)
 - **LangGraph Agent**: [`examples/src/lib/integrations/langchain/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-agent-eval.ts)
-- **LangChain Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langchain-research-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-research-eval.ts) — Dataset-driven research agent with custom job function, dynamic system instructions, and multi-criteria evaluators
+- **LangChain Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langchain-research-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-research-eval.ts) — Dataset-driven research agent with dynamic `instructions` and multi-criteria evaluators
 - **LangGraph Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langgraph-research-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-research-eval.ts) — Multi-tool research agent with correctness, tool chain, quality, completeness, and efficiency evaluators
 
-> **Tip:** Use `wrapLangChainAgent` for simple agents and write a custom job function (like in the research examples) when you need to build dynamic system instructions from dataset inputs.
+> **Tip:** Pass the `instructions` option to `wrapLangChainAgent` for dynamic system prompts — no need to write a custom job function.
 
 ## 🤖 Vercel AI SDK Integration
 
@@ -327,13 +371,15 @@ The Vercel AI SDK integration allows you to:
 - Automatically convert agent outputs to OpenResponses format
 - Evaluate agent behavior using standard evaluatorq evaluators
 
+The same `instructions`, `messages` input, and `extractText` support described in the LangChain section also applies to `wrapAISdkAgent`.
+
 ### Examples
 
 Complete examples are available in the examples folder:
 
 - **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)
 - **Vercel AI SDK Dataset Eval**: [`examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts`](../../examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts) — Dataset-based weather agent evaluation with expected output comparison
-- **Vercel Multi-Agent Eval (advanced)**: [`examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts`](../../examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts) — Research + math agents scored on correctness, tool usage, quality rubric, and safety
+- **Vercel Multi-Agent Eval (advanced)**: [`examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts`](../../examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts) — Research + math agents with `instructions` parameter, scored on correctness, tool usage, quality rubric, and safety
 
 ## 🔧 Configuration
 
@@ -533,6 +579,20 @@ type Scorer = (
 import { wrapLangChainAgent, wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
 import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
 import type { ResponseResource } from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
+
+// Extract the assistant's text reply from an OpenResponses output
+function extractText(output: unknown): string;
+
+// Options accepted by wrapLangChainAgent, wrapLangGraphAgent, and wrapAISdkAgent
+interface AgentJobOptions {
+  /** Job name (defaults to "agent" or agent.id) */
+  name?: string;
+  /** Key in data.inputs to use as the prompt (defaults to "prompt") */
+  promptKey?: string;
+  /** Static string or function returning system instructions */
+  instructions?: string | ((data: DataPoint) => string);
+}
 
 // Deployment helper types
 interface DeploymentOptions {

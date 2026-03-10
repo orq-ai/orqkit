@@ -23,35 +23,21 @@
  */
 
 import { createOpenAI } from "@ai-sdk/openai";
-import type { Agent, ToolSet } from "ai";
 import { ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
-import { evaluatorq, job } from "@orq-ai/evaluatorq";
-import { convertToOpenResponses } from "@orq-ai/evaluatorq/ai-sdk";
+import type { Evaluator, Output } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
+import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
 import type {
   FunctionCall,
-  Message,
-  OutputTextContent,
   ResponseResource,
 } from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 // ────────────────────────────────────────────────
-// Helpers — extract text and tool calls from agent output
+// Helper — extract tool calls from agent output
 // ────────────────────────────────────────────────
-function extractText(output: Output): string {
-  const res = output as ResponseResource;
-  const message = res.output?.find(
-    (item): item is Message => item.type === "message",
-  );
-  const textContent = message?.content.find(
-    (c): c is OutputTextContent & { type: "output_text" } =>
-      c.type === "output_text",
-  );
-  return textContent?.text ?? "";
-}
-
 function extractFunctionCalls(output: Output): FunctionCall[] {
   const res = output as ResponseResource;
   return (
@@ -218,39 +204,6 @@ const mathAgent = new ToolLoopAgent({
 });
 
 // ────────────────────────────────────────────────
-// Custom jobs — extract input, build instructions, run agent
-// ────────────────────────────────────────────────
-
-function createAgentJob<TOOLS extends ToolSet>(
-  name: string,
-  agent: Agent<never, TOOLS, never>,
-) {
-  return job(name, async (data: DataPoint) => {
-    const city = data.inputs.city as string;
-    const cityData = data.inputs.data as string;
-
-    // Messages come from the dataset's "messages" column (included via includeMessages)
-    const messages = data.inputs.messages as
-      | Array<{ role: string; content: string }>
-      | undefined;
-    const userMessage = messages?.find((m) => m.role === "user")?.content ?? "";
-
-    const instructions = buildSystemInstructions(city, cityData);
-
-    // Run the agent with ModelMessage[] — system instructions from dataset input + user message
-    const result = await agent.generate({
-      messages: [
-        { role: "system", content: instructions },
-        { role: "user", content: userMessage },
-      ],
-    });
-
-    // Convert to OpenResponses format
-    return convertToOpenResponses(result, agent);
-  });
-}
-
-// ────────────────────────────────────────────────
 // Evaluators
 // ────────────────────────────────────────────────
 
@@ -364,8 +317,22 @@ await evaluatorq("vercel-multi-agent-eval", {
     includeMessages: true,
   },
   jobs: [
-    createAgentJob("research-agent", researchAgent),
-    createAgentJob("math-agent", mathAgent),
+    wrapAISdkAgent(researchAgent, {
+      name: "research-agent",
+      instructions: (data) =>
+        buildSystemInstructions(
+          data.inputs.city as string,
+          data.inputs.data as string,
+        ),
+    }),
+    wrapAISdkAgent(mathAgent, {
+      name: "math-agent",
+      instructions: (data) =>
+        buildSystemInstructions(
+          data.inputs.city as string,
+          data.inputs.data as string,
+        ),
+    }),
   ],
   evaluators: [
     correctnessEvaluator,

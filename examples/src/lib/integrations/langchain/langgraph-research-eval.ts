@@ -25,7 +25,6 @@
  */
 
 import type { AIMessage, BaseMessage } from "@langchain/core/messages";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import {
   Annotation,
@@ -37,34 +36,18 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
-import { evaluatorq, job } from "@orq-ai/evaluatorq";
-import {
-  convertToOpenResponses,
-  extractToolsFromAgent,
-} from "@orq-ai/evaluatorq/langchain";
+import type { Evaluator, Output } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
+import { wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
 import type {
   FunctionCall,
-  Message,
-  OutputTextContent,
   ResponseResource,
 } from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 // ────────────────────────────────────────────────
-// Helpers — extract text and tool calls from OpenResponses output
+// Helper — extract tool calls from OpenResponses output
 // ────────────────────────────────────────────────
-function extractText(output: Output): string {
-  const res = output as ResponseResource;
-  const message = res.output?.find(
-    (item): item is Message => item.type === "message",
-  );
-  const textContent = message?.content.find(
-    (c): c is OutputTextContent & { type: "output_text" } =>
-      c.type === "output_text",
-  );
-  return textContent?.text ?? "";
-}
-
 function extractToolCalls(output: Output): FunctionCall[] {
   const res = output as ResponseResource;
   return (
@@ -81,7 +64,7 @@ function buildSystemInstructions(city: string, data: string): string {
   return [
     `You are an expert research analyst for the city of ${city}.`,
     `Use the following context data to inform your answers:\n${data}`,
-    "Always ground your response in the provided data. Use your tools to search, verify, and summarize when appropriate.",
+    "Always ground your response in the provided data. You MUST use your tools (search, fetch_page, calculator, summarize, or fact_check) at least once before answering. Search for additional information, verify claims with the fact-checker, or summarize findings to enrich your response.",
   ].join("\n\n");
 }
 
@@ -281,33 +264,6 @@ const graph = new StateGraph(AgentAnnotation)
 const compiledGraph = graph.compile();
 
 // ────────────────────────────────────────────────
-// Custom job — extract inputs, build instructions, run graph
-// ────────────────────────────────────────────────
-
-const researchJob = job("research-graph-agent", async (data: DataPoint) => {
-  const city = data.inputs.city as string;
-  const cityData = data.inputs.data as string;
-
-  // Messages come from the dataset's "messages" column (included via includeMessages)
-  const messages = data.inputs.messages as
-    | Array<{ role: string; content: string }>
-    | undefined;
-  const userMessage = messages?.find((m) => m.role === "user")?.content ?? "";
-
-  const instructions = buildSystemInstructions(city, cityData);
-
-  // Invoke the graph with system instructions + user message
-  const result = await compiledGraph.invoke({
-    messages: [new SystemMessage(instructions), new HumanMessage(userMessage)],
-  });
-
-  // Extract messages from result and convert to OpenResponses format
-  const resultMessages = (result.messages ?? []) as BaseMessage[];
-  const resolvedTools = extractToolsFromAgent(compiledGraph);
-  return convertToOpenResponses(resultMessages, resolvedTools);
-});
-
-// ────────────────────────────────────────────────
 // Evaluators
 // ────────────────────────────────────────────────
 
@@ -488,7 +444,16 @@ await evaluatorq("langgraph-complex-research-eval", {
     })(),
     includeMessages: true,
   },
-  jobs: [researchJob],
+  jobs: [
+    wrapLangGraphAgent(compiledGraph, {
+      name: "research-graph-agent",
+      instructions: (data) =>
+        buildSystemInstructions(
+          data.inputs.city as string,
+          data.inputs.data as string,
+        ),
+    }),
+  ],
   evaluators: [
     correctnessEvaluator,
     toolChainEvaluator,

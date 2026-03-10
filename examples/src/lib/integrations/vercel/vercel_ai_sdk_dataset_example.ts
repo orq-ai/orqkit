@@ -4,11 +4,7 @@ import { z } from "zod";
 
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
-import type {
-  Message,
-  OutputTextContent,
-  ResponseResource,
-} from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,6 +13,8 @@ const openai = createOpenAI({
 const weatherAgent = new ToolLoopAgent({
   model: openai("gpt-4o"),
   maxOutputTokens: 2500,
+  system:
+    "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
   tools: {
     weather: tool({
       description: "Get the weather in a location (in Fahrenheit)",
@@ -65,15 +63,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "has-temperature",
       scorer: async ({ output }) => {
-        const result = output as ResponseResource;
-        const message = result.output.find(
-          (item): item is Message => item.type === "message",
-        );
-        const textContent = message?.content.find(
-          (c): c is OutputTextContent & { type: "output_text" } =>
-            c.type === "output_text",
-        );
-        const text = textContent?.text ?? "";
+        const text = extractText(output);
         const hasTemp = /\d+/.test(text);
         return {
           value: hasTemp ? 1 : 0,
@@ -86,15 +76,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "matches-expected",
       scorer: async ({ data, output }) => {
-        const result = output as ResponseResource;
-        const message = result.output.find(
-          (item): item is Message => item.type === "message",
-        );
-        const textContent = message?.content.find(
-          (c): c is OutputTextContent & { type: "output_text" } =>
-            c.type === "output_text",
-        );
-        const text = textContent?.text ?? "";
+        const text = extractText(output);
         const expected =
           (data.inputs as Record<string, string>).expected_output ?? "";
         if (!expected)
@@ -111,15 +93,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "mentions-city",
       scorer: async ({ data, output }) => {
-        const result = output as ResponseResource;
-        const message = result.output.find(
-          (item): item is Message => item.type === "message",
-        );
-        const textContent = message?.content.find(
-          (c): c is OutputTextContent & { type: "output_text" } =>
-            c.type === "output_text",
-        );
-        const text = textContent?.text ?? "";
+        const text = extractText(output);
 
         // Extract the city name from the input query
         const input = (data.inputs as Record<string, string>).input ?? "";

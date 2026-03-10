@@ -25,7 +25,7 @@ examples/lib/
 │   └── langchain/                   # LangChain / LangGraph
 │       ├── langchain_integration_example.py   # Basic LangChain agent eval
 │       ├── langgraph_integration_example.py   # Basic LangGraph agent eval
-│       ├── langgraph_research_eval.py         # Complex multi-tool research agent
+│       ├── langgraph_research_eval.py         # Research agent with dynamic instructions
 │       └── langgraph_dataset_eval.py          # Dataset-based LangGraph eval
 ├── cli/                             # CLI integration examples
 │   ├── example_using_cli.py

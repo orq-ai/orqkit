@@ -14,7 +14,7 @@ If you're new to evaluatorq, we recommend following this progression:
    - LangChain: [`langchain-agent-eval.ts`](src/lib/integrations/langchain/langchain-agent-eval.ts)
    - LangGraph: [`langgraph-agent-eval.ts`](src/lib/integrations/langchain/langgraph-agent-eval.ts)
    - Vercel AI SDK: [`vercel_ai_sdk_integration_example.ts`](src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)
-6. **Advanced patterns** — [`langgraph-research-eval.ts`](src/lib/integrations/langchain/langgraph-research-eval.ts): Dataset-driven agent with custom jobs
+6. **Advanced patterns** — [`langgraph-research-eval.ts`](src/lib/integrations/langchain/langgraph-research-eval.ts): Dataset-driven agent with `instructions` parameter
 
 ## Examples Overview
 
@@ -100,14 +100,14 @@ Framework integrations in `src/lib/integrations/`.
 
 - **[langchain-agent-eval.ts](src/lib/integrations/langchain/langchain-agent-eval.ts)**: Basic LangChain agent evaluation with `wrapLangChainAgent`
 - **[langgraph-agent-eval.ts](src/lib/integrations/langchain/langgraph-agent-eval.ts)**: Basic LangGraph compiled graph evaluation with `wrapLangGraphAgent`
-- **[langchain-research-eval.ts](src/lib/integrations/langchain/langchain-research-eval.ts)**: Dataset-driven LangChain research agent with custom job function, dynamic system instructions from dataset inputs, and multi-criteria evaluators (correctness, tool-usage, quality rubric, completeness, city-relevance)
-- **[langgraph-research-eval.ts](src/lib/integrations/langchain/langgraph-research-eval.ts)**: Complex multi-tool LangGraph research agent with evaluators for correctness, tool chain, response quality, completeness, and efficiency
+- **[langchain-research-eval.ts](src/lib/integrations/langchain/langchain-research-eval.ts)**: Dataset-driven LangChain research agent with dynamic `instructions` via `wrapLangChainAgent` and multi-criteria evaluators (correctness, tool-usage, quality rubric, completeness, city-relevance)
+- **[langgraph-research-eval.ts](src/lib/integrations/langchain/langgraph-research-eval.ts)**: Complex multi-tool LangGraph research agent with `instructions` parameter, evaluators for correctness, tool chain, response quality, completeness, and efficiency
 
 #### Vercel AI SDK
 
 - **[vercel_ai_sdk_integration_example.ts](src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)**: Basic Vercel AI SDK agent evaluation with `wrapAISdkAgent`
 - **[vercel_ai_sdk_dataset_example.ts](src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts)**: Dataset-based evaluation of a weather agent, demonstrating `expected_output` comparison, temperature detection, and city mention evaluators
-- **[vercel-multi-agent-eval.ts](src/lib/integrations/vercel/vercel-multi-agent-eval.ts)**: Complex multi-agent evaluation with research and math agents, scored on correctness, tool usage, quality rubric, and safety
+- **[vercel-multi-agent-eval.ts](src/lib/integrations/vercel/vercel-multi-agent-eval.ts)**: Multi-agent evaluation with `instructions` via `wrapAISdkAgent`, scored on correctness, tool usage, quality rubric, and safety
 
 ### CLI
 

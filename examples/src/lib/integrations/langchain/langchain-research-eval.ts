@@ -24,41 +24,23 @@
  *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/langchain-research-eval.ts
  */
 
-import type { BaseMessage } from "@langchain/core/messages";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
 import { createAgent } from "langchain";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
-import { evaluatorq, job } from "@orq-ai/evaluatorq";
-import {
-  convertToOpenResponses,
-  extractToolsFromAgent,
-} from "@orq-ai/evaluatorq/langchain";
+import type { Evaluator, Output } from "@orq-ai/evaluatorq";
+import { evaluatorq } from "@orq-ai/evaluatorq";
+import { wrapLangChainAgent } from "@orq-ai/evaluatorq/langchain";
 import type {
   FunctionCall,
-  Message,
-  OutputTextContent,
   ResponseResource,
 } from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 // ────────────────────────────────────────────────
-// Helpers — extract text and tool calls from OpenResponses output
+// Helper — extract tool calls from OpenResponses output
 // ────────────────────────────────────────────────
-function extractText(output: Output): string {
-  const res = output as ResponseResource;
-  const message = res.output?.find(
-    (item): item is Message => item.type === "message",
-  );
-  const textContent = message?.content.find(
-    (c): c is OutputTextContent & { type: "output_text" } =>
-      c.type === "output_text",
-  );
-  return textContent?.text ?? "";
-}
-
 function extractToolCalls(output: Output): FunctionCall[] {
   const res = output as ResponseResource;
   return (
@@ -172,33 +154,6 @@ const model = new ChatOpenAI({ model: "gpt-4o", temperature: 0 });
 const agent = createAgent({
   model,
   tools,
-});
-
-// ────────────────────────────────────────────────
-// Custom job — extract inputs, build instructions, run agent
-// ────────────────────────────────────────────────
-
-const researchJob = job("langchain-research-agent", async (data: DataPoint) => {
-  const city = data.inputs.city as string;
-  const cityData = data.inputs.data as string;
-
-  // Messages come from the dataset's "messages" column (included via includeMessages)
-  const messages = data.inputs.messages as
-    | Array<{ role: string; content: string }>
-    | undefined;
-  const userMessage = messages?.find((m) => m.role === "user")?.content ?? "";
-
-  const instructions = buildSystemInstructions(city, cityData);
-
-  // Invoke the agent with system instructions + user message
-  const result = await agent.invoke({
-    messages: [new SystemMessage(instructions), new HumanMessage(userMessage)],
-  });
-
-  // Extract messages from result and convert to OpenResponses format
-  const resultMessages = (result.messages ?? []) as BaseMessage[];
-  const resolvedTools = extractToolsFromAgent(agent);
-  return convertToOpenResponses(resultMessages, resolvedTools);
 });
 
 // ────────────────────────────────────────────────
@@ -334,7 +289,16 @@ await evaluatorq("langchain-research-eval", {
     })(),
     includeMessages: true,
   },
-  jobs: [researchJob],
+  jobs: [
+    wrapLangChainAgent(agent, {
+      name: "langchain-research-agent",
+      instructions: (data) =>
+        buildSystemInstructions(
+          data.inputs.city as string,
+          data.inputs.data as string,
+        ),
+    }),
+  ],
   evaluators: [
     correctnessEvaluator,
     toolUsageEvaluator,

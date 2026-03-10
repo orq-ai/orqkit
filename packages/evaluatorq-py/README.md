@@ -691,15 +691,50 @@ The LangChain integration allows you to:
 - Automatically convert agent outputs to OpenResponses format
 - Evaluate agent behavior using standard evaluatorq evaluators
 
+### System Instructions
+
+Use the `instructions` parameter to inject a system prompt into the agent. It can be a static string or a callable that builds instructions dynamically from the dataset row:
+
+```python
+from evaluatorq.integrations.langchain_integration import wrap_langchain_agent
+
+# Static instructions
+agent_job = wrap_langchain_agent(
+    agent,
+    name="my-agent",
+    instructions="You are a helpful weather assistant.",
+)
+
+# Dynamic instructions from dataset inputs
+agent_job = wrap_langchain_agent(
+    agent,
+    name="research-agent",
+    instructions=lambda data: (
+        f"Research the topic: {data.inputs['topic']}. "
+        f"Focus on {data.inputs['focus']}."
+    ),
+)
+```
+
+### Input Modes
+
+The wrapper reads the user input from `data.inputs` in three ways:
+
+- **`prompt`** (default): `data.inputs["prompt"]` — a single string, sent as one user message.
+- **`messages`**: `data.inputs["messages"]` — a list of `{"role": ..., "content": ...}` dicts, sent as-is.
+- **Both**: when both are present, `messages` are sent first, followed by `prompt` as a final user message.
+
+Change the prompt key with the `prompt_key` parameter (e.g., `prompt_key="question"`).
+
 ### Examples
 
 Complete examples are available in the examples folder:
 
 - **LangChain Agent**: [`langchain_integration_example.py`](examples/lib/integrations/langchain/langchain_integration_example.py) — Basic agent with weather tools using `wrap_langchain_agent`
 - **LangGraph Agent**: [`langgraph_integration_example.py`](examples/lib/integrations/langchain/langgraph_integration_example.py) — LangGraph compiled graph with StateGraph pattern
-- **LangGraph Research Agent (advanced)**: [`langgraph_research_eval.py`](examples/lib/integrations/langchain/langgraph_research_eval.py) — Dataset-driven research agent with custom job, dynamic system instructions, and multi-criteria evaluators
+- **LangGraph Research Agent (advanced)**: [`langgraph_research_eval.py`](examples/lib/integrations/langchain/langgraph_research_eval.py) — Dataset-driven research agent with dynamic `instructions` and multi-criteria evaluators
 
-> **Tip:** Use `wrap_langchain_agent` for simple agents. Write a custom job function (like in the research example) when you need dynamic system instructions from dataset inputs.
+> **Tip:** Pass the `instructions` parameter to `wrap_langchain_agent` for dynamic system prompts — no need to write a custom job function.
 
 ## 📚 API Reference
 

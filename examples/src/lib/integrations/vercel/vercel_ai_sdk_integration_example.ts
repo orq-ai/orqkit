@@ -5,10 +5,10 @@ import { z } from "zod";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
 import type {
-  Message,
-  OutputTextContent,
+  FunctionCall,
   ResponseResource,
 } from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,6 +17,8 @@ const openai = createOpenAI({
 const weatherAgent = new ToolLoopAgent({
   model: openai("gpt-4o"),
   maxOutputTokens: 2500,
+  system:
+    "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
   tools: {
     weather: tool({
       description: "Get the weather in a location (in Fahrenheit)",
@@ -50,31 +52,50 @@ await evaluatorq("weather-agent-eval", {
   description: "Zonneplan test experiment",
   parallelism: 2,
   data: [
-    { inputs: { prompt: "What is the weather in San Francisco?" } },
-    { inputs: { prompt: "What is the weather in New York?" } },
+    {
+      inputs: {
+        prompt:
+          "Look up the current weather in San Francisco and convert the temperature to Celsius.",
+      },
+    },
+    {
+      inputs: {
+        prompt:
+          "Look up the current weather in New York and convert the temperature to Celsius.",
+      },
+    },
   ],
   jobs: [wrapAISdkAgent(weatherAgent)],
   evaluators: [
     {
       name: "has-temperature",
       scorer: async ({ output }) => {
-        const result = output as ResponseResource;
-        // Find the final assistant message in the output
-        const message = result.output.find(
-          (item): item is Message => item.type === "message",
-        );
-        // Get text from the first output_text content item
-        const textContent = message?.content.find(
-          (c): c is OutputTextContent & { type: "output_text" } =>
-            c.type === "output_text",
-        );
-        const text = textContent?.text ?? "";
+        const text = extractText(output);
         const hasTemp = /\d+/.test(text);
         return {
           value: hasTemp ? 1 : 0,
           explanation: hasTemp
             ? "Response contains temperature"
             : "No temperature found in response",
+        };
+      },
+    },
+    {
+      name: "used-tools",
+      scorer: async ({ output }) => {
+        const res = output as ResponseResource;
+        const calls =
+          res.output?.filter(
+            (item): item is FunctionCall => item.type === "function_call",
+          ) ?? [];
+        const toolNames = [...new Set(calls.map((c) => c.name))];
+        const usedWeather = toolNames.includes("weather");
+        const usedConvert = toolNames.includes("convertFahrenheitToCelsius");
+        const score = (usedWeather ? 0.5 : 0) + (usedConvert ? 0.5 : 0);
+        return {
+          value: score,
+          pass: usedWeather && usedConvert,
+          explanation: `Used tools: ${toolNames.join(", ") || "none"}`,
         };
       },
     },

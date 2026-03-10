@@ -31,18 +31,12 @@ from typing import Any
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from evaluatorq import DataPoint, ScorerParameter, evaluatorq
-from evaluatorq.integrations.langchain_integration import (
-    extract_tools_from_agent,
-)
-from evaluatorq.integrations.langchain_integration.convert import (
-    convert_to_open_responses,
-)
+from evaluatorq.integrations.langchain_integration import wrap_langgraph_agent
 
 _ = load_dotenv()
 
@@ -143,54 +137,6 @@ tools = [search, calculator, fact_check]
 model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 agent = create_react_agent(model, tools)
-
-
-# ────────────────────────────────────────────────
-# Custom job — extract inputs, build instructions, run agent
-# ────────────────────────────────────────────────
-
-
-async def research_agent_job(data: DataPoint, _row: int) -> dict[str, Any]:
-    """
-    Extracts city + data from dataset inputs to build system instructions,
-    extracts the user prompt from dataset messages, then runs the agent.
-    """
-    city = str(data.inputs.get("city", ""))
-    city_data = str(data.inputs.get("data", ""))
-
-    # Messages come from the dataset's "messages" column (included via include_messages)
-    messages = data.inputs.get("messages", [])
-    user_message = ""
-    if isinstance(messages, list):
-        for m in messages:
-            if isinstance(m, dict) and m.get("role") == "user":
-                user_message = m.get("content", "")
-                break
-
-    # Fallback: if the dataset message is empty or too short to trigger tool use,
-    # build a research-oriented prompt from the city input.
-    if not user_message or len(user_message.strip()) < 10:
-        user_message = (
-            f"Research and analyze key information about {city}. "
-            "Use your tools to search for data, verify facts, and perform any relevant calculations."
-        )
-
-    instructions = build_system_instructions(city, city_data)
-
-    # Invoke the agent with system instructions + user message
-    result = await agent.ainvoke({
-        "messages": [SystemMessage(content=instructions), HumanMessage(content=user_message)],
-    })
-
-    # Extract messages from result and convert to OpenResponses format
-    result_messages: list[BaseMessage] = result.get("messages", [])
-    resolved_tools = extract_tools_from_agent(agent)
-    open_responses = convert_to_open_responses(result_messages, resolved_tools)
-
-    return {
-        "name": "langchain-research-agent",
-        "output": open_responses,
-    }
 
 
 # ────────────────────────────────────────────────
@@ -325,7 +271,16 @@ async def main() -> None:
         path="Integrations/LangChain",
         parallelism=3,
         data={"dataset_id": DATASET_ID, "include_messages": True},
-        jobs=[research_agent_job],
+        jobs=[
+            wrap_langgraph_agent(
+                agent,
+                name="langchain-research-agent",
+                instructions=lambda data: build_system_instructions(
+                    str(data.inputs.get("city", "")),
+                    str(data.inputs.get("data", "")),
+                ),
+            ),
+        ],
         evaluators=[
             {"name": "correctness", "scorer": correctness_scorer},
             {"name": "tool-usage", "scorer": tool_usage_scorer},

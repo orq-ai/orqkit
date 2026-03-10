@@ -192,6 +192,11 @@ def convert_to_open_responses(
             )
             input_items.append(input_message)
 
+        else:
+            logging.warning(
+                "Skipping unknown LangChain message type: %s", msg_type
+            )
+
     # Build tools array
     tools_array: list[FunctionTool] = [
         FunctionTool(
