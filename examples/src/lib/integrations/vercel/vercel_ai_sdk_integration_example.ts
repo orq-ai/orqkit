@@ -17,8 +17,6 @@ const openai = createOpenAI({
 const weatherAgent = new ToolLoopAgent({
   model: openai("gpt-4o"),
   maxOutputTokens: 2500,
-  system:
-    "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
   tools: {
     weather: tool({
       description: "Get the weather in a location (in Fahrenheit)",

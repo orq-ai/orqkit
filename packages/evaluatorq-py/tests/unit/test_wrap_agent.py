@@ -38,6 +38,7 @@ pytest.importorskip("langgraph")
 
 from evaluatorq.integrations.langchain_integration.wrap_agent import (  # noqa: E402
     _extract_messages_from_data,
+    _normalize_message,
     wrap_langchain_agent,
     wrap_langgraph_agent,
 )
@@ -63,6 +64,57 @@ class TestExtractMessagesFromData:
     def test_returns_none_when_not_a_list(self) -> None:
         data = DataPoint(inputs={"messages": "not-a-list"})
         assert _extract_messages_from_data(data) is None
+
+    def test_normalizes_pydantic_model_messages(self) -> None:
+        """Orq SDK Pydantic message objects are converted to plain dicts."""
+        mock_msg = MagicMock()
+        mock_msg.model_dump = MagicMock(return_value={"role": "system", "content": "hello"})
+        data = DataPoint(inputs={"messages": [mock_msg]})
+        result = _extract_messages_from_data(data)
+        assert result == [{"role": "system", "content": "hello"}]
+        mock_msg.model_dump.assert_called_once_with(exclude_none=True)
+
+    def test_normalizes_mixed_messages(self) -> None:
+        """Mix of plain dicts and Pydantic models are all normalized."""
+        mock_msg = MagicMock()
+        mock_msg.model_dump = MagicMock(return_value={"role": "assistant", "content": "hi"})
+        data = DataPoint(inputs={"messages": [
+            {"role": "user", "content": "hey"},
+            mock_msg,
+        ]})
+        result = _extract_messages_from_data(data)
+        assert result == [
+            {"role": "user", "content": "hey"},
+            {"role": "assistant", "content": "hi"},
+        ]
+
+
+# ---------------------------------------------------------------------------
+# _normalize_message tests
+# ---------------------------------------------------------------------------
+
+class TestNormalizeMessage:
+    def test_dict_passthrough(self) -> None:
+        msg = {"role": "user", "content": "hi"}
+        assert _normalize_message(msg) == msg
+
+    def test_pydantic_model_dump(self) -> None:
+        mock_msg = MagicMock()
+        mock_msg.model_dump = MagicMock(return_value={"role": "system", "content": "ctx"})
+        assert _normalize_message(mock_msg) == {"role": "system", "content": "ctx"}
+        mock_msg.model_dump.assert_called_once_with(exclude_none=True)
+
+    def test_duck_type_fallback(self) -> None:
+        """Object with role/content attrs but no model_dump."""
+        msg = MagicMock(spec=["role", "content"])
+        msg.role = "assistant"
+        msg.content = "reply"
+        assert _normalize_message(msg) == {"role": "assistant", "content": "reply"}
+
+    def test_duck_type_defaults(self) -> None:
+        """Object with no role/content attrs defaults to user/empty."""
+        msg = MagicMock(spec=[])
+        assert _normalize_message(msg) == {"role": "user", "content": ""}
 
 
 # ---------------------------------------------------------------------------

@@ -27,17 +27,29 @@ def _extract_schema_parameters(
     return schema_obj.model_json_schema()
 
 
+def _normalize_message(msg: Any) -> dict[str, str]:
+    """Convert an Orq SDK message object or dict to a plain dict."""
+    if isinstance(msg, dict):
+        return msg
+    # Pydantic BaseModel (Orq SDK message types)
+    if hasattr(msg, "model_dump"):
+        return msg.model_dump(exclude_none=True)
+    # Fallback: duck-type role + content
+    return {"role": getattr(msg, "role", "user"), "content": getattr(msg, "content", "")}
+
+
 def _extract_messages_from_data(
     data: DataPoint,
 ) -> list[dict[str, str]] | None:
     """Safely extract messages from a DataPoint.
 
     Returns None when data.inputs["messages"] is missing, not a list, or empty.
+    Each message is normalized to a plain dict to handle Orq SDK Pydantic models.
     """
     messages = data.inputs.get("messages")
     if not isinstance(messages, list) or len(messages) == 0:
         return None
-    return messages
+    return [_normalize_message(m) for m in messages]
 
 
 def wrap_langchain_agent(
