@@ -47,7 +47,7 @@ const weatherAgent = new ToolLoopAgent({
 // Usage Example
 // ============================================================
 await evaluatorq("weather-agent-eval", {
-  description: "Zonneplan test experiment",
+  description: "Weather agent evaluation using the Vercel AI SDK",
   parallelism: 2,
   data: [
     {

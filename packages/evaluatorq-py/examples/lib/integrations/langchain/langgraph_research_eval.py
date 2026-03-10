@@ -108,12 +108,21 @@ def search(query: str) -> dict[str, Any]:
 @tool
 def calculator(expression: str) -> dict[str, Any]:
     """Evaluate a mathematical expression."""
-    try:
-        sanitized = re.sub(r"[^0-9+\-*/().%^ ]", "", expression)
-        result = eval(sanitized)  # noqa: S307
-        return {"expression": expression, "result": float(result), "error": None}
-    except Exception:
-        return {"expression": expression, "result": None, "error": "Could not evaluate"}
+    # NOTE: Uses a hard-coded lookup for demo purposes.
+    # In production, use a dedicated math expression library instead.
+    known_expressions: dict[str, float] = {
+        "2 + 2": 4,
+        "10 * 5": 50,
+        "100 / 4": 25,
+        "3.14 * 2": 6.28,
+        "2 ** 10": 1024,
+        "(5 + 3) * 2": 16,
+        "1000 - 750": 250,
+    }
+    result = known_expressions.get(expression.strip())
+    if result is not None:
+        return {"expression": expression, "result": result, "error": None}
+    return {"expression": expression, "result": None, "error": "Expression not in demo lookup table"}
 
 
 @tool

@@ -27,7 +27,7 @@ def _extract_schema_parameters(
     return schema_obj.model_json_schema()
 
 
-def _normalize_message(msg: Any) -> dict[str, str]:
+def _normalize_message(msg: Any) -> dict[str, Any]:
     """Convert an Orq SDK message object or dict to a plain dict."""
     if isinstance(msg, dict):
         return msg
@@ -40,7 +40,7 @@ def _normalize_message(msg: Any) -> dict[str, str]:
 
 def _extract_messages_from_data(
     data: DataPoint,
-) -> list[dict[str, str]] | None:
+) -> list[dict[str, Any]] | None:
     """Safely extract messages from a DataPoint.
 
     Returns None when data.inputs["messages"] is missing, not a list, or empty.

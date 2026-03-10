@@ -56,7 +56,7 @@ const convertTool = tool(
   },
 );
 
-// Create the agent using LangGraph's createReactAgent
+// Create the agent using langchain's createAgent (langchain 1.x convenience wrapper)
 const model = new ChatOpenAI({ model: "gpt-4o" });
 const agent = createAgent({
   model,

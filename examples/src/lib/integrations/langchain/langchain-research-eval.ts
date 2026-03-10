@@ -29,122 +29,101 @@ import { ChatOpenAI } from "@langchain/openai";
 import { createAgent } from "langchain";
 import { z } from "zod";
 
-import type { Evaluator, Output } from "@orq-ai/evaluatorq";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapLangChainAgent } from "@orq-ai/evaluatorq/langchain";
-import type {
-  FunctionCall,
-  ResponseResource,
-} from "@orq-ai/evaluatorq/openresponses";
-import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
-// ────────────────────────────────────────────────
-// Helper — extract tool calls from OpenResponses output
-// ────────────────────────────────────────────────
-function extractToolCalls(output: Output): FunctionCall[] {
-  const res = output as ResponseResource;
-  return (
-    res.output?.filter(
-      (item): item is FunctionCall => item.type === "function_call",
-    ) ?? []
-  );
-}
-
-// ────────────────────────────────────────────────
-// Build system instructions from dataset inputs
-// ────────────────────────────────────────────────
-function buildSystemInstructions(city: string, data: string): string {
-  return [
-    `You are an expert analyst for the city of ${city}.`,
-    `Use the following context data to inform your answers:\n${data}`,
-    "Always ground your response in the provided data.",
-    "You MUST use your tools (search, calculator, or fact_check) at least once before answering. Search for additional information to supplement the provided data, verify claims with the fact-checker, or use the calculator for any numerical analysis.",
-  ].join("\n\n");
-}
+import {
+	buildResearchInstructions,
+	cityRelevanceEvaluator,
+	completenessEvaluator,
+	correctnessEvaluator,
+	qualityRubricEvaluator,
+	toolUsageEvaluator,
+} from "../../utils/agent-eval-helpers.js";
 
 // ────────────────────────────────────────────────
 // Tools
 // ────────────────────────────────────────────────
 
 const searchTool = tool(
-  async ({ query }) => ({
-    results: [
-      {
-        title: `Top result for: ${query}`,
-        snippet: `Comprehensive information about ${query}. According to recent studies, this topic has significant implications in multiple domains.`,
-        url: `https://example.com/search?q=${encodeURIComponent(query)}`,
-      },
-      {
-        title: `Academic paper: ${query}`,
-        snippet: `A peer-reviewed analysis of ${query} published in 2024 found that the key factors include scalability, reliability, and cost-effectiveness.`,
-        url: `https://example.com/papers/${encodeURIComponent(query)}`,
-      },
-    ],
-  }),
-  {
-    name: "search",
-    description: "Search the web for information on a topic",
-    schema: z.object({
-      query: z.string().describe("The search query"),
-    }),
-  },
+	async ({ query }) => ({
+		results: [
+			{
+				title: `Top result for: ${query}`,
+				snippet: `Comprehensive information about ${query}. According to recent studies, this topic has significant implications in multiple domains.`,
+				url: `https://example.com/search?q=${encodeURIComponent(query)}`,
+			},
+			{
+				title: `Academic paper: ${query}`,
+				snippet: `A peer-reviewed analysis of ${query} published in 2024 found that the key factors include scalability, reliability, and cost-effectiveness.`,
+				url: `https://example.com/papers/${encodeURIComponent(query)}`,
+			},
+		],
+	}),
+	{
+		name: "search",
+		description: "Search the web for information on a topic",
+		schema: z.object({
+			query: z.string().describe("The search query"),
+		}),
+	},
 );
 
 const calculatorTool = tool(
-  async ({ expression }) => {
-    // NOTE: Uses a hard-coded lookup for demo purposes.
-    // In production, use a dedicated math expression library instead.
-    const knownExpressions: Record<string, number> = {
-      "2 + 2": 4,
-      "10 * 5": 50,
-      "100 / 4": 25,
-      "3.14 * 2": 6.28,
-      "2 ** 10": 1024,
-      "(5 + 3) * 2": 16,
-      "1000 - 750": 250,
-    };
-    const result = knownExpressions[expression.trim()];
-    if (result !== undefined) {
-      return { expression, result, error: null };
-    }
-    return {
-      expression,
-      result: null,
-      error: "Expression not in demo lookup table",
-    };
-  },
-  {
-    name: "calculator",
-    description: "Evaluate a mathematical expression",
-    schema: z.object({
-      expression: z.string().describe("Math expression to evaluate"),
-    }),
-  },
+	async ({ expression }) => {
+		// NOTE: Uses a hard-coded lookup for demo purposes.
+		// In production, use a dedicated math expression library instead.
+		const knownExpressions: Record<string, number> = {
+			"2 + 2": 4,
+			"10 * 5": 50,
+			"100 / 4": 25,
+			"3.14 * 2": 6.28,
+			"2 ** 10": 1024,
+			"(5 + 3) * 2": 16,
+			"1000 - 750": 250,
+		};
+		const result = knownExpressions[expression.trim()];
+		if (result !== undefined) {
+			return { expression, result, error: null };
+		}
+		return {
+			expression,
+			result: null,
+			error: "Expression not in demo lookup table",
+		};
+	},
+	{
+		name: "calculator",
+		description: "Evaluate a mathematical expression",
+		schema: z.object({
+			expression: z.string().describe("Math expression to evaluate"),
+		}),
+	},
 );
 
 const factCheckTool = tool(
-  async ({ claim }) => {
-    const confidence = 0.85;
-    return {
-      claim,
-      verdict: confidence >= 0.85 ? "supported" : "partially_supported",
-      confidence: Math.round(confidence * 100) / 100,
-      sources: [
-        `https://example.com/fact-check/${encodeURIComponent(claim.slice(0, 30))}`,
-      ],
-    };
-  },
-  {
-    name: "fact_check",
-    description: "Verify a factual claim against known sources",
-    schema: z.object({
-      claim: z.string().describe("The claim to fact-check"),
-    }),
-  },
+	async ({ claim }) => {
+		const confidence = 0.85;
+		return {
+			claim,
+			verdict: confidence >= 0.85 ? "supported" : "partially_supported",
+			confidence: Math.round(confidence * 100) / 100,
+			sources: [
+				`https://example.com/fact-check/${encodeURIComponent(claim.slice(0, 30))}`,
+			],
+		};
+	},
+	{
+		name: "fact_check",
+		description: "Verify a factual claim against known sources",
+		schema: z.object({
+			claim: z.string().describe("The claim to fact-check"),
+		}),
+	},
 );
 
 // ────────────────────────────────────────────────
-// LangChain agent — createReactAgent
+// LangChain agent — createAgent (langchain 1.x convenience wrapper)
 // ────────────────────────────────────────────────
 
 const tools = [searchTool, calculatorTool, factCheckTool];
@@ -152,124 +131,9 @@ const tools = [searchTool, calculatorTool, factCheckTool];
 const model = new ChatOpenAI({ model: "gpt-4o", temperature: 0 });
 
 const agent = createAgent({
-  model,
-  tools,
+	model,
+	tools,
 });
-
-// ────────────────────────────────────────────────
-// Evaluators
-// ────────────────────────────────────────────────
-
-/** Checks correctness against expected output when available. */
-const correctnessEvaluator: Evaluator = {
-  name: "correctness",
-  scorer: async ({ data, output }) => {
-    const text = extractText(output).toLowerCase();
-    const expected = data.expectedOutput as string | undefined;
-    if (!expected) {
-      return {
-        value: text.length > 20 ? 1 : 0.5,
-        explanation: "No expected output — scored on response substance",
-      };
-    }
-    const expectedStr = expected.toLowerCase();
-    const contains = text.includes(expectedStr);
-    return {
-      value: contains ? 1 : 0,
-      pass: contains,
-      explanation: contains
-        ? `Output contains expected answer "${expected}"`
-        : `Expected "${expected}" not found in output`,
-    };
-  },
-};
-
-/** Validates that the agent actually used its tools. */
-const toolUsageEvaluator: Evaluator = {
-  name: "tool-usage",
-  scorer: async ({ output }) => {
-    const calls = extractToolCalls(output);
-    const toolNames = [...new Set(calls.map((c) => c.name as string))];
-    const score = Math.min(toolNames.length / 2, 1);
-    return {
-      value: score,
-      explanation: `Used ${calls.length} tool call(s) across ${toolNames.length} distinct tool(s): ${toolNames.join(", ") || "none"}`,
-    };
-  },
-};
-
-/** Multi-criteria quality rubric (structured result). */
-const qualityRubricEvaluator: Evaluator = {
-  name: "quality-rubric",
-  scorer: async ({ output }) => {
-    const text = extractText(output);
-    const words = text.split(/\s+/).filter(Boolean);
-    const sentences = text.split(/[.!?]+/).filter(Boolean);
-
-    const completeness = Math.min(words.length / 50, 1);
-
-    const avgSentenceLen =
-      sentences.length > 0 ? words.length / sentences.length : 0;
-    const clarity =
-      avgSentenceLen >= 10 && avgSentenceLen <= 25
-        ? 0.95
-        : avgSentenceLen > 0
-          ? 0.5
-          : 0.1;
-
-    const hasStructure = /(\n[-•*]|\n\d+\.|\n\n)/.test(text) ? 0.9 : 0.5;
-
-    return {
-      value: {
-        type: "rubric",
-        value: {
-          completeness: Math.round(completeness * 100) / 100,
-          clarity: Math.round(clarity * 100) / 100,
-          structure: Math.round(hasStructure * 100) / 100,
-        },
-      },
-      explanation:
-        "Multi-criteria quality rubric (completeness, clarity, structure)",
-    };
-  },
-};
-
-/** Boolean pass/fail — the response must not be empty or a refusal. */
-const completenessEvaluator: Evaluator = {
-  name: "completeness",
-  scorer: async ({ output }) => {
-    const text = extractText(output);
-    const words = text.split(/\s+/).filter(Boolean).length;
-    const isRefusal = /i (can't|cannot|am unable to)/i.test(text);
-    const isComplete = words >= 10 && !isRefusal;
-    return {
-      value: isComplete,
-      pass: isComplete,
-      explanation: isComplete
-        ? `Complete response (${words} words)`
-        : isRefusal
-          ? "Agent refused to answer"
-          : `Incomplete response (only ${words} words)`,
-    };
-  },
-};
-
-/** Checks that the response references the city from the dataset input. */
-const cityRelevanceEvaluator: Evaluator = {
-  name: "city-relevance",
-  scorer: async ({ data, output }) => {
-    const text = extractText(output).toLowerCase();
-    const city = data.inputs.city as string;
-    const mentionsCity = text.includes(city.toLowerCase());
-    return {
-      value: mentionsCity ? 1 : 0,
-      pass: mentionsCity,
-      explanation: mentionsCity
-        ? `Response references the target city "${city}"`
-        : `Response does not mention "${city}"`,
-    };
-  },
-};
 
 // ────────────────────────────────────────────────
 // Run the evaluation
@@ -277,33 +141,33 @@ const cityRelevanceEvaluator: Evaluator = {
 const DATASET_ID = process.env.DATASET_ID;
 
 await evaluatorq("langchain-research-eval", {
-  description:
-    "LangChain research agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
-  path: "Integrations/LangChain",
-  parallelism: 3,
-  data: {
-    datasetId: (() => {
-      if (!DATASET_ID)
-        throw new Error("DATASET_ID environment variable is required");
-      return DATASET_ID;
-    })(),
-    includeMessages: true,
-  },
-  jobs: [
-    wrapLangChainAgent(agent, {
-      name: "langchain-research-agent",
-      instructions: (data) =>
-        buildSystemInstructions(
-          data.inputs.city as string,
-          data.inputs.data as string,
-        ),
-    }),
-  ],
-  evaluators: [
-    correctnessEvaluator,
-    toolUsageEvaluator,
-    qualityRubricEvaluator,
-    completenessEvaluator,
-    cityRelevanceEvaluator,
-  ],
+	description:
+		"LangChain research agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
+	path: "Integrations/LangChain",
+	parallelism: 3,
+	data: {
+		datasetId: (() => {
+			if (!DATASET_ID)
+				throw new Error("DATASET_ID environment variable is required");
+			return DATASET_ID;
+		})(),
+		includeMessages: true,
+	},
+	jobs: [
+		wrapLangChainAgent(agent, {
+			name: "langchain-research-agent",
+			instructions: (data) =>
+				buildResearchInstructions(
+					data.inputs.city as string,
+					data.inputs.data as string,
+				),
+		}),
+	],
+	evaluators: [
+		correctnessEvaluator,
+		toolUsageEvaluator,
+		qualityRubricEvaluator,
+		completenessEvaluator,
+		cityRelevanceEvaluator,
+	],
 });
