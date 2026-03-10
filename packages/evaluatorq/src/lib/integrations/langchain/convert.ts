@@ -93,8 +93,7 @@ export function convertToOpenResponses(
     // Resolve the message ID: prefer msgData.id (from kwargs.id for constructor format)
     // over msg.id (which is the LC constructor id array for serialized messages).
     const messageId =
-      msgData.id ??
-      (typeof msg.id === "string" ? msg.id : undefined);
+      msgData.id ?? (typeof msg.id === "string" ? msg.id : undefined);
 
     if (msgType === "human") {
       // User message goes into input
