@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -37,8 +36,8 @@ pytest.importorskip("langchain_core")
 pytest.importorskip("langgraph")
 
 from evaluatorq.integrations.langchain_integration.wrap_agent import (  # noqa: E402
-    _extract_messages_from_data,
-    _normalize_message,
+    _extract_messages_from_data,  # pyright: ignore[reportPrivateUsage]
+    _normalize_message,  # pyright: ignore[reportPrivateUsage]
     wrap_langchain_agent,
     wrap_langgraph_agent,
 )

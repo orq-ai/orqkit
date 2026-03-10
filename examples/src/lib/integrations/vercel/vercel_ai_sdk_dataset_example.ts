@@ -13,8 +13,6 @@ const openai = createOpenAI({
 const weatherAgent = new ToolLoopAgent({
   model: openai("gpt-4o"),
   maxOutputTokens: 2500,
-  system:
-    "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
   tools: {
     weather: tool({
       description: "Get the weather in a location (in Fahrenheit)",
@@ -58,7 +56,13 @@ await evaluatorq("weather-agent-dataset-eval", {
       return process.env.DATASET_ID;
     })(),
   },
-  jobs: [wrapAISdkAgent(weatherAgent, { promptKey: "input" })],
+  jobs: [
+    wrapAISdkAgent(weatherAgent, {
+      promptKey: "input",
+      instructions:
+        "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
+    }),
+  ],
   evaluators: [
     {
       name: "has-temperature",

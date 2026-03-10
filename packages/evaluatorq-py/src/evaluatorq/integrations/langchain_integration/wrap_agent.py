@@ -100,8 +100,7 @@ def wrap_langchain_agent(
                 messages = [system_message, *input_messages]
             else:
                 raise ValueError(
-                    "Expected data.inputs.messages (list) or data.inputs."
-                    f"{prompt_key} (str), but neither was provided"
+                    f"Expected data.inputs.messages (list) or data.inputs.{prompt_key} (str), but neither was provided"
                 )
         elif has_messages and has_prompt:
             messages = [*input_messages, {"role": "user", "content": prompt}]
@@ -111,8 +110,7 @@ def wrap_langchain_agent(
             messages = list(input_messages)
         else:
             raise ValueError(
-                "Expected data.inputs.messages (list) or data.inputs."
-                f"{prompt_key} (str), but neither was provided"
+                f"Expected data.inputs.messages (list) or data.inputs.{prompt_key} (str), but neither was provided"
             )
 
         # Invoke the LangChain agent
