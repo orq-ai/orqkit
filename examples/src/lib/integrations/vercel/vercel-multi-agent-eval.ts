@@ -27,7 +27,7 @@ import type { Agent, ToolSet } from "ai";
 import { ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
-import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
+import type { DataPoint, Evaluator, Output } from "@orq-ai/evaluatorq";
 import { evaluatorq, job } from "@orq-ai/evaluatorq";
 import { convertToOpenResponses } from "@orq-ai/evaluatorq/ai-sdk";
 import type {
@@ -38,13 +38,9 @@ import type {
 } from "@orq-ai/evaluatorq/openresponses";
 
 // ────────────────────────────────────────────────
-// Dataset columns: city, data, messages, expected_output
-// ────────────────────────────────────────────────
-
-// ────────────────────────────────────────────────
 // Helpers — extract text and tool calls from agent output
 // ────────────────────────────────────────────────
-function extractText(output: unknown): string {
+function extractText(output: Output): string {
   const res = output as ResponseResource;
   const message = res.output?.find(
     (item): item is Message => item.type === "message",
@@ -56,7 +52,7 @@ function extractText(output: unknown): string {
   return textContent?.text ?? "";
 }
 
-function extractFunctionCalls(output: unknown): FunctionCall[] {
+function extractFunctionCalls(output: Output): FunctionCall[] {
   const res = output as ResponseResource;
   return (
     res.output?.filter(
@@ -140,13 +136,26 @@ const mathAgent = new ToolLoopAgent({
         expression: z.string().describe("Math expression to evaluate"),
       }),
       execute: async ({ expression }) => {
-        try {
-          const sanitized = expression.replace(/[^0-9+\-*/().%^ ]/g, "");
-          const result = Function(`"use strict"; return (${sanitized})`)();
-          return { expression, result: Number(result), error: null };
-        } catch {
-          return { expression, result: null, error: "Could not evaluate" };
+        // NOTE: Uses a hard-coded lookup for demo purposes.
+        // In production, use a dedicated math expression library instead.
+        const knownExpressions: Record<string, number> = {
+          "2 + 2": 4,
+          "10 * 5": 50,
+          "100 / 4": 25,
+          "3.14 * 2": 6.28,
+          "2 ** 10": 1024,
+          "(5 + 3) * 2": 16,
+          "1000 - 750": 250,
+        };
+        const result = knownExpressions[expression.trim()];
+        if (result !== undefined) {
+          return { expression, result, error: null };
         }
+        return {
+          expression,
+          result: null,
+          error: "Expression not in demo lookup table",
+        };
       },
     }),
     statisticalSummary: tool({
@@ -188,10 +197,10 @@ const mathAgent = new ToolLoopAgent({
           miles: { km: 1.60934, meters: 1609.34, feet: 5280 },
           kg: { lbs: 2.20462, grams: 1000, oz: 35.274 },
           lbs: { kg: 0.453592, grams: 453.592, oz: 16 },
-          celsius: { fahrenheit: -1, kelvin: -1 },
         };
         const from = fromUnit.toLowerCase();
         const to = toUnit.toLowerCase();
+        // Celsius conversions use formulas, not simple multipliers
         if (from === "celsius" && to === "fahrenheit")
           return { result: (value * 9) / 5 + 32, from: fromUnit, to: toUnit };
         if (from === "celsius" && to === "kelvin")
@@ -237,9 +246,7 @@ function createAgentJob<TOOLS extends ToolSet>(
     });
 
     // Convert to OpenResponses format
-    const openResponse = convertToOpenResponses(result, agent);
-
-    return openResponse as unknown as Record<string, unknown>;
+    return convertToOpenResponses(result, agent);
   });
 }
 

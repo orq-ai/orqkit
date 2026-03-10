@@ -58,7 +58,7 @@ await evaluatorq("weather-agent-eval", {
     {
       name: "has-temperature",
       scorer: async ({ output }) => {
-        const result = output as unknown as ResponseResource;
+        const result = output as ResponseResource;
         // Find the final assistant message in the output
         const message = result.output.find(
           (item): item is Message => item.type === "message",

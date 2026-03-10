@@ -65,7 +65,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "has-temperature",
       scorer: async ({ output }) => {
-        const result = output as unknown as ResponseResource;
+        const result = output as ResponseResource;
         const message = result.output.find(
           (item): item is Message => item.type === "message",
         );
@@ -86,7 +86,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "matches-expected",
       scorer: async ({ data, output }) => {
-        const result = output as unknown as ResponseResource;
+        const result = output as ResponseResource;
         const message = result.output.find(
           (item): item is Message => item.type === "message",
         );
@@ -111,7 +111,7 @@ await evaluatorq("weather-agent-dataset-eval", {
     {
       name: "mentions-city",
       scorer: async ({ data, output }) => {
-        const result = output as unknown as ResponseResource;
+        const result = output as ResponseResource;
         const message = result.output.find(
           (item): item is Message => item.type === "message",
         );
