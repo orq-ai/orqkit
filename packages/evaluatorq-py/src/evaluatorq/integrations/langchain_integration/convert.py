@@ -180,6 +180,18 @@ def convert_to_open_responses(
             )
             output_items.append(function_call_output)
 
+        elif msg_type == "system":
+            # System message goes into input
+            content_text = _get_content(msg_data)
+            input_message = Message(
+                type="message",
+                id=msg.id or generate_item_id("msg"),
+                role=MessageRole.system,
+                status=MessageStatus.completed,
+                content=[InputTextContent(type="input_text", text=content_text)],
+            )
+            input_items.append(input_message)
+
     # Build tools array
     tools_array: list[FunctionTool] = [
         FunctionTool(

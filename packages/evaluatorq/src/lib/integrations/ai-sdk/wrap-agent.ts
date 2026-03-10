@@ -69,7 +69,7 @@ export function wrapAISdkAgent<TOOLS extends ToolSet>(
     const result = await agent.generate({ prompt });
 
     // Convert to OpenResponses format
-    const openResponsesOutput = convertToOpenResponses(result, agent, prompt);
+    const openResponsesOutput = convertToOpenResponses(result, agent);
 
     return {
       name,

@@ -14,6 +14,18 @@ An evaluation framework library for Python that provides a flexible way to run p
 - **Built-in Evaluators**: Common evaluators like `string_contains_evaluator` included
 - **Integrations**: Langchain and Langgraph agents integration
 
+## 📖 Table of Contents
+
+- [Installation](#-installation)
+- [Getting Started](#-getting-started)
+- [Quick Start](#-quick-start)
+- [Integrations](#-langchain-integration)
+- [Configuration](#-configuration)
+- [Orq Platform Integration](#-orq-platform-integration)
+- [OpenTelemetry Tracing](#-opentelemetry-tracing)
+- [Pass/Fail Tracking](#-passfail-tracking)
+- [API Reference](#-api-reference)
+
 ## 📥 Installation
 
 ```bash
@@ -45,10 +57,25 @@ pip install evaluatorq[otel]
 For LangChain/LangGraph integration:
 
 ```bash
-pip install langchain 
+pip install langchain
 # or
 pip install evaluatorq[langchain]
 ```
+
+## 🏁 Getting Started
+
+New to evaluatorq? Follow this path to get up and running:
+
+| Step | What you'll learn | Example |
+|------|------------------|---------|
+| 1. **Basic eval** | Run your first evaluation with inline data | [`pass_fail_simple.py`](examples/lib/basics/pass_fail_simple.py) |
+| 2. **Multiple jobs** | Run multiple jobs in parallel on each data point | [`example_runners.py`](examples/lib/basics/example_runners.py) |
+| 3. **Reusable patterns** | Create reusable jobs and evaluators | [`eval_reuse.py`](examples/lib/basics/eval_reuse.py) |
+| 4. **Datasets** | Load data from the Orq platform | [`dataset_example.py`](examples/lib/datasets/dataset_example.py) |
+| 5. **Structured scores** | Return multi-dimensional metrics | [`structured_rubric_eval.py`](examples/lib/structured/structured_rubric_eval.py) |
+| 6. **LangChain agent** | Evaluate a LangChain/LangGraph agent | [`langchain_integration_example.py`](examples/lib/integrations/langchain/langchain_integration_example.py) |
+
+> **Tip:** Start with step 1 and work your way up. Each example builds on concepts from the previous one.
 
 ## 🚀 Quick Start
 
@@ -104,6 +131,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+> **Tip:** The `@job()` decorator preserves the job name in error messages. Always prefer `@job("name")` over raw functions for better debugging.
+
 ### Using Orq Platform Datasets
 
 ```python
@@ -149,6 +178,8 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+> **Tip:** Use `parallelism` to control how many data points are processed concurrently. Start with a low value (3-5) when calling external APIs to avoid rate limits.
 
 ### Advanced Features
 
@@ -421,9 +452,9 @@ async def safety_scorer(params):
 
 See the runnable Python examples in the `examples/` directory:
 
-- [`structured_rubric_eval.py`](examples/structured_rubric_eval.py) - Multi-criteria quality rubric
-- [`structured_sentiment_eval.py`](examples/structured_sentiment_eval.py) - Sentiment distribution breakdown
-- [`structured_safety_eval.py`](examples/structured_safety_eval.py) - Safety scores with pass/fail tracking
+- [`structured_rubric_eval.py`](examples/lib/structured/structured_rubric_eval.py) - Multi-criteria quality rubric
+- [`structured_sentiment_eval.py`](examples/lib/structured/structured_sentiment_eval.py) - Sentiment distribution breakdown
+- [`structured_safety_eval.py`](examples/lib/structured/structured_safety_eval.py) - Safety scores with pass/fail tracking
 
 > **Note:** Structured results display as `[structured]` in the terminal summary table but are preserved in full when sent to the Orq platform and OpenTelemetry spans.
 
@@ -436,6 +467,38 @@ await evaluatorq(
     jobs=[...],
     evaluators=[...],
     parallelism=10,  # Run up to 10 jobs concurrently
+)
+```
+
+#### Dashboard Organization with `path`
+
+Use the `path` parameter to organize evaluation results into folders on the Orq dashboard:
+
+```python
+await evaluatorq(
+    "my-evaluation",
+    path="MyProject/Evaluations/Unit Tests",
+    data=[...],
+    jobs=[...],
+    evaluators=[...],
+)
+```
+
+> **Tip:** Use paths like `"Team/Sprint-42/Feature-X"` to keep experiments organized across teams and sprints.
+
+See [`path_organization.py`](examples/lib/structured/path_organization.py) for a complete example.
+
+#### Evaluation Description
+
+Add a description to document the purpose of each evaluation run:
+
+```python
+await evaluatorq(
+    "model-comparison",
+    description="Compare GPT-4o vs Claude on customer support responses",
+    data=[...],
+    jobs=[...],
+    evaluators=[...],
 )
 ```
 
@@ -509,6 +572,7 @@ await evaluatorq("my-eval", EvaluatorParams(
 | `parallelism` | `int` (≥1) | `1` | Number of concurrent jobs |
 | `print_results` | `bool` | `True` | Display progress and results table |
 | `description` | `str` \| `None` | `None` | Optional evaluation description |
+| `path` | `str` \| `None` | `None` | Path for organizing results on the Orq dashboard (e.g., `"Project/Category"`) |
 
 ## 📊 Orq Platform Integration
 
@@ -631,9 +695,11 @@ The LangChain integration allows you to:
 
 Complete examples are available in the examples folder:
 
-- **LangChain Agent**: [`examples/lib/integrations/langchain_integration_example.py`](./examples/lib/integrations/langchain_integration_example.py)
-- **LangGraph Agent**: [`examples/lib/integrations/langgraph_integration_example.py`](./examples/lib/integrations/langgraph_integration_example.py)
+- **LangChain Agent**: [`langchain_integration_example.py`](examples/lib/integrations/langchain/langchain_integration_example.py) — Basic agent with weather tools using `wrap_langchain_agent`
+- **LangGraph Agent**: [`langgraph_integration_example.py`](examples/lib/integrations/langchain/langgraph_integration_example.py) — LangGraph compiled graph with StateGraph pattern
+- **LangGraph Research Agent (advanced)**: [`langgraph_research_eval.py`](examples/lib/integrations/langchain/langgraph_research_eval.py) — Dataset-driven research agent with custom job, dynamic system instructions, and multi-criteria evaluators
 
+> **Tip:** Use `wrap_langchain_agent` for simple agents. Write a custom job function (like in the research example) when you need dynamic system instructions from dataset inputs.
 
 ## 📚 API Reference
 

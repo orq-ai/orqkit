@@ -90,12 +90,18 @@ export function convertToOpenResponses(
     const msgType = getMessageType(msg);
     const msgData = getMessageData(msg);
 
+    // Resolve the message ID: prefer msgData.id (from kwargs.id for constructor format)
+    // over msg.id (which is the LC constructor id array for serialized messages).
+    const messageId =
+      msgData.id ??
+      (typeof msg.id === "string" ? msg.id : undefined);
+
     if (msgType === "human") {
       // User message goes into input
       const contentText = getContent(msgData);
       const inputMessage: Message = {
         type: "message",
-        id: msg.id ?? generateItemId("msg"),
+        id: messageId ?? generateItemId("msg"),
         role: "user",
         status: "completed",
         content: [{ type: "input_text", text: contentText }],
@@ -154,7 +160,7 @@ export function convertToOpenResponses(
         if (contentText) {
           const outputMessage: Message = {
             type: "message",
-            id: msg.id ?? generateItemId("msg"),
+            id: messageId ?? generateItemId("msg"),
             role: "assistant",
             status: "completed",
             content: [
@@ -176,7 +182,7 @@ export function convertToOpenResponses(
 
       const functionCallOutput: FunctionCallOutput = {
         type: "function_call_output",
-        id: msg.id ?? generateItemId("fco"),
+        id: messageId ?? generateItemId("fco"),
         call_id: toolCallId,
         output: outputContent,
         status: "completed",
@@ -185,14 +191,14 @@ export function convertToOpenResponses(
     } else if (msgType === "system") {
       // System message goes into input
       const contentText = getContent(msgData);
-      const systemMessage: Message = {
+      const inputMessage: Message = {
         type: "message",
-        id: msg.id ?? generateItemId("msg"),
-        role: "system" as Message["role"],
+        id: messageId ?? generateItemId("msg"),
+        role: "system",
         status: "completed",
         content: [{ type: "input_text", text: contentText }],
       };
-      inputItems.push(systemMessage);
+      inputItems.push(inputMessage);
     }
   }
 

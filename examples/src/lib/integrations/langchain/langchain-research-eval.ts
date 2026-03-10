@@ -1,14 +1,14 @@
 /**
- * Complex LangGraph Agent Evaluation Example
+ * LangChain Agent — Dataset-Driven Research Evaluation Example
  *
- * Demonstrates a sophisticated evaluation scenario with:
- *   - Multi-node StateGraph with branching logic and specialized tool nodes
+ * Demonstrates a dataset-driven evaluation scenario with:
+ *   - LangChain createReactAgent with multiple tools
  *   - Dataset with structured inputs: { city, data }, messages, expected_output
  *   - System instructions built from dataset inputs (city + data)
  *   - User prompt extracted from dataset messages
  *   - OpenResponses output with input: [system, user] messages
- *   - Multiple evaluators: correctness, tool chain, quality rubric,
- *     completeness, efficiency, and city-relevance
+ *   - Multiple evaluators: correctness, tool-usage, quality rubric,
+ *     completeness, and city-relevance
  *   - Path-based organization for the Orq dashboard
  *   - Parallel processing
  *
@@ -21,19 +21,13 @@
  *       "expected_output" — the expected answer (string, optional)
  *
  * Usage:
- *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/langgraph-research-eval.ts
+ *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/langchain-research-eval.ts
  */
 
-import type { AIMessage, BaseMessage } from "@langchain/core/messages";
+import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
-import {
-  Annotation,
-  END,
-  MessagesAnnotation,
-  StateGraph,
-} from "@langchain/langgraph";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
@@ -68,54 +62,37 @@ function extractToolCalls(output: unknown): Array<Record<string, unknown>> {
 // ────────────────────────────────────────────────
 function buildSystemInstructions(city: string, data: string): string {
   return [
-    `You are an expert research analyst for the city of ${city}.`,
+    `You are an expert analyst for the city of ${city}.`,
     `Use the following context data to inform your answers:\n${data}`,
-    "Always ground your response in the provided data. Use your tools to search, verify, and summarize when appropriate.",
+    "Always ground your response in the provided data.",
+    "You MUST use your tools (search, calculator, or fact_check) at least once before answering. Search for additional information to supplement the provided data, verify claims with the fact-checker, or use the calculator for any numerical analysis.",
   ].join("\n\n");
 }
 
 // ────────────────────────────────────────────────
-// Tools — a rich set to enable multi-step reasoning
+// Tools
 // ────────────────────────────────────────────────
 
 const searchTool = tool(
-  async ({ query, maxResults }) => {
-    // Simulated search results
-    const results = Array.from({ length: maxResults }, (_, i) => ({
-      rank: i + 1,
-      title: `Result ${i + 1} for "${query}"`,
-      snippet: `Relevant information about ${query} — finding #${i + 1} includes important details about the topic.`,
-      relevanceScore: Math.round((1 - i * 0.15) * 100) / 100,
-    }));
-    return { query, totalResults: 42, results };
-  },
-  {
-    name: "search",
-    description: "Search for information on a topic, returns ranked results",
-    schema: z.object({
-      query: z.string().describe("The search query"),
-      maxResults: z
-        .number()
-        .min(1)
-        .max(5)
-        .default(3)
-        .describe("Max results to return"),
-    }),
-  },
-);
-
-const fetchPageTool = tool(
-  async ({ url }) => ({
-    url,
-    title: `Page content for ${url}`,
-    content: `Detailed content from ${url}. This page contains comprehensive information including data tables, citations, and expert analysis. Key takeaway: the subject matter is well-documented with a 95% consensus among experts.`,
-    wordCount: 2500,
+  async ({ query }) => ({
+    results: [
+      {
+        title: `Top result for: ${query}`,
+        snippet: `Comprehensive information about ${query}. According to recent studies, this topic has significant implications in multiple domains.`,
+        url: `https://example.com/search?q=${encodeURIComponent(query)}`,
+      },
+      {
+        title: `Academic paper: ${query}`,
+        snippet: `A peer-reviewed analysis of ${query} published in 2024 found that the key factors include scalability, reliability, and cost-effectiveness.`,
+        url: `https://example.com/papers/${encodeURIComponent(query)}`,
+      },
+    ],
   }),
   {
-    name: "fetch_page",
-    description: "Fetch and extract content from a web page URL",
+    name: "search",
+    description: "Search the web for information on a topic",
     schema: z.object({
-      url: z.string().describe("The URL to fetch"),
+      query: z.string().describe("The search query"),
     }),
   },
 );
@@ -125,7 +102,7 @@ const calculatorTool = tool(
     try {
       const sanitized = expression.replace(/[^0-9+\-*/().%^ ]/g, "");
       const result = Function(`"use strict"; return (${sanitized})`)();
-      return { expression, result: Number(result) };
+      return { expression, result: Number(result), error: null };
     } catch {
       return { expression, result: null, error: "Could not evaluate" };
     }
@@ -139,35 +116,8 @@ const calculatorTool = tool(
   },
 );
 
-const summarizeTool = tool(
-  async ({ text, maxSentences }) => {
-    const sentences = text.split(/[.!?]+/).filter(Boolean);
-    const summary = `${sentences.slice(0, maxSentences).join(". ")}.`;
-    return {
-      summary,
-      originalLength: text.length,
-      summaryLength: summary.length,
-      compressionRatio: Math.round((summary.length / text.length) * 100) / 100,
-    };
-  },
-  {
-    name: "summarize",
-    description: "Summarize a block of text to a target number of sentences",
-    schema: z.object({
-      text: z.string().describe("The text to summarize"),
-      maxSentences: z
-        .number()
-        .min(1)
-        .max(5)
-        .default(3)
-        .describe("Max sentences in summary"),
-    }),
-  },
-);
-
 const factCheckTool = tool(
   async ({ claim }) => {
-    // Simulated stub — replace with a real fact-checking API in production.
     const confidence = 0.85;
     return {
       claim,
@@ -188,79 +138,23 @@ const factCheckTool = tool(
 );
 
 // ────────────────────────────────────────────────
-// LangGraph — multi-node agent graph
+// LangChain agent — createReactAgent
 // ────────────────────────────────────────────────
 
-const tools = [
-  searchTool,
-  fetchPageTool,
-  calculatorTool,
-  summarizeTool,
-  factCheckTool,
-];
+const tools = [searchTool, calculatorTool, factCheckTool];
 
-const model = new ChatOpenAI({ model: "gpt-4o", temperature: 0 }).bindTools(
+const model = new ChatOpenAI({ model: "gpt-4o", temperature: 0 });
+
+const agent = createReactAgent({
+  llm: model,
   tools,
-);
-
-const toolNode = new ToolNode(tools);
-
-// Custom annotation to track tool usage count
-const AgentAnnotation = Annotation.Root({
-  ...MessagesAnnotation.spec,
-  toolCallCount: Annotation<number>({
-    default: () => 0,
-    value: (prev, next) => prev + next,
-  }),
 });
 
-async function callAgent(state: typeof AgentAnnotation.State) {
-  const response = await model.invoke(state.messages);
-  return { messages: [response] };
-}
-
-async function callTools(state: typeof AgentAnnotation.State) {
-  const toolResult = await toolNode.invoke({
-    messages: state.messages,
-  });
-  const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
-  const newCalls = lastMessage.tool_calls?.length ?? 0;
-  return {
-    messages: toolResult.messages as BaseMessage[],
-    toolCallCount: newCalls,
-  };
-}
-
-function shouldContinue(
-  state: typeof AgentAnnotation.State,
-): "tools" | typeof END {
-  const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
-
-  // Stop if no tool calls or we've exceeded a reasonable limit
-  if (!lastMessage.tool_calls?.length || state.toolCallCount > 10) {
-    return END;
-  }
-  return "tools";
-}
-
-// Build and compile the graph
-const graph = new StateGraph(AgentAnnotation)
-  .addNode("agent", callAgent)
-  .addNode("tools", callTools)
-  .addEdge("__start__", "agent")
-  .addConditionalEdges("agent", shouldContinue, {
-    tools: "tools",
-    [END]: END,
-  })
-  .addEdge("tools", "agent");
-
-const compiledGraph = graph.compile();
-
 // ────────────────────────────────────────────────
-// Custom job — extract inputs, build instructions, run graph
+// Custom job — extract inputs, build instructions, run agent
 // ────────────────────────────────────────────────
 
-const researchJob = job("research-graph-agent", async (data: DataPoint) => {
+const researchJob = job("langchain-research-agent", async (data: DataPoint) => {
   const city = data.inputs.city as string;
   const cityData = data.inputs.data as string;
 
@@ -272,14 +166,14 @@ const researchJob = job("research-graph-agent", async (data: DataPoint) => {
 
   const instructions = buildSystemInstructions(city, cityData);
 
-  // Invoke the graph with system instructions + user message
-  const result = await compiledGraph.invoke({
+  // Invoke the agent with system instructions + user message
+  const result = await agent.invoke({
     messages: [new SystemMessage(instructions), new HumanMessage(userMessage)],
   });
 
   // Extract messages from result and convert to OpenResponses format
   const resultMessages = (result.messages ?? []) as BaseMessage[];
-  const resolvedTools = extractToolsFromAgent(compiledGraph);
+  const resolvedTools = extractToolsFromAgent(agent);
   const openResponse = convertToOpenResponses(resultMessages, resolvedTools);
 
   return openResponse as unknown as Record<string, unknown>;
@@ -313,76 +207,52 @@ const correctnessEvaluator: Evaluator = {
   },
 };
 
-/** Validates that the agent built a proper tool chain. */
-const toolChainEvaluator: Evaluator = {
-  name: "tool-chain",
+/** Validates that the agent actually used its tools. */
+const toolUsageEvaluator: Evaluator = {
+  name: "tool-usage",
   scorer: async ({ output }) => {
     const calls = extractToolCalls(output);
-    const toolNames = calls.map((c) => c.name as string);
-    const uniqueTools = [...new Set(toolNames)];
-
-    // Did the agent use search before summarize? (good chain)
-    const hasSearch = toolNames.includes("search");
-    const hasSummarize = toolNames.includes("summarize");
-    const hasFactCheck = toolNames.includes("fact_check");
-
-    let chainScore = 0;
-    if (hasSearch) chainScore += 0.3;
-    if (hasSummarize) chainScore += 0.2;
-    if (hasFactCheck) chainScore += 0.2;
-    if (uniqueTools.length >= 3) chainScore += 0.3;
-
+    const toolNames = [...new Set(calls.map((c) => c.name as string))];
+    const score = Math.min(toolNames.length / 2, 1);
     return {
-      value: Math.round(chainScore * 100) / 100,
-      explanation: `Tool chain: ${toolNames.join(" → ") || "none"} (${uniqueTools.length} distinct)`,
+      value: score,
+      explanation: `Used ${calls.length} tool call(s) across ${toolNames.length} distinct tool(s): ${toolNames.join(", ") || "none"}`,
     };
   },
 };
 
-/** Multi-criteria response quality rubric (structured result). */
-const responseQualityEvaluator: Evaluator = {
-  name: "response-quality",
+/** Multi-criteria quality rubric (structured result). */
+const qualityRubricEvaluator: Evaluator = {
+  name: "quality-rubric",
   scorer: async ({ output }) => {
     const text = extractText(output);
     const words = text.split(/\s+/).filter(Boolean);
     const sentences = text.split(/[.!?]+/).filter(Boolean);
-    const calls = extractToolCalls(output);
 
-    // Depth — word count relative to a good answer length
-    const depth = Math.min(words.length / 80, 1);
+    const completeness = Math.min(words.length / 50, 1);
 
-    // Accuracy signal — did the agent use fact-checking tools?
-    const accuracy = calls.some((c) => c.name === "fact_check") ? 0.95 : 0.6;
-
-    // Coherence — reasonable sentence structure
     const avgSentenceLen =
       sentences.length > 0 ? words.length / sentences.length : 0;
-    const coherence =
-      avgSentenceLen >= 8 && avgSentenceLen <= 30
-        ? 0.9
+    const clarity =
+      avgSentenceLen >= 10 && avgSentenceLen <= 25
+        ? 0.95
         : avgSentenceLen > 0
           ? 0.5
           : 0.1;
 
-    // Sourcing — did the agent cite sources or use search?
-    const sourcing = calls.some((c) =>
-      ["search", "fetch_page"].includes(c.name as string),
-    )
-      ? 0.9
-      : 0.3;
+    const hasStructure = /(\n[-•*]|\n\d+\.|\n\n)/.test(text) ? 0.9 : 0.5;
 
     return {
       value: {
         type: "rubric",
         value: {
-          depth: Math.round(depth * 100) / 100,
-          accuracy: Math.round(accuracy * 100) / 100,
-          coherence: Math.round(coherence * 100) / 100,
-          sourcing: Math.round(sourcing * 100) / 100,
+          completeness: Math.round(completeness * 100) / 100,
+          clarity: Math.round(clarity * 100) / 100,
+          structure: Math.round(hasStructure * 100) / 100,
         },
       },
       explanation:
-        "Multi-criteria quality rubric (depth, accuracy, coherence, sourcing)",
+        "Multi-criteria quality rubric (completeness, clarity, structure)",
     };
   },
 };
@@ -403,30 +273,6 @@ const completenessEvaluator: Evaluator = {
         : isRefusal
           ? "Agent refused to answer"
           : `Incomplete response (only ${words} words)`,
-    };
-  },
-};
-
-/** Checks the efficiency of tool usage — penalizes excessive calls. */
-const efficiencyEvaluator: Evaluator = {
-  name: "efficiency",
-  scorer: async ({ output }) => {
-    const calls = extractToolCalls(output);
-    const totalCalls = calls.length;
-    // Ideal: 2-5 calls for a complex question
-    let score: number;
-    if (totalCalls >= 2 && totalCalls <= 5) {
-      score = 1;
-    } else if (totalCalls === 1 || totalCalls === 6) {
-      score = 0.7;
-    } else if (totalCalls === 0) {
-      score = 0.3;
-    } else {
-      score = Math.max(0.2, 1 - (totalCalls - 5) * 0.1);
-    }
-    return {
-      value: Math.round(score * 100) / 100,
-      explanation: `${totalCalls} tool call(s) — ${totalCalls >= 2 && totalCalls <= 5 ? "optimal range" : totalCalls > 5 ? "excessive" : "underutilized"}`,
     };
   },
 };
@@ -453,10 +299,10 @@ const cityRelevanceEvaluator: Evaluator = {
 // ────────────────────────────────────────────────
 const DATASET_ID = process.env.DATASET_ID;
 
-await evaluatorq("langgraph-complex-research-eval", {
+await evaluatorq("langchain-research-eval", {
   description:
-    "Complex LangGraph research agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
-  path: "Integrations/LangGraph",
+    "LangChain research agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
+  path: "Integrations/LangChain",
   parallelism: 3,
   data: {
     datasetId: (() => {
@@ -469,10 +315,9 @@ await evaluatorq("langgraph-complex-research-eval", {
   jobs: [researchJob],
   evaluators: [
     correctnessEvaluator,
-    toolChainEvaluator,
-    responseQualityEvaluator,
+    toolUsageEvaluator,
+    qualityRubricEvaluator,
     completenessEvaluator,
-    efficiencyEvaluator,
     cityRelevanceEvaluator,
   ],
 });

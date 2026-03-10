@@ -2,35 +2,44 @@
  * Vercel AI SDK — Multi-Agent Evaluation Example
  *
  * Demonstrates a multi-agent, dataset-driven evaluation scenario with:
- *   - Multiple ToolLoopAgents (research + math) wrapped via wrapAISdkAgent
- *   - Dataset pulled from the Orq platform
- *   - Custom evaluators: correctness, tool-usage, response quality rubric
- *   - Structured EvaluationResultCell scores
- *   - Path-based organization for the Orq dashboard
+ *   - Multiple ToolLoopAgents (research + math) with custom jobs
+ *   - Dataset with structured input: { city, data }, message, expected_output
+ *   - System instructions built from dataset `input` (city + data)
+ *   - User prompt from the `message` column
+ *   - OpenResponses output with input: [instruction, user] messages
+ *   - Custom evaluators: correctness, tool-usage, quality rubric, city-relevance
  *   - Parallel processing
  *
  * Prerequisites:
  *   - Set OPENAI_API_KEY and ORQ_API_KEY environment variables
- *   - Upload a dataset to Orq with columns: "input" (the user prompt)
- *     and optionally "expected_output" (the expected answer)
+ *   - Upload a dataset to Orq with columns:
+ *       "city"            — city name (string)
+ *       "data"            — contextual data about the city (string)
+ *       "messages"        — conversation messages (the user prompt as a message)
+ *       "expected_output" — the expected answer (string, optional)
  *
  * Usage:
- *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel-multi-agent-eval.ts
+ *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts
  */
 
 import { createOpenAI } from "@ai-sdk/openai";
+import type { Agent, ToolSet } from "ai";
 import { ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
-import type { Evaluator } from "@orq-ai/evaluatorq";
-import { evaluatorq } from "@orq-ai/evaluatorq";
-import { wrapAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
+import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
+import { evaluatorq, job } from "@orq-ai/evaluatorq";
+import { convertToOpenResponses } from "@orq-ai/evaluatorq/ai-sdk";
 import type {
   FunctionCall,
   Message,
   OutputTextContent,
   ResponseResource,
 } from "@orq-ai/evaluatorq/openresponses";
+
+// ────────────────────────────────────────────────
+// Dataset columns: city, data, messages, expected_output
+// ────────────────────────────────────────────────
 
 // ────────────────────────────────────────────────
 // Helpers — extract text and tool calls from agent output
@@ -54,6 +63,18 @@ function extractFunctionCalls(output: unknown): FunctionCall[] {
       (item): item is FunctionCall => item.type === "function_call",
     ) ?? []
   );
+}
+
+// ────────────────────────────────────────────────
+// Build system instructions from dataset input
+// ────────────────────────────────────────────────
+function buildSystemInstructions(city: string, data: string): string {
+  return [
+    `You are an expert analyst for the city of ${city}.`,
+    `Use the following context data to inform your answers:\n${data}`,
+    "Always ground your response in the provided data. Cite specifics when possible.",
+    "You MUST use your tools at least once before answering. Search for additional information, look up facts in the knowledge base, perform calculations, or convert units as needed to enrich your response.",
+  ].join("\n\n");
 }
 
 // ────────────────────────────────────────────────
@@ -120,7 +141,6 @@ const mathAgent = new ToolLoopAgent({
       }),
       execute: async ({ expression }) => {
         try {
-          // Simple safe evaluation for basic math
           const sanitized = expression.replace(/[^0-9+\-*/().%^ ]/g, "");
           const result = Function(`"use strict"; return (${sanitized})`)();
           return { expression, result: Number(result), error: null };
@@ -168,7 +188,7 @@ const mathAgent = new ToolLoopAgent({
           miles: { km: 1.60934, meters: 1609.34, feet: 5280 },
           kg: { lbs: 2.20462, grams: 1000, oz: 35.274 },
           lbs: { kg: 0.453592, grams: 453.592, oz: 16 },
-          celsius: { fahrenheit: -1, kelvin: -1 }, // handled specially
+          celsius: { fahrenheit: -1, kelvin: -1 },
         };
         const from = fromUnit.toLowerCase();
         const to = toUnit.toLowerCase();
@@ -189,6 +209,41 @@ const mathAgent = new ToolLoopAgent({
 });
 
 // ────────────────────────────────────────────────
+// Custom jobs — extract input, build instructions, run agent
+// ────────────────────────────────────────────────
+
+function createAgentJob<TOOLS extends ToolSet>(
+  name: string,
+  agent: Agent<never, TOOLS, never>,
+) {
+  return job(name, async (data: DataPoint) => {
+    const city = data.inputs.city as string;
+    const cityData = data.inputs.data as string;
+
+    // Messages come from the dataset's "messages" column (included via includeMessages)
+    const messages = data.inputs.messages as
+      | Array<{ role: string; content: string }>
+      | undefined;
+    const userMessage = messages?.find((m) => m.role === "user")?.content ?? "";
+
+    const instructions = buildSystemInstructions(city, cityData);
+
+    // Run the agent with ModelMessage[] — system instructions from dataset input + user message
+    const result = await agent.generate({
+      messages: [
+        { role: "system", content: instructions },
+        { role: "user", content: userMessage },
+      ],
+    });
+
+    // Convert to OpenResponses format
+    const openResponse = convertToOpenResponses(result, agent);
+
+    return openResponse as unknown as Record<string, unknown>;
+  });
+}
+
+// ────────────────────────────────────────────────
 // Evaluators
 // ────────────────────────────────────────────────
 
@@ -197,14 +252,14 @@ const correctnessEvaluator: Evaluator = {
   name: "correctness",
   scorer: async ({ data, output }) => {
     const text = extractText(output).toLowerCase();
-    const expected = (data.inputs as Record<string, string>).expected_output;
+    const expected = data.expectedOutput as string | undefined;
     if (!expected) {
       return {
         value: text.length > 20 ? 1 : 0.5,
         explanation: "No expected output — scored on response substance",
       };
     }
-    const expectedStr = String(expected).toLowerCase();
+    const expectedStr = expected.toLowerCase();
     const contains = text.includes(expectedStr);
     return {
       value: contains ? 1 : 0,
@@ -216,13 +271,13 @@ const correctnessEvaluator: Evaluator = {
   },
 };
 
-/** Validates that the agent actually used its tools and didn't just guess. */
+/** Validates that the agent actually used its tools. */
 const toolUsageEvaluator: Evaluator = {
   name: "tool-usage",
   scorer: async ({ output }) => {
     const calls = extractFunctionCalls(output);
     const toolNames = [...new Set(calls.map((c) => c.name))];
-    const score = Math.min(toolNames.length / 2, 1); // full score at 2+ distinct tools
+    const score = Math.min(toolNames.length / 2, 1);
     return {
       value: score,
       explanation: `Used ${calls.length} tool call(s) across ${toolNames.length} distinct tool(s): ${toolNames.join(", ") || "none"}`,
@@ -238,10 +293,8 @@ const qualityRubricEvaluator: Evaluator = {
     const words = text.split(/\s+/).filter(Boolean);
     const sentences = text.split(/[.!?]+/).filter(Boolean);
 
-    // Completeness — longer, substantive answers score higher
     const completeness = Math.min(words.length / 50, 1);
 
-    // Clarity — average sentence length; prefer 10-25 words per sentence
     const avgSentenceLen =
       sentences.length > 0 ? words.length / sentences.length : 0;
     const clarity =
@@ -251,7 +304,6 @@ const qualityRubricEvaluator: Evaluator = {
           ? 0.5
           : 0.1;
 
-    // Structure — has it used bullet points, numbers, or paragraphs?
     const hasStructure = /(\n[-•*]|\n\d+\.|\n\n)/.test(text) ? 0.9 : 0.5;
 
     return {
@@ -269,24 +321,19 @@ const qualityRubricEvaluator: Evaluator = {
   },
 };
 
-/** Detects hedging and uncertainty language in the response. */
-const safetyEvaluator: Evaluator = {
-  name: "hedge-detection",
-  scorer: async ({ output }) => {
+/** Checks that the response references the city from the dataset input. */
+const cityRelevanceEvaluator: Evaluator = {
+  name: "city-relevance",
+  scorer: async ({ data, output }) => {
     const text = extractText(output).toLowerCase();
-    const unsafePatterns = [
-      /i('m| am) not sure but/,
-      /i (don't|do not) (actually |really )?know/,
-      /as an ai/i,
-    ];
-    const flagged = unsafePatterns.filter((p) => p.test(text));
+    const city = data.inputs.city as string;
+    const mentionsCity = text.includes(city.toLowerCase());
     return {
-      value: flagged.length === 0,
-      pass: flagged.length === 0,
-      explanation:
-        flagged.length === 0
-          ? "No unsafe patterns detected"
-          : `Detected ${flagged.length} unsafe pattern(s) in response`,
+      value: mentionsCity ? 1 : 0,
+      pass: mentionsCity,
+      explanation: mentionsCity
+        ? `Response references the target city "${city}"`
+        : `Response does not mention "${city}"`,
     };
   },
 };
@@ -296,9 +343,9 @@ const safetyEvaluator: Evaluator = {
 // ────────────────────────────────────────────────
 const DATASET_ID = process.env.DATASET_ID;
 
-await evaluatorq("vercel-complex-multi-agent-eval", {
+await evaluatorq("vercel-multi-agent-eval", {
   description:
-    "Complex multi-agent evaluation: research + math agents scored on correctness, tool usage, quality rubric, and safety",
+    "Multi-agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
   path: "Integrations/VercelAI",
   parallelism: 3,
   data: {
@@ -307,18 +354,16 @@ await evaluatorq("vercel-complex-multi-agent-eval", {
         throw new Error("DATASET_ID environment variable is required");
       return DATASET_ID;
     })(),
+    includeMessages: true,
   },
   jobs: [
-    wrapAISdkAgent(researchAgent, {
-      name: "research-agent",
-      promptKey: "input",
-    }),
-    wrapAISdkAgent(mathAgent, { name: "math-agent", promptKey: "input" }),
+    createAgentJob("research-agent", researchAgent),
+    createAgentJob("math-agent", mathAgent),
   ],
   evaluators: [
     correctnessEvaluator,
     toolUsageEvaluator,
     qualityRubricEvaluator,
-    safetyEvaluator,
+    cityRelevanceEvaluator,
   ],
 });

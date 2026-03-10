@@ -2,6 +2,20 @@
 
 This directory contains examples demonstrating the capabilities of the `@orq-ai/evaluatorq` library.
 
+## Suggested Learning Path
+
+If you're new to evaluatorq, we recommend following this progression:
+
+1. **Start here** — [`pass-fail-simple.ts`](src/lib/basics/pass-fail-simple.ts): Simplest possible evaluation
+2. **Add complexity** — [`example-runners.ts`](src/lib/basics/example-runners.ts): Multiple jobs and evaluators
+3. **Use datasets** — [`dataset-example.eval.ts`](src/lib/datasets/dataset-example.eval.ts): Load data from the Orq platform
+4. **Structured scores** — [`structured-rubric.eval.ts`](src/lib/structured/structured-rubric.eval.ts): Multi-dimensional metrics
+5. **Agent integration** — Pick your framework:
+   - LangChain: [`langchain-agent-eval.ts`](src/lib/integrations/langchain/langchain-agent-eval.ts)
+   - LangGraph: [`langgraph-agent-eval.ts`](src/lib/integrations/langchain/langgraph-agent-eval.ts)
+   - Vercel AI SDK: [`vercel_ai_sdk_integration_example.ts`](src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)
+6. **Advanced patterns** — [`langgraph-research-eval.ts`](src/lib/integrations/langchain/langgraph-research-eval.ts): Dataset-driven agent with custom jobs
+
 ## Examples Overview
 
 ### Basics
@@ -86,6 +100,7 @@ Framework integrations in `src/lib/integrations/`.
 
 - **[langchain-agent-eval.ts](src/lib/integrations/langchain/langchain-agent-eval.ts)**: Basic LangChain agent evaluation with `wrapLangChainAgent`
 - **[langgraph-agent-eval.ts](src/lib/integrations/langchain/langgraph-agent-eval.ts)**: Basic LangGraph compiled graph evaluation with `wrapLangGraphAgent`
+- **[langchain-research-eval.ts](src/lib/integrations/langchain/langchain-research-eval.ts)**: Dataset-driven LangChain research agent with custom job function, dynamic system instructions from dataset inputs, and multi-criteria evaluators (correctness, tool-usage, quality rubric, completeness, city-relevance)
 - **[langgraph-research-eval.ts](src/lib/integrations/langchain/langgraph-research-eval.ts)**: Complex multi-tool LangGraph research agent with evaluators for correctness, tool chain, response quality, completeness, and efficiency
 
 #### Vercel AI SDK
@@ -93,10 +108,6 @@ Framework integrations in `src/lib/integrations/`.
 - **[vercel_ai_sdk_integration_example.ts](src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts)**: Basic Vercel AI SDK agent evaluation with `wrapAISdkAgent`
 - **[vercel_ai_sdk_dataset_example.ts](src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts)**: Dataset-based evaluation of a weather agent, demonstrating `expected_output` comparison, temperature detection, and city mention evaluators
 - **[vercel-multi-agent-eval.ts](src/lib/integrations/vercel/vercel-multi-agent-eval.ts)**: Complex multi-agent evaluation with research and math agents, scored on correctness, tool usage, quality rubric, and safety
-
-#### Orq Deployments
-
-- **[orq-deployment-eval.ts](src/lib/integrations/orq/orq-deployment-eval.ts)**: Multi-deployment, dataset-driven evaluation using `invoke` and `deployment` helpers with custom evaluators, structured scores, and path-based dashboard organization
 
 ### CLI
 
@@ -159,9 +170,6 @@ ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/l
 ORQ_API_KEY=... OPENAI_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/vercel/vercel_ai_sdk_dataset_example.ts
 ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/vercel/vercel-multi-agent-eval.ts
 
-# Orq Deployments (requires ORQ_API_KEY and DATASET_ID)
-ORQ_API_KEY=... DATASET_ID=... bun examples/src/lib/integrations/orq/orq-deployment-eval.ts
-
 # CLI (requires Orq CLI)
 bunx @orq-ai/cli evaluate "examples/src/lib/cli/example-using-cli.eval.ts"
 ```
@@ -173,6 +181,15 @@ bunx @orq-ai/cli evaluate "examples/src/lib/cli/example-using-cli.eval.ts"
 3. **Error Handling** — Examples demonstrate graceful error handling with jobs and evaluators that may fail, showing how errors are captured in results.
 4. **Type Safety** — All examples use TypeScript for full type safety with `DataPoint`, `Job`, and `Evaluator` types.
 5. **Real-world Patterns** — Simulated API calls with delays, text analysis and transformation, data validation and quality scoring, integration with external platforms.
+
+## Common Patterns and Tips
+
+- **Evaluator returns**: Use `value: number` (0-1) for scores, `value: boolean` for pass/fail, or `EvaluationResultCell` for structured multi-dimensional metrics
+- **CI/CD integration**: Return `pass: true/false` from evaluators — the process exits with code 1 if any evaluator fails
+- **Dashboard organization**: Use the `path` parameter (e.g., `path: "Team/Sprint/Feature"`) to keep experiments organized on the Orq platform
+- **Rate limiting**: Set `parallelism` to a low value (3-5) when calling external APIs to avoid rate limits
+- **Error debugging**: Always use the `job()` helper instead of raw functions — it preserves job names in error messages
+- **OpenResponses format**: Integration wrappers (`wrapLangChainAgent`, `wrapAISdkAgent`) automatically convert agent outputs to the standardized OpenResponses format for evaluation
 
 ## Notes
 

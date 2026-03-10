@@ -12,6 +12,19 @@ An evaluation framework library that provides a flexible way to run parallel eva
 - **Pass/Fail Tracking**: Evaluators can return pass/fail status for CI/CD integration
 - **Integrations**: LangChain, LangGraph, and Vercel AI SDK agent integration
 
+## 📖 Table of Contents
+
+- [Installation](#-installation)
+- [Getting Started](#-getting-started)
+- [Quick Start](#-quick-start)
+- [LangChain Integration](#-langchain-integration)
+- [Vercel AI SDK Integration](#-vercel-ai-sdk-integration)
+- [Configuration](#-configuration)
+- [Orq Platform Integration](#-orq-platform-integration)
+- [OpenTelemetry Tracing](#-opentelemetry-tracing)
+- [Pass/Fail Tracking](#-passfail-tracking)
+- [API Reference](#-api-reference)
+
 ## 📥 Installation
 
 ```bash
@@ -45,8 +58,24 @@ npm install langchain @langchain/core @langchain/langgraph
 For Vercel AI SDK integration:
 
 ```bash
-npm install ai 
+npm install ai
 ```
+
+## 🏁 Getting Started
+
+New to evaluatorq? Follow this path to get up and running:
+
+| Step | What you'll learn | Example |
+|------|------------------|---------|
+| 1. **Basic eval** | Run your first evaluation with inline data | [`pass-fail-simple.ts`](../../examples/src/lib/basics/pass-fail-simple.ts) |
+| 2. **Multiple jobs** | Run multiple jobs in parallel on each data point | [`example-runners.ts`](../../examples/src/lib/basics/example-runners.ts) |
+| 3. **Reusable patterns** | Create reusable jobs and evaluators | [`eval-reuse.eval.ts`](../../examples/src/lib/basics/eval-reuse.eval.ts) |
+| 4. **Datasets** | Load data from the Orq platform | [`dataset-example.eval.ts`](../../examples/src/lib/datasets/dataset-example.eval.ts) |
+| 5. **Structured scores** | Return multi-dimensional metrics | [`structured-rubric.eval.ts`](../../examples/src/lib/structured/structured-rubric.eval.ts) |
+| 6. **LangChain agent** | Evaluate a LangChain/LangGraph agent | [`langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-agent-eval.ts) |
+| 7. **Vercel AI SDK** | Evaluate a Vercel AI SDK agent | [`vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel/vercel_ai_sdk_integration_example.ts) |
+
+> **Tip:** Start with step 1 and work your way up. Each example builds on concepts from the previous one.
 
 ## 🚀 Quick Start
 
@@ -89,6 +118,8 @@ await evaluatorq("text-analysis", {
 });
 ```
 
+> **Tip:** The `job()` helper preserves the job name in error messages. Always prefer `job("name", fn)` over raw functions for better debugging.
+
 ### Using Orq Platform Datasets
 
 ```typescript
@@ -124,6 +155,8 @@ await evaluatorq("dataset-evaluation", {
   ],
 });
 ```
+
+> **Tip:** Use `parallelism` to control how many data points are processed concurrently. Start with a low value (3-5) when calling external APIs to avoid rate limits.
 
 ### Advanced Features
 
@@ -174,6 +207,36 @@ const dataPromises = Array.from({ length: 1000 }, (_, i) =>
 
 await evaluatorq("async-eval", {
   data: dataPromises,
+  jobs: [...],
+  evaluators: [...],
+});
+```
+
+#### Dashboard Organization with `path`
+
+Use the `path` parameter to organize evaluation results into folders on the Orq dashboard:
+
+```typescript
+await evaluatorq("my-evaluation", {
+  path: "MyProject/Evaluations/Unit Tests",
+  data: [...],
+  jobs: [...],
+  evaluators: [...],
+});
+```
+
+> **Tip:** Use paths like `"Team/Sprint-42/Feature-X"` to keep experiments organized across teams and sprints.
+
+See [`path-organization.eval.ts`](../../examples/src/lib/structured/path-organization.eval.ts) for a complete example.
+
+#### Evaluation Description
+
+Add a description to document the purpose of each evaluation run:
+
+```typescript
+await evaluatorq("model-comparison", {
+  description: "Compare GPT-4o vs Claude on customer support responses",
+  data: [...],
   jobs: [...],
   evaluators: [...],
 });
@@ -250,7 +313,10 @@ Complete examples are available in the examples folder:
 
 - **LangChain Agent**: [`examples/src/lib/integrations/langchain/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-agent-eval.ts)
 - **LangGraph Agent**: [`examples/src/lib/integrations/langchain/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-agent-eval.ts)
+- **LangChain Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langchain-research-eval.ts`](../../examples/src/lib/integrations/langchain/langchain-research-eval.ts) — Dataset-driven research agent with custom job function, dynamic system instructions, and multi-criteria evaluators
 - **LangGraph Research Agent (advanced)**: [`examples/src/lib/integrations/langchain/langgraph-research-eval.ts`](../../examples/src/lib/integrations/langchain/langgraph-research-eval.ts) — Multi-tool research agent with correctness, tool chain, quality, completeness, and efficiency evaluators
+
+> **Tip:** Use `wrapLangChainAgent` for simple agents and write a custom job function (like in the research examples) when you need to build dynamic system instructions from dataset inputs.
 
 ## 🤖 Vercel AI SDK Integration
 
@@ -391,6 +457,9 @@ Main function to run evaluations.
   - `data`: Array of data points, async iterable, or Orq dataset config
   - `jobs`: Array of job functions to run on each data point
   - `evaluators`: Array of evaluator configurations
+  - `parallelism`: Number of concurrent jobs (default: 1)
+  - `path`: Optional string for organizing results on the Orq dashboard (e.g., `"Project/Category"`)
+  - `description`: Optional string describing the evaluation run
 
 #### Returns:
 
