@@ -28,6 +28,7 @@ import asyncio
 import os
 import re
 from typing import Any
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
@@ -96,7 +97,7 @@ def search(query: str) -> dict[str, Any]:
                     f"Comprehensive information about {query}. According to recent studies, "
                     "this topic has significant implications in multiple domains."
                 ),
-                "url": f"https://example.com/search?q={query}",
+                "url": f"https://example.com/search?q={quote_plus(query)}",
             },
             {
                 "title": f"Academic paper: {query}",
@@ -104,7 +105,7 @@ def search(query: str) -> dict[str, Any]:
                     f"A peer-reviewed analysis of {query} published in 2024 found that the "
                     "key factors include scalability, reliability, and cost-effectiveness."
                 ),
-                "url": f"https://example.com/papers/{query}",
+                "url": f"https://example.com/papers/{quote_plus(query)}",
             },
         ],
     }
@@ -129,7 +130,7 @@ def fact_check(claim: str) -> dict[str, Any]:
         "claim": claim,
         "verdict": "supported" if confidence >= 0.85 else "partially_supported",
         "confidence": round(confidence, 2),
-        "sources": [f"https://example.com/fact-check/{claim[:30]}"],
+        "sources": [f"https://example.com/fact-check/{quote_plus(claim[:30])}"],
     }
 
 
