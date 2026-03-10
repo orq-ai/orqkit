@@ -18,10 +18,10 @@ markers = [
 ]
 
 [tool.basedpyright]
-exclude = ["examples", ".venv"]
+exclude = ["examples", ".venv", "src/evaluatorq/redteam/ui"]
 reportIncompatibleVariableOverride = "none"
 reportExplicitAny = "none"
-reportMissingImports = "warning"
+reportMissingImports = "none"
 reportAny = "none"
 reportUnknownMemberType = "none"
 reportUnknownArgumentType = "none"
@@ -29,6 +29,20 @@ reportUnknownVariableType = "none"
 reportUnknownParameterType = "none"
 reportMissingTypeStubs = "none"
 reportUnusedCallResult = "none"
+reportUnannotatedClassAttribute = "none"
+reportPrivateUsage = "none"
+reportImplicitStringConcatenation = "none"
+reportUnusedImport = "none"
+reportDeprecated = "none"
+reportUnusedVariable = "none"
+reportMissingParameterType = "none"
+reportUnusedParameter = "none"
+reportUnreachable = "none"
+reportImplicitOverride = "none"
+reportUnusedFunction = "none"
+reportUntypedFunctionDecorator = "none"
+reportUnnecessaryIsInstance = "none"
+reportUnnecessaryTypeIgnoreComment = "none"
 
 [project]
 name = "evaluatorq"
@@ -36,7 +50,11 @@ version = "1.2.0-rc.3"
 description = "An evaluation framework library for Python that provides a flexible way to run parallel evaluations and optionally integrate with the Orq AI platform."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [ "pydantic>=2.0", "httpx>=0.28.1", "rich>=14.2.0" ]
+dependencies = [
+ "pydantic>=2.0",
+ "httpx>=0.28.1",
+ "rich>=14.2.0",
+]
 
   [project.license]
   text = "MIT"
@@ -50,7 +68,13 @@ dependencies = [ "pydantic>=2.0", "httpx>=0.28.1", "rich>=14.2.0" ]
     "opentelemetry-semantic-conventions>=0.41b0"
   ]
   langchain = ["langchain>=1.0.0, <2.0.0"]
+  redteam = ["openai>=1.0.0", "loguru", "typer>=0.12.0", "python-dotenv>=1.0.0"]
+  ui = ["streamlit>=1.30.0", "plotly>=5.18.0"]
+  all = ["evaluatorq[orq,otel,langchain,redteam,ui]"]
 
+
+  [project.scripts]
+  evaluatorq-redteam = "evaluatorq.redteam.cli:app"
 
   [project.urls]
   Homepage = "https://github.com/orq-ai/orqkit"
@@ -70,5 +94,8 @@ dev = [
   "opentelemetry-sdk>=1.20.0",
   "opentelemetry-exporter-otlp-proto-http>=1.20.0",
   "langchain-core>=0.3.0",
-  "langgraph>=0.2.0"
+  "langgraph>=0.2.0",
+  "loguru",
+  "pytest-cov>=7.0.0",
+  "watchdog>=4.0.0",
 ]

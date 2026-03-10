@@ -53,3 +53,4 @@ Thumbs.db
 .venv
 **/*.tsbuildinfo
 *.env
+packages/evaluatorq-py/outputs/*
