@@ -30,7 +30,6 @@ import re
 from typing import Any
 from urllib.parse import quote_plus
 
-from dotenv import load_dotenv
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
@@ -38,7 +37,6 @@ from langgraph.prebuilt import create_react_agent
 from evaluatorq import DataPoint, ScorerParameter, evaluatorq
 from evaluatorq.integrations.langchain_integration import wrap_langgraph_agent
 
-_ = load_dotenv()
 
 
 # ────────────────────────────────────────────────
