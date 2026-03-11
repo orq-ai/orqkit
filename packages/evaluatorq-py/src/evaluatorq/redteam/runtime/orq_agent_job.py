@@ -71,8 +71,9 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
                 kwargs['task_id'] = task_id
 
             response = await client.agents.responses.create_async(**kwargs)
-            if getattr(response, 'task_id', None):
-                task_id = response.task_id
+            response_task_id = getattr(response, 'task_id', None)
+            if response_task_id:
+                task_id = response_task_id
             result_text = _extract_agent_response_text(response)
 
         if user_turns == 0:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from evaluatorq.redteam import get_category_info, list_categories, red_team
-from evaluatorq.redteam._runner import _parse_target
+from evaluatorq.redteam._runner import _parse_target  # pyright: ignore[reportPrivateUsage]
 
 
 class TestParseTarget:
@@ -27,7 +27,7 @@ class TestParseTarget:
         assert value == 'my-agent-key'
 
     def test_case_insensitive_kind(self):
-        kind, value = _parse_target('Agent:my-key')
+        kind, _value = _parse_target('Agent:my-key')
         assert kind == 'agent'
 
     def test_empty_value_raises(self):
@@ -68,7 +68,7 @@ class TestGetCategoryInfo:
 
     def test_info_structure(self):
         info = get_category_info()
-        for cat, details in info.items():
+        for _cat, details in info.items():
             assert 'name' in details
             assert 'strategy_count' in details
             assert 'single_turn_count' in details

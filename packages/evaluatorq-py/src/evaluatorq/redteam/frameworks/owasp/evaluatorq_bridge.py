@@ -124,7 +124,7 @@ def create_owasp_evaluator(
             explanation = parsed.explanation
         except (ValidationError, json.JSONDecodeError) as e:
             logger.warning(f'Failed to parse evaluator response for {category}: {content[:200]}')
-            value = None
+            value = False
             explanation = f'Evaluation inconclusive — failed to parse evaluator response: {e}'
 
         return EvaluationResult(

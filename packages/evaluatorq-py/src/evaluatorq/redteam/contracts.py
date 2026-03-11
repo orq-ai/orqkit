@@ -107,6 +107,7 @@ class Framework(StrEnum):
     FAIRNESS = 'FAIRNESS'
     GDPR = 'GDPR'
     AI_ACT = 'AI-ACT'
+    UNKNOWN = 'unknown'
 
 
 class Pipeline(StrEnum):
@@ -150,21 +151,21 @@ def normalize_category(category: str) -> str:
     return category.removeprefix('OWASP-')
 
 
-def infer_framework(category: str) -> str:
+def infer_framework(category: str) -> Framework:
     """Infer OWASP framework from category code.
 
     Args:
         category: Category code (e.g., 'ASI01', 'LLM07', 'OWASP-ASI01')
 
     Returns:
-        'OWASP-ASI' or 'OWASP-LLM'
+        Framework enum value.
     """
     normalized = normalize_category(category)
     if normalized.startswith('ASI'):
-        return 'OWASP-ASI'
+        return Framework.OWASP_ASI
     if normalized.startswith('LLM'):
-        return 'OWASP-LLM'
-    return 'unknown'
+        return Framework.OWASP_LLM
+    return Framework.UNKNOWN
 
 
 # ---------------------------------------------------------------------------

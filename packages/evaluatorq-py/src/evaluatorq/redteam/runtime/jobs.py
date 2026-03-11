@@ -58,7 +58,7 @@ def create_model_job(
             client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
             completion = await client.deployments.invoke_async(
                 key=deployment_key,
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,  # pyright: ignore[reportArgumentType]
             )
 
             return {
@@ -78,7 +78,7 @@ def create_model_job(
         client = llm_client or create_async_llm_client()
         response = await client.chat.completions.create(
             model=model,
-            messages=messages,  # type: ignore[arg-type]
+            messages=messages,  # pyright: ignore[reportArgumentType]
         )
         content = response.choices[0].message.content or ''
         if not content:

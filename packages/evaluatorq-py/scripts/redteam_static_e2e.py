@@ -136,7 +136,7 @@ async def _run(args: argparse.Namespace) -> int:
         print(f'Dataset path does not exist: {dataset_path}', file=sys.stderr)
         return 2
 
-    llm_client = None if args.live_client else DeterministicAsyncOpenAI()
+    llm_client: Any = None if args.live_client else DeterministicAsyncOpenAI()
 
     report = await red_team(
         args.target,
