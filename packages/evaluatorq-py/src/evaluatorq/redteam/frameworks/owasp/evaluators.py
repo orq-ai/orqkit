@@ -191,9 +191,9 @@ def get_evaluator_for_category(
 
 
 def list_available_categories() -> list[str]:
-    """List all available OWASP category codes.
+    """List all available OWASP category codes (short-form only).
 
     Returns:
         List of category codes (ASI01-ASI10, LLM01-LLM10)
     """
-    return list(OWASP_EVALUATOR_REGISTRY.keys())
+    return [k for k in OWASP_EVALUATOR_REGISTRY if not k.startswith('OWASP-')]

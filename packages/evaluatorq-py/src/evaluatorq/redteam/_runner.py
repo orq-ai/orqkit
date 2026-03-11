@@ -305,7 +305,7 @@ async def _run_static(
 
     # Create job based on target kind
     if target_kind == 'agent':
-        model_job = create_model_job(agent_key=target_value, llm_client=llm_client)
+        model_job = create_model_job(agent_key=target_value)
     elif target_kind == 'openai':
         model_job = create_model_job(model=target_value, llm_client=llm_client)
     elif target_kind == 'deployment':
