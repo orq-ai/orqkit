@@ -50,6 +50,30 @@ interface OrqResponse {
   experiment_url?: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isEvaluationResultCell = (
+  value: unknown,
+): value is { type: string; value: Record<string, unknown> } =>
+  isRecord(value) && typeof value.type === "string" && isRecord(value.value);
+
+const serializeScoreValue = (value: unknown): unknown => {
+  if (isRecord(value) && !isEvaluationResultCell(value)) {
+    return JSON.stringify(value);
+  }
+
+  return value;
+};
+
+const isResponseResource = (value: unknown): value is { object: "response" } =>
+  isRecord(value) && value.object === "response";
+
+const serializeOutput = (output: Output): Output =>
+  isRecord(output) && !isResponseResource(output)
+    ? JSON.stringify(output)
+    : output;
+
 export const sendResultsToOrqEffect = (
   apiKey: string,
   evaluationName: string,
@@ -69,12 +93,19 @@ export const sendResultsToOrqEffect = (
         jobResults: result.jobResults?.map(
           (jobResult): SerializedJobResult => ({
             jobName: jobResult.jobName,
-            output: jobResult.output,
+            output: serializeOutput(jobResult.output),
             error: jobResult.error ? String(jobResult.error) : undefined,
             evaluatorScores: jobResult.evaluatorScores?.map(
               (score): SerializedEvaluatorScore => ({
                 evaluatorName: score.evaluatorName,
-                score: score.score,
+                score: {
+                  ...score.score,
+                  value: serializeScoreValue(score.score.value) as
+                    | number
+                    | boolean
+                    | string
+                    | { type: string; value: Record<string, unknown> },
+                },
                 error: score.error ? String(score.error) : undefined,
               }),
             ),
