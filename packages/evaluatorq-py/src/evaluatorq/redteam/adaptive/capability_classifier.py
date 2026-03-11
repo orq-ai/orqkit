@@ -19,9 +19,6 @@ else:
         pass
 
 
-from typing import Any
-
-
 from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field

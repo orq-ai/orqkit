@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 from evaluatorq.redteam.contracts import AgentContext
 from evaluatorq.redteam.reports.converters import (
-    _coerce_job_output_payload,
+    _coerce_job_output_payload,  # pyright: ignore[reportPrivateUsage]
     dynamic_evaluatorq_results_to_report,
 )
 

@@ -35,6 +35,9 @@ class EvaluatorResponsePayload(BaseModel):
 class OWASPEvaluator:
     """Wrapper for OWASP vulnerability evaluators."""
 
+    evaluator_model: str
+    client: AsyncOpenAI
+
     def __init__(
         self,
         evaluator_model: str = 'azure/gpt-5-mini',

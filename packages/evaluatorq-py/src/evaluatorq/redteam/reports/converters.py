@@ -21,7 +21,6 @@ from evaluatorq.redteam.contracts import (
     ExecutionDetails,
     Framework,
     JobOutputPayload,
-    Message,
     OWASP_CATEGORY_NAMES,
     Pipeline,
     RedTeamReport,

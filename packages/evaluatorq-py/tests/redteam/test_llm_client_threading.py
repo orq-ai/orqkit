@@ -6,6 +6,7 @@ calling create_async_llm_client(), and that the env var priority is correct.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ class TestCreateAsyncLlmClientPriority:
         clear=True,
     )
     @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
-    def test_openai_takes_priority_over_orq(self, mock_cls):
+    def test_openai_takes_priority_over_orq(self, mock_cls: Any) -> None:
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
         create_async_llm_client()
@@ -37,7 +38,7 @@ class TestCreateAsyncLlmClientPriority:
         clear=True,
     )
     @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
-    def test_openai_with_base_url(self, mock_cls):
+    def test_openai_with_base_url(self, mock_cls: Any) -> None:
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
         create_async_llm_client()
@@ -49,7 +50,7 @@ class TestCreateAsyncLlmClientPriority:
         clear=True,
     )
     @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
-    def test_orq_fallback_when_no_openai(self, mock_cls):
+    def test_orq_fallback_when_no_openai(self, mock_cls: Any) -> None:
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
         create_async_llm_client()
@@ -83,7 +84,7 @@ class TestResolveBackendLlmClient:
         assert getattr(bundle.target_factory, '_client') is custom_client
 
     @patch('evaluatorq.redteam.backends.registry.create_async_llm_client')
-    def test_openai_backend_falls_back_to_create(self, mock_create):
+    def test_openai_backend_falls_back_to_create(self, mock_create: Any) -> None:
         from evaluatorq.redteam.backends.registry import resolve_backend
 
         mock_create.return_value = MagicMock(spec=AsyncOpenAI)
@@ -107,7 +108,7 @@ class TestOWASPEvaluatorLlmClient:
         assert evaluator.client is custom_client
 
     @patch('evaluatorq.redteam.adaptive.evaluator.create_async_llm_client')
-    def test_falls_back_to_create(self, mock_create):
+    def test_falls_back_to_create(self, mock_create: Any) -> None:
         from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
 
         mock_create.return_value = MagicMock(spec=AsyncOpenAI)
@@ -124,7 +125,7 @@ class TestCreateDynamicEvaluatorLlmClient:
     """Verify create_dynamic_evaluator passes llm_client to OWASPEvaluator."""
 
     @patch('evaluatorq.redteam.adaptive.pipeline.OWASPEvaluator')
-    def test_passes_client_to_evaluator(self, mock_cls):
+    def test_passes_client_to_evaluator(self, mock_cls: Any) -> None:
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
 
         custom_client = MagicMock(spec=AsyncOpenAI)
@@ -132,7 +133,7 @@ class TestCreateDynamicEvaluatorLlmClient:
         mock_cls.assert_called_once_with(evaluator_model='azure/gpt-5-mini', llm_client=custom_client)
 
     @patch('evaluatorq.redteam.adaptive.pipeline.OWASPEvaluator')
-    def test_passes_none_when_no_client(self, mock_cls):
+    def test_passes_none_when_no_client(self, mock_cls: Any) -> None:
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
 
         create_dynamic_evaluator()
@@ -149,7 +150,7 @@ class TestCreateOWASPEvaluatorLlmClient:
     @pytest.mark.asyncio
     @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.get_evaluator_for_category')
     @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.create_async_llm_client')
-    async def test_scorer_uses_custom_client(self, mock_create, mock_get_eval):
+    async def test_scorer_uses_custom_client(self, mock_create: Any, mock_get_eval: Any) -> None:
         from evaluatorq import DataPoint, EvaluationResult
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 
@@ -176,7 +177,7 @@ class TestCreateOWASPEvaluatorLlmClient:
     @pytest.mark.asyncio
     @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.get_evaluator_for_category')
     @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.create_async_llm_client')
-    async def test_scorer_falls_back_when_no_client(self, mock_create, mock_get_eval):
+    async def test_scorer_falls_back_when_no_client(self, mock_create: Any, mock_get_eval: Any) -> None:
         from evaluatorq import DataPoint
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 
@@ -210,7 +211,7 @@ class TestCreateModelJobLlmClient:
 
     @pytest.mark.asyncio
     @patch('evaluatorq.redteam.runtime.jobs.create_async_llm_client')
-    async def test_router_job_uses_custom_client(self, mock_create):
+    async def test_router_job_uses_custom_client(self, mock_create: Any) -> None:
         from evaluatorq import DataPoint
         from evaluatorq.redteam.runtime.jobs import create_model_job
 
@@ -232,7 +233,7 @@ class TestCreateModelJobLlmClient:
 
     @pytest.mark.asyncio
     @patch('evaluatorq.redteam.runtime.jobs.create_async_llm_client')
-    async def test_router_job_falls_back_when_no_client(self, mock_create):
+    async def test_router_job_falls_back_when_no_client(self, mock_create: Any) -> None:
         from evaluatorq import DataPoint
         from evaluatorq.redteam.runtime.jobs import create_model_job
 

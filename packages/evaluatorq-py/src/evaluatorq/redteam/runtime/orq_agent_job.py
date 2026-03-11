@@ -82,7 +82,7 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
 
         logger.debug(
             f'Platform agent response for {sample_id}: turns={user_turns}, '
-            f'len={len(result_text)}, repr={result_text[:200]!r}'
+            + f'len={len(result_text)}, repr={result_text[:200]!r}'
         )
         if not result_text:
             logger.warning(f'Empty platform agent response for {sample_id}')

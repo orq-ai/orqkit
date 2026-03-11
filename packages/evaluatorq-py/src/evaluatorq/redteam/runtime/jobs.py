@@ -86,7 +86,7 @@ def create_model_job(
             finish_reason = response.choices[0].finish_reason
             logger.warning(
                 f'Empty router response for {sample_id}: '
-                f'content={response.choices[0].message.content}, finish_reason={finish_reason}'
+                + f'content={response.choices[0].message.content}, finish_reason={finish_reason}'
             )
         return {
             'response': content,
@@ -141,19 +141,6 @@ def _safe_int(value: Any) -> int:
         return int(value or 0)
     except (TypeError, ValueError):
         return 0
-
-
-def _normalize_usage(raw_usage: Any) -> TokenUsage | None:
-    """Normalize usage payloads to TokenUsage."""
-    if isinstance(raw_usage, TokenUsage):
-        return raw_usage
-    if not isinstance(raw_usage, dict):
-        return None
-
-    prompt = _safe_int(raw_usage.get('prompt_tokens', raw_usage.get('prompt', 0)))
-    completion = _safe_int(raw_usage.get('completion_tokens', raw_usage.get('completion', 0)))
-    total = _safe_int(raw_usage.get('total_tokens', raw_usage.get('total', prompt + completion)))
-    return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
 
 
 def _extract_usage_from_chat_completion(response: Any) -> TokenUsage | None:

@@ -13,8 +13,6 @@ Semantic convention throughout this package:
 
 from __future__ import annotations
 
-from typing import Any
-
 from evaluatorq.redteam.contracts import (
     AgentContext,
     AgentInfo,

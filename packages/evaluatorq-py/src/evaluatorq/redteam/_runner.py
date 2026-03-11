@@ -8,10 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from evaluatorq.redteam.adaptive.strategy_registry import (
-    get_category_info,
-    list_available_categories,
-)
+from evaluatorq.redteam.adaptive.strategy_registry import list_available_categories
 from evaluatorq.redteam.contracts import AgentContext, RedTeamReport
 
 if TYPE_CHECKING:
@@ -101,7 +98,7 @@ async def red_team(
             evaluator_model=evaluator_model,
             parallelism=parallelism,
             max_datapoints=max_datapoints,
-            backend=backend,
+            _backend=backend,
             dataset_path=dataset_path,
             description=description,
             llm_client=llm_client,
@@ -109,7 +106,7 @@ async def red_team(
     if mode == 'hybrid':
         raise NotImplementedError(
             'mode="hybrid" is not yet available. '
-            'Hybrid mode will compose dynamic + static in a single evaluatorq run.'
+            + 'Hybrid mode will compose dynamic + static in a single evaluatorq run.'
         )
     msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
     raise ValueError(msg)
@@ -185,7 +182,7 @@ async def _run_dynamic(
     # Stage 1: Generate datapoints
     logger.info(
         f'Generating attack datapoints for {target} '
-        f'({len(resolved_categories)} categories, max_turns={max_turns})'
+        + f'({len(resolved_categories)} categories, max_turns={max_turns})'
     )
     datapoints, _filtering_metadata = await generate_dynamic_datapoints(
         agent_context=agent_context,
@@ -274,7 +271,7 @@ async def _run_static(
     evaluator_model: str,
     parallelism: int,
     max_datapoints: int | None,
-    backend: str,
+    _backend: str,
     dataset_path: Any,
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
