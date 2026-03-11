@@ -24,12 +24,20 @@ interface ErrorWithStatusCode {
   responseBody?: unknown;
 }
 
+async function getBaseUrl(
+  context: ILoadOptionsFunctions | IExecuteFunctions,
+): Promise<string> {
+  const credentials = await context.getCredentials("orqApi");
+  return (credentials.baseUrl as string) || API_ENDPOINTS.BASE_URL;
+}
+
 export async function getKnowledgeBases(
   context: ILoadOptionsFunctions | IExecuteFunctions,
 ): Promise<IOrqKnowledgeBase[]> {
+  const baseUrl = await getBaseUrl(context);
   const options: IHttpRequestOptions = {
     method: "GET",
-    url: `${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.KNOWLEDGE_BASES}`,
+    url: `${baseUrl}${API_ENDPOINTS.KNOWLEDGE_BASES}`,
     json: true,
     timeout: DEFAULT_TIMEOUT,
   };
@@ -85,13 +93,14 @@ export async function searchKnowledgeBase(
     searchRequest,
   );
 
+  const baseUrl = await getBaseUrl(context);
   const endpoint = API_ENDPOINTS.KNOWLEDGE_BASE_SEARCH.replace(
     "{knowledge_id}",
     validatedId,
   );
   const options: IHttpRequestOptions = {
     method: "POST",
-    url: `${API_ENDPOINTS.BASE_URL}${endpoint}`,
+    url: `${baseUrl}${endpoint}`,
     body: validatedRequest,
     json: true,
     timeout: DEFAULT_TIMEOUT,

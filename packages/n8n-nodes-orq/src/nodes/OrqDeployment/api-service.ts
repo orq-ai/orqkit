@@ -13,6 +13,7 @@ import {
 } from "./constants";
 import type {
   OrqApiResponse,
+  OrqCredentials,
   OrqDeployment,
   OrqDeploymentListResponse,
   OrqRequestBody,
@@ -21,7 +22,8 @@ import type {
 export async function getDeploymentKeys(
   context: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  const baseUrl = DEFAULT_BASE_URL;
+  const credentials = (await context.getCredentials("orqApi")) as OrqCredentials;
+  const baseUrl = credentials.baseUrl || DEFAULT_BASE_URL;
 
   try {
     const response = (await context.helpers.requestWithAuthentication.call(
@@ -54,7 +56,8 @@ export async function invokeDeployment(
   context: IExecuteFunctions,
   body: OrqRequestBody,
 ): Promise<OrqApiResponse> {
-  const baseUrl = DEFAULT_BASE_URL;
+  const credentials = (await context.getCredentials("orqApi")) as OrqCredentials;
+  const baseUrl = credentials.baseUrl || DEFAULT_BASE_URL;
 
   return await context.helpers.requestWithAuthentication.call(
     context,

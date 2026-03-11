@@ -142,6 +142,7 @@ export interface OrqDeploymentListResponse {
 
 export interface OrqCredentials {
   apiKey: string;
+  baseUrl?: string;
 }
 
 export interface OrqDeploymentConfig {
