@@ -216,6 +216,11 @@ def static_sample_to_result(
         normalized_input = dict(raw_input)
         # Normalize free-form dataset techniques before strict schema validation.
         normalized_input['attack_technique'] = _normalize_attack_technique(normalized_input.get('attack_technique'))
+        raw_dm = normalized_input.get('delivery_method', '')
+        valid_dms = {str(dm.value) for dm in DeliveryMethod}
+        if raw_dm and raw_dm not in valid_dms:
+            logger.debug(f'Unknown delivery_method {raw_dm!r}, defaulting to direct-request')
+            normalized_input['delivery_method'] = 'direct-request'
         normalized_sample['input'] = normalized_input
     raw_eval = normalized_sample.get('evaluation_result')
     if isinstance(raw_eval, dict):
