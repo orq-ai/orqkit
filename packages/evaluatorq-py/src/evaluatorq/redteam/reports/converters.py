@@ -471,7 +471,7 @@ def static_evaluatorq_results_to_reports(
         evaluator_meta = get_evaluator_metadata_for_category(normalized_category) or {}
         base_sample = {
             'input': {
-                'id': inputs.get('id', ''),
+                'id': inputs.get('id') or f"{normalized_category}-{inputs.get('attack_technique', 'unknown')}",
                 'category': inputs.get('category', ''),
                 'attack_technique': inputs.get('attack_technique', 'indirect-injection'),
                 'delivery_method': inputs.get('delivery_method', 'direct-request'),
@@ -483,7 +483,7 @@ def static_evaluatorq_results_to_reports(
                 'evaluator_id': evaluator_meta.get('evaluator_id', normalized_category),
                 'evaluator_name': evaluator_meta.get(
                     'evaluator_name', OWASP_CATEGORY_NAMES.get(inputs.get('category', ''))
-                ),
+                ) or '',
             },
             'messages': inputs.get('messages', []),
         }
@@ -507,7 +507,7 @@ def static_evaluatorq_results_to_reports(
                     'evaluator_id': evaluator_meta.get('evaluator_id', normalized_category),
                     'evaluator_name': evaluator_meta.get(
                         'evaluator_name', OWASP_CATEGORY_NAMES.get(inputs.get('category', ''))
-                    ),
+                    ) or '',
                     'token_usage': output_usage,
                 }
             elif output_usage is not None:
