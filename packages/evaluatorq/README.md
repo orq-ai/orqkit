@@ -250,6 +250,7 @@ Complete examples are available in the examples folder:
 
 - **LangChain Agent**: [`examples/src/lib/integrations/langchain-agent-eval.ts`](../../examples/src/lib/integrations/langchain-agent-eval.ts)
 - **LangGraph Agent**: [`examples/src/lib/integrations/langgraph-agent-eval.ts`](../../examples/src/lib/integrations/langgraph-agent-eval.ts)
+- **LangGraph Research Agent (advanced)**: [`examples/src/lib/integrations/langgraph-research-eval.ts`](../../examples/src/lib/integrations/langgraph-research-eval.ts) — Multi-tool research agent with correctness, tool chain, quality, completeness, and efficiency evaluators
 
 ## 🤖 Vercel AI SDK Integration
 
@@ -265,6 +266,8 @@ The Vercel AI SDK integration allows you to:
 Complete examples are available in the examples folder:
 
 - **Vercel AI SDK Agent**: [`examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_integration_example.ts)
+- **Vercel AI SDK Dataset Eval**: [`examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts`](../../examples/src/lib/integrations/vercel_ai_sdk_dataset_example.ts) — Dataset-based weather agent evaluation with expected output comparison
+- **Vercel Multi-Agent Eval (advanced)**: [`examples/src/lib/integrations/vercel-multi-agent-eval.ts`](../../examples/src/lib/integrations/vercel-multi-agent-eval.ts) — Research + math agents scored on correctness, tool usage, quality rubric, and safety
 
 ## 🔧 Configuration
 
