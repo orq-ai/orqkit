@@ -6,6 +6,7 @@ from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
+from loguru import logger
 from pydantic import ValidationError
 
 from evaluatorq.redteam.contracts import (
@@ -90,7 +91,7 @@ def _coerce_job_output_payload(raw_output: Any, _depth: int = 0) -> JobOutputPay
                 if isinstance(parsed, str):
                     return _coerce_job_output_payload(parsed, _depth + 1)
             except json.JSONDecodeError:
-                with suppress(ValidationError, TypeError):
+                with suppress(ValidationError, TypeError, ValueError, SyntaxError):
                     parsed = ast.literal_eval(text)
                     if isinstance(parsed, dict):
                         return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
@@ -150,7 +151,7 @@ def _normalize_attack_technique(value: str | None) -> str:
     supported = {str(item.value) for item in AttackTechnique}
     if lowered in supported:
         return lowered
-    # Common jailbreak-like labels in LLM datasets map to direct injection.
+    logger.debug(f'Unknown attack technique {raw!r}, defaulting to direct-injection')
     return 'direct-injection'
 
 
@@ -335,6 +336,7 @@ def dynamic_evaluatorq_results_to_report(
     for result in results:
         data_point = getattr(result, 'data_point', None)
         if data_point is None:
+            logger.debug('Skipping result with no data_point')
             continue
 
         inputs = getattr(data_point, 'inputs', {}) or {}

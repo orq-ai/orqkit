@@ -8,6 +8,8 @@ from typing import Any
 from evaluatorq import DataPoint, Job, job
 from loguru import logger
 
+from pydantic import ValidationError
+
 from evaluatorq.redteam.contracts import Message
 
 
@@ -104,7 +106,7 @@ def _normalize_message(message: Any) -> Message | dict[str, Any]:
     if isinstance(message, dict):
         try:
             return Message.model_validate(message)
-        except Exception:
+        except (ValidationError, TypeError):
             return message
     return {'role': 'user', 'content': str(message)}
 

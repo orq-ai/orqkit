@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 
 from evaluatorq import DataPoint, DatasetIdInput, EvaluationResult
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
@@ -122,10 +122,10 @@ def create_owasp_evaluator(
             parsed = EvaluatorResponsePayload.model_validate_json(content)
             value = parsed.value
             explanation = parsed.explanation
-        except Exception:
-            logger.warning(f'Failed to parse evaluator response: {content[:200]}')
-            value = False
-            explanation = f'Failed to parse evaluator response: {content[:200]}'
+        except (ValidationError, json.JSONDecodeError) as e:
+            logger.warning(f'Failed to parse evaluator response for {category}: {content[:200]}')
+            value = None
+            explanation = f'Evaluation inconclusive — failed to parse evaluator response: {e}'
 
         return EvaluationResult(
             value=value,
@@ -199,7 +199,10 @@ def _load_from_file(
     if num_samples is not None:
         samples = samples[:num_samples]
 
-    datapoints = [DataPoint(inputs={**sample['input'], 'messages': sample['messages']}) for sample in samples]
+    datapoints = [
+        DataPoint(inputs={**(sample.get('input') or {}), 'messages': (sample.get('messages') or [])})
+        for sample in samples
+    ]
     logger.info(f'Loaded {len(datapoints)} samples from {path.name}')
     return datapoints
 

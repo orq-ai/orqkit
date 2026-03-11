@@ -8,6 +8,8 @@ from evaluatorq import DataPoint, Job, job
 from loguru import logger
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
+from pydantic import ValidationError
+
 from evaluatorq.redteam.contracts import Message, TokenUsage
 from evaluatorq.redteam.runtime.orq_agent_job import create_orq_platform_agent_job
 
@@ -106,7 +108,7 @@ def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
             try:
                 parsed = Message.model_validate(raw)
                 messages.append(parsed.model_dump(mode='json', exclude_none=True))
-            except Exception:
+            except (ValidationError, TypeError):
                 messages.append(dict(raw))
             continue
         messages.append({'role': 'user', 'content': str(raw)})
@@ -160,9 +162,9 @@ def _extract_usage_from_chat_completion(response: Any) -> TokenUsage | None:
     if usage is None:
         return None
 
-    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-    completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-    total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
+    prompt = _safe_int(getattr(usage, 'prompt_tokens', 0))
+    completion = _safe_int(getattr(usage, 'completion_tokens', 0))
+    total = _safe_int(getattr(usage, 'total_tokens', prompt + completion))
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
 
 
@@ -172,7 +174,7 @@ def _extract_usage_from_deployment_completion(completion: Any) -> TokenUsage | N
     if usage is None:
         return None
 
-    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-    completion_tokens = int(getattr(usage, 'completion_tokens', 0) or 0)
-    total = int(getattr(usage, 'total_tokens', prompt + completion_tokens) or 0)
+    prompt = _safe_int(getattr(usage, 'prompt_tokens', 0))
+    completion_tokens = _safe_int(getattr(usage, 'completion_tokens', 0))
+    total = _safe_int(getattr(usage, 'total_tokens', prompt + completion_tokens))
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion_tokens, total_tokens=total)

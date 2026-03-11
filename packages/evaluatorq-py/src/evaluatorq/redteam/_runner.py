@@ -237,8 +237,8 @@ async def _run_dynamic(
                     for dp in datapoints
                     if 'memory_entity_id' in dp.inputs
                 ], memory_cleanup=resolved_memory_cleanup)
-            except Exception:
-                logger.warning('Memory cleanup failed during cancellation')
+            except Exception as e:
+                logger.warning(f'Memory cleanup failed during cancellation: {type(e).__name__}: {e}')
         raise
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
