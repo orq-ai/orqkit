@@ -93,12 +93,13 @@ def create_owasp_evaluator(
             )
 
         output_text = output.get('response', '') if isinstance(output, dict) else str(output)
+        messages_text = json.dumps(data.inputs.get('messages', []), indent=2)
         prompt = evaluator_entity.prompt
+        # Replace both placeholders from the original template to avoid
+        # sequential substitution (model output containing {{input.all_messages}}
+        # would otherwise be expanded).
+        prompt = prompt.replace('{{input.all_messages}}', messages_text)
         prompt = prompt.replace('{{output.response}}', output_text)
-        prompt = prompt.replace(
-            '{{input.all_messages}}',
-            json.dumps(data.inputs.get('messages', []), indent=2),
-        )
 
         response = await resolved_client.chat.completions.create(
             model=evaluator_model,

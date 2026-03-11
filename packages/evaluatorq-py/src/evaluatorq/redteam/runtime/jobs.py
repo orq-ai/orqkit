@@ -40,23 +40,23 @@ def create_model_job(
         return create_orq_platform_agent_job(agent_key)
 
     if deployment_key:
+        try:
+            from orq_ai_sdk import Orq
+        except ImportError as e:
+            msg = (
+                'Deployment jobs require the orq-ai-sdk package. '
+                'Install it with: pip install evaluatorq[orq]'
+            )
+            raise ImportError(msg) from e
+
+        import os
+
+        deployment_client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
 
         @job('model-under-test')
         async def deployment_job(data: DataPoint, _row: int) -> dict[str, Any]:
-            try:
-                from orq_ai_sdk import Orq
-            except ImportError as e:
-                msg = (
-                    'Deployment jobs require the orq-ai-sdk package. '
-                    'Install it with: pip install evaluatorq[orq]'
-                )
-                raise ImportError(msg) from e
-
-            import os
-
             messages = _build_messages(data)
-            client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
-            completion = await client.deployments.invoke_async(
+            completion = await deployment_client.deployments.invoke_async(
                 key=deployment_key,
                 messages=messages,  # pyright: ignore[reportArgumentType]
             )

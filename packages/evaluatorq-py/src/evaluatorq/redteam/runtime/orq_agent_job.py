@@ -22,25 +22,24 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
     Requires the ``orq-ai-sdk`` optional dependency.
     """
 
+    try:
+        from orq_ai_sdk import Orq
+        from orq_ai_sdk.models import A2AMessage, CreateAgentResponseRequestMemory, TextPart
+    except ImportError as e:
+        msg = (
+            'ORQ platform agent jobs require the orq-ai-sdk package. '
+            'Install it with: pip install evaluatorq[orq]'
+        )
+        raise ImportError(msg) from e
+
+    import os
+
+    agent_client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
+
     @job('agent')
     async def platform_agent_job(data: DataPoint, _row: int) -> str:
         messages = list(data.inputs.get('messages', []))
         sample_id = data.inputs.get('id') or str(uuid.uuid4())
-
-        try:
-            from orq_ai_sdk.models import A2AMessage, CreateAgentResponseRequestMemory, TextPart
-        except ImportError as e:
-            msg = (
-                'ORQ platform agent jobs require the orq-ai-sdk package. '
-                'Install it with: pip install evaluatorq[orq]'
-            )
-            raise ImportError(msg) from e
-
-        import os
-
-        from orq_ai_sdk import Orq
-
-        client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
         task_id: str | None = None
         result_text = ''
         user_turns = 0
@@ -70,7 +69,7 @@ def create_orq_platform_agent_job(agent_key: str) -> Job:
             if task_id is not None:
                 kwargs['task_id'] = task_id
 
-            response = await client.agents.responses.create_async(**kwargs)
+            response = await agent_client.agents.responses.create_async(**kwargs)
             response_task_id = getattr(response, 'task_id', None)
             if response_task_id:
                 task_id = response_task_id
