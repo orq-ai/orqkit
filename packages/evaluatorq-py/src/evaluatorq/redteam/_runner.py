@@ -314,15 +314,19 @@ async def _run_static(
 
     # Run evaluatorq
     logger.info(f'Running static red teaming against {target} (parallelism={parallelism})')
-    results = await evaluatorq(
-        'static-red-team',
-        data=data,
-        jobs=[model_job],
-        evaluators=[evaluator],
-        parallelism=parallelism,
-        print_results=False,
-        description=description or f'Static red teaming for {target}',
-    )
+    try:
+        results = await evaluatorq(
+            'static-red-team',
+            data=data,
+            jobs=[model_job],
+            evaluators=[evaluator],
+            parallelism=parallelism,
+            print_results=False,
+            description=description or f'Static red teaming for {target}',
+        )
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logger.warning('Static red teaming run cancelled')
+        raise
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 

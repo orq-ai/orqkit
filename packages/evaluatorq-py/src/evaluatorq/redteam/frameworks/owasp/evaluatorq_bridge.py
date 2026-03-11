@@ -75,6 +75,8 @@ def create_owasp_evaluator(
         llm_client: Pre-configured client. Falls back to ``create_async_llm_client()``.
     """
 
+    resolved_client = llm_client or create_async_llm_client()
+
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
         output = params['output']
@@ -98,8 +100,7 @@ def create_owasp_evaluator(
             json.dumps(data.inputs.get('messages', []), indent=2),
         )
 
-        client = llm_client or create_async_llm_client()
-        response = await client.chat.completions.create(
+        response = await resolved_client.chat.completions.create(
             model=evaluator_model,
             messages=[
                 {

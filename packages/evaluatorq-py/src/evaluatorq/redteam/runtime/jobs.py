@@ -72,11 +72,12 @@ def create_model_job(
         msg = "Provide one of: 'model', 'deployment_key', or 'agent_key'"
         raise ValueError(msg)
 
+    resolved_client = llm_client or create_async_llm_client()
+
     @job('model-under-test')
     async def router_job(data: DataPoint, _row: int) -> dict[str, Any]:
         messages = _build_messages(data)
-        client = llm_client or create_async_llm_client()
-        response = await client.chat.completions.create(
+        response = await resolved_client.chat.completions.create(
             model=model,
             messages=messages,  # pyright: ignore[reportArgumentType]
         )
