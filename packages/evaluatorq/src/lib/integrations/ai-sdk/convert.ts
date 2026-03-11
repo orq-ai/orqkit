@@ -119,9 +119,8 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
 export function convertToOpenResponses<TOOLS extends ToolSet>(
   result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
   agent: Agent<never, TOOLS, never>,
-  prompt?: string,
 ): ResponseResource {
-  return buildOpenResponsesFromSteps(result, agent, prompt);
+  return buildOpenResponsesFromSteps(result, agent);
 }
 
 /**
@@ -142,6 +141,10 @@ interface ExtendedStepData {
   }>;
   request?: {
     body?: {
+      input?: Array<{
+        role: string;
+        content: string | Array<{ type: string; text?: string }>;
+      }>;
       max_output_tokens?: number;
       tool_choice?: string;
       temperature?: number;
@@ -163,8 +166,58 @@ interface ExtendedStepData {
 }
 
 /**
- * Fallback function to manually build OpenResponses format from steps.
- * Used when the provider doesn't return native OpenResponses format.
+ * Maps a request body role to an OpenResponses Message role.
+ */
+const ROLE_MAP: Record<string, Message["role"]> = {
+  system: "system",
+  user: "user",
+  assistant: "assistant",
+};
+
+/**
+ * Extracts text from request body message content.
+ * Content can be a plain string or an array of content blocks.
+ */
+function extractContentText(
+  content: string | Array<{ type: string; text?: string }>,
+): string {
+  if (typeof content === "string") return content;
+  return content
+    .filter((block) => block.type === "text" || block.type === "input_text")
+    .map((block) => block.text ?? "")
+    .join("");
+}
+
+/**
+ * Builds input ItemField[] from the request body input messages.
+ * Extracts system + user messages from result.steps[0].request.body.input.
+ */
+function buildInputFromRequestBody(
+  requestInput:
+    | Array<{
+        role: string;
+        content: string | Array<{ type: string; text?: string }>;
+      }>
+    | undefined,
+): ItemField[] {
+  if (!requestInput || requestInput.length === 0) return [];
+
+  return requestInput.map((msg) => {
+    const role = ROLE_MAP[msg.role] ?? "user";
+    const text = extractContentText(msg.content);
+    return {
+      type: "message",
+      id: generateItemId("msg"),
+      status: "completed",
+      role,
+      content: [{ type: "input_text", text }],
+    } satisfies Message;
+  });
+}
+
+/**
+ * Builds OpenResponses format from AI SDK agent result steps.
+ * Extracts input messages from the request body when available.
  */
 export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
   result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
@@ -298,6 +351,7 @@ export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
     model: result.response.modelId,
     previous_response_id: null,
     instructions: null,
+    input: buildInputFromRequestBody(requestBody?.input),
     output,
     error: status === "failed" ? { message: "Agent execution failed" } : null,
     tools,

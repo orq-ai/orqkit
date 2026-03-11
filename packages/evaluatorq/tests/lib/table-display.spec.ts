@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { calculateEvaluatorAverages } from "../../src/lib/table-display.js";
-import type { EvaluatorqResult } from "../../src/lib/types.js";
+import type {
+  EvaluationResultCellValue,
+  EvaluatorqResult,
+} from "../../src/lib/types.js";
 
 function makeResult(
   jobName: string,
@@ -11,7 +14,7 @@ function makeResult(
       | number
       | boolean
       | string
-      | { type: string; value: Record<string, unknown> };
+      | { type: string; value: Record<string, EvaluationResultCellValue> };
     explanation?: string;
     pass?: boolean;
     error?: Error;

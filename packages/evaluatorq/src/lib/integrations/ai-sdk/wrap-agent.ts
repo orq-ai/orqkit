@@ -1,7 +1,10 @@
-import type { Agent, ToolSet } from "ai";
+import type { Agent, ModelMessage, ToolSet } from "ai";
 
 import type { DataPoint, Job, Output } from "../../types.js";
-import { extractPromptFromData } from "../common/index.js";
+import {
+  extractMessagesFromData,
+  extractPromptFromData,
+} from "../common/utils.js";
 import { convertToOpenResponses } from "./convert.js";
 import type { AgentJobOptions } from "./types.js";
 
@@ -62,14 +65,86 @@ export function wrapAISdkAgent<TOOLS extends ToolSet>(
   agent: Agent<never, TOOLS, never>,
   options: AgentJobOptions = {},
 ): Job {
-  const { name = agent.id ?? "agent", promptKey = "prompt" } = options;
+  const {
+    name = agent.id ?? "agent",
+    promptKey = "prompt",
+    instructions,
+  } = options;
 
   return async (data: DataPoint, _row: number) => {
-    const prompt = extractPromptFromData(data, promptKey);
-    const result = await agent.generate({ prompt });
+    const inputMessages = extractMessagesFromData(data);
+    const hasMessages = inputMessages !== undefined;
+    const hasPrompt =
+      typeof data.inputs[promptKey] === "string" && data.inputs[promptKey];
+
+    let result: Awaited<ReturnType<typeof agent.generate>>;
+
+    if (instructions) {
+      // Resolve instructions (static string or dynamic function)
+      const resolvedInstructions =
+        typeof instructions === "function" ? instructions(data) : instructions;
+      const systemMessage: ModelMessage = {
+        role: "system",
+        content: resolvedInstructions,
+      } as ModelMessage;
+
+      if (hasMessages && hasPrompt) {
+        const messages: ModelMessage[] = [
+          systemMessage,
+          ...(inputMessages as ModelMessage[]),
+          {
+            role: "user",
+            content: data.inputs[promptKey] as string,
+          } as ModelMessage,
+        ];
+        result = await agent.generate({ messages });
+      } else if (hasPrompt) {
+        const messages: ModelMessage[] = [
+          systemMessage,
+          {
+            role: "user",
+            content: data.inputs[promptKey] as string,
+          } as ModelMessage,
+        ];
+        result = await agent.generate({ messages });
+      } else if (hasMessages) {
+        const messages: ModelMessage[] = [
+          systemMessage,
+          ...(inputMessages as ModelMessage[]),
+        ];
+        result = await agent.generate({ messages });
+      } else {
+        throw new Error(
+          "Expected data.inputs.messages (array) or data.inputs.prompt (string), but neither was provided",
+        );
+      }
+    } else if (hasMessages && hasPrompt) {
+      // Both exist — merge messages + prompt appended as user message
+      const messages: ModelMessage[] = [
+        ...(inputMessages as ModelMessage[]),
+        {
+          role: "user",
+          content: data.inputs[promptKey] as string,
+        } as ModelMessage,
+      ];
+      result = await agent.generate({ messages });
+    } else if (hasPrompt) {
+      // Prompt only — use native single-turn API
+      const prompt = extractPromptFromData(data, promptKey);
+      result = await agent.generate({ prompt });
+    } else if (hasMessages) {
+      // Messages only — pass directly
+      result = await agent.generate({
+        messages: inputMessages as ModelMessage[],
+      });
+    } else {
+      throw new Error(
+        "Expected data.inputs.messages (array) or data.inputs.prompt (string), but neither was provided",
+      );
+    }
 
     // Convert to OpenResponses format
-    const openResponsesOutput = convertToOpenResponses(result, agent, prompt);
+    const openResponsesOutput = convertToOpenResponses(result, agent);
 
     return {
       name,

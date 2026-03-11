@@ -1,5 +1,6 @@
 import type { StepResult } from "ai";
 
+import type { DataPoint } from "../../types.js";
 import type { FunctionTool, ResponseResource } from "../openresponses/index.js";
 
 // Re-export AI SDK types for consumers
@@ -59,4 +60,9 @@ export interface AgentJobOptions {
   name?: string;
   /** The key in data.inputs to use as the prompt (defaults to "prompt") */
   promptKey?: string;
+  /**
+   * System instructions to prepend to the messages sent to the agent.
+   * Can be a static string or a function that receives the data point and returns the instructions.
+   */
+  instructions?: string | ((data: DataPoint) => string);
 }

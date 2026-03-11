@@ -9,7 +9,7 @@
  *   - Set OPENAI_API_KEY environment variable
  *
  * Usage:
- *   OPENAI_API_KEY=your-key bun examples/src/lib/langchain-agent-eval.ts
+ *   OPENAI_API_KEY=your-key bun examples/src/lib/integrations/langchain/langchain-agent-eval.ts
  */
 
 import { tool } from "@langchain/core/tools";
@@ -20,6 +20,11 @@ import { z } from "zod";
 import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapLangChainAgent } from "@orq-ai/evaluatorq/langchain";
+import type {
+  FunctionCall,
+  ResponseResource,
+} from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 // Define tools
 const weatherTool = tool(
@@ -51,7 +56,7 @@ const convertTool = tool(
   },
 );
 
-// Create the agent using the modern createAgent API
+// Create the agent using langchain's createAgent (langchain 1.x convenience wrapper)
 const model = new ChatOpenAI({ model: "gpt-4o" });
 const agent = createAgent({
   model,
@@ -62,18 +67,7 @@ const agent = createAgent({
 const hasTemperature: Evaluator = {
   name: "has-temperature",
   scorer: async ({ output }) => {
-    const result = output as Record<string, unknown>;
-    const outputItems = (result.output as Array<Record<string, unknown>>) ?? [];
-
-    // Find the final message in the output
-    const message = outputItems.find((item) => item.type === "message");
-
-    let text = "";
-    if (message) {
-      const contentArray = message.content as Array<Record<string, unknown>>;
-      const textContent = contentArray?.find((c) => c.type === "output_text");
-      text = (textContent?.text as string) ?? "";
-    }
+    const text = extractText(output);
 
     // Check if the text contains a number (temperature)
     const hasTemp = /\d+/.test(text);
@@ -88,10 +82,41 @@ const hasTemperature: Evaluator = {
   },
 };
 
-// Test data
+// Evaluator that checks if the agent used its tools
+const usedTools: Evaluator = {
+  name: "used-tools",
+  scorer: async ({ output }) => {
+    const res = output as ResponseResource;
+    const calls =
+      res.output?.filter(
+        (item): item is FunctionCall => item.type === "function_call",
+      ) ?? [];
+    const toolNames = [...new Set(calls.map((c) => c.name))];
+    const usedWeather = toolNames.includes("weather");
+    const usedConvert = toolNames.includes("convert_fahrenheit_to_celsius");
+    const score = (usedWeather ? 0.5 : 0) + (usedConvert ? 0.5 : 0);
+    return {
+      value: score,
+      pass: usedWeather && usedConvert,
+      explanation: `Used tools: ${toolNames.join(", ") || "none"}`,
+    };
+  },
+};
+
+// Test data — prompts that require multi-step tool usage
 const dataPoints: DataPoint[] = [
-  { inputs: { prompt: "What is the weather in San Francisco?" } },
-  { inputs: { prompt: "What is the weather in New York?" } },
+  {
+    inputs: {
+      prompt:
+        "Look up the current weather in San Francisco and convert the temperature to Celsius.",
+    },
+  },
+  {
+    inputs: {
+      prompt:
+        "Look up the current weather in New York and convert the temperature to Celsius.",
+    },
+  },
 ];
 
 async function run() {
@@ -101,8 +126,14 @@ async function run() {
 
   const results = await evaluatorq("langchain-agent-test", {
     data: dataPoints,
-    jobs: [wrapLangChainAgent(agent, { name: "weather-agent" })],
-    evaluators: [hasTemperature],
+    jobs: [
+      wrapLangChainAgent(agent, {
+        name: "weather-agent",
+        instructions:
+          "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
+      }),
+    ],
+    evaluators: [hasTemperature, usedTools],
     parallelism: 2,
     print: true,
   });
