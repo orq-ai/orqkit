@@ -211,7 +211,7 @@ async def red_team(
 
     Args:
         target: Target identifier(s). A single string like ``"agent:<key>"``
-            or ``"openai:<model>"``, or a list of such strings for multi-target runs.
+            or ``"llm:<model>"``, or a list of such strings for multi-target runs.
         mode: Execution mode — ``"dynamic"``, ``"static"``, or ``"hybrid"``.
         categories: OWASP categories to test (e.g., ``["ASI01", "ASI03"]``).
             Defaults to all available categories. Ignored if ``vulnerabilities`` is set.
@@ -399,13 +399,13 @@ def _create_job_for_target(
 ) -> Any:
     """Create a model job for the given target string.
 
-    Dispatches on the target kind (``agent``, ``openai``, ``deployment``, or
+    Dispatches on the target kind (``agent``, ``llm``, ``deployment``, or
     fallback to model) and returns the appropriate
     :func:`~evaluatorq.redteam.runtime.jobs.create_model_job` result.
 
     Args:
         target:        Full target string, e.g. ``"agent:my-key"`` or
-                       ``"openai:gpt-4o"``.
+                       ``"llm:openai/gpt-4o"``.
         llm_client:    Optional pre-configured :class:`openai.AsyncOpenAI`
                        client.
         system_prompt: Optional system prompt to pass to the job.
@@ -418,10 +418,21 @@ def _create_job_for_target(
     kind, value = _parse_target(target)
     if kind == 'agent':
         return create_model_job(agent_key=value, llm_client=llm_client, system_prompt=system_prompt)
-    elif kind == 'openai':
-        return create_model_job(model=value, llm_client=llm_client, system_prompt=system_prompt)
     elif kind == 'deployment':
         return create_model_job(deployment_key=value, llm_client=llm_client, system_prompt=system_prompt)
+    elif kind in ('llm', 'openai'):
+        has_orq = bool(os.environ.get('ORQ_API_KEY'))
+        has_openai = bool(os.environ.get('OPENAI_API_KEY'))
+        if has_orq:
+            logger.info(f"Routing llm target '{value}' via Orq proxy (ORQ_API_KEY is set)")
+        elif has_openai:
+            logger.info(f"Routing llm target '{value}' via OpenAI directly (OPENAI_API_KEY is set)")
+        else:
+            logger.warning(
+                f"No API key found for llm target '{value}'. "
+                "Set ORQ_API_KEY (for Orq proxy) or OPENAI_API_KEY (for direct OpenAI)."
+            )
+        return create_model_job(model=value, llm_client=llm_client, system_prompt=system_prompt)
     else:
         return create_model_job(model=value, llm_client=llm_client, system_prompt=system_prompt)
 

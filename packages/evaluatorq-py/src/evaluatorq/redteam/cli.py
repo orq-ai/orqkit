@@ -146,7 +146,7 @@ def run(
         list[str],
         typer.Option(
             "--target", "-t",
-            help='Target identifier(s), e.g. "agent:<key>" or "openai:<model>". Repeatable.',
+            help='Target identifier(s), e.g. "agent:<key>" or "llm:<model>". Repeatable.',
         ),
     ],
     mode: Annotated[
