@@ -22,6 +22,9 @@ if TYPE_CHECKING:
 
 OWASP_DATASET_ID = os.environ.get('EVALUATORQ_OWASP_DATASET_ID', '')
 
+DEFAULT_HF_DATASET = 'orq/redteam-vulnerabilities'
+DEFAULT_HF_FILENAME = 'redteam_dataset.v2.json'
+
 
 class EvaluatorResponsePayload(BaseModel):
     """Typed JSON payload returned by evaluator model."""
@@ -42,28 +45,43 @@ def load_owasp_agentic_dataset(
     num_samples: int | None = None,
     categories: list[str] | None = None,
     path: str | Path | None = None,
+    dataset_repo: str = DEFAULT_HF_DATASET,
+    source: str = 'huggingface',
 ) -> DatasetIdInput | list[DataPoint]:
-    """Load OWASP agentic data from ORQ platform or a local JSON file."""
+    """Load red team data from HuggingFace (default), ORQ platform, or a local JSON file.
+
+    Resolution order:
+    1. ``path`` is given → load from local file
+    2. ``source='orq'`` or ``EVALUATORQ_OWASP_DATASET_ID`` is set → use ORQ platform
+    3. Default (``source='huggingface'``) → load from HuggingFace
+    """
     num_samples = _normalize_num_samples(num_samples)
 
     if path is not None:
         return _load_from_file(path, num_samples=num_samples, categories=categories)
 
-    if not dataset_id:
-        msg = (
-            'Static mode requires either dataset_path or EVALUATORQ_OWASP_DATASET_ID '
-            'environment variable to be set.'
-        )
-        raise ValueError(msg)
+    if source == 'orq' or OWASP_DATASET_ID:
+        effective_id = dataset_id or OWASP_DATASET_ID
+        if not effective_id:
+            msg = (
+                'Orq source requires EVALUATORQ_OWASP_DATASET_ID environment variable to be set.'
+            )
+            raise ValueError(msg)
 
-    if not categories and num_samples is None:
-        logger.info(f'Using dataset streaming for dataset_id={dataset_id}')
-        return DatasetIdInput(dataset_id=dataset_id)
+        if not categories and num_samples is None:
+            logger.info(f'Using dataset streaming for dataset_id={effective_id}')
+            return DatasetIdInput(dataset_id=effective_id)
 
-    datapoints = _fetch_all_datapoints(dataset_id)
-    datapoints = _apply_filters(datapoints, num_samples=num_samples, categories=categories)
-    logger.info(f'Loaded {len(datapoints)} samples from dataset {dataset_id}')
-    return datapoints
+        datapoints = _fetch_all_datapoints(effective_id)
+        datapoints = _apply_filters(datapoints, num_samples=num_samples, categories=categories)
+        logger.info(f'Loaded {len(datapoints)} samples from dataset {effective_id}')
+        return datapoints
+
+    return _fetch_from_huggingface(
+        dataset_repo=dataset_repo,
+        num_samples=num_samples,
+        categories=categories,
+    )
 
 
 def create_owasp_evaluator(
@@ -135,6 +153,36 @@ def create_owasp_evaluator(
         )
 
     return {'name': 'owasp-agentic-security', 'scorer': scorer}
+
+
+def _fetch_from_huggingface(
+    dataset_repo: str = DEFAULT_HF_DATASET,
+    num_samples: int | None = None,
+    categories: list[str] | None = None,
+) -> list[DataPoint]:
+    """Fetch red team samples from a HuggingFace dataset repository.
+
+    Downloads the dataset JSON file via ``huggingface_hub`` and parses it
+    using the same ``StaticDataset`` model as local file loading.
+    """
+    try:
+        from huggingface_hub import hf_hub_download
+    except ImportError as e:
+        msg = (
+            'Loading datasets from HuggingFace requires the huggingface-hub package. '
+            'Install it with: pip install evaluatorq[redteam]'
+        )
+        raise ImportError(msg) from e
+
+    logger.info(f'Downloading dataset from HuggingFace: {dataset_repo}/{DEFAULT_HF_FILENAME}...')
+    local_path = hf_hub_download(
+        repo_id=dataset_repo,
+        filename=DEFAULT_HF_FILENAME,
+        repo_type='dataset',
+    )
+    datapoints = _load_from_file(local_path, num_samples=num_samples, categories=categories)
+    logger.info(f'Loaded {len(datapoints)} samples from HuggingFace ({dataset_repo})')
+    return datapoints
 
 
 def _validate_platform_datapoint(inputs: dict[str, Any]) -> None:

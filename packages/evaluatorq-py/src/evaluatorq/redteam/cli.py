@@ -228,8 +228,12 @@ def run(
     ] = "orq",
     dataset: Annotated[
         Optional[Path],
-        typer.Option(help="Path to static dataset (required for static/hybrid modes)."),
+        typer.Option(help="Path to local static dataset JSON file."),
     ] = None,
+    hf_dataset: Annotated[
+        str,
+        typer.Option("--hf-dataset", help="HuggingFace dataset repository name."),
+    ] = "orq/redteam-vulnerabilities",
     output_dir: Annotated[
         Optional[Path],
         typer.Option(help="Directory to save intermediate stage artifacts."),
@@ -310,6 +314,7 @@ def run(
                 cleanup_memory=not no_cleanup_memory,
                 backend=backend,
                 dataset_path=dataset,
+                dataset_repo=hf_dataset,
                 hooks=RichHooks(skip_confirm=yes),
                 output_dir=output_dir,
                 target_config=target_config,

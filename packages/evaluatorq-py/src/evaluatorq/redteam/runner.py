@@ -197,6 +197,7 @@ async def red_team(
     llm_client: AsyncOpenAI | None = None,
     description: str | None = None,
     dataset_path: Path | str | None = None,
+    dataset_repo: str = 'orq/redteam-vulnerabilities',
     hooks: PipelineHooks | None = None,
     output_dir: Path | str | None = None,
     target_config: TargetConfig | None = None,
@@ -233,7 +234,9 @@ async def red_team(
         memory_cleanup: Custom memory cleanup (overrides backend default).
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
         description: Optional description for the report.
-        dataset_path: Path to static dataset (required for static/hybrid modes).
+        dataset_path: Path to local static dataset JSON file. When set, loads
+            from file instead of HuggingFace or Orq.
+        dataset_repo: HuggingFace dataset repository name (default ``"orq/redteam-vulnerabilities"``).
         hooks: Optional ``PipelineHooks`` implementation. Defaults to
             ``DefaultHooks()`` (loguru output, auto-confirm).
         output_dir: Optional directory to save intermediate stage artifacts as
@@ -321,6 +324,7 @@ async def red_team(
             llm_client=llm_client,
             description=description,
             dataset_path=dataset_path,
+            dataset_repo=dataset_repo,
             hooks=resolved_hooks,
             output_dir=resolved_output_dir,
             target_config=target_config,
@@ -335,6 +339,7 @@ async def red_team(
             max_static_datapoints=max_static_datapoints,
             backend=backend,
             dataset_path=dataset_path,
+            dataset_repo=dataset_repo,
             description=description,
             llm_client=llm_client,
             hooks=resolved_hooks,
@@ -461,6 +466,7 @@ async def _prepare_target(
     memory_cleanup: MemoryCleanup | None,
     llm_client: AsyncOpenAI | None,
     dataset_path: Any,
+    dataset_repo: str = 'orq/redteam-vulnerabilities',
     hooks: PipelineHooks,
     output_dir: Path | None,
     target_config: TargetConfig | None,
@@ -615,11 +621,12 @@ async def _prepare_target(
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
 
             # Load static datapoints
-            path = Path(dataset_path)
+            path = Path(dataset_path) if dataset_path is not None else None
             static_data = load_owasp_agentic_dataset(
                 num_samples=max_static_datapoints,
                 categories=categories,
                 path=path,
+                dataset_repo=dataset_repo,
             )
             static_datapoints = static_data if isinstance(static_data, list) else []
 
@@ -727,6 +734,7 @@ async def _run_dynamic_or_hybrid(
     llm_client: AsyncOpenAI | None,
     description: str | None,
     dataset_path: Any,
+    dataset_repo: str = 'orq/redteam-vulnerabilities',
     hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
@@ -803,6 +811,7 @@ async def _run_dynamic_or_hybrid(
             memory_cleanup=memory_cleanup,
             llm_client=llm_client,
             dataset_path=dataset_path,
+            dataset_repo=dataset_repo,
             hooks=resolved_hooks,
             output_dir=output_dir,
             target_config=target_config,
@@ -1130,6 +1139,7 @@ async def _run_static(
     max_static_datapoints: int | None,
     backend: str,
     dataset_path: Any,
+    dataset_repo: str = 'orq/redteam-vulnerabilities',
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
     hooks: PipelineHooks | None = None,
@@ -1166,6 +1176,7 @@ async def _run_static(
         num_samples=max_static_datapoints,
         categories=categories,
         path=path,
+        dataset_repo=dataset_repo,
     )
 
     # Filter out datapoints whose category has no registered evaluator

@@ -288,12 +288,12 @@ class RedTeamInput(BaseModel):
 
     id: str = Field(min_length=1, description='Unique sample identifier')
     vulnerability: str = Field(default='', description='Vulnerability identifier (primary key in new format)')
-    category: str = Field(description='Attack category (framework-specific) — kept for backwards compat')
+    category: str = Field(default='', description='Attack category (framework-specific) — kept for backwards compat')
     attack_technique: AttackTechnique = Field(description='Specific attack technique used')
     delivery_method: DeliveryMethod = Field(description='Jailbreak/delivery technique used')
     severity: Severity = Field(description='Attack severity level')
     scope: Scope = Field(description='Attack target scope')
-    framework: Framework = Field(description='Security framework identifier')
+    framework: Framework = Field(default=Framework.OWASP_AGENTIC, description='Security framework identifier')
     evaluator_id: str = Field(default='', description='Evaluator identifier (optional)')
     evaluator_name: str = Field(default='', description='Evaluator name (optional)')
     turn_type: TurnType = Field(description='Conversation turn type')
@@ -305,10 +305,23 @@ class RedTeamInput(BaseModel):
 
     @model_validator(mode='before')
     @classmethod
-    def _migrate_category_to_vulnerability(cls, data: Any) -> Any:
-        """Auto-resolve vulnerability from category for old-format datasets."""
-        if isinstance(data, dict) and not data.get('vulnerability') and data.get('category'):
-            from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
+    def _cross_resolve_vulnerability_and_category(cls, data: Any) -> Any:
+        """Cross-resolve vulnerability ↔ category so either field can be omitted."""
+        if not isinstance(data, dict):
+            return data
+        from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
+        has_vuln = bool(data.get('vulnerability'))
+        has_cat = bool(data.get('category'))
+        if has_vuln and not has_cat:
+            # Derive category from vulnerability via the registry
+            from evaluatorq.redteam.contracts import Vulnerability as _Vuln
+            try:
+                vuln_enum = _Vuln(data['vulnerability'])
+                from evaluatorq.redteam.vulnerability_registry import get_primary_category
+                data['category'] = get_primary_category(vuln_enum)
+            except ValueError:
+                data['category'] = data['vulnerability']
+        elif has_cat and not has_vuln:
             vuln = resolve_category_safe(data['category'])
             if vuln is not None:
                 data['vulnerability'] = vuln.value
