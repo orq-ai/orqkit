@@ -40,6 +40,7 @@ async def plan_strategies_for_vulnerabilities(
     generate_additional_strategies: bool,
     generated_strategy_count: int,
     generation_parallelism: int | None = None,
+    attacker_instructions: str | None = None,
 ) -> tuple[dict[Vulnerability, list[AttackStrategy]], dict[Vulnerability, dict[str, Any]], AgentCapabilities]:
     """Build per-vulnerability strategy plans for dynamic red teaming.
 
@@ -98,6 +99,7 @@ async def plan_strategies_for_vulnerabilities(
                             count=generated_strategy_count,
                             turn_type=None,
                             max_turns=max_turns,
+                            attacker_instructions=attacker_instructions,
                         )
                     return vuln, generated
                 except Exception as e:
@@ -161,6 +163,7 @@ async def plan_strategies_for_categories(
     generate_additional_strategies: bool,
     generated_strategy_count: int,
     generation_parallelism: int | None = None,
+    attacker_instructions: str | None = None,
 ) -> tuple[dict[str, list[AttackStrategy]], dict[str, dict[str, Any]], AgentCapabilities]:
     """Build per-category strategy plans for dynamic red teaming.
 
@@ -196,6 +199,7 @@ async def plan_strategies_for_categories(
         generate_additional_strategies=generate_additional_strategies,
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=generation_parallelism,
+        attacker_instructions=attacker_instructions,
     )
 
     # Remap results back to original category strings

@@ -201,6 +201,7 @@ async def red_team(
     output_dir: Path | str | None = None,
     target_config: TargetConfig | None = None,
     generate_recommendations: bool = False,
+    attacker_instructions: str | None = None,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -243,6 +244,10 @@ async def red_team(
             recommendations for the top focus areas by analyzing failed traces.
             Requires an LLM client (explicit or via environment credentials).
             Defaults to ``False``.
+        attacker_instructions: Optional domain-specific context to steer attack
+            generation (e.g. "this agent handles financial transactions, try to
+            get it to approve fraudulent ones"). Appended to adversarial system
+            prompts and objective generation prompts.
 
     Returns:
         RedTeamReport with results and summary statistics.
@@ -319,6 +324,7 @@ async def red_team(
             hooks=resolved_hooks,
             output_dir=resolved_output_dir,
             target_config=target_config,
+            attacker_instructions=attacker_instructions,
         )
     elif resolved_mode == Pipeline.STATIC:
         report = await _run_static(
@@ -449,6 +455,7 @@ async def _prepare_target(
     target_config: TargetConfig | None,
     resolved_categories: list[str],
     shared_datapoints: list[Any] | None = None,
+    attacker_instructions: str | None = None,
 ) -> PreparedTarget:
     """Prepare all per-target state for a dynamic or hybrid run.
 
@@ -532,6 +539,7 @@ async def _prepare_target(
                 llm_client=resolved_llm_client,
                 attack_model=attack_model,
                 parallelism=parallelism,
+                attacker_instructions=attacker_instructions,
             )
         else:
             # Fallback: categories that could not be resolved to vulnerabilities
@@ -545,6 +553,7 @@ async def _prepare_target(
                 llm_client=resolved_llm_client,
                 attack_model=attack_model,
                 parallelism=parallelism,
+                attacker_instructions=attacker_instructions,
             )
 
         if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
@@ -573,6 +582,7 @@ async def _prepare_target(
         error_mapper=resolved_error_mapper,
         attack_llm_client=resolved_llm_client,
         memory_entity_ids=_memory_entity_ids,
+        attacker_instructions=attacker_instructions,
     )
 
     # --- Mode-specific path ---------------------------------------------------
@@ -709,6 +719,7 @@ async def _run_dynamic_or_hybrid(
     hooks: PipelineHooks | None = None,
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
+    attacker_instructions: str | None = None,
 ) -> RedTeamReport:
     """Run dynamic or hybrid red teaming for multiple targets in a single evaluatorq call.
 
@@ -785,6 +796,7 @@ async def _run_dynamic_or_hybrid(
             output_dir=output_dir,
             target_config=target_config,
             resolved_categories=resolved_categories,
+            attacker_instructions=attacker_instructions,
         )
         first_target = await _prepare_target(target=targets[0], **_common_prepare_kwargs)
 

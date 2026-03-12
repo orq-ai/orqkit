@@ -67,6 +67,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
     llm_client: AsyncOpenAI | None = None,
     attack_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 5,
+    attacker_instructions: str | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming, keyed by Vulnerability enum.
 
@@ -96,6 +97,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
         generate_additional_strategies=generate_additional_strategies,
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=parallelism,
+        attacker_instructions=attacker_instructions,
     )
 
     # Convert Vulnerability-keyed metadata to string keys for external consumption
@@ -139,6 +141,7 @@ async def generate_dynamic_datapoints(
     llm_client: AsyncOpenAI | None = None,
     attack_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 5,
+    attacker_instructions: str | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming.
 
@@ -181,6 +184,7 @@ async def generate_dynamic_datapoints(
             llm_client=llm_client,
             attack_model=attack_model,
             parallelism=parallelism,
+            attacker_instructions=attacker_instructions,
         )
         # Remap metadata keys from vulnerability IDs back to original category strings
         # so callers that expect category-keyed metadata continue to work.
@@ -204,6 +208,7 @@ async def generate_dynamic_datapoints(
         generate_additional_strategies=generate_additional_strategies,
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=parallelism,
+        attacker_instructions=attacker_instructions,
     )
 
     datapoints = []
@@ -240,6 +245,7 @@ def create_dynamic_redteam_job(
     error_mapper: ErrorMapper | None = None,
     attack_llm_client: AsyncOpenAI | None = None,
     memory_entity_ids: list[str] | None = None,
+    attacker_instructions: str | None = None,
 ) -> Job:
     """Create an evaluatorq Job that runs a red-team attack.
 
@@ -394,6 +400,7 @@ def create_dynamic_redteam_job(
                 llm_client,
                 model=red_team_model,
                 error_mapper=resolved_error_mapper,
+                attacker_instructions=attacker_instructions,
             )
 
             try:

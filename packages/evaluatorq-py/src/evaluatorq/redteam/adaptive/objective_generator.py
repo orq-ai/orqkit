@@ -81,6 +81,7 @@ def _build_objective_prompt(
     count: int,
     turn_type: TurnType | None,
     max_turns: int,
+    attacker_instructions: str | None = None,
 ) -> str:
     """Build the formatted OBJECTIVE_GENERATION_PROMPT string.
 
@@ -104,7 +105,7 @@ def _build_objective_prompt(
             f'All objectives MUST use turn_type="{turn_type.value}". Do not mix turn types in this output.'
         )
 
-    return OBJECTIVE_GENERATION_PROMPT.format(
+    prompt = OBJECTIVE_GENERATION_PROMPT.format(
         agent_name=agent_context.display_name or agent_context.key,
         agent_description=agent_context.description or 'An AI assistant',
         tools=tools_str,
@@ -116,6 +117,11 @@ def _build_objective_prompt(
         turn_type_guidance=turn_type_guidance,
         max_turns=max_turns,
     )
+
+    if attacker_instructions:
+        prompt += f"\n\n## Additional Context from Operator\n{attacker_instructions}"
+
+    return prompt
 
 
 async def _call_llm_for_objectives(
@@ -189,6 +195,7 @@ async def generate_objectives_for_vulnerability(
     count: int = 3,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
+    attacker_instructions: str | None = None,
 ) -> list[GeneratedObjective]:
     """Generate attack objectives using an LLM based on agent context.
 
@@ -203,6 +210,7 @@ async def generate_objectives_for_vulnerability(
         count: Number of objectives to generate
         turn_type: Optional forced turn type. When None, LLM chooses per objective.
         max_turns: Maximum turns available to the adversarial LLM
+        attacker_instructions: Optional domain-specific context to steer attack generation
 
     Returns:
         List of generated objectives with requirements
@@ -218,6 +226,7 @@ async def generate_objectives_for_vulnerability(
         count=count,
         turn_type=turn_type,
         max_turns=max_turns,
+        attacker_instructions=attacker_instructions,
     )
     return await _call_llm_for_objectives(
         prompt=prompt,
@@ -240,6 +249,7 @@ async def generate_objectives_for_category(
     count: int = 3,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
+    attacker_instructions: str | None = None,
 ) -> list[GeneratedObjective]:
     """Generate attack objectives using an LLM based on agent context.
 
@@ -255,6 +265,7 @@ async def generate_objectives_for_category(
         count: Number of objectives to generate
         turn_type: Optional forced turn type. When None, LLM chooses per objective.
         max_turns: Maximum turns available to the adversarial LLM
+        attacker_instructions: Optional domain-specific context to steer attack generation
 
     Returns:
         List of generated objectives with requirements
@@ -269,6 +280,7 @@ async def generate_objectives_for_category(
             count=count,
             turn_type=turn_type,
             max_turns=max_turns,
+            attacker_instructions=attacker_instructions,
         )
 
     # Fallback path for unrecognized category codes: build a best-effort prompt
@@ -287,6 +299,7 @@ async def generate_objectives_for_category(
         count=count,
         turn_type=turn_type,
         max_turns=max_turns,
+        attacker_instructions=attacker_instructions,
     )
     return await _call_llm_for_objectives(
         prompt=prompt,
@@ -429,6 +442,7 @@ async def generate_strategies_for_vulnerability(
     count: int = 2,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
+    attacker_instructions: str | None = None,
 ) -> list[AttackStrategy]:
     """Generate complete attack strategies for a vulnerability.
 
@@ -444,6 +458,7 @@ async def generate_strategies_for_vulnerability(
         count: Number of strategies to generate
         turn_type: Optional forced turn type. When None, LLM chooses per strategy.
         max_turns: Maximum turns for multi-turn generated strategies
+        attacker_instructions: Optional domain-specific context to steer attack generation
 
     Returns:
         List of generated AttackStrategy instances with both vulnerability and category set
@@ -457,6 +472,7 @@ async def generate_strategies_for_vulnerability(
         count=count,
         turn_type=turn_type,
         max_turns=max_turns,
+        attacker_instructions=attacker_instructions,
     )
     return _objectives_to_strategies(
         objectives=objectives,
@@ -476,6 +492,7 @@ async def generate_strategies_for_category(
     count: int = 2,
     turn_type: TurnType | None = None,
     max_turns: int = 5,
+    attacker_instructions: str | None = None,
 ) -> list[AttackStrategy]:
     """Generate complete attack strategies for a category.
 
@@ -491,6 +508,7 @@ async def generate_strategies_for_category(
         count: Number of strategies to generate
         turn_type: Optional forced turn type. When None, LLM chooses per strategy.
         max_turns: Maximum turns for multi-turn generated strategies
+        attacker_instructions: Optional domain-specific context to steer attack generation
 
     Returns:
         List of generated AttackStrategy instances
@@ -505,6 +523,7 @@ async def generate_strategies_for_category(
             count=count,
             turn_type=turn_type,
             max_turns=max_turns,
+            attacker_instructions=attacker_instructions,
         )
 
     # Fallback for unrecognized categories: generate objectives without a resolved
@@ -522,6 +541,7 @@ async def generate_strategies_for_category(
         count=count,
         turn_type=turn_type,
         max_turns=max_turns,
+        attacker_instructions=attacker_instructions,
     )
     return _objectives_to_strategies(
         objectives=objectives,

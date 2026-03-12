@@ -184,6 +184,16 @@ def run(
         str,
         typer.Option(help="Model for adversarial prompt generation."),
     ] = DEFAULT_PIPELINE_MODEL,
+    attacker_instructions: Annotated[
+        Optional[str],
+        typer.Option(
+            "--attacker-instructions",
+            help=(
+                "Domain-specific context to steer attack generation "
+                "(e.g. 'this agent handles financial transactions, try to get it to approve fraudulent ones')."
+            ),
+        ),
+    ] = None,
     evaluator_model: Annotated[
         str,
         typer.Option(help="Model for OWASP evaluation scoring."),
@@ -303,6 +313,7 @@ def run(
                 hooks=RichHooks(skip_confirm=yes),
                 output_dir=output_dir,
                 target_config=target_config,
+                attacker_instructions=attacker_instructions,
             )
         )
     except CancelledError:

@@ -204,6 +204,7 @@ def _build_adversarial_system_prompt(
     strategy: AttackStrategy,
     agent_context: AgentContext,
     max_turns: int,
+    attacker_instructions: str | None = None,
 ) -> str:
     """Build the adversarial system prompt from agent context."""
     tools_str = ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'None'
@@ -213,7 +214,7 @@ def _build_adversarial_system_prompt(
 
     from evaluatorq.redteam.adaptive.attack_generator import _SafeDict
 
-    return ADVERSARIAL_SYSTEM_PROMPT.format_map(_SafeDict({
+    prompt = ADVERSARIAL_SYSTEM_PROMPT.format_map(_SafeDict({
         'objective': objective,
         'agent_name': agent_context.display_name or agent_context.key,
         'agent_description': agent_context.description or 'An AI assistant',
@@ -222,6 +223,11 @@ def _build_adversarial_system_prompt(
         'strategy_description': strategy.description,
         'max_turns': str(max_turns),
     }))
+
+    if attacker_instructions:
+        prompt += f"\n\n## Additional Context from Operator\n{attacker_instructions}"
+
+    return prompt
 
 
 def _progress_ui_enabled_for_current_run() -> bool:
@@ -278,16 +284,20 @@ class MultiTurnOrchestrator:
         llm_client: AsyncOpenAI,
         model: str = DEFAULT_PIPELINE_MODEL,
         error_mapper: ErrorMapper | None = None,
+        attacker_instructions: str | None = None,
     ):
         """Initialize the orchestrator.
 
         Args:
             llm_client: OpenAI-compatible async client for adversarial LLM
             model: Model to use for adversarial prompt generation
+            error_mapper: Optional custom error mapper
+            attacker_instructions: Optional domain-specific context to steer attack generation
         """
         self.llm_client = llm_client
         self.model = model
         self.error_mapper = error_mapper or DefaultErrorMapper()
+        self.attacker_instructions = attacker_instructions
 
     async def generate_single_prompt(
         self,
@@ -308,7 +318,10 @@ class MultiTurnOrchestrator:
         Returns:
             Tuple of (prompt string, token usage or None, rendered system prompt)
         """
-        system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=1)
+        system_prompt = _build_adversarial_system_prompt(
+            objective, strategy, agent_context, max_turns=1,
+            attacker_instructions=self.attacker_instructions,
+        )
 
         llm_messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': system_prompt},
@@ -377,7 +390,10 @@ class MultiTurnOrchestrator:
         adversarial_calls = 0
 
         # Build adversarial system prompt
-        system_prompt = _build_adversarial_system_prompt(objective, strategy, agent_context, max_turns=max_turns)
+        system_prompt = _build_adversarial_system_prompt(
+            objective, strategy, agent_context, max_turns=max_turns,
+            attacker_instructions=self.attacker_instructions,
+        )
 
         # Adversarial LLM conversation
         adversarial_messages: list[ChatCompletionMessageParam] = [
