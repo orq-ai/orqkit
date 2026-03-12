@@ -64,7 +64,7 @@ def _render_header(data: dict[str, Any]) -> str:
     target = data.get("target", "unknown")
     pipeline = data.get("pipeline", "unknown")
     created_at = data.get("created_at")
-    resistance_rate = data.get("resistance_rate", 0.0)
+    vulnerability_rate = data.get("vulnerability_rate", 0.0)
 
     date_str = created_at.strftime("%Y-%m-%d %H:%M UTC") if created_at else "unknown"
     lines = [
@@ -73,7 +73,7 @@ def _render_header(data: dict[str, Any]) -> str:
         f"**Target:** {target}  ",
         f"**Mode:** {pipeline}  ",
         f"**Date:** {date_str}  ",
-        f"**Resistance Rate:** {_pct(resistance_rate)}  ",
+        f"**ASR:** {_pct(vulnerability_rate)}  ",
     ]
     return "\n".join(lines)
 
@@ -85,8 +85,7 @@ def _render_summary_section(section: ReportSection) -> str:
         ["Total Attacks", str(data.get("total_attacks", 0))],
         ["Evaluated", str(data.get("evaluated_attacks", 0))],
         ["Vulnerabilities Found", str(data.get("vulnerabilities_found", 0))],
-        ["Vulnerability Rate", _pct(data.get("vulnerability_rate", 0.0))],
-        ["Resistance Rate", _pct(data.get("resistance_rate", 1.0))],
+        ["ASR", _pct(data.get("vulnerability_rate", 0.0))],
         ["Evaluation Coverage", _pct(data.get("evaluation_coverage", 0.0))],
     ]
     if data.get("total_errors"):
@@ -127,7 +126,46 @@ def _render_focus_areas_section(section: ReportSection) -> str:
             lines.append(f"> {remediation}")
             lines.append("")
 
+        # LLM-generated recommendations (when available)
+        llm_rec = area.get("llm_recommendations")
+        if llm_rec:
+            patterns = llm_rec.get("patterns_observed", "")
+            recs = llm_rec.get("recommendations", [])
+            traces_analyzed = llm_rec.get("traces_analyzed", 0)
+            if recs:
+                lines.append(f"**Actionable recommendations** (based on {traces_analyzed} trace samples):")
+                lines.append("")
+                for rec_item in recs:
+                    lines.append(f"- {rec_item}")
+                lines.append("")
+            if patterns:
+                lines.append(f"*Patterns observed:* {patterns}")
+                lines.append("")
+
     return "\n".join(lines)
+
+
+def _render_vulnerability_breakdown_section(section: ReportSection) -> str:
+    """Render the per-vulnerability breakdown table."""
+    rows = section.data.get("rows", [])
+    if not rows:
+        return f"## {section.title}\n\nNo vulnerability data available."
+
+    table_rows = [
+        [
+            r["vulnerability_name"] or r["vulnerability"],
+            r.get("domain", ""),
+            str(r["total_attacks"]),
+            str(r["vulnerabilities_found"]),
+            _pct(r["vulnerability_rate"]),
+        ]
+        for r in rows
+    ]
+    table = _md_table(
+        ["Vulnerability", "Domain", "Attacks", "Vulnerabilities", "ASR"],
+        table_rows,
+    )
+    return f"## {section.title}\n\n{table}"
 
 
 def _render_category_breakdown_section(section: ReportSection) -> str:
@@ -142,12 +180,11 @@ def _render_category_breakdown_section(section: ReportSection) -> str:
             str(r["total_attacks"]),
             str(r["vulnerabilities_found"]),
             _pct(r["vulnerability_rate"]),
-            _pct(r["resistance_rate"]),
         ]
         for r in rows
     ]
     table = _md_table(
-        ["Category", "Attacks", "Vulnerabilities", "Vuln Rate", "Resistance"],
+        ["Category", "Attacks", "Vulnerabilities", "ASR"],
         table_rows,
     )
     return f"## {section.title}\n\n{table}"
@@ -165,14 +202,32 @@ def _render_technique_breakdown_section(section: ReportSection) -> str:
             str(r["total_attacks"]),
             str(r["vulnerabilities_found"]),
             _pct(r["vulnerability_rate"]),
-            _pct(r["resistance_rate"]),
         ]
         for r in rows
     ]
     table = _md_table(
-        ["Technique", "Attacks", "Vulnerabilities", "Vuln Rate", "Resistance"],
+        ["Technique", "Attacks", "Vulnerabilities", "ASR"],
         table_rows,
     )
+    return f"## {section.title}\n\n{table}"
+
+
+def _render_severity_definitions_section(section: ReportSection) -> str:
+    """Render the severity level definitions table."""
+    definitions = section.data.get("definitions", [])
+    weights = section.data.get("weights", {})
+    if not definitions:
+        return ""
+
+    table_rows = [
+        [
+            d["level"].capitalize(),
+            d["description"],
+            str(weights.get(d["level"], "")),
+        ]
+        for d in definitions
+    ]
+    table = _md_table(["Severity", "Description", "Risk Weight"], table_rows)
     return f"## {section.title}\n\n{table}"
 
 
@@ -231,7 +286,9 @@ def _render_individual_results_section(section: ReportSection) -> str:
 
 _SECTION_RENDERERS = {
     "summary": _render_summary_section,
+    "severity_definitions": _render_severity_definitions_section,
     "focus_areas": _render_focus_areas_section,
+    "vulnerability_breakdown": _render_vulnerability_breakdown_section,
     "category_breakdown": _render_category_breakdown_section,
     "technique_breakdown": _render_technique_breakdown_section,
     "individual_results": _render_individual_results_section,

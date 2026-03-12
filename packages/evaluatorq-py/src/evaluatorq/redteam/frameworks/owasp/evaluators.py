@@ -24,9 +24,9 @@ Excluded LLM categories:
 from collections.abc import Callable
 from typing import TypedDict
 
-from evaluatorq.redteam.contracts import Vulnerability
+from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES, Vulnerability
 from evaluatorq.redteam.frameworks.owasp.models import LlmEvaluatorEntity
-from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
+from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY, resolve_category_safe
 
 from evaluatorq.redteam.frameworks.owasp.agent_evaluators import (
     get_asi01_goal_hijacking_evaluator,
@@ -94,42 +94,6 @@ for _cat, _getter in _LLM_REGISTRY.items():
     if _vuln is not None:
         VULNERABILITY_EVALUATOR_REGISTRY[_vuln] = _getter
 
-# Category code to display name mappings
-_ASI_CATEGORY_NAMES: dict[str, str] = {
-    'ASI01': 'Agent Goal Hijacking',
-    'ASI02': 'Tool Misuse & Exploitation',
-    'ASI03': 'Identity & Privilege Abuse',
-    'ASI04': 'Supply Chain Vulnerabilities',
-    'ASI05': 'Unexpected Code Execution',
-    'ASI06': 'Memory & Context Poisoning',
-    'ASI07': 'Insecure Inter-Agent Communication',
-    'ASI08': 'Cascading Failures',
-    'ASI09': 'Human-Agent Trust Exploitation',
-    'ASI10': 'Rogue Agents',
-}
-
-_LLM_CATEGORY_NAMES: dict[str, str] = {
-    'LLM01': 'Prompt Injection',
-    'LLM02': 'Sensitive Information Disclosure',
-    'LLM03': 'Supply Chain',
-    'LLM04': 'Data and Model Poisoning',
-    'LLM05': 'Improper Output Handling',
-    'LLM06': 'Excessive Agency',
-    'LLM07': 'System Prompt Leakage',
-    'LLM08': 'Vector and Embedding Weaknesses',
-    'LLM09': 'Misinformation',
-    'LLM10': 'Unbounded Consumption',
-}
-
-# Unified category names (supports ASI01, OWASP-ASI01, LLM01, OWASP-LLM01 formats)
-OWASP_CATEGORY_NAMES: dict[str, str] = {
-    **_ASI_CATEGORY_NAMES,
-    **{f'OWASP-{k}': v for k, v in _ASI_CATEGORY_NAMES.items()},
-    **_LLM_CATEGORY_NAMES,
-    **{f'OWASP-{k}': v for k, v in _LLM_CATEGORY_NAMES.items()},
-}
-
-
 class EvaluatorMetadata(TypedDict):
     """Canonical evaluator metadata associated with an OWASP category."""
 
@@ -142,31 +106,20 @@ def _normalize_category_code(category: str) -> str:
     return category.removeprefix('OWASP-')
 
 
-# Canonical evaluator metadata for categories with known evaluator entities in ORQ.
-_CANONICAL_EVALUATOR_METADATA_BY_CATEGORY: dict[str, EvaluatorMetadata] = {
-    'ASI01': {'evaluator_id': '01KFTGH3A3ZEQBY4JH0RHTAQYN', 'evaluator_name': 'owasp_asi01_goal_hijacking'},
-    'ASI05': {'evaluator_id': '01KFTGH3TW3SHBNT0FF8ZC53KA', 'evaluator_name': 'owasp_asi05_code_execution'},
-    'ASI06': {'evaluator_id': '01KFTGH4AHJD0DGMVXEV0QPM21', 'evaluator_name': 'owasp_asi06_memory_poisoning'},
-    'LLM01': {'evaluator_id': '01KFX0DEY1S57B1Q19AK10RAYF', 'evaluator_name': 'owasp_llm01_prompt_injection'},
-    'LLM02': {
-        'evaluator_id': '01KFX0DEY1RWTR466RMS2FT3P7',
-        'evaluator_name': 'owasp_llm02_sensitive_info_disclosure',
-    },
-    'LLM07': {'evaluator_id': '01KFX0DEY1DBEW2ZAQ0M3DN12T', 'evaluator_name': 'owasp_llm07_system_prompt_leakage'},
-}
-
-
 def get_evaluator_metadata_for_category(category: str) -> EvaluatorMetadata | None:
     """Return evaluator metadata for a category, with fallback to local evaluator identifiers.
 
+    Delegates to get_evaluator_metadata_for_vulnerability after resolving the category
+    to a Vulnerability via the vulnerability registry (single source of truth).
+
     Preference order:
-    1. Canonical ORQ evaluator metadata mapping (when known)
+    1. Canonical ORQ evaluator metadata mapping (when known, from vulnerability_registry)
     2. Local evaluator entity id/display_name
     """
     normalized = _normalize_category_code(category)
-    mapped = _CANONICAL_EVALUATOR_METADATA_BY_CATEGORY.get(normalized)
-    if mapped:
-        return mapped
+    vuln = resolve_category_safe(normalized)
+    if vuln is not None:
+        return get_evaluator_metadata_for_vulnerability(vuln)
 
     evaluator = get_evaluator_for_category(normalized)
     if evaluator is None:

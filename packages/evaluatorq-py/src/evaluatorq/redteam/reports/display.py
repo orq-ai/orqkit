@@ -27,7 +27,7 @@ def _format_vulnerability_label(vuln_str: str) -> str:
 
 
 def _format_category_label(category: str) -> str:
-    """Format ``'ASI01'`` → ``'ASI01 - Prompt Injection'``."""
+    """Format ``'ASI01'`` → ``'ASI01 - Goal Hijacking'``."""
     name = OWASP_CATEGORY_NAMES.get(category)
     if name:
         return f"{category} - {name}"
@@ -39,6 +39,15 @@ def _rate_style(rate: float) -> str:
     if rate >= 0.8:
         return "green"
     if rate >= 0.5:
+        return "yellow"
+    return "red"
+
+
+def _asr_style(asr: float) -> str:
+    """Return a Rich color style for an ASR value (lower is better)."""
+    if asr <= 0.2:
+        return "green"
+    if asr <= 0.5:
         return "yellow"
     return "red"
 
@@ -72,8 +81,8 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
         Text(str(summary.vulnerabilities_found), style="red" if summary.vulnerabilities_found else "green"),
     )
     stats.add_row(
-        "Resistance Rate",
-        Text(f"{summary.resistance_rate:.0%}", style=_rate_style(summary.resistance_rate)),
+        "ASR",
+        Text(f"{summary.vulnerability_rate:.0%}", style=_asr_style(summary.vulnerability_rate)),
     )
     stats.add_row(
         "Eval Coverage",
@@ -101,7 +110,43 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
     console.print(stats)
     console.print()
 
-    # ── Per-category breakdown ─────────────────────────────────────────
+    # ── Per-vulnerability breakdown (primary) ─────────────────────────
+    if summary.by_vulnerability:
+        # Show worst-first (lowest resistance first, most attacks as tiebreaker)
+        sorted_vulns = sorted(
+            summary.by_vulnerability.values(),
+            key=lambda v: (v.resistance_rate, -v.total_attacks),
+        )
+
+        vuln_table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        vuln_table.add_column("Vulnerability", style="white", min_width=35)
+        vuln_table.add_column("Domain", style="white", min_width=18)
+        vuln_table.add_column("Tested", justify="right", width=8)
+        vuln_table.add_column("Passed", justify="right", width=8)
+        vuln_table.add_column("ASR", justify="right", width=11)
+
+        for vuln_summary in sorted_vulns:
+            passed_count = vuln_summary.total_attacks - vuln_summary.vulnerabilities_found
+            asr = 1 - vuln_summary.resistance_rate
+            vuln_table.add_row(
+                _format_vulnerability_label(vuln_summary.vulnerability),
+                Text(vuln_summary.domain.replace("_", " ").title(), style="white"),
+                Text(str(vuln_summary.total_attacks), style="cyan"),
+                Text(
+                    str(passed_count),
+                    style="green" if passed_count == vuln_summary.total_attacks else "yellow",
+                ),
+                Text(
+                    f"{asr:.0%}",
+                    style=_asr_style(asr),
+                ),
+            )
+
+        console.print("[bold white]Per-Vulnerability Breakdown:[/bold white]")
+        console.print(vuln_table)
+        console.print()
+
+    # ── Per-category breakdown (secondary) ────────────────────────────
     if summary.by_category:
         # Show worst-first (lowest resistance first, most attacks as tiebreaker)
         sorted_cats = sorted(
@@ -113,9 +158,10 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
         cat_table.add_column("Category", style="white", min_width=30)
         cat_table.add_column("Attacks", justify="right", width=9)
         cat_table.add_column("Vulnerable", justify="right", width=11)
-        cat_table.add_column("Resistance", justify="right", width=11)
+        cat_table.add_column("ASR", justify="right", width=11)
 
         for cat_summary in sorted_cats:
+            asr = 1 - cat_summary.resistance_rate
             cat_table.add_row(
                 _format_category_label(cat_summary.category),
                 Text(str(cat_summary.total_attacks), style="cyan"),
@@ -124,8 +170,8 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
                     style="red" if cat_summary.vulnerabilities_found else "green",
                 ),
                 Text(
-                    f"{cat_summary.resistance_rate:.0%}",
-                    style=_rate_style(cat_summary.resistance_rate),
+                    f"{asr:.0%}",
+                    style=_asr_style(asr),
                 ),
             )
 

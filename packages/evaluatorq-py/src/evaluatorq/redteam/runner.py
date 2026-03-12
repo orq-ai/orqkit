@@ -17,7 +17,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories,
 )
-from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, Pipeline, RedTeamReport, TargetConfig
+from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, Pipeline, RedTeamReport, TargetConfig, Vulnerability
 from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 
@@ -200,6 +200,7 @@ async def red_team(
     hooks: PipelineHooks | None = None,
     output_dir: Path | str | None = None,
     target_config: TargetConfig | None = None,
+    generate_recommendations: bool = False,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -238,6 +239,10 @@ async def red_team(
             numbered JSON files. When ``None`` (default), no files are written.
         target_config: Optional backend-agnostic target configuration (e.g.
             system prompt for OpenAI targets).
+        generate_recommendations: Whether to generate LLM-based actionable
+            recommendations for the top focus areas by analyzing failed traces.
+            Requires an LLM client (explicit or via environment credentials).
+            Defaults to ``False``.
 
     Returns:
         RedTeamReport with results and summary statistics.
@@ -263,23 +268,37 @@ async def red_team(
             'or ORQ_API_KEY (optionally ORQ_BASE_URL).'
         )
 
+    from evaluatorq.redteam.contracts import Vulnerability as _Vulnerability
+    from evaluatorq.redteam.vulnerability_registry import (
+        get_primary_category as _get_primary_category,
+        resolve_vulnerabilities as _resolve_vulns,
+    )
+
+    resolved_vulns: list[_Vulnerability] | None
     if vulnerabilities:
-        from evaluatorq.redteam.vulnerability_registry import (
-            get_primary_category,
-            resolve_vulnerabilities as _resolve_vulns,
-        )
         resolved_vulns = _resolve_vulns(vulnerabilities)
-        resolved_categories = [get_primary_category(v) for v in resolved_vulns]
+        resolved_categories = [_get_primary_category(v) for v in resolved_vulns]
     elif categories:
+        # Resolve category strings to vulnerabilities so the pipeline can use the
+        # vulnerability-first path; fall back gracefully if any code is unknown.
+        try:
+            resolved_vulns = _resolve_vulns(categories)
+        except ValueError:
+            resolved_vulns = None
         resolved_categories = categories
     else:
         resolved_categories = list_available_categories()
+        try:
+            resolved_vulns = _resolve_vulns(resolved_categories)
+        except ValueError:
+            resolved_vulns = None
 
     if resolved_mode in (Pipeline.DYNAMIC, Pipeline.HYBRID):
         report = await _run_dynamic_or_hybrid(
             targets=targets,
             mode=resolved_mode,
             categories=resolved_categories,
+            resolved_vulns=resolved_vulns,
             max_turns=max_turns,
             max_per_category=max_per_category,
             attack_model=attack_model,
@@ -319,6 +338,24 @@ async def red_team(
     else:
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
         raise ValueError(msg)
+
+    # Generate LLM-based recommendations for focus areas (opt-in)
+    if generate_recommendations:
+        try:
+            from evaluatorq.redteam.backends.registry import create_async_llm_client
+            from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
+
+            rec_client = llm_client
+            if rec_client is None:
+                rec_client = create_async_llm_client()
+
+            report.focus_area_recommendations = await generate_focus_area_recommendations(
+                report=report,
+                llm_client=rec_client,
+                model=evaluator_model or DEFAULT_PIPELINE_MODEL,
+            )
+        except Exception:
+            logger.warning('Failed to generate focus area recommendations', exc_info=True)
 
     resolved_hooks.on_complete(report, output_dir=str(resolved_output_dir) if resolved_output_dir else None)
     return report
@@ -392,6 +429,7 @@ async def _prepare_target(
     target: str,
     mode: Pipeline,
     categories: list[str] | None,
+    resolved_vulns: list[Vulnerability] | None,
     max_turns: int,
     max_per_category: int | None,
     attack_model: str,
@@ -441,6 +479,7 @@ async def _prepare_target(
     from evaluatorq.redteam.adaptive.pipeline import (
         create_dynamic_redteam_job,
         generate_dynamic_datapoints,
+        generate_dynamic_datapoints_for_vulnerabilities,
     )
 
     target_kind, target_value = _parse_target(target)
@@ -481,17 +520,32 @@ async def _prepare_target(
             "target": target,
         })
 
-        dynamic_datapoints, filtering_metadata = await generate_dynamic_datapoints(
-            agent_context=agent_context,
-            categories=resolved_categories,
-            max_per_category=max_per_category,
-            max_turns=max_turns,
-            generate_additional_strategies=generate_strategies,
-            generated_strategy_count=generated_strategy_count,
-            llm_client=resolved_llm_client,
-            attack_model=attack_model,
-            parallelism=parallelism,
-        )
+        if resolved_vulns is not None:
+            # Primary vulnerability-first path
+            dynamic_datapoints, filtering_metadata = await generate_dynamic_datapoints_for_vulnerabilities(
+                agent_context=agent_context,
+                vulnerabilities=resolved_vulns,
+                max_per_category=max_per_category,
+                max_turns=max_turns,
+                generate_additional_strategies=generate_strategies,
+                generated_strategy_count=generated_strategy_count,
+                llm_client=resolved_llm_client,
+                attack_model=attack_model,
+                parallelism=parallelism,
+            )
+        else:
+            # Fallback: categories that could not be resolved to vulnerabilities
+            dynamic_datapoints, filtering_metadata = await generate_dynamic_datapoints(
+                agent_context=agent_context,
+                categories=resolved_categories,
+                max_per_category=max_per_category,
+                max_turns=max_turns,
+                generate_additional_strategies=generate_strategies,
+                generated_strategy_count=generated_strategy_count,
+                llm_client=resolved_llm_client,
+                attack_model=attack_model,
+                parallelism=parallelism,
+            )
 
         if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
             template_count = sum(
@@ -576,6 +630,7 @@ async def _prepare_target(
             _dyn: Any = dynamic_job,
             _sta: Any = static_job,
         ) -> Any:
+            """Dispatch a hybrid datapoint to the dynamic or static inner job."""
             route = data.inputs.get('hybrid_source', 'static')
             inner = _dyn if route == 'dynamic' else _sta
             result = await inner(data, row)
@@ -600,6 +655,7 @@ async def _prepare_target(
             row: int,
             _inner: Any = dynamic_job,
         ) -> Any:
+            """Dispatch a dynamic datapoint to the inner job and unwrap the result."""
             result = await _inner(data, row)
             # Inner job is @job-decorated, so it returns {"name": ..., "output": ...}.
             # Unwrap to avoid double-wrapping since _target_job is also @job-decorated.
@@ -632,6 +688,7 @@ async def _run_dynamic_or_hybrid(
     targets: list[str],
     mode: Pipeline,
     categories: list[str] | None,
+    resolved_vulns: list[Vulnerability] | None = None,
     max_turns: int,
     max_per_category: int | None,
     attack_model: str,
@@ -709,6 +766,7 @@ async def _run_dynamic_or_hybrid(
         _common_prepare_kwargs: dict[str, Any] = dict(
             mode=mode,
             categories=categories,
+            resolved_vulns=resolved_vulns,
             max_turns=max_turns,
             max_per_category=max_per_category,
             attack_model=attack_model,
@@ -786,7 +844,7 @@ async def _run_dynamic_or_hybrid(
                 "mode": "hybrid",
                 "target": ", ".join(targets),
                 "dataset_path": str(dataset_path) if dataset_path else None,
-                "vulnerabilities": None,
+                "vulnerabilities": [v.value for v in resolved_vulns] if resolved_vulns else None,
             }
         else:
             confirm_payload = {
@@ -803,7 +861,7 @@ async def _run_dynamic_or_hybrid(
                 "mode": "dynamic",
                 "target": ", ".join(targets),
                 "dataset_path": None,
-                "vulnerabilities": None,
+                "vulnerabilities": [v.value for v in resolved_vulns] if resolved_vulns else None,
             }
 
         if not resolved_hooks.on_confirm(confirm_payload):
@@ -826,6 +884,7 @@ async def _run_dynamic_or_hybrid(
             static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
             async def hybrid_scorer(params: Any) -> EvaluationResult:
+                """Route evaluation to the dynamic or static OWASP scorer based on datapoint source."""
                 data = params['data']
                 route = data.inputs.get('hybrid_source', 'static')
                 if route == 'dynamic':

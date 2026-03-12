@@ -89,6 +89,30 @@ class Severity(StrEnum):
     CRITICAL = 'critical'
 
 
+SEVERITY_DEFINITIONS: dict[str, str] = {
+    'critical': (
+        'Attacks that, if successful, could lead to complete system compromise, '
+        'unauthorized access to sensitive data, or execution of arbitrary actions '
+        'with full privileges. Immediate remediation required.'
+    ),
+    'high': (
+        'Attacks that could cause significant harm such as partial data exfiltration, '
+        'privilege escalation, or bypassing critical safety guardrails. '
+        'Should be prioritized for remediation.'
+    ),
+    'medium': (
+        'Attacks that could lead to moderate impact such as information leakage of '
+        'non-sensitive data, minor policy violations, or degraded safety behavior. '
+        'Should be addressed in normal development cycles.'
+    ),
+    'low': (
+        'Attacks with limited impact such as minor guideline deviations, '
+        'edge-case behaviors, or cosmetic safety issues. '
+        'Address as time permits or during routine hardening.'
+    ),
+}
+
+
 class Scope(StrEnum):
     """Attack target scope."""
 
@@ -293,6 +317,7 @@ class RedTeamInput(BaseModel):
     @field_validator('framework', mode='before')
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
+        """Normalize framework string aliases to canonical Framework enum values."""
         if isinstance(value, str):
             return normalize_framework(value)
         return value
@@ -666,6 +691,7 @@ class AttackInfo(BaseModel):
     @field_validator('framework', mode='before')
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
+        """Normalize framework string aliases to canonical Framework enum values."""
         if isinstance(value, str):
             return normalize_framework(value)
         return value
@@ -898,6 +924,17 @@ class ReportSummary(BaseModel):
     )
 
 
+class FocusAreaRecommendation(BaseModel):
+    """LLM-generated actionable recommendation for a focus area."""
+
+    category: str = Field(description='OWASP category code (e.g. ASI01, LLM07)')
+    category_name: str = Field(description='Human-readable category name')
+    risk_score: float = Field(description='Risk score used for ranking')
+    traces_analyzed: int = Field(description='Number of failed traces analyzed')
+    recommendations: list[str] = Field(description='Actionable bullet-point recommendations')
+    patterns_observed: str = Field(description='Brief summary of patterns the LLM spotted in traces')
+
+
 class RedTeamReport(BaseModel):
     """Top-level unified report wrapping all results."""
 
@@ -917,12 +954,18 @@ class RedTeamReport(BaseModel):
 
     summary: ReportSummary
 
+    focus_area_recommendations: list[FocusAreaRecommendation] | None = Field(
+        default=None,
+        description='LLM-generated actionable recommendations for top risk areas (populated when generate_recommendations=True)',
+    )
+
     token_usage_summary: TokenUsage | None = None
     duration_seconds: float | None = None
 
     @field_validator('pipeline', mode='before')
     @classmethod
     def _normalize_pipeline(cls, value: Any) -> Any:
+        """Normalize legacy 'mixed' pipeline value to 'hybrid'."""
         if value == 'mixed':
             return 'hybrid'
         return value
@@ -930,6 +973,7 @@ class RedTeamReport(BaseModel):
     @field_validator('framework', mode='before')
     @classmethod
     def _normalize_framework(cls, value: Any) -> Any:
+        """Normalize framework string aliases to canonical Framework enum values."""
         if isinstance(value, str):
             return normalize_framework(value)
         return value

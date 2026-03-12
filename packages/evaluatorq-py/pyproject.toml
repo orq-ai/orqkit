@@ -16,6 +16,7 @@ norecursedirs = [ ".venv", "dist", "*.egg-info" ]
 markers = [
   "integration: marks tests as integration tests (require ORQ_API_KEY in .env)",
 ]
+timeout = 120
 
 [tool.basedpyright]
 exclude = ["examples", ".venv", "src/evaluatorq/redteam/ui"]
@@ -70,7 +71,8 @@ dependencies = [
   langchain = ["langchain>=1.0.0, <2.0.0"]
   redteam = ["openai>=1.0.0,<3.0.0", "loguru>=0.6.0", "typer>=0.12.0", "python-dotenv>=1.0.0"]
   ui = ["streamlit>=1.30.0", "plotly>=5.18.0"]
-  all = ["evaluatorq[orq,otel,langchain,redteam,ui]"]
+  export = ["kaleido>=0.2.1"]
+  all = ["evaluatorq[orq,otel,langchain,redteam,ui,export]"]
 
 
   [project.scripts]

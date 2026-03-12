@@ -24,6 +24,7 @@ class OpenAIModelTarget:
         client: AsyncOpenAI,
         system_prompt: str | None = None,
     ):
+        """Initialize the target with a model ID, async client, and optional system prompt."""
         self.model_id = model_id
         self.client = client
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
@@ -91,6 +92,7 @@ class OpenAIContextProvider:
     """
 
     def __init__(self, system_prompt: str | None = None):
+        """Initialize the context provider with an optional system prompt override."""
         self._system_prompt = system_prompt
 
     async def get_agent_context(self, agent_key: str) -> AgentContext:
@@ -112,6 +114,7 @@ class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
     def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None):
+        """Initialize the factory with a shared async OpenAI client and optional system prompt."""
         self._client = client
         self._system_prompt = system_prompt
 

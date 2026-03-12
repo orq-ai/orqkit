@@ -13,7 +13,7 @@ from typing import Annotated, Any, Optional
 
 import typer
 
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, Vulnerability
 
 app = typer.Typer(
     name="redteam",
@@ -50,6 +50,22 @@ def _configure_logging(verbosity: int) -> None:
 # ---------------------------------------------------------------------------
 # Markdown export helpers (importable for tests)
 # ---------------------------------------------------------------------------
+
+
+def _generate_report_filename(target: str, timestamp: str, ext: str) -> str:
+    """Generate a safe report filename with the given extension.
+
+    Args:
+        target:    Target identifier string.
+        timestamp: Timestamp string.
+        ext:       File extension including dot (e.g. ``".html"``).
+
+    Returns:
+        Filename string.
+    """
+    safe_target = re.sub(r"[/:|\s]+", "-", target).strip("-")
+    safe_target = re.sub(r"-{2,}", "-", safe_target)
+    return f"redteam-report-{safe_target}-{timestamp}{ext}"
 
 
 def _generate_md_filename(target: str, timestamp: str) -> str:
@@ -103,6 +119,27 @@ def write_markdown_report(
     return output_path
 
 
+def write_html_report(
+    report: Any,
+    output_dir: Path,
+    target: str,
+) -> Path:
+    """Export ``report`` to an HTML file inside ``output_dir``."""
+    from evaluatorq.redteam.reports.export_html import export_html
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = _generate_report_filename(target=target, timestamp=timestamp, ext=".html")
+    output_path = output_dir / filename
+
+    html_content = export_html(report)
+    output_path.write_text(html_content, encoding="utf-8")
+    return output_path
+
+
+
 @app.command(no_args_is_help=True)
 def run(
     target: Annotated[
@@ -126,8 +163,13 @@ def run(
     vulnerabilities: Annotated[
         Optional[list[str]],
         typer.Option(
-            "--vulnerability",
-            help="Vulnerability IDs to test (e.g. goal_hijacking). Repeatable. Takes precedence over --category.",
+            "--vulnerability", "-V",
+            help=(
+                "Vulnerability IDs to test (e.g. 'goal_hijacking', 'prompt_injection'). "
+                "Repeatable. Also accepts OWASP codes (ASI01, LLM01). "
+                "Takes precedence over --category. "
+                f"Available: {', '.join(v.value for v in Vulnerability)}."
+            ),
         ),
     ] = None,
     max_turns: Annotated[
@@ -201,6 +243,13 @@ def run(
             help="Directory path to write a Markdown report. Filename is auto-generated.",
         ),
     ] = None,
+    export_html: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--export-html",
+            help="Directory path to write an HTML report. Filename is auto-generated.",
+        ),
+    ] = None,
     system_prompt: Annotated[
         Optional[str],
         typer.Option("--system-prompt", help="System prompt for the target model/agent."),
@@ -216,6 +265,18 @@ def run(
     from evaluatorq.redteam.contracts import TargetConfig
     from evaluatorq.redteam.exceptions import CancelledError
     from evaluatorq.redteam.hooks import RichHooks
+
+    # Validate vulnerability IDs early for a clean error message
+    if vulnerabilities:
+        from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
+
+        valid_ids = {v.value for v in Vulnerability} | set(CATEGORY_TO_VULNERABILITY.keys())
+        for v in vulnerabilities:
+            if v not in valid_ids:
+                raise typer.BadParameter(
+                    f"Unknown vulnerability ID: {v!r}. "
+                    f"Valid IDs: {sorted(vi.value for vi in Vulnerability)}"
+                )
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
     targets = target if len(target) > 1 else target[0]
@@ -260,6 +321,11 @@ def run(
         target_label = targets if isinstance(targets, str) else ", ".join(targets)
         md_path = write_markdown_report(report, output_dir=export_md, target=target_label)
         typer.echo(f"Markdown report written to {md_path}")
+
+    if export_html:
+        target_label = targets if isinstance(targets, str) else ", ".join(targets)
+        html_path = write_html_report(report, output_dir=export_html, target=target_label)
+        typer.echo(f"HTML report written to {html_path}")
 
 
 @app.command()

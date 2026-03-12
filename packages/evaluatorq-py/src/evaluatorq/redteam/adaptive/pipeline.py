@@ -23,9 +23,10 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage, Vulnerability
+from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
-from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories
+from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories, plan_strategies_for_vulnerabilities
 from evaluatorq.redteam.contracts import TurnType
 from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
 
@@ -55,6 +56,78 @@ def _set_attack_span_attrs(span: Any, result: AttackOutput) -> None:
         })
 
 
+async def generate_dynamic_datapoints_for_vulnerabilities(
+    agent_context: AgentContext,
+    vulnerabilities: list[Vulnerability],
+    max_per_category: int | None = None,
+    max_turns: int = 5,
+    *,
+    generate_additional_strategies: bool = True,
+    generated_strategy_count: int = 2,
+    llm_client: AsyncOpenAI | None = None,
+    attack_model: str = DEFAULT_PIPELINE_MODEL,
+    parallelism: int = 5,
+) -> tuple[list[DataPoint], dict[str, Any]]:
+    """Generate evaluatorq DataPoints for dynamic red teaming, keyed by Vulnerability enum.
+
+    This is the primary (vulnerability-first) datapoint generation function.
+    Each datapoint carries the serialized strategy, objective, and optional
+    memory entity ID. Strategy planning uses the shared planner:
+
+    1. Filter hardcoded strategies by agent capabilities
+    2. Optionally generate LLM-based strategies per vulnerability
+    3. Cap per vulnerability if max_per_category is set
+
+    The total number of datapoints is:
+        sum over vulnerabilities of min(applicable + generated, max_per_category)
+
+    Returns:
+        Tuple of (datapoints, filtering_metadata) where filtering_metadata contains
+        per-vulnerability counts of all/applicable/generated/filtered strategies.
+        The metadata keys are vulnerability ID strings (e.g. 'goal_hijacking').
+    """
+    all_vuln_strategies, filtering_metadata_by_vuln, _agent_capabilities = await plan_strategies_for_vulnerabilities(
+        agent_context=agent_context,
+        vulnerabilities=vulnerabilities,
+        llm_client=llm_client,
+        attack_model=attack_model,
+        max_turns=max_turns,
+        max_per_category=max_per_category,
+        generate_additional_strategies=generate_additional_strategies,
+        generated_strategy_count=generated_strategy_count,
+        generation_parallelism=parallelism,
+    )
+
+    # Convert Vulnerability-keyed metadata to string keys for external consumption
+    filtering_metadata: dict[str, Any] = {
+        vuln.value: meta for vuln, meta in filtering_metadata_by_vuln.items()
+    }
+
+    datapoints: list[DataPoint] = []
+    for vuln in vulnerabilities:
+        category = get_primary_category(vuln)
+        for strategy in all_vuln_strategies.get(vuln, []):
+            sample_id = f'dynamic_{vuln.value}_{strategy.name}'
+            objective = generate_objective(strategy, agent_context)
+
+            inputs: dict[str, Any] = {
+                'id': sample_id,
+                'vulnerability': vuln.value,
+                'category': category,
+                'strategy': strategy.model_dump(mode='json'),
+                'objective': objective,
+            }
+
+            # Each datapoint gets its own memory entity ID so parallel jobs don't interfere
+            if agent_context.has_memory:
+                inputs['memory_entity_id'] = f'red-team-{uuid.uuid4().hex[:12]}'
+
+            datapoints.append(DataPoint(inputs=inputs))
+
+    logger.debug(f'Generated {len(datapoints)} dynamic datapoints across {len(vulnerabilities)} vulnerabilities')
+    return datapoints, filtering_metadata
+
+
 async def generate_dynamic_datapoints(
     agent_context: AgentContext,
     categories: list[str],
@@ -79,10 +152,48 @@ async def generate_dynamic_datapoints(
     The total number of datapoints is:
         sum over categories of min(applicable + generated, max_per_category)
 
+    Delegates to generate_dynamic_datapoints_for_vulnerabilities() when all
+    categories can be resolved to Vulnerability enum values. Falls back to
+    plan_strategies_for_categories() for unresolvable category codes so that
+    legacy behaviour is preserved.
+
     Returns:
         Tuple of (datapoints, filtering_metadata) where filtering_metadata contains
         per-category counts of all/applicable/generated/filtered strategies.
     """
+    from evaluatorq.redteam.vulnerability_registry import resolve_vulnerabilities
+
+    # Try resolving all categories to vulnerabilities for the primary path
+    try:
+        resolved_vulnerabilities = resolve_vulnerabilities(categories)
+    except ValueError:
+        resolved_vulnerabilities = None
+
+    if resolved_vulnerabilities is not None:
+        # Primary vulnerability-first path — delegate entirely
+        datapoints, vuln_metadata = await generate_dynamic_datapoints_for_vulnerabilities(
+            agent_context=agent_context,
+            vulnerabilities=resolved_vulnerabilities,
+            max_per_category=max_per_category,
+            max_turns=max_turns,
+            generate_additional_strategies=generate_additional_strategies,
+            generated_strategy_count=generated_strategy_count,
+            llm_client=llm_client,
+            attack_model=attack_model,
+            parallelism=parallelism,
+        )
+        # Remap metadata keys from vulnerability IDs back to original category strings
+        # so callers that expect category-keyed metadata continue to work.
+        # resolve_vulnerabilities() succeeded, so each category maps to exactly one
+        # vulnerability; we look up the metadata by vulnerability ID string.
+        filtering_metadata: dict[str, Any] = {}
+        for category in categories:
+            resolved_v = resolve_category_safe(category)
+            if resolved_v is not None and resolved_v.value in vuln_metadata:
+                filtering_metadata[category] = vuln_metadata[resolved_v.value]
+        return datapoints, filtering_metadata
+
+    # Fallback path: one or more categories could not be resolved to a Vulnerability
     all_category_strategies, filtering_metadata, _agent_capabilities = await plan_strategies_for_categories(
         agent_context=agent_context,
         categories=categories,
@@ -95,7 +206,7 @@ async def generate_dynamic_datapoints(
         generation_parallelism=parallelism,
     )
 
-    datapoints: list[DataPoint] = []
+    datapoints = []
     for category in categories:
         for strategy in all_category_strategies.get(category, []):
             sample_id = f'dynamic_{category}_{strategy.name}'
@@ -160,6 +271,7 @@ def create_dynamic_redteam_job(
 
     @job(job_name)
     async def dynamic_job(data: DataPoint, _row: int) -> dict[str, Any]:
+        """Execute a single red-team attack for the given datapoint and return the serialized result."""
         import time
         import traceback
 
@@ -344,6 +456,7 @@ def create_dynamic_evaluator(
     owasp_evaluator = OWASPEvaluator(evaluator_model=evaluator_model, llm_client=llm_client)
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
+        """Evaluate the attack output using OWASPEvaluator and return a scored EvaluationResult."""
         data = params['data']
         raw_output = params['output']
         if isinstance(raw_output, AttackOutput):
@@ -373,6 +486,14 @@ def create_dynamic_evaluator(
         category = output.category or data.inputs.get('category', '')
         vulnerability = output.vulnerability or data.inputs.get('vulnerability', '')
 
+        # Prefer vulnerability-first path when a valid Vulnerability enum can be resolved
+        resolved_vuln: Vulnerability | None = None
+        if vulnerability:
+            try:
+                resolved_vuln = Vulnerability(vulnerability)
+            except ValueError:
+                resolved_vuln = resolve_category_safe(vulnerability)
+
         async with with_redteam_span(
             'orq.redteam.security_evaluation',
             {
@@ -381,11 +502,18 @@ def create_dynamic_evaluator(
                 'orq.redteam.model': evaluator_model,
             },
         ) as eval_span:
-            eval_result = await owasp_evaluator.evaluate(
-                category=category,
-                messages=conversation,
-                response=final_response,
-            )
+            if resolved_vuln is not None:
+                eval_result = await owasp_evaluator.evaluate_vulnerability(
+                    vuln=resolved_vuln,
+                    messages=conversation,
+                    response=final_response,
+                )
+            else:
+                eval_result = await owasp_evaluator.evaluate(
+                    category=category,
+                    messages=conversation,
+                    response=final_response,
+                )
             set_span_attrs(eval_span, {
                 'orq.redteam.passed': eval_result.passed,
                 'input': final_response or '',
@@ -395,7 +523,12 @@ def create_dynamic_evaluator(
         raw_value = None
         if isinstance(eval_result.raw_output, dict):
             raw_value = eval_result.raw_output.get('value')
-        result_value: str | int | float | bool = raw_value if raw_value is not None else bool(eval_result.passed)
+        if raw_value is not None:
+            result_value: str | int | float | bool = raw_value
+        elif eval_result.passed is not None:
+            result_value = bool(eval_result.passed)
+        else:
+            result_value = 'inconclusive'
         return EvaluationResult(
             value=result_value,
             explanation=eval_result.explanation,

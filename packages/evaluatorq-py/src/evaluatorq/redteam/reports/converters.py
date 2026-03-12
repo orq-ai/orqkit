@@ -96,6 +96,7 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
     """Normalize evaluatorq job output into a typed payload."""
 
     def _normalize_output_dict(d: dict[str, Any]) -> dict[str, Any]:
+        """Unwrap nested 'output' keys and merge top-level fields into a flat dict."""
         wrapped = d.get('output')
         if isinstance(wrapped, dict):
             merged = dict(wrapped)
@@ -577,10 +578,12 @@ def _rate(numerator: int, denominator: int, *, default: float = 1.0) -> float:
 
 
 def _is_evaluated(r: RedTeamResult) -> bool:
+    """Return True if the result has a definitive boolean evaluation outcome."""
     return r.evaluation is not None and isinstance(r.evaluation.passed, bool)
 
 
 def _is_vulnerable(r: RedTeamResult) -> bool:
+    """Return True if the result was evaluated and the agent failed (is vulnerable)."""
     return r.evaluation is not None and r.evaluation.passed is False
 
 

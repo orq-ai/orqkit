@@ -45,6 +45,7 @@ from evaluatorq.redteam.contracts import (
     EvaluationPayload,
     EvaluationResult,
     ExecutionDetails,
+    FocusAreaRecommendation,
     Framework,
     FrameworkSummary,
     FunctionCall,
@@ -62,6 +63,7 @@ from evaluatorq.redteam.contracts import (
     ReportSummary,
     Scope,
     ScopeSummary,
+    SEVERITY_DEFINITIONS,
     Severity,
     SeveritySummary,
     TechniqueSummary,
@@ -86,6 +88,13 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories as list_categories,
 )
+from evaluatorq.redteam.vulnerability_registry import (
+    VULNERABILITY_DEFS,
+    get_vulnerability_name,
+    list_available_vulnerabilities,
+    resolve_category,
+    resolve_vulnerabilities,
+)
 from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
 from evaluatorq.redteam.hooks import (
     ConfirmPayload,
@@ -102,6 +111,12 @@ __all__ = [
     # Category introspection
     "list_categories",
     "get_category_info",
+    # Vulnerability introspection
+    "list_available_vulnerabilities",
+    "get_vulnerability_name",
+    "resolve_vulnerabilities",
+    "resolve_category",
+    "VULNERABILITY_DEFS",
     # Hook system
     "PipelineHooks",
     "DefaultHooks",

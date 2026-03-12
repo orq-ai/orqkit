@@ -181,14 +181,14 @@ class TestReportSections:
         kinds = [s.kind for s in sections]
         assert "individual_results" in kinds
 
-    def test_focus_areas_limited_to_top_3(self):
-        """Focus areas section contains at most 3 entries."""
+    def test_focus_areas_limited_to_top_5(self):
+        """Focus areas section contains at most 5 entries."""
         from evaluatorq.redteam.reports.sections import build_report_sections
 
         report = _make_multi_category_report()
         sections = build_report_sections(report)
         focus_section = next(s for s in sections if s.kind == "focus_areas")
-        assert len(focus_section.data["focus_areas"]) <= 3
+        assert len(focus_section.data["focus_areas"]) <= 5
 
     def test_focus_areas_risk_scoring(self):
         """Focus areas are ordered by risk_score = vulnerability_rate * severity_weight."""

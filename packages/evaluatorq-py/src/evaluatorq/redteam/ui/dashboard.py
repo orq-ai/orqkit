@@ -22,7 +22,9 @@ from evaluatorq.redteam.contracts import (
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
+    VulnerabilitySummary,
 )
+from evaluatorq.redteam.contracts import SEVERITY_DEFINITIONS
 from evaluatorq.redteam.reports.converters import compute_report_summary
 from evaluatorq.redteam.reports.export_md import export_markdown
 from evaluatorq.redteam.reports.guidance import REMEDIATION_GUIDANCE
@@ -61,21 +63,21 @@ def _status_icon(rate: float) -> str:
     return "\u274c"
 
 
-def _defense_rate_color(rate: float) -> str:
-    """Interpolate from red_400 through yellow_400 to success_400 (ORQ brand)."""
-    # red_400: #d92d20 (217, 45, 32)
-    # yellow_400: #f2b600 (242, 182, 0)
+def _asr_color(asr: float) -> str:
+    """Interpolate from success_400 (low ASR) through yellow_400 to red_400 (high ASR)."""
     # success_400: #2ebd85 (46, 189, 133)
-    if rate <= 0.5:
-        t = rate / 0.5
-        r = int(217 + (242 - 217) * t)
-        g = int(45 + (182 - 45) * t)
-        b = int(32 + (0 - 32) * t)
+    # yellow_400: #f2b600 (242, 182, 0)
+    # red_400: #d92d20 (217, 45, 32)
+    if asr <= 0.5:
+        t = asr / 0.5
+        r = int(46 + (242 - 46) * t)
+        g = int(189 + (182 - 189) * t)
+        b = int(133 + (0 - 133) * t)
     else:
-        t = (rate - 0.5) / 0.5
-        r = int(242 + (46 - 242) * t)
-        g = int(182 + (189 - 182) * t)
-        b = int(0 + (133 - 0) * t)
+        t = (asr - 0.5) / 0.5
+        r = int(242 + (217 - 242) * t)
+        g = int(182 + (45 - 182) * t)
+        b = int(0 + (32 - 0) * t)
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
@@ -144,142 +146,77 @@ def _compliant_categories(summary: ReportSummary) -> tuple[int, int]:
 # Sidebar agent context
 # ---------------------------------------------------------------------------
 
-_AGENT_CARD_CSS = """
-<style>
-.agent-card {
-    background: transparent;
-    border: 1px solid rgba(2,85,88,0.2);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
-}
-.agent-card h3 {
-    margin: 0 0 4px 0;
-    font-size: 1.05rem;
-}
-.agent-card .agent-desc {
-    color: #888;
-    font-size: 0.82rem;
-    margin-bottom: 10px;
-    line-height: 1.4;
-}
-.agent-card .agent-model {
-    display: inline-block;
-    background: rgba(2,85,88,0.12);
-    border: 1px solid rgba(2,85,88,0.25);
-    border-radius: 6px;
-    padding: 3px 10px;
-    font-size: 0.8rem;
-    font-family: monospace;
-}
-.agent-card .ctx-divider {
-    border: none;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    margin: 12px 0 10px 0;
-}
-.agent-card .ctx-section-title {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    margin-bottom: 6px;
-}
-.agent-card .tool-chip {
-    display: inline-block;
-    background: rgba(46,189,133,0.12);
-    border: 1px solid rgba(46,189,133,0.3);
-    color: #2ebd85;
-    border-radius: 14px;
-    padding: 2px 9px;
-    font-size: 0.76rem;
-    font-family: monospace;
-    margin: 2px 2px;
-}
-.agent-card .mem-chip {
-    display: inline-block;
-    background: rgba(126,34,206,0.12);
-    border: 1px solid rgba(126,34,206,0.3);
-    color: #7e22ce;
-    border-radius: 14px;
-    padding: 2px 9px;
-    font-size: 0.76rem;
-    font-family: monospace;
-    margin: 2px 2px;
-}
-.agent-card .kb-chip {
-    display: inline-block;
-    background: rgba(255,143,52,0.12);
-    border: 1px solid rgba(255,143,52,0.3);
-    color: #ff8f34;
-    border-radius: 14px;
-    padding: 2px 9px;
-    font-size: 0.76rem;
-    font-family: monospace;
-    margin: 2px 2px;
-}
-.agent-card .ctx-group {
-    margin-bottom: 8px;
-}
-.agent-card .ctx-group:last-child {
-    margin-bottom: 0;
-}
-</style>
-"""
+def _esc_html(text: str) -> str:
+    """Escape HTML special characters to prevent XSS."""
+    import html as _html
+
+    return _html.escape(text)
+
+
+def _chip_css(color: str) -> str:
+    """Return inline CSS for a capability chip using a brand color."""
+    return (
+        f"display:inline-block;background:{color}1f;border:1px solid {color}4d;"
+        f"color:{color};border-radius:14px;padding:2px 9px;font-size:0.76rem;"
+        f"font-family:monospace;margin:2px 2px;"
+    )
 
 
 def _render_sidebar_agent_context(ctx: AgentContext) -> None:
-    st.sidebar.markdown(_AGENT_CARD_CSS, unsafe_allow_html=True)
+    name = _esc_html(ctx.display_name or ctx.key or "Agent")
+    st.sidebar.markdown(f"**Agent:** {name}")
 
-    name = ctx.key or ctx.display_name or "Agent"
-    desc_html = f'<div class="agent-desc">{ctx.description}</div>' if ctx.description else ""
-    model_html = f'<div class="agent-model">{ctx.model}</div>' if ctx.model else ""
+    if ctx.description:
+        st.sidebar.caption(ctx.description)
 
-    # Build capability sections
-    sections_html = ""
+    if ctx.model:
+        st.sidebar.markdown(
+            f"**Model:** `{_esc_html(ctx.model)}`"
+        )
+
     has_capabilities = ctx.tools or ctx.memory_stores or ctx.knowledge_bases
+    if not has_capabilities:
+        return
 
-    if has_capabilities:
-        sections_html += '<hr class="ctx-divider">'
+    with st.sidebar.expander("Capabilities", expanded=True):
+        if ctx.tools:
+            tool_color = COLORS['success_400']
+            chips = "".join(
+                f'<span style="{_chip_css(tool_color)}">{_esc_html(t.name or "unknown")}</span>'
+                for t in ctx.tools
+            )
+            st.markdown(
+                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;">'
+                f'Tools ({len(ctx.tools)})</div>{chips}',
+                unsafe_allow_html=True,
+            )
 
-    if ctx.tools:
-        chips = "".join(f'<span class="tool-chip">{t.name or "unknown"}</span>' for t in ctx.tools)
-        sections_html += (
-            f'<div class="ctx-group">'
-            f'<div class="ctx-section-title">Tools ({len(ctx.tools)})</div>'
-            f'{chips}'
-            f'</div>'
-        )
+        if ctx.memory_stores:
+            mem_color = COLORS['purple_400']
+            chips = "".join(
+                f'<span style="{_chip_css(mem_color)}">{_esc_html(m.key or m.id or "unknown")}</span>'
+                for m in ctx.memory_stores
+            )
+            st.markdown(
+                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
+                f'Memory ({len(ctx.memory_stores)})</div>{chips}',
+                unsafe_allow_html=True,
+            )
 
-    if ctx.memory_stores:
-        chips = "".join(f'<span class="mem-chip">{m.key or m.id or "unknown"}</span>' for m in ctx.memory_stores)
-        sections_html += (
-            f'<div class="ctx-group">'
-            f'<div class="ctx-section-title">Memory ({len(ctx.memory_stores)})</div>'
-            f'{chips}'
-            f'</div>'
-        )
-
-    if ctx.knowledge_bases:
-        chips = "".join(
-            f'<span class="kb-chip">{kb.name or kb.key or kb.id or "unknown"}</span>' for kb in ctx.knowledge_bases
-        )
-        sections_html += (
-            f'<div class="ctx-group">'
-            f'<div class="ctx-section-title">Knowledge ({len(ctx.knowledge_bases)})</div>'
-            f'{chips}'
-            f'</div>'
-        )
-
-    st.sidebar.markdown(
-        f'<div class="agent-card">'
-        f'<h3>{name}</h3>'
-        f'{desc_html}'
-        f'{model_html}'
-        f'{sections_html}'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
+        if ctx.knowledge_bases:
+            kb_color = COLORS['orange_300']
+            chips = "".join(
+                f'<span style="{_chip_css(kb_color)}">{_esc_html(kb.name or kb.key or kb.id or "unknown")}</span>'
+                for kb in ctx.knowledge_bases
+            )
+            st.markdown(
+                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
+                f'Knowledge ({len(ctx.knowledge_bases)})</div>{chips}',
+                unsafe_allow_html=True,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -297,6 +234,7 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
     all_severities = [s for s in SEVERITY_ORDER if any(r.attack.severity.value == s for r in results)]
     all_techniques = sorted({r.attack.attack_technique.value for r in results})
     all_delivery = sorted({dm.value for r in results for dm in (r.attack.delivery_methods or [])})
+    all_vulnerabilities = sorted({r.attack.vulnerability for r in results if r.attack.vulnerability})
     all_agents = sorted({r.agent.key or r.agent.display_name or "unknown" for r in results})
 
     with st.sidebar.expander("Filters", expanded=False):
@@ -345,6 +283,17 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
         else:
             sel_delivery = []
 
+        # Vulnerability
+        if all_vulnerabilities:
+            sel_vulnerabilities = st.multiselect(
+                "Vulnerability",
+                options=all_vulnerabilities,
+                default=all_vulnerabilities,
+                key="filter_vulnerabilities",
+            )
+        else:
+            sel_vulnerabilities = []
+
         # Agent (only show when multi-agent)
         if len(all_agents) > 1:
             sel_agents = st.multiselect(
@@ -364,6 +313,8 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
             st.session_state["filter_techniques"] = all_techniques
             if all_delivery:
                 st.session_state["filter_delivery"] = all_delivery
+            if all_vulnerabilities:
+                st.session_state["filter_vulnerabilities"] = all_vulnerabilities
             if len(all_agents) > 1:
                 st.session_state["filter_agents"] = all_agents
             st.rerun()
@@ -389,6 +340,9 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
 
     if all_delivery and set(sel_delivery) != set(all_delivery):
         filtered = [r for r in filtered if any(dm.value in sel_delivery for dm in (r.attack.delivery_methods or []))]
+
+    if all_vulnerabilities and set(sel_vulnerabilities) != set(all_vulnerabilities):
+        filtered = [r for r in filtered if r.attack.vulnerability in sel_vulnerabilities]
 
     if len(all_agents) > 1 and set(sel_agents) != set(all_agents):
         filtered = [r for r in filtered if (r.agent.key or r.agent.display_name or "unknown") in sel_agents]
@@ -447,6 +401,8 @@ def _render_dashboard() -> None:
 
     # Sidebar: report metadata
     st.sidebar.divider()
+    if report.description:
+        st.sidebar.markdown(f"*{report.description}*")
     st.sidebar.markdown(f"**Pipeline:** {report.pipeline.value}")
     if report.framework:
         st.sidebar.markdown(f"**Framework:** {report.framework.value}")
@@ -475,6 +431,21 @@ def _render_dashboard() -> None:
         file_name=_md_filename,
         mime="text/markdown",
     )
+
+    # HTML export download button
+    try:
+        from evaluatorq.redteam.reports.export_html import export_html
+
+        _html_content = export_html(report)
+        _html_filename = f"redteam-report-{_target.replace('/', '-').replace(':', '-')}-{report.created_at:%Y%m%d_%H%M%S}.html"
+        st.sidebar.download_button(
+            label="Download HTML Report",
+            data=_html_content,
+            file_name=_html_filename,
+            mime="text/html",
+        )
+    except Exception:
+        pass
 
     # Global filters
     st.sidebar.divider()
@@ -572,7 +543,7 @@ def _dominant_severity_for_category(results: list[RedTeamResult], category: str)
 
 
 def _render_focus_areas(report: RedTeamReport) -> None:
-    """Render top-3 risk focus areas with remediation guidance.
+    """Render top-5 risk focus areas with remediation guidance and LLM recommendations.
 
     Risk score formula: vulnerability_rate * severity_weight
     Severity weights: low=1, medium=2, high=4, critical=8
@@ -582,6 +553,12 @@ def _render_focus_areas(report: RedTeamReport) -> None:
     summary = report.summary
     if not summary.by_category:
         return
+
+    # Build recommendation lookup by category
+    rec_lookup: dict[str, Any] = {}
+    if report.focus_area_recommendations:
+        for rec in report.focus_area_recommendations:
+            rec_lookup[rec.category] = rec
 
     # Compute risk scores
     risk_items = []
@@ -593,15 +570,15 @@ def _render_focus_areas(report: RedTeamReport) -> None:
         risk_score = cat_summary.vulnerability_rate * weight
         risk_items.append((cat_summary, dominant_sev, risk_score))
 
-    # Sort by risk score descending, take top 3
+    # Sort by risk score descending, take top 5
     risk_items.sort(key=lambda x: x[2], reverse=True)
-    top_items = risk_items[:3]
+    top_items = risk_items[:5]
 
     if not top_items:
         return
 
     st.subheader("Focus Areas")
-    st.caption("Top-3 categories by risk score (vulnerability rate × severity weight). Prioritize these for remediation.")
+    st.caption("Top-5 categories by risk score (vulnerability rate × severity weight). Prioritize these for remediation.")
 
     for cat_summary, dominant_sev, risk_score in top_items:
         normalized_code = _norm_cat(cat_summary.category)
@@ -614,6 +591,30 @@ def _render_focus_areas(report: RedTeamReport) -> None:
                 "Consult the relevant OWASP framework documentation for specific countermeasures.",
             ),
         )
+
+        # Build LLM recommendations HTML if available
+        llm_rec_html = ""
+        rec = rec_lookup.get(normalized_code) or rec_lookup.get(cat_summary.category)
+        if rec and rec.recommendations:
+            rec_items = "".join(
+                f'<li style="margin-bottom: 4px;">{item}</li>'
+                for item in rec.recommendations
+            )
+            patterns_html = ""
+            if rec.patterns_observed:
+                patterns_html = (
+                    f'<div style="margin-top: 6px; font-style: italic; font-size: 0.8em; color: #666;">'
+                    f'Patterns observed: {rec.patterns_observed}</div>'
+                )
+            llm_rec_html = (
+                f'<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.08);">'
+                f'<div style="font-size: 0.78rem; font-weight: 600; color: {COLORS["teal_400"]}; '
+                f'margin-bottom: 4px;">Based on {rec.traces_analyzed} trace samples</div>'
+                f'<ul style="margin: 4px 0 0 16px; padding: 0; font-size: 0.83em; color: #333;">'
+                f'{rec_items}</ul>'
+                f'{patterns_html}'
+                f'</div>'
+            )
 
         st.markdown(
             f"""
@@ -631,6 +632,7 @@ padding: 16px; border-radius: 8px; margin-bottom: 12px;">
     <div style="margin-top: 8px; font-size: 0.85em; color: #444;">
         {remediation}
     </div>
+    {llm_rec_html}
 </div>
 """,
             unsafe_allow_html=True,
@@ -654,15 +656,15 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
         f"## Executive Summary\n\n"
         f"This dashboard analyzes the security posture of AI agents against the **{framework_name}** "
         f"vulnerability framework. Based on **{summary.total_attacks:,}** attack simulations, your agent "
-        f"demonstrates a **{summary.resistance_rate:.1%} defense rate**. {critical_msg}"
+        f"demonstrates a **{summary.vulnerability_rate:.1%} attack success rate (ASR)**. {critical_msg}"
     )
 
     # KPI Cards
     compliant, total_cats = _compliant_categories(summary)
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Defense Rate", f"{summary.resistance_rate:.1%}", delta="Target: 100%", delta_color="normal")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("ASR", f"{summary.vulnerability_rate:.1%}", delta="Target: 0%", delta_color="inverse")
     col2.metric(
         "Critical Exposure", str(critical_count),
         delta="Requires attention" if critical_count > 0 else "Clear",
@@ -670,9 +672,13 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     )
     col3.metric("Eval Coverage", f"{summary.evaluation_coverage:.1%}")
     col4.metric("Errors", f"{summary.total_errors:,}", delta=f"{error_rate:.1f}% of attacks", delta_color="inverse")
+    if summary.average_turns_per_attack > 0:
+        col5.metric("Avg Turns/Attack", f"{summary.average_turns_per_attack:.1f}")
+    else:
+        col5.metric("Unevaluated", f"{summary.unevaluated_attacks:,}")
 
     if summary.total_errors > 0:
-        st.warning(f"{summary.total_errors} attacks errored and were excluded from resistance rate calculations.")
+        st.warning(f"{summary.total_errors} attacks errored and were excluded from ASR calculations.")
 
     # Datapoint breakdown (hybrid runs)
     if summary.datapoint_breakdown:
@@ -752,29 +758,69 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
         else:
             st.info("No severity breakdown available.")
 
+        with st.expander("What do severity levels mean?"):
+            for level in SEVERITY_ORDER:
+                desc = SEVERITY_DEFINITIONS.get(level, "")
+                color = SEVERITY_COLORS.get(level, COLORS['sand_400'])
+                st.markdown(
+                    f"**<span style='color:{color}'>{level.capitalize()}</span>** — {desc}",
+                    unsafe_allow_html=True,
+                )
+
     with col_cat:
-        st.subheader("OWASP Category Defense Status")
+        st.subheader("OWASP Category ASR")
         if summary.by_category:
             table_html = (
                 '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
                 '<thead><tr>'
                 '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Category</th>'
-                '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">Defense Rate</th>'
+                '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">ASR</th>'
                 '</tr></thead><tbody>'
             )
             for cat in sorted(summary.by_category.values(), key=lambda c: c.category):
-                color = _defense_rate_color(cat.resistance_rate)
+                asr = 1 - cat.resistance_rate
+                color = _asr_color(asr)
                 table_html += (
                     f'<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">'
                     f'<td style="padding:6px 10px">{_fmt_category(cat.category)}</td>'
                     f'<td style="text-align:right;padding:6px 10px">'
                     f'<span style="background:{color}18;color:{color};border:1px solid {color}40;'
                     f'border-radius:12px;padding:2px 10px;font-weight:600;font-size:0.82rem">'
-                    f'{cat.resistance_rate:.1%}</span></td>'
+                    f'{asr:.1%}</span></td>'
                     f'</tr>'
                 )
             table_html += '</tbody></table>'
             st.markdown(table_html, unsafe_allow_html=True)
+
+    # Vulnerability defense status
+    if summary.by_vulnerability:
+        st.divider()
+        st.subheader("Vulnerability ASR")
+        vuln_table_html = (
+            '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
+            '<thead><tr>'
+            '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Vulnerability</th>'
+            '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Domain</th>'
+            '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:80px">Attacks</th>'
+            '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">ASR</th>'
+            '</tr></thead><tbody>'
+        )
+        for vs in sorted(summary.by_vulnerability.values(), key=lambda v: v.resistance_rate):
+            asr = 1 - vs.resistance_rate
+            color = _asr_color(asr)
+            vuln_table_html += (
+                f'<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">'
+                f'<td style="padding:6px 10px">{vs.vulnerability_name or vs.vulnerability}</td>'
+                f'<td style="padding:6px 10px;color:#888;font-size:0.8rem">{vs.domain}</td>'
+                f'<td style="text-align:right;padding:6px 10px">{vs.total_attacks}</td>'
+                f'<td style="text-align:right;padding:6px 10px">'
+                f'<span style="background:{color}18;color:{color};border:1px solid {color}40;'
+                f'border-radius:12px;padding:2px 10px;font-weight:600;font-size:0.82rem">'
+                f'{asr:.1%}</span></td>'
+                f'</tr>'
+            )
+        vuln_table_html += '</tbody></table>'
+        st.markdown(vuln_table_html, unsafe_allow_html=True)
 
     # Focus Areas section — top-3 risk categories with remediation guidance
     st.divider()
@@ -866,6 +912,30 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
             st.plotly_chart(fig, width="stretch")
         else:
             st.info("No delivery method breakdown available.")
+
+    # Vulnerability breakdown
+    if summary.by_vulnerability:
+        st.divider()
+        st.subheader("ASR by Vulnerability")
+        v_items = sorted(summary.by_vulnerability.items(), key=lambda t: (1.0 - t[1].resistance_rate), reverse=True)
+        v_names = [v.vulnerability_name or k for k, v in v_items]
+        v_vuln_rates = [(1.0 - v.resistance_rate) * 100 for _, v in v_items]
+        v_totals = [v.total_attacks for _, v in v_items]
+
+        fig = px.bar(
+            x=v_vuln_rates, y=v_names, orientation="h",
+            labels={"x": "ASR (%)", "y": "Vulnerability"},
+            text=[f"n={n}" for n in v_totals],
+        )
+        fig.update_traces(
+            textposition="inside", textfont=dict(color="white", size=10),
+            marker_color=QUALITATIVE[:len(v_names)],
+        )
+        fig.update_layout(
+            height=max(300, len(v_names) * 35), showlegend=False,
+            margin=dict(l=20, r=20, t=10, b=20),
+        )
+        st.plotly_chart(fig, width="stretch")
 
     st.divider()
 
@@ -964,6 +1034,7 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
     # Available dimensions
     dim_labels: dict[str, str] = {
         "category": "OWASP Category",
+        "vulnerability": "Vulnerability",
         "severity": "Severity",
         "attack_technique": "Attack Technique",
         "delivery_method": "Delivery Method",
@@ -994,6 +1065,8 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
     def _dim_value(r: RedTeamResult, dim: str) -> str:
         if dim == "category":
             return _fmt_category(r.attack.category)
+        if dim == "vulnerability":
+            return r.attack.vulnerability or "unknown"
         if dim == "severity":
             return r.attack.severity.value
         if dim == "attack_technique":
@@ -1109,7 +1182,7 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
                     "Attacks": c.total_attacks,
                     "Evaluated": c.evaluated_attacks,
                     "Vulnerable": c.vulnerabilities_found,
-                    "Resistance": f"{c.resistance_rate:.1%}",
+                    "ASR": f"{1 - c.resistance_rate:.1%}",
                     "Errors": c.total_errors,
                     "Strategies": ", ".join(c.strategies_used) if c.strategies_used else "-",
                 })
@@ -1152,7 +1225,7 @@ def _render_turn_depth_analysis(results: list[RedTeamResult]) -> None:
         fig = go.Figure()
         fig.add_trace(go.Bar(
             x=[str(t) for t in sorted_turns], y=asrs,
-            marker_color=[_defense_rate_color(1 - a / 100) for a in asrs],
+            marker_color=[_asr_color(a / 100) for a in asrs],
             text=[f"{a:.0f}%<br>n={n}" for a, n in zip(asrs, totals)],
             textposition="outside",
         ))
@@ -1372,6 +1445,8 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     dimensions: list[tuple[str, str, dict[str, int]]] = []
     if summary.by_category:
         dimensions.append(("Category", f"{len(summary.by_category)} unique", {_fmt_category(k): v.total_attacks for k, v in summary.by_category.items()}))
+    if summary.by_vulnerability:
+        dimensions.append(("Vulnerability", f"{len(summary.by_vulnerability)} unique", {(v.vulnerability_name or k): v.total_attacks for k, v in summary.by_vulnerability.items()}))
     if summary.by_technique:
         dimensions.append(("Technique", f"{len(summary.by_technique)} unique", {k: v.total_attacks for k, v in summary.by_technique.items()}))
     if summary.by_delivery_method:
@@ -1418,6 +1493,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
         table_rows.append({
             "ID": r.attack.id,
             "Category": r.attack.category,
+            "Vulnerability": r.attack.vulnerability or "-",
             "Technique": r.attack.attack_technique.value,
             "Delivery Method": delivery_str,
             "Turn Type": r.attack.turn_type.value if r.attack.turn_type else "-",
@@ -1507,11 +1583,12 @@ def _render_result_detail(result: RedTeamResult) -> None:
     """Render detailed view for a single result."""
     atk = result.attack
 
-    mc1, mc2, mc3, mc4 = st.columns(4)
+    mc1, mc2, mc3, mc4, mc5 = st.columns(5)
     mc1.markdown(f"**Category:** {_fmt_category(atk.category)}")
-    mc2.markdown(f"**Technique:** {atk.attack_technique.value}")
-    mc3.markdown(f"**Severity:** {atk.severity.value}")
-    mc4.markdown(f"**Turn Type:** {atk.turn_type.value}")
+    mc2.markdown(f"**Vulnerability:** {atk.vulnerability or '-'}")
+    mc3.markdown(f"**Technique:** {atk.attack_technique.value}")
+    mc4.markdown(f"**Severity:** {atk.severity.value}")
+    mc5.markdown(f"**Turn Type:** {atk.turn_type.value}")
 
     if atk.delivery_methods:
         st.markdown(f"**Delivery Methods:** {', '.join(dm.value for dm in atk.delivery_methods)}")
@@ -1535,6 +1612,13 @@ def _render_result_detail(result: RedTeamResult) -> None:
             st.error(f"**VULNERABLE** - {ev.explanation}")
         else:
             st.warning(f"**Unevaluated** - {ev.explanation}")
+        evaluator_parts = []
+        if ev.evaluator_name:
+            evaluator_parts.append(ev.evaluator_name)
+        if ev.evaluator_id:
+            evaluator_parts.append(f"`{ev.evaluator_id}`")
+        if evaluator_parts:
+            st.caption(f"Evaluator: {' — '.join(evaluator_parts)}")
 
     # Error
     if result.error:
@@ -1744,16 +1828,20 @@ def _render_errors_tab(summary: ReportSummary, report: RedTeamReport) -> None:
     error_results = [r for r in report.results if r.error]
     if error_results:
         st.subheader("Error Details")
+        has_details = any(r.error_details for r in error_results)
         rows = []
         for r in error_results:
-            rows.append({
+            row: dict[str, Any] = {
                 "ID": r.attack.id,
                 "Category": r.attack.category,
                 "Technique": r.attack.attack_technique.value,
                 "Error Type": r.error_type or "unknown",
                 "Stage": r.error_stage or "-",
                 "Error": r.error or "",
-            })
+            }
+            if has_details:
+                row["Details"] = json.dumps(r.error_details, default=str) if r.error_details else "-"
+            rows.append(row)
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
     # Error impact
@@ -1761,13 +1849,13 @@ def _render_errors_tab(summary: ReportSummary, report: RedTeamReport) -> None:
     st.subheader("Error Impact on Metrics")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Resistance Rate (including errors)", f"{summary.resistance_rate:.1%}")
+        st.metric("ASR (including errors)", f"{summary.vulnerability_rate:.1%}")
     with col2:
         evaluated = summary.evaluated_attacks
         if evaluated > 0:
             vuln_of_evaluated = summary.vulnerabilities_found / evaluated
             clean_resistance = 1.0 - vuln_of_evaluated
-            st.metric("Resistance Rate (errors excluded)", f"{clean_resistance:.1%}")
+            st.metric("ASR (errors excluded)", f"{vuln_of_evaluated:.1%}")
 
 
 # ---------------------------------------------------------------------------
@@ -1810,6 +1898,7 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
 
     _dim_options: dict[str, str] = {
         "category": "Category",
+        "vulnerability": "Vulnerability",
         "technique": "Technique",
         "severity": "Severity",
     }
@@ -1823,6 +1912,8 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
     def _heatmap_dim_value(r: RedTeamResult, dim: str) -> str:
         if dim == "category":
             return _fmt_category(r.attack.category)
+        if dim == "vulnerability":
+            return r.attack.vulnerability or "unknown"
         if dim == "technique":
             return r.attack.attack_technique.value
         if dim == "severity":
@@ -2088,7 +2179,7 @@ def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str])
         path=["category", "dimension"],
         values="failures",
         color="asr",
-        color_continuous_scale=ORQ_SCALE_HEAT,
+        color_continuous_scale=ORQ_SCALE_AGENT,
         range_color=[0, 100],
         custom_data=["total", "asr", "category"],
     )
@@ -2108,7 +2199,7 @@ def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str])
         coloraxis_colorbar=dict(title="ASR (%)"),
         margin=dict(l=10, r=10, t=10, b=10),
     )
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, width="stretch", key="comp_treemap")
 
 
 def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str]) -> None:

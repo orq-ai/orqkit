@@ -44,6 +44,7 @@ def create_model_job(
 
         @job(f'redteam:static:{safe_key}')
         async def deployment_job(data: DataPoint, _row: int) -> dict[str, Any]:
+            """Invoke the ORQ deployment and return the response with token usage."""
             try:
                 from orq_ai_sdk import Orq
             except ImportError as e:
@@ -80,6 +81,7 @@ def create_model_job(
 
     @job(f'redteam:static:{safe_model}')
     async def router_job(data: DataPoint, _row: int) -> dict[str, Any]:
+        """Call the router model and return the response with token usage and finish reason."""
         messages = _build_messages(data)
         if system_prompt:
             messages = [{'role': 'system', 'content': system_prompt}] + messages

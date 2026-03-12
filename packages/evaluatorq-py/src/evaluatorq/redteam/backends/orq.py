@@ -70,6 +70,7 @@ class ORQAgentTarget:
         memory_entity_id: str | None = None,
         model: str | None = None,
     ):
+        """Initialize the ORQ agent target with client and configuration."""
         self.agent_key = agent_key
         self.orq_client = orq_client
         self.memory_entity_id = memory_entity_id
@@ -112,6 +113,7 @@ class ORQAgentTarget:
                 total_calls = 0
 
                 def _accumulate_usage(resp: object) -> None:
+                    """Accumulate token usage from a response into running totals."""
                     nonlocal total_prompt_tokens, total_completion_tokens, total_tokens, total_calls
                     usage = getattr(resp, 'usage', None)
                     if usage is None:
@@ -126,6 +128,7 @@ class ORQAgentTarget:
                     total_calls += 1
 
                 def _extract_text(resp: object) -> str:
+                    """Extract the first non-empty text part from an agent response."""
                     output = getattr(resp, 'output', None) or []
                     for item in output:
                         parts = getattr(item, 'parts', None) or []
@@ -137,6 +140,7 @@ class ORQAgentTarget:
                     return ''
 
                 def _pending_tool_call_ids(resp: object) -> list[str]:
+                    """Return IDs of pending tool calls from a response."""
                     pending = getattr(resp, 'pending_tool_calls', None) or []
                     ids: list[str] = []
                     for call in pending:
@@ -247,6 +251,7 @@ class ORQContextProvider:
     """Retrieves agent context from the ORQ API."""
 
     def __init__(self, orq_client: Any):
+        """Initialize the context provider with an ORQ SDK client."""
         self.orq_client = orq_client
 
     async def get_agent_context(self, agent_key: str) -> AgentContext:
@@ -346,6 +351,7 @@ class ORQTargetFactory:
     """Creates ORQAgentTarget instances, one per job."""
 
     def __init__(self, orq_client: Any = None, model: str | None = None):
+        """Initialize the factory, creating an ORQ client from environment if none is provided."""
         if orq_client is not None:
             self._orq_client = orq_client
         else:
@@ -370,6 +376,7 @@ class ORQMemoryCleanup:
     """Cleans up memory entities created during red teaming via ORQ SDK."""
 
     def __init__(self, orq_client: Any = None):
+        """Initialize the cleanup handler, creating an ORQ client from environment if none is provided."""
         if orq_client is not None:
             self._orq_client = orq_client
         else:
@@ -407,6 +414,7 @@ class ORQErrorMapper:
     """Normalize ORQ SDK/HTTP failures into runtime error taxonomy."""
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Map an exception to a (error_code, error_message) tuple."""
         name = type(exc).__name__.lower()
         text = str(exc).lower()
         status_code = extract_status_code(exc)

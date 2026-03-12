@@ -63,31 +63,26 @@ def get_strategies_for_category(category: str) -> list[AttackStrategy]:
     return STRATEGY_REGISTRY.get(category, [])
 
 
-def select_applicable_strategies(
-    category: str,
+def _filter_applicable_strategies(
+    all_strategies: list[AttackStrategy],
+    label: str,
     agent_context: AgentContext,
-    agent_capabilities: AgentCapabilities | None = None,
+    agent_capabilities: AgentCapabilities | None,
 ) -> list[AttackStrategy]:
-    """Select strategies applicable to the given agent based on its context.
+    """Filter strategies to those applicable for the given agent context.
 
-    Filters out strategies whose requirements are not met by the agent:
-    - requires_tools: Agent must have tools configured
-    - required_capabilities: Agent must have at least one matching capability
+    Shared implementation used by both select_applicable_strategies() and
+    select_applicable_strategies_for_vulnerability().
 
     Args:
-        category: OWASP category code
+        all_strategies: Full list of candidate strategies to filter.
+        label: Human-readable label for logging (category code or vulnerability value).
         agent_context: Agent context with tools, memory, etc.
-        agent_capabilities: Classified capabilities (optional, for capability filtering)
+        agent_capabilities: Classified capabilities (optional, for capability filtering).
 
     Returns:
-        List of applicable strategies
+        List of applicable strategies.
     """
-    all_strategies = get_strategies_for_category(category)
-
-    if not all_strategies:
-        logger.warning(f'No strategies found for category: {category}')
-        return []
-
     applicable: list[AttackStrategy] = []
 
     for strategy in all_strategies:
@@ -115,10 +110,70 @@ def select_applicable_strategies(
         applicable.append(strategy)
 
     logger.debug(
-        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} (agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
+        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {label} '
+        f'(agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
     )
 
     return applicable
+
+
+def select_applicable_strategies(
+    category: str,
+    agent_context: AgentContext,
+    agent_capabilities: AgentCapabilities | None = None,
+) -> list[AttackStrategy]:
+    """Select strategies applicable to the given agent based on its context.
+
+    Filters out strategies whose requirements are not met by the agent:
+    - requires_tools: Agent must have tools configured
+    - required_capabilities: Agent must have at least one matching capability
+
+    Args:
+        category: OWASP category code
+        agent_context: Agent context with tools, memory, etc.
+        agent_capabilities: Classified capabilities (optional, for capability filtering)
+
+    Returns:
+        List of applicable strategies
+    """
+    all_strategies = get_strategies_for_category(category)
+
+    if not all_strategies:
+        logger.warning(f'No strategies found for category: {category}')
+        return []
+
+    return _filter_applicable_strategies(all_strategies, category, agent_context, agent_capabilities)
+
+
+def select_applicable_strategies_for_vulnerability(
+    vuln: Vulnerability,
+    agent_context: AgentContext,
+    agent_capabilities: AgentCapabilities | None = None,
+) -> list[AttackStrategy]:
+    """Select strategies applicable to the given agent for a vulnerability.
+
+    Mirrors select_applicable_strategies() but operates on a Vulnerability enum
+    rather than an OWASP category string.
+
+    Filters out strategies whose requirements are not met by the agent:
+    - requires_tools: Agent must have tools configured
+    - required_capabilities: Agent must have at least one matching capability
+
+    Args:
+        vuln: Vulnerability enum value
+        agent_context: Agent context with tools, memory, etc.
+        agent_capabilities: Classified capabilities (optional, for capability filtering)
+
+    Returns:
+        List of applicable strategies
+    """
+    all_strategies = get_strategies_for_vulnerability(vuln)
+
+    if not all_strategies:
+        logger.warning(f'No strategies found for vulnerability: {vuln.value}')
+        return []
+
+    return _filter_applicable_strategies(all_strategies, vuln.value, agent_context, agent_capabilities)
 
 
 def _fallback_capability_check(required: list[str], agent_context: AgentContext) -> bool:
