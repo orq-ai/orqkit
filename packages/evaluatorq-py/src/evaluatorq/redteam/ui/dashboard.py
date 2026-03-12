@@ -162,61 +162,142 @@ def _chip_css(color: str) -> str:
     )
 
 
-def _render_sidebar_agent_context(ctx: AgentContext) -> None:
-    name = _esc_html(ctx.display_name or ctx.key or "Agent")
-    st.sidebar.markdown(f"**Agent:** {name}")
-
-    if ctx.description:
-        st.sidebar.caption(ctx.description)
-
-    if ctx.model:
-        st.sidebar.markdown(
-            f"**Model:** `{_esc_html(ctx.model)}`"
+def _render_capability_chips(ctx: AgentContext) -> None:
+    """Render tool/memory/knowledge chips for an agent context."""
+    if ctx.tools:
+        tool_color = COLORS['success_400']
+        chips = "".join(
+            f'<span style="{_chip_css(tool_color)}">{_esc_html(t.name or "unknown")}</span>'
+            for t in ctx.tools
+        )
+        st.markdown(
+            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;">'
+            f'Tools ({len(ctx.tools)})</div>{chips}',
+            unsafe_allow_html=True,
         )
 
-    has_capabilities = ctx.tools or ctx.memory_stores or ctx.knowledge_bases
-    if not has_capabilities:
-        return
+    if ctx.memory_stores:
+        mem_color = COLORS['purple_400']
+        chips = "".join(
+            f'<span style="{_chip_css(mem_color)}">{_esc_html(m.key or m.id or "unknown")}</span>'
+            for m in ctx.memory_stores
+        )
+        st.markdown(
+            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
+            f'Memory ({len(ctx.memory_stores)})</div>{chips}',
+            unsafe_allow_html=True,
+        )
 
-    with st.sidebar.expander("Capabilities", expanded=True):
-        if ctx.tools:
-            tool_color = COLORS['success_400']
-            chips = "".join(
-                f'<span style="{_chip_css(tool_color)}">{_esc_html(t.name or "unknown")}</span>'
-                for t in ctx.tools
-            )
-            st.markdown(
-                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;">'
-                f'Tools ({len(ctx.tools)})</div>{chips}',
-                unsafe_allow_html=True,
-            )
+    if ctx.knowledge_bases:
+        kb_color = COLORS['orange_300']
+        chips = "".join(
+            f'<span style="{_chip_css(kb_color)}">{_esc_html(kb.name or kb.key or kb.id or "unknown")}</span>'
+            for kb in ctx.knowledge_bases
+        )
+        st.markdown(
+            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
+            f'Knowledge ({len(ctx.knowledge_bases)})</div>{chips}',
+            unsafe_allow_html=True,
+        )
 
-        if ctx.memory_stores:
-            mem_color = COLORS['purple_400']
-            chips = "".join(
-                f'<span style="{_chip_css(mem_color)}">{_esc_html(m.key or m.id or "unknown")}</span>'
-                for m in ctx.memory_stores
-            )
-            st.markdown(
-                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
-                f'Memory ({len(ctx.memory_stores)})</div>{chips}',
-                unsafe_allow_html=True,
-            )
 
-        if ctx.knowledge_bases:
-            kb_color = COLORS['orange_300']
-            chips = "".join(
-                f'<span style="{_chip_css(kb_color)}">{_esc_html(kb.name or kb.key or kb.id or "unknown")}</span>'
-                for kb in ctx.knowledge_bases
-            )
-            st.markdown(
-                f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-                f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
-                f'Knowledge ({len(ctx.knowledge_bases)})</div>{chips}',
-                unsafe_allow_html=True,
-            )
+def _fetch_agent_context_from_orq(agent_key: str) -> AgentContext | None:
+    """Attempt to fetch agent context from the ORQ API. Returns None on failure."""
+    try:
+        import asyncio
+        import os
+        from concurrent.futures import ThreadPoolExecutor
+
+        if not os.environ.get("ORQ_API_KEY"):
+            return None
+        from evaluatorq.redteam.backends.orq import _orq_cls, _get_orq_api_key, _get_orq_server_url
+        if _orq_cls is None:
+            return None
+        client = _orq_cls(api_key=_get_orq_api_key(), server_url=_get_orq_server_url())
+
+        from evaluatorq.redteam.adaptive.agent_context import retrieve_agent_context
+
+        # Run in a separate thread with its own event loop to avoid conflicts
+        # with Streamlit's running event loop.
+        def _run() -> AgentContext:
+            return asyncio.run(retrieve_agent_context(client, agent_key))
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(_run).result(timeout=10)
+    except Exception:
+        return None
+
+
+@st.cache_data(show_spinner="Fetching agent details from orq...", ttl=300)
+def _cached_fetch_agent_contexts(agent_keys: tuple[str, ...]) -> dict[str, Any]:
+    """Fetch and cache agent contexts from ORQ API. Returns serialized dicts."""
+    result: dict[str, Any] = {}
+    for key in agent_keys:
+        ctx = _fetch_agent_context_from_orq(key)
+        if ctx is not None:
+            result[key] = ctx.model_dump(mode="json")
+    return result
+
+
+def _resolve_agent_contexts(report: RedTeamReport) -> dict[str, AgentContext]:
+    """Resolve agent contexts: use report data first, fetch from orq API as fallback."""
+    contexts: dict[str, AgentContext] = {}
+
+    # 1. Use stored contexts from the report
+    if report.agent_contexts:
+        contexts = dict(report.agent_contexts)
+    elif report.agent_context:
+        name = report.agent_context.display_name or report.agent_context.key or "Agent"
+        contexts[name] = report.agent_context
+
+    # 2. Identify agent keys that are missing context
+    known_keys = set(report.tested_agents) if report.tested_agents else set()
+    missing_keys = known_keys - set(contexts.keys())
+    if missing_keys:
+        # Try fetching from orq API (cached)
+        fetched = _cached_fetch_agent_contexts(tuple(sorted(missing_keys)))
+        for key, ctx_dict in fetched.items():
+            contexts[key] = AgentContext.model_validate(ctx_dict)
+        # For any still missing, create minimal stubs so they still show up
+        still_missing = missing_keys - set(contexts.keys())
+        for key in sorted(still_missing):
+            contexts[key] = AgentContext(key=key, display_name=key)
+
+    return contexts
+
+
+def _render_agent_card(key: str, ctx: AgentContext) -> None:
+    """Render a single agent info card inside a container."""
+    name = ctx.display_name or ctx.key or key
+    model = ctx.model or "Unknown"
+    st.markdown(f"**{_esc_html(name)}**")
+    st.caption(f"Model: `{_esc_html(model)}`")
+    if ctx.description:
+        st.markdown(f"_{_esc_html(ctx.description)}_", unsafe_allow_html=False)
+    if ctx.tools or ctx.memory_stores or ctx.knowledge_bases:
+        _render_capability_chips(ctx)
+
+
+def _render_agent_context_section(report: RedTeamReport) -> None:
+    """Render agent context as simple side-by-side cards."""
+    contexts = _resolve_agent_contexts(report)
+
+    if not contexts:
+        # Fall back to tested_agents names only
+        if report.tested_agents:
+            contexts = {k: AgentContext(key=k, display_name=k) for k in report.tested_agents}
+        else:
+            return
+
+    st.subheader("Target Agents")
+    cols = st.columns(len(contexts))
+    for col, (key, ctx) in zip(cols, sorted(contexts.items())):
+        with col:
+            with st.container(border=True):
+                _render_agent_card(key, ctx)
 
 
 # ---------------------------------------------------------------------------
@@ -413,12 +494,6 @@ def _render_dashboard() -> None:
     if report.duration_seconds is not None:
         mins, secs = divmod(int(report.duration_seconds), 60)
         st.sidebar.markdown(f"**Duration:** {mins}m {secs}s")
-
-    # Agent context
-    if report.agent_context:
-        ctx = report.agent_context
-        st.sidebar.divider()
-        _render_sidebar_agent_context(ctx)
 
     # Markdown export download button
     st.sidebar.divider()
@@ -662,20 +737,29 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     # KPI Cards
     compliant, total_cats = _compliant_categories(summary)
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
+    num_agents = len(report.tested_agents) if report.tested_agents else 1
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("ASR", f"{summary.vulnerability_rate:.1%}", delta="Target: 0%", delta_color="inverse")
-    col2.metric(
+    kpi_cols = st.columns(6 if num_agents > 1 else 5)
+    col_idx = 0
+    if num_agents > 1:
+        kpi_cols[col_idx].metric("Agents Tested", str(num_agents))
+        col_idx += 1
+    kpi_cols[col_idx].metric("ASR", f"{summary.vulnerability_rate:.1%}", delta="Target: 0%", delta_color="inverse")
+    col_idx += 1
+    kpi_cols[col_idx].metric(
         "Critical Exposure", str(critical_count),
         delta="Requires attention" if critical_count > 0 else "Clear",
         delta_color="inverse",
     )
-    col3.metric("Eval Coverage", f"{summary.evaluation_coverage:.1%}")
-    col4.metric("Errors", f"{summary.total_errors:,}", delta=f"{error_rate:.1f}% of attacks", delta_color="inverse")
+    col_idx += 1
+    kpi_cols[col_idx].metric("Eval Coverage", f"{summary.evaluation_coverage:.1%}")
+    col_idx += 1
+    kpi_cols[col_idx].metric("Errors", f"{summary.total_errors:,}", delta=f"{error_rate:.1f}% of attacks", delta_color="inverse")
+    col_idx += 1
     if summary.average_turns_per_attack > 0:
-        col5.metric("Avg Turns/Attack", f"{summary.average_turns_per_attack:.1f}")
+        kpi_cols[col_idx].metric("Avg Turns/Attack", f"{summary.average_turns_per_attack:.1f}")
     else:
-        col5.metric("Unevaluated", f"{summary.unevaluated_attacks:,}")
+        kpi_cols[col_idx].metric("Unevaluated", f"{summary.unevaluated_attacks:,}")
 
     if summary.total_errors > 0:
         st.warning(f"{summary.total_errors} attacks errored and were excluded from ASR calculations.")
@@ -692,6 +776,9 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
             parts.append(f"{bp['generated_dynamic']} generated")
         if parts:
             st.caption(f"Datapoint breakdown: {' | '.join(parts)}")
+
+    # Agent context section
+    _render_agent_context_section(report)
 
     st.divider()
 

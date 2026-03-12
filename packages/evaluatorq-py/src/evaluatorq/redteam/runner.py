@@ -1070,6 +1070,7 @@ async def _run_dynamic_or_hybrid(
             )
 
         merged.duration_seconds = pipeline_duration
+        merged.agent_contexts = {pt.target: pt.agent_context for pt in prepared_targets}
 
         if mode == Pipeline.HYBRID:
             merged.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
@@ -1277,6 +1278,21 @@ async def _run_static(
                 job_report.tested_agents = [t_value]
                 break
 
+    # Fetch agent contexts for all targets (best-effort)
+    from evaluatorq.redteam.backends.registry import resolve_backend as _resolve_backend
+    agent_contexts: dict[str, AgentContext] = {}
+    try:
+        backend_bundle = _resolve_backend(backend, llm_client=llm_client, target_config=target_config)
+        for t in targets:
+            _kind, _value = _parse_target(t)
+            try:
+                ctx = await backend_bundle.context_provider.get_agent_context(_value)
+                agent_contexts[_value] = ctx
+            except Exception:
+                logger.debug(f'Could not retrieve agent context for {_value} — skipping')
+    except Exception:
+        logger.debug('Could not resolve backend for agent context retrieval — skipping')
+
     all_job_reports = list(per_job_reports.values())
     if not all_job_reports:
         merged = static_results_to_report(
@@ -1290,6 +1306,8 @@ async def _run_static(
         )
 
     merged.duration_seconds = pipeline_duration
+    if agent_contexts:
+        merged.agent_contexts = agent_contexts
     resolved_hooks.on_stage_end("report_generation", {
         "resistance_rate": merged.summary.resistance_rate,
         "elapsed_s": pipeline_duration,

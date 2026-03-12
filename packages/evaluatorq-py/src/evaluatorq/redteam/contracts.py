@@ -949,6 +949,7 @@ class RedTeamReport(BaseModel):
     total_results: int
 
     agent_context: AgentContext | None = None
+    agent_contexts: dict[str, AgentContext] = Field(default_factory=dict, description='Per-agent context keyed by agent key')
 
     results: list[RedTeamResult]
 

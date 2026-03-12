@@ -890,6 +890,7 @@ def merge_reports(
     frameworks: set[Framework | None] = set()
     pipelines: set[Pipeline] = set()
     agent_context = None
+    merged_agent_contexts: dict[str, AgentContext] = {}
 
     for report in reports:
         all_results.extend(report.results)
@@ -899,6 +900,12 @@ def merge_reports(
         pipelines.add(report.pipeline)
         if agent_context is None and report.agent_context is not None:
             agent_context = report.agent_context
+        # Collect agent_contexts from all sub-reports
+        if report.agent_contexts:
+            merged_agent_contexts.update(report.agent_contexts)
+        elif report.agent_context:
+            key = report.agent_context.key or report.agent_context.display_name or "unknown"
+            merged_agent_contexts.setdefault(key, report.agent_context)
 
     # Resolve framework: use single value if unanimous, else None
     resolved_framework: Framework | None = None
@@ -922,6 +929,7 @@ def merge_reports(
         tested_agents=sorted(all_agents),
         total_results=len(all_results),
         agent_context=agent_context,
+        agent_contexts=merged_agent_contexts,
         results=all_results,
         summary=summary,
     )
