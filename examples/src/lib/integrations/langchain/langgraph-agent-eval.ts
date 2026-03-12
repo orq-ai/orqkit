@@ -21,6 +21,11 @@ import { z } from "zod";
 import type { DataPoint, Evaluator } from "@orq-ai/evaluatorq";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
+import type {
+  FunctionCall,
+  ResponseResource,
+} from "@orq-ai/evaluatorq/openresponses";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
 // Define tools
 const weatherTool = tool(
@@ -95,18 +100,7 @@ const agent = graph.compile();
 const hasTemperatureInBothUnits: Evaluator = {
   name: "has-both-units",
   scorer: async ({ output }) => {
-    const result = output as Record<string, unknown>;
-    const outputItems = (result.output as Array<Record<string, unknown>>) ?? [];
-
-    // Find the final message in the output
-    const message = outputItems.find((item) => item.type === "message");
-
-    let text = "";
-    if (message) {
-      const contentArray = message.content as Array<Record<string, unknown>>;
-      const textContent = contentArray?.find((c) => c.type === "output_text");
-      text = (textContent?.text as string) ?? "";
-    }
+    const text = extractText(output);
 
     // Check if text contains both Fahrenheit and Celsius
     const hasFahrenheit = /\d+°?F/.test(text);
@@ -131,13 +125,11 @@ const hasTemperatureInBothUnits: Evaluator = {
 const usedWeatherTools: Evaluator = {
   name: "used-weather-tools",
   scorer: async ({ output }) => {
-    const result = output as Record<string, unknown>;
-    const outputItems = (result.output as Array<Record<string, unknown>>) ?? [];
-
-    // Find all function calls
-    const functionCalls = outputItems.filter(
-      (item) => item.type === "function_call",
-    );
+    const res = output as ResponseResource;
+    const functionCalls =
+      res.output?.filter(
+        (item): item is FunctionCall => item.type === "function_call",
+      ) ?? [];
 
     const usedWeather = functionCalls.some((fc) => fc.name === "weather");
     const usedConvert = functionCalls.some(
@@ -154,11 +146,26 @@ const usedWeatherTools: Evaluator = {
   },
 };
 
-// Test data
+// Test data — prompts that require multi-step tool usage
 const dataPoints: DataPoint[] = [
-  { inputs: { prompt: "What is the weather in San Francisco?" } },
-  { inputs: { prompt: "What is the weather in New York?" } },
-  { inputs: { prompt: "Tell me the temperature in Tokyo" } },
+  {
+    inputs: {
+      prompt:
+        "Look up the current weather in San Francisco and convert the temperature to Celsius.",
+    },
+  },
+  {
+    inputs: {
+      prompt:
+        "Look up the current weather in New York and convert the temperature to Celsius.",
+    },
+  },
+  {
+    inputs: {
+      prompt:
+        "Look up the temperature in Tokyo and convert it from Fahrenheit to Celsius.",
+    },
+  },
 ];
 
 async function run() {
@@ -168,7 +175,13 @@ async function run() {
 
   const results = await evaluatorq("langgraph-agent-test", {
     data: dataPoints,
-    jobs: [wrapLangGraphAgent(agent, { name: "langgraph-weather" })],
+    jobs: [
+      wrapLangGraphAgent(agent, {
+        name: "langgraph-weather",
+        instructions:
+          "You are a weather assistant. You MUST always use your tools to look up the weather and convert temperatures. Never answer from memory — always call the weather tool first, then convert the result to Celsius using the conversion tool. Report both Fahrenheit and Celsius in your final answer.",
+      }),
+    ],
     evaluators: [hasTemperatureInBothUnits, usedWeatherTools],
     parallelism: 2,
     print: true,

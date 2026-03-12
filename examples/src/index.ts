@@ -1,1 +1,1 @@
-export * from "./lib/examples.js";
+export * from "./lib/basics/examples.js";

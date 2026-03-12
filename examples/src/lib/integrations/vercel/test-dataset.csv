@@ -1,0 +1,5 @@
+city,data,messages,expected_output
+Tokyo,"Population: 13.96M. GDP: $1.9T. Major industries: technology, finance, manufacturing. Average temperature: 16°C. Top employer: Toyota.","[{""role"":""user"",""content"":""What are the main economic drivers of this city?""}]",technology and finance
+Berlin,"Population: 3.75M. GDP: €155B. Major industries: tech startups, tourism, creative arts. Unemployment rate: 9.1%. Average rent: €12.5/sqm.","[{""role"":""user"",""content"":""How does the cost of living compare to its economic output?""}]",high GDP relative to moderate rent
+São Paulo,"Population: 12.33M. GDP: $699B. Major industries: banking, agriculture trade, automotive. Inflation rate: 4.6%. Exports: $62B annually.","[{""role"":""user"",""content"":""Calculate the GDP per capita and explain its significance""}]",approximately $56700 per capita
+Melbourne,"Population: 5.08M. GDP: AUD $364B. Major industries: education, healthcare, construction. Temperature range: 6-26°C. Universities: 9 major institutions.","[{""role"":""user"",""content"":""What role does education play in the local economy?""}]",education is a major industry

@@ -64,6 +64,20 @@ export function getResponseStatus(
   }
 }
 
+export type InputMessage = { role: string; content: string };
+
+/**
+ * Safely extracts messages from a DataPoint.
+ * Returns undefined when `data.inputs.messages` is missing, not an array, or empty.
+ */
+export function extractMessagesFromData(
+  data: DataPoint,
+): InputMessage[] | undefined {
+  const messages = data.inputs.messages;
+  if (!Array.isArray(messages) || messages.length === 0) return undefined;
+  return messages as InputMessage[];
+}
+
 /**
  * Extracts and validates a prompt string from a DataPoint.
  *

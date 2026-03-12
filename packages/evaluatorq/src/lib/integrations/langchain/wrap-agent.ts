@@ -6,7 +6,10 @@ import type { StructuredToolInterface } from "@langchain/core/tools";
 import { toJsonSchema } from "@langchain/core/utils/json_schema";
 
 import type { DataPoint, Job, Output } from "../../types.js";
-import { extractPromptFromData } from "../common/index.js";
+import {
+  extractMessagesFromData,
+  extractPromptFromData,
+} from "../common/utils.js";
 import { convertToOpenResponses, type MessageInput } from "./convert.js";
 import type {
   AgentJobOptions,
@@ -106,15 +109,65 @@ export function wrapLangChainAgent(
   agent: LangChainInvocable,
   options: AgentJobOptions & { tools?: ToolDefinition[] } = {},
 ): Job {
-  const { name = "agent", promptKey = "prompt", tools } = options;
+  const { name = "agent", promptKey = "prompt", instructions, tools } = options;
 
   return async (data: DataPoint, _row: number) => {
-    const prompt = extractPromptFromData(data, promptKey);
+    const inputMessages = extractMessagesFromData(data);
+    const hasMessages = inputMessages !== undefined;
+    const hasPrompt =
+      typeof data.inputs[promptKey] === "string" && data.inputs[promptKey];
 
-    // Invoke the LangChain agent with messages format
-    const result = await agent.invoke({
-      messages: [{ role: "user", content: prompt }],
-    });
+    let result: Awaited<ReturnType<typeof agent.invoke>>;
+
+    if (instructions) {
+      // Resolve instructions (static string or dynamic function)
+      const resolvedInstructions =
+        typeof instructions === "function" ? instructions(data) : instructions;
+      const systemMessage = { role: "system", content: resolvedInstructions };
+
+      let messages: { role: string; content: string }[];
+      if (hasMessages && hasPrompt) {
+        messages = [
+          systemMessage,
+          ...inputMessages,
+          { role: "user", content: data.inputs[promptKey] as string },
+        ];
+      } else if (hasPrompt) {
+        messages = [
+          systemMessage,
+          { role: "user", content: data.inputs[promptKey] as string },
+        ];
+      } else if (hasMessages) {
+        messages = [systemMessage, ...inputMessages];
+      } else {
+        throw new Error(
+          "Expected data.inputs.messages (array) or data.inputs.prompt (string), but neither was provided",
+        );
+      }
+      result = await agent.invoke({ messages });
+    } else if (hasMessages && hasPrompt) {
+      // Both exist — merge messages + prompt appended as user message
+      const messages = [
+        ...inputMessages,
+        { role: "user", content: data.inputs[promptKey] as string },
+      ];
+      result = await agent.invoke({ messages });
+    } else if (hasPrompt) {
+      // Prompt only — wrap as single user message
+      const prompt = extractPromptFromData(data, promptKey);
+      result = await agent.invoke({
+        messages: [{ role: "user", content: prompt }],
+      });
+    } else if (hasMessages) {
+      // Messages only — pass directly
+      result = await agent.invoke({
+        messages: inputMessages,
+      });
+    } else {
+      throw new Error(
+        "Expected data.inputs.messages (array) or data.inputs.prompt (string), but neither was provided",
+      );
+    }
 
     // Extract messages from result
     const messages = result.messages ?? [];
@@ -130,7 +183,7 @@ export function wrapLangChainAgent(
 
     return {
       name,
-      output: openResponsesOutput as unknown as Output,
+      output: openResponsesOutput as Output,
     };
   };
 }

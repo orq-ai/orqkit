@@ -5,6 +5,8 @@
 import type { BaseMessage } from "@langchain/core/messages";
 import type { RunnableConfig } from "@langchain/core/runnables";
 
+import type { DataPoint } from "../../types.js";
+
 // Re-export for consumers who want to use the proper LangChain types
 export type { BaseMessage, RunnableConfig };
 
@@ -123,6 +125,11 @@ export interface AgentJobOptions {
   name?: string;
   /** The key in data.inputs to use as the prompt (defaults to "prompt") */
   promptKey?: string;
+  /**
+   * System instructions to prepend to the messages sent to the agent.
+   * Can be a static string or a function that receives the data point and returns the instructions.
+   */
+  instructions?: string | ((data: DataPoint) => string);
 }
 
 /**
