@@ -15,6 +15,7 @@ from typing import Any
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from loguru import logger
 
 from evaluatorq.redteam.contracts import (
     OWASP_CATEGORY_NAMES,
@@ -164,18 +165,18 @@ def _chip_css(color: str) -> str:
 
 def _render_capability_chips(ctx: AgentContext) -> None:
     """Render tool/memory/knowledge chips for an agent context."""
+    _label = (
+        'font-size:0.7rem;font-weight:600;text-transform:uppercase;'
+        'letter-spacing:0.05em;color:#888;margin-bottom:4px;'
+    )
+    parts: list[str] = []
     if ctx.tools:
         tool_color = COLORS['success_400']
         chips = "".join(
             f'<span style="{_chip_css(tool_color)}">{_esc_html(t.name or "unknown")}</span>'
             for t in ctx.tools
         )
-        st.markdown(
-            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;">'
-            f'Tools ({len(ctx.tools)})</div>{chips}',
-            unsafe_allow_html=True,
-        )
+        parts.append(f'<div style="{_label}">Tools ({len(ctx.tools)})</div>{chips}')
 
     if ctx.memory_stores:
         mem_color = COLORS['purple_400']
@@ -183,12 +184,7 @@ def _render_capability_chips(ctx: AgentContext) -> None:
             f'<span style="{_chip_css(mem_color)}">{_esc_html(m.key or m.id or "unknown")}</span>'
             for m in ctx.memory_stores
         )
-        st.markdown(
-            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
-            f'Memory ({len(ctx.memory_stores)})</div>{chips}',
-            unsafe_allow_html=True,
-        )
+        parts.append(f'<div style="{_label}margin-top:8px;">Memory ({len(ctx.memory_stores)})</div>{chips}')
 
     if ctx.knowledge_bases:
         kb_color = COLORS['orange_300']
@@ -196,10 +192,11 @@ def _render_capability_chips(ctx: AgentContext) -> None:
             f'<span style="{_chip_css(kb_color)}">{_esc_html(kb.name or kb.key or kb.id or "unknown")}</span>'
             for kb in ctx.knowledge_bases
         )
+        parts.append(f'<div style="{_label}margin-top:8px;">Knowledge ({len(ctx.knowledge_bases)})</div>{chips}')
+
+    if parts:
         st.markdown(
-            f'<div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;'
-            f'letter-spacing:0.05em;color:#888;margin-bottom:4px;margin-top:8px;">'
-            f'Knowledge ({len(ctx.knowledge_bases)})</div>{chips}',
+            f'<div style="padding-bottom:12px;">{"".join(parts)}</div>',
             unsafe_allow_html=True,
         )
 
@@ -227,7 +224,8 @@ def _fetch_agent_context_from_orq(agent_key: str) -> AgentContext | None:
 
         with ThreadPoolExecutor(max_workers=1) as pool:
             return pool.submit(_run).result(timeout=10)
-    except Exception:
+    except Exception as exc:
+        logger.warning(f'Failed to fetch agent context for {agent_key!r}: {exc}')
         return None
 
 
@@ -242,31 +240,50 @@ def _cached_fetch_agent_contexts(agent_keys: tuple[str, ...]) -> dict[str, Any]:
     return result
 
 
+def _agents_from_results(results: list[RedTeamResult]) -> dict[str, AgentContext]:
+    """Build agent context stubs from result agent info (key, display_name, model)."""
+    agents: dict[str, AgentContext] = {}
+    for r in results:
+        key = r.agent.key or r.agent.display_name or "unknown"
+        if key not in agents:
+            agents[key] = AgentContext(
+                key=key,
+                display_name=r.agent.display_name or r.agent.key,
+                model=r.agent.model,
+            )
+    return agents
+
+
 def _resolve_agent_contexts(report: RedTeamReport) -> dict[str, AgentContext]:
-    """Resolve agent contexts: use report data first, fetch from orq API as fallback."""
-    contexts: dict[str, AgentContext] = {}
-
-    # 1. Use stored contexts from the report
+    """Resolve agent contexts: report data > result metadata > orq API > stub."""
+    # 1. Use stored agent_contexts dict (new reports)
     if report.agent_contexts:
-        contexts = dict(report.agent_contexts)
-    elif report.agent_context:
-        name = report.agent_context.display_name or report.agent_context.key or "Agent"
-        contexts[name] = report.agent_context
+        return dict(report.agent_contexts)
 
-    # 2. Identify agent keys that are missing context
-    known_keys = set(report.tested_agents) if report.tested_agents else set()
-    missing_keys = known_keys - set(contexts.keys())
-    if missing_keys:
-        # Try fetching from orq API (cached)
-        fetched = _cached_fetch_agent_contexts(tuple(sorted(missing_keys)))
-        for key, ctx_dict in fetched.items():
-            contexts[key] = AgentContext.model_validate(ctx_dict)
-        # For any still missing, create minimal stubs so they still show up
-        still_missing = missing_keys - set(contexts.keys())
-        for key in sorted(still_missing):
-            contexts[key] = AgentContext(key=key, display_name=key)
+    # 2. Always build from results — covers all agents in the report
+    from_results = _agents_from_results(report.results)
 
-    return contexts
+    # Merge in singular agent_context if it has richer data
+    if report.agent_context:
+        key = report.agent_context.key or report.agent_context.display_name or "Agent"
+        from_results[key] = report.agent_context
+
+    if from_results:
+        # Try enriching with orq API (best-effort)
+        try:
+            api_keys = tuple(sorted(from_results.keys()))
+            fetched = _cached_fetch_agent_contexts(api_keys)
+            for key, ctx_dict in fetched.items():
+                from_results[key] = AgentContext.model_validate(ctx_dict)
+        except Exception as exc:
+            logger.warning(f'Agent context API enrichment failed: {exc}')
+        return from_results
+
+    # 3. Last resort: tested_agents names as stubs
+    if report.tested_agents:
+        return {k: AgentContext(key=k, display_name=k) for k in report.tested_agents}
+
+    return {}
 
 
 def _render_agent_card(key: str, ctx: AgentContext) -> None:
@@ -298,6 +315,7 @@ def _render_agent_context_section(report: RedTeamReport) -> None:
         with col:
             with st.container(border=True):
                 _render_agent_card(key, ctx)
+    st.divider()
 
 
 # ---------------------------------------------------------------------------
