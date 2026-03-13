@@ -27,7 +27,7 @@ import type {
 export async function getAgentKeys(
   context: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  const requestUrl = `${DEFAULT_BASE_URL}${AGENTS_LIST_ENDPOINT}?limit=50`;
+  const requestUrl = `${DEFAULT_BASE_URL}${AGENTS_LIST_ENDPOINT}?limit=100`;
   try {
     const response = (await context.helpers.requestWithAuthentication.call(
       context,
