@@ -50,7 +50,8 @@
     ],
     "nodes": [
       "dist/src/nodes/OrqDeployment/OrqDeployment.node.js",
-      "dist/src/nodes/OrqKnowledgeBaseSearch/OrqKnowledgeBaseSearch.node.js"
+      "dist/src/nodes/OrqKnowledgeBaseSearch/OrqKnowledgeBaseSearch.node.js",
+      "dist/src/nodes/OrqAgent/OrqAgent.node.js"
     ]
   },
   "devDependencies": {
