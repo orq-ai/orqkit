@@ -4,9 +4,10 @@ Community nodes for integrating [Orq AI](https://orq.ai) with n8n workflows. The
 
 ## Features
 
+- **Agent Invocation**: Invoke Orq AI Agents for complex, multi-step workflows with async task execution
 - **Deployment Invocation**: Execute Orq AI deployments with messages, context, and inputs
 - **Knowledge Base Search**: Search and retrieve content from Orq knowledge bases
-- **Dynamic Configuration**: Automatically load available deployments and knowledge bases
+- **Dynamic Configuration**: Automatically load available agents, deployments, and knowledge bases
 - **Multi-modal Support**: Send text and image content to vision-capable models
 - **Metadata Filtering**: Advanced filtering options for knowledge base searches
 - **Error Handling**: Built-in error handling with continue-on-fail support
@@ -36,27 +37,31 @@ N8N_COMMUNITY_NODE_PACKAGES=@orq-ai/n8n-nodes-orq
 For local development and testing with n8n:
 
 1. Clone and navigate to the package:
+
 ```bash
 git clone https://github.com/orq-ai/orqkit.git
 cd orqkit/packages/n8n-nodes-orq
 ```
 
 2. Install dependencies:
+
 ```bash
 bun install
 ```
 
 3. Build the nodes:
+
 ```bash
 bunx nx build n8n-nodes-orq
 ```
 
 4. Start n8n with custom nodes:
+
 ```bash
 N8N_CUSTOM_EXTENSIONS="$(pwd)" n8n start
 ```
 
-The nodes will appear as "OrqDeployment" and "OrqKnowledgeBaseSearch" in the n8n node panel.
+The nodes will appear as "OrqAgent", "OrqDeployment" and "OrqKnowledgeBaseSearch" in the n8n node panel.
 
 ## Authentication
 
@@ -69,6 +74,71 @@ The nodes will appear as "OrqDeployment" and "OrqKnowledgeBaseSearch" in the n8n
    - Save the credentials
 
 ## Available Nodes
+
+### Orq Agent
+
+Invoke Orq AI Agents for complex, long-running tasks with multi-step reasoning, tool use, and human input handling.
+
+#### How It Works
+
+1. **Invoke**: Send a message to an agent
+2. **Async Execution**: The agent processes the request (may take seconds to minutes)
+3. **Poll**: The node automatically polls the agent task status until completion
+4. **Retrieve Results**: Extract the final agent response and full conversation history
+
+#### Configuration
+
+- **Agent Key**: Select from your available agents or specify via expression
+- **Message**: Send your instruction or data to the agent
+
+#### Task States
+
+The agent task goes through states during execution:
+
+- `submitted` → `working` → `completed` (or `failed`, `canceled`, `input-required`, `rejected`, `auth-required`)
+
+The node automatically waits for a terminal state (max 120 seconds).
+
+#### Output
+
+The node returns:
+
+- **taskId**: Unique identifier for this agent execution
+- **agentKey**: The agent that was invoked
+- **status**: Final task state (`completed`, `failed`, etc.)
+- **success**: Boolean indicating if task completed successfully
+- **response**: The agent's response text (formatted markdown)
+- **messages**: Full conversation history with all message parts
+
+#### Example Use Cases
+
+- Data analysis and insights generation
+- Complex document processing
+- Multi-step reasoning tasks
+- Tool use and function calling
+- Tasks requiring intermediate human input
+
+#### Example Workflow
+
+```yaml
+1. Set Node (Create data)
+   - csvData: "Month,Sales\nJan,10000..."
+2. Orq Agent
+   - Agent: "data-analyst"
+   - Message: "Analyze this sales data and provide insights"
+3. Email Send
+   - Body: "{{ $node["Orq Agent"].json.response }}"
+```
+
+#### Differences from Orq Deployment
+
+| Feature       | Agent                          | Deployment                     |
+| ------------- | ------------------------------ | ------------------------------ |
+| Execution     | Async (long-running)           | Sync (immediate)               |
+| Response Time | Delayed (up to 2 minutes)      | Immediate (< 1s)               |
+| Use Case      | Complex reasoning, tools       | Simple LLM inference           |
+| Task States   | 8 states, requires polling     | Single immediate response      |
+| Best For      | Analysis, multi-step workflows | Text generation, summarization |
 
 ### Orq Deployment
 
@@ -122,6 +192,20 @@ Search and retrieve relevant content from your Orq knowledge bases.
 
 ## Workflow Examples
 
+### Agent-Based Data Analysis
+
+```yaml
+1. Manual Trigger
+2. Set Node
+   - csvData: "Month,Sales,Region\nJan,10000,North..."
+3. Orq Agent
+   - Agent: "data-analyst"
+   - Message: "Analyze this sales data by region and provide growth rates"
+4. Email Send
+   - Subject: "Sales Analysis Report"
+   - Body: "{{ $node["Orq Agent"].json.response }}"
+```
+
 ### Basic Text Generation
 
 ```yaml
@@ -151,9 +235,9 @@ Search and retrieve relevant content from your Orq knowledge bases.
 ```yaml
 1. Image input (e.g., S3 trigger)
 2. Orq Deployment
-   - Vision model deployment
-   - Image URL from trigger
-   - Analyze and extract data
+- Vision model deployment
+- Image URL from trigger
+- Analyze and extract data
 3. Store results (e.g., Database)
 ```
 
