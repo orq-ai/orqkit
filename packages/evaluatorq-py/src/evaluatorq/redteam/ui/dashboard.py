@@ -134,21 +134,21 @@ def _report_cache_key(report: RedTeamReport) -> str:
 
 
 @st.cache_data
-def _cached_compute_summary(_key: str, results: list[RedTeamResult]) -> ReportSummary:
-    return compute_report_summary(results)
+def _cached_compute_summary(_key: str, _results: list[RedTeamResult]) -> ReportSummary:
+    return compute_report_summary(_results)
 
 
 @st.cache_data
-def _cached_export_markdown(_key: str, report: RedTeamReport) -> str:
-    return export_markdown(report)
+def _cached_export_markdown(_key: str, _report: RedTeamReport) -> str:
+    return export_markdown(_report)
 
 
 @st.cache_data
-def _cached_export_html(_key: str, report: RedTeamReport) -> str | None:
+def _cached_export_html(_key: str, _report: RedTeamReport) -> str | None:
     try:
         from evaluatorq.redteam.reports.export_html import export_html
 
-        return export_html(report)
+        return export_html(_report)
     except Exception:
         return None
 
@@ -564,16 +564,23 @@ def _render_dashboard() -> None:
         mime="text/markdown",
     )
 
-    # HTML export download button
-    _html_content = _cached_export_html(_report_cache_key(report), report)
-    if _html_content is not None:
-        _html_filename = f"redteam-report-{_target.replace('/', '-').replace(':', '-')}-{report.created_at:%Y%m%d_%H%M%S}.html"
-        st.sidebar.download_button(
-            label="Download HTML Report",
-            data=_html_content,
-            file_name=_html_filename,
-            mime="text/html",
-        )
+    # HTML export — on-demand to avoid blocking dashboard startup
+    _html_session_key = f"html_export_{_report_cache_key(report)}"
+    if _html_session_key not in st.session_state:
+        if st.sidebar.button("Download HTML Report"):
+            with st.sidebar.spinner("Rendering HTML report..."):
+                st.session_state[_html_session_key] = _cached_export_html(_report_cache_key(report), report)
+            st.rerun()
+    else:
+        _html_content = st.session_state[_html_session_key]
+        if _html_content is not None:
+            _html_filename = f"redteam-report-{_target.replace('/', '-').replace(':', '-')}-{report.created_at:%Y%m%d_%H%M%S}.html"
+            st.sidebar.download_button(
+                label="Download HTML Report",
+                data=_html_content,
+                file_name=_html_filename,
+                mime="text/html",
+            )
 
     # Global filters
     st.sidebar.divider()
@@ -709,7 +716,7 @@ def _render_focus_areas(report: RedTeamReport) -> None:
     st.caption("Top-5 vulnerabilities by risk score (ASR × severity weight). Prioritize these for remediation.")
 
     for vuln_summary, dominant_sev, risk_score in top_items:
-        vuln_name = vuln_summary.vulnerability_name or _fmt_vulnerability(vuln_summary.vulnerability)
+        vuln_name = _esc_html(vuln_summary.vulnerability_name or _fmt_vulnerability(vuln_summary.vulnerability))
         accent_color = SEVERITY_COLORS.get(dominant_sev, COLORS['orange_300'])
         vuln_rate = 1.0 - vuln_summary.resistance_rate
 
@@ -729,6 +736,7 @@ def _render_focus_areas(report: RedTeamReport) -> None:
                 "Review attack logs for this vulnerability and apply the principle of least privilege. "
                 "Consult the relevant framework documentation for specific countermeasures."
             )
+        remediation = _esc_html(remediation)
 
         # Build LLM recommendations HTML if available
         llm_rec_html = ""
@@ -743,14 +751,14 @@ def _render_focus_areas(report: RedTeamReport) -> None:
                     break
         if rec and rec.recommendations:
             rec_items = "".join(
-                f'<li style="margin-bottom: 4px;">{item}</li>'
+                f'<li style="margin-bottom: 4px;">{_esc_html(item)}</li>'
                 for item in rec.recommendations
             )
             patterns_html = ""
             if rec.patterns_observed:
                 patterns_html = (
                     f'<div style="margin-top: 6px; font-style: italic; font-size: 0.8em; opacity: 0.6;">'
-                    f'Patterns observed: {rec.patterns_observed}</div>'
+                    f'Patterns observed: {_esc_html(rec.patterns_observed)}</div>'
                 )
             llm_rec_html = (
                 f'<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid {accent_color}30;">'
@@ -763,7 +771,7 @@ def _render_focus_areas(report: RedTeamReport) -> None:
             )
 
         # Domain badge
-        domain_badge = f'<span style="font-size: 0.75rem; opacity: 0.5; margin-left: 8px;">{vuln_summary.domain}</span>'
+        domain_badge = f'<span style="font-size: 0.75rem; opacity: 0.5; margin-left: 8px;">{_esc_html(vuln_summary.domain)}</span>'
 
         st.markdown(
             f"""
@@ -813,6 +821,9 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
     num_agents = len(report.tested_agents) if report.tested_agents else 1
 
+    confidence = "HIGH" if summary.total_attacks >= 100 and len(report.categories_tested) >= 5 else "MEDIUM" if summary.total_attacks >= 30 and len(report.categories_tested) >= 3 else "LOW"
+    confidence_colors = {"HIGH": "green", "MEDIUM": "orange", "LOW": "red"}
+
     kpi_cols = st.columns(6 if num_agents > 1 else 5)
     col_idx = 0
     if num_agents > 1:
@@ -836,6 +847,8 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
     if summary.total_errors > 0:
         st.warning(f"{summary.total_errors} attacks errored and were excluded from ASR calculations.")
+
+    st.markdown(f"**Confidence:** :{confidence_colors[confidence]}[{confidence}]")
 
     # Datapoint breakdown (hybrid runs)
     if summary.datapoint_breakdown:
@@ -952,6 +965,41 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     # Focus Areas section — top-3 risk categories with remediation guidance
     st.divider()
     _render_focus_areas(report)
+
+    # Methodology disclosure
+    methodology = report.methodology
+    if methodology is not None or report.pipeline:
+        with st.expander("Methodology & Scope", expanded=False):
+            cols = st.columns(2)
+            with cols[0]:
+                st.markdown(f"**Assessment Type:** {report.pipeline.value}")
+                if methodology and methodology.evaluator_model:
+                    st.markdown(f"**Evaluator Model:** {methodology.evaluator_model}")
+                if methodology and methodology.attack_model:
+                    st.markdown(f"**Attack Model:** {methodology.attack_model}")
+                if methodology and methodology.dataset_source:
+                    st.markdown(f"**Dataset Source:** {methodology.dataset_source}")
+            with cols[1]:
+                scoring = methodology.scoring_method if methodology else "llm-as-judge"
+                st.markdown(f"**Scoring Method:** {scoring}")
+                if methodology and methodology.max_turns:
+                    st.markdown(f"**Max Turns:** {methodology.max_turns}")
+                if methodology and methodology.parallelism:
+                    st.markdown(f"**Parallelism:** {methodology.parallelism}")
+
+            cats = (methodology.categories_tested if methodology else None) or report.categories_tested
+            if cats:
+                st.markdown(f"**Categories Tested ({len(cats)}):** {', '.join(sorted(cats))}")
+
+            all_supported = {k for k in OWASP_CATEGORY_NAMES if not k.startswith("OWASP-")}
+            untested = sorted(all_supported - set(cats or []))
+            if untested:
+                st.warning(f"**{len(untested)} categories not tested:** {', '.join(untested)}")
+
+            if methodology and methodology.scope_limitations:
+                st.markdown("**Known Limitations:**")
+                for lim in methodology.scope_limitations:
+                    st.markdown(f"- {lim}")
 
 
 # ---------------------------------------------------------------------------
@@ -2298,6 +2346,8 @@ def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str])
     st.caption(f"Found {len(disagreements)} disagreements between **{a1}** and **{a2}** ({PAGE_SIZE} per page).")
 
     if "dis_page" not in st.session_state:
+        st.session_state.dis_page = 1
+    if st.session_state.dis_page > total_pages:
         st.session_state.dis_page = 1
 
     prev_col, info_col, next_col = st.columns([1, 2, 1])
