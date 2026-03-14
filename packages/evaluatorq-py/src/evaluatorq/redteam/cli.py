@@ -392,3 +392,71 @@ def ui(
             "--", str(report_path),
         ],
     )
+
+
+@app.command()
+def validate_dataset(
+    path: Annotated[
+        Optional[Path],
+        typer.Argument(help="Path to a local dataset JSON file. If omitted, validates the default HuggingFace dataset."),
+    ] = None,
+    hf_dataset: Annotated[
+        str,
+        typer.Option("--hf-dataset", help="HuggingFace dataset repository name."),
+    ] = "orq/redteam-vulnerabilities",
+) -> None:
+    """Validate the shape of a red team dataset.
+
+    Checks that every sample has the required fields and that messages
+    are well-formed.  Does NOT enforce enum membership for open-set
+    fields like attack_technique or delivery_method.
+    """
+    from pydantic import ValidationError as _VE
+
+    from evaluatorq.redteam.contracts import RedTeamSample, StaticDataset
+
+    # Load raw JSON
+    if path is not None:
+        typer.echo(f"Validating local file: {path}")
+        with path.open() as f:
+            raw = json.load(f)
+    else:
+        try:
+            from huggingface_hub import hf_hub_download
+        except ImportError:
+            typer.echo("huggingface-hub not installed. Install with: pip install evaluatorq[redteam]", err=True)
+            raise typer.Exit(code=1)
+
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import DEFAULT_HF_FILENAME
+
+        typer.echo(f"Downloading from HuggingFace: {hf_dataset}/{DEFAULT_HF_FILENAME}")
+        local_path = hf_hub_download(repo_id=hf_dataset, filename=DEFAULT_HF_FILENAME, repo_type='dataset')
+        with open(local_path) as f:
+            raw = json.load(f)
+
+    # Validate top-level shape
+    if not isinstance(raw, dict) or 'samples' not in raw:
+        typer.echo("FAIL: Expected top-level object with 'samples' key.", err=True)
+        raise typer.Exit(code=1)
+
+    samples = raw['samples']
+    typer.echo(f"Found {len(samples)} samples.")
+
+    errors: list[str] = []
+    for i, sample in enumerate(samples):
+        try:
+            RedTeamSample.model_validate(sample)
+        except _VE as e:
+            for err in e.errors():
+                loc = ' -> '.join(str(l) for l in err['loc'])
+                errors.append(f"  sample[{i}].{loc}: {err['msg']}")
+
+    if errors:
+        typer.echo(f"\nFAIL: {len(errors)} validation error(s):", err=True)
+        for line in errors[:20]:
+            typer.echo(line, err=True)
+        if len(errors) > 20:
+            typer.echo(f"  ... and {len(errors) - 20} more", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"OK: All {len(samples)} samples are valid.")

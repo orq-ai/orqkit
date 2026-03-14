@@ -36,26 +36,59 @@ class TurnType(StrEnum):
 
 
 class AttackTechnique(StrEnum):
-    """Specific attack techniques used in red teaming attacks."""
+    """Known attack techniques used in red teaming attacks.
 
+    This enum tracks *known* techniques for internal validation and reporting.
+    External datasets may contain additional values — use
+    :func:`is_known_attack_technique` to check membership without failing.
+    """
+
+    # Injection
     INDIRECT_INJECTION = 'indirect-injection'
     DIRECT_INJECTION = 'direct-injection'
     DAN = 'DAN'
+    AUTODAN = 'autodan'
+    DEVELOPER_MODE = 'developer-mode'
+    # Privilege / access
     CREDENTIAL_CACHING = 'credential-caching'
     PRIVILEGE_ESCALATION = 'privilege-escalation'
     CONFUSED_DEPUTY = 'confused-deputy'
+    EXCESSIVE_AGENCY = 'excessive-agency'
+    PLUGIN_ABUSE = 'plugin-abuse'
+    # Infrastructure
     RCE_EXPLOIT = 'rce-exploit'
+    SUPPLY_CHAIN = 'supply-chain'
+    RESOURCE_EXHAUSTION = 'resource-exhaustion'
+    # Social / manipulation
     MESSAGE_SPOOFING = 'message-spoofing'
     SOCIAL_ENGINEERING = 'social-engineering'
+    EMOTIONAL_MANIPULATION = 'emotional-manipulation'
+    # Evasion / obfuscation
+    PAYLOAD_SPLITTING = 'payload-splitting'
+    ALTERNATIVE_ENCODING = 'alternative-encoding'
+    UNICODE_OBFUSCATION = 'unicode-obfuscation'
+    # Data extraction
+    MODEL_EXTRACTION = 'model-extraction'
+    PII_EXTRACTION = 'pii-extraction'
+    PII_INPUT = 'pii-input'
+    SYSTEM_PROMPT_EXTRACTION = 'system-prompt-extraction'
+    # Agent / tool
     TOOL_ABUSE = 'tool-abuse'
-    SUPPLY_CHAIN = 'supply-chain'
     CONTEXT_POISONING = 'context-poisoning'
     CASCADE_TRIGGER = 'cascade-trigger'
     BOUNDARY_VIOLATION = 'boundary-violation'
 
 
+def is_known_attack_technique(value: str) -> bool:
+    """Check whether *value* is a known :class:`AttackTechnique` member."""
+    return value in AttackTechnique.__members__.values()
+
+
 class DeliveryMethod(StrEnum):
-    """Jailbreak and delivery techniques."""
+    """Known jailbreak and delivery techniques.
+
+    See :class:`AttackTechnique` — the same open-set policy applies.
+    """
 
     # Persona/Role-play
     DAN = 'DAN'
@@ -78,6 +111,12 @@ class DeliveryMethod(StrEnum):
     CODE_ASSISTANCE = 'code-assistance'
     # Tool/Agent-based
     TOOL_RESPONSE = 'tool-response'
+    WORD_SUBSTITUTION = 'word-substitution'
+
+
+def is_known_delivery_method(value: str) -> bool:
+    """Check whether *value* is a known :class:`DeliveryMethod` member."""
+    return value in DeliveryMethod.__members__.values()
 
 
 class Severity(StrEnum):
@@ -134,18 +173,16 @@ class Framework(StrEnum):
 
 
 class VulnerabilityDomain(StrEnum):
-    """Top-level domain for vulnerability grouping.
+    """Where in the stack the vulnerability fix belongs.
 
-    All 6 domains are forward-declared. Only AGENTIC_SECURITY and LLM_SECURITY
-    are populated initially — the rest signal future intent.
+    - AGENT: orchestration layer (tools, memory, workflows, permissions)
+    - MODEL: LLM inference layer (prompts, guardrails, output filters)
+    - DATA: data/retrieval layer (training data, embeddings, RAG)
     """
 
-    AGENTIC_SECURITY = 'agentic_security'
-    LLM_SECURITY = 'llm_security'
-    RESPONSIBLE_AI = 'responsible_ai'
-    SAFETY = 'safety'
-    DATA_PRIVACY = 'data_privacy'
-    BUSINESS = 'business'
+    AGENT = 'agent'
+    MODEL = 'model'
+    DATA = 'data'
 
 
 class Vulnerability(StrEnum):
@@ -289,8 +326,8 @@ class RedTeamInput(BaseModel):
     id: str = Field(min_length=1, description='Unique sample identifier')
     vulnerability: str = Field(default='', description='Vulnerability identifier (primary key in new format)')
     category: str = Field(default='', description='Attack category (framework-specific) — kept for backwards compat')
-    attack_technique: AttackTechnique = Field(description='Specific attack technique used')
-    delivery_method: DeliveryMethod = Field(description='Jailbreak/delivery technique used')
+    attack_technique: str = Field(default='', description='Specific attack technique used')
+    delivery_method: str = Field(default='', description='Jailbreak/delivery technique used')
     severity: Severity = Field(description='Attack severity level')
     scope: Scope = Field(description='Attack target scope')
     framework: Framework = Field(default=Framework.OWASP_AGENTIC, description='Security framework identifier')

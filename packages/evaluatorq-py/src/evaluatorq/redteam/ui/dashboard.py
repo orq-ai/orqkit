@@ -25,7 +25,6 @@ from evaluatorq.redteam.contracts import (
     ReportSummary,
     VulnerabilitySummary,
 )
-from evaluatorq.redteam.contracts import SEVERITY_DEFINITIONS
 from evaluatorq.redteam.reports.converters import compute_report_summary
 from evaluatorq.redteam.reports.export_md import export_markdown
 from evaluatorq.redteam.reports.guidance import REMEDIATION_GUIDANCE
@@ -54,6 +53,20 @@ st.set_page_config(
 def _fmt_category(code: str) -> str:
     name = OWASP_CATEGORY_NAMES.get(code)
     return f"{code} - {name}" if name else code
+
+
+def _fmt_vulnerability(vuln_id: str) -> str:
+    """Format a vulnerability ID into a human-readable name."""
+    from evaluatorq.redteam.vulnerability_registry import VULNERABILITY_DEFS, Vulnerability
+
+    try:
+        vuln_enum = Vulnerability(vuln_id)
+        vdef = VULNERABILITY_DEFS.get(vuln_enum)
+        if vdef:
+            return vdef.name
+    except ValueError:
+        pass
+    return vuln_id.replace("_", " ").title()
 
 
 def _status_icon(rate: float) -> str:
@@ -110,8 +123,34 @@ def _load_report(path: str) -> dict[str, Any]:
         return json.load(f)
 
 
+@st.cache_data
 def _parse_report(data: dict[str, Any]) -> RedTeamReport:
     return RedTeamReport.model_validate(data)
+
+
+def _report_cache_key(report: RedTeamReport) -> str:
+    """Stable cache key for a report based on identity fields."""
+    return f"{report.created_at.isoformat()}_{len(report.results)}"
+
+
+@st.cache_data
+def _cached_compute_summary(_key: str, results: list[RedTeamResult]) -> ReportSummary:
+    return compute_report_summary(results)
+
+
+@st.cache_data
+def _cached_export_markdown(_key: str, report: RedTeamReport) -> str:
+    return export_markdown(report)
+
+
+@st.cache_data
+def _cached_export_html(_key: str, report: RedTeamReport) -> str | None:
+    try:
+        from evaluatorq.redteam.reports.export_html import export_html
+
+        return export_html(report)
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -120,26 +159,26 @@ def _parse_report(data: dict[str, Any]) -> RedTeamReport:
 
 
 def _weakest_link(results: list[RedTeamResult]) -> tuple[str, int]:
-    """Find the category+technique combo with most vulnerabilities."""
+    """Find the vulnerability+technique combo with most successful attacks."""
     combos: Counter[tuple[str, str]] = Counter()
     for r in results:
         if r.vulnerable:
-            combos[(r.attack.category, r.attack.attack_technique.value)] += 1
+            vuln = r.attack.vulnerability or r.attack.category
+            combos[(vuln, r.attack.attack_technique.value)] += 1
     if not combos:
         return "None", 0
-    (cat, tech), count = combos.most_common(1)[0]
-    cat_name = OWASP_CATEGORY_NAMES.get(cat, cat)
-    return f"{cat_name} + {tech}", count
+    (vuln, tech), count = combos.most_common(1)[0]
+    return f"{_fmt_vulnerability(vuln)} + {tech}", count
 
 
 def _critical_exposure(results: list[RedTeamResult]) -> int:
     return sum(1 for r in results if r.vulnerable and r.attack.severity.value == "critical")
 
 
-def _compliant_categories(summary: ReportSummary) -> tuple[int, int]:
-    """Return (fully_compliant, total) category counts."""
-    total = len(summary.by_category)
-    compliant = sum(1 for c in summary.by_category.values() if c.vulnerabilities_found == 0)
+def _compliant_vulnerabilities(summary: ReportSummary) -> tuple[int, int]:
+    """Return (fully_resistant, total) vulnerability counts."""
+    total = len(summary.by_vulnerability)
+    compliant = sum(1 for v in summary.by_vulnerability.values() if v.vulnerabilities_found == 0)
     return compliant, total
 
 
@@ -291,7 +330,7 @@ def _render_agent_card(key: str, ctx: AgentContext) -> None:
     name = ctx.display_name or ctx.key or key
     model = ctx.model or "Unknown"
     st.markdown(f"**{_esc_html(name)}**")
-    st.caption(f"Model: `{_esc_html(model)}`")
+    st.markdown(f"Model: **`{_esc_html(model)}`**")
     if ctx.description:
         st.markdown(f"_{_esc_html(ctx.description)}_", unsafe_allow_html=False)
     if ctx.tools or ctx.memory_stores or ctx.knowledge_bases:
@@ -346,6 +385,17 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
             key="filter_result",
         )
 
+        # Agent (only show when multi-agent)
+        if len(all_agents) > 1:
+            sel_agents = st.multiselect(
+                "Agent",
+                options=all_agents,
+                default=all_agents,
+                key="filter_agents",
+            )
+        else:
+            sel_agents = all_agents
+
         # Category
         sel_categories = st.multiselect(
             "Category",
@@ -392,17 +442,6 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
             )
         else:
             sel_vulnerabilities = []
-
-        # Agent (only show when multi-agent)
-        if len(all_agents) > 1:
-            sel_agents = st.multiselect(
-                "Agent",
-                options=all_agents,
-                default=all_agents,
-                key="filter_agents",
-            )
-        else:
-            sel_agents = all_agents
 
         # Reset button
         if st.button("Reset All Filters", use_container_width=True, key="reset_filters"):
@@ -516,7 +555,7 @@ def _render_dashboard() -> None:
     # Markdown export download button
     st.sidebar.divider()
     _target = ", ".join(sorted({r.agent.key or r.agent.display_name or "unknown" for r in report.results})) or "report"
-    _md_content = export_markdown(report)
+    _md_content = _cached_export_markdown(_report_cache_key(report), report)
     _md_filename = f"redteam-report-{_target.replace('/', '-').replace(':', '-')}-{report.created_at:%Y%m%d_%H%M%S}.md"
     st.sidebar.download_button(
         label="Download Markdown Report",
@@ -526,10 +565,8 @@ def _render_dashboard() -> None:
     )
 
     # HTML export download button
-    try:
-        from evaluatorq.redteam.reports.export_html import export_html
-
-        _html_content = export_html(report)
+    _html_content = _cached_export_html(_report_cache_key(report), report)
+    if _html_content is not None:
         _html_filename = f"redteam-report-{_target.replace('/', '-').replace(':', '-')}-{report.created_at:%Y%m%d_%H%M%S}.html"
         st.sidebar.download_button(
             label="Download HTML Report",
@@ -537,8 +574,6 @@ def _render_dashboard() -> None:
             file_name=_html_filename,
             mime="text/html",
         )
-    except Exception:
-        pass
 
     # Global filters
     st.sidebar.divider()
@@ -547,7 +582,8 @@ def _render_dashboard() -> None:
     # Recompute summary from filtered results when filters are active
     is_filtered = len(filtered_results) != len(report.results)
     if is_filtered:
-        summary = compute_report_summary(filtered_results)
+        _filter_key = f"{_report_cache_key(report)}_filtered_{len(filtered_results)}"
+        summary = _cached_compute_summary(_filter_key, filtered_results)
     else:
         summary = report.summary
 
@@ -555,7 +591,7 @@ def _render_dashboard() -> None:
     filtered_report = report.model_copy(update={"results": filtered_results, "summary": summary})
 
     # Title
-    framework_name = report.framework.value if report.framework else "OWASP"
+    framework_name = report.framework.value if report.framework else "Security"
     st.title("Red Team Security Report")
 
     if is_filtered:
@@ -607,7 +643,7 @@ def _render_dashboard() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Focus Areas (top-3 risk categories with remediation guidance)
+# Focus Areas (top-5 risk vulnerabilities with remediation guidance)
 # ---------------------------------------------------------------------------
 
 _SEVERITY_WEIGHTS: dict[str, int] = {
@@ -618,17 +654,17 @@ _SEVERITY_WEIGHTS: dict[str, int] = {
 }
 
 
-def _dominant_severity_for_category(results: list[RedTeamResult], category: str) -> str:
-    """Return the most common severity among vulnerable results in the given category.
+def _dominant_severity_for_vulnerability(results: list[RedTeamResult], vuln_id: str) -> str:
+    """Return the most common severity among vulnerable results for the given vulnerability.
 
-    Falls back to the most common severity among all results in the category if no
-    vulnerable results exist, and finally to 'medium' if the category has no results.
+    Falls back to the most common severity among all results for the vulnerability if no
+    vulnerable results exist, and finally to 'medium' if there are no results.
     """
     from collections import Counter as _Counter
 
-    cat_results = [r for r in results if r.attack.category == category]
-    vuln_results = [r for r in cat_results if r.vulnerable]
-    source = vuln_results if vuln_results else cat_results
+    vuln_results_all = [r for r in results if r.attack.vulnerability == vuln_id]
+    vuln_results = [r for r in vuln_results_all if r.vulnerable]
+    source = vuln_results if vuln_results else vuln_results_all
     if not source:
         return 'medium'
     counts = _Counter(r.attack.severity.value for r in source)
@@ -641,27 +677,26 @@ def _render_focus_areas(report: RedTeamReport) -> None:
     Risk score formula: vulnerability_rate * severity_weight
     Severity weights: low=1, medium=2, high=4, critical=8
     """
-    from evaluatorq.redteam.contracts import normalize_category as _norm_cat
-
     summary = report.summary
-    if not summary.by_category:
+    if not summary.by_vulnerability:
         return
 
-    # Build recommendation lookup by category
+    # Build recommendation lookup by category (recommendations may still be keyed by category)
     rec_lookup: dict[str, Any] = {}
     if report.focus_area_recommendations:
         for rec in report.focus_area_recommendations:
             rec_lookup[rec.category] = rec
 
-    # Compute risk scores
+    # Compute risk scores per vulnerability
     risk_items = []
-    for cat_code, cat_summary in summary.by_category.items():
-        if cat_summary.total_attacks == 0:
+    for vuln_id, vuln_summary in summary.by_vulnerability.items():
+        if vuln_summary.total_attacks == 0:
             continue
-        dominant_sev = _dominant_severity_for_category(report.results, cat_summary.category)
+        vuln_rate = 1.0 - vuln_summary.resistance_rate
+        dominant_sev = _dominant_severity_for_vulnerability(report.results, vuln_id)
         weight = _SEVERITY_WEIGHTS.get(dominant_sev, 2)
-        risk_score = cat_summary.vulnerability_rate * weight
-        risk_items.append((cat_summary, dominant_sev, risk_score))
+        risk_score = vuln_rate * weight
+        risk_items.append((vuln_summary, dominant_sev, risk_score))
 
     # Sort by risk score descending, take top 5
     risk_items.sort(key=lambda x: x[2], reverse=True)
@@ -671,23 +706,41 @@ def _render_focus_areas(report: RedTeamReport) -> None:
         return
 
     st.subheader("Focus Areas")
-    st.caption("Top-5 categories by risk score (vulnerability rate × severity weight). Prioritize these for remediation.")
+    st.caption("Top-5 vulnerabilities by risk score (ASR × severity weight). Prioritize these for remediation.")
 
-    for cat_summary, dominant_sev, risk_score in top_items:
-        normalized_code = _norm_cat(cat_summary.category)
+    for vuln_summary, dominant_sev, risk_score in top_items:
+        vuln_name = vuln_summary.vulnerability_name or _fmt_vulnerability(vuln_summary.vulnerability)
         accent_color = SEVERITY_COLORS.get(dominant_sev, COLORS['orange_300'])
-        remediation = REMEDIATION_GUIDANCE.get(
-            normalized_code,
-            REMEDIATION_GUIDANCE.get(
-                cat_summary.category,
-                "Review attack logs for this category and apply the principle of least privilege. "
-                "Consult the relevant OWASP framework documentation for specific countermeasures.",
-            ),
-        )
+        vuln_rate = 1.0 - vuln_summary.resistance_rate
+
+        # Look up remediation by vulnerability id, then by mapped framework categories
+        remediation = REMEDIATION_GUIDANCE.get(vuln_summary.vulnerability)
+        if not remediation:
+            # Try mapped OWASP category codes
+            for cats in vuln_summary.framework_categories.values():
+                for cat_code in cats:
+                    remediation = REMEDIATION_GUIDANCE.get(cat_code)
+                    if remediation:
+                        break
+                if remediation:
+                    break
+        if not remediation:
+            remediation = (
+                "Review attack logs for this vulnerability and apply the principle of least privilege. "
+                "Consult the relevant framework documentation for specific countermeasures."
+            )
 
         # Build LLM recommendations HTML if available
         llm_rec_html = ""
-        rec = rec_lookup.get(normalized_code) or rec_lookup.get(cat_summary.category)
+        rec = rec_lookup.get(vuln_summary.vulnerability)
+        if not rec:
+            for cats in vuln_summary.framework_categories.values():
+                for cat_code in cats:
+                    rec = rec_lookup.get(cat_code)
+                    if rec:
+                        break
+                if rec:
+                    break
         if rec and rec.recommendations:
             rec_items = "".join(
                 f'<li style="margin-bottom: 4px;">{item}</li>'
@@ -696,33 +749,36 @@ def _render_focus_areas(report: RedTeamReport) -> None:
             patterns_html = ""
             if rec.patterns_observed:
                 patterns_html = (
-                    f'<div style="margin-top: 6px; font-style: italic; font-size: 0.8em; color: #666;">'
+                    f'<div style="margin-top: 6px; font-style: italic; font-size: 0.8em; opacity: 0.6;">'
                     f'Patterns observed: {rec.patterns_observed}</div>'
                 )
             llm_rec_html = (
-                f'<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.08);">'
+                f'<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid {accent_color}30;">'
                 f'<div style="font-size: 0.78rem; font-weight: 600; color: {COLORS["teal_400"]}; '
                 f'margin-bottom: 4px;">Based on {rec.traces_analyzed} trace samples</div>'
-                f'<ul style="margin: 4px 0 0 16px; padding: 0; font-size: 0.83em; color: #333;">'
+                f'<ul style="margin: 4px 0 0 16px; padding: 0; font-size: 0.83em; opacity: 0.85;">'
                 f'{rec_items}</ul>'
                 f'{patterns_html}'
                 f'</div>'
             )
 
+        # Domain badge
+        domain_badge = f'<span style="font-size: 0.75rem; opacity: 0.5; margin-left: 8px;">{vuln_summary.domain}</span>'
+
         st.markdown(
             f"""
-<div style="background-color: {COLORS['sand_100']}; border-left: 4px solid {accent_color}; \
+<div style="background: {accent_color}10; border-left: 4px solid {accent_color}; \
 padding: 16px; border-radius: 8px; margin-bottom: 12px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <strong style="font-size: 0.95rem;">{_fmt_category(cat_summary.category)}</strong>
+        <strong style="font-size: 0.95rem;">{vuln_name}{domain_badge}</strong>
         <span style="color: {accent_color}; font-weight: bold; font-size: 0.85rem;">
             Risk: {risk_score:.1f} &nbsp;|&nbsp; {dominant_sev.upper()}
         </span>
     </div>
-    <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
-        Vulnerability rate: {cat_summary.vulnerability_rate:.0%} &nbsp;|&nbsp; Samples: {cat_summary.total_attacks:,}
+    <div style="margin-top: 8px; font-size: 0.9em; opacity: 0.6;">
+        ASR: {vuln_rate:.0%} &nbsp;|&nbsp; Samples: {vuln_summary.total_attacks:,}
     </div>
-    <div style="margin-top: 8px; font-size: 0.85em; color: #444;">
+    <div style="margin-top: 8px; font-size: 0.85em; opacity: 0.75;">
         {remediation}
     </div>
     {llm_rec_html}
@@ -753,7 +809,7 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     )
 
     # KPI Cards
-    compliant, total_cats = _compliant_categories(summary)
+    compliant, total_vulns = _compliant_vulnerabilities(summary)
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
     num_agents = len(report.tested_agents) if report.tested_agents else 1
 
@@ -798,10 +854,39 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     # Agent context section
     _render_agent_context_section(report)
 
+    # Severity legend cards
+    st.subheader("Criticality")
+    _sev_short_defs = {
+        'critical': 'Full system compromise or unauthorized data access — immediate fix required',
+        'high': 'Significant harm such as data exfiltration or privilege escalation — prioritize remediation',
+        'medium': 'Moderate impact like non-sensitive info leakage or minor policy violations — normal dev cycle',
+        'low': 'Limited impact such as edge-case behaviors or cosmetic safety issues — address as time permits',
+    }
+    _sev_cols = st.columns(4)
+    for _i, _lvl in enumerate(SEVERITY_ORDER):
+        _clr = SEVERITY_COLORS[_lvl]
+        _count = summary.by_severity[_lvl].vulnerabilities_found if _lvl in summary.by_severity else 0
+        _desc = _sev_short_defs[_lvl]
+        _sev_cols[_i].markdown(
+            f"<div class='sev-card' style='border-left:4px solid {_clr};padding:8px 12px;"
+            f"background:{_clr}10;border-radius:0 6px 6px 0;position:relative;cursor:default'>"
+            f"<div style='display:flex;align-items:baseline;gap:8px'>"
+            f"<span style='font-size:1.8rem;font-weight:800;color:{_clr};line-height:1'>{_count}</span>"
+            f"<span style='font-size:0.82rem;font-weight:600;color:{_clr}'>{_lvl.capitalize()}</span>"
+            f"</div>"
+            f"<div class='sev-tooltip' style='display:none;position:absolute;left:0;right:0;top:100%;"
+            f"z-index:999;padding:8px 12px;background:#1e1e1e;border:1px solid {_clr}40;"
+            f"border-radius:6px;font-size:0.78rem;color:#ccc;margin-top:4px;"
+            f"box-shadow:0 4px 12px rgba(0,0,0,0.3)'>{_desc}</div>"
+            f"</div>"
+            f"<style>.sev-card:hover .sev-tooltip {{display:block!important}}</style>",
+            unsafe_allow_html=True,
+        )
+
     st.divider()
 
-    # Overall outcome donut + Severity bar chart + Category defense status table
-    col_donut, col_sev, col_cat = st.columns([1, 1, 1.2])
+    # Overall outcome donut + Vulnerability ASR table
+    col_donut, col_cat = st.columns([1, 1.2])
 
     with col_donut:
         st.subheader("Overall Outcome")
@@ -839,93 +924,30 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
         else:
             st.info("No results to display.")
 
-    with col_sev:
-        st.subheader("Severity of Successful Attacks")
-        if summary.by_severity:
-            items = [(k, summary.by_severity[k]) for k in SEVERITY_ORDER if k in summary.by_severity]
-            names = [k for k, _ in items]
-            vuln_counts = [v.vulnerabilities_found for _, v in items]
-            colors = [SEVERITY_COLORS.get(k, COLORS['sand_400']) for k in names]
-
-            if any(c > 0 for c in vuln_counts):
-                fig = go.Figure(go.Bar(
-                    x=names, y=vuln_counts,
-                    marker_color=colors,
-                    text=vuln_counts, textposition="outside",
-                ))
-                fig.update_layout(
-                    height=400, xaxis_title="Severity", yaxis_title="Vulnerabilities Found",
-                    margin=dict(l=20, r=20, t=10, b=20), showlegend=False,
-                )
-                st.plotly_chart(fig, width="stretch")
-            else:
-                st.info("No successful attacks to analyze.")
-        else:
-            st.info("No severity breakdown available.")
-
-        with st.expander("What do severity levels mean?"):
-            for level in SEVERITY_ORDER:
-                desc = SEVERITY_DEFINITIONS.get(level, "")
-                color = SEVERITY_COLORS.get(level, COLORS['sand_400'])
-                st.markdown(
-                    f"**<span style='color:{color}'>{level.capitalize()}</span>** — {desc}",
-                    unsafe_allow_html=True,
-                )
-
     with col_cat:
-        st.subheader("OWASP Category ASR")
-        if summary.by_category:
-            table_html = (
+        st.subheader("Vulnerability ASR")
+        if summary.by_vulnerability:
+            vuln_table_html = (
                 '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
                 '<thead><tr>'
-                '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Category</th>'
+                '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Vulnerability</th>'
                 '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">ASR</th>'
                 '</tr></thead><tbody>'
             )
-            for cat in sorted(summary.by_category.values(), key=lambda c: c.category):
-                asr = 1 - cat.resistance_rate
+            for vs in sorted(summary.by_vulnerability.values(), key=lambda v: v.resistance_rate):
+                asr = 1 - vs.resistance_rate
                 color = _asr_color(asr)
-                table_html += (
+                vuln_table_html += (
                     f'<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">'
-                    f'<td style="padding:6px 10px">{_fmt_category(cat.category)}</td>'
+                    f'<td style="padding:6px 10px">{vs.vulnerability_name or vs.vulnerability}</td>'
                     f'<td style="text-align:right;padding:6px 10px">'
                     f'<span style="background:{color}18;color:{color};border:1px solid {color}40;'
                     f'border-radius:12px;padding:2px 10px;font-weight:600;font-size:0.82rem">'
                     f'{asr:.1%}</span></td>'
                     f'</tr>'
                 )
-            table_html += '</tbody></table>'
-            st.markdown(table_html, unsafe_allow_html=True)
-
-    # Vulnerability defense status
-    if summary.by_vulnerability:
-        st.divider()
-        st.subheader("Vulnerability ASR")
-        vuln_table_html = (
-            '<table style="width:100%;border-collapse:collapse;font-size:0.85rem">'
-            '<thead><tr>'
-            '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Vulnerability</th>'
-            '<th style="text-align:left;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1)">Domain</th>'
-            '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:80px">Attacks</th>'
-            '<th style="text-align:right;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);width:110px">ASR</th>'
-            '</tr></thead><tbody>'
-        )
-        for vs in sorted(summary.by_vulnerability.values(), key=lambda v: v.resistance_rate):
-            asr = 1 - vs.resistance_rate
-            color = _asr_color(asr)
-            vuln_table_html += (
-                f'<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">'
-                f'<td style="padding:6px 10px">{vs.vulnerability_name or vs.vulnerability}</td>'
-                f'<td style="padding:6px 10px;color:#888;font-size:0.8rem">{vs.domain}</td>'
-                f'<td style="text-align:right;padding:6px 10px">{vs.total_attacks}</td>'
-                f'<td style="text-align:right;padding:6px 10px">'
-                f'<span style="background:{color}18;color:{color};border:1px solid {color}40;'
-                f'border-radius:12px;padding:2px 10px;font-weight:600;font-size:0.82rem">'
-                f'{asr:.1%}</span></td>'
-                f'</tr>'
-            )
-        vuln_table_html += '</tbody></table>'
-        st.markdown(vuln_table_html, unsafe_allow_html=True)
+            vuln_table_html += '</tbody></table>'
+            st.markdown(vuln_table_html, unsafe_allow_html=True)
 
     # Focus Areas section — top-3 risk categories with remediation guidance
     st.divider()
@@ -939,6 +961,10 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
 def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) -> None:
     st.header("Breakdown")
+
+    if not report.results:
+        st.info("No results to analyze. Run a red teaming session first.")
+        return
 
     # KPIs
     weakest, weakest_count = _weakest_link(report.results)
@@ -1136,10 +1162,10 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
         st.info("No results to display.")
         return
 
-    # Available dimensions
+    # Available dimensions — vulnerability first
     dim_labels: dict[str, str] = {
-        "category": "OWASP Category",
         "vulnerability": "Vulnerability",
+        "category": "Framework Category",
         "severity": "Severity",
         "attack_technique": "Attack Technique",
         "delivery_method": "Delivery Method",
@@ -1171,7 +1197,7 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
         if dim == "category":
             return _fmt_category(r.attack.category)
         if dim == "vulnerability":
-            return r.attack.vulnerability or "unknown"
+            return _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else "unknown"
         if dim == "severity":
             return r.attack.severity.value
         if dim == "attack_technique":
@@ -1277,19 +1303,18 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
 
     st.plotly_chart(fig, width="stretch")
 
-    # Category details expander (always available)
-    if summary.by_category:
-        with st.expander("Category Details"):
+    # Vulnerability details expander (always available)
+    if summary.by_vulnerability:
+        with st.expander("Vulnerability Details"):
             rows = []
-            for c in sorted(summary.by_category.values(), key=lambda c: c.resistance_rate):
+            for v in sorted(summary.by_vulnerability.values(), key=lambda v: v.resistance_rate):
                 rows.append({
-                    "Category": _fmt_category(c.category),
-                    "Attacks": c.total_attacks,
-                    "Evaluated": c.evaluated_attacks,
-                    "Vulnerable": c.vulnerabilities_found,
-                    "ASR": f"{1 - c.resistance_rate:.1%}",
-                    "Errors": c.total_errors,
-                    "Strategies": ", ".join(c.strategies_used) if c.strategies_used else "-",
+                    "Vulnerability": v.vulnerability_name or _fmt_vulnerability(v.vulnerability),
+                    "Domain": v.domain,
+                    "Attacks": v.total_attacks,
+                    "Vulnerable": v.vulnerabilities_found,
+                    "ASR": f"{1 - v.resistance_rate:.1%}",
+                    "Strategies": ", ".join(v.strategies_used) if v.strategies_used else "-",
                 })
             st.dataframe(rows, use_container_width=True, hide_index=True)
 
@@ -1328,14 +1353,17 @@ def _render_turn_depth_analysis(results: list[RedTeamResult]) -> None:
         asrs = [(v / t * 100) if t else 0 for v, t in zip(vulns, totals)]
 
         fig = go.Figure()
+        bar_width = 0.4 if len(sorted_turns) <= 3 else None
         fig.add_trace(go.Bar(
             x=[str(t) for t in sorted_turns], y=asrs,
             marker_color=[_asr_color(a / 100) for a in asrs],
             text=[f"{a:.0f}%<br>n={n}" for a, n in zip(asrs, totals)],
             textposition="outside",
+            width=bar_width,
         ))
         fig.update_layout(
             height=350, xaxis_title="Conversation Turns", yaxis_title="ASR (%)",
+            xaxis_type="category",
             margin=dict(l=20, r=20, t=10, b=20),
         )
         st.plotly_chart(fig, width="stretch")
@@ -1365,6 +1393,7 @@ def _render_turn_depth_analysis(results: list[RedTeamResult]) -> None:
                 height=350,
                 xaxis_title="Conversation Turns",
                 yaxis_title="% of Vulnerabilities Found",
+                xaxis_type="category",
                 yaxis_range=[0, 105],
                 margin=dict(l=20, r=20, t=10, b=20),
             )
@@ -1379,7 +1408,7 @@ def _render_turn_depth_analysis(results: list[RedTeamResult]) -> None:
 
 
 def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
-    """Treemap showing attack failures: Category -> Technique, size=failures, color=ASR%."""
+    """Treemap showing attack failures: Vulnerability -> Technique, size=failures, color=ASR%."""
     vulnerable_results = [r for r in results if r.vulnerable]
     if not vulnerable_results:
         return
@@ -1388,21 +1417,22 @@ def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
     st.subheader("Attack Failure Treemap")
     st.caption("Block size = number of successful attacks. Color intensity = attack success rate.")
 
-    # Build grouped data: (category, technique) -> {failures, total}
+    # Build grouped data: (vulnerability, technique) -> {failures, total}
     from collections import defaultdict
 
     groups: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"failures": 0, "total": 0})
     for r in results:
-        key = (_fmt_category(r.attack.category), r.attack.attack_technique.value)
+        vuln_label = _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else _fmt_category(r.attack.category)
+        key = (vuln_label, r.attack.attack_technique.value)
         groups[key]["total"] += 1
         if r.vulnerable:
             groups[key]["failures"] += 1
 
     rows = []
-    for (cat, tech), counts in groups.items():
+    for (vuln, tech), counts in groups.items():
         if counts["failures"] > 0:
             rows.append({
-                "category": cat,
+                "vulnerability": vuln,
                 "technique": tech,
                 "failures": counts["failures"],
                 "total": counts["total"],
@@ -1414,18 +1444,19 @@ def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
 
     fig = px.treemap(
         rows,
-        path=["category", "technique"],
+        path=["vulnerability", "technique"],
         values="failures",
         color="asr",
         color_continuous_scale=ORQ_SCALE_AGENT,
         range_color=[0, 100],
-        custom_data=["total", "asr", "category"],
+        custom_data=["total", "asr", "vulnerability", "technique"],
     )
     fig.update_traces(
         texttemplate="<b>%{label}</b><br>%{value} failures",
         hovertemplate=(
             "<b>%{label}</b><br>"
-            "Category: %{customdata[2]}<br>"
+            "<i>Vulnerability:</i> %{customdata[2]}<br>"
+            "<i>Attack Technique:</i> %{customdata[3]}<br>"
             "Failures: %{value}<br>"
             "Total: %{customdata[0]}<br>"
             "ASR: %{customdata[1]:.1f}%"
@@ -1456,7 +1487,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     # Overview metrics from summary breakdowns
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("Total Samples", f"{summary.total_attacks:,}")
-    col2.metric("Categories", f"{len(summary.by_category)}")
+    col2.metric("Vulnerabilities", f"{len(summary.by_vulnerability)}")
     col3.metric("Attack Techniques", f"{len(summary.by_technique)}")
     col4.metric("Delivery Methods", f"{len(summary.by_delivery_method)}")
     sources = {r.attack.source for r in results}
@@ -1468,23 +1499,24 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.subheader("Categories by Severity")
-        if summary.by_category and summary.by_severity:
+        st.subheader("Vulnerabilities by Severity")
+        if summary.by_vulnerability and summary.by_severity:
             # Build from results for cross-dimension
-            cat_sev: Counter[tuple[str, str]] = Counter()
+            vuln_sev: Counter[tuple[str, str]] = Counter()
             for r in results:
-                cat_sev[(r.attack.category, r.attack.severity.value)] += 1
+                vuln_label = _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else r.attack.category
+                vuln_sev[(vuln_label, r.attack.severity.value)] += 1
 
-            rows = [{"category": cat, "severity": sev, "count": cnt} for (cat, sev), cnt in cat_sev.items()]
+            rows = [{"vulnerability": vuln, "severity": sev, "count": cnt} for (vuln, sev), cnt in vuln_sev.items()]
             if rows:
                 fig = px.bar(
-                    rows, y="category", x="count", color="severity",
+                    rows, y="vulnerability", x="count", color="severity",
                     orientation="h", title="",
                     color_discrete_map=SEVERITY_COLORS,
                     category_orders={"severity": SEVERITY_ORDER},
                 )
                 fig.update_layout(
-                    barmode="stack", height=max(350, len(summary.by_category) * 35),
+                    barmode="stack", height=max(350, len(summary.by_vulnerability) * 35),
                     margin=dict(l=20, r=20, t=10, b=20), legend_title_text="Severity",
                 )
                 st.plotly_chart(fig, width="stretch")
@@ -1548,8 +1580,6 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     st.subheader("Dimension Counts")
 
     dimensions: list[tuple[str, str, dict[str, int]]] = []
-    if summary.by_category:
-        dimensions.append(("Category", f"{len(summary.by_category)} unique", {_fmt_category(k): v.total_attacks for k, v in summary.by_category.items()}))
     if summary.by_vulnerability:
         dimensions.append(("Vulnerability", f"{len(summary.by_vulnerability)} unique", {(v.vulnerability_name or k): v.total_attacks for k, v in summary.by_vulnerability.items()}))
     if summary.by_technique:
@@ -1689,8 +1719,8 @@ def _render_result_detail(result: RedTeamResult) -> None:
     atk = result.attack
 
     mc1, mc2, mc3, mc4, mc5 = st.columns(5)
-    mc1.markdown(f"**Category:** {_fmt_category(atk.category)}")
-    mc2.markdown(f"**Vulnerability:** {atk.vulnerability or '-'}")
+    mc1.markdown(f"**Vulnerability:** {_fmt_vulnerability(atk.vulnerability) if atk.vulnerability else '-'}")
+    mc2.markdown(f"**Category:** {_fmt_category(atk.category)}")
     mc3.markdown(f"**Technique:** {atk.attack_technique.value}")
     mc4.markdown(f"**Severity:** {atk.severity.value}")
     mc5.markdown(f"**Turn Type:** {atk.turn_type.value}")
@@ -2002,8 +2032,8 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
     st.subheader("Agent Heatmap")
 
     _dim_options: dict[str, str] = {
-        "category": "Category",
         "vulnerability": "Vulnerability",
+        "category": "Category",
         "technique": "Technique",
         "severity": "Severity",
     }
@@ -2015,10 +2045,10 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
     )
 
     def _heatmap_dim_value(r: RedTeamResult, dim: str) -> str:
+        if dim == "vulnerability":
+            return _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else "unknown"
         if dim == "category":
             return _fmt_category(r.attack.category)
-        if dim == "vulnerability":
-            return r.attack.vulnerability or "unknown"
         if dim == "technique":
             return r.attack.attack_technique.value
         if dim == "severity":
@@ -2084,43 +2114,43 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
 
     st.divider()
 
-    # Per-category comparison (grouped bar chart)
-    st.subheader("ASR by Category")
+    # Per-vulnerability comparison (grouped bar chart)
+    st.subheader("ASR by Vulnerability")
 
-    cat_data: dict[str, dict[str, float]] = {}
+    vuln_data: dict[str, dict[str, float]] = {}
     for agent_name in agents:
         for r in agent_results[agent_name]:
-            cat = r.attack.category
-            if cat not in cat_data:
-                cat_data[cat] = {}
-            cat_data[cat].setdefault(f"{agent_name}_total", 0)
-            cat_data[cat].setdefault(f"{agent_name}_vuln", 0)
-            cat_data[cat][f"{agent_name}_total"] += 1
+            vuln = r.attack.vulnerability or r.attack.category
+            if vuln not in vuln_data:
+                vuln_data[vuln] = {}
+            vuln_data[vuln].setdefault(f"{agent_name}_total", 0)
+            vuln_data[vuln].setdefault(f"{agent_name}_vuln", 0)
+            vuln_data[vuln][f"{agent_name}_total"] += 1
             if r.vulnerable:
-                cat_data[cat][f"{agent_name}_vuln"] += 1
+                vuln_data[vuln][f"{agent_name}_vuln"] += 1
 
-    if cat_data:
+    if vuln_data:
         chart_rows = []
-        for cat in sorted(cat_data.keys()):
+        for vuln in sorted(vuln_data.keys()):
             for agent_name in agents:
-                total = cat_data[cat].get(f"{agent_name}_total", 0)
-                vuln = cat_data[cat].get(f"{agent_name}_vuln", 0)
-                asr = (vuln / total * 100) if total else 0
+                total = vuln_data[vuln].get(f"{agent_name}_total", 0)
+                v_count = vuln_data[vuln].get(f"{agent_name}_vuln", 0)
+                asr = (v_count / total * 100) if total else 0
                 chart_rows.append({
-                    "category": _fmt_category(cat),
+                    "vulnerability": _fmt_vulnerability(vuln),
                     "agent": agent_name,
                     "asr": asr,
                     "n": total,
                 })
 
         fig = px.bar(
-            chart_rows, y="category", x="asr", color="agent",
+            chart_rows, y="vulnerability", x="asr", color="agent",
             orientation="h", barmode="group",
-            labels={"asr": "ASR (%)", "category": "Category"},
+            labels={"asr": "ASR (%)", "vulnerability": "Vulnerability"},
             color_discrete_sequence=QUALITATIVE,
         )
         fig.update_layout(
-            height=max(350, len(cat_data) * 50),
+            height=max(350, len(vuln_data) * 50),
             margin=dict(l=20, r=20, t=10, b=20),
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
         )
@@ -2250,19 +2280,20 @@ def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str])
         st.info("No vulnerable results for the selected agent.")
         return
 
-    # Build grouped data: (category, inner_dim_val) -> {failures, total}
+    # Build grouped data: (vulnerability, inner_dim_val) -> {failures, total}
     groups: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"failures": 0, "total": 0})
     for r in filtered_results:
-        key = (_fmt_category(r.attack.category), _inner_dim_val(r, inner_dim))
+        vuln_label = _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else _fmt_category(r.attack.category)
+        key = (vuln_label, _inner_dim_val(r, inner_dim))
         groups[key]["total"] += 1
         if r.vulnerable:
             groups[key]["failures"] += 1
 
     rows = []
-    for (cat, dim_val), counts in groups.items():
+    for (vuln, dim_val), counts in groups.items():
         if counts["failures"] > 0:
             rows.append({
-                "category": cat,
+                "vulnerability": vuln,
                 "dimension": dim_val,
                 "failures": counts["failures"],
                 "total": counts["total"],
@@ -2281,18 +2312,19 @@ def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str])
 
     fig = px.treemap(
         rows,
-        path=["category", "dimension"],
+        path=["vulnerability", "dimension"],
         values="failures",
         color="asr",
         color_continuous_scale=ORQ_SCALE_AGENT,
         range_color=[0, 100],
-        custom_data=["total", "asr", "category"],
+        custom_data=["total", "asr", "vulnerability", "dimension"],
     )
     fig.update_traces(
         texttemplate="<b>%{label}</b><br>%{value} failures",
         hovertemplate=(
             "<b>%{label}</b><br>"
-            "Category: %{customdata[2]}<br>"
+            "<i>Vulnerability:</i> %{customdata[2]}<br>"
+            "<i>" + dim_label + ":</i> %{customdata[3]}<br>"
             "Failures: %{value}<br>"
             "Total: %{customdata[0]}<br>"
             "ASR: %{customdata[1]:.1f}%"
@@ -2377,7 +2409,7 @@ def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str])
 
     for idx, (r1, r2) in enumerate(page_items, start=start + 1):
         with st.expander(
-            f"#{idx} {r1.attack.id} — {_fmt_category(r1.attack.category)} / {r1.attack.attack_technique.value}",
+            f"#{idx} {r1.attack.id} — {_fmt_vulnerability(r1.attack.vulnerability) if r1.attack.vulnerability else _fmt_category(r1.attack.category)} / {r1.attack.attack_technique.value}",
             expanded=(idx == start + 1),  # expand first item by default
         ):
             col_a, col_b = st.columns(2)
