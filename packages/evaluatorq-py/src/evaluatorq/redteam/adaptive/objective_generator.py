@@ -7,7 +7,7 @@ the agent's tools, memory configuration, and system prompt.
 import asyncio
 
 from loguru import logger
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
@@ -180,7 +180,7 @@ async def _call_llm_for_objectives(
             logger.debug(f'Generated {len(result.objectives)} objectives for {log_label}')
             return result.objectives[:count]
 
-    except asyncio.CancelledError:
+    except (asyncio.CancelledError, APIConnectionError, APIStatusError):
         raise
     except Exception as e:
         logger.error(f'Objective generation failed for {log_label!r} ({type(e).__name__}): {e}')

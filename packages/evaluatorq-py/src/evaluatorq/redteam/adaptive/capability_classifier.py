@@ -23,7 +23,7 @@ from typing import Any
 
 
 from loguru import logger
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
@@ -228,6 +228,8 @@ async def _infer_resource_capabilities(
             if parsed is None:
                 raise ValueError('Resource capability inference returned no parsed content')
             return parsed
+    except (APIConnectionError, APIStatusError):
+        raise
     except Exception as e:
         logger.error(f'Capability inference failed, falling back to explicit resource check: {e}')
         return ResourceCapabilityInference(
@@ -296,6 +298,8 @@ async def _classify_tools(
             logger.debug(f'LLM classified {len(capabilities)}/{len(agent_context.tools)} tools with capabilities')
             return capabilities
 
+    except (APIConnectionError, APIStatusError):
+        raise
     except Exception as e:
         logger.error(f'Tool classification failed, no tool-specific attacks will be generated: {e}')
         return {}

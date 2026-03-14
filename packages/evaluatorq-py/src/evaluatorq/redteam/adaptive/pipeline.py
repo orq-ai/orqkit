@@ -479,7 +479,7 @@ def create_dynamic_evaluator(
                 )
         else:
             logger.warning(f'Unexpected output type {type(raw_output).__name__} from job; treating as empty')
-            output = AttackOutput()
+            output = AttackOutput(conversation=[], turns=0, final_response='', objective_achieved=False, duration_seconds=0.0)
 
         # Skip evaluation when the target returned an error
         if output.error:

@@ -98,7 +98,14 @@ def create_owasp_evaluator(
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
         output = params['output']
-        category = data.inputs['category']
+        category = data.inputs.get('category', '')
+        if not category:
+            logger.error("Scorer received datapoint with missing 'category' field")
+            return EvaluationResult(
+                value="error",
+                explanation="Missing 'category' in datapoint inputs — cannot score",
+                pass_=None,
+            )
 
         evaluator_entity = get_evaluator_for_category(category, evaluator_model)
         if evaluator_entity is None:
@@ -142,9 +149,12 @@ def create_owasp_evaluator(
             value = parsed.value
             explanation = parsed.explanation
         except (ValidationError, json.JSONDecodeError) as e:
-            logger.error(f'Evaluator response parse error (defaulting to VULNERABLE): {e}')
-            value = False
-            explanation = f'Failed to parse evaluator response: {content[:200]}'
+            logger.error(f'Evaluator response parse error (result is inconclusive): {e}')
+            return EvaluationResult(
+                value="error",
+                explanation=f'Failed to parse evaluator response: {content[:200]}',
+                pass_=None,
+            )
 
         return EvaluationResult(
             value=value,

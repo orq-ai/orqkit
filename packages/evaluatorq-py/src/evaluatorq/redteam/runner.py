@@ -638,11 +638,12 @@ async def _prepare_target(
 
             all_datapoints = dynamic_datapoints + static_datapoints
 
-        hooks.on_stage_end("datapoint_generation", {
-            "num_datapoints": len(all_datapoints),
-            "num_dynamic": len(dynamic_datapoints),
-            "num_static": len(static_datapoints),
-        })
+        if shared_datapoints is None:
+            hooks.on_stage_end("datapoint_generation", {
+                "num_datapoints": len(all_datapoints),
+                "num_dynamic": len(dynamic_datapoints),
+                "num_static": len(static_datapoints),
+            })
 
         # Build the static job via shared helper
         _sys_prompt = target_config.system_prompt if target_config else None
@@ -822,7 +823,7 @@ async def _run_dynamic_or_hybrid(
 
         # Step 2: Prepare remaining targets with shared datapoints — skip generation.
         if len(targets) > 1:
-            other_targets: list[PreparedTarget] = list(await asyncio.gather(
+            raw_results = await asyncio.gather(
                 *[
                     _prepare_target(
                         target=t,
@@ -830,8 +831,15 @@ async def _run_dynamic_or_hybrid(
                         **_common_prepare_kwargs,
                     )
                     for t in targets[1:]
-                ]
-            ))
+                ],
+                return_exceptions=True,
+            )
+            other_targets: list[PreparedTarget] = []
+            for t, result in zip(targets[1:], raw_results):
+                if isinstance(result, BaseException):
+                    logger.error(f"Failed to prepare target {t}: {result}")
+                else:
+                    other_targets.append(result)
             prepared_targets: list[PreparedTarget] = [first_target] + other_targets
         else:
             prepared_targets = [first_target]
@@ -1080,7 +1088,6 @@ async def _run_dynamic_or_hybrid(
 
         merged.duration_seconds = pipeline_duration
         merged.agent_contexts = {pt.target: pt.agent_context for pt in prepared_targets}
-
         if mode == Pipeline.HYBRID:
             merged.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
 
@@ -1199,7 +1206,8 @@ async def _run_static(
             raise ValueError(msg)
         data = filtered_data  # type: ignore[assignment]
 
-    _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))  # pyright: ignore[reportAttributeAccessIssue]
+    if isinstance(data, list):
+        _save_stage(output_dir, "01_datapoints.json", json.dumps([dp.inputs for dp in data], indent=2, default=str))
 
     # Build one job per target using the shared helper
     _sys_prompt = target_config.system_prompt if target_config else None
@@ -1214,7 +1222,7 @@ async def _run_static(
     vulnerabilities: list[str] = list({
         dp.inputs.get("category", "") for dp in data  # pyright: ignore[reportAttributeAccessIssue]
         if dp.inputs.get("category")
-    })
+    } if isinstance(data, list) else [])
     confirm_payload: ConfirmPayload = {
         "agent_context": None,
         "num_datapoints": len(data) if isinstance(data, list) else 0,  # type: ignore[arg-type]

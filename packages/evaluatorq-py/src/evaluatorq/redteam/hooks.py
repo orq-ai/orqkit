@@ -346,7 +346,7 @@ class RichHooks:
 
         if memory_stores:
             store_ids = ", ".join(
-                m.get("store_id", str(m)) if isinstance(m, dict) else str(m)
+                m.get("key") or m.get("id", str(m)) if isinstance(m, dict) else str(m)
                 for m in memory_stores[:5]
             )
             lines.append(f"Memory Stores ({len(memory_stores)}): {store_ids}")
@@ -355,7 +355,7 @@ class RichHooks:
 
         if knowledge_bases:
             kb_ids = ", ".join(
-                kb.get("kb_id", str(kb)) if isinstance(kb, dict) else str(kb)
+                kb.get("name") or kb.get("key") or kb.get("id", str(kb)) if isinstance(kb, dict) else str(kb)
                 for kb in knowledge_bases[:5]
             )
             lines.append(f"Knowledge Bases ({len(knowledge_bases)}): {kb_ids}")

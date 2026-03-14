@@ -460,7 +460,11 @@ class TestRunAttack:
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
     async def test_objective_achieved_empty_prompt_after_marker(self, _rs, _ls, _rl, _pu):
-        """Adversarial returns just 'OBJECTIVE_ACHIEVED' with nothing after stripping."""
+        """Adversarial returns just 'OBJECTIVE_ACHIEVED' with nothing after stripping.
+
+        The adversarial LLM claiming success on turn 0 with no prior target
+        interaction is invalid — objective_achieved should be False.
+        """
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
 
@@ -476,7 +480,7 @@ class TestRunAttack:
             max_turns=5,
         )
 
-        assert result.objective_achieved is True
+        assert result.objective_achieved is False
         assert result.turns == 0
         target.send_prompt.assert_not_called()
 

@@ -72,26 +72,26 @@ async def with_redteam_span(
     try:
         from opentelemetry import context as otel_context
         from opentelemetry.trace import SpanKind, Status, StatusCode
-
-        ctx = parent_context or otel_context.get_current()
-
-        with tracer.start_as_current_span(
-            name,
-            context=ctx,
-            kind=SpanKind.INTERNAL,
-            attributes=attributes or {},
-        ) as span:
-            try:
-                yield span
-                span.set_status(Status(StatusCode.OK))
-            except Exception as e:
-                span.set_attribute("error.type", type(e).__name__)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
-
     except ImportError:
         yield None
+        return
+
+    ctx = parent_context or otel_context.get_current()
+
+    with tracer.start_as_current_span(
+        name,
+        context=ctx,
+        kind=SpanKind.INTERNAL,
+        attributes=attributes or {},
+    ) as span:
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_attribute("error.type", type(e).__name__)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
 
 
 @asynccontextmanager
@@ -139,49 +139,49 @@ async def with_llm_span(
     try:
         from opentelemetry import context as otel_context
         from opentelemetry.trace import SpanKind, Status, StatusCode
-
-        ctx = parent_context or otel_context.get_current()
-
-        resolved_provider = provider or _derive_provider(model)
-        span_name = f"{operation} {model}"
-
-        genai_attrs: dict[str, Any] = {
-            "gen_ai.operation.name": operation,
-            "gen_ai.system": resolved_provider,
-            "gen_ai.provider.name": resolved_provider,
-            "gen_ai.request.model": model,
-        }
-        if temperature is not None:
-            genai_attrs["gen_ai.request.temperature"] = float(temperature)
-        if max_tokens is not None:
-            genai_attrs["gen_ai.request.max_tokens"] = max_tokens
-        if input_messages is not None:
-            serialized = json.dumps(
-                _sanitize_messages(input_messages), ensure_ascii=False,
-            )
-            genai_attrs["gen_ai.input.messages"] = serialized
-            genai_attrs["input"] = serialized
-
-        if attributes:
-            genai_attrs.update(attributes)
-
-        with tracer.start_as_current_span(
-            span_name,
-            context=ctx,
-            kind=SpanKind.CLIENT,
-            attributes=genai_attrs,
-        ) as span:
-            try:
-                yield span
-                span.set_status(Status(StatusCode.OK))
-            except Exception as e:
-                span.set_attribute("error.type", type(e).__name__)
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-                span.record_exception(e)
-                raise
-
     except ImportError:
         yield None
+        return
+
+    ctx = parent_context or otel_context.get_current()
+
+    resolved_provider = provider or _derive_provider(model)
+    span_name = f"{operation} {model}"
+
+    genai_attrs: dict[str, Any] = {
+        "gen_ai.operation.name": operation,
+        "gen_ai.system": resolved_provider,
+        "gen_ai.provider.name": resolved_provider,
+        "gen_ai.request.model": model,
+    }
+    if temperature is not None:
+        genai_attrs["gen_ai.request.temperature"] = float(temperature)
+    if max_tokens is not None:
+        genai_attrs["gen_ai.request.max_tokens"] = max_tokens
+    if input_messages is not None:
+        serialized = json.dumps(
+            _sanitize_messages(input_messages), ensure_ascii=False,
+        )
+        genai_attrs["gen_ai.input.messages"] = serialized
+        genai_attrs["input"] = serialized
+
+    if attributes:
+        genai_attrs.update(attributes)
+
+    with tracer.start_as_current_span(
+        span_name,
+        context=ctx,
+        kind=SpanKind.CLIENT,
+        attributes=genai_attrs,
+    ) as span:
+        try:
+            yield span
+            span.set_status(Status(StatusCode.OK))
+        except Exception as e:
+            span.set_attribute("error.type", type(e).__name__)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.record_exception(e)
+            raise
 
 
 def record_llm_response(

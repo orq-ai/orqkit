@@ -246,6 +246,19 @@ class ORQAgentTarget:
         self._last_token_usage = None
         return usage
 
+    def clone(self) -> "ORQAgentTarget":
+        """Create a fresh target instance with the same config but isolated state.
+
+        Used by parallel job runners to ensure each worker has its own
+        ``_task_id`` and ``_last_token_usage`` rather than sharing state.
+        """
+        return ORQAgentTarget(
+            agent_key=self.agent_key,
+            orq_client=self.orq_client,
+            memory_entity_id=self.memory_entity_id,
+            model=self.model,
+        )
+
 
 class ORQContextProvider:
     """Retrieves agent context from the ORQ API."""
@@ -355,6 +368,9 @@ class ORQTargetFactory:
         if orq_client is not None:
             self._orq_client = orq_client
         else:
+            if _orq_cls is None:
+                msg = "ORQ backend requires the orq-ai-sdk package. Install with: pip install evaluatorq[orq]"
+                raise ImportError(msg)
             self._orq_client = _orq_cls(
                 api_key=_get_orq_api_key(),
                 server_url=_get_orq_server_url(),
@@ -380,6 +396,9 @@ class ORQMemoryCleanup:
         if orq_client is not None:
             self._orq_client = orq_client
         else:
+            if _orq_cls is None:
+                msg = "ORQ backend requires the orq-ai-sdk package. Install with: pip install evaluatorq[orq]"
+                raise ImportError(msg)
             self._orq_client = _orq_cls(
                 api_key=_get_orq_api_key(),
                 server_url=_get_orq_server_url(),
@@ -446,6 +465,9 @@ def create_orq_backend(
         Tuple of (target_factory, context_provider, memory_cleanup)
     """
     if orq_client is None:
+        if _orq_cls is None:
+            msg = "ORQ backend requires the orq-ai-sdk package. Install with: pip install evaluatorq[orq]"
+            raise ImportError(msg)
         orq_client = _orq_cls(
             api_key=_get_orq_api_key(),
             server_url=_get_orq_server_url(),

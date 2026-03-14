@@ -6,6 +6,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
+from openai import APIConnectionError, APIStatusError
 from pydantic import BaseModel
 
 from openai.types.chat import ChatCompletionMessageParam
@@ -170,6 +171,8 @@ class OWASPEvaluator:
                     'raw_content': raw_content,
                 },
             )
+        except (APIConnectionError, APIStatusError):
+            raise
         except Exception as e:
             logger.error(f'Evaluation failed for {evaluator_id}, result will be inconclusive: {e}')
             return EvaluationResult(
