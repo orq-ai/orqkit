@@ -292,6 +292,11 @@ def run(
                     f"Valid IDs: {sorted(vi.value for vi in Vulnerability)}"
                 )
 
+    if dataset is not None and hf_dataset != "orq/redteam-vulnerabilities":
+        raise typer.BadParameter(
+            "Cannot specify both --dataset and --hf-dataset. Use one or the other."
+        )
+
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
     targets = target if len(target) > 1 else target[0]
 
