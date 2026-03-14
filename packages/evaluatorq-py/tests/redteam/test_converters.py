@@ -22,7 +22,7 @@ from evaluatorq.redteam.contracts import (
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
-    Scope,
+    VulnerabilityDomain,
     Severity,
     TokenUsage,
     TurnType,
@@ -47,7 +47,7 @@ def _make_result(
     delivery_methods: list[DeliveryMethod] | None = None,
     turn_type: TurnType = TurnType.SINGLE,
     severity: Severity = Severity.MEDIUM,
-    scope: Scope | None = None,
+    vulnerability_domain: VulnerabilityDomain | None = None,
     framework: Framework = Framework.OWASP_ASI,
     execution: ExecutionDetails | None = None,
     error: str | None = None,
@@ -63,7 +63,7 @@ def _make_result(
             delivery_methods=delivery_methods or [DeliveryMethod.DIRECT_REQUEST],
             turn_type=turn_type,
             severity=severity,
-            scope=scope,
+            vulnerability_domain=vulnerability_domain,
             source='test',
         ),
         agent=AgentInfo(key=agent_key),
@@ -248,18 +248,18 @@ class TestComputeReportSummary:
         assert summary.by_turn_type['multi'].vulnerability_rate == 0.5
         assert summary.by_turn_type['multi'].average_turns == 5.0
 
-    def test_by_scope(self):
+    def test_by_domain(self):
         results = [
-            _make_result(scope=Scope.MODEL, passed=False),
-            _make_result(scope=Scope.APPLICATION, passed=True),
-            _make_result(passed=True),  # no scope
+            _make_result(vulnerability_domain=VulnerabilityDomain.MODEL, passed=False),
+            _make_result(vulnerability_domain=VulnerabilityDomain.AGENT, passed=True),
+            _make_result(passed=True),  # no domain
         ]
         summary = compute_report_summary(results)
-        assert 'model' in summary.by_scope
-        assert summary.by_scope['model'].vulnerability_rate == 1.0
-        assert summary.by_scope['application'].vulnerability_rate == 0.0
-        # No scope → not in by_scope
-        assert len(summary.by_scope) == 2
+        assert 'model' in summary.by_domain
+        assert summary.by_domain['model'].vulnerability_rate == 1.0
+        assert summary.by_domain['agent'].vulnerability_rate == 0.0
+        # No domain → not in by_domain
+        assert len(summary.by_domain) == 2
 
     def test_by_framework(self):
         results = [
@@ -390,7 +390,7 @@ def _make_static_mock_result(
     attack_technique: str = 'indirect-injection',
     delivery_method: str = 'direct-request',
     severity: str = 'medium',
-    scope: str = 'application',
+    vulnerability_domain: str = 'agent',
     framework: str = 'OWASP-ASI',
     turn_type: str = 'single',
 ) -> SimpleNamespace:
@@ -406,7 +406,7 @@ def _make_static_mock_result(
             'attack_technique': attack_technique,
             'delivery_method': delivery_method,
             'severity': severity,
-            'scope': scope,
+            'vulnerability_domain': vulnerability_domain,
             'framework': framework,
             'turn_type': turn_type,
             'source': 'test',
@@ -622,7 +622,7 @@ class TestStaticSampleToResult:
                 'attack_technique': 'indirect-injection',
                 'delivery_method': 'direct-request',
                 'severity': 'medium',
-                'scope': 'application',
+                'vulnerability_domain': 'agent',
                 'framework': 'OWASP-ASI',
                 'turn_type': 'single',
                 'source': 'test',

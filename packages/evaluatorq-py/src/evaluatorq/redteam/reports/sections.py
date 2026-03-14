@@ -20,7 +20,7 @@ Section kinds:
     - ``agent_disagreements``     — per-attack disagreement viewer (>= 2 agents only)
     - ``framework_breakdown``     — per-framework breakdown (> 1 framework only)
     - ``agent_context``           — agent capability cards
-    - ``turn_scope_breakdown``    — by-turn-type and by-scope statistics
+    - ``turn_scope_breakdown``    — by-turn-type and by-domain statistics
     - ``turn_depth_analysis``     — multi-turn ASR% by conversation depth
     - ``token_usage``             — token consumption summary
     - ``source_distribution``     — attack source counts
@@ -685,10 +685,10 @@ def _build_agent_context_section(report: RedTeamReport) -> ReportSection | None:
     )
 
 
-def _build_turn_scope_breakdown_section(report: RedTeamReport) -> ReportSection | None:
-    """Build turn-type and scope breakdown statistics.
+def _build_turn_domain_breakdown_section(report: RedTeamReport) -> ReportSection | None:
+    """Build turn-type and vulnerability-domain breakdown statistics.
 
-    Returns ``None`` when neither ``by_turn_type`` nor ``by_scope`` contain
+    Returns ``None`` when neither ``by_turn_type`` nor ``by_domain`` contain
     any data.
     """
     s = report.summary
@@ -702,17 +702,17 @@ def _build_turn_scope_breakdown_section(report: RedTeamReport) -> ReportSection 
         }
 
     by_turn_type = {k: _obj_to_dict(v) for k, v in s.by_turn_type.items()}
-    by_scope = {k: _obj_to_dict(v) for k, v in s.by_scope.items()}
+    by_domain = {k: _obj_to_dict(v) for k, v in s.by_domain.items()}
 
-    if not by_turn_type and not by_scope:
+    if not by_turn_type and not by_domain:
         return None
 
     return ReportSection(
         kind="turn_scope_breakdown",
-        title="Turn Type & Scope Breakdown",
+        title="Turn Type & Domain Breakdown",
         data={
             "by_turn_type": by_turn_type,
-            "by_scope": by_scope,
+            "by_domain": by_domain,
         },
     )
 
@@ -907,7 +907,7 @@ def build_report_sections(report: RedTeamReport) -> list[ReportSection]:
         8.  attack_heatmap           (vulnerability × technique grid)
         9.  technique_breakdown
         10. delivery_breakdown       (when data present)
-        11. turn_scope_breakdown     (when turn-type/scope data present)
+        11. turn_scope_breakdown     (when turn-type/domain data present)
         12. turn_depth_analysis      (multi-turn results only)
         13. error_analysis           (only when errors exist)
         14. framework_breakdown      (only when > 1 framework)
@@ -945,7 +945,7 @@ def build_report_sections(report: RedTeamReport) -> list[ReportSection]:
     if report.summary.by_delivery_method:
         sections.append(_build_delivery_breakdown_section(report))
 
-    turn_scope_section = _build_turn_scope_breakdown_section(report)
+    turn_scope_section = _build_turn_domain_breakdown_section(report)
     if turn_scope_section is not None:
         sections.append(turn_scope_section)
 

@@ -152,13 +152,6 @@ SEVERITY_DEFINITIONS: dict[str, str] = {
 }
 
 
-class Scope(StrEnum):
-    """Attack target scope."""
-
-    MODEL = 'model'  # Targets LLM itself (jailbreaks, prompt injection)
-    APPLICATION = 'application'  # Targets agent system (tools, memory, workflows)
-
-
 class Framework(StrEnum):
     """Supported framework identifiers for datasets and reports."""
 
@@ -329,7 +322,7 @@ class RedTeamInput(BaseModel):
     attack_technique: str = Field(default='', description='Specific attack technique used')
     delivery_method: str = Field(default='', description='Jailbreak/delivery technique used')
     severity: Severity = Field(description='Attack severity level')
-    scope: Scope = Field(description='Attack target scope')
+    vulnerability_domain: VulnerabilityDomain = Field(description='Vulnerability domain (where the fix belongs)')
     framework: Framework = Field(default=Framework.OWASP_AGENTIC, description='Security framework identifier')
     evaluator_id: str = Field(default='', description='Evaluator identifier (optional)')
     evaluator_name: str = Field(default='', description='Evaluator name (optional)')
@@ -339,6 +332,20 @@ class RedTeamInput(BaseModel):
         default=None,
         description='Additional metadata that does not fit standard fields (e.g., AgentDojo-specific context)',
     )
+
+    @model_validator(mode='before')
+    @classmethod
+    def _migrate_scope_to_vulnerability_domain(cls, data: Any) -> Any:
+        """Migrate legacy ``scope`` field to ``vulnerability_domain``.
+
+        Accepts the old ``scope`` key in input data and maps it:
+        ``application`` → ``agent``, ``model`` → ``model``.
+        """
+        if isinstance(data, dict) and 'scope' in data and 'vulnerability_domain' not in data:
+            scope_val = data.pop('scope')
+            mapping = {'application': 'agent', 'model': 'model'}
+            data['vulnerability_domain'] = mapping.get(scope_val, scope_val)
+        return data
 
     @model_validator(mode='before')
     @classmethod
@@ -728,7 +735,9 @@ class AttackInfo(BaseModel):
     delivery_methods: list[DeliveryMethod] = Field(description='Delivery methods (always a list)')
     turn_type: TurnType
     severity: Severity
-    scope: Scope | None = Field(default=None, description='Attack target scope (null for dynamic)')
+    vulnerability_domain: VulnerabilityDomain | None = Field(
+        default=None, description='Vulnerability domain (null for dynamic attacks without a fixed domain)'
+    )
     source: str = Field(
         description="Origin: 'AgentDojo', 'orq_generated', 'hardcoded_strategy', 'llm_generated_strategy'"
     )
@@ -737,6 +746,20 @@ class AttackInfo(BaseModel):
     evaluator_id: str | None = None
     evaluator_name: str | None = None
     additional_metadata: dict[str, Any] | None = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def _migrate_scope_to_vulnerability_domain(cls, data: Any) -> Any:
+        """Migrate legacy ``scope`` field to ``vulnerability_domain``.
+
+        Accepts the old ``scope`` key in input data and maps it:
+        ``application`` → ``agent``, ``model`` → ``model``.
+        """
+        if isinstance(data, dict) and 'scope' in data and 'vulnerability_domain' not in data:
+            scope_val = data.pop('scope')
+            mapping = {'application': 'agent', 'model': 'model'}
+            data['vulnerability_domain'] = mapping.get(scope_val, scope_val)
+        return data
 
     @field_validator('framework', mode='before')
     @classmethod
@@ -926,8 +949,8 @@ class TurnTypeSummary(BaseModel):
     average_turns: float = 0.0
 
 
-class ScopeSummary(BaseModel):
-    """Per-scope (model vs application) summary statistics."""
+class DomainSummary(BaseModel):
+    """Per-domain (agent / model / data) summary statistics."""
 
     total_attacks: int = 0
     vulnerabilities_found: int = 0
@@ -966,7 +989,7 @@ class ReportSummary(BaseModel):
     by_severity: dict[str, SeveritySummary] = Field(default_factory=dict)
     by_delivery_method: dict[str, DeliveryMethodSummary] = Field(default_factory=dict)
     by_turn_type: dict[str, TurnTypeSummary] = Field(default_factory=dict)
-    by_scope: dict[str, ScopeSummary] = Field(default_factory=dict)
+    by_domain: dict[str, DomainSummary] = Field(default_factory=dict)
     by_framework: dict[str, FrameworkSummary] = Field(default_factory=dict)
     datapoint_breakdown: dict[str, int] | None = Field(
         default=None,

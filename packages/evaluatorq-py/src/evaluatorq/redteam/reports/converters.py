@@ -27,7 +27,7 @@ from evaluatorq.redteam.contracts import (
     RedTeamReport,
     RedTeamResult,
     ReportSummary,
-    ScopeSummary,
+    DomainSummary,
     SeveritySummary,
     TechniqueSummary,
     TokenUsage,
@@ -259,7 +259,7 @@ def static_sample_to_result(
         delivery_methods=delivery_methods,
         turn_type=inp.turn_type,
         severity=inp.severity,
-        scope=inp.scope,
+        vulnerability_domain=inp.vulnerability_domain,
         source=inp.source,
         evaluator_id=inp.evaluator_id or evaluator_meta.get('evaluator_id') or category,
         evaluator_name=inp.evaluator_name or evaluator_meta.get('evaluator_name') or OWASP_CATEGORY_NAMES.get(category),
@@ -775,20 +775,20 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
             average_turns=tt_turns.get(tt, 0) / t_total if t_total > 0 else 0.0,
         )
 
-    # ── Group by scope ─────────────────────────────────────────────────
-    scope_totals: dict[str, int] = {}
-    scope_vulns: dict[str, int] = {}
+    # ── Group by vulnerability domain ──────────────────────────────────
+    domain_totals: dict[str, int] = {}
+    domain_vulns: dict[str, int] = {}
     for r in results:
-        sc = r.attack.scope
+        sc = r.attack.vulnerability_domain
         if sc is not None:
-            scope_totals[sc] = scope_totals.get(sc, 0) + 1
+            domain_totals[sc] = domain_totals.get(sc, 0) + 1
             if _is_vulnerable(r):
-                scope_vulns[sc] = scope_vulns.get(sc, 0) + 1
-    by_scope: dict[str, ScopeSummary] = {}
-    for sc, s_total in scope_totals.items():
-        s_vulns = scope_vulns.get(sc, 0)
+                domain_vulns[sc] = domain_vulns.get(sc, 0) + 1
+    by_domain: dict[str, DomainSummary] = {}
+    for sc, s_total in domain_totals.items():
+        s_vulns = domain_vulns.get(sc, 0)
         s_resistant = s_total - s_vulns
-        by_scope[sc] = ScopeSummary(
+        by_domain[sc] = DomainSummary(
             total_attacks=s_total,
             vulnerabilities_found=s_vulns,
             resistance_rate=_rate(s_resistant, s_total),
@@ -843,7 +843,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
         by_severity=by_severity,
         by_delivery_method=by_delivery_method,
         by_turn_type=by_turn_type,
-        by_scope=by_scope,
+        by_domain=by_domain,
         by_framework=by_framework,
     )
 

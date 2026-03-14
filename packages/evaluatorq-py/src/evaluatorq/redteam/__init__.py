@@ -61,8 +61,7 @@ from evaluatorq.redteam.contracts import (
     RedTeamResult,
     ReportSnapshot,
     ReportSummary,
-    Scope,
-    ScopeSummary,
+    DomainSummary,
     SEVERITY_DEFINITIONS,
     Severity,
     SeveritySummary,
@@ -133,7 +132,6 @@ __all__ = [
     "AttackTechnique",
     "DeliveryMethod",
     "Severity",
-    "Scope",
     "Framework",
     "Pipeline",
     # Message models
@@ -172,7 +170,7 @@ __all__ = [
     "SeveritySummary",
     "DeliveryMethodSummary",
     "TurnTypeSummary",
-    "ScopeSummary",
+    "DomainSummary",
     "FrameworkSummary",
     # Helper functions
     "normalize_framework",

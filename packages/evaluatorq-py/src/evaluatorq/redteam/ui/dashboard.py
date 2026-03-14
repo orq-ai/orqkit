@@ -818,17 +818,16 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     if num_agents > 1:
         kpi_cols[col_idx].metric("Agents Tested", str(num_agents))
         col_idx += 1
-    kpi_cols[col_idx].metric("ASR", f"{summary.vulnerability_rate:.1%}", delta="Target: 0%", delta_color="inverse")
+    kpi_cols[col_idx].metric("ASR", f"{summary.vulnerability_rate:.1%}", help="Attack Success Rate — target is 0%")
     col_idx += 1
     kpi_cols[col_idx].metric(
         "Critical Exposure", str(critical_count),
-        delta="Requires attention" if critical_count > 0 else "Clear",
-        delta_color="inverse",
+        help="Number of critical-severity vulnerabilities found",
     )
     col_idx += 1
     kpi_cols[col_idx].metric("Eval Coverage", f"{summary.evaluation_coverage:.1%}")
     col_idx += 1
-    kpi_cols[col_idx].metric("Errors", f"{summary.total_errors:,}", delta=f"{error_rate:.1f}% of attacks", delta_color="inverse")
+    kpi_cols[col_idx].metric("Errors", f"{summary.total_errors:,}", help=f"{error_rate:.1f}% of attacks")
     col_idx += 1
     if summary.average_turns_per_attack > 0:
         kpi_cols[col_idx].metric("Avg Turns/Attack", f"{summary.average_turns_per_attack:.1f}")
@@ -856,6 +855,7 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
     # Severity legend cards
     st.subheader("Criticality")
+    st.caption("Vulnerabilities found by severity level. Hover over each card for details.")
     _sev_short_defs = {
         'critical': 'Full system compromise or unauthorized data access — immediate fix required',
         'high': 'Significant harm such as data exfiltration or privilege escalation — prioritize remediation',
@@ -1070,58 +1070,65 @@ def _render_technical_analysis(report: RedTeamReport, summary: ReportSummary) ->
 
     st.divider()
 
-    # Severity + Turn Type + Scope
-    col1, col2, col3 = st.columns(3)
+    # Severity + Turn Type + Domain (only show panels with data)
+    _breakdown_panels = []
+    if summary.by_severity:
+        _breakdown_panels.append("severity")
+    if summary.by_turn_type:
+        _breakdown_panels.append("turn_type")
+    if summary.by_domain:
+        _breakdown_panels.append("domain")
 
-    with col1:
-        st.subheader("By Severity")
-        if summary.by_severity:
-            items = [(k, summary.by_severity[k]) for k in SEVERITY_ORDER if k in summary.by_severity]
-            names = [k for k, _ in items]
-            vuln_rates = [v.vulnerability_rate * 100 for _, v in items]
-            totals = [v.total_attacks for _, v in items]
-            colors = [SEVERITY_COLORS.get(k, COLORS['sand_400']) for k in names]
+    if _breakdown_panels:
+        _bd_cols = st.columns(len(_breakdown_panels))
+        for _bd_i, _bd_key in enumerate(_breakdown_panels):
+            with _bd_cols[_bd_i]:
+                if _bd_key == "severity":
+                    st.subheader("By Severity")
+                    items = [(k, summary.by_severity[k]) for k in SEVERITY_ORDER if k in summary.by_severity]
+                    names = [k for k, _ in items]
+                    vuln_rates = [v.vulnerability_rate * 100 for _, v in items]
+                    totals = [v.total_attacks for _, v in items]
+                    colors = [SEVERITY_COLORS.get(k, COLORS['sand_400']) for k in names]
 
-            fig = go.Figure(go.Bar(
-                x=names, y=vuln_rates, marker_color=colors,
-                text=[f"{r:.1f}%<br>n={n}" for r, n in zip(vuln_rates, totals)],
-                textposition="outside",
-            ))
-            fig.update_layout(
-                height=350, xaxis_title="Severity", yaxis_title="ASR (%)",
-                margin=dict(l=20, r=20, t=10, b=20),
-            )
-            st.plotly_chart(fig, width="stretch")
+                    fig = go.Figure(go.Bar(
+                        x=names, y=vuln_rates, marker_color=colors,
+                        text=[f"{r:.1f}%<br>n={n}" for r, n in zip(vuln_rates, totals)],
+                        textposition="outside",
+                    ))
+                    fig.update_layout(
+                        height=350, xaxis_title="Severity", yaxis_title="ASR (%)",
+                        margin=dict(l=20, r=20, t=10, b=20),
+                    )
+                    st.plotly_chart(fig, width="stretch")
 
-    with col2:
-        st.subheader("By Turn Type")
-        if summary.by_turn_type:
-            names = list(summary.by_turn_type.keys())
-            totals = [v.total_attacks for v in summary.by_turn_type.values()]
-            fig = go.Figure(go.Pie(
-                labels=names, values=totals,
-                marker_colors=QUALITATIVE[:len(names)],
-                textinfo="label+value", hole=0.4,
-            ))
-            fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-            st.plotly_chart(fig, width="stretch")
-            for name, tt in summary.by_turn_type.items():
-                st.caption(f"{name}: {tt.vulnerability_rate:.1%} vuln rate")
+                elif _bd_key == "turn_type":
+                    st.subheader("By Turn Type")
+                    names = list(summary.by_turn_type.keys())
+                    totals = [v.total_attacks for v in summary.by_turn_type.values()]
+                    fig = go.Figure(go.Pie(
+                        labels=names, values=totals,
+                        marker_colors=QUALITATIVE[:len(names)],
+                        textinfo="label+value", hole=0.4,
+                    ))
+                    fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
+                    st.plotly_chart(fig, width="stretch")
+                    for name, tt in summary.by_turn_type.items():
+                        st.caption(f"{name}: {tt.vulnerability_rate:.1%} vuln rate")
 
-    with col3:
-        st.subheader("By Scope")
-        if summary.by_scope:
-            names = list(summary.by_scope.keys())
-            totals = [v.total_attacks for v in summary.by_scope.values()]
-            fig = go.Figure(go.Pie(
-                labels=names, values=totals,
-                marker_colors=QUALITATIVE[:len(names)],
-                textinfo="label+value", hole=0.4,
-            ))
-            fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-            st.plotly_chart(fig, width="stretch")
-            for name, sc in summary.by_scope.items():
-                st.caption(f"{name}: {sc.vulnerability_rate:.1%} vuln rate")
+                elif _bd_key == "domain":
+                    st.subheader("By Domain")
+                    names = list(summary.by_domain.keys())
+                    totals = [v.total_attacks for v in summary.by_domain.values()]
+                    fig = go.Figure(go.Pie(
+                        labels=names, values=totals,
+                        marker_colors=QUALITATIVE[:len(names)],
+                        textinfo="label+value", hole=0.4,
+                    ))
+                    fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
+                    st.plotly_chart(fig, width="stretch")
+                    for name, sc in summary.by_domain.items():
+                        st.caption(f"{name}: {sc.vulnerability_rate:.1%} vuln rate")
 
     # Framework breakdown (for mixed reports)
     if summary.by_framework and len(summary.by_framework) > 1:
@@ -1415,7 +1422,7 @@ def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
 
     st.divider()
     st.subheader("Attack Failure Treemap")
-    st.caption("Block size = number of successful attacks. Color intensity = attack success rate.")
+    st.caption("Block size = number of successful attacks. Color intensity = attack success rate. Use the sidebar filters to narrow down by agent, category, or severity.")
 
     # Build grouped data: (vulnerability, technique) -> {failures, total}
     from collections import defaultdict
@@ -1451,17 +1458,33 @@ def _render_attack_failure_treemap(results: list[RedTeamResult]) -> None:
         range_color=[0, 100],
         custom_data=["total", "asr", "vulnerability", "technique"],
     )
+    # Build per-node hovertext, omitting fields that resolve to "?" on parent nodes
+    hovertexts = []
+    for cd, label, value in zip(
+        fig.data[0].customdata,
+        fig.data[0].labels,
+        fig.data[0].values,
+    ):
+        parts = [f"<b>{label}</b>"]
+        vuln = cd[2] if cd[2] is not None and str(cd[2]) != "?" else None
+        tech = cd[3] if cd[3] is not None and str(cd[3]) != "?" else None
+        if vuln:
+            parts.append(f"<i>Vulnerability:</i> {vuln}")
+        if tech:
+            parts.append(f"<i>Attack Technique:</i> {tech}")
+        total = cd[0] if cd[0] is not None and str(cd[0]) != "?" else None
+        asr = cd[1] if cd[1] is not None and str(cd[1]) != "?" else None
+        parts.append(f"Failures: {value}")
+        if total is not None:
+            parts.append(f"Total: {total}")
+        if asr is not None:
+            parts.append(f"ASR: {asr:.1f}%")
+        hovertexts.append("<br>".join(parts))
+    fig.data[0].hovertext = hovertexts
+    fig.data[0].hoverinfo = "text"
     fig.update_traces(
         texttemplate="<b>%{label}</b><br>%{value} failures",
-        hovertemplate=(
-            "<b>%{label}</b><br>"
-            "<i>Vulnerability:</i> %{customdata[2]}<br>"
-            "<i>Attack Technique:</i> %{customdata[3]}<br>"
-            "Failures: %{value}<br>"
-            "Total: %{customdata[0]}<br>"
-            "ASR: %{customdata[1]:.1f}%"
-            "<extra></extra>"
-        ),
+        hovertemplate=None,
     )
     fig.update_layout(
         height=600,
@@ -1590,8 +1613,8 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
         dimensions.append(("Severity", f"{len(summary.by_severity)} unique", {k: v.total_attacks for k, v in summary.by_severity.items()}))
     if summary.by_turn_type:
         dimensions.append(("Turn Type", f"{len(summary.by_turn_type)} unique", {k: v.total_attacks for k, v in summary.by_turn_type.items()}))
-    if summary.by_scope:
-        dimensions.append(("Scope", f"{len(summary.by_scope)} unique", {k: v.total_attacks for k, v in summary.by_scope.items()}))
+    if summary.by_domain:
+        dimensions.append(("Domain", f"{len(summary.by_domain)} unique", {k: v.total_attacks for k, v in summary.by_domain.items()}))
 
     cols = st.columns(3)
     for i, (label, subtitle, counts) in enumerate(dimensions):
@@ -1615,7 +1638,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
         st.info("No results match the current filters.")
         return
 
-    # Results table — extended columns including delivery_method, turn_type, scope
+    # Results table — extended columns including delivery_method, turn_type, vulnerability_domain
     table_rows = []
     for r in filtered:
         # delivery_methods is a list in AttackInfo; join for display
@@ -1624,7 +1647,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
             delivery_str = ", ".join(dm.value if hasattr(dm, "value") else str(dm) for dm in dms)
         else:
             delivery_str = "-"
-        scope_val = r.attack.scope.value if r.attack.scope else "-"
+        domain_val = r.attack.vulnerability_domain.value if r.attack.vulnerability_domain else "-"
         table_rows.append({
             "ID": r.attack.id,
             "Category": r.attack.category,
@@ -1632,7 +1655,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
             "Technique": r.attack.attack_technique.value,
             "Delivery Method": delivery_str,
             "Turn Type": r.attack.turn_type.value if r.attack.turn_type else "-",
-            "Scope": scope_val,
+            "Domain": domain_val,
             "Severity": r.attack.severity.value,
             "Result": "VULNERABLE" if r.vulnerable else "RESISTANT",
             "Source": r.attack.source,
@@ -2214,129 +2237,10 @@ def _render_agent_comparison(report: RedTeamReport, summary: ReportSummary, agen
         else:
             st.info("No shared attack samples between agents to compare.")
 
-    # Agent delta treemap (configurable)
-    if len(agents) >= 2:
-        _render_agent_delta_treemap(report.results, agents)
-
     # Disagreement viewer
     if len(agents) >= 2:
         _render_disagreement_viewer(report.results, agents)
 
-
-# ---------------------------------------------------------------------------
-# Agent Delta Treemap
-# ---------------------------------------------------------------------------
-
-
-def _render_agent_delta_treemap(results: list[RedTeamResult], agents: list[str]) -> None:
-    """Configurable treemap showing attack failures with agent and inner-dimension selectors."""
-    from collections import defaultdict
-
-    st.divider()
-    st.subheader("Attack Failure Treemap (Comparison)")
-    st.caption("Explore how attack failures distribute across agents and dimensions.")
-
-    # Agent selector (filter to one agent's results)
-    treemap_agent = st.selectbox(
-        "Filter to agent",
-        options=["All agents"] + agents,
-        key="comp_treemap_agent",
-    )
-
-    # Inner dimension selector
-    inner_dim_options: dict[str, str] = {
-        "attack_technique": "Attack Technique",
-        "delivery_method": "Delivery Method",
-        "severity": "Severity",
-    }
-    inner_dim = st.selectbox(
-        "Inner dimension",
-        options=list(inner_dim_options.keys()),
-        format_func=lambda x: inner_dim_options.get(x, x),
-        key="comp_treemap_inner_dim",
-    )
-
-    def _inner_dim_val(r: RedTeamResult, dim: str) -> str:
-        if dim == "attack_technique":
-            return r.attack.attack_technique.value
-        if dim == "delivery_method":
-            dms = getattr(r.attack, "delivery_methods", None)
-            if dms:
-                return dms[0].value if hasattr(dms[0], "value") else str(dms[0])
-            return "unknown"
-        if dim == "severity":
-            return r.attack.severity.value
-        return "unknown"
-
-    # Apply agent filter
-    filtered_results = results
-    if treemap_agent != "All agents":
-        filtered_results = [
-            r for r in results if (r.agent.key or r.agent.display_name or "unknown") == treemap_agent
-        ]
-
-    vulnerable_results = [r for r in filtered_results if r.vulnerable]
-    if not vulnerable_results:
-        st.info("No vulnerable results for the selected agent.")
-        return
-
-    # Build grouped data: (vulnerability, inner_dim_val) -> {failures, total}
-    groups: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"failures": 0, "total": 0})
-    for r in filtered_results:
-        vuln_label = _fmt_vulnerability(r.attack.vulnerability) if r.attack.vulnerability else _fmt_category(r.attack.category)
-        key = (vuln_label, _inner_dim_val(r, inner_dim))
-        groups[key]["total"] += 1
-        if r.vulnerable:
-            groups[key]["failures"] += 1
-
-    rows = []
-    for (vuln, dim_val), counts in groups.items():
-        if counts["failures"] > 0:
-            rows.append({
-                "vulnerability": vuln,
-                "dimension": dim_val,
-                "failures": counts["failures"],
-                "total": counts["total"],
-                "asr": round(counts["failures"] / counts["total"] * 100, 1),
-            })
-
-    if not rows:
-        return
-
-    agent_label = treemap_agent if treemap_agent != "All agents" else "all agents"
-    dim_label = inner_dim_options.get(inner_dim, inner_dim)
-    st.caption(
-        f"Agent: **{agent_label}** | Inner dimension: **{dim_label}**. "
-        "Block size = failures. Color intensity = attack success rate."
-    )
-
-    fig = px.treemap(
-        rows,
-        path=["vulnerability", "dimension"],
-        values="failures",
-        color="asr",
-        color_continuous_scale=ORQ_SCALE_AGENT,
-        range_color=[0, 100],
-        custom_data=["total", "asr", "vulnerability", "dimension"],
-    )
-    fig.update_traces(
-        texttemplate="<b>%{label}</b><br>%{value} failures",
-        hovertemplate=(
-            "<b>%{label}</b><br>"
-            "<i>Vulnerability:</i> %{customdata[2]}<br>"
-            "<i>" + dim_label + ":</i> %{customdata[3]}<br>"
-            "Failures: %{value}<br>"
-            "Total: %{customdata[0]}<br>"
-            "ASR: %{customdata[1]:.1f}%"
-            "<extra></extra>"
-        ),
-    )
-    fig.update_layout(
-        height=600,
-        coloraxis_colorbar=dict(title="ASR (%)"),
-        margin=dict(l=10, r=10, t=10, b=10),
-    )
-    st.plotly_chart(fig, width="stretch", key="comp_treemap")
 
 
 def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str]) -> None:
@@ -2391,17 +2295,27 @@ def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str])
     PAGE_SIZE = 10
     total_pages = max(1, (len(disagreements) + PAGE_SIZE - 1) // PAGE_SIZE)
 
-    st.caption(f"Found {len(disagreements)} disagreements between **{a1}** and **{a2}**.")
+    st.caption(f"Found {len(disagreements)} disagreements between **{a1}** and **{a2}** ({PAGE_SIZE} per page).")
 
-    page = st.number_input(
-        "Page",
-        min_value=1,
-        max_value=total_pages,
-        value=1,
-        step=1,
-        key="dis_page",
-        help=f"Page 1 of {total_pages} ({PAGE_SIZE} per page)",
-    )
+    if "dis_page" not in st.session_state:
+        st.session_state.dis_page = 1
+
+    prev_col, info_col, next_col = st.columns([1, 2, 1])
+    with prev_col:
+        if st.button("← Previous", key="dis_prev", disabled=st.session_state.dis_page <= 1):
+            st.session_state.dis_page -= 1
+            st.rerun()
+    with info_col:
+        st.markdown(
+            f"<div style='text-align:center; padding-top:6px;'>Page <b>{st.session_state.dis_page}</b> of <b>{total_pages}</b></div>",
+            unsafe_allow_html=True,
+        )
+    with next_col:
+        if st.button("Next →", key="dis_next", disabled=st.session_state.dis_page >= total_pages):
+            st.session_state.dis_page += 1
+            st.rerun()
+
+    page = st.session_state.dis_page
 
     start = (page - 1) * PAGE_SIZE
     end = start + PAGE_SIZE

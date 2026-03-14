@@ -504,11 +504,11 @@ def _render_delivery_breakdown_section(section: ReportSection) -> str:
 
 
 def _render_turn_scope_breakdown_section(section: ReportSection) -> str:
-    """Render turn-type and scope breakdown as two sub-tables."""
+    """Render turn-type and domain breakdown as two sub-tables."""
     by_turn_type: dict[str, Any] = section.data.get("by_turn_type", {})
-    by_scope: dict[str, Any] = section.data.get("by_scope", {})
+    by_domain: dict[str, Any] = section.data.get("by_domain", {})
 
-    if not by_turn_type and not by_scope:
+    if not by_turn_type and not by_domain:
         return ""
 
     def _sub_table(label: str, mapping: dict[str, Any]) -> str:
@@ -529,8 +529,8 @@ def _render_turn_scope_breakdown_section(section: ReportSection) -> str:
     if by_turn_type:
         parts.append(_sub_table("Turn Type", by_turn_type))
         parts.append("")
-    if by_scope:
-        parts.append(_sub_table("Scope", by_scope))
+    if by_domain:
+        parts.append(_sub_table("Domain", by_domain))
         parts.append("")
 
     return "\n".join(parts)
