@@ -192,6 +192,7 @@ def _normalize_attack_technique(value: str | None) -> AttackTechnique:
     if lowered in supported:
         return AttackTechnique(lowered)
     # Common jailbreak-like labels in LLM datasets map to direct injection.
+    _converters_logger.warning('Unknown attack technique %r, defaulting to direct-injection', raw)
     return AttackTechnique.DIRECT_INJECTION
 
 
@@ -622,7 +623,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
     coverage = _rate(evaluated_total, total, default=0.0)
     vulns = sum(1 for r in evaluated if _is_vulnerable(r))
     resistant = evaluated_total - vulns
-    resistance = _rate(resistant, evaluated_total)
+    resistance = _rate(resistant, evaluated_total, default=0.0)
 
     total_turns = sum(r.execution.turns for r in results if r.execution)
 
@@ -651,7 +652,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
             total_turns=cat_turns,
             vulnerabilities_found=cat_vulns,
             vulnerability_rate=_rate(cat_vulns, cat_eval_total, default=0.0),
-            resistance_rate=_rate(cat_resistant, cat_eval_total),
+            resistance_rate=_rate(cat_resistant, cat_eval_total, default=0.0),
             total_errors=cat_errors,
             strategies_used=list({r.attack.strategy_name for r in cat_results if r.attack.strategy_name}),
         )
@@ -690,128 +691,152 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
             domain=vdef.domain.value if vdef else '',
             total_attacks=len(v_results),
             vulnerabilities_found=v_vulns,
-            resistance_rate=_rate(v_resistant, v_eval_total),
+            resistance_rate=_rate(v_resistant, v_eval_total, default=0.0),
             strategies_used=list({r.attack.strategy_name for r in v_results if r.attack.strategy_name}),
             framework_categories=get_framework_categories(vuln_enum),
         )
 
     # ── Group by technique ─────────────────────────────────────────────
     tech_totals: dict[str, int] = {}
+    tech_eval_totals: dict[str, int] = {}
     tech_vulns: dict[str, int] = {}
     for r in results:
         tech = r.attack.attack_technique
         tech_totals[tech] = tech_totals.get(tech, 0) + 1
+        if _is_evaluated(r):
+            tech_eval_totals[tech] = tech_eval_totals.get(tech, 0) + 1
         if _is_vulnerable(r):
             tech_vulns[tech] = tech_vulns.get(tech, 0) + 1
     by_technique: dict[str, TechniqueSummary] = {}
     for tech, t_total in tech_totals.items():
+        t_eval = tech_eval_totals.get(tech, 0)
         t_vulns = tech_vulns.get(tech, 0)
-        t_resistant = t_total - t_vulns
+        t_resistant = t_eval - t_vulns
         by_technique[tech] = TechniqueSummary(
             total_attacks=t_total,
             vulnerabilities_found=t_vulns,
-            resistance_rate=_rate(t_resistant, t_total),
-            vulnerability_rate=_rate(t_vulns, t_total, default=0.0),
+            resistance_rate=_rate(t_resistant, t_eval, default=0.0),
+            vulnerability_rate=_rate(t_vulns, t_eval, default=0.0),
         )
 
     # ── Group by severity ──────────────────────────────────────────────
     sev_totals: dict[str, int] = {}
+    sev_eval_totals: dict[str, int] = {}
     sev_vulns: dict[str, int] = {}
     for r in results:
         sev = r.attack.severity
         sev_totals[sev] = sev_totals.get(sev, 0) + 1
+        if _is_evaluated(r):
+            sev_eval_totals[sev] = sev_eval_totals.get(sev, 0) + 1
         if _is_vulnerable(r):
             sev_vulns[sev] = sev_vulns.get(sev, 0) + 1
     by_severity: dict[str, SeveritySummary] = {}
     for sev, s_total in sev_totals.items():
+        s_eval = sev_eval_totals.get(sev, 0)
         s_vulns = sev_vulns.get(sev, 0)
-        s_resistant = s_total - s_vulns
+        s_resistant = s_eval - s_vulns
         by_severity[sev] = SeveritySummary(
             total_attacks=s_total,
             vulnerabilities_found=s_vulns,
-            resistance_rate=_rate(s_resistant, s_total),
-            vulnerability_rate=_rate(s_vulns, s_total, default=0.0),
+            resistance_rate=_rate(s_resistant, s_eval, default=0.0),
+            vulnerability_rate=_rate(s_vulns, s_eval, default=0.0),
         )
 
     # ── Group by delivery method ───────────────────────────────────────
     dm_totals: dict[str, int] = {}
+    dm_eval_totals: dict[str, int] = {}
     dm_vulns: dict[str, int] = {}
     for r in results:
         for dm in r.attack.delivery_methods:
             dm_totals[dm] = dm_totals.get(dm, 0) + 1
+            if _is_evaluated(r):
+                dm_eval_totals[dm] = dm_eval_totals.get(dm, 0) + 1
             if _is_vulnerable(r):
                 dm_vulns[dm] = dm_vulns.get(dm, 0) + 1
     by_delivery_method: dict[str, DeliveryMethodSummary] = {}
     for dm, d_total in dm_totals.items():
+        d_eval = dm_eval_totals.get(dm, 0)
         d_vulns = dm_vulns.get(dm, 0)
-        d_resistant = d_total - d_vulns
+        d_resistant = d_eval - d_vulns
         by_delivery_method[dm] = DeliveryMethodSummary(
             total_attacks=d_total,
             vulnerabilities_found=d_vulns,
-            resistance_rate=_rate(d_resistant, d_total),
-            vulnerability_rate=_rate(d_vulns, d_total, default=0.0),
+            resistance_rate=_rate(d_resistant, d_eval, default=0.0),
+            vulnerability_rate=_rate(d_vulns, d_eval, default=0.0),
         )
 
     # ── Group by turn type ─────────────────────────────────────────────
     tt_totals: dict[str, int] = {}
+    tt_eval_totals: dict[str, int] = {}
     tt_vulns: dict[str, int] = {}
     tt_turns: dict[str, int] = {}
     for r in results:
         tt = r.attack.turn_type
         tt_totals[tt] = tt_totals.get(tt, 0) + 1
+        if _is_evaluated(r):
+            tt_eval_totals[tt] = tt_eval_totals.get(tt, 0) + 1
         if r.execution:
             tt_turns[tt] = tt_turns.get(tt, 0) + r.execution.turns
         if _is_vulnerable(r):
             tt_vulns[tt] = tt_vulns.get(tt, 0) + 1
     by_turn_type: dict[str, TurnTypeSummary] = {}
     for tt, t_total in tt_totals.items():
+        t_eval = tt_eval_totals.get(tt, 0)
         t_vulns = tt_vulns.get(tt, 0)
-        t_resistant = t_total - t_vulns
+        t_resistant = t_eval - t_vulns
         by_turn_type[tt] = TurnTypeSummary(
             total_attacks=t_total,
             vulnerabilities_found=t_vulns,
-            resistance_rate=_rate(t_resistant, t_total),
-            vulnerability_rate=_rate(t_vulns, t_total, default=0.0),
+            resistance_rate=_rate(t_resistant, t_eval, default=0.0),
+            vulnerability_rate=_rate(t_vulns, t_eval, default=0.0),
             average_turns=tt_turns.get(tt, 0) / t_total if t_total > 0 else 0.0,
         )
 
     # ── Group by vulnerability domain ──────────────────────────────────
     domain_totals: dict[str, int] = {}
+    domain_eval_totals: dict[str, int] = {}
     domain_vulns: dict[str, int] = {}
     for r in results:
         sc = r.attack.vulnerability_domain
         if sc is not None:
             domain_totals[sc] = domain_totals.get(sc, 0) + 1
+            if _is_evaluated(r):
+                domain_eval_totals[sc] = domain_eval_totals.get(sc, 0) + 1
             if _is_vulnerable(r):
                 domain_vulns[sc] = domain_vulns.get(sc, 0) + 1
     by_domain: dict[str, DomainSummary] = {}
     for sc, s_total in domain_totals.items():
+        s_eval = domain_eval_totals.get(sc, 0)
         s_vulns = domain_vulns.get(sc, 0)
-        s_resistant = s_total - s_vulns
+        s_resistant = s_eval - s_vulns
         by_domain[sc] = DomainSummary(
             total_attacks=s_total,
             vulnerabilities_found=s_vulns,
-            resistance_rate=_rate(s_resistant, s_total),
-            vulnerability_rate=_rate(s_vulns, s_total, default=0.0),
+            resistance_rate=_rate(s_resistant, s_eval, default=0.0),
+            vulnerability_rate=_rate(s_vulns, s_eval, default=0.0),
         )
 
     # ── Group by framework ─────────────────────────────────────────────
     fw_totals: dict[str, int] = {}
+    fw_eval_totals: dict[str, int] = {}
     fw_vulns: dict[str, int] = {}
     for r in results:
         fw = r.attack.framework
         fw_totals[fw] = fw_totals.get(fw, 0) + 1
+        if _is_evaluated(r):
+            fw_eval_totals[fw] = fw_eval_totals.get(fw, 0) + 1
         if _is_vulnerable(r):
             fw_vulns[fw] = fw_vulns.get(fw, 0) + 1
     by_framework: dict[str, FrameworkSummary] = {}
     for fw, f_total in fw_totals.items():
+        f_eval = fw_eval_totals.get(fw, 0)
         f_vulns = fw_vulns.get(fw, 0)
-        f_resistant = f_total - f_vulns
+        f_resistant = f_eval - f_vulns
         by_framework[fw] = FrameworkSummary(
             total_attacks=f_total,
             vulnerabilities_found=f_vulns,
-            resistance_rate=_rate(f_resistant, f_total),
-            vulnerability_rate=_rate(f_vulns, f_total, default=0.0),
+            resistance_rate=_rate(f_resistant, f_eval, default=0.0),
+            vulnerability_rate=_rate(f_vulns, f_eval, default=0.0),
         )
 
     # ── Count errors by type ───────────────────────────────────────────

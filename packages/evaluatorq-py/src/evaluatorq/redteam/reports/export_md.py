@@ -150,8 +150,14 @@ def _render_summary_section(section: ReportSection) -> str:
 
     risk_callout = f"> [!{callout_type}]\n> {risk_label} — Attack Success Rate: **{_pct(asr)}**"
 
+    confidence = data.get("confidence", "")
+    confidence_note = data.get("confidence_note", "")
+    if confidence:
+        confidence_line = f"\n> **Confidence: {confidence}** — {confidence_note}"
+        risk_callout += confidence_line
+
     kpi_table = _center_table(
-        ["Total Attacks", "Vulnerabilities", "ASR", "Coverage", "Errors"],
+        ["Total Attacks", "Successful Attacks", "ASR", "Coverage", "Errors"],
         [[
             f"**{total_attacks}**",
             f"**{vulnerabilities_found}**",
@@ -164,7 +170,7 @@ def _render_summary_section(section: ReportSection) -> str:
     detail_rows: list[list[str]] = [
         ["Total Attacks", str(total_attacks)],
         ["Evaluated", str(evaluated_attacks)],
-        ["Vulnerabilities Found", str(vulnerabilities_found)],
+        ["Successful Attacks", str(vulnerabilities_found)],
         ["ASR", _pct(asr)],
         ["Evaluation Coverage", _pct(evaluation_coverage)],
     ]
@@ -250,6 +256,13 @@ def _render_focus_areas_section(section: ReportSection) -> str:
             lines.append(f"> {remediation}")
             lines.append("")
 
+        agent_remediation = area.get("agent_specific_remediation", "")
+        if agent_remediation:
+            lines.append("**Agent-specific recommendations:**")
+            lines.append("")
+            lines.append(f"> {agent_remediation}")
+            lines.append("")
+
         llm_rec = area.get("llm_recommendations")
         if llm_rec:
             patterns = llm_rec.get("patterns_observed", "")
@@ -289,7 +302,7 @@ def _render_agent_comparison_section(section: ReportSection) -> str:
             for m in agent_metrics
         ]
         lines.append(_md_table(
-            ["Agent", "Attacks", "Vulns", "ASR"], metric_rows, right_align={1, 2},
+            ["Agent", "Attacks", "Hits", "ASR"], metric_rows, right_align={1, 2},
         ))
         lines.append("")
 
@@ -390,7 +403,7 @@ def _render_vulnerability_breakdown_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Vulnerability", "Domain", "Attacks", "Vulns", "ASR"],
+        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={2, 3},
     )
@@ -413,7 +426,7 @@ def _render_category_breakdown_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Category", "Attacks", "Vulns", "ASR"],
+        ["Category", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={1, 2},
     )
@@ -473,7 +486,7 @@ def _render_technique_breakdown_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Technique", "Attacks", "Vulns", "ASR"],
+        ["Technique", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={1, 2},
     )
@@ -496,7 +509,7 @@ def _render_delivery_breakdown_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Delivery Method", "Attacks", "Vulns", "ASR"],
+        ["Delivery Method", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={1, 2},
     )
@@ -522,7 +535,7 @@ def _render_turn_scope_breakdown_section(section: ReportSection) -> str:
             for name, stats in mapping.items()
         ]
         return f"### {label}\n\n" + _md_table(
-            [label, "Attacks", "Vulns", "ASR"], sub_rows, right_align={1, 2},
+            [label, "Attacks", "Hits", "ASR"], sub_rows, right_align={1, 2},
         )
 
     parts: list[str] = [f"## {section.title}", ""]
@@ -552,7 +565,7 @@ def _render_turn_depth_analysis_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Turn Depth", "Attacks", "Vulns", "ASR"],
+        ["Turn Depth", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={0, 1, 2},
     )
@@ -634,56 +647,12 @@ def _render_framework_breakdown_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Framework", "Attacks", "Vulns", "ASR"],
+        ["Framework", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={1, 2},
     )
     return f"## {section.title}\n\n{table}"
 
-
-def _render_individual_results_section(section: ReportSection) -> str:
-    """Render individual attack results with collapsible prompt/response blocks."""
-    entries = section.data.get("entries", [])
-    if not entries:
-        return f"## {section.title}\n\nNo individual results available."
-
-    lines = [f"## {section.title}", ""]
-    for entry in entries:
-        status = "VULNERABLE" if entry["vulnerable"] else "RESISTANT"
-        attack_id = entry.get("id", "unknown")
-        cat = entry.get("category", "")
-        cat_name = entry.get("category_name", cat)
-        technique = entry.get("technique", "")
-        severity = entry.get("severity", "")
-        explanation = entry.get("explanation", "")
-        prompt_text = entry.get("prompt", "")
-        response_text = entry.get("response", "")
-        error = entry.get("error")
-
-        lines.append(f"### [{status}] {attack_id}")
-        lines.append("")
-        lines.append(f"- **Category:** {cat} — {cat_name}")
-        lines.append(f"- **Technique:** {technique}")
-        lines.append(f"- **Severity:** {severity}")
-        if explanation:
-            lines.append(f"- **Evaluation:** {explanation}")
-        if error:
-            lines.append(f"- **Error:** {error}")
-        lines.append("")
-
-        if prompt_text:
-            lines.append(_details_block(
-                "Attack Prompt", f"```\n{_truncate(prompt_text)}\n```",
-            ))
-            lines.append("")
-
-        if response_text:
-            lines.append(_details_block(
-                "Agent Response", f"```\n{_truncate(response_text)}\n```",
-            ))
-            lines.append("")
-
-    return "\n".join(lines)
 
 
 def _render_source_distribution_section(section: ReportSection) -> str:
@@ -764,7 +733,7 @@ def _render_vulnerability_asr_table_section(section: ReportSection) -> str:
         for r in rows
     ]
     table = _md_table(
-        ["Vulnerability", "Domain", "Attacks", "Vulns", "ASR"],
+        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
         table_rows,
         right_align={2, 3},
     )
@@ -786,12 +755,98 @@ def _render_severity_definitions_section(section: ReportSection) -> str:
     return f"## {section.title}\n\n{table}"
 
 
+def _render_methodology_section(section: ReportSection) -> str:
+    """Render the methodology disclosure section."""
+    data = section.data
+    lines = [f"## {section.title}", ""]
+
+    # Pipeline and scoring
+    pipeline = data.get("pipeline", "unknown")
+    scoring = data.get("scoring_method", "llm-as-judge")
+    lines.append(f"**Assessment Type:** {pipeline}  ")
+    lines.append(f"**Scoring Method:** {scoring}  ")
+
+    # Models used
+    evaluator_model = data.get("evaluator_model")
+    attack_model = data.get("attack_model")
+    if evaluator_model:
+        lines.append(f"**Evaluator Model:** {evaluator_model}  ")
+    if attack_model:
+        lines.append(f"**Attack Model:** {attack_model}  ")
+
+    # Dataset source
+    dataset_source = data.get("dataset_source")
+    if dataset_source:
+        lines.append(f"**Dataset Source:** {dataset_source}  ")
+
+    # Framework
+    framework = data.get("framework")
+    if framework:
+        lines.append(f"**Framework:** {framework}  ")
+    lines.append("")
+
+    # Scope
+    categories = data.get("categories_tested") or []
+    vulnerabilities = data.get("vulnerabilities_tested") or []
+    total_attacks = data.get("total_attacks", 0)
+    coverage = data.get("evaluation_coverage", 0.0)
+    max_turns = data.get("max_turns")
+    duration = data.get("duration_seconds")
+
+    scope_rows = [
+        ["Categories Tested", str(len(categories))],
+        ["Total Attacks", str(total_attacks)],
+        ["Evaluation Coverage", _pct(coverage)],
+    ]
+    if vulnerabilities:
+        scope_rows.insert(1, ["Vulnerabilities Tested", str(len(vulnerabilities))])
+    if max_turns:
+        scope_rows.append(["Max Conversation Turns", str(max_turns)])
+    if duration is not None:
+        mins, secs = divmod(int(duration), 60)
+        scope_rows.append(["Duration", f"{mins}m {secs}s"])
+
+    lines.append(_md_table(["Parameter", "Value"], scope_rows))
+    lines.append("")
+
+    # Agents tested
+    agents = data.get("tested_agents", [])
+    if agents:
+        lines.append(f"**Agents Tested:** {', '.join(agents)}")
+        lines.append("")
+
+    # Scope limitations
+    limitations = data.get("scope_limitations", [])
+    if limitations:
+        lines.append("### Known Limitations")
+        lines.append("")
+        for lim in limitations:
+            lines.append(f"- {lim}")
+        lines.append("")
+
+    untested = data.get("untested_categories", [])
+    untested_names = data.get("untested_category_names", {})
+    if untested:
+        lines.append("### Untested Categories")
+        lines.append("")
+        lines.append(f"> [!WARNING]")
+        lines.append(f"> {len(untested)} supported categories were not included in this assessment:")
+        lines.append("")
+        for cat in untested:
+            name = untested_names.get(cat, cat)
+            lines.append(f"- **{cat}** — {name}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Section dispatch
 # ---------------------------------------------------------------------------
 
 _SECTION_RENDERERS = {
     "summary": _render_summary_section,
+    "methodology": _render_methodology_section,
     "agent_context": _render_agent_context_section,
     "focus_areas": _render_focus_areas_section,
     "agent_comparison": _render_agent_comparison_section,
@@ -806,7 +861,6 @@ _SECTION_RENDERERS = {
     "turn_depth_analysis": _render_turn_depth_analysis_section,
     "error_analysis": _render_error_analysis_section,
     "framework_breakdown": _render_framework_breakdown_section,
-    "individual_results": _render_individual_results_section,
     "source_distribution": _render_source_distribution_section,
     "token_usage": _render_token_usage_section,
     "severity_definitions": _render_severity_definitions_section,
@@ -814,7 +868,7 @@ _SECTION_RENDERERS = {
 
 # Sections wrapped in collapsible <details> blocks to keep the report concise.
 _COLLAPSED_SECTIONS = {
-    "individual_results",
+    "methodology",
     "severity_definitions",
     "token_usage",
     "source_distribution",
@@ -857,6 +911,10 @@ def export_markdown(report: RedTeamReport) -> str:
             if not rendered:
                 continue
             if section.kind in _COLLAPSED_SECTIONS:
+                # Strip the leading ## heading — _details_block adds its own <summary> title
+                heading_prefix = f"## {section.title}\n"
+                if rendered.startswith(heading_prefix):
+                    rendered = rendered[len(heading_prefix):].lstrip("\n")
                 rendered = _details_block(section.title, rendered)
             parts.append(rendered)
             parts.append("")

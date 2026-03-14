@@ -415,26 +415,14 @@ class TestMarkdownExport:
         md = export_markdown(report)
         assert re.search(r"#{1,3}\s.*[Tt]echnique", md) is not None
 
-    def test_export_has_individual_results(self):
-        """Exported markdown has an individual results section."""
+    def test_export_excludes_individual_results(self):
+        """Exported markdown does not include individual datapoint results."""
         from evaluatorq.redteam.reports.export_md import export_markdown
 
         report = _make_report(results=[_make_result("ASI01", passed=False)])
         md = export_markdown(report)
-        assert re.search(r"#{1,3}\s.*[Rr]esult", md) is not None
-
-    def test_export_uses_details_tags_for_prompts(self):
-        """Prompt/response content is wrapped in <details> tags."""
-        from evaluatorq.redteam.reports.export_md import export_markdown
-
-        report = _make_report(
-            results=[
-                _make_result("ASI01", passed=False, prompt="My attack prompt", response="My response")
-            ]
-        )
-        md = export_markdown(report)
-        assert "<details>" in md
-        assert "</details>" in md
+        assert "Individual" not in md
+        assert "[VULNERABLE] ASI01" not in md
 
     def test_export_focus_areas_include_remediation(self):
         """Focus areas in markdown include remediation guidance text."""

@@ -93,7 +93,37 @@ def _compute_risk_score(vulnerability_rate: float, results: list[RedTeamResult])
 
 def _build_summary_section(report: RedTeamReport) -> ReportSection:
     s = report.summary
-    targets = sorted(set(report.tested_agents)) if report.tested_agents else ["unknown"]
+    if report.tested_agents:
+        targets = sorted(set(report.tested_agents))
+    elif report.agent_contexts:
+        targets = sorted(report.agent_contexts.keys())
+    elif report.agent_context:
+        targets = [report.agent_context.display_name or report.agent_context.key or "unknown"]
+    else:
+        # Last resort: extract from individual results
+        agent_names = {r.agent.key or r.agent.display_name or r.agent.model for r in report.results if r.agent}
+        targets = sorted(agent_names - {None}) if agent_names - {None} else ["unknown"]
+    critical_sev = s.by_severity.get("critical")
+    critical_exposure = critical_sev.vulnerabilities_found if critical_sev else 0
+
+    # Confidence indicator based on sample size and category coverage
+    total = s.total_attacks
+    num_categories = len(report.categories_tested)
+    if total >= 100 and num_categories >= 5:
+        confidence = "HIGH"
+        confidence_note = f"{total} attacks across {num_categories} categories"
+    elif total >= 30 and num_categories >= 3:
+        confidence = "MEDIUM"
+        confidence_note = f"{total} attacks across {num_categories} categories"
+    else:
+        confidence = "LOW"
+        reasons = []
+        if total < 30:
+            reasons.append(f"only {total} attack{'s' if total != 1 else ''}")
+        if num_categories < 3:
+            reasons.append(f"only {num_categories} categor{'ies' if num_categories != 1 else 'y'}")
+        confidence_note = ", ".join(reasons)
+
     return ReportSection(
         kind="summary",
         title="Executive Summary",
@@ -109,6 +139,10 @@ def _build_summary_section(report: RedTeamReport) -> ReportSection:
             "evaluation_coverage": s.evaluation_coverage,
             "total_errors": s.total_errors,
             "duration_seconds": report.duration_seconds,
+            "critical_exposure": critical_exposure,
+            "by_severity": {k: v.model_dump(mode="json") for k, v in s.by_severity.items()},
+            "confidence": confidence,
+            "confidence_note": confidence_note,
         },
     )
 
@@ -176,7 +210,7 @@ def _build_vulnerability_breakdown_section(report: RedTeamReport) -> ReportSecti
     for vuln_id, vuln_summary in report.summary.by_vulnerability.items():
         total = vuln_summary.total_attacks
         found = vuln_summary.vulnerabilities_found
-        vulnerability_rate = found / total if total > 0 else 0.0
+        vulnerability_rate = 1.0 - vuln_summary.resistance_rate
         rows.append(
             {
                 "vulnerability": vuln_id,
@@ -440,8 +474,11 @@ def _build_agent_comparison_section(report: RedTeamReport) -> ReportSection:
     agent_results: dict[str, list[RedTeamResult]] = {a: [] for a in agents}
     for r in report.results:
         key = r.agent.key or r.agent.display_name or "unknown"
+        display = r.agent.display_name or r.agent.key or "unknown"
         if key in agent_results:
             agent_results[key].append(r)
+        elif display in agent_results:
+            agent_results[display].append(r)
 
     # Per-agent top-level metrics
     agent_metrics: list[dict[str, Any]] = []
@@ -858,7 +895,7 @@ def _build_vulnerability_asr_table_section(report: RedTeamReport) -> ReportSecti
             "domain": vuln_summary.domain,
             "total_attacks": total,
             "vulnerabilities_found": found,
-            "vulnerability_rate": found / total if total > 0 else 0.0,
+            "vulnerability_rate": 1.0 - vuln_summary.resistance_rate,
         })
 
     if not rows:
@@ -893,32 +930,68 @@ def _build_severity_definitions_section() -> ReportSection:
     )
 
 
+def _build_methodology_section(report: RedTeamReport) -> ReportSection | None:
+    """Build methodology disclosure section from report metadata."""
+    data: dict[str, Any] = {
+        "pipeline": report.pipeline.value,
+        "categories_tested": report.categories_tested,
+        "scoring_method": "llm-as-judge",
+    }
+
+    # Add computed metadata
+    data["total_attacks"] = report.summary.total_attacks
+    data["evaluation_coverage"] = report.summary.evaluation_coverage
+    data["tested_agents"] = report.tested_agents
+    data["framework"] = report.framework.value if report.framework else None
+    data["duration_seconds"] = report.duration_seconds
+
+    # Compute untested categories
+    all_supported = {k for k in OWASP_CATEGORY_NAMES if not k.startswith("OWASP-")}
+    tested = set(data.get("categories_tested") or report.categories_tested)
+    untested = sorted(all_supported - tested)
+    if untested:
+        data["untested_categories"] = untested
+        data["untested_category_names"] = {cat: OWASP_CATEGORY_NAMES.get(cat, cat) for cat in untested}
+
+    return ReportSection(
+        kind="methodology",
+        title="Methodology",
+        data=data,
+    )
+
+
 def build_report_sections(report: RedTeamReport) -> list[ReportSection]:
     """Convert a ``RedTeamReport`` into renderer-agnostic ``ReportSection`` objects.
 
     Returns sections in document order optimised for executive readability:
         1.  summary
-        2.  agent_context            (when agent info is available)
-        3.  focus_areas
-        4.  agent_comparison         (only when >= 2 agents — key decision info)
-        5.  agent_disagreements      (only when >= 2 agents)
-        6.  vulnerability_breakdown  (primary breakdown)
-        7.  category_breakdown
-        8.  attack_heatmap           (vulnerability × technique grid)
-        9.  technique_breakdown
-        10. delivery_breakdown       (when data present)
-        11. turn_scope_breakdown     (when turn-type/domain data present)
-        12. turn_depth_analysis      (multi-turn results only)
-        13. error_analysis           (only when errors exist)
-        14. framework_breakdown      (only when > 1 framework)
-        15. individual_results
-        16. source_distribution      (when >= 2 distinct sources)
-        17. token_usage              (when token data present)
-        18. severity_definitions     (reference / appendix)
+        2.  methodology
+        3.  agent_context            (when agent info is available)
+        4.  focus_areas
+        5.  agent_comparison         (only when >= 2 agents — key decision info)
+        6.  agent_disagreements      (only when >= 2 agents)
+        7.  vulnerability_breakdown  (primary breakdown)
+        8.  category_breakdown
+        9.  attack_heatmap           (vulnerability × technique grid)
+        10. technique_breakdown
+        11. delivery_breakdown       (when data present)
+        12. turn_scope_breakdown     (when turn-type/domain data present)
+        13. turn_depth_analysis      (multi-turn results only)
+        14. error_analysis           (only when errors exist)
+        15. framework_breakdown      (only when > 1 framework)
+        16. individual_results
+        17. source_distribution      (when >= 2 distinct sources)
+        18. token_usage              (when token data present)
+        19. severity_definitions     (reference / appendix)
     """
     sections: list[ReportSection] = [
         _build_summary_section(report),
     ]
+
+    # Methodology — how the assessment was conducted
+    methodology_section = _build_methodology_section(report)
+    if methodology_section is not None:
+        sections.append(methodology_section)
 
     # Agent context near the top — who/what was tested
     agent_ctx_section = _build_agent_context_section(report)

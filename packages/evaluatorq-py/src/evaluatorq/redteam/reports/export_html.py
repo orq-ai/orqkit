@@ -380,7 +380,7 @@ def _render_category_bar_chart(rows: list[dict[str, Any]]) -> str:
         margin=dict(t=40, b=40, l=80, r=50),
         title=dict(text="Vulnerability Rate by Category", font=dict(size=14)),
         xaxis_title="Vulnerability Rate (%)",
-        xaxis=dict(range=[0, max(rates) * 1.2 if rates else 100]),
+        xaxis=dict(range=[0, max(max(rates) * 1.2, 5) if rates else 100]),
         yaxis=dict(autorange="reversed"),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -428,7 +428,7 @@ def _render_technique_bar_chart(rows: list[dict[str, Any]]) -> str:
         margin=dict(t=40, b=40, l=140, r=60),
         title=dict(text="ASR by Technique", font=dict(size=14)),
         xaxis_title="Attack Success Rate (%)",
-        xaxis=dict(range=[0, max(rates) * 1.2 if rates else 100]),
+        xaxis=dict(range=[0, max(max(rates) * 1.2, 5) if rates else 100]),
         yaxis=dict(autorange="reversed"),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -477,7 +477,7 @@ def _render_vulnerability_bar_chart(rows: list[dict[str, Any]]) -> str:
         margin=dict(t=40, b=40, l=160, r=60),
         title=dict(text="ASR by Vulnerability", font=dict(size=14)),
         xaxis_title="Attack Success Rate (%)",
-        xaxis=dict(range=[0, max(rates) * 1.2 if rates else 100]),
+        xaxis=dict(range=[0, max(max(rates) * 1.2, 5) if rates else 100]),
         yaxis=dict(autorange="reversed"),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -592,7 +592,7 @@ def _render_summary_html(section: ReportSection) -> str:
     rows = [
         ["Total Attacks", _esc(str(data.get("total_attacks", 0)))],
         ["Evaluated", _esc(str(data.get("evaluated_attacks", 0)))],
-        ["Vulnerabilities Found", _esc(str(data.get("vulnerabilities_found", 0)))],
+        ["Successful Attacks", _esc(str(data.get("vulnerabilities_found", 0)))],
         ["ASR", _pct(data.get("vulnerability_rate", 0.0))],
         ["Evaluation Coverage", _pct(data.get("evaluation_coverage", 0.0))],
     ]
@@ -632,6 +632,13 @@ def _render_focus_areas_html(section: ReportSection) -> str:
         if remediation:
             card_lines.append(f"<p><strong>Remediation guidance:</strong></p>")
             card_lines.append(f"<blockquote>{_esc(remediation)}</blockquote>")
+
+        agent_remediation = area.get("agent_specific_remediation", "")
+        if agent_remediation:
+            card_lines.append(
+                f'<div style="margin-top:8px;padding:8px 12px;background:{_COLORS["sand_100"]};border-left:3px solid {_COLORS["orange_300"]};border-radius:4px">'
+                f'<strong>Agent-specific:</strong> {_esc(agent_remediation)}</div>'
+            )
 
         llm_rec = area.get("llm_recommendations")
         if llm_rec:
@@ -673,7 +680,7 @@ def _render_vulnerability_breakdown_html(section: ReportSection) -> str:
         for r in rows
     ]
     table = _html_table(
-        ["Vulnerability", "Domain", "Attacks", "Vulnerabilities", "ASR"],
+        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
         table_rows,
     )
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
@@ -695,7 +702,7 @@ def _render_category_breakdown_html(section: ReportSection) -> str:
         for r in rows
     ]
     table = _html_table(
-        ["Category", "Attacks", "Vulnerabilities", "ASR"],
+        ["Category", "Attacks", "Hits", "ASR"],
         table_rows,
     )
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
@@ -717,7 +724,7 @@ def _render_technique_breakdown_html(section: ReportSection) -> str:
         for r in rows
     ]
     table = _html_table(
-        ["Technique", "Attacks", "Vulnerabilities", "ASR"],
+        ["Technique", "Attacks", "Hits", "ASR"],
         table_rows,
     )
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
@@ -757,7 +764,7 @@ def _render_delivery_bar_chart(rows: list[dict[str, Any]]) -> str:
         margin=dict(t=40, b=40, l=140, r=60),
         title=dict(text="ASR by Delivery Method", font=dict(size=14)),
         xaxis_title="Attack Success Rate (%)",
-        xaxis=dict(range=[0, max(rates) * 1.2 if rates else 100]),
+        xaxis=dict(range=[0, max(max(rates) * 1.2, 5) if rates else 100]),
         yaxis=dict(autorange="reversed"),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -783,7 +790,7 @@ def _render_delivery_breakdown_html(section: ReportSection) -> str:
         for r in rows
     ]
     table = _html_table(
-        ["Delivery Method", "Attacks", "Vulnerabilities", "ASR"],
+        ["Delivery Method", "Attacks", "Hits", "ASR"],
         table_rows,
     )
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
@@ -1162,7 +1169,7 @@ def _render_turn_scope_breakdown_html(section: ReportSection) -> str:
             for turn_type, d in by_turn_type.items()
         ]
         parts.append("<h3>By Turn Type</h3>")
-        parts.append(_html_table(["Turn Type", "Attacks", "Vulnerabilities", "ASR"], tt_rows))
+        parts.append(_html_table(["Turn Type", "Attacks", "Hits", "ASR"], tt_rows))
 
     # Domain table
     if by_domain:
@@ -1176,7 +1183,7 @@ def _render_turn_scope_breakdown_html(section: ReportSection) -> str:
             for domain, d in by_domain.items()
         ]
         parts.append("<h3>By Domain</h3>")
-        parts.append(_html_table(["Domain", "Attacks", "Vulnerabilities", "ASR"], domain_rows))
+        parts.append(_html_table(["Domain", "Attacks", "Hits", "ASR"], domain_rows))
 
     return "\n".join(parts)
 
@@ -1235,7 +1242,7 @@ def _render_turn_depth_analysis_html(section: ReportSection) -> str:
         ]
         for r in rows
     ]
-    table = _html_table(["Turn Count", "Attacks", "Vulnerabilities", "ASR"], table_rows)
+    table = _html_table(["Turn Count", "Attacks", "Hits", "ASR"], table_rows)
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
 
 
@@ -1428,7 +1435,7 @@ def _render_vulnerability_asr_table_html(section: ReportSection) -> str:
         ])
 
     table = _html_table(
-        ["Vulnerability", "Domain", "Attacks", "Vulnerabilities", "ASR"],
+        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
         table_rows,
     )
     legend = (
@@ -1755,7 +1762,7 @@ def _render_framework_breakdown_html(section: ReportSection) -> str:
         for r in rows
     ]
     table = _html_table(
-        ["Framework", "Attacks", "Vulnerabilities", "ASR", "Resistance Rate"],
+        ["Framework", "Attacks", "Hits", "ASR", "Resistance Rate"],
         table_rows,
     )
     return f"<h2>{_esc(section.title)}</h2>\n{chart}\n{table}"
@@ -1790,8 +1797,89 @@ def _render_severity_definitions_html(section: ReportSection) -> str:
     return f"<h2>{_esc(section.title)}</h2>\n{table}"
 
 
+def _render_methodology_html(section: ReportSection) -> str:
+    """Render methodology disclosure section as HTML."""
+    data = section.data
+    rows = []
+
+    pipeline = data.get("pipeline", "unknown")
+    scoring = data.get("scoring_method", "llm-as-judge")
+    rows.append(("Assessment Type", pipeline.capitalize()))
+    rows.append(("Scoring Method", scoring))
+
+    evaluator_model = data.get("evaluator_model")
+    if evaluator_model:
+        rows.append(("Evaluator Model", evaluator_model))
+    attack_model = data.get("attack_model")
+    if attack_model:
+        rows.append(("Attack Model", attack_model))
+    dataset_source = data.get("dataset_source")
+    if dataset_source:
+        rows.append(("Dataset Source", dataset_source))
+    framework = data.get("framework")
+    if framework:
+        rows.append(("Framework", framework))
+
+    categories = data.get("categories_tested") or []
+    vulnerabilities = data.get("vulnerabilities_tested") or []
+    total_attacks = data.get("total_attacks", 0)
+    coverage = data.get("evaluation_coverage", 0.0)
+    max_turns = data.get("max_turns")
+    duration = data.get("duration_seconds")
+
+    rows.append(("Categories Tested", str(len(categories))))
+    if vulnerabilities:
+        rows.append(("Vulnerabilities Tested", str(len(vulnerabilities))))
+    rows.append(("Total Attacks", str(total_attacks)))
+    rows.append(("Evaluation Coverage", f"{coverage:.0%}"))
+    if max_turns:
+        rows.append(("Max Conversation Turns", str(max_turns)))
+    if duration is not None:
+        mins, secs = divmod(int(duration), 60)
+        rows.append(("Duration", f"{mins}m {secs}s"))
+
+    agents = data.get("tested_agents", [])
+    if agents:
+        rows.append(("Agents Tested", ", ".join(agents)))
+
+    table_html = "\n".join(
+        f'<tr><td style="font-weight:600;padding:6px 12px;white-space:nowrap">{_esc(k)}</td>'
+        f'<td style="padding:6px 12px">{_esc(v)}</td></tr>'
+        for k, v in rows
+    )
+
+    limitations = data.get("scope_limitations", [])
+    limitations_html = ""
+    if limitations:
+        items = "".join(f"<li>{_esc(lim)}</li>" for lim in limitations)
+        limitations_html = f'<h4 style="margin-top:16px">Known Limitations</h4><ul>{items}</ul>'
+
+    untested = data.get("untested_categories", [])
+    untested_names = data.get("untested_category_names", {})
+    untested_html = ""
+    if untested:
+        items = "".join(
+            f"<li><strong>{_esc(cat)}</strong> — {_esc(untested_names.get(cat, cat))}</li>"
+            for cat in untested
+        )
+        untested_html = (
+            f'<div style="margin-top:16px;padding:12px;background:#fff3cd;border-left:3px solid #ffc107;border-radius:4px">'
+            f'<strong>{len(untested)} supported categories not tested:</strong>'
+            f'<ul style="margin:8px 0 0 0">{items}</ul></div>'
+        )
+
+    return (
+        f'<section id="methodology"><h2>{_esc(section.title)}</h2>'
+        f'<table style="border-collapse:collapse;width:100%;max-width:600px">'
+        f'{table_html}</table>'
+        f'{limitations_html}'
+        f'{untested_html}</section>'
+    )
+
+
 _SECTION_RENDERERS = {
     "summary": _render_summary_html,
+    "methodology": _render_methodology_html,
     "severity_definitions": _render_severity_definitions_html,
     "focus_areas": _render_focus_areas_html,
     "vulnerability_breakdown": _render_vulnerability_breakdown_html,
@@ -1834,7 +1922,13 @@ def _risk_level(asr: float, critical_count: int) -> tuple[str, str]:
     return "Low Risk", "risk-low"
 
 
-def _render_risk_banner(asr: float, critical_count: int, total_attacks: int) -> str:
+def _render_risk_banner(
+    asr: float,
+    critical_count: int,
+    total_attacks: int,
+    confidence: str = "",
+    confidence_note: str = "",
+) -> str:
     """Render a prominent risk-level verdict banner."""
     level, css_cls = _risk_level(asr, critical_count)
     summary = (
@@ -1848,10 +1942,18 @@ def _render_risk_banner(asr: float, critical_count: int, total_attacks: int) -> 
     else:
         summary += f"Immediate remediation of top-risk areas is recommended."
 
+    confidence_html = ""
+    if confidence:
+        confidence_html = (
+            f'<div style="margin-top:.5rem;font-size:.82em;opacity:.8">'
+            f'<strong>Confidence: {_esc(confidence)}</strong> — {_esc(confidence_note)}</div>'
+        )
+
     return (
         f'<div class="risk-banner {css_cls}">'
         f'<div style="font-size:1.4em;margin-bottom:.3rem">{level}</div>'
         f'<div style="font-weight:400;font-size:.9em">{summary}</div>'
+        f'{confidence_html}'
         f"</div>"
     )
 
@@ -1917,7 +2019,9 @@ def export_html(report: RedTeamReport) -> str:
     # Risk verdict banner
     asr = report.summary.vulnerability_rate
     total_attacks = report.summary.total_attacks
-    risk_banner = _render_risk_banner(asr, critical_exposure, total_attacks)
+    confidence = summary_section.data.get("confidence", "") if summary_section else ""
+    confidence_note = summary_section.data.get("confidence_note", "") if summary_section else ""
+    risk_banner = _render_risk_banner(asr, critical_exposure, total_attacks, confidence, confidence_note)
 
     # Table of contents
     toc = _render_toc(sections)
