@@ -187,13 +187,13 @@ class TestHTMLExport:
         assert "ASI01" in html
         assert "ASI02" in html
 
-    def test_export_does_not_contain_individual_results(self):
-        """Individual results section is intentionally excluded from the HTML report."""
+    def test_export_contains_individual_results(self):
+        """Individual results section is rendered in the HTML report."""
         from evaluatorq.redteam.reports.export_html import export_html
 
         report = _make_report(results=[_make_result("ASI01", passed=False)])
         html = export_html(report)
-        assert "Individual Attack Results" not in html
+        assert "Individual Attack Results" in html
 
     def test_export_badge_css_present_in_stylesheet(self):
         """Badge CSS classes are defined in the stylesheet even without individual results."""
