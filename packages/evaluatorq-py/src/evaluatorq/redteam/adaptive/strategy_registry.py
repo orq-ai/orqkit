@@ -14,7 +14,8 @@ from loguru import logger
 
 from evaluatorq.redteam.frameworks.owasp_asi import ASI_STRATEGIES
 from evaluatorq.redteam.frameworks.owasp_llm import LLM_STRATEGIES
-from evaluatorq.redteam.contracts import AgentContext, AttackStrategy  # noqa: TC001
+from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, Vulnerability  # noqa: TC001
+from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
 
 if TYPE_CHECKING:
     from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities
@@ -27,6 +28,27 @@ STRATEGY_REGISTRY: dict[str, list[AttackStrategy]] = {
 
 # Also support OWASP- prefixed versions
 STRATEGY_REGISTRY.update({f'OWASP-{k}': v for k, v in STRATEGY_REGISTRY.items()})
+
+# Primary registry keyed by vulnerability
+VULNERABILITY_STRATEGY_REGISTRY: dict[Vulnerability, list[AttackStrategy]] = {}
+for _cat, _strategies in STRATEGY_REGISTRY.items():
+    if _cat.startswith('OWASP-'):
+        continue  # skip prefixed duplicates
+    _vuln = CATEGORY_TO_VULNERABILITY.get(_cat)
+    if _vuln is not None:
+        VULNERABILITY_STRATEGY_REGISTRY[_vuln] = _strategies
+
+
+def get_strategies_for_vulnerability(vuln: Vulnerability) -> list[AttackStrategy]:
+    """Get all strategies for a given vulnerability.
+
+    Args:
+        vuln: Vulnerability enum value
+
+    Returns:
+        List of attack strategies for the vulnerability, or empty list if not found
+    """
+    return VULNERABILITY_STRATEGY_REGISTRY.get(vuln, [])
 
 
 def get_strategies_for_category(category: str) -> list[AttackStrategy]:
@@ -41,31 +63,26 @@ def get_strategies_for_category(category: str) -> list[AttackStrategy]:
     return STRATEGY_REGISTRY.get(category, [])
 
 
-def select_applicable_strategies(
-    category: str,
+def _filter_applicable_strategies(
+    all_strategies: list[AttackStrategy],
+    label: str,
     agent_context: AgentContext,
-    agent_capabilities: AgentCapabilities | None = None,
+    agent_capabilities: AgentCapabilities | None,
 ) -> list[AttackStrategy]:
-    """Select strategies applicable to the given agent based on its context.
+    """Filter strategies to those applicable for the given agent context.
 
-    Filters out strategies whose requirements are not met by the agent:
-    - requires_tools: Agent must have tools configured
-    - required_capabilities: Agent must have at least one matching capability
+    Shared implementation used by both select_applicable_strategies() and
+    select_applicable_strategies_for_vulnerability().
 
     Args:
-        category: OWASP category code
+        all_strategies: Full list of candidate strategies to filter.
+        label: Human-readable label for logging (category code or vulnerability value).
         agent_context: Agent context with tools, memory, etc.
-        agent_capabilities: Classified capabilities (optional, for capability filtering)
+        agent_capabilities: Classified capabilities (optional, for capability filtering).
 
     Returns:
-        List of applicable strategies
+        List of applicable strategies.
     """
-    all_strategies = get_strategies_for_category(category)
-
-    if not all_strategies:
-        logger.warning(f'No strategies found for category: {category}')
-        return []
-
     applicable: list[AttackStrategy] = []
 
     for strategy in all_strategies:
@@ -92,11 +109,71 @@ def select_applicable_strategies(
 
         applicable.append(strategy)
 
-    logger.info(
-        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {category} (agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
+    logger.debug(
+        f'Selected {len(applicable)}/{len(all_strategies)} strategies for {label} '
+        f'(agent has: {len(agent_context.tools)} tools, {len(agent_context.memory_stores)} memory stores)'
     )
 
     return applicable
+
+
+def select_applicable_strategies(
+    category: str,
+    agent_context: AgentContext,
+    agent_capabilities: AgentCapabilities | None = None,
+) -> list[AttackStrategy]:
+    """Select strategies applicable to the given agent based on its context.
+
+    Filters out strategies whose requirements are not met by the agent:
+    - requires_tools: Agent must have tools configured
+    - required_capabilities: Agent must have at least one matching capability
+
+    Args:
+        category: OWASP category code
+        agent_context: Agent context with tools, memory, etc.
+        agent_capabilities: Classified capabilities (optional, for capability filtering)
+
+    Returns:
+        List of applicable strategies
+    """
+    all_strategies = get_strategies_for_category(category)
+
+    if not all_strategies:
+        logger.debug(f'No hardcoded strategies for category: {category} (will use generated strategies only)')
+        return []
+
+    return _filter_applicable_strategies(all_strategies, category, agent_context, agent_capabilities)
+
+
+def select_applicable_strategies_for_vulnerability(
+    vuln: Vulnerability,
+    agent_context: AgentContext,
+    agent_capabilities: AgentCapabilities | None = None,
+) -> list[AttackStrategy]:
+    """Select strategies applicable to the given agent for a vulnerability.
+
+    Mirrors select_applicable_strategies() but operates on a Vulnerability enum
+    rather than an OWASP category string.
+
+    Filters out strategies whose requirements are not met by the agent:
+    - requires_tools: Agent must have tools configured
+    - required_capabilities: Agent must have at least one matching capability
+
+    Args:
+        vuln: Vulnerability enum value
+        agent_context: Agent context with tools, memory, etc.
+        agent_capabilities: Classified capabilities (optional, for capability filtering)
+
+    Returns:
+        List of applicable strategies
+    """
+    all_strategies = get_strategies_for_vulnerability(vuln)
+
+    if not all_strategies:
+        logger.debug(f'No hardcoded strategies for vulnerability: {vuln.value} (will use generated strategies only)')
+        return []
+
+    return _filter_applicable_strategies(all_strategies, vuln.value, agent_context, agent_capabilities)
 
 
 def _fallback_capability_check(required: list[str], agent_context: AgentContext) -> bool:
@@ -123,12 +200,20 @@ def _fallback_capability_check(required: list[str], agent_context: AgentContext)
 
 
 def list_available_categories() -> list[str]:
-    """List all available OWASP categories with strategies.
+    """List all OWASP categories that can be tested.
+
+    Includes categories with hardcoded strategies AND categories that only
+    have an evaluator (these can still be tested via LLM-generated strategies
+    in dynamic mode).
 
     Returns:
         List of category codes (without OWASP- prefix)
     """
-    return [k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')]
+    from evaluatorq.redteam.frameworks.owasp.evaluators import OWASP_EVALUATOR_REGISTRY
+
+    strategy_cats = {k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')}
+    evaluator_cats = {k for k in OWASP_EVALUATOR_REGISTRY if not k.startswith('OWASP-')}
+    return sorted(strategy_cats | evaluator_cats)
 
 
 def get_category_info() -> dict[str, dict[str, Any]]:
@@ -140,9 +225,12 @@ def get_category_info() -> dict[str, dict[str, Any]]:
         - strategy_count: Number of strategies
         - single_turn_count: Number of single-turn strategies
         - multi_turn_count: Number of multi-turn strategies
+        - vulnerability: Vulnerability enum value (or None if unmapped)
+        - vulnerability_name: Human-readable vulnerability name (or None if unmapped)
     """
     from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
     from evaluatorq.redteam.contracts import TurnType
+    from evaluatorq.redteam.vulnerability_registry import VULNERABILITY_DEFS
 
     info: dict[str, dict[str, Any]] = {}
     for category in list_available_categories():
@@ -150,11 +238,19 @@ def get_category_info() -> dict[str, dict[str, Any]]:
         single_turn = sum(1 for s in strategies if s.turn_type == TurnType.SINGLE)
         multi_turn = sum(1 for s in strategies if s.turn_type == TurnType.MULTI)
 
+        vuln = CATEGORY_TO_VULNERABILITY.get(category)
+        vuln_name: str | None = None
+        if vuln is not None:
+            vdef = VULNERABILITY_DEFS.get(vuln)
+            vuln_name = vdef.name if vdef is not None else vuln.value
+
         info[category] = {
             'name': OWASP_CATEGORY_NAMES.get(category, category),
             'strategy_count': len(strategies),
             'single_turn_count': single_turn,
             'multi_turn_count': multi_turn,
+            'vulnerability': vuln,
+            'vulnerability_name': vuln_name,
         }
 
     return info

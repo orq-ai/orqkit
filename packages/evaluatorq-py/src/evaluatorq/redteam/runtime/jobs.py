@@ -8,10 +8,9 @@ from evaluatorq import DataPoint, Job, job
 from loguru import logger
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from pydantic import ValidationError
-
 from evaluatorq.redteam.contracts import Message, TokenUsage
-from evaluatorq.redteam.runtime.orq_agent_job import create_orq_platform_agent_job
+from evaluatorq.redteam.exceptions import CredentialError
+from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name, create_orq_platform_agent_job
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -22,6 +21,7 @@ def create_model_job(
     deployment_key: str | None = None,
     agent_key: str | None = None,
     llm_client: AsyncOpenAI | None = None,
+    system_prompt: str | None = None,
 ) -> Job:
     """Create an evaluatorq job for router model, deployment, or ORQ agent.
 
@@ -40,23 +40,28 @@ def create_model_job(
         return create_orq_platform_agent_job(agent_key)
 
     if deployment_key:
-        try:
-            from orq_ai_sdk import Orq
-        except ImportError as e:
-            msg = (
-                'Deployment jobs require the orq-ai-sdk package. '
-                'Install it with: pip install evaluatorq[orq]'
-            )
-            raise ImportError(msg) from e
+        safe_key = _sanitize_job_name(deployment_key)
 
-        import os
-
-        deployment_client = Orq(api_key=os.environ.get('ORQ_API_KEY', ''))
-
-        @job('model-under-test')
+        @job(f'redteam:static:{safe_key}')
         async def deployment_job(data: DataPoint, _row: int) -> dict[str, Any]:
+            """Invoke the ORQ deployment and return the response with token usage."""
+            try:
+                from orq_ai_sdk import Orq
+            except ImportError as e:
+                msg = (
+                    'Deployment jobs require the orq-ai-sdk package. '
+                    'Install it with: pip install evaluatorq[orq]'
+                )
+                raise ImportError(msg) from e
+
+            import os
+
             messages = _build_messages(data)
-            completion = await deployment_client.deployments.invoke_async(
+            api_key = os.environ.get('ORQ_API_KEY')
+            if not api_key:
+                raise CredentialError('ORQ_API_KEY environment variable is not set')
+            client = Orq(api_key=api_key)
+            completion = await client.deployments.invoke_async(
                 key=deployment_key,
                 messages=messages,  # pyright: ignore[reportArgumentType]
             )
@@ -72,12 +77,16 @@ def create_model_job(
         msg = "Provide one of: 'model', 'deployment_key', or 'agent_key'"
         raise ValueError(msg)
 
-    resolved_client = llm_client or create_async_llm_client()
+    safe_model = _sanitize_job_name(model)
 
-    @job('model-under-test')
+    @job(f'redteam:static:{safe_model}')
     async def router_job(data: DataPoint, _row: int) -> dict[str, Any]:
+        """Call the router model and return the response with token usage and finish reason."""
         messages = _build_messages(data)
-        response = await resolved_client.chat.completions.create(
+        if system_prompt:
+            messages = [{'role': 'system', 'content': system_prompt}] + messages
+        client = llm_client or create_async_llm_client()
+        response = await client.chat.completions.create(
             model=model,
             messages=messages,  # pyright: ignore[reportArgumentType]
         )
@@ -87,7 +96,7 @@ def create_model_job(
             finish_reason = response.choices[0].finish_reason
             logger.warning(
                 f'Empty router response for {sample_id}: '
-                + f'content={response.choices[0].message.content}, finish_reason={finish_reason}'
+                f'content={response.choices[0].message.content}, finish_reason={finish_reason}'
             )
         return {
             'response': content,
@@ -109,7 +118,8 @@ def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
             try:
                 parsed = Message.model_validate(raw)
                 messages.append(parsed.model_dump(mode='json', exclude_none=True))
-            except (ValidationError, TypeError):
+            except Exception as e:
+                logger.debug(f'Message validation failed, using raw dict: {e}')
                 messages.append(dict(raw))
             continue
         messages.append({'role': 'user', 'content': str(raw)})
@@ -144,15 +154,28 @@ def _safe_int(value: Any) -> int:
         return 0
 
 
+def _normalize_usage(raw_usage: Any) -> TokenUsage | None:
+    """Normalize usage payloads to TokenUsage."""
+    if isinstance(raw_usage, TokenUsage):
+        return raw_usage
+    if not isinstance(raw_usage, dict):
+        return None
+
+    prompt = _safe_int(raw_usage.get('prompt_tokens', raw_usage.get('prompt', 0)))
+    completion = _safe_int(raw_usage.get('completion_tokens', raw_usage.get('completion', 0)))
+    total = _safe_int(raw_usage.get('total_tokens', raw_usage.get('total', prompt + completion)))
+    return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
+
+
 def _extract_usage_from_chat_completion(response: Any) -> TokenUsage | None:
     """Extract token usage from OpenAI-compatible completion responses."""
     usage = getattr(response, 'usage', None)
     if usage is None:
         return None
 
-    prompt = _safe_int(getattr(usage, 'prompt_tokens', 0))
-    completion = _safe_int(getattr(usage, 'completion_tokens', 0))
-    total = _safe_int(getattr(usage, 'total_tokens', prompt + completion))
+    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
+    completion = int(getattr(usage, 'completion_tokens', 0) or 0)
+    total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
 
 
@@ -162,7 +185,7 @@ def _extract_usage_from_deployment_completion(completion: Any) -> TokenUsage | N
     if usage is None:
         return None
 
-    prompt = _safe_int(getattr(usage, 'prompt_tokens', 0))
-    completion_tokens = _safe_int(getattr(usage, 'completion_tokens', 0))
-    total = _safe_int(getattr(usage, 'total_tokens', prompt + completion_tokens))
+    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
+    completion_tokens = int(getattr(usage, 'completion_tokens', 0) or 0)
+    total = int(getattr(usage, 'total_tokens', prompt + completion_tokens) or 0)
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion_tokens, total_tokens=total)
