@@ -85,7 +85,9 @@ export class OrqAgent implements INodeType {
         );
         const responseText = agentMessages
           .flatMap((m: OrqTaskMessage) =>
-            m.parts.filter((p) => p.kind === "text").map((p) => p.text),
+            m.parts
+              .filter((p) => p.kind === "text" && p.text != null)
+              .map((p) => p.text as string),
           )
           .join("\n");
 
