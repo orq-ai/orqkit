@@ -462,7 +462,8 @@ def dynamic_evaluatorq_results_to_report(
         )
 
     summary = compute_report_summary(unified)
-    categories = [normalize_category(c) for c in categories_tested]
+    # Derive categories from actual results, not the (possibly broader) requested list
+    categories = sorted({r.attack.category for r in unified})
 
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
