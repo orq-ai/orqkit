@@ -1,7 +1,7 @@
 import type { DataPoint } from "@orq-ai/evaluatorq";
 import { evaluatorq, job } from "@orq-ai/evaluatorq";
 
-import { maxLengthValidator } from "./evals.js";
+import { maxLengthValidator } from "../utils/evals.js";
 
 const textAnalysisJob = job("text-analyzer", async (data: DataPoint) => {
   const text = data.inputs.text || data.inputs.input || "";

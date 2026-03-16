@@ -3,7 +3,10 @@ import { describe, expect, mock, test } from "bun:test";
 import { Effect } from "effect";
 
 import { sendResultsToOrqEffect } from "../../src/lib/send-results.js";
-import type { EvaluatorqResult } from "../../src/lib/types.js";
+import type {
+  EvaluationResultCellValue,
+  EvaluatorqResult,
+} from "../../src/lib/types.js";
 
 describe("sendResultsToOrqEffect serialization", () => {
   const apiKey = "test-key";
@@ -16,7 +19,7 @@ describe("sendResultsToOrqEffect serialization", () => {
       | number
       | boolean
       | string
-      | { type: string; value: Record<string, unknown> },
+      | { type: string; value: Record<string, EvaluationResultCellValue> },
     error?: Error,
   ): EvaluatorqResult {
     return [
@@ -69,6 +72,7 @@ describe("sendResultsToOrqEffect serialization", () => {
           results,
           startTime,
           endTime,
+          undefined,
         ),
       ).finally(() => {
         globalThis.fetch = originalFetch;

@@ -3,20 +3,25 @@
  *
  * Demonstrates a sophisticated evaluation scenario with:
  *   - Multi-node StateGraph with branching logic and specialized tool nodes
- *   - Dataset pulled from the Orq platform
- *   - Multiple evaluators: correctness, tool chain validation, structured rubric,
- *     response completeness, and latency-aware scoring
- *   - Structured EvaluationResultCell scores
+ *   - Dataset with structured inputs: { city, data }, messages, expected_output
+ *   - System instructions built from dataset inputs (city + data)
+ *   - User prompt extracted from dataset messages
+ *   - OpenResponses output with input: [system, user] messages
+ *   - Multiple evaluators: correctness, tool chain, quality rubric,
+ *     completeness, efficiency, and city-relevance
  *   - Path-based organization for the Orq dashboard
  *   - Parallel processing
  *
  * Prerequisites:
  *   - Set OPENAI_API_KEY and ORQ_API_KEY environment variables
- *   - Upload a dataset to Orq with columns: "input" (the user prompt)
- *     and optionally "expected_output" (the expected answer)
+ *   - Upload a dataset to Orq with columns:
+ *       "city"            — city name (string)
+ *       "data"            — contextual data about the city (string)
+ *       "messages"        — conversation messages (the user prompt as a message)
+ *       "expected_output" — the expected answer (string, optional)
  *
  * Usage:
- *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langgraph-research-eval.ts
+ *   ORQ_API_KEY=... OPENAI_API_KEY=... bun examples/src/lib/integrations/langchain/langgraph-research-eval.ts
  */
 
 import type { AIMessage, BaseMessage } from "@langchain/core/messages";
@@ -34,25 +39,15 @@ import { z } from "zod";
 import type { Evaluator } from "@orq-ai/evaluatorq";
 import { evaluatorq } from "@orq-ai/evaluatorq";
 import { wrapLangGraphAgent } from "@orq-ai/evaluatorq/langchain";
+import { extractText } from "@orq-ai/evaluatorq/openresponses";
 
-// ────────────────────────────────────────────────
-// Helpers — extract text and tool calls from OpenResponses output
-// ────────────────────────────────────────────────
-function extractText(output: unknown): string {
-  const res = output as Record<string, unknown>;
-  const items = (res.output as Array<Record<string, unknown>>) ?? [];
-  const message = items.find((item) => item.type === "message");
-  if (!message) return "";
-  const contentArray = message.content as Array<Record<string, unknown>>;
-  const textContent = contentArray?.find((c) => c.type === "output_text");
-  return (textContent?.text as string) ?? "";
-}
-
-function extractToolCalls(output: unknown): Array<Record<string, unknown>> {
-  const res = output as Record<string, unknown>;
-  const items = (res.output as Array<Record<string, unknown>>) ?? [];
-  return items.filter((item) => item.type === "function_call");
-}
+import {
+  buildResearchInstructions,
+  cityRelevanceEvaluator,
+  completenessEvaluator,
+  correctnessEvaluator,
+  extractToolCalls,
+} from "../../utils/agent-eval-helpers.js";
 
 // ────────────────────────────────────────────────
 // Tools — a rich set to enable multi-step reasoning
@@ -102,13 +97,26 @@ const fetchPageTool = tool(
 
 const calculatorTool = tool(
   async ({ expression }) => {
-    try {
-      const sanitized = expression.replace(/[^0-9+\-*/().%^ ]/g, "");
-      const result = Function(`"use strict"; return (${sanitized})`)();
-      return { expression, result: Number(result) };
-    } catch {
-      return { expression, result: null, error: "Could not evaluate" };
+    // NOTE: Uses a hard-coded lookup for demo purposes.
+    // In production, use a dedicated math expression library instead.
+    const knownExpressions: Record<string, number> = {
+      "2 + 2": 4,
+      "10 * 5": 50,
+      "100 / 4": 25,
+      "3.14 * 2": 6.28,
+      "2 ** 10": 1024,
+      "(5 + 3) * 2": 16,
+      "1000 - 750": 250,
+    };
+    const result = knownExpressions[expression.trim()];
+    if (result !== undefined) {
+      return { expression, result };
     }
+    return {
+      expression,
+      result: null,
+      error: "Expression not in demo lookup table",
+    };
   },
   {
     name: "calculator",
@@ -151,7 +159,7 @@ const factCheckTool = tool(
     const confidence = 0.85;
     return {
       claim,
-      verdict: confidence > 0.85 ? "supported" : "partially_supported",
+      verdict: confidence >= 0.85 ? "supported" : "partially_supported",
       confidence: Math.round(confidence * 100) / 100,
       sources: [
         `https://example.com/fact-check/${encodeURIComponent(claim.slice(0, 30))}`,
@@ -237,39 +245,15 @@ const graph = new StateGraph(AgentAnnotation)
 const compiledGraph = graph.compile();
 
 // ────────────────────────────────────────────────
-// Evaluators
+// LangGraph-specific evaluators
 // ────────────────────────────────────────────────
-
-/** Checks correctness against expected output when available. */
-const correctnessEvaluator: Evaluator = {
-  name: "correctness",
-  scorer: async ({ data, output }) => {
-    const text = extractText(output).toLowerCase();
-    const expected = (data.inputs as Record<string, string>).expected_output;
-    if (!expected) {
-      return {
-        value: text.length > 20 ? 1 : 0.5,
-        explanation: "No expected output — scored on response substance",
-      };
-    }
-    const expectedStr = String(expected).toLowerCase();
-    const contains = text.includes(expectedStr);
-    return {
-      value: contains ? 1 : 0,
-      pass: contains,
-      explanation: contains
-        ? `Output contains expected answer "${expected}"`
-        : `Expected "${expected}" not found in output`,
-    };
-  },
-};
 
 /** Validates that the agent built a proper tool chain. */
 const toolChainEvaluator: Evaluator = {
   name: "tool-chain",
   scorer: async ({ output }) => {
     const calls = extractToolCalls(output);
-    const toolNames = calls.map((c) => c.name as string);
+    const toolNames = calls.map((c) => c.name);
     const uniqueTools = [...new Set(toolNames)];
 
     // Did the agent use search before summarize? (good chain)
@@ -317,7 +301,7 @@ const responseQualityEvaluator: Evaluator = {
 
     // Sourcing — did the agent cite sources or use search?
     const sourcing = calls.some((c) =>
-      ["search", "fetch_page"].includes(c.name as string),
+      ["search", "fetch_page"].includes(c.name),
     )
       ? 0.9
       : 0.3;
@@ -334,26 +318,6 @@ const responseQualityEvaluator: Evaluator = {
       },
       explanation:
         "Multi-criteria quality rubric (depth, accuracy, coherence, sourcing)",
-    };
-  },
-};
-
-/** Boolean pass/fail — the response must not be empty or a refusal. */
-const completenessEvaluator: Evaluator = {
-  name: "completeness",
-  scorer: async ({ output }) => {
-    const text = extractText(output);
-    const words = text.split(/\s+/).filter(Boolean).length;
-    const isRefusal = /i (can't|cannot|am unable to)/i.test(text);
-    const isComplete = words >= 10 && !isRefusal;
-    return {
-      value: isComplete,
-      pass: isComplete,
-      explanation: isComplete
-        ? `Complete response (${words} words)`
-        : isRefusal
-          ? "Agent refused to answer"
-          : `Incomplete response (only ${words} words)`,
     };
   },
 };
@@ -389,7 +353,7 @@ const DATASET_ID = process.env.DATASET_ID;
 
 await evaluatorq("langgraph-complex-research-eval", {
   description:
-    "Complex LangGraph research agent evaluation: multi-tool chain scored on correctness, tool chain, response quality, completeness, and efficiency",
+    "Complex LangGraph research agent evaluation with structured dataset input (city + data), custom instructions, and OpenResponses output",
   path: "Integrations/LangGraph",
   parallelism: 3,
   data: {
@@ -398,13 +362,25 @@ await evaluatorq("langgraph-complex-research-eval", {
         throw new Error("DATASET_ID environment variable is required");
       return DATASET_ID;
     })(),
+    includeMessages: true,
   },
-  jobs: [wrapLangGraphAgent(compiledGraph, { name: "research-graph-agent" })],
+  jobs: [
+    wrapLangGraphAgent(compiledGraph, {
+      name: "research-graph-agent",
+      instructions: (data) =>
+        buildResearchInstructions(
+          data.inputs.city as string,
+          data.inputs.data as string,
+          "search, fetch_page, calculator, summarize, or fact_check",
+        ),
+    }),
+  ],
   evaluators: [
     correctnessEvaluator,
     toolChainEvaluator,
     responseQualityEvaluator,
     completenessEvaluator,
     efficiencyEvaluator,
+    cityRelevanceEvaluator,
   ],
 });
