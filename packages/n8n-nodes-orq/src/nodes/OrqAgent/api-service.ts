@@ -39,7 +39,10 @@ export async function getAgentKeys(
       },
     )) as OrqAgentListResponse;
 
-    return response.data.map((agent: OrqAgent) => ({
+    return (response?.data ?? []).map((agent: OrqAgent) => ({
+      name: agent.display_name || agent.key,
+      value: agent.key,
+    }));
       name: agent.display_name || agent.key,
       value: agent.key,
     }));
