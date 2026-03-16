@@ -7,6 +7,7 @@ adapts based on agent responses.
 
 import asyncio
 import time
+from collections import deque
 from inspect import signature
 from threading import Lock
 from typing import Any, cast
@@ -35,8 +36,11 @@ _shared_progress_task_ids: set[TaskID] = set()
 _shared_progress_summary_task_id: TaskID | None = None
 _shared_progress_started = 0
 _shared_progress_finished = 0
+_shared_progress_total: int | None = None
 _PROGRESS_LABEL_MAX_LEN = 52
+_MAX_VISIBLE_TASK_BARS = 10
 _progress_ui_disabled = False
+_progress_waiters: deque[asyncio.Event] = deque()
 
 ADVERSARIAL_SYSTEM_PROMPT = """You are a red team security researcher testing an AI agent for vulnerabilities.
 
@@ -116,26 +120,43 @@ def _ensure_shared_progress() -> None:
         console=_ui_console,
     )
     _shared_progress.start()
+    # Suppress loguru output while progress bars are active to prevent log lines
+    # from corrupting Rich's live terminal display.
+    logger.disable("evaluatorq")
     _shared_progress_summary_task_id = _shared_progress.add_task(
-        '[bold]Running 0 attacks | Finished 0[/bold]',
-        total=1,
+        '[bold]Overall[/bold]',
+        total=_shared_progress_total or 1,
         completed=0,
     )
 
 
-def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
-    """Start (or reuse) shared progress and add one per-attack task row."""
+async def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
+    """Start (or reuse) shared progress and add one per-attack task row.
+
+    If there are already ``_MAX_VISIBLE_TASK_BARS`` per-attack bars visible,
+    waits until a slot is freed by ``_stop_shared_progress_task``.
+    """
     global _shared_progress_started
 
-    with _progress_lock:
-        _ensure_shared_progress()
-        assert _shared_progress is not None  # for type checker
+    # Wait for a free slot if the bar limit is reached.
+    while True:
+        with _progress_lock:
+            if len(_shared_progress_task_ids) < _MAX_VISIBLE_TASK_BARS:
+                _ensure_shared_progress()
+                assert _shared_progress is not None  # for type checker
 
-        task_id = _shared_progress.add_task(description, total=total)
-        _shared_progress_task_ids.add(task_id)
-        _shared_progress_started += 1
-        _update_shared_progress_summary_locked()
-        return task_id
+                task_id = _shared_progress.add_task(description, total=total)
+                _shared_progress_task_ids.add(task_id)
+                _shared_progress_started += 1
+                _update_shared_progress_summary_locked()
+                return task_id
+
+            # No free slot — register a waiter and release the lock.
+            event = asyncio.Event()
+            _progress_waiters.append(event)
+
+        # Wait outside the lock so other tasks can finish and free slots.
+        await event.wait()
 
 
 def _register_shared_progress_attack() -> None:
@@ -210,7 +231,11 @@ def _stop_shared_progress_task(task_id: TaskID) -> None:
             _shared_progress_finished += 1
             _update_shared_progress_summary_locked()
 
-        if not _shared_progress_task_ids:
+        all_done = _shared_progress_finished >= _shared_progress_started and not _shared_progress_task_ids
+        has_known_total = _shared_progress_total is not None
+        all_known_done = has_known_total and _shared_progress_finished >= _shared_progress_total
+
+        if all_done or all_known_done:
             if _shared_progress_summary_task_id is not None:
                 try:
                     _shared_progress.remove_task(_shared_progress_summary_task_id)
@@ -218,17 +243,20 @@ def _stop_shared_progress_task(task_id: TaskID) -> None:
                     logger.debug(f'Failed to remove shared progress summary task: {e}')
             _shared_progress.stop()
             _reset_shared_progress_state_locked()
+        elif _progress_waiters:
+            # Wake one waiter so it can claim the freed slot.
+            _progress_waiters.popleft().set()
 
 
 def _update_shared_progress_summary_locked() -> None:
     """Update shared summary task; lock must be held."""
     if _shared_progress is None or _shared_progress_summary_task_id is None:
         return
-    total = max(1, _shared_progress_started)
+    total = _shared_progress_total if _shared_progress_total is not None else max(1, _shared_progress_started)
     finished = min(_shared_progress_finished, total)
     _shared_progress.update(
         _shared_progress_summary_task_id,
-        description=f'[bold]Running {_shared_progress_started} attacks | Finished {finished}[/bold]',
+        description='[bold]Overall[/bold]',
         total=total,
         completed=finished,
     )
@@ -236,13 +264,30 @@ def _update_shared_progress_summary_locked() -> None:
 
 def _reset_shared_progress_state_locked() -> None:
     """Reset global shared progress state; lock must be held."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished, _progress_ui_disabled
+    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished, _progress_ui_disabled, _shared_progress_total
+    # Re-enable loguru output now that progress bars are done.
+    logger.enable("evaluatorq")
     _shared_progress = None
     _shared_progress_summary_task_id = None
     _shared_progress_task_ids.clear()
     _shared_progress_started = 0
     _shared_progress_finished = 0
+    _shared_progress_total = None
     _progress_ui_disabled = False
+    _progress_waiters.clear()
+
+
+def set_progress_total(total: int) -> None:
+    """Set the expected total number of attacks for the overall progress bar.
+
+    Call this before any attacks start so the summary bar shows accurate progress
+    from the beginning rather than growing dynamically as attacks register.
+    """
+    global _shared_progress_total
+    with _progress_lock:
+        _shared_progress_total = total
+        _ensure_shared_progress()
+        _update_shared_progress_summary_locked()
 
 
 def _build_adversarial_system_prompt(
@@ -466,7 +511,7 @@ class MultiTurnOrchestrator:
         if (show_summary or show_per_attack) and not _progress_ui_disabled:
             try:
                 if show_per_attack:
-                    task_id = _start_shared_progress_task(
+                    task_id = await _start_shared_progress_task(
                         f'[cyan]{_progress_label(strategy.category, strategy.name)}[/cyan]',
                         total=max_turns,
                     )

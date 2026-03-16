@@ -1099,6 +1099,10 @@ async def _run_dynamic_or_hybrid(
             evaluators = [evaluator]
             log_label = f'{len(all_datapoints)} datapoints'
 
+        if verbosity >= 1:
+            from evaluatorq.redteam.adaptive.orchestrator import set_progress_total
+            set_progress_total(est_total * len(prepared_targets))
+
         try:
             results = await evaluatorq(
                 resolved_name,
