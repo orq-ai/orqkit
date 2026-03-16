@@ -1099,32 +1099,31 @@ async def _run_dynamic_or_hybrid(
             evaluators = [evaluator]
             log_label = f'{len(all_datapoints)} datapoints'
 
-        if verbosity >= 1:
-            from evaluatorq.redteam.adaptive.orchestrator import set_progress_total
-            set_progress_total(est_total * len(prepared_targets))
+        from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay
 
-        try:
-            results = await evaluatorq(
-                resolved_name,
-                data=all_datapoints,
-                jobs=all_jobs,
-                evaluators=evaluators,
-                parallelism=parallelism,
-                print_results=False,
-                _exit_on_failure=False,
-                _send_results=False,
-                description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
-            )
-        except (asyncio.CancelledError, KeyboardInterrupt):
-            logger.warning(f'Multi-target {mode} run cancelled — attempting memory cleanup')
-            for pt in prepared_targets:
-                if cleanup_memory and pt.agent_context.has_memory:
-                    entity_ids = pt.memory_entity_ids
-                    if entity_ids:
-                        await cleanup_memory_entities(
-                            pt.agent_context, entity_ids, memory_cleanup=pt.resolved_memory_cleanup
-                        )
-            raise
+        async with ProgressDisplay(est_total * len(prepared_targets), verbosity):
+            try:
+                results = await evaluatorq(
+                    resolved_name,
+                    data=all_datapoints,
+                    jobs=all_jobs,
+                    evaluators=evaluators,
+                    parallelism=parallelism,
+                    print_results=False,
+                    _exit_on_failure=False,
+                    _send_results=False,
+                    description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+                )
+            except (asyncio.CancelledError, KeyboardInterrupt):
+                logger.warning(f'Multi-target {mode} run cancelled — attempting memory cleanup')
+                for pt in prepared_targets:
+                    if cleanup_memory and pt.agent_context.has_memory:
+                        entity_ids = pt.memory_entity_ids
+                        if entity_ids:
+                            await cleanup_memory_entities(
+                                pt.agent_context, entity_ids, memory_cleanup=pt.resolved_memory_cleanup
+                            )
+                raise
 
         resolved_hooks.on_stage_end("attack_execution", {"num_results": len(results)})
 

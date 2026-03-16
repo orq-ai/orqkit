@@ -6,8 +6,8 @@ adapts based on agent responses.
 """
 
 import asyncio
+import logging
 import time
-from collections import deque
 from inspect import signature
 from threading import Lock
 from typing import Any, cast
@@ -30,17 +30,129 @@ from evaluatorq.redteam.contracts import (
 from evaluatorq.redteam.tracing import record_llm_response, set_span_attrs, with_llm_span, with_redteam_span
 
 _ui_console = Console(stderr=True)
-_progress_lock = Lock()
-_shared_progress: Progress | None = None
-_shared_progress_task_ids: set[TaskID] = set()
-_shared_progress_summary_task_id: TaskID | None = None
-_shared_progress_started = 0
-_shared_progress_finished = 0
-_shared_progress_total: int | None = None
 _PROGRESS_LABEL_MAX_LEN = 52
-_MAX_VISIBLE_TASK_BARS = 10
-_progress_ui_disabled = False
-_progress_waiters: deque[asyncio.Event] = deque()
+_active_progress: "ProgressDisplay | None" = None
+
+
+class ProgressDisplay:
+    """Manages Rich progress bars for a red team run.
+
+    Use as an async context manager — ``__aexit__`` guarantees cleanup
+    (progress stopped, logging restored) regardless of errors.
+
+    Args:
+        total: Expected number of attacks.
+        verbosity: 0 = silent, 1 = overall bar only, 2 = per-attack bars.
+        max_bars: Maximum simultaneously visible per-attack bars.
+    """
+
+    def __init__(self, total: int, verbosity: int, *, max_bars: int = 10):
+        self._total = total
+        self._verbosity = verbosity
+        self._finished = 0
+        self._progress: Progress | None = None
+        self._overall_id: TaskID | None = None
+        self._lock = Lock()
+        self._bar_semaphore = asyncio.Semaphore(max_bars)
+        self._bar_task_ids: set[TaskID] = set()
+        self._saved_handler_levels: list[tuple[logging.Handler, int]] = []
+
+    async def __aenter__(self) -> "ProgressDisplay":
+        global _active_progress
+        if not _ui_console.is_terminal or self._verbosity < 1:
+            _active_progress = self
+            return self
+
+        def _description_column() -> TextColumn:
+            init_params = signature(TextColumn.__init__).parameters
+            kwargs: dict[str, Any] = {}
+            if 'no_wrap' in init_params:
+                kwargs['no_wrap'] = True
+            if 'overflow' in init_params:
+                kwargs['overflow'] = 'ellipsis'
+            return TextColumn('{task.description}', **kwargs)
+
+        self._progress = Progress(
+            SpinnerColumn(),
+            _description_column(),
+            BarColumn(),
+            TextColumn('{task.completed}/{task.total}'),
+            TimeElapsedColumn(),
+            transient=True,
+            console=_ui_console,
+        )
+        self._progress.start()
+        self._suppress_logging()
+        self._overall_id = self._progress.add_task(
+            '[bold]Overall[/bold]', total=self._total, completed=0,
+        )
+        _active_progress = self
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        global _active_progress
+        _active_progress = None
+        if self._progress is not None:
+            self._progress.stop()
+            self._progress = None
+        self._restore_logging()
+
+    # -- public API for the orchestrator ------------------------------------
+
+    async def start_attack(self, label: str, total_turns: int) -> TaskID | None:
+        """Register an attack. Returns a task ID if a per-attack bar is shown."""
+        if self._progress is None:
+            return None
+        if self._verbosity >= 2 and total_turns > 1:
+            await self._bar_semaphore.acquire()
+            with self._lock:
+                task_id = self._progress.add_task(
+                    f'[cyan]{label}[/cyan]', total=total_turns,
+                )
+                self._bar_task_ids.add(task_id)
+                return task_id
+        return None
+
+    def update_attack(self, task_id: TaskID | None, completed: int) -> None:
+        """Advance a per-attack bar (no-op when *task_id* is ``None``)."""
+        if task_id is None or self._progress is None:
+            return
+        with self._lock:
+            self._progress.update(task_id, completed=completed)
+
+    def finish_attack(self, task_id: TaskID | None) -> None:
+        """Mark one attack as done. Removes per-attack bar if present."""
+        if self._progress is None:
+            return
+        with self._lock:
+            if task_id is not None:
+                try:
+                    self._progress.remove_task(task_id)
+                except Exception:
+                    pass
+                self._bar_task_ids.discard(task_id)
+            self._finished += 1
+            if self._overall_id is not None:
+                self._progress.update(
+                    self._overall_id, completed=self._finished,
+                )
+        if task_id is not None:
+            self._bar_semaphore.release()
+
+    # -- logging suppression ------------------------------------------------
+
+    def _suppress_logging(self) -> None:
+        logger.disable("evaluatorq")
+        for h in logging.getLogger("evaluatorq").handlers:
+            if isinstance(h, logging.StreamHandler):
+                self._saved_handler_levels.append((h, h.level))
+                h.setLevel(logging.CRITICAL + 1)
+
+    def _restore_logging(self) -> None:
+        logger.enable("evaluatorq")
+        for h, level in self._saved_handler_levels:
+            h.setLevel(level)
+        self._saved_handler_levels.clear()
 
 ADVERSARIAL_SYSTEM_PROMPT = """You are a red team security researcher testing an AI agent for vulnerabilities.
 
@@ -93,201 +205,12 @@ Constraints:
 """
 
 
-def _ensure_shared_progress() -> None:
-    """Create the shared Progress instance if it doesn't exist yet. Lock must be held."""
-    global _shared_progress, _shared_progress_summary_task_id
-
-    if _shared_progress is not None:
-        return
-
-    def _description_column() -> TextColumn:
-        """Build a Rich TextColumn compatible with multiple Rich versions."""
-        init_params = signature(TextColumn.__init__).parameters
-        kwargs: dict[str, Any] = {}
-        if 'no_wrap' in init_params:
-            kwargs['no_wrap'] = True
-        if 'overflow' in init_params:
-            kwargs['overflow'] = 'ellipsis'
-        return TextColumn('{task.description}', **kwargs)
-
-    _shared_progress = Progress(
-        SpinnerColumn(),
-        _description_column(),
-        BarColumn(),
-        TextColumn('{task.completed}/{task.total}'),
-        TimeElapsedColumn(),
-        transient=True,
-        console=_ui_console,
-    )
-    _shared_progress.start()
-    # Suppress loguru output while progress bars are active to prevent log lines
-    # from corrupting Rich's live terminal display.
-    logger.disable("evaluatorq")
-    _shared_progress_summary_task_id = _shared_progress.add_task(
-        '[bold]Overall[/bold]',
-        total=_shared_progress_total or 1,
-        completed=0,
-    )
-
-
-async def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
-    """Start (or reuse) shared progress and add one per-attack task row.
-
-    If there are already ``_MAX_VISIBLE_TASK_BARS`` per-attack bars visible,
-    waits until a slot is freed by ``_stop_shared_progress_task``.
-    """
-    global _shared_progress_started
-
-    # Wait for a free slot if the bar limit is reached.
-    while True:
-        with _progress_lock:
-            if len(_shared_progress_task_ids) < _MAX_VISIBLE_TASK_BARS:
-                _ensure_shared_progress()
-                assert _shared_progress is not None  # for type checker
-
-                task_id = _shared_progress.add_task(description, total=total)
-                _shared_progress_task_ids.add(task_id)
-                _shared_progress_started += 1
-                _update_shared_progress_summary_locked()
-                return task_id
-
-            # No free slot — register a waiter and release the lock.
-            event = asyncio.Event()
-            _progress_waiters.append(event)
-
-        # Wait outside the lock so other tasks can finish and free slots.
-        await event.wait()
-
-
-def _register_shared_progress_attack() -> None:
-    """Register an attack in the summary counter without adding a per-attack row.
-
-    Used at verbosity == 1 where only the summary bar is shown.
-    """
-    global _shared_progress_started
-
-    with _progress_lock:
-        _ensure_shared_progress()
-        _shared_progress_started += 1
-        _update_shared_progress_summary_locked()
-
-
-def _finish_shared_progress_attack() -> None:
-    """Mark an attack as finished in the summary counter (no per-attack row).
-
-    Used at verbosity == 1. Stops the progress display when the last attack completes.
-    """
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_finished
-
-    with _progress_lock:
-        if _shared_progress is None:
-            return
-        _shared_progress_finished += 1
-        _update_shared_progress_summary_locked()
-
-        # Check if all registered attacks are done
-        if _shared_progress_finished >= _shared_progress_started and not _shared_progress_task_ids:
-            if _shared_progress_summary_task_id is not None:
-                try:
-                    _shared_progress.remove_task(_shared_progress_summary_task_id)
-                except Exception as e:
-                    logger.debug(f'Failed to remove shared progress summary task: {e}')
-            _shared_progress.stop()
-            _reset_shared_progress_state_locked()
-
-
 def _progress_label(category: str, strategy_name: str) -> str:
     """Build a compact single-line label to avoid wrapped progress rows."""
     raw = f'{category}:{strategy_name}'
     if len(raw) <= _PROGRESS_LABEL_MAX_LEN:
         return raw
     return raw[: _PROGRESS_LABEL_MAX_LEN - 1] + '…'
-
-
-def _update_shared_progress_task(task_id: TaskID, *, completed: int | None = None) -> None:
-    """Update one attack task on the shared progress display."""
-    with _progress_lock:
-        if _shared_progress is None:
-            return
-        if completed is None:
-            _shared_progress.update(task_id)
-            return
-        _shared_progress.update(task_id, completed=completed)
-
-
-def _stop_shared_progress_task(task_id: TaskID) -> None:
-    """Remove one task and stop shared progress when the last task completes."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_finished
-    with _progress_lock:
-        if _shared_progress is None:
-            return
-        try:
-            _shared_progress.remove_task(task_id)
-        except Exception as e:
-            logger.debug(f'Failed to remove shared progress task {task_id}: {e}')
-
-        if task_id in _shared_progress_task_ids:
-            _shared_progress_task_ids.remove(task_id)
-            _shared_progress_finished += 1
-            _update_shared_progress_summary_locked()
-
-        all_done = _shared_progress_finished >= _shared_progress_started and not _shared_progress_task_ids
-        has_known_total = _shared_progress_total is not None
-        all_known_done = has_known_total and _shared_progress_finished >= _shared_progress_total
-
-        if all_done or all_known_done:
-            if _shared_progress_summary_task_id is not None:
-                try:
-                    _shared_progress.remove_task(_shared_progress_summary_task_id)
-                except Exception as e:
-                    logger.debug(f'Failed to remove shared progress summary task: {e}')
-            _shared_progress.stop()
-            _reset_shared_progress_state_locked()
-        elif _progress_waiters:
-            # Wake one waiter so it can claim the freed slot.
-            _progress_waiters.popleft().set()
-
-
-def _update_shared_progress_summary_locked() -> None:
-    """Update shared summary task; lock must be held."""
-    if _shared_progress is None or _shared_progress_summary_task_id is None:
-        return
-    total = _shared_progress_total if _shared_progress_total is not None else max(1, _shared_progress_started)
-    finished = min(_shared_progress_finished, total)
-    _shared_progress.update(
-        _shared_progress_summary_task_id,
-        description='[bold]Overall[/bold]',
-        total=total,
-        completed=finished,
-    )
-
-
-def _reset_shared_progress_state_locked() -> None:
-    """Reset global shared progress state; lock must be held."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started, _shared_progress_finished, _progress_ui_disabled, _shared_progress_total
-    # Re-enable loguru output now that progress bars are done.
-    logger.enable("evaluatorq")
-    _shared_progress = None
-    _shared_progress_summary_task_id = None
-    _shared_progress_task_ids.clear()
-    _shared_progress_started = 0
-    _shared_progress_finished = 0
-    _shared_progress_total = None
-    _progress_ui_disabled = False
-    _progress_waiters.clear()
-
-
-def set_progress_total(total: int) -> None:
-    """Set the expected total number of attacks for the overall progress bar.
-
-    Call this before any attacks start so the summary bar shows accurate progress
-    from the beginning rather than growing dynamically as attacks register.
-    """
-    global _shared_progress_total
-    with _progress_lock:
-        _shared_progress_total = total
-        _ensure_shared_progress()
-        _update_shared_progress_summary_locked()
 
 
 def _build_adversarial_system_prompt(
@@ -504,24 +427,15 @@ class MultiTurnOrchestrator:
         consecutive_agent_errors = 0
         truncation_warnings: list[int] = []  # turns where finish_reason=length
 
-        show_summary = _ui_console.is_terminal and self.verbosity >= 1
-        show_per_attack = max_turns > 1 and _ui_console.is_terminal and self.verbosity >= 2
+        progress = _active_progress
         task_id: TaskID | None = None
-        global _progress_ui_disabled
-        if (show_summary or show_per_attack) and not _progress_ui_disabled:
+        if progress is not None:
             try:
-                if show_per_attack:
-                    task_id = await _start_shared_progress_task(
-                        f'[cyan]{_progress_label(strategy.category, strategy.name)}[/cyan]',
-                        total=max_turns,
-                    )
-                else:
-                    _register_shared_progress_attack()
-            except Exception as e:
-                # Progress UI must never fail the attack execution path.
-                _progress_ui_disabled = True
-                logger.warning(f'Progress UI disabled due to setup error: {e}')
-                task_id = None
+                task_id = await progress.start_attack(
+                    _progress_label(strategy.category, strategy.name), max_turns,
+                )
+            except Exception:
+                pass
 
         try:
             for turn in range(max_turns):
@@ -536,8 +450,8 @@ class MultiTurnOrchestrator:
                     },
                 ) as turn_span:
                     logger.debug(f'Multi-turn attack: turn {turn + 1}/{max_turns}')
-                    if task_id is not None:
-                        _update_shared_progress_task(task_id, completed=turn)
+                    if progress is not None:
+                        progress.update_attack(task_id, completed=turn)
 
                     # Generate attack prompt from adversarial LLM
                     llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
@@ -667,7 +581,7 @@ class MultiTurnOrchestrator:
                             # Adversarial LLM signaled success but no more prompts needed
                             logger.info('Adversarial LLM signaled objective achieved')
                             if task_id is not None:
-                                _update_shared_progress_task(task_id, completed=turn + 1)
+                                progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.finish_reason": "objective_achieved",
@@ -726,7 +640,7 @@ class MultiTurnOrchestrator:
                                 Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
-                                _update_shared_progress_task(task_id, completed=turn + 1)
+                                progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.error_type": error_type,
@@ -759,7 +673,7 @@ class MultiTurnOrchestrator:
                                 Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
-                                _update_shared_progress_task(task_id, completed=turn + 1)
+                                progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.error_type": error_type,
@@ -780,8 +694,8 @@ class MultiTurnOrchestrator:
                     analysis_prompt = ADVERSARIAL_ANALYSIS_PROMPT.format(response=agent_response)
                     adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
 
-                    if task_id is not None:
-                        _update_shared_progress_task(task_id, completed=turn + 1)
+                    if progress is not None:
+                        progress.update_attack(task_id, completed=turn + 1)
 
                     set_span_attrs(turn_span, {
                         "input": attack_prompt,
@@ -795,10 +709,8 @@ class MultiTurnOrchestrator:
                     logger.info(f'Objective achieved at turn {turn + 1}')
                     break
         finally:
-            if task_id is not None:
-                _stop_shared_progress_task(task_id)
-            elif show_summary and not _progress_ui_disabled:
-                _finish_shared_progress_attack()
+            if progress is not None:
+                progress.finish_attack(task_id)
 
         duration = time.time() - start_time
         logger.debug(
