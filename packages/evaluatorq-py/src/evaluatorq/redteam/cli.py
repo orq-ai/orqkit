@@ -149,6 +149,10 @@ def run(
             help='Target identifier(s), e.g. "agent:<key>" or "llm:<model>". Repeatable.',
         ),
     ],
+    name: Annotated[
+        Optional[str],
+        typer.Option("--name", "-n", help="Experiment name (defaults to 'red-team')."),
+    ] = None,
     mode: Annotated[
         str,
         typer.Option(help='Execution mode: "dynamic", "static", or "hybrid".'),
@@ -224,8 +228,8 @@ def run(
     ] = False,
     backend: Annotated[
         str,
-        typer.Option(help='Backend name ("orq" or "openai").'),
-    ] = "orq",
+        typer.Option(help='Backend name ("openai" or "orq").'),
+    ] = "openai",
     dataset: Annotated[
         Optional[Path],
         typer.Option(help="Path to local static dataset JSON file."),
@@ -277,7 +281,7 @@ def run(
 
     from evaluatorq.redteam import red_team
     from evaluatorq.redteam.contracts import TargetConfig
-    from evaluatorq.redteam.exceptions import CancelledError
+    from evaluatorq.redteam.exceptions import CancelledError, RedTeamError
     from evaluatorq.redteam.hooks import RichHooks
 
     # Validate vulnerability IDs early for a clean error message
@@ -304,6 +308,7 @@ def run(
         report = asyncio.run(
             red_team(
                 target=targets,
+                name=name,
                 mode=mode,
                 categories=categories,
                 vulnerabilities=vulnerabilities,
@@ -324,6 +329,7 @@ def run(
                 output_dir=output_dir,
                 target_config=target_config,
                 attacker_instructions=attacker_instructions,
+                verbosity=verbose,
             )
         )
     except CancelledError:
@@ -332,6 +338,12 @@ def run(
     except KeyboardInterrupt:
         typer.echo("\nInterrupted.")
         raise typer.Exit(code=130)
+    except RedTeamError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1)
+    except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1)
 
     if save_report:
         save_report.parent.mkdir(parents=True, exist_ok=True)
@@ -352,9 +364,13 @@ def run(
 @app.command()
 def ui(
     report_path: Annotated[
-        Path,
-        typer.Argument(help="Path to report JSON file or directory containing report files."),
-    ],
+        Optional[Path],
+        typer.Argument(help="Path to report JSON file or directory. Omit to use the latest run."),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", "-l", help="Open the most recent auto-saved run."),
+    ] = False,
     port: Annotated[
         int,
         typer.Option(help="Port for the Streamlit server."),
@@ -367,10 +383,29 @@ def ui(
     """Launch the interactive Streamlit dashboard for a red team report."""
     import subprocess
 
+    from evaluatorq.redteam.runner import get_runs_dir
+
+    if report_path is None or latest:
+        # Find the most recent auto-saved run
+        runs_dir = get_runs_dir()
+        if runs_dir.exists():
+            run_files = sorted(runs_dir.glob('*.json'), key=lambda p: p.stat().st_mtime, reverse=True)
+            if run_files:
+                report_path = run_files[0]
+                typer.echo(f"Opening latest run: {report_path.name}")
+        if report_path is None:
+            typer.echo("No runs found. Run `eq redteam run` first, or pass a report path.", err=True)
+            raise typer.Exit(code=1)
+
     report_path = report_path.resolve()
     if not report_path.exists():
-        typer.echo(f"Error: {report_path} does not exist.", err=True)
-        raise typer.Exit(code=1)
+        # Check if it's a filename from the runs directory
+        candidate = get_runs_dir() / report_path.name
+        if candidate.exists():
+            report_path = candidate
+        else:
+            typer.echo(f"Error: {report_path} does not exist.", err=True)
+            raise typer.Exit(code=1)
 
     dashboard_script = Path(__file__).parent / "ui" / "dashboard.py"
     if not dashboard_script.exists():
@@ -465,3 +500,95 @@ def validate_dataset(
         raise typer.Exit(code=1)
 
     typer.echo(f"OK: All {len(samples)} samples are valid.")
+
+
+@app.command()
+def runs(
+    path: Annotated[
+        Optional[Path],
+        typer.Argument(help="Directory containing run reports. Defaults to .evaluatorq/runs/"),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option("--limit", "-n", help="Maximum number of runs to show."),
+    ] = 20,
+) -> None:
+    """List previous red team runs saved locally."""
+    from evaluatorq.redteam.runner import get_runs_dir
+
+    runs_dir = Path(path) if path is not None else get_runs_dir()
+    if not runs_dir.exists():
+        typer.echo(f"No runs found (directory {runs_dir} does not exist).")
+        raise typer.Exit(code=0)
+
+    run_files = sorted(runs_dir.glob('*.json'), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not run_files:
+        typer.echo(f"No runs found in {runs_dir}.")
+        raise typer.Exit(code=0)
+
+    run_files = run_files[:limit]
+
+    try:
+        from rich import box
+        from rich.console import Console
+        from rich.table import Table
+
+        table = Table(title=f"Red Team Runs ({runs_dir})", show_header=True, box=box.ROUNDED)
+        table.add_column("Name", style="cyan")
+        table.add_column("Date", style="white")
+        table.add_column("Mode", style="white")
+        table.add_column("Targets", style="white")
+        table.add_column("Attacks", style="white", justify="right")
+        table.add_column("ASR", style="white", justify="right")
+        table.add_column("File", style="dim")
+
+        skipped = 0
+        for f in run_files:
+            try:
+                data = json.loads(f.read_text(encoding='utf-8'))
+            except (json.JSONDecodeError, OSError):
+                skipped += 1
+                continue
+
+            run_name = data.get('run_name', f.stem)
+            created = data.get('created_at', '')
+            if isinstance(created, str) and len(created) >= 16:
+                created = created[:16].replace('T', ' ')
+            pipeline = data.get('pipeline', '?')
+            agents = data.get('tested_agents', [])
+            targets_str = ', '.join(agents) if agents else '?'
+            summary = data.get('summary', {})
+            total = summary.get('total_attacks', data.get('total_results', 0))
+            asr = summary.get('vulnerability_rate', 0.0)
+            asr_str = f"{asr:.0%}" if isinstance(asr, (int, float)) else '?'
+
+            table.add_row(run_name, str(created), pipeline, targets_str, str(total), asr_str, f.name)
+
+        console = Console()
+        console.print(table)
+        if skipped:
+            console.print(f"[yellow]Warning: {skipped} file(s) could not be parsed and were skipped.[/yellow]")
+
+    except ImportError:
+        # Fallback without rich
+        typer.echo(f"{'Name':<20} {'Date':<17} {'Mode':<8} {'Attacks':>7} {'ASR':>5}  File")
+        typer.echo("-" * 80)
+        skipped = 0
+        for f in run_files:
+            try:
+                data = json.loads(f.read_text(encoding='utf-8'))
+            except (json.JSONDecodeError, OSError):
+                skipped += 1
+                continue
+            run_name = data.get('run_name', f.stem)[:20]
+            created = data.get('created_at', '')
+            if isinstance(created, str) and len(created) >= 16:
+                created = created[:16].replace('T', ' ')
+            pipeline = data.get('pipeline', '?')
+            summary = data.get('summary', {})
+            total = summary.get('total_attacks', data.get('total_results', 0))
+            asr = summary.get('vulnerability_rate', 0.0)
+            asr_str = f"{asr:.0%}" if isinstance(asr, (int, float)) else '?'
+            typer.echo(f"{run_name:<20} {str(created):<17} {pipeline:<8} {total:>7} {asr_str:>5}  {f.name}")
+        if skipped:
+            typer.echo(f"Warning: {skipped} file(s) could not be parsed and were skipped.", err=True)
