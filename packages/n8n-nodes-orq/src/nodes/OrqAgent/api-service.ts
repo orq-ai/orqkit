@@ -43,9 +43,6 @@ export async function getAgentKeys(
       name: agent.display_name || agent.key,
       value: agent.key,
     }));
-      name: agent.display_name || agent.key,
-      value: agent.key,
-    }));
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
