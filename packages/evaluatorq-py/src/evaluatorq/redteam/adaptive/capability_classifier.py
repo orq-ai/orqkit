@@ -137,6 +137,7 @@ async def classify_agent_capabilities(
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
     model: str = DEFAULT_PIPELINE_MODEL,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> AgentCapabilities:
     """Classify agent tools and resources into capability tags.
 
@@ -155,7 +156,7 @@ async def classify_agent_capabilities(
     capabilities: dict[str, list[AgentCapability]] = {}
 
     # Infer high-level memory/knowledge capabilities with an LLM step.
-    resource_caps = await _infer_resource_capabilities(agent_context, llm_client, model)
+    resource_caps = await _infer_resource_capabilities(agent_context, llm_client, model, llm_kwargs)
 
     # Explicit resource config remains a strong signal.
     if agent_context.memory_stores:
@@ -178,7 +179,7 @@ async def classify_agent_capabilities(
 
     # Classify tools via LLM
     if agent_context.tools:
-        tool_caps = await _classify_tools(agent_context, llm_client, model)
+        tool_caps = await _classify_tools(agent_context, llm_client, model, llm_kwargs)
         capabilities.update(tool_caps)
 
     all_caps = set()
@@ -195,6 +196,7 @@ async def _infer_resource_capabilities(
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
     model: str,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> ResourceCapabilityInference:
     """Infer memory/knowledge capabilities with structured LLM output."""
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools) or '- none'
@@ -217,8 +219,9 @@ async def _infer_resource_capabilities(
                 messages=infer_messages,
                 response_format=ResourceCapabilityInference,
                 temperature=PIPELINE_CONFIG.capability_classification_temperature,
-                max_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
+                max_completion_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
                 extra_body=PIPELINE_CONFIG.retry_config,
+                **(llm_kwargs or {}),
             )
             parsed = response.choices[0].message.parsed
             record_llm_response(
@@ -243,6 +246,7 @@ async def _classify_tools(
     agent_context: AgentContext,
     llm_client: AsyncOpenAI,
     model: str,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, list[AgentCapability]]:
     """Classify tools via LLM call.
 
@@ -277,8 +281,9 @@ async def _classify_tools(
                 messages=classify_messages,
                 response_format=ToolCapabilitiesResponse,
                 temperature=PIPELINE_CONFIG.capability_classification_temperature,
-                max_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
+                max_completion_tokens=PIPELINE_CONFIG.capability_classification_max_tokens,
                 extra_body=PIPELINE_CONFIG.retry_config,
+                **(llm_kwargs or {}),
             )
             record_llm_response(
                 cls_span, response,

@@ -142,6 +142,7 @@ async def generate_focus_area_recommendations(
     *,
     max_areas: int = 5,
     max_traces: int = 10,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[FocusAreaRecommendation]:
     """Analyze failed traces and generate actionable recommendations per focus area.
 
@@ -189,8 +190,9 @@ async def generate_focus_area_recommendations(
                     {'role': 'user', 'content': user_prompt},
                 ],
                 temperature=0.3,
-                max_tokens=1500,
+                max_completion_tokens=1500,
                 response_format={'type': 'json_object'},
+                **(llm_kwargs or {}),
             )
 
             content = response.choices[0].message.content or '{}'

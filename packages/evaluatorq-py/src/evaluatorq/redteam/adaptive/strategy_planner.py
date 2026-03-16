@@ -41,6 +41,7 @@ async def plan_strategies_for_vulnerabilities(
     generated_strategy_count: int,
     generation_parallelism: int | None = None,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> tuple[dict[Vulnerability, list[AttackStrategy]], dict[Vulnerability, dict[str, Any]], AgentCapabilities]:
     """Build per-vulnerability strategy plans for dynamic red teaming.
 
@@ -56,6 +57,7 @@ async def plan_strategies_for_vulnerabilities(
                 agent_context=agent_context,
                 llm_client=llm_client,
                 model=attack_model,
+                llm_kwargs=llm_kwargs,
             )
             set_span_attrs(cap_span, {
                 "orq.redteam.num_capabilities": len(agent_capabilities.all_capabilities()),
@@ -100,6 +102,7 @@ async def plan_strategies_for_vulnerabilities(
                             turn_type=None,
                             max_turns=max_turns,
                             attacker_instructions=attacker_instructions,
+                            llm_kwargs=llm_kwargs,
                         )
                     return vuln, generated
                 except Exception as e:
@@ -164,6 +167,7 @@ async def plan_strategies_for_categories(
     generated_strategy_count: int,
     generation_parallelism: int | None = None,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> tuple[dict[str, list[AttackStrategy]], dict[str, dict[str, Any]], AgentCapabilities]:
     """Build per-category strategy plans for dynamic red teaming.
 
@@ -200,6 +204,7 @@ async def plan_strategies_for_categories(
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=generation_parallelism,
         attacker_instructions=attacker_instructions,
+        llm_kwargs=llm_kwargs,
     )
 
     # Remap results back to original category strings

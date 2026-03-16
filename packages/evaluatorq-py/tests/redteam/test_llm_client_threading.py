@@ -44,7 +44,7 @@ class TestCreateAsyncLlmClientPriority:
         {'OPENAI_API_KEY': 'sk-openai', 'ORQ_API_KEY': 'orq-key'},
         clear=True,
     )
-    @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
+    @patch('openai.AsyncOpenAI')
     def test_openai_takes_priority_over_orq(self, mock_cls):
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
@@ -56,7 +56,7 @@ class TestCreateAsyncLlmClientPriority:
         {'OPENAI_API_KEY': 'sk-openai', 'OPENAI_BASE_URL': 'http://local:8000'},
         clear=True,
     )
-    @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
+    @patch('openai.AsyncOpenAI')
     def test_openai_with_base_url(self, mock_cls):
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
@@ -68,7 +68,7 @@ class TestCreateAsyncLlmClientPriority:
         {'ORQ_API_KEY': 'orq-key'},
         clear=True,
     )
-    @patch('evaluatorq.redteam.backends.registry.AsyncOpenAI')
+    @patch('openai.AsyncOpenAI')
     def test_orq_fallback_when_no_openai(self, mock_cls):
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
@@ -150,14 +150,14 @@ class TestCreateDynamicEvaluatorLlmClient:
 
         custom_client = MagicMock(spec=AsyncOpenAI)
         create_dynamic_evaluator(llm_client=custom_client)
-        mock_cls.assert_called_once_with(evaluator_model='openai/gpt-5-mini', llm_client=custom_client)
+        mock_cls.assert_called_once_with(evaluator_model='gpt-5-mini', llm_client=custom_client, llm_kwargs=None)
 
     @patch('evaluatorq.redteam.adaptive.pipeline.OWASPEvaluator')
     def test_passes_none_when_no_client(self, mock_cls):
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
 
         create_dynamic_evaluator()
-        mock_cls.assert_called_once_with(evaluator_model='openai/gpt-5-mini', llm_client=None)
+        mock_cls.assert_called_once_with(evaluator_model='gpt-5-mini', llm_client=None, llm_kwargs=None)
 
 
 # ---------------------------------------------------------------------------

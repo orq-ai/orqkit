@@ -5,6 +5,7 @@ the agent's tools, memory configuration, and system prompt.
 """
 
 import asyncio
+from typing import Any
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI
@@ -78,14 +79,14 @@ def _build_objective_prompt(
     agent_context: AgentContext,
     vulnerability_name: str,
     category_code: str,
-    count: int,
     turn_type: TurnType | None,
     max_turns: int,
     attacker_instructions: str | None = None,
 ) -> str:
-    """Build the formatted OBJECTIVE_GENERATION_PROMPT string.
+    """Build the objective generation prompt template.
 
-    Shared by both vulnerability-first and category-fallback objective generation.
+    Returns a string with ``{count}`` still unformatted so callers can fill it
+    per LLM call (enables batching).
     """
     tools_str = ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'None'
     memory_str = (
@@ -105,6 +106,8 @@ def _build_objective_prompt(
             f'All objectives MUST use turn_type="{turn_type.value}". Do not mix turn types in this output.'
         )
 
+    # Format everything except {count}, which is left as a late-bound
+    # placeholder so callers (including batching) can fill it per LLM call.
     prompt = OBJECTIVE_GENERATION_PROMPT.format(
         agent_name=agent_context.display_name or agent_context.key,
         agent_description=agent_context.description or 'An AI assistant',
@@ -113,41 +116,39 @@ def _build_objective_prompt(
         instructions_excerpt=instructions_excerpt,
         vulnerability_name=vulnerability_name,
         category_code=category_code,
-        count=count,
+        count='{count}',
         turn_type_guidance=turn_type_guidance,
         max_turns=max_turns,
     )
 
     if attacker_instructions:
-        prompt += f"\n\n## Additional Context from Operator\n{attacker_instructions}"
+        # Escape braces so they survive the later .format(count=...) call.
+        safe_instructions = attacker_instructions.replace('{', '{{').replace('}', '}}')
+        prompt += f"\n\n## Additional Context from Operator\n{safe_instructions}"
 
     return prompt
 
 
-async def _call_llm_for_objectives(
-    prompt: str,
+# Maximum objectives to request per LLM call. Keeps output quality high and
+# avoids hitting max_tokens limits (~150 tokens per objective).
+_MAX_PER_LLM_CALL = 8
+
+
+async def _call_llm_for_objectives_single(
+    prompt_template: str,
     llm_client: AsyncOpenAI,
     model: str,
     count: int,
     span_attributes: dict,
     log_label: str,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[GeneratedObjective]:
-    """Call the LLM to generate objectives and parse the structured response.
+    """Make a single LLM call to generate up to ``count`` objectives.
 
-    Shared by both vulnerability-first and category-fallback objective generation.
-
-    Args:
-        prompt: Fully formatted prompt string.
-        llm_client: OpenAI-compatible async client.
-        model: Model identifier.
-        count: Maximum number of objectives to return.
-        span_attributes: Extra tracing attributes for the LLM span.
-        log_label: Label used in debug/error log messages (e.g. vulnerability value or category).
-
-    Returns:
-        List of generated objectives, truncated to ``count``.
+    ``prompt_template`` must contain a ``{count}`` placeholder.
     """
     try:
+        prompt = prompt_template.format(count=count)
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
@@ -165,8 +166,9 @@ async def _call_llm_for_objectives(
                 messages=gen_messages,
                 response_format=GeneratedObjectives,
                 temperature=PIPELINE_CONFIG.strategy_generation_temperature,
-                max_tokens=PIPELINE_CONFIG.strategy_generation_max_tokens,
+                max_completion_tokens=PIPELINE_CONFIG.strategy_generation_max_tokens,
                 extra_body=PIPELINE_CONFIG.retry_config,
+                **(llm_kwargs or {}),
             )
             record_llm_response(
                 gen_span, response,
@@ -187,6 +189,47 @@ async def _call_llm_for_objectives(
         return []
 
 
+async def _call_llm_for_objectives(
+    prompt_template: str,
+    llm_client: AsyncOpenAI,
+    model: str,
+    count: int,
+    span_attributes: dict,
+    log_label: str,
+    llm_kwargs: dict[str, Any] | None = None,
+) -> list[GeneratedObjective]:
+    """Generate objectives, batching into multiple LLM calls if needed.
+
+    ``prompt_template`` must contain a ``{count}`` placeholder. Each batch
+    fills it with the batch size so the LLM generates the right number.
+    """
+    if count <= _MAX_PER_LLM_CALL:
+        return await _call_llm_for_objectives_single(
+            prompt_template, llm_client, model, count, span_attributes, log_label, llm_kwargs,
+        )
+
+    all_objectives: list[GeneratedObjective] = []
+    remaining = count
+    batch_idx = 0
+
+    while remaining > 0:
+        batch_size = min(remaining, _MAX_PER_LLM_CALL)
+        batch_objectives = await _call_llm_for_objectives_single(
+            prompt_template, llm_client, model, batch_size,
+            {**span_attributes, "orq.redteam.batch_index": batch_idx},
+            f'{log_label} (batch {batch_idx + 1})',
+            llm_kwargs,
+        )
+        if not batch_objectives:
+            logger.warning(f'Batch {batch_idx + 1} returned no objectives for {log_label}; stopping early')
+            break
+        all_objectives.extend(batch_objectives)
+        remaining -= batch_size
+        batch_idx += 1
+
+    return all_objectives[:count]
+
+
 async def generate_objectives_for_vulnerability(
     vuln: Vulnerability,
     agent_context: AgentContext,
@@ -196,6 +239,7 @@ async def generate_objectives_for_vulnerability(
     turn_type: TurnType | None = None,
     max_turns: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[GeneratedObjective]:
     """Generate attack objectives using an LLM based on agent context.
 
@@ -219,17 +263,16 @@ async def generate_objectives_for_vulnerability(
     vulnerability_name = vdef.name if vdef is not None else vuln.value
     category_code = get_primary_category(vuln)
 
-    prompt = _build_objective_prompt(
+    prompt_template = _build_objective_prompt(
         agent_context=agent_context,
         vulnerability_name=vulnerability_name,
         category_code=category_code,
-        count=count,
         turn_type=turn_type,
         max_turns=max_turns,
         attacker_instructions=attacker_instructions,
     )
     return await _call_llm_for_objectives(
-        prompt=prompt,
+        prompt_template=prompt_template,
         llm_client=llm_client,
         model=model,
         count=count,
@@ -238,6 +281,7 @@ async def generate_objectives_for_vulnerability(
             "orq.redteam.vulnerability": vuln.value,
         },
         log_label=f'{vuln.value} ({category_code})',
+        llm_kwargs=llm_kwargs,
     )
 
 
@@ -250,6 +294,7 @@ async def generate_objectives_for_category(
     turn_type: TurnType | None = None,
     max_turns: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[GeneratedObjective]:
     """Generate attack objectives using an LLM based on agent context.
 
@@ -281,6 +326,7 @@ async def generate_objectives_for_category(
             turn_type=turn_type,
             max_turns=max_turns,
             attacker_instructions=attacker_instructions,
+            llm_kwargs=llm_kwargs,
         )
 
     # Fallback path for unrecognized category codes: build a best-effort prompt
@@ -292,17 +338,16 @@ async def generate_objectives_for_category(
     )
     vulnerability_name = OWASP_CATEGORY_NAMES.get(category, category)
 
-    prompt = _build_objective_prompt(
+    prompt_template = _build_objective_prompt(
         agent_context=agent_context,
         vulnerability_name=vulnerability_name,
         category_code=category,
-        count=count,
         turn_type=turn_type,
         max_turns=max_turns,
         attacker_instructions=attacker_instructions,
     )
     return await _call_llm_for_objectives(
-        prompt=prompt,
+        prompt_template=prompt_template,
         llm_client=llm_client,
         model=model,
         count=count,
@@ -311,6 +356,7 @@ async def generate_objectives_for_category(
             "orq.redteam.vulnerability": "",
         },
         log_label=category,
+        llm_kwargs=llm_kwargs,
     )
 
 
@@ -443,6 +489,7 @@ async def generate_strategies_for_vulnerability(
     turn_type: TurnType | None = None,
     max_turns: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[AttackStrategy]:
     """Generate complete attack strategies for a vulnerability.
 
@@ -473,6 +520,7 @@ async def generate_strategies_for_vulnerability(
         turn_type=turn_type,
         max_turns=max_turns,
         attacker_instructions=attacker_instructions,
+        llm_kwargs=llm_kwargs,
     )
     return _objectives_to_strategies(
         objectives=objectives,
@@ -493,6 +541,7 @@ async def generate_strategies_for_category(
     turn_type: TurnType | None = None,
     max_turns: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> list[AttackStrategy]:
     """Generate complete attack strategies for a category.
 
@@ -524,6 +573,7 @@ async def generate_strategies_for_category(
             turn_type=turn_type,
             max_turns=max_turns,
             attacker_instructions=attacker_instructions,
+            llm_kwargs=llm_kwargs,
         )
 
     # Fallback for unrecognized categories: generate objectives without a resolved
@@ -542,6 +592,7 @@ async def generate_strategies_for_category(
         turn_type=turn_type,
         max_turns=max_turns,
         attacker_instructions=attacker_instructions,
+        llm_kwargs=llm_kwargs,
     )
     return _objectives_to_strategies(
         objectives=objectives,

@@ -43,7 +43,8 @@ from evaluatorq.redteam.contracts import (
     DeliveryMethod,
     DeliveryMethodSummary,
     EvaluationPayload,
-    EvaluationResult,
+    AttackEvaluationResult,
+    EvaluationResult,  # backwards-compatible alias
     ExecutionDetails,
     FocusAreaRecommendation,
     Framework,
@@ -56,6 +57,7 @@ from evaluatorq.redteam.contracts import (
     OrchestratorResult,
     Pipeline,
     PipelineLLMConfig,
+    RedTeamConfig,
     RedTeamInput,
     RedTeamReport,
     RedTeamResult,
@@ -145,13 +147,15 @@ __all__ = [
     "MemoryStoreInfo",
     "KnowledgeBaseInfo",
     # Pipeline config
+    "RedTeamConfig",
     "PipelineLLMConfig",
     # Attack models
     "AttackStrategy",
     "AttackInfo",
     # Result models
     "OrchestratorResult",
-    "EvaluationResult",
+    "AttackEvaluationResult",
+    "EvaluationResult",  # backwards-compatible alias
     "UnifiedEvaluationResult",
     "EvaluationPayload",
     "JobOutputPayload",

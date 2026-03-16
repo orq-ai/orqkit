@@ -37,10 +37,12 @@ class OWASPEvaluator:
         self,
         evaluator_model: str = DEFAULT_PIPELINE_MODEL,
         llm_client: AsyncOpenAI | None = None,
+        llm_kwargs: dict[str, Any] | None = None,
     ):
         """Initialize the evaluator with the given model and optional async LLM client."""
         self.evaluator_model = evaluator_model
         self.client = llm_client or create_async_llm_client()
+        self.llm_kwargs = llm_kwargs or {}
         logger.debug(f'Initialized OWASPEvaluator with model: {evaluator_model}')
 
     async def evaluate_vulnerability(
@@ -153,6 +155,7 @@ class OWASPEvaluator:
                     model=self.evaluator_model,
                     messages=eval_messages,
                     response_format={'type': 'json_object'},
+                    **self.llm_kwargs,
                 )
                 raw_content = llm_response.choices[0].message.content or '{}'
                 record_llm_response(eval_llm_span, llm_response, output_content=raw_content)

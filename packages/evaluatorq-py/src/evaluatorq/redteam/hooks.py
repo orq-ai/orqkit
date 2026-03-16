@@ -46,7 +46,10 @@ class ConfirmPayload(TypedDict, total=False):
     """Payload passed to ``on_confirm`` before pipeline execution begins."""
 
     agent_context: dict[str, Any] | None
-    """Serialized agent context (None for static mode)."""
+    """Serialized agent context for the first target (None for static mode)."""
+
+    agent_contexts: dict[str, dict[str, Any]] | None
+    """Per-target agent contexts keyed by target string (multi-target runs)."""
 
     num_datapoints: int
     """Total number of attack datapoints to be executed."""
@@ -290,11 +293,13 @@ class RichHooks:
 
         table.add_row("Target", str(target))
         table.add_row("Mode", str(mode))
-        table.add_row("Datapoints", str(num_dp))
 
-        if num_dynamic is not None and num_static is not None:
-            table.add_row("  → Dynamic", str(num_dynamic))
-            table.add_row("  → Static", str(num_static))
+        if num_dp is not None:
+            table.add_row("Datapoints", str(num_dp))
+            if num_dynamic is not None:
+                table.add_row("  → Dynamic", str(num_dynamic))
+            if num_static is not None:
+                table.add_row("  → Static", str(num_static))
 
         table.add_row("Categories", str(len(categories)))
         table.add_row("Attack Model", str(attack_model))
@@ -307,10 +312,18 @@ class RichHooks:
 
         self._console.print(table)
 
-        # ── Agent capabilities panel ────────────────────────────────────
-        agent_context = payload.get("agent_context")
-        if agent_context is not None:
-            self._render_agent_capabilities(agent_context)
+        # ── Agent capabilities panel(s) ────────────────────────────────
+        agent_contexts = payload.get("agent_contexts")
+        if agent_contexts and len(agent_contexts) > 1:
+            for target_str, ctx in agent_contexts.items():
+                self._render_agent_capabilities(ctx, title=f"Agent Capabilities — {target_str}")
+        elif agent_contexts:
+            ctx = next(iter(agent_contexts.values()))
+            self._render_agent_capabilities(ctx)
+        else:
+            agent_context = payload.get("agent_context")
+            if agent_context is not None:
+                self._render_agent_capabilities(agent_context)
 
         # ── Filtering metadata ──────────────────────────────────────────
         filtering_metadata = payload.get("filtering_metadata")
@@ -325,10 +338,8 @@ class RichHooks:
 
         return typer.confirm("Proceed with this run?", default=True)
 
-    def _render_agent_capabilities(self, agent_context: dict[str, Any]) -> None:
+    def _render_agent_capabilities(self, agent_context: dict[str, Any], title: str = "Agent Capabilities") -> None:
         """Render an agent capabilities panel."""
-        from rich.panel import Panel
-
         tools = agent_context.get("tools") or []
         memory_stores = agent_context.get("memory_stores") or []
         knowledge_bases = agent_context.get("knowledge_bases") or []
@@ -363,7 +374,7 @@ class RichHooks:
             lines.append("Knowledge Bases: none")
 
         self._console.print(
-            self._make_panel("\n".join(lines), title="Agent Capabilities")
+            self._make_panel("\n".join(lines), title=title)
         )
 
     def _render_filtering_metadata(self, filtering_metadata: dict[str, Any]) -> None:
@@ -382,7 +393,7 @@ class RichHooks:
         )
 
         table = Table(
-            title="Strategy Filtering",
+            title="Dynamic Strategy Filtering",
             show_header=True,
             header_style="bold",
             box=box.ROUNDED,

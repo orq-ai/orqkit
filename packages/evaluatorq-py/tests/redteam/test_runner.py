@@ -94,7 +94,7 @@ class TestGetCategoryInfo:
             assert 'single_turn_count' in details
             assert 'multi_turn_count' in details
             assert isinstance(details['strategy_count'], int)
-            assert details['strategy_count'] > 0
+            assert details['strategy_count'] >= 0
 
     def test_asi01_has_strategies(self):
         info = get_category_info()

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
-from openai import AsyncOpenAI
 from loguru import logger
 
 from evaluatorq.redteam.backends.base import BackendBundle
@@ -17,12 +17,15 @@ from evaluatorq.redteam.backends.openai import (
 )
 from evaluatorq.redteam.contracts import TargetConfig
 
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
 
 ORQ_DEFAULT_BASE_URL = "https://my.orq.ai"
 _ROUTER_SUFFIX = "/v2/router"
 
 
-def create_async_llm_client() -> AsyncOpenAI:
+def create_async_llm_client() -> "AsyncOpenAI":
     """Create an OpenAI-compatible async client.
 
     Preference order:
@@ -32,6 +35,15 @@ def create_async_llm_client() -> AsyncOpenAI:
     When using ORQ, the router suffix ``/v2/router`` is appended automatically
     to produce the OpenAI-compatible completions endpoint.
     """
+    try:
+        from openai import AsyncOpenAI
+    except ImportError as exc:
+        msg = (
+            "openai package is required for LLM-based attack generation. "
+            "Install it with: pip install openai"
+        )
+        raise BackendError(msg) from exc
+
     if os.getenv("ROUTER_BASE_URL") and not os.getenv("ORQ_BASE_URL"):
         logger.warning("ROUTER_BASE_URL is no longer supported; rename it to ORQ_BASE_URL")
 
@@ -57,7 +69,7 @@ def create_async_llm_client() -> AsyncOpenAI:
 
 def resolve_backend(
     backend: str = "orq",
-    llm_client: AsyncOpenAI | None = None,
+    llm_client: "AsyncOpenAI | None" = None,
     target_config: TargetConfig | None = None,
 ) -> BackendBundle:
     """Resolve runtime backend bundle with lazy optional imports.

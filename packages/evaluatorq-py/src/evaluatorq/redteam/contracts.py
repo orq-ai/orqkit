@@ -535,7 +535,14 @@ class PipelineLLMConfig(BaseModel):
 
     @property
     def retry_config(self) -> dict[str, Any]:
-        """ORQ retry config dict for ``extra_body``."""
+        """ORQ retry config dict for ``extra_body``.
+
+        Returns an empty dict when using the OpenAI API directly (the
+        ``retry`` parameter is ORQ-specific and rejected by OpenAI).
+        """
+        import os
+        if os.getenv('OPENAI_API_KEY') or not os.getenv('ORQ_API_KEY'):
+            return {}
         return {'retry': {'count': self.retry_count, 'on_codes': self.retry_on_codes}}
 
 
@@ -544,8 +551,68 @@ class PipelineLLMConfig(BaseModel):
 PIPELINE_CONFIG = PipelineLLMConfig()
 
 # Default model used across the red teaming pipeline for adversarial generation
-# and evaluation.
-DEFAULT_PIPELINE_MODEL: str = 'openai/gpt-5-mini'
+# and evaluation. Uses the OpenAI model name directly (works with both the
+# openai and orq backends — the orq backend accepts this format as-is).
+DEFAULT_PIPELINE_MODEL: str = 'gpt-5-mini'
+
+
+class RedTeamConfig(BaseModel):
+    """Top-level configuration for the red teaming pipeline.
+
+    Centralizes backend routing, model resolution, and LLM call settings
+    into a single object.  When ``backend="auto"`` (the default), the
+    backend is inferred from the target prefix and available credentials:
+
+    * ``agent:`` / ``deployment:`` targets → ``orq``
+    * ``llm:`` targets → ``openai`` (or ``orq`` if only ``ORQ_API_KEY`` is set)
+
+    Models are automatically prefixed (e.g. ``"openai/gpt-5-mini"``) when
+    routing through the orq router so callers never have to think about it.
+    """
+
+    # --- Backend / routing ---------------------------------------------------
+    backend: Literal['auto', 'openai', 'orq'] = 'auto'
+
+    # --- Models --------------------------------------------------------------
+    attack_model: str = DEFAULT_PIPELINE_MODEL
+    evaluator_model: str = DEFAULT_PIPELINE_MODEL
+
+    # --- LLM call tuning (sub-config) ----------------------------------------
+    llm: PipelineLLMConfig = Field(default_factory=PipelineLLMConfig)
+
+    # --- Extra kwargs forwarded to every chat.completions.create() call ------
+    llm_kwargs: dict[str, Any] = Field(default_factory=dict)
+
+    def resolve_backend(self, targets: list[str]) -> str:
+        """Return the concrete backend name (``"orq"`` or ``"openai"``)."""
+        if self.backend != 'auto':
+            return self.backend
+        orq_prefixes = ('agent:', 'deployment:')
+        has_orq_target = any(
+            any(t.startswith(p) for p in orq_prefixes) or ':' not in t
+            for t in targets
+        )
+        return 'orq' if has_orq_target else 'openai'
+
+    def resolve_model(self, model: str, *, uses_orq_router: bool) -> str:
+        """Add a provider prefix when the model goes through the orq router.
+
+        If the model already contains a ``/`` (e.g. ``"openai/gpt-5-mini"``)
+        it is returned unchanged.
+        """
+        if uses_orq_router and '/' not in model:
+            return f'openai/{model}'
+        return model
+
+    @property
+    def uses_orq_router(self) -> bool:
+        """True when the LLM client will route through the orq router.
+
+        This is the case when no custom ``llm_client`` / ``OPENAI_API_KEY``
+        is set and ``ORQ_API_KEY`` is available.
+        """
+        import os
+        return not os.getenv('OPENAI_API_KEY') and bool(os.getenv('ORQ_API_KEY'))
 
 
 # ---------------------------------------------------------------------------
@@ -701,12 +768,15 @@ class AttackOutput(OrchestratorResult):
     vulnerability: str = ''
 
 
-class EvaluationResult(BaseModel):
-    """Result from OWASP evaluator.
+class AttackEvaluationResult(BaseModel):
+    """Result from OWASP evaluator for a single attack.
 
     Semantic convention:
         passed=True  → RESISTANT (attack failed)
         passed=False → VULNERABLE (attack succeeded)
+
+    .. note:: Named ``AttackEvaluationResult`` to avoid collision with the root
+       ``evaluatorq.EvaluationResult`` which is used for generic evaluator scores.
     """
 
     passed: bool | None = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated')
@@ -714,6 +784,10 @@ class EvaluationResult(BaseModel):
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
     raw_output: dict[str, Any] | None = Field(default=None, description='Raw evaluator output')
+
+
+# Backwards-compatible alias
+EvaluationResult = AttackEvaluationResult
 
 
 # ---------------------------------------------------------------------------

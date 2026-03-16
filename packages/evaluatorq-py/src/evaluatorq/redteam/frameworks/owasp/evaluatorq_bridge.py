@@ -87,6 +87,7 @@ def load_owasp_agentic_dataset(
 def create_owasp_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluatorq scorer that routes by OWASP category.
 
@@ -141,6 +142,7 @@ def create_owasp_evaluator(
                 {'role': 'user', 'content': prompt},
             ],
             response_format={'type': 'json_object'},
+            **(llm_kwargs or {}),
         )
 
         content = response.choices[0].message.content or '{}'

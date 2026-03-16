@@ -6,7 +6,6 @@ adapts based on agent responses.
 """
 
 import asyncio
-import os
 import time
 from inspect import signature
 from threading import Lock
@@ -90,9 +89,12 @@ Constraints:
 """
 
 
-def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
-    """Start (or reuse) shared progress and add one attack task."""
-    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_started
+def _ensure_shared_progress() -> None:
+    """Create the shared Progress instance if it doesn't exist yet. Lock must be held."""
+    global _shared_progress, _shared_progress_summary_task_id
+
+    if _shared_progress is not None:
+        return
 
     def _description_column() -> TextColumn:
         """Build a Rich TextColumn compatible with multiple Rich versions."""
@@ -104,29 +106,73 @@ def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
             kwargs['overflow'] = 'ellipsis'
         return TextColumn('{task.description}', **kwargs)
 
+    _shared_progress = Progress(
+        SpinnerColumn(),
+        _description_column(),
+        BarColumn(),
+        TextColumn('{task.completed}/{task.total}'),
+        TimeElapsedColumn(),
+        transient=True,
+        console=_ui_console,
+    )
+    _shared_progress.start()
+    _shared_progress_summary_task_id = _shared_progress.add_task(
+        '[bold]Running 0 attacks | Finished 0[/bold]',
+        total=1,
+        completed=0,
+    )
+
+
+def _start_shared_progress_task(description: str, *, total: int) -> TaskID:
+    """Start (or reuse) shared progress and add one per-attack task row."""
+    global _shared_progress_started
+
     with _progress_lock:
-        if _shared_progress is None:
-            _shared_progress = Progress(
-                SpinnerColumn(),
-                _description_column(),
-                BarColumn(),
-                TextColumn('{task.completed}/{task.total}'),
-                TimeElapsedColumn(),
-                transient=True,
-                console=_ui_console,
-            )
-            _shared_progress.start()
-            _shared_progress_summary_task_id = _shared_progress.add_task(
-                '[bold]Running 0 attacks | Finished 0[/bold]',
-                total=1,
-                completed=0,
-            )
+        _ensure_shared_progress()
+        assert _shared_progress is not None  # for type checker
 
         task_id = _shared_progress.add_task(description, total=total)
         _shared_progress_task_ids.add(task_id)
         _shared_progress_started += 1
         _update_shared_progress_summary_locked()
         return task_id
+
+
+def _register_shared_progress_attack() -> None:
+    """Register an attack in the summary counter without adding a per-attack row.
+
+    Used at verbosity == 1 where only the summary bar is shown.
+    """
+    global _shared_progress_started
+
+    with _progress_lock:
+        _ensure_shared_progress()
+        _shared_progress_started += 1
+        _update_shared_progress_summary_locked()
+
+
+def _finish_shared_progress_attack() -> None:
+    """Mark an attack as finished in the summary counter (no per-attack row).
+
+    Used at verbosity == 1. Stops the progress display when the last attack completes.
+    """
+    global _shared_progress, _shared_progress_summary_task_id, _shared_progress_finished
+
+    with _progress_lock:
+        if _shared_progress is None:
+            return
+        _shared_progress_finished += 1
+        _update_shared_progress_summary_locked()
+
+        # Check if all registered attacks are done
+        if _shared_progress_finished >= _shared_progress_started and not _shared_progress_task_ids:
+            if _shared_progress_summary_task_id is not None:
+                try:
+                    _shared_progress.remove_task(_shared_progress_summary_task_id)
+                except Exception as e:
+                    logger.debug(f'Failed to remove shared progress summary task: {e}')
+            _shared_progress.stop()
+            _reset_shared_progress_state_locked()
 
 
 def _progress_label(category: str, strategy_name: str) -> str:
@@ -230,19 +276,6 @@ def _build_adversarial_system_prompt(
     return prompt
 
 
-def _progress_ui_enabled_for_current_run() -> bool:
-    """Enable per-attack live progress only in verbose CLI modes.
-
-    Controlled by the ``REDTEAM_VERBOSE_LEVEL`` environment variable.
-    Set to any integer > 0 to enable per-attack progress bars in the terminal.
-    Default is ``0`` (disabled), keeping terminal output compact.
-    """
-    try:
-        return int(os.getenv('REDTEAM_VERBOSE_LEVEL', '0')) > 0
-    except ValueError:
-        return False
-
-
 def _extract_usage_from_completion(response: Any) -> TokenUsage | None:
     """Extract usage from an OpenAI-compatible chat completion response."""
     usage = getattr(response, 'usage', None)
@@ -285,6 +318,8 @@ class MultiTurnOrchestrator:
         model: str = DEFAULT_PIPELINE_MODEL,
         error_mapper: ErrorMapper | None = None,
         attacker_instructions: str | None = None,
+        verbosity: int = 0,
+        llm_kwargs: dict[str, Any] | None = None,
     ):
         """Initialize the orchestrator.
 
@@ -293,11 +328,15 @@ class MultiTurnOrchestrator:
             model: Model to use for adversarial prompt generation
             error_mapper: Optional custom error mapper
             attacker_instructions: Optional domain-specific context to steer attack generation
+            verbosity: Verbosity level (0=silent, 1=summary progress bar, 2=per-attack progress bars)
+            llm_kwargs: Optional extra keyword arguments merged into every chat.completions call
         """
         self.llm_client = llm_client
         self.model = model
         self.error_mapper = error_mapper or DefaultErrorMapper()
         self.attacker_instructions = attacker_instructions
+        self.verbosity = verbosity
+        self.llm_kwargs = llm_kwargs or {}
 
     async def generate_single_prompt(
         self,
@@ -347,8 +386,9 @@ class MultiTurnOrchestrator:
                         model=self.model,
                         messages=llm_messages,
                         temperature=PIPELINE_CONFIG.adversarial_temperature,
-                        max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                        max_completion_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
                         extra_body=PIPELINE_CONFIG.retry_config,
+                        **self.llm_kwargs,
                     ),
                     timeout=llm_timeout_s,
                 )
@@ -419,15 +459,19 @@ class MultiTurnOrchestrator:
         consecutive_agent_errors = 0
         truncation_warnings: list[int] = []  # turns where finish_reason=length
 
-        show_progress = max_turns > 1 and _ui_console.is_terminal and _progress_ui_enabled_for_current_run()
+        show_summary = _ui_console.is_terminal and self.verbosity >= 1
+        show_per_attack = max_turns > 1 and _ui_console.is_terminal and self.verbosity >= 2
         task_id: TaskID | None = None
         global _progress_ui_disabled
-        if show_progress and not _progress_ui_disabled:
+        if (show_summary or show_per_attack) and not _progress_ui_disabled:
             try:
-                task_id = _start_shared_progress_task(
-                    f'[cyan]{_progress_label(strategy.category, strategy.name)}[/cyan]',
-                    total=max_turns,
-                )
+                if show_per_attack:
+                    task_id = _start_shared_progress_task(
+                        f'[cyan]{_progress_label(strategy.category, strategy.name)}[/cyan]',
+                        total=max_turns,
+                    )
+                else:
+                    _register_shared_progress_attack()
             except Exception as e:
                 # Progress UI must never fail the attack execution path.
                 _progress_ui_disabled = True
@@ -477,8 +521,9 @@ class MultiTurnOrchestrator:
                                         model=self.model,
                                         messages=adversarial_messages,
                                         temperature=PIPELINE_CONFIG.adversarial_temperature,
-                                        max_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
+                                        max_completion_tokens=PIPELINE_CONFIG.adversarial_max_tokens,
                                         extra_body=PIPELINE_CONFIG.retry_config,
+                                        **self.llm_kwargs,
                                     ),
                                     timeout=llm_timeout_s,
                                 )
@@ -707,6 +752,8 @@ class MultiTurnOrchestrator:
         finally:
             if task_id is not None:
                 _stop_shared_progress_task(task_id)
+            elif show_summary and not _progress_ui_disabled:
+                _finish_shared_progress_attack()
 
         duration = time.time() - start_time
         logger.debug(

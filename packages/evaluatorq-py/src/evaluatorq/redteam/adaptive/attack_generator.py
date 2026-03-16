@@ -7,7 +7,7 @@ This module generates concrete attack prompts by:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError
@@ -150,6 +150,7 @@ async def adapt_prompt_to_tools(
     *,
     llm_client: AsyncOpenAI,
     model: str = DEFAULT_PIPELINE_MODEL,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> str:
     """Adapt an attack prompt to leverage specific agent tools.
 
@@ -184,8 +185,9 @@ async def adapt_prompt_to_tools(
             messages=[{'role': 'user', 'content': prompt}],
             response_format=ToolAnalysis,
             temperature=PIPELINE_CONFIG.tool_adaptation_temperature,
-            max_tokens=PIPELINE_CONFIG.tool_adaptation_max_tokens,
+            max_completion_tokens=PIPELINE_CONFIG.tool_adaptation_max_tokens,
             extra_body=PIPELINE_CONFIG.retry_config,
+            **(llm_kwargs or {}),
         )
 
         analysis = response.choices[0].message.parsed

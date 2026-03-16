@@ -68,6 +68,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
     attack_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming, keyed by Vulnerability enum.
 
@@ -98,6 +99,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=parallelism,
         attacker_instructions=attacker_instructions,
+        llm_kwargs=llm_kwargs,
     )
 
     # Convert Vulnerability-keyed metadata to string keys for external consumption
@@ -142,6 +144,7 @@ async def generate_dynamic_datapoints(
     attack_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 5,
     attacker_instructions: str | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming.
 
@@ -185,6 +188,7 @@ async def generate_dynamic_datapoints(
             attack_model=attack_model,
             parallelism=parallelism,
             attacker_instructions=attacker_instructions,
+            llm_kwargs=llm_kwargs,
         )
         # Remap metadata keys from vulnerability IDs back to original category strings
         # so callers that expect category-keyed metadata continue to work.
@@ -209,6 +213,7 @@ async def generate_dynamic_datapoints(
         generated_strategy_count=generated_strategy_count,
         generation_parallelism=parallelism,
         attacker_instructions=attacker_instructions,
+        llm_kwargs=llm_kwargs,
     )
 
     datapoints = []
@@ -246,6 +251,8 @@ def create_dynamic_redteam_job(
     attack_llm_client: AsyncOpenAI | None = None,
     memory_entity_ids: list[str] | None = None,
     attacker_instructions: str | None = None,
+    verbosity: int = 0,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> Job:
     """Create an evaluatorq Job that runs a red-team attack.
 
@@ -401,6 +408,8 @@ def create_dynamic_redteam_job(
                 model=red_team_model,
                 error_mapper=resolved_error_mapper,
                 attacker_instructions=attacker_instructions,
+                verbosity=verbosity,
+                llm_kwargs=llm_kwargs,
             )
 
             try:
@@ -454,13 +463,14 @@ def create_dynamic_redteam_job(
 def create_dynamic_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluator that uses OWASPEvaluator on the attack conversation.
 
     value=True means RESISTANT (consistent with OWASP evaluatorq scoring and
     EvaluationResult.passed convention).
     """
-    owasp_evaluator = OWASPEvaluator(evaluator_model=evaluator_model, llm_client=llm_client)
+    owasp_evaluator = OWASPEvaluator(evaluator_model=evaluator_model, llm_client=llm_client, llm_kwargs=llm_kwargs)
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         """Evaluate the attack output using OWASPEvaluator and return a scored EvaluationResult."""

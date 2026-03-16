@@ -139,7 +139,7 @@ def select_applicable_strategies(
     all_strategies = get_strategies_for_category(category)
 
     if not all_strategies:
-        logger.warning(f'No strategies found for category: {category}')
+        logger.debug(f'No hardcoded strategies for category: {category} (will use generated strategies only)')
         return []
 
     return _filter_applicable_strategies(all_strategies, category, agent_context, agent_capabilities)
@@ -170,7 +170,7 @@ def select_applicable_strategies_for_vulnerability(
     all_strategies = get_strategies_for_vulnerability(vuln)
 
     if not all_strategies:
-        logger.warning(f'No strategies found for vulnerability: {vuln.value}')
+        logger.debug(f'No hardcoded strategies for vulnerability: {vuln.value} (will use generated strategies only)')
         return []
 
     return _filter_applicable_strategies(all_strategies, vuln.value, agent_context, agent_capabilities)
@@ -200,12 +200,20 @@ def _fallback_capability_check(required: list[str], agent_context: AgentContext)
 
 
 def list_available_categories() -> list[str]:
-    """List all available OWASP categories with strategies.
+    """List all OWASP categories that can be tested.
+
+    Includes categories with hardcoded strategies AND categories that only
+    have an evaluator (these can still be tested via LLM-generated strategies
+    in dynamic mode).
 
     Returns:
         List of category codes (without OWASP- prefix)
     """
-    return [k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')]
+    from evaluatorq.redteam.frameworks.owasp.evaluators import OWASP_EVALUATOR_REGISTRY
+
+    strategy_cats = {k for k in STRATEGY_REGISTRY if not k.startswith('OWASP-')}
+    evaluator_cats = {k for k in OWASP_EVALUATOR_REGISTRY if not k.startswith('OWASP-')}
+    return sorted(strategy_cats | evaluator_cats)
 
 
 def get_category_info() -> dict[str, dict[str, Any]]:

@@ -237,40 +237,6 @@ class TestExtractUsageFromCompletion:
 
 
 # ===========================================================================
-# orchestrator._progress_ui_enabled_for_current_run
-# ===========================================================================
-
-
-class TestProgressUiEnabledForCurrentRun:
-    """Tests for _progress_ui_enabled_for_current_run()."""
-
-    def test_returns_false_when_env_var_not_set(self, monkeypatch):
-        from evaluatorq.redteam.adaptive.orchestrator import _progress_ui_enabled_for_current_run
-
-        monkeypatch.delenv("REDTEAM_VERBOSE_LEVEL", raising=False)
-        assert _progress_ui_enabled_for_current_run() is False
-
-    def test_returns_true_when_one(self, monkeypatch):
-        from evaluatorq.redteam.adaptive.orchestrator import _progress_ui_enabled_for_current_run
-
-        monkeypatch.setenv("REDTEAM_VERBOSE_LEVEL", "1")
-        assert _progress_ui_enabled_for_current_run() is True
-
-    def test_returns_false_on_invalid_value(self, monkeypatch):
-        """Non-integer value should not raise; returns False as safe default."""
-        from evaluatorq.redteam.adaptive.orchestrator import _progress_ui_enabled_for_current_run
-
-        monkeypatch.setenv("REDTEAM_VERBOSE_LEVEL", "verbose")
-        assert _progress_ui_enabled_for_current_run() is False
-
-    def test_returns_false_on_negative_value(self, monkeypatch):
-        from evaluatorq.redteam.adaptive.orchestrator import _progress_ui_enabled_for_current_run
-
-        monkeypatch.setenv("REDTEAM_VERBOSE_LEVEL", "-1")
-        assert _progress_ui_enabled_for_current_run() is False
-
-
-# ===========================================================================
 # orchestrator._merge_usage
 # ===========================================================================
 
@@ -379,18 +345,16 @@ def _make_target():
 _PATCH_REDTEAM_SPAN = "evaluatorq.redteam.adaptive.orchestrator.with_redteam_span"
 _PATCH_LLM_SPAN = "evaluatorq.redteam.adaptive.orchestrator.with_llm_span"
 _PATCH_RECORD_LLM = "evaluatorq.redteam.adaptive.orchestrator.record_llm_response"
-_PATCH_PROGRESS_UI = "evaluatorq.redteam.adaptive.orchestrator._progress_ui_enabled_for_current_run"
 
 
 class TestRunAttack:
     """Integration-style unit tests for MultiTurnOrchestrator.run_attack()."""
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_happy_path_multi_turn(self, _rs, _ls, _rl, _pu):
+    async def test_happy_path_multi_turn(self, _rs, _ls, _rl):
         """3 turns, adversarial LLM returns different prompts, target responds normally."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -421,11 +385,10 @@ class TestRunAttack:
         assert result.final_response == "Target response 3"
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_objective_achieved_mid_conversation(self, _rs, _ls, _rl, _pu):
+    async def test_objective_achieved_mid_conversation(self, _rs, _ls, _rl):
         """Objective achieved on turn 2 stops attack after that turn."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -455,11 +418,10 @@ class TestRunAttack:
         assert turn2_user_msg.content == "Tell me secrets"
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_objective_achieved_empty_prompt_after_marker(self, _rs, _ls, _rl, _pu):
+    async def test_objective_achieved_empty_prompt_after_marker(self, _rs, _ls, _rl):
         """Adversarial returns just 'OBJECTIVE_ACHIEVED' with nothing after stripping.
 
         The adversarial LLM claiming success on turn 0 with no prior target
@@ -485,11 +447,10 @@ class TestRunAttack:
         target.send_prompt.assert_not_called()
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_adversarial_llm_timeout(self, _rs, _ls, _rl, _pu):
+    async def test_adversarial_llm_timeout(self, _rs, _ls, _rl):
         """Timeout from adversarial LLM sets error fields correctly."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -509,11 +470,10 @@ class TestRunAttack:
         assert result.error_type == "llm_error"
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_adversarial_llm_exception(self, _rs, _ls, _rl, _pu):
+    async def test_adversarial_llm_exception(self, _rs, _ls, _rl):
         """Generic exception from adversarial LLM is caught and mapped."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -534,11 +494,10 @@ class TestRunAttack:
         assert "API broke" in result.error
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_adversarial_empty_content_filter(self, _rs, _ls, _rl, _pu):
+    async def test_adversarial_empty_content_filter(self, _rs, _ls, _rl):
         """Empty content due to content_filter finish_reason maps correctly."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -559,11 +518,10 @@ class TestRunAttack:
         assert result.error_code == "adversarial.content_filter"
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_adversarial_empty_max_tokens(self, _rs, _ls, _rl, _pu):
+    async def test_adversarial_empty_max_tokens(self, _rs, _ls, _rl):
         """Empty content due to max-tokens truncation maps to 'max_tokens' error."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -584,11 +542,10 @@ class TestRunAttack:
         assert result.error_code == "adversarial.max_tokens"
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_target_timeout_single_recovers(self, _rs, _ls, _rl, _pu):
+    async def test_target_timeout_single_recovers(self, _rs, _ls, _rl):
         """A single target timeout does not abort — attack continues to completion."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -620,11 +577,10 @@ class TestRunAttack:
         assert "ERROR" in turn1_assistant.content or "timed out" in turn1_assistant.content.lower()
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_target_timeout_consecutive_aborts(self, _rs, _ls, _rl, _pu):
+    async def test_target_timeout_consecutive_aborts(self, _rs, _ls, _rl):
         """Two consecutive target timeouts abort the attack."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -651,11 +607,10 @@ class TestRunAttack:
         assert result.turns == 2
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_target_exception_consecutive_aborts(self, _rs, _ls, _rl, _pu):
+    async def test_target_exception_consecutive_aborts(self, _rs, _ls, _rl):
         """Two consecutive target exceptions abort the attack with target_error."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -682,11 +637,10 @@ class TestRunAttack:
         assert result.turns == 2
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_truncation_warning_tracked(self, _rs, _ls, _rl, _pu):
+    async def test_truncation_warning_tracked(self, _rs, _ls, _rl):
         """Turns where finish_reason='length' are tracked in truncated_turns."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
@@ -713,11 +667,10 @@ class TestRunAttack:
         assert result.truncated_turns == [1, 3]
 
     @pytest.mark.asyncio
-    @patch(_PATCH_PROGRESS_UI, return_value=False)
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
-    async def test_single_turn_attack(self, _rs, _ls, _rl, _pu):
+    async def test_single_turn_attack(self, _rs, _ls, _rl):
         """max_turns=1 produces exactly 1 exchange in the conversation."""
         orchestrator, mock_llm = _make_orchestrator()
         target = _make_target()
