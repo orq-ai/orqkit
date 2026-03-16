@@ -1,6 +1,6 @@
 # Red Team Examples
 
-Python examples demonstrating the evaluatorq red teaming module for automated security testing of LLM agents against OWASP vulnerability categories.
+Python examples for automated security testing of LLMs and AI agents against OWASP vulnerability categories.
 
 ## Prerequisites
 
@@ -8,125 +8,103 @@ Python examples demonstrating the evaluatorq red teaming module for automated se
 pip install evaluatorq[redteam]
 ```
 
-Set at least one API key:
+## Quick Start
+
+Most examples work with just an OpenAI API key:
 
 ```bash
-# ORQ platform (for agent targets)
-export ORQ_API_KEY="orq-..."
-
-# OpenAI (for direct model targets or custom LLM routing)
 export OPENAI_API_KEY="sk-..."
+
+# Fastest way to verify the pipeline works
+python 08_quick_smoke_test.py
+
+# Full dynamic run against a model
+python 01_basic_dynamic.py
+```
+
+If your application is an ORQ platform agent, see example 10 instead:
+
+```bash
+export ORQ_API_KEY="orq-..."
+# Edit 10_orq_agent.py and replace YOUR_AGENT_KEY
+python 10_orq_agent.py
 ```
 
 ## Examples
 
+### OpenAI backend (OPENAI_API_KEY)
+
+These examples test LLMs directly via the OpenAI API. You provide a system prompt that simulates your application.
+
 | # | File | Description |
 |---|------|-------------|
-| 01 | `01_basic_dynamic.py` | Simplest possible dynamic red team run against an ORQ agent |
-| 02 | `02_static_dataset.py` | Run a fixed OWASP dataset for reproducible regression testing |
-| 03 | `03_hybrid_mode.py` | Combine static dataset + dynamic strategy generation |
-| 04 | `04_filter_categories.py` | Narrow scope to specific OWASP categories (ASI01, LLM07, etc.) |
-| 05 | `05_custom_llm_client.py` | Route LLM calls through a custom endpoint or proxy |
-| 06 | `06_multi_target.py` | Compare security posture across multiple agents |
-| 07 | `07_report_inspection.py` | Parse reports, filter results, export JSON, display Rich tables |
+| 01 | `01_basic_dynamic.py` | Simplest dynamic red team run |
+| 02 | `02_static_dataset.py` | Fixed dataset for reproducible regression testing |
+| 03 | `03_hybrid_mode.py` | Static dataset + dynamic generation combined |
+| 04 | `04_filter_categories.py` | Narrow scope to specific OWASP categories |
+| 05 | `05_custom_llm_client.py` | Route through a custom endpoint or proxy |
+| 06 | `06_multi_target.py` | Compare permissive vs restrictive system prompts |
+| 07 | `07_report_inspection.py` | Parse reports, filter results, export JSON |
 | 08 | `08_quick_smoke_test.py` | Fast CI-friendly run with exit code gating |
-| 09 | `09_custom_hooks.py` | Implement `PipelineHooks` for custom logging and run control |
-| 10 | `10_openai_backend.py` | Test a raw OpenAI model without an ORQ agent |
+| 09 | `09_custom_hooks.py` | Custom `PipelineHooks` for logging and control |
 
-## Quick Start
+### ORQ platform (ORQ_API_KEY)
 
-```bash
-# Fastest way to verify the pipeline works
-ORQ_API_KEY=orq-... python 08_quick_smoke_test.py
+When your application is an ORQ agent, the pipeline auto-discovers its tools, memory stores, and system prompt — then generates attacks tailored to its capabilities (including tool-misuse and memory-poisoning vectors).
 
-# Full dynamic run
-ORQ_API_KEY=orq-... python 01_basic_dynamic.py
-
-# Direct OpenAI model test (no ORQ account needed)
-OPENAI_API_KEY=sk-... python 10_openai_backend.py
-```
+| # | File | Description |
+|---|------|-------------|
+| 10 | `10_orq_agent.py` | Red team an agent deployed on the ORQ platform |
 
 ## CLI Reference
 
-All examples use the Python API. The same functionality is available via the `evaluatorq-redteam` CLI. Below are example invocations covering common configurations.
+The same functionality is available via the CLI:
+
+```bash
+eq redteam run --help
+# or
+evaluatorq redteam run --help
+```
 
 ### Target types
 
-The `-t` / `--target` flag accepts two kinds of targets:
+- **`llm:<model>`** — Test an LLM directly. Set `OPENAI_API_KEY` and use `--system-prompt`.
+- **`agent:<key>`** — Test an ORQ agent. Set `ORQ_API_KEY` and use `--backend orq`.
 
-- **`agent:<key>`** — An ORQ platform agent. The agent's system prompt and tools are configured on the platform.
-- **`llm:<model>`** — A plain LLM model. Use the Orq model format (e.g. `openai/gpt-4o`) when `ORQ_API_KEY` is set, which routes through the Orq proxy. To call OpenAI directly, set `OPENAI_API_KEY` and use `--backend openai` with the OpenAI model name (e.g. `gpt-4o`). Use `--system-prompt` to set the system message for LLM targets.
-
-If no prefix is given, the target is treated as an agent key.
-
-### Basic dynamic run (single agent, all categories)
+### OpenAI examples
 
 ```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic --max-turns 2 --max-dynamic-datapoints 5 --no-generate-strategies -y
+# Basic dynamic run
+eq redteam run -t "llm:gpt-5-mini" \
+  --system-prompt "You are a helpful assistant." \
+  --max-turns 2 --max-dynamic-datapoints 5 -y
+
+# Filter to specific categories
+eq redteam run -t "llm:gpt-5-mini" \
+  -c LLM01 -c LLM07 \
+  --system-prompt "You are a helpful assistant." \
+  --max-turns 2 --max-dynamic-datapoints 3 -y
+
+# Compare two models
+eq redteam run -t "llm:gpt-5-mini" -t "llm:gpt-4o" \
+  -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 -y
+
+# Export reports
+eq redteam run -t "llm:gpt-5-mini" \
+  -c LLM07 --max-dynamic-datapoints 5 \
+  --save-report ./report.json --export-md ./reports --export-html ./reports -y
 ```
 
-### Filter to specific OWASP categories
+### ORQ platform examples
 
 ```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -c LLM01 -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 -y
-```
+# Dynamic run against an ORQ agent
+eq redteam run -t "agent:my-agent-key" --backend orq \
+  -c LLM01 -c ASI01 --max-turns 3 --max-dynamic-datapoints 5 -y
 
-### Filter by specific vulnerabilities
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -V prompt_injection -V goal_hijacking --max-turns 3 --max-dynamic-datapoints 5 -y
-```
-
-### Multi-target comparison
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" -t "agent:my-other-agent" --mode dynamic -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 --no-generate-strategies -y
-```
-
-### With LLM strategy generation enabled
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -c ASI01 -c ASI02 --generated-strategy-count 3 --max-turns 3 --max-dynamic-datapoints 10 --parallelism 3 -y
-```
-
-### LLM target via Orq proxy
-
-Uses the Orq model format (`provider/model`). Requires `ORQ_API_KEY`.
-
-```bash
-evaluatorq-redteam run -t "llm:openai/gpt-4o" --mode dynamic -c LLM01 --system-prompt "You are a helpful assistant." --max-turns 2 --max-dynamic-datapoints 5 -y
-```
-
-### LLM target via OpenAI directly
-
-Uses the OpenAI model name directly. Requires `OPENAI_API_KEY`.
-
-```bash
-evaluatorq-redteam run -t "llm:gpt-4o" --backend openai --mode dynamic -c LLM01 --system-prompt "You are a helpful assistant." --max-turns 2 --max-dynamic-datapoints 5 -y
-```
-
-### Custom attack/evaluator models
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic --attack-model "openai/gpt-4o" --evaluator-model "openai/gpt-4o-mini" --max-turns 2 --max-dynamic-datapoints 5 -y
-```
-
-### With report exports (JSON + Markdown + HTML)
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -c LLM07 --max-turns 2 --max-dynamic-datapoints 5 --no-generate-strategies --save-report ./reports/report.json --export-md ./reports --export-html ./reports -y
-```
-
-### Quick smoke test (CI-friendly, minimal)
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic --no-generate-strategies --max-dynamic-datapoints 3 --max-turns 2 --parallelism 3 -y
-```
-
-### Verbose debug output
-
-```bash
-evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -c ASI01 --max-turns 2 --max-dynamic-datapoints 3 -vv -y
+# Hybrid mode (dynamic + static dataset)
+eq redteam run -t "agent:my-agent-key" --backend orq \
+  --mode hybrid --max-turns 3 -y
 ```
 
 ### Key flags
@@ -135,15 +113,22 @@ evaluatorq-redteam run -t "agent:my-agent-key" --mode dynamic -c ASI01 --max-tur
 |-----------------------------|-----------------------------------------------------|
 | `-t` / `--target`           | Target (repeatable for multi-target)                |
 | `--mode`                    | `dynamic`, `static`, or `hybrid`                    |
+| `--backend`                 | `openai` (default) or `orq`                         |
 | `-c` / `--category`         | OWASP category filter (LLM01-10, ASI01-10)          |
 | `-V` / `--vulnerability`    | Vulnerability ID filter (e.g. `prompt_injection`)   |
+| `--system-prompt`           | System message for `llm:` targets                   |
 | `--max-turns`               | Max conversation turns per attack                   |
 | `--max-dynamic-datapoints`  | Cap on generated attack datapoints                  |
 | `--no-generate-strategies`  | Skip LLM strategy generation (faster)               |
 | `--parallelism`             | Concurrent jobs                                     |
-| `--backend`                 | `orq` (default) or `openai`                         |
-| `--system-prompt`           | System message for `llm:` targets                   |
+| `-n` / `--name`             | Experiment name (default: `red-team`)               |
 | `-y`                        | Skip confirmation prompt                            |
 | `-v` / `-vv`                | Info / debug verbosity                              |
 
-See `evaluatorq-redteam run --help` for the full list of options.
+See `eq redteam run --help` for the full list.
+
+### List previous runs
+
+```bash
+eq redteam runs
+```

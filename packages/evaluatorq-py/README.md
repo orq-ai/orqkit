@@ -899,20 +899,47 @@ def exact_match_evaluator(
 
 ## 🔴 Red Teaming
 
-Evaluatorq includes a red teaming module for automated security testing of LLM-powered agents against OWASP vulnerability categories.
+Evaluatorq includes a red teaming module for automated security testing of LLMs and AI agents against OWASP vulnerability categories (LLM Top 10 and Agentic Security Initiative).
 
 ### Quick Start
 
+```bash
+pip install evaluatorq[redteam]
+
+# Enable shell completion
+evaluatorq --install-completion
+# or
+eq --install-completion
+```
+
+#### Test an LLM (OpenAI)
+
 ```python
 import asyncio
-from evaluatorq.redteam import red_team
+from evaluatorq.redteam import TargetConfig, red_team
 
 report = asyncio.run(red_team(
-    "agent:my-agent-key",
-    mode="dynamic",
-    categories=["ASI01", "ASI03"],
+    "llm:gpt-5-mini",
+    categories=["LLM01", "LLM07"],
+    max_dynamic_datapoints=5,
+    max_turns=2,
+    target_config=TargetConfig(
+        system_prompt="You are a helpful customer support assistant."
+    ),
 ))
-print(report.summary)
+print(f"Resistance rate: {report.summary.resistance_rate:.0%}")
+```
+
+#### Test an ORQ agent
+
+```python
+# agent: targets auto-select the orq backend
+report = asyncio.run(red_team(
+    "agent:my-agent-key",
+    categories=["LLM01", "ASI01", "ASI02"],
+    max_dynamic_datapoints=5,
+    max_turns=3,
+))
 ```
 
 ### Modes
@@ -920,134 +947,73 @@ print(report.summary)
 | Mode | Description |
 |------|-------------|
 | `dynamic` | Generates adversarial attacks using LLM-based strategy planning and multi-turn orchestration |
-| `static` | Runs a pre-built OWASP dataset against a target model/agent/deployment |
+| `static` | Runs a pre-built OWASP dataset for reproducible regression testing |
+| `hybrid` | Combines dynamic generation with a static dataset in a single run |
+
+### Target Types
+
+- **`llm:<model>`** — Test an LLM directly via OpenAI API. Provide a system prompt via `TargetConfig`.
+- **`agent:<key>`** — Test an ORQ platform agent. Auto-discovers tools, memory, and system prompt.
+- **`deployment:<key>`** — Test an ORQ deployment.
+
+`agent:` and `deployment:` targets automatically use the ORQ backend.
 
 ### LLM Client Configuration
 
-Red teaming requires an OpenAI-compatible LLM client for attack generation, strategy planning, and evaluation scoring. There are two ways to configure it:
-
-#### Environment Variables
-
-Set environment variables and the client is created automatically. **`OPENAI_*` variables take priority** over `ORQ_*`, so you can use ORQ for dataset access while routing LLM calls to a different provider:
+Red teaming needs an OpenAI-compatible LLM for attack generation and evaluation. `OPENAI_*` variables take priority over `ORQ_*`:
 
 | Priority | Variables | Description |
 |----------|-----------|-------------|
 | 1st | `OPENAI_API_KEY` + `OPENAI_BASE_URL` (optional) | Direct OpenAI or any compatible endpoint |
-| 2nd | `ORQ_API_KEY` + `ORQ_BASE_URL` (optional, default `https://my.orq.ai`) | ORQ router (auto-appends `/v2/router`) |
+| 2nd | `ORQ_API_KEY` + `ORQ_BASE_URL` (optional) | ORQ router |
 
-```bash
-# Use OpenAI directly for LLM calls, ORQ for datasets
-OPENAI_API_KEY=sk-... ORQ_API_KEY=orq-... python my_redteam.py
-
-# Use ORQ for everything
-ORQ_API_KEY=orq-... python my_redteam.py
-```
-
-#### Custom LLM Client
-
-Pass a pre-configured `AsyncOpenAI` client via the `llm_client` parameter. When provided, **all** LLM calls in the pipeline use this client — attack generation, strategy planning, evaluation scoring, and model-under-test calls (in static mode):
-
-```python
-from openai import AsyncOpenAI
-from evaluatorq.redteam import red_team
-
-client = AsyncOpenAI(api_key="sk-...", base_url="http://localhost:8080/v1")
-
-report = await red_team(
-    "agent:my-agent-key",
-    mode="dynamic",
-    llm_client=client,
-)
-```
-
-This is useful for routing through a local proxy, using a self-hosted model, or testing with a custom endpoint.
-
-### Target Types
-
-```python
-# ORQ platform agent
-await red_team("agent:my-agent-key", mode="dynamic")
-
-# Direct OpenAI-compatible model
-await red_team("openai:gpt-4o", mode="static", dataset_path="data.json")
-
-# ORQ deployment
-await red_team("deployment:my-deployment-key", mode="static", dataset_path="data.json")
-```
+Or pass a custom client: `red_team(..., llm_client=AsyncOpenAI(api_key="sk-..."))`.
 
 ### Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `target` | `str` | **required** | Target identifier (`"agent:<key>"`, `"openai:<model>"`, `"deployment:<key>"`) |
-| `mode` | `str` | `"dynamic"` | Execution mode (`"dynamic"` or `"static"`) |
-| `categories` | `list[str]` | all | OWASP categories to test (e.g. `["ASI01"]`) |
-| `max_turns` | `int` | `5` | Max conversation turns for multi-turn attacks |
-| `max_per_category` | `int \| None` | `None` | Cap strategies per category |
-| `attack_model` | `str` | `"azure/gpt-5-mini"` | Model for adversarial prompt generation |
-| `evaluator_model` | `str` | `"azure/gpt-5-mini"` | Model for evaluation scoring |
+| `target` | `str \| list[str]` | **required** | Target identifier(s) |
+| `mode` | `str` | `"dynamic"` | `"dynamic"`, `"static"`, or `"hybrid"` |
+| `categories` | `list[str] \| None` | all | OWASP categories (e.g. `["ASI01", "LLM07"]`) |
+| `max_turns` | `int` | `5` | Max conversation turns per attack |
+| `max_dynamic_datapoints` | `int \| None` | `None` | Cap generated attack datapoints |
+| `attack_model` | `str` | `"gpt-5-mini"` | Model for adversarial prompt generation |
+| `evaluator_model` | `str` | `"gpt-5-mini"` | Model for evaluation scoring |
 | `parallelism` | `int` | `5` | Max concurrent jobs |
-| `llm_client` | `AsyncOpenAI \| None` | `None` | Custom LLM client for all pipeline calls |
-| `dataset_path` | `str \| None` | `None` | Path to static dataset (required for static mode) |
-| `backend` | `str` | `"orq"` | Backend (`"orq"` or `"openai"`) |
+| `name` | `str \| None` | `"red-team"` | Experiment name |
+| `backend` | `str` | `"openai"` | `"openai"` or `"orq"` (auto-detected for agent targets) |
+| `llm_client` | `AsyncOpenAI \| None` | `None` | Custom LLM client |
+| `dataset_path` | `str \| None` | `None` | Path to local static dataset |
 
 ### CLI
 
-The red teaming module includes a CLI for running security tests from the terminal. Install with the `redteam` extra:
-
-```bash
-pip install evaluatorq[redteam]
-```
-
-#### Usage
-
 ```bash
 # Show all options
-evaluatorq-redteam --help
+eq redteam run --help
 
-# Dynamic red teaming against an ORQ agent
-evaluatorq-redteam --target agent:my-agent-key --mode dynamic --print-results
+# Test an LLM with a system prompt
+eq redteam run -t "llm:gpt-5-mini" \
+  --system-prompt "You are a helpful assistant." \
+  -c LLM01 -c LLM07 --max-turns 2 --max-dynamic-datapoints 5 -y
 
-# Test specific OWASP categories
-evaluatorq-redteam -t agent:my-agent-key --category ASI01 --category ASI03 --print-results
+# Test an ORQ agent
+eq redteam run -t "agent:my-agent-key" \
+  -c ASI01 -c LLM07 --max-turns 3 -y
 
-# Static mode with a dataset
-evaluatorq-redteam -t agent:my-agent-key --mode static --dataset ./data/owasp.json --print-results
+# Multi-target comparison
+eq redteam run -t "llm:gpt-5-mini" -t "llm:gpt-4o" \
+  -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 -y
 
-# Hybrid mode (dynamic + static combined)
-evaluatorq-redteam -t agent:my-agent-key --mode hybrid --dataset ./data/owasp.json --print-results
+# Export reports
+eq redteam run -t "llm:gpt-5-mini" \
+  --save-report report.json --export-md ./reports --export-html ./reports -y
 
-# Cap datapoints for a quick smoke test
-evaluatorq-redteam -t agent:my-agent-key --max-dynamic-datapoints 5 --no-generate-strategies -y --print-results
-
-# Save the report to a JSON file
-evaluatorq-redteam -t agent:my-agent-key --save-report report.json -y
-
-# Multiple targets
-evaluatorq-redteam -t agent:agent-a -t agent:agent-b --print-results
-
-# Verbose output for debugging (-v info, -vv debug)
-evaluatorq-redteam -t agent:my-agent-key -vv --print-results -y
-
-# Save intermediate stage artifacts
-evaluatorq-redteam -t agent:my-agent-key --output-dir ./artifacts -y --print-results
+# List previous runs
+eq redteam runs
 ```
 
-#### Key Flags
-
-| Flag | Description |
-|------|-------------|
-| `--target` / `-t` | Target identifier (repeatable for multi-target) |
-| `--mode` | `dynamic`, `static`, or `hybrid` (default: `dynamic`) |
-| `--category` / `-c` | OWASP category filter (repeatable) |
-| `--yes` / `-y` | Skip confirmation prompt |
-| `--print-results` | Display Rich summary table after the run |
-| `--save-report` | Write full report JSON to a file |
-| `--no-generate-strategies` | Disable LLM-based strategy generation |
-| `--max-dynamic-datapoints` | Cap dynamic datapoints |
-| `--max-static-datapoints` | Cap static datapoints |
-| `--output-dir` | Save intermediate stage artifacts |
-| `--verbose` / `-v` | Increase log verbosity |
+See [examples/redteam/](examples/redteam/) for complete Python examples covering both backends.
 
 ## 🛠️ Development
 

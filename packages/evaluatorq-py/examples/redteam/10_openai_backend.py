@@ -1,45 +1,50 @@
-"""Red team a raw OpenAI model (no ORQ agent).
+"""Red team an ORQ platform agent.
 
-Use the `openai` backend to test any OpenAI-compatible model directly.
-This skips agent context retrieval (no tools/memory to discover) and
-runs attacks against the model with an optional system prompt.
+When your application is deployed as an ORQ agent, the pipeline auto-discovers
+its system prompt, tools, and memory stores, then generates attacks tailored
+to its capabilities — including tool-misuse and memory-poisoning vectors that
+aren't available with plain LLM targets.
 
-Useful for:
-    - Testing base model safety before deploying as an agent
-    - Comparing safety across models
-    - Running without an ORQ account (OPENAI_API_KEY only)
+Prerequisites:
+    - ORQ_API_KEY set in environment
+    - An agent deployed on https://my.orq.ai
+    - Replace "YOUR_AGENT_KEY" below with your agent's key
 
 Usage:
-    OPENAI_API_KEY=sk-... python 10_openai_backend.py
+    ORQ_API_KEY=orq-... python 10_orq_agent.py
 """
 
 import asyncio
 
-from evaluatorq.redteam import TargetConfig, red_team
+from evaluatorq.redteam import red_team
 
 
 async def main() -> None:
+    # Replace with your agent key from the ORQ platform settings page.
     report = await red_team(
-        "openai:azure/gpt-5-mini",
+        "agent:YOUR_AGENT_KEY",
+        backend="orq",
         mode="dynamic",
-        backend="openai",
-        categories=["LLM01", "LLM07"],
-        max_turns=2,
-        max_dynamic_datapoints=3,
+        categories=["LLM01", "LLM07", "ASI01", "ASI02"],
+        max_dynamic_datapoints=5,
+        max_turns=3,
         generate_strategies=False,
-        # Provide a system prompt to test the model in a realistic context
-        target_config=TargetConfig(
-            system_prompt="You are a helpful customer support agent for Acme Corp."
-        ),
     )
 
-    print(f"Model: azure/gpt-5-mini")
+    # The report includes auto-discovered agent context
+    ctx = report.agent_context
+    if ctx:
+        tools = [t.name for t in ctx.tools] if ctx.tools else []
+        memory = [m.key or m.id for m in ctx.memory_stores] if ctx.memory_stores else []
+        print(f"Agent tools:  {', '.join(tools) or 'none'}")
+        print(f"Agent memory: {', '.join(memory) or 'none'}")
+
     print(f"Resistance rate: {report.summary.resistance_rate:.0%}")
-    print(f"Vulnerabilities: {report.summary.vulnerabilities_found}")
+    print(f"Vulnerabilities: {report.summary.vulnerabilities_found}/{report.summary.total_attacks}")
 
     for result in report.results:
-        status = "VULNERABLE" if result.vulnerable else "RESISTANT"
-        print(f"  [{result.attack.category}] {status}: {result.attack.vulnerability}")
+        if result.vulnerable:
+            print(f"  VULNERABLE [{result.attack.category}]: {result.attack.vulnerability}")
 
 
 if __name__ == "__main__":

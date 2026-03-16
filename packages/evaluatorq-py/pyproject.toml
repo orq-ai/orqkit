@@ -77,7 +77,7 @@ dependencies = [
 
   [project.scripts]
   evaluatorq = "evaluatorq.cli:main"
-  evaluatorq-redteam = "evaluatorq.redteam.cli:app"
+  eq = "evaluatorq.cli:main"
 
   [project.urls]
   Homepage = "https://github.com/orq-ai/orqkit"
