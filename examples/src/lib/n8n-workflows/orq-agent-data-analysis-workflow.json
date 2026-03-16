@@ -5,10 +5,7 @@
       "parameters": {},
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        -416,
-        -208
-      ],
+      "position": [-416, -208],
       "id": "9a48d892-0e86-44f4-b8d1-66d8b23e4282",
       "name": "When clicking 'Execute workflow'"
     },
@@ -28,10 +25,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        -224,
-        -208
-      ],
+      "position": [-224, -208],
       "id": "4500838c-09c2-4e8e-a8be-8c6073c75853",
       "name": "Edit Fields"
     },
@@ -42,10 +36,7 @@
       },
       "type": "@orq-ai/n8n-nodes-orq.orqAgent",
       "typeVersion": 1,
-      "position": [
-        -32,
-        -208
-      ],
+      "position": [-32, -208],
       "id": "fa3f235e-1680-4679-a2cb-c6f5c2df7334",
       "name": "Orq Agent",
       "credentials": {
@@ -82,10 +73,7 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [
-        176,
-        -208
-      ],
+      "position": [176, -208],
       "id": "52a91b3f-60ec-4b25-8975-a54577481495",
       "name": "If"
     },
@@ -95,10 +83,7 @@
       },
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [
-        450,
-        -100
-      ],
+      "position": [450, -100],
       "id": "noop-success",
       "name": "Analysis Complete"
     },
@@ -108,10 +93,7 @@
       },
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [
-        450,
-        -300
-      ],
+      "position": [450, -300],
       "id": "noop-failed",
       "name": "Analysis Failed"
     }
@@ -170,14 +152,10 @@
       ]
     },
     "Analysis Complete": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "Analysis Failed": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     }
   },
   "active": false,
@@ -190,9 +168,5 @@
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "orq-agent",
-    "data-analysis",
-    "example"
-  ]
+  "tags": ["orq-agent", "data-analysis", "example"]
 }

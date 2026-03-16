@@ -15,7 +15,6 @@ import {
   MAX_POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
 } from "./constants";
-import { TERMINAL_TASK_STATES } from "./types";
 import type {
   OrqAgent,
   OrqAgentInvokeRequest,
@@ -23,6 +22,7 @@ import type {
   OrqTask,
   OrqTaskMessagesResponse,
 } from "./types";
+import { TERMINAL_TASK_STATES } from "./types";
 
 export async function getAgentKeys(
   context: ILoadOptionsFunctions,
