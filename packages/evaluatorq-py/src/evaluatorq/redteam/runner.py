@@ -1183,7 +1183,6 @@ async def _run_dynamic_or_hybrid(
                 if dynamic_results:
                     dyn_report = dynamic_evaluatorq_results_to_report(
                         agent_context=pt.agent_context,
-                        categories_tested=resolved_categories,
                         results=dynamic_results,
                         duration_seconds=pipeline_duration,
                         description=f'{description or "Hybrid"} ({pt.target}) (dynamic)',
@@ -1217,7 +1216,6 @@ async def _run_dynamic_or_hybrid(
                 if target_results:
                     t_report = dynamic_evaluatorq_results_to_report(
                         agent_context=pt.agent_context,
-                        categories_tested=resolved_categories,
                         results=target_results,
                         duration_seconds=pipeline_duration,
                         description=f'{description or "Dynamic red teaming"} ({pt.target})',
@@ -1243,11 +1241,9 @@ async def _run_dynamic_or_hybrid(
 
         merged.duration_seconds = pipeline_duration
         merged.agent_contexts = {pt.target: pt.agent_context for pt in prepared_targets}
-        # Canonical tested_agents: one entry per target, prefer display name over key.
-        merged.tested_agents = [
-            pt.agent_context.display_name or pt.agent_context.key or pt.target_value
-            for pt in prepared_targets
-        ]
+        # Canonical tested_agents: use the same keys as agent_contexts so
+        # dashboard/report lookups resolve correctly.
+        merged.tested_agents = [pt.target for pt in prepared_targets]
         if mode == Pipeline.HYBRID:
             merged.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
 

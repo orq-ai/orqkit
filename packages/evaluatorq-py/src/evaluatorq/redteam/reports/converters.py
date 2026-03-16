@@ -85,12 +85,6 @@ def _classify_error(error: str | None, *, existing_type: str | None = None) -> s
 # ---------------------------------------------------------------------------
 
 
-def _agent_display_name(agent_context: AgentContext | None, *, fallback: str | None = None) -> str | None:
-    """Best-effort stable agent label for reports."""
-    if agent_context is not None:
-        return agent_context.display_name or agent_context.key or fallback
-    return fallback
-
 
 def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
     """Normalize evaluatorq job output into a typed payload."""
@@ -347,10 +341,10 @@ def static_results_to_report(
 def dynamic_evaluatorq_results_to_report(
     *,
     agent_context: AgentContext,
-    categories_tested: list[str],
     results: list[Any],
     duration_seconds: float | None = None,
     description: str | None = None,
+    categories_tested: list[str] | None = None,  # deprecated, derived from results
 ) -> RedTeamReport:
     """Convert evaluatorq dynamic results to a unified RedTeamReport."""
     unified: list[RedTeamResult] = []
@@ -462,8 +456,15 @@ def dynamic_evaluatorq_results_to_report(
         )
 
     summary = compute_report_summary(unified)
-    # Derive categories from actual results, not the (possibly broader) requested list
+    # Derive categories from actual results; fall back to caller-provided list
+    # when all results were skipped (e.g. missing data_point).
     categories = sorted({r.attack.category for r in unified})
+    if not categories and categories_tested:
+        _converters_logger.warning(
+            'No results produced data points; falling back to %d requested categories.',
+            len(categories_tested),
+        )
+        categories = sorted({normalize_category(c) for c in categories_tested})
 
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
@@ -471,7 +472,7 @@ def dynamic_evaluatorq_results_to_report(
         pipeline=Pipeline.DYNAMIC,
         framework=_dominant_framework(unified),
         categories_tested=categories,
-        tested_agents=[name] if (name := _agent_display_name(agent_context)) else [],
+        tested_agents=[agent_context.key or agent_context.display_name] if (agent_context.key or agent_context.display_name) else [],
         total_results=len(unified),
         agent_context=agent_context,
         results=unified,
@@ -911,8 +912,6 @@ def merge_reports(
         return reports[0]
 
     all_results: list[RedTeamResult] = []
-    all_categories: set[str] = set()
-    all_agents: set[str] = set()
     frameworks: set[Framework | None] = set()
     pipelines: set[Pipeline] = set()
     agent_context = None
@@ -920,8 +919,6 @@ def merge_reports(
 
     for report in reports:
         all_results.extend(report.results)
-        all_categories.update(report.categories_tested)
-        all_agents.update(report.tested_agents)
         frameworks.add(report.framework)
         pipelines.add(report.pipeline)
         if agent_context is None and report.agent_context is not None:
@@ -946,13 +943,22 @@ def merge_reports(
 
     summary = compute_report_summary(all_results)
 
+    # Derive categories from actual results, not sub-report metadata
+    all_categories = sorted({r.attack.category for r in all_results})
+    # Union agent_contexts keys with sub-report tested_agents so that
+    # agents from static reports (which lack agent_context) are not lost.
+    all_agent_keys: set[str] = set(merged_agent_contexts.keys())
+    for report in reports:
+        all_agent_keys.update(report.tested_agents)
+    all_agents = sorted(all_agent_keys)
+
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
         description=description or 'Merged report',
         pipeline=resolved_pipeline,
         framework=resolved_framework,
-        categories_tested=sorted(all_categories),
-        tested_agents=sorted(all_agents),
+        categories_tested=all_categories,
+        tested_agents=all_agents,
         total_results=len(all_results),
         agent_context=agent_context,
         agent_contexts=merged_agent_contexts,
