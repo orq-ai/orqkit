@@ -5,30 +5,30 @@ import { ERROR_MESSAGES } from "./constants";
 import type { OrqCredentials } from "./types";
 
 export function validateAgentKey(agentKey: string, node: INode): void {
-	if (!agentKey || agentKey.trim() === "") {
-		throw new NodeOperationError(node, ERROR_MESSAGES.AGENT_KEY_REQUIRED);
-	}
+  if (!agentKey || agentKey.trim() === "") {
+    throw new NodeOperationError(node, ERROR_MESSAGES.AGENT_KEY_REQUIRED);
+  }
 }
 
 export function validateMessage(message: string, node: INode): void {
-	if (!message || message.trim() === "") {
-		throw new NodeOperationError(node, ERROR_MESSAGES.MESSAGE_REQUIRED);
-	}
+  if (!message || message.trim() === "") {
+    throw new NodeOperationError(node, ERROR_MESSAGES.MESSAGE_REQUIRED);
+  }
 }
 
 export function validateCredentials(credentials: unknown, node: INode): void {
-	if (!credentials) {
-		throw new NodeOperationError(node, ERROR_MESSAGES.NO_CREDENTIALS);
-	}
+  if (!credentials) {
+    throw new NodeOperationError(node, ERROR_MESSAGES.NO_CREDENTIALS);
+  }
 
-	const creds = credentials as OrqCredentials;
-	if (!creds.apiKey) {
-		throw new NodeOperationError(node, "API Key is required in credentials");
-	}
+  const creds = credentials as OrqCredentials;
+  if (!creds.apiKey) {
+    throw new NodeOperationError(node, "API Key is required in credentials");
+  }
 }
 
 export const Validators = {
-	validateAgentKey,
-	validateMessage,
-	validateCredentials,
+  validateAgentKey,
+  validateMessage,
+  validateCredentials,
 };
