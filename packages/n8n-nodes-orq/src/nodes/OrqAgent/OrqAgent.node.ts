@@ -77,6 +77,13 @@ export class OrqAgent implements INodeType {
         const completedTask = await pollTaskUntilDone(this, agentKey, task.id);
         const finalState = completedTask.status?.state;
 
+        if (finalState !== "completed") {
+          throw new NodeOperationError(
+            this.getNode(),
+            ERROR_MESSAGES.TASK_FAILED(finalState ?? "unknown"),
+          );
+        }
+
         const messagesResponse = await getTaskMessages(this, agentKey, task.id);
         const messages = messagesResponse.data || [];
 
