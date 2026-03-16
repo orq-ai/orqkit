@@ -444,7 +444,7 @@ def _render_sidebar_filters(results: list[RedTeamResult]) -> list[RedTeamResult]
             sel_vulnerabilities = []
 
         # Reset button
-        if st.button("Reset All Filters", use_container_width=True, key="reset_filters"):
+        if st.button("Reset All Filters", width="stretch", key="reset_filters"):
             st.session_state["filter_result"] = "All"
             st.session_state["filter_categories"] = all_categories
             st.session_state["filter_severities"] = all_severities
@@ -619,6 +619,7 @@ def _render_dashboard() -> None:
         tab_names.append("\u26a0\ufe0f Error Analysis")
     if has_multi_agent:
         tab_names.append("\U0001f916 Comparison")
+    tab_names.append("\U0001f4d1 Methodology")
     tabs = st.tabs(tab_names)
 
     tab_idx = 0
@@ -647,6 +648,10 @@ def _render_dashboard() -> None:
     if has_multi_agent:
         with tabs[tab_idx]:
             _render_agent_comparison(filtered_report, summary, unique_agents)
+        tab_idx += 1
+
+    with tabs[tab_idx]:
+        _render_methodology_tab(filtered_report, summary, unique_agents if has_multi_agent else [])
 
 
 # ---------------------------------------------------------------------------
@@ -821,9 +826,6 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     error_rate = (summary.total_errors / summary.total_attacks * 100) if summary.total_attacks else 0
     num_agents = len(report.tested_agents) if report.tested_agents else 1
 
-    confidence = "HIGH" if summary.total_attacks >= 100 and len(report.categories_tested) >= 5 else "MEDIUM" if summary.total_attacks >= 30 and len(report.categories_tested) >= 3 else "LOW"
-    confidence_colors = {"HIGH": "green", "MEDIUM": "orange", "LOW": "red"}
-
     kpi_cols = st.columns(6 if num_agents > 1 else 5)
     col_idx = 0
     if num_agents > 1:
@@ -847,8 +849,6 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
 
     if summary.total_errors > 0:
         st.warning(f"{summary.total_errors} attacks errored and were excluded from ASR calculations.")
-
-    st.markdown(f"**Confidence:** :{confidence_colors[confidence]}[{confidence}]")
 
     # Datapoint breakdown (hybrid runs)
     if summary.datapoint_breakdown:
@@ -966,40 +966,114 @@ def _render_executive_summary(report: RedTeamReport, summary: ReportSummary, fra
     st.divider()
     _render_focus_areas(report)
 
-    # Methodology disclosure
-    methodology = report.methodology
-    if methodology is not None or report.pipeline:
-        with st.expander("Methodology & Scope", expanded=False):
-            cols = st.columns(2)
-            with cols[0]:
-                st.markdown(f"**Assessment Type:** {report.pipeline.value}")
-                if methodology and methodology.evaluator_model:
-                    st.markdown(f"**Evaluator Model:** {methodology.evaluator_model}")
-                if methodology and methodology.attack_model:
-                    st.markdown(f"**Attack Model:** {methodology.attack_model}")
-                if methodology and methodology.dataset_source:
-                    st.markdown(f"**Dataset Source:** {methodology.dataset_source}")
-            with cols[1]:
-                scoring = methodology.scoring_method if methodology else "llm-as-judge"
-                st.markdown(f"**Scoring Method:** {scoring}")
-                if methodology and methodology.max_turns:
-                    st.markdown(f"**Max Turns:** {methodology.max_turns}")
-                if methodology and methodology.parallelism:
-                    st.markdown(f"**Parallelism:** {methodology.parallelism}")
 
-            cats = (methodology.categories_tested if methodology else None) or report.categories_tested
-            if cats:
-                st.markdown(f"**Categories Tested ({len(cats)}):** {', '.join(sorted(cats))}")
 
-            all_supported = {k for k in OWASP_CATEGORY_NAMES if not k.startswith("OWASP-")}
-            untested = sorted(all_supported - set(cats or []))
-            if untested:
-                st.warning(f"**{len(untested)} categories not tested:** {', '.join(untested)}")
+# ---------------------------------------------------------------------------
+# Methodology & Scope tab
+# ---------------------------------------------------------------------------
 
-            if methodology and methodology.scope_limitations:
-                st.markdown("**Known Limitations:**")
-                for lim in methodology.scope_limitations:
-                    st.markdown(f"- {lim}")
+
+def _render_methodology_tab(
+    report: RedTeamReport, summary: ReportSummary, agents: list[str],
+) -> None:
+    """Render the Methodology & Scope tab with assessment details."""
+    st.header("Methodology & Scope")
+    methodology = getattr(report, 'methodology', None)
+
+    # --- Assessment Configuration ---
+    st.subheader("Assessment Configuration")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"**Pipeline:** {report.pipeline.value}")
+        st.markdown(f"**Scoring Method:** LLM-as-Judge")
+        st.markdown(f"**Framework:** {report.framework.value if report.framework else 'OWASP LLM + ASI'}")
+        if methodology and getattr(methodology, 'dataset_source', None):
+            st.markdown(f"**Dataset Source:** {methodology.dataset_source}")
+    with col2:
+        if methodology and getattr(methodology, 'attack_model', None):
+            st.markdown(f"**Attack Model:** {methodology.attack_model}")
+        if methodology and getattr(methodology, 'evaluator_model', None):
+            st.markdown(f"**Evaluator Model:** {methodology.evaluator_model}")
+        if methodology and getattr(methodology, 'max_turns', None):
+            st.markdown(f"**Max Turns:** {methodology.max_turns}")
+        if report.duration_seconds is not None:
+            mins, secs = divmod(int(report.duration_seconds), 60)
+            st.markdown(f"**Duration:** {mins}m {secs}s")
+
+    # --- Run Statistics ---
+    st.divider()
+    st.subheader("Run Statistics")
+    stat_cols = st.columns(4)
+    stat_cols[0].metric("Total Attacks", summary.total_attacks)
+    stat_cols[1].metric("Evaluated", summary.evaluated_attacks)
+    stat_cols[2].metric("Coverage", f"{summary.evaluation_coverage:.0%}")
+    stat_cols[3].metric("Errors", summary.total_errors)
+
+    # --- Categories Tested ---
+    st.divider()
+    st.subheader("Categories Tested")
+    cats = report.categories_tested or []
+    if cats:
+        cat_cols = st.columns(min(len(cats), 4))
+        for i, cat in enumerate(sorted(cats)):
+            cat_name = OWASP_CATEGORY_NAMES.get(cat, cat)
+            cat_summary = summary.by_category.get(cat)
+            with cat_cols[i % len(cat_cols)]:
+                if cat_summary:
+                    asr = cat_summary.vulnerability_rate
+                    color = _asr_color(asr)
+                    st.markdown(
+                        f'<span style="color:{color};font-weight:600">{cat}</span> '
+                        f'— {cat_name}<br/>'
+                        f'<span style="font-size:0.85rem;color:#888">'
+                        f'{cat_summary.total_attacks} attacks, {asr:.0%} ASR</span>',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(f"**{cat}** — {cat_name}")
+
+        all_supported = {k for k in OWASP_CATEGORY_NAMES if not k.startswith("OWASP-")}
+        untested = sorted(all_supported - set(cats))
+        if untested:
+            st.markdown(f"**{len(untested)} categories not tested:**")
+            st.caption(", ".join(f"{c} ({OWASP_CATEGORY_NAMES.get(c, c)})" for c in untested))
+
+    # --- Agents Tested ---
+    if report.tested_agents:
+        st.divider()
+        st.subheader("Agents Tested")
+        for agent_key in report.tested_agents:
+            ctx = report.agent_contexts.get(agent_key) or report.agent_context
+            if ctx:
+                tools = [t.name for t in ctx.tools] if ctx.tools else []
+                memory = [m.key or m.id for m in ctx.memory_stores] if ctx.memory_stores else []
+                kbs = [kb.name or kb.key or kb.id for kb in ctx.knowledge_bases] if ctx.knowledge_bases else []
+                st.markdown(f"#### {ctx.display_name or agent_key}")
+                if ctx.description:
+                    st.caption(ctx.description)
+                if ctx.model:
+                    st.markdown(f"**Model:** {ctx.model}")
+                st.markdown(f"**Tools ({len(tools)}):** {', '.join(tools) if tools else 'none'}")
+                st.markdown(f"**Memory ({len(memory)}):** {', '.join(memory) if memory else 'none'}")
+                if kbs:
+                    st.markdown(f"**Knowledge Bases ({len(kbs)}):** {', '.join(kbs)}")
+            else:
+                st.markdown(f"- {agent_key}")
+
+    # --- Severity Definitions ---
+    st.divider()
+    st.subheader("Severity Definitions")
+    sev_data = {
+        "Severity": ["Critical", "High", "Medium", "Low"],
+        "Weight": [8, 4, 2, 1],
+        "Description": [
+            "Immediate, exploitable vulnerability with high impact",
+            "Significant vulnerability likely exploitable in practice",
+            "Moderate vulnerability with limited impact or exploitability",
+            "Minor issue, low risk or unlikely to be exploited",
+        ],
+    }
+    st.table(sev_data)
 
 
 # ---------------------------------------------------------------------------
@@ -1371,7 +1445,7 @@ def _render_interactive_breakdown(results: list[RedTeamResult], summary: ReportS
                     "ASR": f"{1 - v.resistance_rate:.1%}",
                     "Strategies": ", ".join(v.strategies_used) if v.strategies_used else "-",
                 })
-            st.dataframe(rows, use_container_width=True, hide_index=True)
+            st.dataframe(rows, width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -1604,7 +1678,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
                 labels={"x": "Sample Count", "y": "Technique"},
                 text=counts,
             )
-            fig.update_traces(textposition="outside", marker_color=COLORS['orange_300'])
+            fig.update_traces(textposition="outside", marker_color=COLORS['success_400'])
             fig.update_layout(
                 showlegend=False, height=max(350, len(names) * 30),
                 margin=dict(l=20, r=20, t=10, b=20),
@@ -1626,7 +1700,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
                 labels={"x": "Delivery Method", "y": "Sample Count"},
                 text=counts,
             )
-            fig.update_traces(textposition="outside", marker_color=COLORS['blue_400'])
+            fig.update_traces(textposition="outside", marker_color=COLORS['success_400'])
             fig.update_layout(
                 showlegend=False, height=350,
                 margin=dict(l=20, r=20, t=10, b=20),
@@ -1673,7 +1747,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
                     {label: name, "Count": cnt, "%": round(cnt / total * 100, 1) if total else 0}
                     for name, cnt in sorted(counts.items(), key=lambda x: x[1], reverse=True)
                 ]
-                st.dataframe(rows, use_container_width=True, hide_index=True)
+                st.dataframe(rows, width="stretch", hide_index=True)
 
     # Sample Explorer
     st.divider()
@@ -1715,7 +1789,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
     try:
         selection_state = st.dataframe(
             table_rows,
-            use_container_width=True,
+            width="stretch",
             height=300,
             hide_index=True,
             on_select="rerun",
@@ -1731,7 +1805,7 @@ def _render_data_explorer(report: RedTeamReport, summary: ReportSummary) -> None
             selected_row_idx = rows_selected[0]
     except TypeError:
         # Fallback for older Streamlit versions that do not support on_select
-        st.dataframe(table_rows, use_container_width=True, height=300, hide_index=True)
+        st.dataframe(table_rows, width="stretch", height=300, hide_index=True)
 
     # Export buttons
     export_cols = st.columns([1, 1, 4])
@@ -1942,7 +2016,7 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
                 "Completion Tokens": f"{int(usage['completion_tokens']):,}",
                 "API Calls": int(usage["calls"]),
             })
-        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.dataframe(rows, width="stretch", hide_index=True)
 
     # Token distribution histogram
     st.divider()
@@ -1964,7 +2038,7 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
             if prompt_tokens:
                 fig = go.Figure(go.Histogram(
                     x=prompt_tokens, nbinsx=30,
-                    marker_color=COLORS['orange_300'],
+                    marker_color=COLORS['success_400'],
                     name="Prompt Tokens",
                 ))
                 fig.update_layout(
@@ -1980,7 +2054,7 @@ def _render_usage_tab(report: RedTeamReport, summary: ReportSummary, agents: lis
             if completion_tokens:
                 fig = go.Figure(go.Histogram(
                     x=completion_tokens, nbinsx=30,
-                    marker_color=COLORS['blue_400'],
+                    marker_color=COLORS['teal_400'],
                     name="Completion Tokens",
                 ))
                 fig.update_layout(
@@ -2048,7 +2122,7 @@ def _render_errors_tab(summary: ReportSummary, report: RedTeamReport) -> None:
             if has_details:
                 row["Details"] = json.dumps(r.error_details, default=str) if r.error_details else "-"
             rows.append(row)
-        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.dataframe(rows, width="stretch", hide_index=True)
 
     # Error impact
     st.divider()

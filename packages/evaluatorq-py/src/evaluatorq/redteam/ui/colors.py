@@ -83,12 +83,12 @@ ORQ_SCALE_AGENT: list[list[float | str]] = [
 # ---------------------------------------------------------------------------
 
 QUALITATIVE: list[str] = [
-    COLORS['orange_300'],
-    COLORS['blue_400'],
     COLORS['success_400'],
+    COLORS['orange_300'],
     COLORS['purple_400'],
-    COLORS['orange_400'],
     COLORS['turquoise_400'],
     COLORS['teal_400'],
+    COLORS['blue_400'],
+    COLORS['orange_400'],
     COLORS['info_400'],
 ]
