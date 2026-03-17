@@ -13,6 +13,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from click.testing import Result as CliResult
 from typer.testing import CliRunner
 
 from evaluatorq.redteam.cli import app
@@ -33,7 +34,7 @@ def _make_mock_report() -> MagicMock:
     return report
 
 
-def _run_with_mocked_red_team(args: list[str], report: MagicMock | None = None) -> object:
+def _run_with_mocked_red_team(args: list[str], report: MagicMock | None = None) -> tuple[CliResult, MagicMock]:
     """Invoke the CLI with red_team patched out.
 
     Returns the CliRunner result object.

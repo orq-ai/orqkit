@@ -252,5 +252,6 @@ class TestAttackOutput:
         )
         assert output.error == "content_filter blocked"
         assert output.error_type == "content_filter"
+        assert output.token_usage is not None
         assert output.token_usage.total_tokens == 150
         assert isinstance(output, OrchestratorResult)

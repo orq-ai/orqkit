@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 from types import SimpleNamespace
 
 import pytest
@@ -326,10 +327,10 @@ def _make_dynamic_mock_result(
     final_response: str = 'I cannot help',
     turns: int = 2,
     objective_achieved: bool = False,
-    token_usage: dict | None = None,
+    token_usage: dict[str, Any] | None = None,
     error: str | None = None,
     output_error: str | None = None,
-    evaluator_scores: list | None = None,
+    evaluator_scores: list[Any] | None = None,
     strategy_name: str = 'test-strat',
     attack_technique: str = 'indirect-injection',
     delivery_methods: list[str] | None = None,
@@ -338,7 +339,7 @@ def _make_dynamic_mock_result(
     is_generated: bool = False,
 ) -> SimpleNamespace:
     """Build a minimal mock evaluatorq DataPointResult for dynamic pipeline tests."""
-    output: dict = {
+    output: dict[str, Any] = {
         'final_response': final_response,
         'turns': turns,
         'conversation': [],
@@ -384,7 +385,7 @@ def _make_static_mock_result(
     score_value: bool = True,
     score_explanation: str = 'ok',
     final_response: str = 'denied',
-    token_usage: dict | None = None,
+    token_usage: dict[str, Any] | None = None,
     dp_error: str | None = None,
     job_error: str | None = None,
     attack_technique: str = 'indirect-injection',
@@ -395,7 +396,7 @@ def _make_static_mock_result(
     turn_type: str = 'single',
 ) -> SimpleNamespace:
     """Build a minimal mock evaluatorq DataPointResult for static pipeline tests."""
-    output: dict = {'final_response': final_response}
+    output: dict[str, Any] = {'final_response': final_response}
     if token_usage is not None:
         output['token_usage'] = token_usage
 
@@ -614,7 +615,7 @@ class TestDynamicConverterValuePropagation:
 class TestStaticSampleToResult:
     """Tests for static_sample_to_result()."""
 
-    def _base_sample(self, **overrides) -> dict:
+    def _base_sample(self, **overrides: Any) -> dict[str, Any]:
         sample = {
             'input': {
                 'id': 'test-001',

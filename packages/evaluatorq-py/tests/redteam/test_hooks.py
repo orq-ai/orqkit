@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from evaluatorq.redteam.hooks import ConfirmPayload
 
 
 # ---------------------------------------------------------------------------
@@ -18,46 +21,48 @@ def _make_report(**kwargs):
     """Create a minimal RedTeamReport for use in tests."""
     from evaluatorq.redteam.contracts import Pipeline, RedTeamReport, ReportSummary
 
-    defaults = dict(
-        created_at=datetime.now(tz=timezone.utc),
-        description="Test report",
-        pipeline=Pipeline.DYNAMIC,
-        framework=None,
-        categories_tested=["ASI01"],
-        tested_agents=["agent:test"],
-        total_results=10,
-        results=[],
-        summary=ReportSummary(
-            total_attacks=10,
-            evaluated_attacks=8,
-            vulnerabilities_found=3,
-            resistance_rate=0.7,
+    return RedTeamReport(
+        created_at=kwargs.get("created_at", datetime.now(tz=timezone.utc)),
+        description=kwargs.get("description", "Test report"),
+        pipeline=kwargs.get("pipeline", Pipeline.DYNAMIC),
+        framework=kwargs.get("framework", None),
+        categories_tested=kwargs.get("categories_tested", ["ASI01"]),
+        tested_agents=kwargs.get("tested_agents", ["agent:test"]),
+        total_results=kwargs.get("total_results", 10),
+        results=kwargs.get("results", []),
+        summary=kwargs.get(
+            "summary",
+            ReportSummary(
+                total_attacks=10,
+                evaluated_attacks=8,
+                vulnerabilities_found=3,
+                resistance_rate=0.7,
+            ),
         ),
     )
-    defaults.update(kwargs)
-    return RedTeamReport(**defaults)
 
 
-def _make_confirm_payload(**kwargs) -> dict[str, Any]:
-    """Create a minimal ConfirmPayload-like dict."""
-    defaults: dict[str, Any] = dict(
-        agent_context=None,
-        num_datapoints=20,
-        num_dynamic=None,
-        num_static=None,
-        categories=["ASI01", "ASI02"],
-        attack_model="azure/gpt-5-mini",
-        evaluator_model="azure/gpt-5-mini",
-        max_turns=5,
-        parallelism=5,
-        filtering_metadata=None,
-        mode="dynamic",
-        target="agent:test",
-        dataset=None,
-        vulnerabilities=None,
-    )
-    defaults.update(kwargs)
-    return defaults
+def _make_confirm_payload(**kwargs) -> ConfirmPayload:
+    """Create a minimal ConfirmPayload for use in tests."""
+    from evaluatorq.redteam.hooks import ConfirmPayload
+
+    payload: ConfirmPayload = {
+        "agent_context": kwargs.get("agent_context", None),
+        "num_datapoints": kwargs.get("num_datapoints", 20),
+        "num_dynamic": kwargs.get("num_dynamic", None),
+        "num_static": kwargs.get("num_static", None),
+        "categories": kwargs.get("categories", ["ASI01", "ASI02"]),
+        "attack_model": kwargs.get("attack_model", "azure/gpt-5-mini"),
+        "evaluator_model": kwargs.get("evaluator_model", "azure/gpt-5-mini"),
+        "max_turns": kwargs.get("max_turns", 5),
+        "parallelism": kwargs.get("parallelism", 5),
+        "filtering_metadata": kwargs.get("filtering_metadata", None),
+        "mode": kwargs.get("mode", "dynamic"),
+        "target": kwargs.get("target", "agent:test"),
+        "dataset_path": kwargs.get("dataset_path", None),
+        "vulnerabilities": kwargs.get("vulnerabilities", None),
+    }
+    return payload
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +101,7 @@ class TestDefaultHooks:
 
         hooks = DefaultHooks()
         payload = _make_confirm_payload()
-        result = hooks.on_confirm(payload)  # type: ignore[arg-type]
+        result = hooks.on_confirm(payload)
         assert result is True
 
     def test_default_on_confirm_logs_plan(self):
@@ -106,7 +111,7 @@ class TestDefaultHooks:
         hooks = DefaultHooks()
         payload = _make_confirm_payload(num_datapoints=42, categories=["ASI01", "ASI02", "ASI03"])
         with patch("evaluatorq.redteam.hooks.logger") as mock_logger:
-            hooks.on_confirm(payload)  # type: ignore[arg-type]
+            hooks.on_confirm(payload)
             mock_logger.info.assert_called()
             # At least one log call should mention datapoints or categories
             all_calls = " ".join(str(c) for c in mock_logger.info.call_args_list)
@@ -177,7 +182,7 @@ class TestRichHooks:
         """on_confirm should render a table with run parameters."""
         hooks, buf = self._make_rich_hooks(skip_confirm=True)
         payload = _make_confirm_payload(num_datapoints=30, attack_model="gpt-4o")
-        hooks.on_confirm(payload)  # type: ignore[arg-type]
+        hooks.on_confirm(payload)
         output = buf.getvalue()
         assert "30" in output or "Datapoint" in output
 
@@ -190,7 +195,7 @@ class TestRichHooks:
             "knowledge_bases": [],
         }
         payload = _make_confirm_payload(agent_context=agent_ctx)
-        hooks.on_confirm(payload)  # type: ignore[arg-type]
+        hooks.on_confirm(payload)
         output = buf.getvalue()
         # Should render tools count or memory info
         assert "search_web" in output or "2" in output or "tool" in output.lower()
@@ -200,7 +205,7 @@ class TestRichHooks:
         hooks, buf = self._make_rich_hooks(skip_confirm=True)
         filtering = {"total_strategies": 15, "filtered_count": 3, "categories_covered": 5}
         payload = _make_confirm_payload(filtering_metadata=filtering)
-        hooks.on_confirm(payload)  # type: ignore[arg-type]
+        hooks.on_confirm(payload)
         output = buf.getvalue()
         # Some filtering info should appear
         assert "15" in output or "strateg" in output.lower() or "filter" in output.lower()
@@ -210,7 +215,7 @@ class TestRichHooks:
         hooks, buf = self._make_rich_hooks(skip_confirm=False)
         payload = _make_confirm_payload()
         with patch("typer.confirm", return_value=False):
-            result = hooks.on_confirm(payload)  # type: ignore[arg-type]
+            result = hooks.on_confirm(payload)
         assert result is False
 
     def test_rich_on_confirm_skip_confirm_true(self):
@@ -218,7 +223,7 @@ class TestRichHooks:
         hooks, buf = self._make_rich_hooks(skip_confirm=True)
         payload = _make_confirm_payload()
         with patch("typer.confirm") as mock_confirm:
-            result = hooks.on_confirm(payload)  # type: ignore[arg-type]
+            result = hooks.on_confirm(payload)
             mock_confirm.assert_not_called()
         assert result is True
 
@@ -227,7 +232,7 @@ class TestRichHooks:
         hooks, buf = self._make_rich_hooks(skip_confirm=True)
         payload = _make_confirm_payload(agent_context=None, mode="static")
         # Should not raise
-        result = hooks.on_confirm(payload)  # type: ignore[arg-type]
+        result = hooks.on_confirm(payload)
         assert result is True
 
     def test_rich_on_complete_calls_print_report_summary(self):
@@ -277,10 +282,10 @@ class TestProtocolCompliance:
         from evaluatorq.redteam.hooks import PipelineHooks
 
         class MyHooks:
-            def on_stage_start(self, stage: str, meta: dict) -> None:
+            def on_stage_start(self, stage: str, meta: dict[str, Any]) -> None:
                 pass
 
-            def on_stage_end(self, stage: str, meta: dict) -> None:
+            def on_stage_end(self, stage: str, meta: dict[str, Any]) -> None:
                 pass
 
             def on_confirm(self, payload) -> bool:
@@ -345,7 +350,7 @@ class TestHooksIntegration:
         from evaluatorq.redteam.runner import red_team
 
         class ExplodingHooks(DefaultHooks):
-            def on_stage_start(self, stage: str, meta: dict) -> None:
+            def on_stage_start(self, stage: str, meta: dict[str, Any]) -> None:
                 raise ValueError("Hook exploded!")
 
         with patch("evaluatorq.redteam.runner._run_dynamic_or_hybrid") as mock_dynamic:

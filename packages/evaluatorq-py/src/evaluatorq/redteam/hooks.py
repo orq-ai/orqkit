@@ -289,7 +289,7 @@ class RichHooks:
 
         target = payload.get("target", "?")
         mode = payload.get("mode", "?")
-        num_dp = payload.get("num_datapoints", "?")
+        num_dp = payload.get("num_datapoints")
         categories = payload.get("categories") or []
         attack_model = payload.get("attack_model", "?")
         evaluator_model = payload.get("evaluator_model", "?")

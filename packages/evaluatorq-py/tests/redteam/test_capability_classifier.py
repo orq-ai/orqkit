@@ -6,13 +6,12 @@ import pytest
 
 from evaluatorq.redteam.adaptive.capability_classifier import (
     AgentCapabilities,
-    AgentCapability,
     ResourceCapabilityInference,
     ToolCapabilities,
     ToolCapabilitiesResponse,
     classify_agent_capabilities,
 )
-from evaluatorq.redteam.contracts import AgentContext, KnowledgeBaseInfo, MemoryStoreInfo, ToolInfo
+from evaluatorq.redteam.contracts import AgentCapability, AgentContext, KnowledgeBaseInfo, MemoryStoreInfo, ToolInfo
 
 
 def _mock_resource_response(

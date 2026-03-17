@@ -13,11 +13,11 @@ import pytest
 from openai import AsyncOpenAI
 
 
-def _make_report(**kwargs):
+def _make_report():
     """Create a minimal RedTeamReport for use in tests."""
     from evaluatorq.redteam.contracts import Pipeline, RedTeamReport, ReportSummary
 
-    defaults = dict(
+    return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc),
         description="Test report",
         pipeline=Pipeline.DYNAMIC,
@@ -28,8 +28,6 @@ def _make_report(**kwargs):
         results=[],
         summary=ReportSummary(),
     )
-    defaults.update(kwargs)
-    return RedTeamReport(**defaults)
 
 
 # ---------------------------------------------------------------------------

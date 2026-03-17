@@ -42,7 +42,7 @@ class SpyHooks:
     """
 
     def __init__(self, confirm_result: bool = True) -> None:
-        self.calls: list[tuple[str, Any, ...]] = []
+        self.calls: list[tuple[Any, ...]] = []
         self.confirm_result = confirm_result
         self.received_confirm_payload: ConfirmPayload | None = None
         self.received_complete_report: RedTeamReport | None = None
@@ -835,15 +835,18 @@ class TestDynamicConfirmPayload:
         for key in required_keys:
             assert key in payload, f"ConfirmPayload missing key: {key!r}"
 
+        # Cast to plain dict so item access is type-safe after the membership checks above.
+        payload_dict: dict[str, Any] = dict(payload)
+
         # mode must be "dynamic"
-        assert payload["mode"] == "dynamic"
+        assert payload_dict["mode"] == "dynamic"
 
         # parallelism and max_turns pass through unchanged
-        assert payload["parallelism"] == 4
-        assert payload["max_turns"] == 3
+        assert payload_dict["parallelism"] == 4
+        assert payload_dict["max_turns"] == 3
 
         # target reflects the input target string
-        assert "gpt-4o-mini" in payload["target"]
+        assert "gpt-4o-mini" in payload_dict["target"]
 
     @pytest.mark.asyncio
     async def test_dynamic_confirm_rejection_aborts_before_datapoint_generation(self) -> None:
