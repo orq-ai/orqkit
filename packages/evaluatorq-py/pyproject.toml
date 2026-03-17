@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src/evaluatorq" ]
-include = [ "src/evaluatorq/py.typed" ]
+include = [ "src/evaluatorq/py.typed", "src/evaluatorq/**/*.css" ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [ "examples/", ".venv/", "tests/" ]
