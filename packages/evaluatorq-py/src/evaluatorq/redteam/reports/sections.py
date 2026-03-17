@@ -103,8 +103,8 @@ def _build_summary_section(report: RedTeamReport) -> ReportSection:
         targets = [report.agent_context.display_name or report.agent_context.key or "unknown"]
     else:
         # Last resort: extract from individual results
-        agent_names = {r.agent.key or r.agent.display_name or r.agent.model for r in report.results if r.agent}
-        targets = sorted(agent_names - {None}) if agent_names - {None} else ["unknown"]
+        agent_names = [r.agent.key or r.agent.display_name or r.agent.model or 'unknown' for r in report.results if r.agent]
+        targets = sorted(set(agent_names)) if agent_names else ['unknown']
     critical_sev = s.by_severity.get("critical")
     critical_exposure = critical_sev.vulnerabilities_found if critical_sev else 0
 

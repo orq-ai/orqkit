@@ -472,7 +472,7 @@ def dynamic_evaluatorq_results_to_report(
         pipeline=Pipeline.DYNAMIC,
         framework=_dominant_framework(unified),
         categories_tested=categories,
-        tested_agents=[agent_context.key or agent_context.display_name] if (agent_context.key or agent_context.display_name) else [],
+        tested_agents=[agent_context.key or agent_context.display_name or 'unknown'],
         total_results=len(unified),
         agent_context=agent_context,
         results=unified,

@@ -231,7 +231,7 @@ class PreparedTarget:
     job: Callable[..., Any]  # the @job-decorated callable for this target
     dynamic_job: Callable[..., Any]  # raw inner dynamic job
     resolved_memory_cleanup: MemoryCleanup
-    resolved_llm_client: AsyncOpenAI
+    resolved_llm_client: AsyncOpenAI | None
     filtering_metadata: dict[str, Any]
     memory_entity_ids: list[str]  # runtime-accumulated entity IDs for cleanup
 
