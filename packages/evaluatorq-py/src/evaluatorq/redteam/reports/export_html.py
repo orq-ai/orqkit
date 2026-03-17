@@ -1410,42 +1410,6 @@ def _asr_badge_color(asr: float) -> str:
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
-def _render_vulnerability_asr_table_html(section: ReportSection) -> str:
-    """Render per-vulnerability ASR table with color-coded ASR badges."""
-    rows = section.data.get("rows", [])
-    if not rows:
-        return f"<h2>{_esc(section.title)}</h2>\n<p>No vulnerability data available.</p>"
-
-    table_rows = []
-    for r in rows:
-        asr = r.get("vulnerability_rate", 0.0)
-        badge_color = _asr_badge_color(asr)
-        text_color = "white" if asr > 0.15 else _COLORS["ink_700"]
-        asr_badge = (
-            f'<span class="badge" style="background:{badge_color};color:{text_color}">'
-            f"{_pct(asr)}"
-            f"</span>"
-        )
-        table_rows.append([
-            _esc(r.get("vulnerability_name") or r.get("vulnerability", "?")),
-            _esc(r.get("domain", "")),
-            _esc(str(r.get("total_attacks", 0))),
-            _esc(str(r.get("vulnerabilities_found", 0))),
-            asr_badge,
-        ])
-
-    table = _html_table(
-        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
-        table_rows,
-    )
-    legend = (
-        '<p style="font-size:.8em;color:#888;margin-top:.3rem">'
-        "ASR badge color: green = low risk, yellow = medium, red = high risk."
-        "</p>"
-    )
-    return f"<h2>{_esc(section.title)}</h2>\n{table}\n{legend}"
-
-
 # ---------------------------------------------------------------------------
 # Phase 3 chart helpers
 # ---------------------------------------------------------------------------
@@ -1895,7 +1859,6 @@ _SECTION_RENDERERS = {
     "turn_depth_analysis": _render_turn_depth_analysis_html,
     "token_usage": _render_token_usage_html,
     "source_distribution": _render_source_distribution_html,
-    "vulnerability_asr_table": _render_vulnerability_asr_table_html,
     # Phase 3 sections
     "agent_comparison": _render_agent_comparison_html,
     "agent_disagreements": _render_agent_disagreements_html,

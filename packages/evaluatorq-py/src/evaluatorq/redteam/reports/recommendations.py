@@ -18,28 +18,11 @@ from evaluatorq.redteam.contracts import (
     RedTeamReport,
     RedTeamResult,
 )
+from evaluatorq.redteam.reports._utils import extract_prompt, extract_response
 from evaluatorq.redteam.reports.sections import SEVERITY_WEIGHTS, _compute_risk_score
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
-
-
-def _extract_prompt(result: RedTeamResult) -> str:
-    """Extract the first user message content."""
-    for msg in result.messages:
-        if msg.role == 'user' and msg.content:
-            return msg.content
-    return ''
-
-
-def _extract_response(result: RedTeamResult) -> str:
-    """Extract the agent's response text."""
-    if result.response:
-        return result.response
-    for msg in reversed(result.messages):
-        if msg.role == 'assistant' and msg.content:
-            return msg.content
-    return ''
 
 
 def _truncate(text: str, max_chars: int = 500) -> str:
@@ -51,8 +34,8 @@ def _truncate(text: str, max_chars: int = 500) -> str:
 def _format_trace(result: RedTeamResult) -> str:
     """Format a single failed trace into a compact representation."""
     attack = result.attack
-    prompt = _truncate(_extract_prompt(result))
-    response = _truncate(_extract_response(result))
+    prompt = _truncate(extract_prompt(result))
+    response = _truncate(extract_response(result))
     explanation = _truncate(result.evaluation.explanation if result.evaluation else '', 300)
 
     parts = [

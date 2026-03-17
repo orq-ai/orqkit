@@ -24,7 +24,6 @@ Section kinds:
     - ``turn_depth_analysis``     — multi-turn ASR% by conversation depth
     - ``token_usage``             — token consumption summary
     - ``source_distribution``     — attack source counts
-    - ``vulnerability_asr_table`` — per-vulnerability ASR table with color codes
 """
 
 from __future__ import annotations
@@ -32,7 +31,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from loguru import logger
+
 from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES, SEVERITY_DEFINITIONS, RedTeamReport, RedTeamResult
+from evaluatorq.redteam.reports._utils import extract_prompt, extract_response
 from evaluatorq.redteam.reports.guidance import REMEDIATION_GUIDANCE
 
 # ---------------------------------------------------------------------------
@@ -275,25 +277,6 @@ def _build_technique_breakdown_section(report: RedTeamReport) -> ReportSection:
     )
 
 
-def _extract_prompt(result: RedTeamResult) -> str:
-    """Extract the first user message content as the attack prompt."""
-    for msg in result.messages:
-        if msg.role == "user" and msg.content:
-            return msg.content
-    return ""
-
-
-def _extract_response(result: RedTeamResult) -> str:
-    """Extract the agent's response text."""
-    if result.response:
-        return result.response
-    # Fall back to last assistant message
-    for msg in reversed(result.messages):
-        if msg.role == "assistant" and msg.content:
-            return msg.content
-    return ""
-
-
 def _build_individual_results_section(report: RedTeamReport) -> ReportSection:
     """Build individual attack result entries."""
     entries: list[dict[str, Any]] = []
@@ -307,8 +290,8 @@ def _build_individual_results_section(report: RedTeamReport) -> ReportSection:
                 "technique": result.attack.attack_technique.value,
                 "severity": result.attack.severity.value,
                 "vulnerable": result.vulnerable,
-                "prompt": _extract_prompt(result),
-                "response": _extract_response(result),
+                "prompt": extract_prompt(result),
+                "response": extract_response(result),
                 "explanation": result.evaluation.explanation if result.evaluation else "",
                 "error": result.error,
             }
@@ -479,6 +462,8 @@ def _build_agent_comparison_section(report: RedTeamReport) -> ReportSection:
             agent_results[key].append(r)
         elif display in agent_results:
             agent_results[display].append(r)
+        else:
+            logger.warning("Result agent {!r} (display={!r}) not in tested_agents, skipping", key, display)
 
     # Per-agent top-level metrics
     agent_metrics: list[dict[str, Any]] = []
@@ -598,7 +583,7 @@ def _build_agent_disagreements_section(report: RedTeamReport) -> ReportSection:
                 {
                     "agent": a,
                     "vulnerable": r.vulnerable,
-                    "response_snippet": _extract_response(r)[:500],
+                    "response_snippet": extract_response(r)[:500],
                     "explanation": r.evaluation.explanation if r.evaluation else "",
                 }
             )
@@ -609,7 +594,7 @@ def _build_agent_disagreements_section(report: RedTeamReport) -> ReportSection:
                 "vulnerability": first_result.attack.vulnerability or first_result.attack.category or "unknown",
                 "technique": first_result.attack.attack_technique.value,
                 "severity": first_result.attack.severity.value,
-                "prompt_snippet": _extract_prompt(first_result)[:300],
+                "prompt_snippet": extract_prompt(first_result)[:300],
                 "per_agent": per_agent,
             }
         )
@@ -876,36 +861,6 @@ def _build_source_distribution_section(report: RedTeamReport) -> ReportSection |
     return ReportSection(
         kind="source_distribution",
         title="Attack Source Distribution",
-        data={"rows": rows},
-    )
-
-
-def _build_vulnerability_asr_table_section(report: RedTeamReport) -> ReportSection | None:
-    """Build a per-vulnerability ASR color-coded table.
-
-    Returns ``None`` when there are no vulnerability summaries.
-    """
-    rows: list[dict[str, Any]] = []
-    for vuln_id, vuln_summary in report.summary.by_vulnerability.items():
-        total = vuln_summary.total_attacks
-        found = vuln_summary.vulnerabilities_found
-        rows.append({
-            "vulnerability": vuln_id,
-            "vulnerability_name": vuln_summary.vulnerability_name or vuln_id,
-            "domain": vuln_summary.domain,
-            "total_attacks": total,
-            "vulnerabilities_found": found,
-            "vulnerability_rate": 1.0 - vuln_summary.resistance_rate,
-        })
-
-    if not rows:
-        return None
-
-    rows.sort(key=lambda r: r["vulnerability_rate"], reverse=True)
-
-    return ReportSection(
-        kind="vulnerability_asr_table",
-        title="Vulnerability ASR Summary",
         data={"rows": rows},
     )
 

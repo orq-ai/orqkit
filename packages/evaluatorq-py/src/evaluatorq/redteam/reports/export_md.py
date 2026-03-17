@@ -716,30 +716,6 @@ def _render_token_usage_section(section: ReportSection) -> str:
     return "\n".join(lines)
 
 
-def _render_vulnerability_asr_table_section(section: ReportSection) -> str:
-    """Render per-vulnerability ASR summary table with Unicode bars."""
-    rows = section.data.get("rows", [])
-    if not rows:
-        return ""
-
-    table_rows = [
-        [
-            r.get("vulnerability_name") or r["vulnerability"],
-            r.get("domain", ""),
-            str(r["total_attacks"]),
-            str(r["vulnerabilities_found"]),
-            _bold_bar(r["vulnerability_rate"]),
-        ]
-        for r in rows
-    ]
-    table = _md_table(
-        ["Vulnerability", "Domain", "Attacks", "Hits", "ASR"],
-        table_rows,
-        right_align={2, 3},
-    )
-    return f"## {section.title}\n\n{table}"
-
-
 def _render_severity_definitions_section(section: ReportSection) -> str:
     """Render the severity level definitions table."""
     definitions = section.data.get("definitions", [])
@@ -852,7 +828,6 @@ _SECTION_RENDERERS = {
     "agent_comparison": _render_agent_comparison_section,
     "agent_disagreements": _render_agent_disagreements_section,
     "vulnerability_breakdown": _render_vulnerability_breakdown_section,
-    "vulnerability_asr_table": _render_vulnerability_asr_table_section,
     "category_breakdown": _render_category_breakdown_section,
     "attack_heatmap": _render_attack_heatmap_section,
     "technique_breakdown": _render_technique_breakdown_section,
