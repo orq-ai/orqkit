@@ -25,7 +25,7 @@ def _make_report(target: str = "agent:test", **kwargs) -> RedTeamReport:
         summary=ReportSummary(),
     )
     defaults.update(kwargs)
-    return RedTeamReport(**defaults)
+    return RedTeamReport(**defaults)  # pyright: ignore[reportArgumentType]
 
 
 class TestParseTarget:
