@@ -173,8 +173,10 @@ class TestVulnerabilityHelpText:
     """The --vulnerability help text must describe IDs, examples, and precedence."""
 
     def _get_help_output(self) -> str:
+        import re
         result = runner.invoke(app, ["run", "--help"])
-        return result.output
+        # Strip ANSI escape codes so assertions work regardless of terminal width
+        return re.sub(r'\x1b\[[0-9;]*m', '', result.output)
 
     def test_help_shows_vulnerability_flag(self):
         """--vulnerability appears in the help output."""
