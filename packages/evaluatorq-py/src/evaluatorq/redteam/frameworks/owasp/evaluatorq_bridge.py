@@ -148,11 +148,13 @@ def create_owasp_evaluator(
 
         output_text = output.get('response', '') if isinstance(output, dict) else str(output)
         prompt = evaluator_entity.prompt
-        prompt = prompt.replace('{{output.response}}', output_text)
+        # Replace {{input.all_messages}} BEFORE inserting untrusted output_text so that
+        # a crafted response containing "{{input.all_messages}}" cannot expand the template.
         prompt = prompt.replace(
             '{{input.all_messages}}',
             json.dumps(data.inputs.get('messages', []), indent=2),
         )
+        prompt = prompt.replace('{{output.response}}', output_text)
 
         client = llm_client or create_async_llm_client()
         try:

@@ -422,7 +422,7 @@ def ui(
         )
         raise typer.Exit(code=1)
 
-    subprocess.run(
+    result = subprocess.run(
         [
             sys.executable, "-m", "streamlit", "run",
             str(dashboard_script),
@@ -432,6 +432,7 @@ def ui(
             "--", str(report_path),
         ],
     )
+    raise typer.Exit(code=result.returncode)
 
 
 @app.command()

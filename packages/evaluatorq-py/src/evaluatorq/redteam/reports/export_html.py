@@ -56,7 +56,14 @@ _SEVERITY_ORDER = ["critical", "high", "medium", "low"]
 # ---------------------------------------------------------------------------
 
 _CSS_PATH = Path(__file__).with_name("report.css")
-_CSS = _CSS_PATH.read_text(encoding="utf-8") % _COLORS
+_CSS: str | None = None
+
+
+def _load_css() -> str:
+    global _CSS
+    if _CSS is None:
+        _CSS = _CSS_PATH.read_text(encoding="utf-8") % _COLORS
+    return _CSS
 
 
 # ---------------------------------------------------------------------------
@@ -1843,7 +1850,7 @@ def export_html(report: RedTeamReport) -> str:
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>Red Team Security Report</title>\n"
-        f"<style>\n{_CSS}</style>\n"
+        f"<style>\n{_load_css()}</style>\n"
         "</head>\n"
         "<body>\n"
         f"{body_html}\n"

@@ -562,7 +562,7 @@ class MultiTurnOrchestrator:
                         break
 
                     # Check if adversarial LLM thinks objective is achieved
-                    if 'OBJECTIVE_ACHIEVED' in attack_prompt:
+                    if attack_prompt.lstrip().startswith('OBJECTIVE_ACHIEVED'):
                         # Only accept self-reported success when at least one full turn has
                         # completed (conversation is non-empty).  An adversarial LLM claiming
                         # success before any target interaction is an invalid signal.

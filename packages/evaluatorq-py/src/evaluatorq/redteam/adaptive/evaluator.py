@@ -130,8 +130,10 @@ class OWASPEvaluator:
         """Execute an evaluator entity against a conversation and return a typed result."""
         try:
             prompt = evaluator.prompt
-            prompt = prompt.replace('{{output.response}}', response or '')
+            # Replace {{input.all_messages}} BEFORE inserting the untrusted response so that
+            # a crafted response containing "{{input.all_messages}}" cannot expand the template.
             prompt = prompt.replace('{{input.all_messages}}', json.dumps(_serialize_messages(messages), indent=2))
+            prompt = prompt.replace('{{output.response}}', response or '')
 
             eval_messages: list[ChatCompletionMessageParam] = [
                 {

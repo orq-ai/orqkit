@@ -195,7 +195,7 @@ class ORQAgentTarget:
 
                 if pending_ids:
                     raise RuntimeError(
-                        f'Unresolved pending tool calls after {max_tool_continuations} continuations: {pending_ids}'
+                        f'Unresolved pending tool calls after {max_tool_continuations} continuations ({len(pending_ids)} remaining)'
                     )
 
                 if total_calls > 0:

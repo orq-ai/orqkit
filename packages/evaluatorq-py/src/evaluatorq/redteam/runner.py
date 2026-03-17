@@ -67,9 +67,10 @@ def get_runs_dir() -> Path:
 def _auto_save_run(report: RedTeamReport, name: str | None = None) -> Path | None:
     """Persist a report to ``.evaluatorq/runs/`` for later listing via ``runs`` CLI."""
     try:
+        import re
         runs_dir = get_runs_dir()
         runs_dir.mkdir(parents=True, exist_ok=True)
-        resolved_name = name or 'red-team'
+        resolved_name = re.sub(r'[^a-zA-Z0-9_\-]', '-', name or 'red-team').strip('-') or 'red-team'
         ts = report.created_at.strftime('%Y%m%d_%H%M%S')
         filename = f'{resolved_name}_{ts}.json'
         path = runs_dir / filename
@@ -380,8 +381,8 @@ async def red_team(
     # Early credential validation — fail fast with a clear message
     if llm_client is None and not os.getenv('OPENAI_API_KEY') and not os.getenv('ORQ_API_KEY'):
         raise CredentialError(
-            'Missing LLM credentials. Set either OPENAI_API_KEY (optionally OPENAI_BASE_URL) '
-            'or ORQ_API_KEY (optionally ORQ_BASE_URL).'
+            'Missing LLM credentials for attack/evaluation models. '
+            'Set OPENAI_API_KEY for direct OpenAI access, or ORQ_API_KEY to use the ORQ router.'
         )
 
     from evaluatorq.redteam.contracts import Vulnerability as _Vulnerability
