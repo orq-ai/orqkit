@@ -82,6 +82,7 @@ async def plan_strategies_for_vulnerabilities(
     generated_by_vuln: dict[Vulnerability, list[AttackStrategy]] = {vuln: [] for vuln in vulnerabilities}
     generated_single_by_vuln: dict[Vulnerability, list[AttackStrategy]] = {vuln: [] for vuln in vulnerabilities}
     generated_multi_by_vuln: dict[Vulnerability, list[AttackStrategy]] = {vuln: [] for vuln in vulnerabilities}
+    generation_errors: dict[Vulnerability, str | None] = {vuln: None for vuln in vulnerabilities}
 
     if generate_additional_strategies and llm_client is not None and generated_strategy_count > 0:
         async with with_redteam_span("orq.redteam.strategy_planning", {
@@ -90,7 +91,7 @@ async def plan_strategies_for_vulnerabilities(
             effective_parallelism = max(1, generation_parallelism or len(vulnerabilities) or 1)
             semaphore = asyncio.Semaphore(effective_parallelism)
 
-            async def _generate_for_vulnerability(vuln: Vulnerability) -> tuple[Vulnerability, list[AttackStrategy]]:
+            async def _generate_for_vulnerability(vuln: Vulnerability) -> tuple[Vulnerability, list[AttackStrategy], str | None]:
                 try:
                     async with semaphore:
                         generated = await generate_strategies_for_vulnerability(
@@ -104,16 +105,17 @@ async def plan_strategies_for_vulnerabilities(
                             attacker_instructions=attacker_instructions,
                             llm_kwargs=llm_kwargs,
                         )
-                    return vuln, generated
+                    return vuln, generated, None
                 except Exception as e:
                     logger.error(
                         f'Strategy generation failed for {vuln.value}, no strategies will be tested for this vulnerability: {e}'
                     )
-                    return vuln, []
+                    return vuln, [], str(e)
 
             generation_results = await asyncio.gather(*(_generate_for_vulnerability(vuln) for vuln in vulnerabilities))
-            for vuln, generated in generation_results:
+            for vuln, generated, generation_error in generation_results:
                 generated_by_vuln[vuln] = generated
+                generation_errors[vuln] = generation_error
                 generated_single = [s for s in generated if s.turn_type == TurnType.SINGLE]
                 generated_multi = [s for s in generated if s.turn_type == TurnType.MULTI]
                 generated_single_by_vuln[vuln] = generated_single
@@ -144,12 +146,13 @@ async def plan_strategies_for_vulnerabilities(
             'all_hardcoded': [s.model_dump(mode='json') for s in all_hardcoded],
             'applicable': [s.model_dump(mode='json') for s in applicable],
             'all_hardcoded_count': len(all_hardcoded),
-            'applicable_count': len(applicable_hardcoded),
+            'applicable_count': len(applicable),
             'generated_count': len(generated),
             'generated_single_count': len(generated_single),
             'generated_multi_count': len(generated_multi),
             'filtered_count': len(all_hardcoded) - len(applicable_hardcoded),
             'total_selected': len(applicable),
+            'generation_error': generation_errors.get(vuln),
         }
 
     return all_vuln_strategies, strategy_selection, agent_capabilities

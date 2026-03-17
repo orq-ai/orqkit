@@ -101,6 +101,10 @@ def _filter_applicable_strategies(
                         f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not met (fallback check)'
                     )
                     continue
+            elif agent_capabilities.classification_failed:
+                logger.debug(
+                    f'Including {strategy.name} optimistically: tool classification failed'
+                )
             elif not agent_capabilities.has_any(strategy.required_capabilities):
                 logger.debug(
                     f'Skipping {strategy.name}: required capabilities {strategy.required_capabilities} not matched by agent capabilities'

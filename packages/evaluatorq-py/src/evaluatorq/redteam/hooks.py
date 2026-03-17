@@ -129,7 +129,7 @@ class PipelineHooks(Protocol):
             payload: Summary of the planned run.
 
         Returns:
-            ``True`` to proceed, ``False`` to cancel (raises ``RuntimeError``).
+            ``True`` to proceed, ``False`` to cancel (raises ``CancelledError``).
         """
         ...
 
@@ -182,6 +182,9 @@ class DefaultHooks:
     def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
         """Log a brief summary and UI hint."""
         from pathlib import Path
+
+        for warning in report.pipeline_warnings:
+            logger.warning(f'[redteam] PIPELINE WARNING: {warning}')
 
         summary = report.summary
         logger.info(
@@ -296,10 +299,8 @@ class RichHooks:
 
         if num_dp is not None:
             table.add_row("Datapoints", str(num_dp))
-            if num_dynamic is not None:
-                table.add_row("  → Dynamic", str(num_dynamic))
-            if num_static is not None:
-                table.add_row("  → Static", str(num_static))
+            table.add_row("  → Dynamic", str(num_dynamic or 0))
+            table.add_row("  → Static", str(num_static or 0))
 
         table.add_row("Categories", str(len(categories)))
         table.add_row("Attack Model", str(attack_model))
@@ -432,6 +433,13 @@ class RichHooks:
     def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
         """Render the full report summary and a UI hint."""
         from pathlib import Path
+        from rich.panel import Panel
+
+        if report.pipeline_warnings:
+            warning_text = '\n'.join(f'[bold]WARNING:[/bold] {w}' for w in report.pipeline_warnings)
+            self._console.print(
+                Panel(warning_text, title='[bold red]Pipeline Warnings[/bold red]', border_style='red', expand=False)
+            )
 
         print_report_summary(report, console=self._console)
         self._console.print()

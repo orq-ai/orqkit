@@ -42,29 +42,36 @@ def create_model_job(
     if deployment_key:
         safe_key = _sanitize_job_name(deployment_key)
 
+        try:
+            from orq_ai_sdk import Orq
+        except ImportError as e:
+            msg = (
+                'Deployment jobs require the orq-ai-sdk package. '
+                'Install it with: pip install evaluatorq[orq]'
+            )
+            raise ImportError(msg) from e
+
+        import os
+
+        api_key = os.environ.get('ORQ_API_KEY')
+        if not api_key:
+            raise CredentialError('ORQ_API_KEY environment variable is not set')
+        deployment_client = Orq(api_key=api_key)
+
         @job(f'redteam:static:{safe_key}')
         async def deployment_job(data: DataPoint, _row: int) -> dict[str, Any]:
             """Invoke the ORQ deployment and return the response with token usage."""
-            try:
-                from orq_ai_sdk import Orq
-            except ImportError as e:
-                msg = (
-                    'Deployment jobs require the orq-ai-sdk package. '
-                    'Install it with: pip install evaluatorq[orq]'
-                )
-                raise ImportError(msg) from e
-
-            import os
-
             messages = _build_messages(data)
-            api_key = os.environ.get('ORQ_API_KEY')
-            if not api_key:
-                raise CredentialError('ORQ_API_KEY environment variable is not set')
-            client = Orq(api_key=api_key)
-            completion = await client.deployments.invoke_async(
+            completion = await deployment_client.deployments.invoke_async(
                 key=deployment_key,
                 messages=messages,  # pyright: ignore[reportArgumentType]
             )
+
+            # Advance the global progress bar for static attacks.
+            from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
+            _active_progress = _get_active_progress()
+            if _active_progress is not None:
+                _active_progress.finish_attack(None)
 
             return {
                 'response': _extract_deployment_content(completion),
@@ -98,6 +105,12 @@ def create_model_job(
                 f'Empty router response for {sample_id}: '
                 f'content={response.choices[0].message.content}, finish_reason={finish_reason}'
             )
+        # Advance the global progress bar for static attacks.
+        from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
+        _active_progress = _get_active_progress()
+        if _active_progress is not None:
+            _active_progress.finish_attack(None)
+
         return {
             'response': content,
             'token_usage': _extract_usage_from_chat_completion(response),

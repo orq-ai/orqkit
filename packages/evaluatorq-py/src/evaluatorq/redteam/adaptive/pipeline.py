@@ -172,7 +172,8 @@ async def generate_dynamic_datapoints(
     # Try resolving all categories to vulnerabilities for the primary path
     try:
         resolved_vulnerabilities = resolve_vulnerabilities(categories)
-    except ValueError:
+    except ValueError as exc:
+        logger.warning(f'Could not resolve all categories to vulnerabilities, falling back to category-based path: {exc}')
         resolved_vulnerabilities = None
 
     if resolved_vulnerabilities is not None:
@@ -235,6 +236,10 @@ async def generate_dynamic_datapoints(
                 inputs['memory_entity_id'] = f'red-team-{uuid.uuid4().hex[:12]}'
 
             datapoints.append(DataPoint(inputs=inputs))
+
+    empty_categories = [cat for cat in categories if not all_category_strategies.get(cat)]
+    if empty_categories:
+        filtering_metadata['_unresolved_categories'] = empty_categories
 
     logger.debug(f'Generated {len(datapoints)} dynamic datapoints across {len(categories)} categories')
     return datapoints, filtering_metadata
@@ -367,6 +372,8 @@ def create_dynamic_redteam_job(
                         'timeout_ms': PIPELINE_CONFIG.target_agent_timeout_ms,
                     }
                 except Exception as e:
+                    if isinstance(e, (TypeError, AttributeError, ImportError, NameError)):
+                        raise
                     mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
                     logger.error(f'Single-turn attack failed for {category}/{strategy.name}: {mapped_msg}')
                     response = f'[ERROR: {mapped_msg}]'
@@ -399,6 +406,14 @@ def create_dynamic_redteam_job(
 
                 set_span_attrs(attack_span, {'input': prompt, 'output': response or ''})
                 _set_attack_span_attrs(attack_span, result_dict)
+
+                # Advance the global progress bar for template single-turn attacks
+                # (multi-turn attacks are tracked by run_attack in the orchestrator).
+                from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
+                _active_progress = _get_active_progress()
+                if _active_progress is not None:
+                    _active_progress.finish_attack(None)
+
                 return result_dict.model_dump(mode='json')
 
             # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
@@ -420,21 +435,47 @@ def create_dynamic_redteam_job(
                     agent_context=agent_context,
                     max_turns=effective_max_turns,
                 )
-            except Exception as e:
+            except asyncio.TimeoutError as e:
                 tb = traceback.format_exc(limit=8)
                 mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
-                logger.error(f'Orchestrator failed for {category}/{strategy.name}: {mapped_msg}\n{tb}')
+                logger.error(f'Orchestrator timed out for {category}/{strategy.name}: {mapped_msg}\n{tb}')
                 result = OrchestratorResult(
                     conversation=[],
                     final_response='',
                     objective_achieved=False,
-                    turns=1,
+                    turns=0,
                     duration_seconds=0.0,
                     token_usage=None,
                     token_usage_adversarial=None,
                     token_usage_target=None,
                     system_prompt=None,
-                    error=f'Orchestrator exception: {mapped_msg}',
+                    error=f'Orchestrator timeout: {mapped_msg}',
+                    error_type='orchestrator_timeout',
+                    error_stage='orchestrator',
+                    error_code=mapped_code,
+                    error_details={
+                        'exception_type': type(e).__name__,
+                        'raw_message': str(e),
+                        'traceback': tb,
+                    },
+                )
+            except Exception as e:
+                if isinstance(e, (TypeError, AttributeError, KeyError, IndexError, ImportError, NameError)):
+                    raise
+                tb = traceback.format_exc(limit=8)
+                mapped_code, mapped_msg = resolved_error_mapper.map_error(e)
+                logger.error(f'Unexpected orchestrator error for {category}/{strategy.name}: {mapped_msg}\n{tb}')
+                result = OrchestratorResult(
+                    conversation=[],
+                    final_response='',
+                    objective_achieved=False,
+                    turns=0,
+                    duration_seconds=0.0,
+                    token_usage=None,
+                    token_usage_adversarial=None,
+                    token_usage_target=None,
+                    system_prompt=None,
+                    error=f'Unexpected orchestrator error: {mapped_msg}',
                     error_type='orchestrator_exception',
                     error_stage='orchestrator',
                     error_code=mapped_code,

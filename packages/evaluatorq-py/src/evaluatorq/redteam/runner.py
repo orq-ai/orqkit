@@ -311,9 +311,6 @@ async def red_team(
         config = RedTeamConfig()
 
     # Config fields are defaults — explicit caller params win.
-    if backend == 'openai' and config.backend != 'auto':
-        # Caller didn't override backend; use config value
-        pass
     if attack_model == DEFAULT_PIPELINE_MODEL:
         attack_model = config.attack_model
     if evaluator_model == DEFAULT_PIPELINE_MODEL:
@@ -321,7 +318,8 @@ async def red_team(
     if not llm_kwargs and config.llm_kwargs:
         llm_kwargs = config.llm_kwargs
 
-    # Resolve backend via config (handles auto-detection)
+    # Resolve backend via config (handles auto-detection).
+    # Only override the default 'openai' when config specifies a non-openai backend.
     backend = config.resolve_backend(targets) if backend == 'openai' and config.backend != 'openai' else backend
 
     # Auto-detect backend: agent:/deployment: targets require the orq backend.
@@ -948,13 +946,12 @@ async def _run_dynamic_or_hybrid(
 
         est_static: int | None = None
         static_data: list[Any] | None = None
-        if mode == Pipeline.HYBRID and dataset_path is not None:
-            # Local file: cheap to load before confirm for an exact count.
+        if mode == Pipeline.HYBRID:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
             static_data = load_owasp_agentic_dataset(
                 num_samples=max_static_datapoints,
                 categories=categories,
-                path=Path(dataset_path),
+                path=Path(dataset_path) if dataset_path else None,
                 dataset_repo=dataset_repo,
             )
             est_static = len(static_data) if isinstance(static_data, list) else None
@@ -1246,6 +1243,51 @@ async def _run_dynamic_or_hybrid(
         if mode == Pipeline.HYBRID:
             merged.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
 
+        if len(all_datapoints) == 0:
+            merged.pipeline_warnings.append(
+                'Zero datapoints generated for requested vulnerabilities. '
+                'Strategy generation may have failed — check logs for details.'
+            )
+        elif merged.summary.total_attacks == 0:
+            merged.pipeline_warnings.append(
+                'Zero attacks executed. The resistance rate of 100% does not reflect actual security posture — '
+                'no attacks were run. Check strategy generation logs and LLM credentials.'
+            )
+
+        for pt in prepared_targets:
+            fm = pt.filtering_metadata
+            if not fm:
+                continue
+            unresolved = fm.get('_unresolved_categories', [])
+            for cat in unresolved:
+                merged.pipeline_warnings.append(
+                    f'Category {cat!r}: zero strategies selected — category could not be resolved. Check for typos or unsupported category names.'
+                )
+            for cat_key, cat_meta in fm.items():
+                if cat_key.startswith('_') or not isinstance(cat_meta, dict):
+                    continue
+                if cat_meta.get('total_selected', 0) == 0:
+                    gen_error = cat_meta.get('generation_error')
+                    if gen_error:
+                        merged.pipeline_warnings.append(
+                            f'Category {cat_key!r}: zero strategies selected (generation error: {gen_error})'
+                        )
+                    else:
+                        merged.pipeline_warnings.append(
+                            f'Category {cat_key!r}: zero strategies selected — no applicable strategies found for this agent.'
+                        )
+
+        total_attacks = merged.summary.total_attacks
+        unevaluated_attacks = merged.summary.unevaluated_attacks
+        if total_attacks > 0 and unevaluated_attacks / total_attacks > 0.5:
+            merged.pipeline_warnings.append(
+                f'High evaluation failure rate: {unevaluated_attacks}/{total_attacks} attacks could not be evaluated. '
+                'Check evaluator model configuration and credentials.'
+            )
+            logger.warning(
+                f'High evaluation failure rate: {unevaluated_attacks}/{total_attacks} attacks returned inconclusive results.'
+            )
+
         resolved_hooks.on_stage_end("report_generation", {
             "resistance_rate": merged.summary.resistance_rate,
             "elapsed_s": pipeline_duration,
@@ -1408,7 +1450,7 @@ async def _run_static(
     })
 
     results = await evaluatorq(
-        'red-team',
+        resolved_name,
         data=data,
         jobs=jobs,
         evaluators=[evaluator],
@@ -1497,7 +1539,7 @@ async def _run_static(
     # output for every datapoint, so we send results as-is (no stripping).
     await _send_cleaned_results(
         results=results,
-        name='red-team',
+        name=resolved_name,
         description=description or f'Static red teaming ({len(targets)} targets)',
         start_time=pipeline_start,
     )

@@ -76,6 +76,10 @@ class AgentCapabilities(BaseModel):
         default_factory=dict,
         description='Mapping of tool/resource name to capability tags',
     )
+    classification_failed: bool = Field(
+        default=False,
+        description='True when tool classification failed; strategies are included optimistically',
+    )
 
     def all_capabilities(self) -> set[str]:
         """Get the flat set of all capability tag values."""
@@ -178,8 +182,10 @@ async def classify_agent_capabilities(
             capabilities['knowledge:inferred'] = [AgentCapability.KNOWLEDGE_RETRIEVAL]
 
     # Classify tools via LLM
+    classification_failed = False
     if agent_context.tools:
-        tool_caps = await _classify_tools(agent_context, llm_client, model, llm_kwargs)
+        tool_caps, _classify_ok = await _classify_tools(agent_context, llm_client, model, llm_kwargs)
+        classification_failed = not _classify_ok
         capabilities.update(tool_caps)
 
     all_caps = set()
@@ -189,7 +195,7 @@ async def classify_agent_capabilities(
         f'Classified agent capabilities: {len(capabilities)} resources, {len(all_caps)} unique capabilities: {sorted(all_caps)}'
     )
 
-    return AgentCapabilities(capabilities=capabilities)
+    return AgentCapabilities(capabilities=capabilities, classification_failed=classification_failed)
 
 
 async def _infer_resource_capabilities(
@@ -200,10 +206,11 @@ async def _infer_resource_capabilities(
 ) -> ResourceCapabilityInference:
     """Infer memory/knowledge capabilities with structured LLM output."""
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools) or '- none'
-    prompt = RESOURCE_CAPABILITY_PROMPT.format(
-        has_memory_stores=bool(agent_context.memory_stores),
-        has_knowledge_bases=bool(agent_context.knowledge_bases),
-        tool_list=tool_list,
+    prompt = (
+        RESOURCE_CAPABILITY_PROMPT
+        .replace('{has_memory_stores}', str(bool(agent_context.memory_stores)))
+        .replace('{has_knowledge_bases}', str(bool(agent_context.knowledge_bases)))
+        .replace('{tool_list}', tool_list)
     )
     try:
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
@@ -247,20 +254,16 @@ async def _classify_tools(
     llm_client: AsyncOpenAI,
     model: str,
     llm_kwargs: dict[str, Any] | None = None,
-) -> dict[str, list[AgentCapability]]:
+) -> tuple[dict[str, list[AgentCapability]], bool]:
     """Classify tools via LLM call.
 
-    Args:
-        agent_context: Agent context with tools
-        llm_client: LLM client
-        model: Model to use
-
     Returns:
-        Dict mapping tool name to capability tags
+        Tuple of (capabilities dict, success bool). success=False when
+        classification failed due to an exception.
     """
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = TOOL_CLASSIFICATION_PROMPT.format(tool_list=tool_list)
+    prompt = TOOL_CLASSIFICATION_PROMPT.replace('{tool_list}', tool_list)
 
     valid_values = {c.value for c in AgentCapability}
 
@@ -301,10 +304,10 @@ async def _classify_tools(
                     capabilities[tool_result.tool_name] = valid_caps
 
             logger.debug(f'LLM classified {len(capabilities)}/{len(agent_context.tools)} tools with capabilities')
-            return capabilities
+            return capabilities, True
 
     except (APIConnectionError, APIStatusError):
         raise
     except Exception as e:
-        logger.error(f'Tool classification failed, no tool-specific attacks will be generated: {e}')
-        return {}
+        logger.error(f'Tool classification failed, strategies will be included optimistically: {e}')
+        return {}, False

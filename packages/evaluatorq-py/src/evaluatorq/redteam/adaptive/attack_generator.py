@@ -49,16 +49,12 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
         'agent_description': agent_context.description or 'an AI assistant',
     }
 
-    # Single-pass substitution via format_map — avoids double-substitution.
-    # _SafeDict returns the original placeholder for missing keys.
-    return template.format_map(_SafeDict(substitutions))
-
-
-class _SafeDict(dict[str, str]):
-    """Dict subclass that returns the original {key} for missing keys."""
-
-    def __missing__(self, key: str) -> str:
-        return '{' + key + '}'
+    # Use .replace() instead of .format_map() to avoid "Invalid format specifier"
+    # errors when substitution values contain literal braces (e.g. JSON in tool descriptions).
+    result = template
+    for key, value in substitutions.items():
+        result = result.replace('{' + key + '}', value)
+    return result
 
 
 def generate_attack_prompt(
@@ -172,12 +168,13 @@ async def adapt_prompt_to_tools(
 
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = TOOL_CLASSIFICATION_PROMPT.format_map(_SafeDict({
-        'attack_technique': strategy.attack_technique.value,
-        'strategy_description': strategy.description,
-        'base_prompt': base_prompt,
-        'tool_list': tool_list,
-    }))
+    prompt = (
+        TOOL_CLASSIFICATION_PROMPT
+        .replace('{attack_technique}', strategy.attack_technique.value)
+        .replace('{strategy_description}', strategy.description)
+        .replace('{base_prompt}', base_prompt)
+        .replace('{tool_list}', tool_list)
+    )
 
     try:
         response = await llm_client.chat.completions.parse(

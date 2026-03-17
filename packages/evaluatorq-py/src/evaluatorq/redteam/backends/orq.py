@@ -96,9 +96,10 @@ class ORQAgentTarget:
                 kwargs: dict[str, Any] = {
                     'agent_key': self.agent_key,
                     'message': {'role': 'user', 'parts': [{'kind': 'text', 'text': prompt}]},
-                    'task_id': self._task_id,
                     'background': False,
                 }
+                if self._task_id is not None:
+                    kwargs['task_id'] = self._task_id
                 if self.memory_entity_id:
                     kwargs['memory'] = {'entity_id': self.memory_entity_id}
 
