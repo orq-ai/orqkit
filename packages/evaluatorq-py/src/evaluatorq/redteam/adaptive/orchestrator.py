@@ -10,7 +10,6 @@ import contextvars
 import logging
 import time
 from inspect import signature
-from threading import Lock
 from typing import Any, cast
 
 from loguru import logger
@@ -59,7 +58,7 @@ class ProgressDisplay:
         self._finished = 0
         self._progress: Progress | None = None
         self._overall_id: TaskID | None = None
-        self._lock = Lock()
+        self._lock = asyncio.Lock()
         self._bar_semaphore = asyncio.Semaphore(max_bars)
         self._bar_task_ids: set[TaskID] = set()
         self._start_time: float = 0.0
@@ -120,7 +119,7 @@ class ProgressDisplay:
         if self._verbosity >= 2 and total_turns > 1:
             await self._bar_semaphore.acquire()
             try:
-                with self._lock:
+                async with self._lock:
                     task_id = self._progress.add_task(
                         f'[cyan]{label}[/cyan]', total=total_turns,
                     )
@@ -131,23 +130,23 @@ class ProgressDisplay:
                 raise
         return None
 
-    def update_attack(self, task_id: TaskID | None, completed: int) -> None:
+    async def update_attack(self, task_id: TaskID | None, completed: int) -> None:
         """Advance a per-attack bar (no-op when *task_id* is ``None``)."""
         if task_id is None or self._progress is None:
             return
-        with self._lock:
+        async with self._lock:
             self._progress.update(task_id, completed=completed)
 
-    def finish_attack(self, task_id: TaskID | None) -> None:
+    async def finish_attack(self, task_id: TaskID | None) -> None:
         """Mark one attack as done. Removes per-attack bar if present."""
         if self._progress is None:
             return
-        with self._lock:
+        async with self._lock:
             if task_id is not None:
                 try:
                     self._progress.remove_task(task_id)
                 except Exception:
-                    pass
+                    logger.debug('Failed to update progress display', exc_info=True)
                 self._bar_task_ids.discard(task_id)
             self._finished += 1
             if self._overall_id is not None:
@@ -434,7 +433,7 @@ class MultiTurnOrchestrator:
                     _progress_label(strategy.category, strategy.name), max_turns,
                 )
             except Exception:
-                pass
+                logger.debug('Failed to update progress display', exc_info=True)
 
         try:
             for turn in range(max_turns):
@@ -450,7 +449,7 @@ class MultiTurnOrchestrator:
                 ) as turn_span:
                     logger.debug(f'Multi-turn attack: turn {turn + 1}/{max_turns}')
                     if progress is not None:
-                        progress.update_attack(task_id, completed=turn)
+                        await progress.update_attack(task_id, completed=turn)
 
                     # Generate attack prompt from adversarial LLM
                     llm_timeout_s = PIPELINE_CONFIG.llm_call_timeout_ms / 1000.0
@@ -580,7 +579,7 @@ class MultiTurnOrchestrator:
                             # Adversarial LLM signaled success but no more prompts needed
                             logger.info('Adversarial LLM signaled objective achieved')
                             if task_id is not None:
-                                progress.update_attack(task_id, completed=turn + 1)
+                                await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.finish_reason": "objective_achieved",
@@ -639,7 +638,7 @@ class MultiTurnOrchestrator:
                                 Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
-                                progress.update_attack(task_id, completed=turn + 1)
+                                await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.error_type": error_type,
@@ -672,7 +671,7 @@ class MultiTurnOrchestrator:
                                 Message(role='assistant', content=agent_response),
                             ])
                             if task_id is not None:
-                                progress.update_attack(task_id, completed=turn + 1)
+                                await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
                                 "orq.redteam.error_type": error_type,
@@ -696,7 +695,7 @@ class MultiTurnOrchestrator:
                     adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
 
                     if progress is not None:
-                        progress.update_attack(task_id, completed=turn + 1)
+                        await progress.update_attack(task_id, completed=turn + 1)
 
                     set_span_attrs(turn_span, {
                         "input": attack_prompt,
@@ -711,7 +710,7 @@ class MultiTurnOrchestrator:
                     break
         finally:
             if progress is not None:
-                progress.finish_attack(task_id)
+                await progress.finish_attack(task_id)
 
         duration = time.time() - start_time
         logger.debug(

@@ -13,7 +13,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, OWASP_CATEGORY_NAMES
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext, AttackStrategy
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentCapability, AgentContext, AttackStrategy
 from evaluatorq.redteam.contracts import AttackTechnique, DeliveryMethod, Severity, TurnType, Vulnerability
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 from evaluatorq.redteam.vulnerability_registry import (
@@ -405,9 +405,9 @@ def create_strategy_from_objective(
     name = f'generated_{resolved_turn_type.value}_{objective_index + 1:02d}_{name_base}'
 
     # Map boolean flags to capability requirements
-    required_capabilities: list[str] = []
+    required_capabilities: list[AgentCapability] = []
     if objective.requires_memory:
-        required_capabilities.extend(['memory_read', 'memory_write'])
+        required_capabilities.extend([AgentCapability.MEMORY_READ, AgentCapability.MEMORY_WRITE])
 
     return AttackStrategy(
         vulnerability=resolved_vuln,

@@ -16,7 +16,7 @@ from loguru import logger
 
 from evaluatorq.redteam.frameworks.owasp_asi import ASI_STRATEGIES
 from evaluatorq.redteam.frameworks.owasp_llm import LLM_STRATEGIES
-from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, Vulnerability  # noqa: TC001
+from evaluatorq.redteam.contracts import AgentCapability, AgentContext, AttackStrategy, Vulnerability  # noqa: TC001
 from evaluatorq.redteam.vulnerability_registry import CATEGORY_TO_VULNERABILITY
 
 if TYPE_CHECKING:
@@ -188,18 +188,18 @@ def select_applicable_strategies_for_vulnerability(
     return _filter_applicable_strategies(all_strategies, vuln.value, agent_context, agent_capabilities)
 
 
-def _fallback_capability_check(required: list[str], agent_context: AgentContext) -> bool:
+def _fallback_capability_check(required: list[AgentCapability], agent_context: AgentContext) -> bool:
     """Check capabilities without LLM classification using agent config heuristics.
 
     Used when agent_capabilities is not provided.
     """
-    memory_caps = {'memory_read', 'memory_write'}
-    knowledge_caps = {'knowledge_retrieval'}
+    memory_caps = {AgentCapability.MEMORY_READ, AgentCapability.MEMORY_WRITE}
+    knowledge_caps = {AgentCapability.KNOWLEDGE_RETRIEVAL}
 
     for cap in required:
-        if cap == 'memory_read' and agent_context.has_memory:
+        if cap == AgentCapability.MEMORY_READ and agent_context.has_memory:
             return True
-        if cap == 'memory_write' and agent_context.has_memory:
+        if cap == AgentCapability.MEMORY_WRITE and agent_context.has_memory:
             return True
         if cap in knowledge_caps and agent_context.has_knowledge:
             return True

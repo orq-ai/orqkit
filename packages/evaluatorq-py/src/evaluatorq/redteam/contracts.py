@@ -412,6 +412,13 @@ class RedTeamInput(BaseModel):
             return normalize_framework(value)
         return value
 
+    @model_validator(mode='after')
+    def _require_vulnerability_or_category(self) -> 'RedTeamInput':
+        """Ensure at least one of vulnerability or category is populated."""
+        if not self.vulnerability and not self.category:
+            raise ValueError('RedTeamInput requires at least one of vulnerability or category')
+        return self
+
 
 # ---------------------------------------------------------------------------
 # Dataset validation models
@@ -716,6 +723,8 @@ class AttackStrategy(BaseModel):
     Strategies can be hardcoded or generated based on agent context.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     vulnerability: Vulnerability | None = Field(default=None, description='Primary vulnerability identifier')
     category: str = Field(description='OWASP category code (e.g., ASI01, LLM01) — kept for backwards compat')
     name: str = Field(description='Strategy identifier (e.g., indirect_injection_via_email)')
@@ -727,7 +736,7 @@ class AttackStrategy(BaseModel):
 
     # Context requirements for filtering
     requires_tools: bool = Field(default=False, description='Requires agent to have tools')
-    required_capabilities: list[str] = Field(
+    required_capabilities: list[AgentCapability] = Field(
         default_factory=list,
         description='Capability tags required for this strategy (any match = eligible)',
     )
@@ -1047,7 +1056,7 @@ class VulnerabilitySummary(BaseModel):
     domain: str
     total_attacks: int
     vulnerabilities_found: int
-    resistance_rate: float
+    resistance_rate: float = Field(ge=0.0, le=1.0)
     strategies_used: list[str] = Field(default_factory=list)
     framework_categories: dict[str, list[str]] = Field(
         default_factory=dict,
@@ -1063,12 +1072,12 @@ class CategorySummary(BaseModel):
     total_attacks: int
     evaluated_attacks: int = 0
     unevaluated_attacks: int = 0
-    evaluation_coverage: float = 0.0
+    evaluation_coverage: float = Field(default=0.0, ge=0.0, le=1.0)
     total_conversations: int = 0
     total_turns: int = 0
     vulnerabilities_found: int
-    vulnerability_rate: float = 0.0
-    resistance_rate: float
+    vulnerability_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    resistance_rate: float = Field(ge=0.0, le=1.0)
     total_errors: int = 0
     strategies_used: list[str] = Field(default_factory=list)
 
@@ -1078,8 +1087,8 @@ class DimensionSummary(BaseModel):
 
     total_attacks: int = 0
     vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
+    resistance_rate: float = Field(default=1.0, ge=0.0, le=1.0)
+    vulnerability_rate: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class TechniqueSummary(DimensionSummary):
@@ -1114,13 +1123,13 @@ class ReportSummary(BaseModel):
     total_attacks: int = 0
     evaluated_attacks: int = 0
     unevaluated_attacks: int = 0
-    evaluation_coverage: float = 0.0
+    evaluation_coverage: float = Field(default=0.0, ge=0.0, le=1.0)
     total_conversations: int = 0
     total_turns: int = 0
     average_turns_per_attack: float = 0.0
     vulnerabilities_found: int = 0
-    vulnerability_rate: float = 0.0
-    resistance_rate: float = 1.0
+    vulnerability_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    resistance_rate: float = Field(default=1.0, ge=0.0, le=1.0)
     total_errors: int = 0
     errors_by_type: dict[str, int] = Field(default_factory=dict, description='Error counts grouped by type')
     token_usage_total: TokenUsage | None = Field(default=None, description='Aggregated token usage across all results')

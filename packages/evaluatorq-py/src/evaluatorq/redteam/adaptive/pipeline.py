@@ -412,7 +412,7 @@ def create_dynamic_redteam_job(
                 from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
                 _active_progress = _get_active_progress()
                 if _active_progress is not None:
-                    _active_progress.finish_attack(None)
+                    await _active_progress.finish_attack(None)
 
                 return result_dict.model_dump(mode='json')
 
@@ -529,8 +529,11 @@ def create_dynamic_evaluator(
                     explanation=f'Failed to parse job output: {e}',
                 )
         else:
-            logger.warning(f'Unexpected output type {type(raw_output).__name__} from job; treating as empty')
-            output = AttackOutput(conversation=[], turns=0, final_response='', objective_achieved=False, duration_seconds=0.0)
+            logger.warning(f'Unexpected output type {type(raw_output).__name__} from job; treating as error')
+            return EvaluationResult(
+                value='error',
+                explanation=f'Unexpected job output type: {type(raw_output).__name__}',
+            )
 
         # Skip evaluation when the target returned an error
         if output.error:

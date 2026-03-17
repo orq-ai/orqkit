@@ -71,7 +71,7 @@ def create_model_job(
             from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
             _active_progress = _get_active_progress()
             if _active_progress is not None:
-                _active_progress.finish_attack(None)
+                await _active_progress.finish_attack(None)
 
             return {
                 'response': _extract_deployment_content(completion),
@@ -109,7 +109,7 @@ def create_model_job(
         from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
         _active_progress = _get_active_progress()
         if _active_progress is not None:
-            _active_progress.finish_attack(None)
+            await _active_progress.finish_attack(None)
 
         return {
             'response': content,
@@ -135,6 +135,7 @@ def _build_messages(data: DataPoint) -> list[dict[str, Any]]:
                 logger.debug(f'Message validation failed, using raw dict: {e}')
                 messages.append(dict(raw))
             continue
+        logger.warning(f'Unexpected message type {type(raw).__name__} in DataPoint, coercing to string: {str(raw)[:100]}')
         messages.append({'role': 'user', 'content': str(raw)})
     return messages
 
@@ -143,10 +144,12 @@ def _extract_deployment_content(completion: object) -> str:
     """Extract text content from an ORQ deployment response."""
     choices = getattr(completion, 'choices', None)
     if not choices:
+        logger.warning(f'Deployment returned no choices: {type(completion).__name__}')
         return ''
 
     message = getattr(choices[0], 'message', None)
     if not message:
+        logger.warning('Deployment choice has no message')
         return ''
 
     msg_content = getattr(message, 'content', None)
@@ -156,6 +159,7 @@ def _extract_deployment_content(completion: object) -> str:
         return '\n'.join(
             str(getattr(part, 'text', '')) for part in msg_content if getattr(part, 'type', None) == 'text'
         )
+    logger.warning(f'Unexpected content type in deployment response: {type(msg_content).__name__}')
     return ''
 
 

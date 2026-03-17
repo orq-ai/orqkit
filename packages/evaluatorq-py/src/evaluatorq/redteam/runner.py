@@ -440,13 +440,21 @@ async def red_team(
                 model=evaluator_model or DEFAULT_PIPELINE_MODEL,
                 llm_kwargs=llm_kwargs,
             )
+        except (TypeError, AttributeError, ImportError, NameError, KeyError):
+            raise
         except Exception:
             logger.warning('Failed to generate focus area recommendations', exc_info=True)
+            report.pipeline_warnings.append(
+                'Failed to generate focus area recommendations. Check LLM credentials and model configuration.'
+            )
 
     resolved_hooks.on_complete(report, output_dir=str(resolved_output_dir) if resolved_output_dir else None)
 
     # Auto-save to .evaluatorq/runs/ for the `runs` CLI command.
-    _auto_save_run(report, name=name)
+    if _auto_save_run(report, name=name) is None:
+        report.pipeline_warnings.append(
+            'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
+        )
 
     return report
 
@@ -1021,12 +1029,16 @@ async def _run_dynamic_or_hybrid(
                 ],
                 return_exceptions=True,
             )
-            other_targets: list[PreparedTarget] = []
+            failed_targets: list[str] = []
             for t, result in zip(targets[1:], raw_results):
                 if isinstance(result, BaseException):
                     logger.error(f"Failed to prepare target {t}: {result}")
-                else:
-                    other_targets.append(result)
+                    failed_targets.append(f"{t}: {result}")
+            if failed_targets:
+                failure_summary = "; ".join(failed_targets)
+                msg = f"Aborting multi-target run — failed to prepare target(s): {failure_summary}"
+                raise RuntimeError(msg)
+            other_targets: list[PreparedTarget] = [r for r in raw_results if not isinstance(r, BaseException)]
             prepared_targets: list[PreparedTarget] = [first_target] + other_targets
         else:
             prepared_targets = [first_target]
