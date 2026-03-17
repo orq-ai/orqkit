@@ -62,7 +62,7 @@ _CSS: str | None = None
 def _load_css() -> str:
     global _CSS
     if _CSS is None:
-        _CSS = _CSS_PATH.read_text(encoding="utf-8") % _COLORS
+        _CSS = _CSS_PATH.read_text(encoding="utf-8") % _COLORS  # pyright: ignore[reportConstantRedefinition]
     return _CSS
 
 

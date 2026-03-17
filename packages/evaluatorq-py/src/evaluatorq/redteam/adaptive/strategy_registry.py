@@ -43,8 +43,8 @@ for _cat, _strategies in _strategy_registry.items():
     if _vuln is not None:
         _vulnerability_strategy_registry[_vuln] = _strategies
 
-STRATEGY_REGISTRY = types.MappingProxyType(_strategy_registry)
-VULNERABILITY_STRATEGY_REGISTRY = types.MappingProxyType(_vulnerability_strategy_registry)
+STRATEGY_REGISTRY = types.MappingProxyType(_strategy_registry)  # pyright: ignore[reportConstantRedefinition]
+VULNERABILITY_STRATEGY_REGISTRY = types.MappingProxyType(_vulnerability_strategy_registry)  # pyright: ignore[reportConstantRedefinition]
 
 
 def get_strategies_for_vulnerability(vuln: Vulnerability) -> list[AttackStrategy]:

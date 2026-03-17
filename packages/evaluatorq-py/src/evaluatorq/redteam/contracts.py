@@ -736,7 +736,7 @@ class AttackStrategy(BaseModel):
 
     # Context requirements for filtering
     requires_tools: bool = Field(default=False, description='Requires agent to have tools')
-    required_capabilities: list[AgentCapability] = Field(
+    required_capabilities: list[str] = Field(
         default_factory=list,
         description='Capability tags required for this strategy (any match = eligible)',
     )
