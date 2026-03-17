@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from evaluatorq import DataPoint, DatasetIdInput, EvaluationResult
+from evaluatorq import DataPoint, EvaluationResult
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -20,9 +20,7 @@ if TYPE_CHECKING:
 
     from evaluatorq.types import ScorerParameter
 
-OWASP_DATASET_ID = os.environ.get('EVALUATORQ_OWASP_DATASET_ID', '')
-
-DEFAULT_HF_DATASET = 'orq/redteam-vulnerabilities'
+DEFAULT_HF_REPO = 'orq/redteam-vulnerabilities'
 DEFAULT_HF_FILENAME = 'redteam_dataset.v2.json'
 
 
@@ -41,47 +39,83 @@ def _normalize_num_samples(num_samples: int | None) -> int | None:
 
 
 def load_owasp_agentic_dataset(
-    dataset_id: str = OWASP_DATASET_ID,
+    dataset: str | Path | None = None,
     num_samples: int | None = None,
     categories: list[str] | None = None,
-    path: str | Path | None = None,
-    dataset_repo: str = DEFAULT_HF_DATASET,
-    source: str = 'huggingface',
-) -> DatasetIdInput | list[DataPoint]:
-    """Load red team data from HuggingFace (default), ORQ platform, or a local JSON file.
+) -> list[DataPoint]:
+    """Load red team dataset from various sources.
 
-    Resolution order:
-    1. ``path`` is given → load from local file
-    2. ``source='orq'`` or ``EVALUATORQ_OWASP_DATASET_ID`` is set → use ORQ platform
-    3. Default (``source='huggingface'``) → load from HuggingFace
+    Args:
+        dataset: Dataset source. Accepts:
+            - ``None`` (default): HuggingFace ``orq/redteam-vulnerabilities``
+            - Local file path (string or ``Path``): loads from a JSON file
+            - ``"hf:org/repo"``: custom HuggingFace repository (default filename)
+            - ``"hf:org/repo/filename.json"``: specific file in a HuggingFace repository
+        num_samples: Maximum number of samples to load (None = all).
+        categories: Filter to these OWASP category codes.
+
+    Returns:
+        List of DataPoint instances ready for evaluatorq evaluation.
     """
     num_samples = _normalize_num_samples(num_samples)
 
-    if path is not None:
-        return _load_from_file(path, num_samples=num_samples, categories=categories)
+    if dataset is None:
+        return _fetch_from_huggingface(
+            repo=DEFAULT_HF_REPO,
+            filename=DEFAULT_HF_FILENAME,
+            num_samples=num_samples,
+            categories=categories,
+        )
 
-    if source == 'orq' or OWASP_DATASET_ID:
-        effective_id = dataset_id or OWASP_DATASET_ID
-        if not effective_id:
-            msg = (
-                'Orq source requires EVALUATORQ_OWASP_DATASET_ID environment variable to be set.'
-            )
-            raise ValueError(msg)
+    if isinstance(dataset, Path):
+        return _load_from_file(dataset, num_samples=num_samples, categories=categories)
 
-        if not categories and num_samples is None:
-            logger.info(f'Using dataset streaming for dataset_id={effective_id}')
-            return DatasetIdInput(dataset_id=effective_id)
+    s = str(dataset)
 
-        datapoints = _fetch_all_datapoints(effective_id)
+    if s.startswith('hf:'):
+        repo, filename = _parse_hf_source(s.removeprefix('hf:'))
+        return _fetch_from_huggingface(
+            repo=repo,
+            filename=filename,
+            num_samples=num_samples,
+            categories=categories,
+        )
+
+    if s.startswith('orq:'):
+        dataset_id = s.removeprefix('orq:')
+        if not dataset_id:
+            raise ValueError("Invalid dataset specifier 'orq:': provide a dataset ID after the colon, e.g. 'orq:my-dataset-id'")
+        datapoints = _fetch_all_datapoints(dataset_id)
         datapoints = _apply_filters(datapoints, num_samples=num_samples, categories=categories)
-        logger.info(f'Loaded {len(datapoints)} samples from dataset {effective_id}')
+        logger.info(f'Loaded {len(datapoints)} samples from ORQ dataset {dataset_id}')
         return datapoints
 
-    return _fetch_from_huggingface(
-        dataset_repo=dataset_repo,
-        num_samples=num_samples,
-        categories=categories,
-    )
+    # Everything else is a local file path
+    path = Path(s)
+    if not path.exists():
+        raise FileNotFoundError(
+            f'Dataset file not found: {path}. '
+            'For HuggingFace datasets, use "hf:org/repo" format.'
+        )
+    return _load_from_file(path, num_samples=num_samples, categories=categories)
+
+
+def _parse_hf_source(rest: str) -> tuple[str, str]:
+    """Parse an ``hf:`` dataset specifier into ``(repo_id, filename)``.
+
+    Accepts:
+        ``org/repo`` → ``(org/repo, DEFAULT_HF_FILENAME)``
+        ``org/repo/filename.json`` → ``(org/repo, filename.json)``
+    """
+    parts = rest.split('/', 2)
+    if len(parts) < 2 or not parts[0] or not parts[1]:
+        raise ValueError(
+            f"Invalid HuggingFace dataset specifier 'hf:{rest}'. "
+            "Expected format: 'hf:org/repo' or 'hf:org/repo/filename.json'"
+        )
+    if len(parts) == 3 and parts[2]:
+        return f'{parts[0]}/{parts[1]}', parts[2]
+    return f'{parts[0]}/{parts[1]}', DEFAULT_HF_FILENAME
 
 
 def create_owasp_evaluator(
@@ -89,12 +123,7 @@ def create_owasp_evaluator(
     llm_client: AsyncOpenAI | None = None,
     llm_kwargs: dict[str, Any] | None = None,
 ) -> EvaluatorConfig:
-    """Create an evaluatorq scorer that routes by OWASP category.
-
-    Args:
-        evaluator_model: Model name for evaluation scoring.
-        llm_client: Pre-configured client. Falls back to ``create_async_llm_client()``.
-    """
+    """Create an evaluatorq scorer that routes by OWASP category."""
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
@@ -103,7 +132,7 @@ def create_owasp_evaluator(
         if not category:
             logger.error("Scorer received datapoint with missing 'category' field")
             return EvaluationResult(
-                value="error",
+                value='error',
                 explanation="Missing 'category' in datapoint inputs — cannot score",
                 pass_=None,
             )
@@ -112,7 +141,7 @@ def create_owasp_evaluator(
         if evaluator_entity is None:
             logger.warning(f'No evaluator found for category {category}')
             return EvaluationResult(
-                value="error",
+                value='error',
                 explanation=f'No evaluator found for category {category}',
                 pass_=None,
             )
@@ -176,15 +205,12 @@ def create_owasp_evaluator(
 
 
 def _fetch_from_huggingface(
-    dataset_repo: str = DEFAULT_HF_DATASET,
+    repo: str = DEFAULT_HF_REPO,
+    filename: str = DEFAULT_HF_FILENAME,
     num_samples: int | None = None,
     categories: list[str] | None = None,
 ) -> list[DataPoint]:
-    """Fetch red team samples from a HuggingFace dataset repository.
-
-    Downloads the dataset JSON file via ``huggingface_hub`` and parses it
-    using the same ``StaticDataset`` model as local file loading.
-    """
+    """Fetch red team samples from a HuggingFace dataset repository."""
     try:
         from huggingface_hub import hf_hub_download
     except ImportError as e:
@@ -194,23 +220,19 @@ def _fetch_from_huggingface(
         )
         raise ImportError(msg) from e
 
-    logger.info(f'Downloading dataset from HuggingFace: {dataset_repo}/{DEFAULT_HF_FILENAME}...')
+    logger.info(f'Downloading dataset from HuggingFace: {repo}/{filename}...')
     local_path = hf_hub_download(
-        repo_id=dataset_repo,
-        filename=DEFAULT_HF_FILENAME,
+        repo_id=repo,
+        filename=filename,
         repo_type='dataset',
     )
     datapoints = _load_from_file(local_path, num_samples=num_samples, categories=categories)
-    logger.info(f'Loaded {len(datapoints)} samples from HuggingFace ({dataset_repo})')
+    logger.info(f'Loaded {len(datapoints)} samples from HuggingFace ({repo})')
     return datapoints
 
 
 def _validate_platform_datapoint(inputs: dict[str, Any]) -> None:
-    """Validate that an ORQ platform datapoint has required structure.
-
-    Platform datapoints are flat dicts with all fields (including ``messages``)
-    at the top level of ``inputs``.
-    """
+    """Validate that an ORQ platform datapoint has required structure."""
     RedTeamInput.model_validate({k: v for k, v in inputs.items() if k != 'messages'})
     messages = inputs.get('messages')
     if not messages or not isinstance(messages, list):
@@ -219,10 +241,7 @@ def _validate_platform_datapoint(inputs: dict[str, Any]) -> None:
 
 
 def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
-    """Fetch all datapoints from an ORQ dataset, handling pagination.
-
-    Requires the ``orq-ai-sdk`` optional dependency.
-    """
+    """Fetch all datapoints from an ORQ dataset, handling pagination."""
     try:
         from orq_ai_sdk import Orq
     except ImportError as e:
@@ -236,7 +255,7 @@ def _fetch_all_datapoints(dataset_id: str) -> list[DataPoint]:
     if not orq_api_key:
         msg = (
             'Fetching datasets from the ORQ platform requires ORQ_API_KEY to be set. '
-            'Alternatively, use dataset_path to load from a local file.'
+            'Alternatively, pass a local file path as the dataset argument.'
         )
         raise ValueError(msg)
     client = Orq(api_key=orq_api_key)

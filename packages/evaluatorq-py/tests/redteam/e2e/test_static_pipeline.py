@@ -25,7 +25,7 @@ async def test_full_static_run(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         description="E2E static test",
     )
@@ -47,7 +47,7 @@ async def test_static_vulnerability_detection(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 
@@ -82,7 +82,7 @@ async def test_static_category_filtering(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 
@@ -104,7 +104,7 @@ async def test_static_datapoint_capping(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
     )
 

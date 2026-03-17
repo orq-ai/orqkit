@@ -231,13 +231,9 @@ def run(
         typer.Option(help='Backend name ("openai" or "orq").'),
     ] = "openai",
     dataset: Annotated[
-        Optional[Path],
-        typer.Option(help="Path to local static dataset JSON file."),
+        Optional[str],
+        typer.Option(help='Dataset source: local path, "hf:org/repo", or "hf:org/repo/file.json".'),
     ] = None,
-    hf_dataset: Annotated[
-        str,
-        typer.Option("--hf-dataset", help="HuggingFace dataset repository name."),
-    ] = "orq/redteam-vulnerabilities",
     output_dir: Annotated[
         Optional[Path],
         typer.Option(help="Directory to save intermediate stage artifacts."),
@@ -296,10 +292,6 @@ def run(
                     f"Valid IDs: {sorted(vi.value for vi in Vulnerability)}"
                 )
 
-    if dataset is not None and hf_dataset != "orq/redteam-vulnerabilities":
-        raise typer.BadParameter(
-            "Cannot specify both --dataset and --hf-dataset. Use one or the other."
-        )
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
     targets = target if len(target) > 1 else target[0]
@@ -323,8 +315,7 @@ def run(
                 max_static_datapoints=max_static_datapoints,
                 cleanup_memory=not no_cleanup_memory,
                 backend=backend,
-                dataset_path=dataset,
-                dataset_repo=hf_dataset,
+                dataset=dataset,
                 hooks=RichHooks(skip_confirm=yes),
                 output_dir=output_dir,
                 target_config=target_config,
@@ -436,14 +427,10 @@ def ui(
 
 @app.command()
 def validate_dataset(
-    path: Annotated[
-        Optional[Path],
-        typer.Argument(help="Path to a local dataset JSON file. If omitted, validates the default HuggingFace dataset."),
+    dataset: Annotated[
+        Optional[str],
+        typer.Argument(help='Dataset source: local path, "hf:org/repo", or "hf:org/repo/file.json". Default: HuggingFace orq/redteam-vulnerabilities.'),
     ] = None,
-    hf_dataset: Annotated[
-        str,
-        typer.Option("--hf-dataset", help="HuggingFace dataset repository name."),
-    ] = "orq/redteam-vulnerabilities",
 ) -> None:
     """Validate the shape of a red team dataset.
 
@@ -455,23 +442,39 @@ def validate_dataset(
 
     from evaluatorq.redteam.contracts import RedTeamSample, StaticDataset
 
-    # Load raw JSON
-    if path is not None:
-        typer.echo(f"Validating local file: {path}")
-        with path.open() as f:
-            raw = json.load(f)
-    else:
+    # Load raw JSON via the unified dataset loader's internal helpers
+    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
+        DEFAULT_HF_FILENAME,
+        DEFAULT_HF_REPO,
+        _parse_hf_source,
+    )
+
+    if dataset is None:
+        # Default: download from HuggingFace
         try:
             from huggingface_hub import hf_hub_download
         except ImportError:
             typer.echo("huggingface-hub not installed. Install with: pip install evaluatorq[redteam]", err=True)
             raise typer.Exit(code=1)
-
-        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import DEFAULT_HF_FILENAME
-
-        typer.echo(f"Downloading from HuggingFace: {hf_dataset}/{DEFAULT_HF_FILENAME}")
-        local_path = hf_hub_download(repo_id=hf_dataset, filename=DEFAULT_HF_FILENAME, repo_type='dataset')
+        typer.echo(f"Downloading from HuggingFace: {DEFAULT_HF_REPO}/{DEFAULT_HF_FILENAME}")
+        local_path = hf_hub_download(repo_id=DEFAULT_HF_REPO, filename=DEFAULT_HF_FILENAME, repo_type='dataset')
         with open(local_path) as f:
+            raw = json.load(f)
+    elif dataset.startswith('hf:'):
+        try:
+            from huggingface_hub import hf_hub_download
+        except ImportError:
+            typer.echo("huggingface-hub not installed. Install with: pip install evaluatorq[redteam]", err=True)
+            raise typer.Exit(code=1)
+        repo, filename = _parse_hf_source(dataset.removeprefix('hf:'))
+        typer.echo(f"Downloading from HuggingFace: {repo}/{filename}")
+        local_path = hf_hub_download(repo_id=repo, filename=filename, repo_type='dataset')
+        with open(local_path) as f:
+            raw = json.load(f)
+    else:
+        path = Path(dataset)
+        typer.echo(f"Validating local file: {path}")
+        with path.open() as f:
             raw = json.load(f)
 
     # Validate top-level shape

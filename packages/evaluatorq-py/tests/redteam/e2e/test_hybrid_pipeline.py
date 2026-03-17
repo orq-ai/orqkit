@@ -45,7 +45,7 @@ async def test_full_hybrid_run(
             parallelism=2,
             backend="openai",
             llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
-            dataset_path=str(static_dataset_path),
+            dataset=str(static_dataset_path),
             description="E2E hybrid test",
         )
 
@@ -80,7 +80,7 @@ async def test_hybrid_independent_caps(
             parallelism=2,
             backend="openai",
             llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
-            dataset_path=str(static_dataset_path),
+            dataset=str(static_dataset_path),
         )
 
     assert report.total_results <= 2, f"Expected at most 2 results, got {report.total_results}"

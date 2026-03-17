@@ -53,7 +53,7 @@ def _make_confirm_payload(**kwargs) -> dict[str, Any]:
         filtering_metadata=None,
         mode="dynamic",
         target="agent:test",
-        dataset_path=None,
+        dataset=None,
         vulnerabilities=None,
     )
     defaults.update(kwargs)

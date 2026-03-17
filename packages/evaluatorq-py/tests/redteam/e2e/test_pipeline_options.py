@@ -91,7 +91,7 @@ async def test_hooks_on_confirm_cancels_hybrid(
                 parallelism=2,
                 backend="openai",
                 llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
-                dataset_path=str(static_dataset_path),
+                dataset=str(static_dataset_path),
                 hooks=hooks,
             )
 
@@ -119,7 +119,7 @@ async def test_static_output_artifacts(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         output_dir=output_dir,
     )

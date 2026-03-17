@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Protocol, TypedDict, runtime_checkable
 
 from loguru import logger
 
+from evaluatorq.redteam.contracts import PipelineStage
 from evaluatorq.redteam.reports.display import print_report_summary
 
 if TYPE_CHECKING:
@@ -28,13 +29,13 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 _STAGE_LABELS: dict[str, str] = {
-    "context_retrieval": "Retrieving Agent Context",
-    "datapoint_generation": "Generating Attack Datapoints",
-    "attack_execution": "Executing Attacks",
-    "report_generation": "Generating Report",
-    "cleanup": "Cleaning Up",
-    "target_start": "Starting Target",
-    "target_complete": "Target Complete",
+    PipelineStage.CONTEXT_RETRIEVAL: 'Retrieving Agent Context',
+    PipelineStage.DATAPOINT_GENERATION: 'Generating Attack Datapoints',
+    PipelineStage.ATTACK_EXECUTION: 'Executing Attacks',
+    PipelineStage.REPORT_GENERATION: 'Generating Report',
+    PipelineStage.CLEANUP: 'Cleaning Up',
+    PipelineStage.TARGET_START: 'Starting Target',
+    PipelineStage.TARGET_COMPLETE: 'Target Complete',
 }
 
 # ---------------------------------------------------------------------------
@@ -104,16 +105,16 @@ class PipelineHooks(Protocol):
     All methods are synchronous.  If a hook raises, the pipeline breaks.
     """
 
-    def on_stage_start(self, stage: str, meta: dict[str, Any]) -> None:
+    def on_stage_start(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
         """Called when a pipeline stage begins.
 
         Args:
-            stage: Stage identifier (e.g. ``"context_retrieval"``).
+            stage: Stage identifier (e.g. ``PipelineStage.CONTEXT_RETRIEVAL``).
             meta:  Stage-specific metadata dict.
         """
         ...
 
-    def on_stage_end(self, stage: str, meta: dict[str, Any]) -> None:
+    def on_stage_end(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
         """Called when a pipeline stage completes.
 
         Args:
@@ -156,12 +157,12 @@ class DefaultHooks:
     prompt).
     """
 
-    def on_stage_start(self, stage: str, meta: dict[str, Any]) -> None:
-        label = _STAGE_LABELS.get(stage, stage)
+    def on_stage_start(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
+        label = _STAGE_LABELS.get(stage, str(stage))
         logger.info(f"[redteam] Stage started: {stage} — {label} | meta={meta}")
 
-    def on_stage_end(self, stage: str, meta: dict[str, Any]) -> None:
-        label = _STAGE_LABELS.get(stage, stage)
+    def on_stage_end(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
+        label = _STAGE_LABELS.get(stage, str(stage))
         logger.info(f"[redteam] Stage complete: {stage} — {label} | meta={meta}")
 
     def on_confirm(self, payload: ConfirmPayload) -> bool:
@@ -236,16 +237,16 @@ class RichHooks:
     # on_stage_start
     # ------------------------------------------------------------------
 
-    def on_stage_start(self, stage: str, meta: dict[str, Any]) -> None:
-        label = _STAGE_LABELS.get(stage, stage.replace("_", " ").title())
+    def on_stage_start(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
+        label = _STAGE_LABELS.get(stage, str(stage).replace('_', ' ').title())
         self._console.rule(f"[bold cyan]{label}[/bold cyan]")
 
     # ------------------------------------------------------------------
     # on_stage_end
     # ------------------------------------------------------------------
 
-    def on_stage_end(self, stage: str, meta: dict[str, Any]) -> None:
-        if stage == "context_retrieval":
+    def on_stage_end(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
+        if stage == PipelineStage.CONTEXT_RETRIEVAL:
             self._render_context_summary(meta)
 
         elapsed = meta.get("elapsed_s")

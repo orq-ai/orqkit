@@ -75,7 +75,7 @@ def create_model_job(
 
             return {
                 'response': _extract_deployment_content(completion),
-                'token_usage': _extract_usage_from_deployment_completion(completion),
+                'token_usage': TokenUsage.from_completion(completion),
             }
 
         return deployment_job
@@ -113,7 +113,7 @@ def create_model_job(
 
         return {
             'response': content,
-            'token_usage': _extract_usage_from_chat_completion(response),
+            'token_usage': TokenUsage.from_completion(response),
             'finish_reason': response.choices[0].finish_reason,
         }
 
@@ -180,25 +180,3 @@ def _normalize_usage(raw_usage: Any) -> TokenUsage | None:
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
 
 
-def _extract_usage_from_chat_completion(response: Any) -> TokenUsage | None:
-    """Extract token usage from OpenAI-compatible completion responses."""
-    usage = getattr(response, 'usage', None)
-    if usage is None:
-        return None
-
-    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-    completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-    total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
-    return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total)
-
-
-def _extract_usage_from_deployment_completion(completion: Any) -> TokenUsage | None:
-    """Best-effort extraction of usage from ORQ deployment completion objects."""
-    usage = getattr(completion, 'usage', None)
-    if usage is None:
-        return None
-
-    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-    completion_tokens = int(getattr(usage, 'completion_tokens', 0) or 0)
-    total = int(getattr(usage, 'total_tokens', prompt + completion_tokens) or 0)
-    return TokenUsage(prompt_tokens=prompt, completion_tokens=completion_tokens, total_tokens=total)

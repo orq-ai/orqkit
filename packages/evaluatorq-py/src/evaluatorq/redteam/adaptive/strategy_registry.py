@@ -8,6 +8,8 @@ This module provides:
 
 from __future__ import annotations
 
+import types
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -21,22 +23,28 @@ if TYPE_CHECKING:
     from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities
 
 # Combined registry of all strategies
-STRATEGY_REGISTRY: dict[str, list[AttackStrategy]] = {
+STRATEGY_REGISTRY: Mapping[str, list[AttackStrategy]]
+VULNERABILITY_STRATEGY_REGISTRY: Mapping[Vulnerability, list[AttackStrategy]]
+
+_strategy_registry: dict[str, list[AttackStrategy]] = {
     **ASI_STRATEGIES,
     **LLM_STRATEGIES,
 }
 
 # Also support OWASP- prefixed versions
-STRATEGY_REGISTRY.update({f'OWASP-{k}': v for k, v in STRATEGY_REGISTRY.items()})
+_strategy_registry.update({f'OWASP-{k}': v for k, v in _strategy_registry.items()})
 
 # Primary registry keyed by vulnerability
-VULNERABILITY_STRATEGY_REGISTRY: dict[Vulnerability, list[AttackStrategy]] = {}
-for _cat, _strategies in STRATEGY_REGISTRY.items():
+_vulnerability_strategy_registry: dict[Vulnerability, list[AttackStrategy]] = {}
+for _cat, _strategies in _strategy_registry.items():
     if _cat.startswith('OWASP-'):
         continue  # skip prefixed duplicates
     _vuln = CATEGORY_TO_VULNERABILITY.get(_cat)
     if _vuln is not None:
-        VULNERABILITY_STRATEGY_REGISTRY[_vuln] = _strategies
+        _vulnerability_strategy_registry[_vuln] = _strategies
+
+STRATEGY_REGISTRY = types.MappingProxyType(_strategy_registry)
+VULNERABILITY_STRATEGY_REGISTRY = types.MappingProxyType(_vulnerability_strategy_registry)
 
 
 def get_strategies_for_vulnerability(vuln: Vulnerability) -> list[AttackStrategy]:

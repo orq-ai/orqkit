@@ -33,6 +33,7 @@ _check_redteam_deps()
 from typing import Any
 
 from evaluatorq.redteam.contracts import (
+    AgentCapability,
     AgentContext,
     TargetConfig,
     AgentInfo,
@@ -42,6 +43,8 @@ from evaluatorq.redteam.contracts import (
     CategorySummary,
     DeliveryMethod,
     DeliveryMethodSummary,
+    DimensionSummary,
+    ErrorInfo,
     EvaluationPayload,
     AttackEvaluationResult,
     EvaluationResult,  # backwards-compatible alias
@@ -57,6 +60,7 @@ from evaluatorq.redteam.contracts import (
     OrchestratorResult,
     Pipeline,
     PipelineLLMConfig,
+    PipelineStage,
     RedTeamConfig,
     RedTeamInput,
     RedTeamReport,
@@ -97,6 +101,7 @@ from evaluatorq.redteam.vulnerability_registry import (
     resolve_vulnerabilities,
 )
 from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
+from evaluatorq.redteam.backends.registry import register_backend
 from evaluatorq.redteam.hooks import (
     ConfirmPayload,
     DefaultHooks,
@@ -136,6 +141,8 @@ __all__ = [
     "Severity",
     "Framework",
     "Pipeline",
+    "PipelineStage",
+    "AgentCapability",
     # Message models
     "FunctionCall",
     "ToolCall",
@@ -166,8 +173,11 @@ __all__ = [
     "VulnerabilityDef",
     "VulnerabilityDomain",
     "VulnerabilitySummary",
+    # Error model
+    "ErrorInfo",
     # Report models
     "CategorySummary",
+    "DimensionSummary",
     "ReportSummary",
     "ReportSnapshot",
     "TechniqueSummary",
@@ -184,4 +194,6 @@ __all__ = [
     "CredentialError",
     "BackendError",
     "CancelledError",
+    # Backend extension
+    "register_backend",
 ]

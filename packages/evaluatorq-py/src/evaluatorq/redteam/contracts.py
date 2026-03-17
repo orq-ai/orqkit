@@ -217,6 +217,39 @@ class Pipeline(StrEnum):
     HYBRID = 'hybrid'
 
 
+class PipelineStage(StrEnum):
+    """Pipeline stage identifiers used in hook callbacks."""
+
+    CONTEXT_RETRIEVAL = 'context_retrieval'
+    DATAPOINT_GENERATION = 'datapoint_generation'
+    ATTACK_EXECUTION = 'attack_execution'
+    REPORT_GENERATION = 'report_generation'
+    CLEANUP = 'cleanup'
+    TARGET_START = 'target_start'
+    TARGET_COMPLETE = 'target_complete'
+
+
+class AgentCapability(StrEnum):
+    """Capability tags for agent resources.
+
+    Moved from ``capability_classifier.py`` so that ``AttackStrategy`` and other
+    contract models can reference it without introducing a circular import.
+    """
+
+    CODE_EXECUTION = 'code_execution'
+    SHELL_ACCESS = 'shell_access'
+    FILE_SYSTEM = 'file_system'
+    DATABASE = 'database'
+    WEB_REQUEST = 'web_request'
+    MEMORY_READ = 'memory_read'
+    MEMORY_WRITE = 'memory_write'
+    KNOWLEDGE_RETRIEVAL = 'knowledge_retrieval'
+    EMAIL = 'email'
+    MESSAGING = 'messaging'
+    PAYMENT = 'payment'
+    USER_DATA = 'user_data'
+
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -722,6 +755,33 @@ class TokenUsage(BaseModel):
     completion_tokens: int = Field(default=0, description='Completion/output tokens')
     calls: int = Field(default=0, description='Number of LLM API calls')
 
+    @classmethod
+    def from_completion(cls, response: Any) -> 'TokenUsage | None':
+        """Extract token usage from an OpenAI-compatible completion response."""
+        usage = getattr(response, 'usage', None)
+        if usage is None:
+            return None
+        prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
+        completion = int(getattr(usage, 'completion_tokens', 0) or 0)
+        total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
+        return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
+
+
+# ---------------------------------------------------------------------------
+# Error info model
+# ---------------------------------------------------------------------------
+
+
+class ErrorInfo(BaseModel):
+    """Structured error information for attack/evaluation results."""
+
+    message: str
+    error_type: str
+    stage: str | None = None
+    code: str | None = None
+    details: dict[str, Any] | None = None
+    turn: int | None = None
+
 
 # ---------------------------------------------------------------------------
 # Orchestrator and evaluation result models
@@ -755,6 +815,20 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
+
+    @property
+    def error_info(self) -> 'ErrorInfo | None':
+        """Structured view of the flat error fields."""
+        if self.error is None:
+            return None
+        return ErrorInfo(
+            message=self.error,
+            error_type=self.error_type or 'unknown',
+            stage=self.error_stage,
+            code=self.error_code,
+            details=self.error_details,
+            turn=self.error_turn,
+        )
 
 
 class AttackOutput(OrchestratorResult):
@@ -951,6 +1025,19 @@ class RedTeamResult(BaseModel):
     error_code: str | None = None
     error_details: dict[str, Any] | None = None
 
+    @property
+    def error_info(self) -> 'ErrorInfo | None':
+        """Structured view of the flat error fields."""
+        if self.error is None:
+            return None
+        return ErrorInfo(
+            message=self.error,
+            error_type=self.error_type or 'unknown',
+            stage=self.error_stage,
+            code=self.error_code,
+            details=self.error_details,
+        )
+
 
 class VulnerabilitySummary(BaseModel):
     """Per-vulnerability summary statistics."""
@@ -986,59 +1073,39 @@ class CategorySummary(BaseModel):
     strategies_used: list[str] = Field(default_factory=list)
 
 
-class TechniqueSummary(BaseModel):
+class DimensionSummary(BaseModel):
+    """Base class for per-dimension summary statistics."""
+
+    total_attacks: int = 0
+    vulnerabilities_found: int = 0
+    resistance_rate: float = 1.0
+    vulnerability_rate: float = 0.0
+
+
+class TechniqueSummary(DimensionSummary):
     """Per-technique summary statistics."""
 
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
 
-
-class SeveritySummary(BaseModel):
+class SeveritySummary(DimensionSummary):
     """Per-severity summary statistics."""
 
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
 
-
-class DeliveryMethodSummary(BaseModel):
+class DeliveryMethodSummary(DimensionSummary):
     """Per-delivery-method summary statistics."""
 
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
 
-
-class TurnTypeSummary(BaseModel):
+class TurnTypeSummary(DimensionSummary):
     """Per-turn-type (single vs multi) summary statistics."""
 
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
     average_turns: float = 0.0
 
 
-class DomainSummary(BaseModel):
+class DomainSummary(DimensionSummary):
     """Per-domain (agent / model / data) summary statistics."""
 
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
 
-
-class FrameworkSummary(BaseModel):
+class FrameworkSummary(DimensionSummary):
     """Per-framework summary statistics (useful for mixed reports)."""
-
-    total_attacks: int = 0
-    vulnerabilities_found: int = 0
-    resistance_rate: float = 1.0
-    vulnerability_rate: float = 0.0
 
 
 class ReportSummary(BaseModel):

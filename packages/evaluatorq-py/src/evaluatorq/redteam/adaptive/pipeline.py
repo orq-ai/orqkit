@@ -600,11 +600,13 @@ async def cleanup_memory_entities(
     agent_context: AgentContext,
     entity_ids: list[str],
     memory_cleanup: MemoryCleanup | None = None,
-) -> None:
-    """Delete memory entities created during an evaluatorq red teaming run.
+) -> str | None:
+    """Delete memory entities created during a red teaming run.
 
     Delegates to provided backend cleanup implementation.
     Wrapped with an overall timeout — cleanup is best-effort and should never block the pipeline.
+
+    Returns None on success, or an error message string on failure.
     """
     cleanup_timeout_s = PIPELINE_CONFIG.cleanup_timeout_ms / 1000.0
     try:
@@ -613,15 +615,18 @@ async def cleanup_memory_entities(
                 memory_cleanup.cleanup_memory(agent_context, entity_ids),
                 timeout=cleanup_timeout_s,
             )
-            return
+            return None
         # Default fallback keeps existing ORQ behavior.
         await asyncio.wait_for(
             resolve_backend('orq').memory_cleanup.cleanup_memory(agent_context, entity_ids),
             timeout=cleanup_timeout_s,
         )
     except asyncio.TimeoutError:
-        logger.warning(
-            f'Memory cleanup timed out after {cleanup_timeout_s:.0f}s for {len(entity_ids)} entities — skipping'
-        )
+        msg = f'Memory cleanup timed out after {cleanup_timeout_s:.0f}s for {len(entity_ids)} entities'
+        logger.warning(msg)
+        return msg
     except Exception as e:
-        logger.warning(f'Memory cleanup failed: {e}')
+        msg = f'Memory cleanup failed: {e}'
+        logger.warning(msg)
+        return msg
+    return None

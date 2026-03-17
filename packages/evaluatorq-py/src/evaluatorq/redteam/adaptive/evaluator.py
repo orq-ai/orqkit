@@ -159,7 +159,7 @@ class OWASPEvaluator:
                 )
                 raw_content = llm_response.choices[0].message.content or '{}'
                 record_llm_response(eval_llm_span, llm_response, output_content=raw_content)
-                usage = _extract_usage_from_completion(llm_response)
+                usage = TokenUsage.from_completion(llm_response)
 
             parsed = EvaluatorResponsePayload.model_validate_json(raw_content)
 
@@ -216,17 +216,3 @@ def _serialize_messages(messages: list[dict[str, Any]] | list[Message]) -> list[
     return serialized
 
 
-def _extract_usage_from_completion(response: Any) -> TokenUsage | None:
-    """Extract token usage from an OpenAI completion response, or return None if unavailable."""
-    usage = getattr(response, 'usage', None)
-    if usage is None:
-        return None
-    prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-    completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-    total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
-    return TokenUsage(
-        prompt_tokens=prompt,
-        completion_tokens=completion,
-        total_tokens=total,
-        calls=1,
-    )

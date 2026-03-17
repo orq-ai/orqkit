@@ -6,46 +6,20 @@ while memory and knowledge capabilities are inferred from explicit
 agent configuration (memory tools / knowledge bases).
 """
 
-import sys
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum  # pyright: ignore[reportUnreachable]
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # type: ignore[no-redef]
-        """String enum compatible with Python 3.10."""
-
-        pass
-
-
 from typing import Any
-
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AgentContext
+from evaluatorq.redteam.contracts import (
+    DEFAULT_PIPELINE_MODEL,
+    PIPELINE_CONFIG,
+    AgentCapability,
+    AgentContext,
+)
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
-
-
-class AgentCapability(StrEnum):
-    """Capability tags for agent resources."""
-
-    CODE_EXECUTION = 'code_execution'
-    SHELL_ACCESS = 'shell_access'
-    FILE_SYSTEM = 'file_system'
-    DATABASE = 'database'
-    WEB_REQUEST = 'web_request'
-    MEMORY_READ = 'memory_read'
-    MEMORY_WRITE = 'memory_write'
-    KNOWLEDGE_RETRIEVAL = 'knowledge_retrieval'
-    EMAIL = 'email'
-    MESSAGING = 'messaging'
-    PAYMENT = 'payment'
-    USER_DATA = 'user_data'
 
 
 class ToolCapabilities(BaseModel):

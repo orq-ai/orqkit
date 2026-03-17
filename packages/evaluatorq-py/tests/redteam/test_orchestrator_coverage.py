@@ -212,16 +212,16 @@ class TestProgressLabel:
 
 
 # ===========================================================================
-# orchestrator._extract_usage_from_completion
+# TokenUsage.from_completion
 # ===========================================================================
 
 
 class TestExtractUsageFromCompletion:
-    """Tests for _extract_usage_from_completion()."""
+    """Tests for TokenUsage.from_completion()."""
 
     def test_handles_partial_usage_fields(self):
         """When some usage fields are missing, defaults to 0."""
-        from evaluatorq.redteam.adaptive.orchestrator import _extract_usage_from_completion
+        from evaluatorq.redteam.contracts import TokenUsage
 
         usage = MagicMock(spec=["prompt_tokens"])
         usage.prompt_tokens = 42
@@ -229,7 +229,7 @@ class TestExtractUsageFromCompletion:
         response = MagicMock()
         response.usage = usage
 
-        result = _extract_usage_from_completion(response)
+        result = TokenUsage.from_completion(response)
         assert result is not None
         assert result.prompt_tokens == 42
         assert result.completion_tokens == 0

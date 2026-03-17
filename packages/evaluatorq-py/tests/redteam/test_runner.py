@@ -186,7 +186,7 @@ class TestStaticCoverageGuard:
                 parallelism=5,
                 max_static_datapoints=None,
                 backend='orq',
-                dataset_path=None,
+                dataset=None,
                 description='test',
             )
 
@@ -227,7 +227,7 @@ class TestStaticCoverageGuard:
                     parallelism=5,
                     max_static_datapoints=None,
                     backend='orq',
-                    dataset_path=None,
+                    dataset=None,
                     description='test',
                 )
 

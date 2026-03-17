@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -67,6 +68,14 @@ def create_async_llm_client() -> "AsyncOpenAI":
     raise CredentialError(msg)
 
 
+_BACKEND_REGISTRY: dict[str, Callable[..., BackendBundle]] = {}
+
+
+def register_backend(name: str, factory: Callable[..., BackendBundle]) -> None:
+    """Register a backend factory for use with resolve_backend()."""
+    _BACKEND_REGISTRY[name.strip().lower()] = factory
+
+
 def resolve_backend(
     backend: str = "orq",
     llm_client: "AsyncOpenAI | None" = None,
@@ -75,34 +84,43 @@ def resolve_backend(
     """Resolve runtime backend bundle with lazy optional imports.
 
     Args:
-        backend: Backend name (``"orq"`` or ``"openai"``).
+        backend: Backend name (e.g. ``"orq"`` or ``"openai"``).
         llm_client: Pre-configured client for the OpenAI backend.
             When provided, skips ``create_async_llm_client()`` for
             the ``"openai"`` backend.
         target_config: Optional target configuration (e.g. system prompt).
     """
-    system_prompt = target_config.system_prompt if target_config else None
     normalized = backend.strip().lower()
-    if normalized == "openai":
-        client = llm_client or create_async_llm_client()
-        return BackendBundle(
-            name="openai",
-            target_factory=OpenAITargetFactory(client, system_prompt=system_prompt),
-            context_provider=OpenAIContextProvider(system_prompt=system_prompt),
-            memory_cleanup=NoopMemoryCleanup(),
-            error_mapper=OpenAIErrorMapper(),
-        )
+    factory = _BACKEND_REGISTRY.get(normalized)
+    if factory is not None:
+        return factory(llm_client=llm_client, target_config=target_config)
+    raise BackendError(f"Unsupported backend: {backend!r}. Available: {sorted(_BACKEND_REGISTRY)}")
 
-    if normalized != "orq":
-        msg = f"Unsupported backend: {backend!r}. Expected 'orq' or 'openai'."
-        raise BackendError(msg)
 
+def _create_openai_backend(
+    llm_client: "AsyncOpenAI | None" = None,
+    target_config: TargetConfig | None = None,
+) -> BackendBundle:
+    system_prompt = target_config.system_prompt if target_config else None
+    client = llm_client or create_async_llm_client()
+    return BackendBundle(
+        name="openai",
+        target_factory=OpenAITargetFactory(client, system_prompt=system_prompt),
+        context_provider=OpenAIContextProvider(system_prompt=system_prompt),
+        memory_cleanup=NoopMemoryCleanup(),
+        error_mapper=OpenAIErrorMapper(),
+    )
+
+
+def _create_orq_backend(
+    llm_client: "AsyncOpenAI | None" = None,
+    target_config: TargetConfig | None = None,
+) -> BackendBundle:
     try:
         from evaluatorq.redteam.backends.orq import ORQErrorMapper, create_orq_backend
     except ImportError as exc:
-        msg = "ORQ backend requested but ORQ dependencies are unavailable. Install ORQ extras or use backend='openai'."
+        msg = "ORQ backend requested but ORQ dependencies are unavailable."
         raise BackendError(msg) from exc
-
     target_factory, context_provider, memory_cleanup = create_orq_backend()
     return BackendBundle(
         name="orq",
@@ -111,3 +129,7 @@ def resolve_backend(
         memory_cleanup=memory_cleanup,
         error_mapper=ORQErrorMapper(),
     )
+
+
+register_backend("openai", _create_openai_backend)
+register_backend("orq", _create_orq_backend)

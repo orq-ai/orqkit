@@ -25,7 +25,7 @@ async def test_multi_target_static_merge(
         evaluator_model="e2e-evaluator",
         parallelism=2,
         backend="openai",
-        dataset_path=str(static_dataset_path),
+        dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         description="E2E multi-target test",
     )
