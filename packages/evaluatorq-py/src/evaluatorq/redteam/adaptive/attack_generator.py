@@ -7,9 +7,10 @@ This module generates concrete attack prompts by:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
+from openai import APIConnectionError, APIStatusError
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
     from evaluatorq.redteam.contracts import AgentContext, AttackStrategy
 
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG
 
 
 def fill_template(template: str, agent_context: AgentContext) -> str:
@@ -30,6 +31,9 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     - {agent_name}: Agent display name (or key)
     - {agent_description}: Agent description (or "an AI assistant")
 
+    Uses a single-pass substitution to prevent double-substitution attacks
+    where agent metadata containing placeholder strings could be re-expanded.
+
     Args:
         template: Template string with {placeholder} variables
         agent_context: Agent context for filling values
@@ -37,20 +41,20 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     Returns:
         Filled template string
     """
-    # Prepare substitution values
-    tool_name = agent_context.tools[0].name if agent_context.tools else 'the tool'
-    tool_names = ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools'
-    memory_store = (agent_context.memory_stores[0].key or agent_context.memory_stores[0].id) if agent_context.memory_stores else 'memory'
-    agent_name = agent_context.display_name or agent_context.key
-    agent_description = agent_context.description or 'an AI assistant'
+    substitutions = {
+        'tool_name': agent_context.tools[0].name if agent_context.tools else 'the tool',
+        'tool_names': ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools',
+        'memory_store': (agent_context.memory_stores[0].key or 'memory') if agent_context.memory_stores else 'memory',
+        'agent_name': agent_context.display_name or agent_context.key,
+        'agent_description': agent_context.description or 'an AI assistant',
+    }
 
-    # Perform substitutions
+    # Use .replace() instead of .format_map() to avoid "Invalid format specifier"
+    # errors when substitution values contain literal braces (e.g. JSON in tool descriptions).
     result = template
-    result = result.replace('{tool_name}', tool_name)
-    result = result.replace('{tool_names}', tool_names)
-    result = result.replace('{memory_store}', memory_store)
-    result = result.replace('{agent_name}', agent_name)
-    return result.replace('{agent_description}', agent_description)
+    for key, value in substitutions.items():
+        result = result.replace('{' + key + '}', value)
+    return result
 
 
 def generate_attack_prompt(
@@ -141,7 +145,8 @@ async def adapt_prompt_to_tools(
     strategy: AttackStrategy,
     *,
     llm_client: AsyncOpenAI,
-    model: str = 'azure/gpt-5-mini',
+    model: str = DEFAULT_PIPELINE_MODEL,
+    llm_kwargs: dict[str, Any] | None = None,
 ) -> str:
     """Adapt an attack prompt to leverage specific agent tools.
 
@@ -163,11 +168,12 @@ async def adapt_prompt_to_tools(
 
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = TOOL_CLASSIFICATION_PROMPT.format(
-        attack_technique=strategy.attack_technique.value,
-        strategy_description=strategy.description,
-        base_prompt=base_prompt,
-        tool_list=tool_list,
+    prompt = (
+        TOOL_CLASSIFICATION_PROMPT
+        .replace('{attack_technique}', strategy.attack_technique.value)
+        .replace('{strategy_description}', strategy.description)
+        .replace('{base_prompt}', base_prompt)
+        .replace('{tool_list}', tool_list)
     )
 
     try:
@@ -176,8 +182,9 @@ async def adapt_prompt_to_tools(
             messages=[{'role': 'user', 'content': prompt}],
             response_format=ToolAnalysis,
             temperature=PIPELINE_CONFIG.tool_adaptation_temperature,
-            max_tokens=PIPELINE_CONFIG.tool_adaptation_max_tokens,
+            max_completion_tokens=PIPELINE_CONFIG.tool_adaptation_max_tokens,
             extra_body=PIPELINE_CONFIG.retry_config,
+            **(llm_kwargs or {}),
         )
 
         analysis = response.choices[0].message.parsed
@@ -196,6 +203,8 @@ async def adapt_prompt_to_tools(
         logger.debug(f'Tool adaptation: {len(relevant)}/{len(agent_context.tools)} tools relevant for {strategy.name}')
         return base_prompt + tool_reference
 
+    except (APIConnectionError, APIStatusError):
+        raise
     except Exception as e:
-        logger.warning(f'Tool classification failed, returning original prompt: {e}')
+        logger.error(f'Tool adaptation failed, using generic prompt without tool-specific targeting: {e}')
         return base_prompt
