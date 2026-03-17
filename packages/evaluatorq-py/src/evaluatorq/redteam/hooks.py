@@ -79,6 +79,9 @@ class ConfirmPayload(TypedDict, total=False):
     filtering_metadata: dict[str, Any] | None
     """Strategy filtering metadata from datapoint generation."""
 
+    strategy_breakdown: dict[str, Any] | None
+    """Per-category breakdown of template/generated/filtered strategies for the confirm table."""
+
     mode: str
     """Execution mode: 'dynamic', 'static', or 'hybrid'."""
 
@@ -298,10 +301,18 @@ class RichHooks:
         table.add_row("Target", str(target))
         table.add_row("Mode", str(mode))
 
+        # Compute target count from agent_contexts or comma-separated target string
+        agent_contexts_raw = payload.get("agent_contexts") or {}
+        num_targets = len(agent_contexts_raw) or 1
+
         if num_dp is not None:
             table.add_row("Datapoints", str(num_dp))
-            table.add_row("  → Dynamic", str(num_dynamic or 0))
-            table.add_row("  → Static", str(num_static or 0))
+            if num_targets > 1:
+                total_attacks = num_dp * num_targets
+                table.add_row(
+                    "Total Attacks",
+                    f'{total_attacks} ({num_dp} datapoints × {num_targets} targets)',
+                )
 
         table.add_row("Categories", str(len(categories)))
         table.add_row("Attack Model", str(attack_model))
@@ -310,7 +321,7 @@ class RichHooks:
         table.add_row("Parallelism", str(parallelism))
 
         if dataset_path:
-            table.add_row("Dataset Path", str(dataset_path))
+            table.add_row("Dataset", str(dataset_path))
 
         self._console.print(table)
 
@@ -331,6 +342,11 @@ class RichHooks:
         filtering_metadata = payload.get("filtering_metadata")
         if filtering_metadata:
             self._render_filtering_metadata(filtering_metadata)
+
+        # ── Strategy breakdown ─────────────────────────────────────────
+        strategy_breakdown = payload.get("strategy_breakdown")
+        if strategy_breakdown:
+            self._render_strategy_breakdown(strategy_breakdown, num_dynamic=num_dynamic, num_static=num_static)
 
         # ── Prompt or auto-approve ──────────────────────────────────────
         if self._skip_confirm:
@@ -418,6 +434,101 @@ class RichHooks:
                 str(info.get("filtered_count", "?")),
                 str(info.get("total_selected", "?")),
             )
+
+        self._console.print(table)
+
+    def _render_strategy_breakdown(
+        self,
+        strategy_breakdown: dict[str, Any],
+        num_dynamic: int | None = None,
+        num_static: int | None = None,
+    ) -> None:
+        """Render a per-category table showing template vs generated strategy counts."""
+        from rich import box
+        from rich.table import Table
+
+        # Detect if any category has a 'capped' key (round-robin allocation was applied)
+        has_cap = any(
+            isinstance(info, dict) and 'capped' in info
+            for info in strategy_breakdown.values()
+        )
+
+        table = Table(
+            title="Datapoint Breakdown (per target)",
+            show_header=True,
+            header_style="bold",
+            box=box.ROUNDED,
+        )
+        table.add_column("Category", style="white")
+        table.add_column("Hardcoded", style="cyan", justify="right")
+        table.add_column("Applicable", style="cyan", justify="right")
+        table.add_column("Filtered", style="yellow", justify="right")
+        table.add_column("Generated", style="cyan", justify="right")
+        table.add_column("Selected", style="bold green", justify="right")
+        if has_cap:
+            table.add_column("Capped", style="bold yellow", justify="right")
+
+        total_hardcoded = 0
+        total_applicable = 0
+        total_filtered = 0
+        total_generated = 0
+        total_selected = 0
+        total_capped = 0
+
+        for category, info in strategy_breakdown.items():
+            if not isinstance(info, dict):
+                continue
+            hc = info.get('total_hardcoded', 0)
+            ap = info.get('applicable', 0)
+            fi = info.get('filtered', 0)
+            ge = info.get('generated', 0)
+            se = info.get('selected', 0)
+            ca = info.get('capped', se)
+            total_hardcoded += hc
+            total_applicable += ap
+            total_filtered += fi
+            total_generated += ge
+            total_selected += se
+            total_capped += ca
+            row = [
+                category.upper(),
+                str(hc),
+                str(ap),
+                str(fi) if fi else '-',
+                str(ge) if ge else '-',
+                str(se),
+            ]
+            if has_cap:
+                row.append(str(ca))
+            table.add_row(*row)
+
+        table.add_section()
+        dynamic_row = [
+            '[bold]Dynamic total[/bold]',
+            str(total_hardcoded),
+            str(total_applicable),
+            str(total_filtered) if total_filtered else '-',
+            str(total_generated) if total_generated else '-',
+            f'[bold]{total_selected}[/bold]',
+        ]
+        if has_cap:
+            dynamic_row.append(f'[bold yellow]{total_capped}[/bold yellow]')
+        table.add_row(*dynamic_row)
+
+        if num_static:
+            static_row = ['[bold]Static[/bold]', '', '', '', '', f'[bold]{num_static}[/bold]']
+            if has_cap:
+                static_row.append(f'[bold]{num_static}[/bold]')
+            table.add_row(*static_row)
+
+            final = total_capped + num_static if has_cap else total_selected + num_static
+            table.add_section()
+            total_row = ['[bold]Total datapoints[/bold]', '', '', '', '', '']
+            if has_cap:
+                total_row.append(f'[bold green]{final}[/bold green]')
+            else:
+                total_row[-1] = f'[bold green]{final}[/bold green]'
+            table.add_row(*total_row)
 
         self._console.print(table)
 

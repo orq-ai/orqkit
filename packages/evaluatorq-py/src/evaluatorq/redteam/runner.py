@@ -161,6 +161,43 @@ def _datapoint_breakdown(datapoints: list[Any]) -> dict[str, int]:
         "generated_dynamic": generated_dynamic,
     }
 
+def _cap_datapoints_balanced(datapoints: list[Any], cap: int) -> list[Any]:
+    """Cap datapoints using round-robin across vulnerabilities for balanced coverage.
+
+    Instead of slicing the first N (which biases toward early vulnerabilities),
+    this picks one datapoint per vulnerability in rotation until the cap is reached.
+    """
+    from collections import defaultdict
+
+    # Group by vulnerability
+    by_vuln: dict[str, list[Any]] = defaultdict(list)
+    vuln_order: list[str] = []
+    for dp in datapoints:
+        inputs = dp.inputs if hasattr(dp, 'inputs') else dp
+        vuln = inputs.get('vulnerability', inputs.get('category', ''))
+        if vuln not in by_vuln:
+            vuln_order.append(vuln)
+        by_vuln[vuln].append(dp)
+
+    # Round-robin: pick one from each vulnerability per round
+    result: list[Any] = []
+    indices = {v: 0 for v in vuln_order}
+    while len(result) < cap:
+        added_this_round = False
+        for vuln in vuln_order:
+            if len(result) >= cap:
+                break
+            idx = indices[vuln]
+            if idx < len(by_vuln[vuln]):
+                result.append(by_vuln[vuln][idx])
+                indices[vuln] = idx + 1
+                added_this_round = True
+        if not added_this_round:
+            break
+
+    return result
+
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -668,20 +705,12 @@ async def _prepare_target(
                 llm_kwargs=llm_kwargs,
             )
 
-        if generate_strategies and generated_strategy_count > 0 and max_dynamic_datapoints is not None:
-            template_count = sum(
-                1 for dp in dynamic_datapoints
-                if not dp.inputs.get('strategy', {}).get('is_generated', False)
+        if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(dynamic_datapoints) > max_dynamic_datapoints:
+            total_before = len(dynamic_datapoints)
+            dynamic_datapoints = _cap_datapoints_balanced(dynamic_datapoints, max_dynamic_datapoints)
+            logger.info(
+                f'[{target}] Capped dynamic datapoints from {total_before} to {len(dynamic_datapoints)}'
             )
-            if template_count >= max_dynamic_datapoints:
-                logger.warning(
-                    f'[{target}] max_dynamic_datapoints={max_dynamic_datapoints} is already covered by '
-                    f'{template_count} template strategies — {generated_strategy_count} generated '
-                    f'strategies per category will be unused.'
-                )
-
-        if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0:
-            dynamic_datapoints = dynamic_datapoints[:max_dynamic_datapoints]
 
     # Build the raw dynamic job for this target
     _memory_entity_ids: list[str] = []
@@ -914,34 +943,70 @@ async def _run_dynamic_or_hybrid(
 
         # Step 2: Estimate datapoint counts (cheap registry lookups, no LLM).
         from evaluatorq.redteam.adaptive.strategy_registry import (
-            select_applicable_strategies_for_vulnerability,
+            get_strategies_for_category,
+            get_strategies_for_vulnerability,
             select_applicable_strategies,
+            select_applicable_strategies_for_vulnerability,
         )
 
         est_dynamic = 0
+        strategy_breakdown: dict[str, Any] = {}
         if resolved_vulns is not None:
             for vuln in resolved_vulns:
-                # Exact count: filter hardcoded strategies using agent context (no LLM needed)
-                n_hardcoded = len(select_applicable_strategies_for_vulnerability(
+                all_strategies = get_strategies_for_vulnerability(vuln)
+                applicable = select_applicable_strategies_for_vulnerability(
                     vuln, first_agent_context, agent_capabilities=None,
-                ))
+                )
                 n_generated = generated_strategy_count if generate_strategies else 0
-                n = n_hardcoded + n_generated
+                n = len(applicable) + n_generated
                 if max_per_category is not None:
                     n = min(n, max_per_category)
                 est_dynamic += n
+                strategy_breakdown[vuln.value] = {
+                    'total_hardcoded': len(all_strategies),
+                    'applicable': len(applicable),
+                    'filtered': len(all_strategies) - len(applicable),
+                    'generated': n_generated,
+                    'selected': n,
+                }
         else:
             for cat in resolved_categories:
-                n_hardcoded = len(select_applicable_strategies(
+                all_strategies = get_strategies_for_category(cat)
+                applicable = select_applicable_strategies(
                     cat, first_agent_context, agent_capabilities=None,
-                ))
+                )
                 n_generated = generated_strategy_count if generate_strategies else 0
-                n = n_hardcoded + n_generated
+                n = len(applicable) + n_generated
                 if max_per_category is not None:
                     n = min(n, max_per_category)
                 est_dynamic += n
-        if max_dynamic_datapoints is not None:
-            est_dynamic = min(est_dynamic, max_dynamic_datapoints)
+                strategy_breakdown[cat] = {
+                    'total_hardcoded': len(all_strategies),
+                    'applicable': len(applicable),
+                    'filtered': len(all_strategies) - len(applicable),
+                    'generated': n_generated,
+                    'selected': n,
+                }
+        if max_dynamic_datapoints is not None and est_dynamic > max_dynamic_datapoints:
+            # Simulate round-robin allocation to show per-category capped counts
+            categories_ordered = list(strategy_breakdown.keys())
+            remaining = {k: v['selected'] for k, v in strategy_breakdown.items()}
+            allocated = {k: 0 for k in categories_ordered}
+            budget = max_dynamic_datapoints
+            while budget > 0:
+                added = False
+                for cat in categories_ordered:
+                    if budget <= 0:
+                        break
+                    if allocated[cat] < remaining[cat]:
+                        allocated[cat] += 1
+                        budget -= 1
+                        added = True
+                if not added:
+                    break
+            for cat in categories_ordered:
+                strategy_breakdown[cat]['capped'] = allocated[cat]
+            est_dynamic = max_dynamic_datapoints
 
         est_static: int | None = None
         static_data: list[Any] | None = None
@@ -971,6 +1036,7 @@ async def _run_dynamic_or_hybrid(
             "max_turns": max_turns,
             "parallelism": parallelism,
             "filtering_metadata": None,
+            "strategy_breakdown": strategy_breakdown if strategy_breakdown else None,
             "mode": str(mode.value) if hasattr(mode, 'value') else str(mode),
             "target": ", ".join(targets),
             "dataset_path": str(dataset) if dataset else None,
