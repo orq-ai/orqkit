@@ -45,6 +45,8 @@ reportUnusedFunction = "none"
 reportUntypedFunctionDecorator = "none"
 reportUnnecessaryIsInstance = "none"
 reportUnnecessaryTypeIgnoreComment = "none"
+reportUnnecessaryComparison = "none"
+reportPrivateLocalImportUsage = "none"
 
 [project]
 name = "evaluatorq"

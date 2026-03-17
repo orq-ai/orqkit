@@ -1,6 +1,7 @@
 """Unit tests for dynamic red teaming models."""
 
 from evaluatorq.redteam.contracts import (
+    AgentCapability,
     AgentContext,
     AttackStrategy,
     AttackTechnique,
@@ -135,7 +136,7 @@ class TestAttackStrategy:
             delivery_methods=[DeliveryMethod.DIRECT_REQUEST],
             turn_type=TurnType.SINGLE,
             requires_tools=True,
-            required_capabilities=['database'],
+            required_capabilities=[AgentCapability.DATABASE],
             objective_template='Exploit the database tool',
         )
         assert strategy.requires_tools
