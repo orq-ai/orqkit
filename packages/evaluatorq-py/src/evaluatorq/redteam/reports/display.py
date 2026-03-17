@@ -200,12 +200,31 @@ def print_report_summary(report: RedTeamReport, *, console: Console | None = Non
     # ── Top error causes ───────────────────────────────────────────────
     if summary.errors_by_type:
         top_errors = sorted(summary.errors_by_type.items(), key=lambda t: t[1], reverse=True)[:5]
-        err_table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
-        err_table.add_column("Error Type", style="white", min_width=25)
-        err_table.add_column("Count", justify="right", width=8)
 
-        for error_type, count in top_errors:
-            err_table.add_row(error_type, Text(str(count), style="red"))
+        # Collect a sample error message and stage per error code
+        error_samples: dict[str, str] = {}
+        error_stages: dict[str, str] = {}
+        for r in report.results:
+            if r.error:
+                etype = r.error_code or r.error_type or 'unknown'
+                if etype not in error_samples:
+                    msg = r.error[:100] + '...' if len(r.error) > 100 else r.error
+                    error_samples[etype] = msg
+                    error_stages[etype] = r.error_stage or ''
+
+        err_table = Table(show_header=True, header_style="bold", box=box.ROUNDED)
+        err_table.add_column("Error", style="white", min_width=16)
+        err_table.add_column("Stage", style="cyan", min_width=10)
+        err_table.add_column("Count", justify="right", width=6)
+        err_table.add_column("Example", style="dim", max_width=70)
+
+        for error_code, count in top_errors:
+            err_table.add_row(
+                error_code,
+                error_stages.get(error_code, ''),
+                Text(str(count), style="red"),
+                error_samples.get(error_code, ''),
+            )
 
         console.print("[bold white]Top Error Causes:[/bold white]")
         console.print(err_table)

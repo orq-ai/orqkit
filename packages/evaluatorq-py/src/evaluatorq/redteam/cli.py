@@ -24,7 +24,9 @@ app = typer.Typer(
 
 def _configure_logging(verbosity: int) -> None:
     """Configure logging based on verbosity level."""
-    if verbosity == 0:
+    if verbosity < 0:
+        level = logging.ERROR
+    elif verbosity == 0:
         level = logging.WARNING
     elif verbosity == 1:
         level = logging.INFO
@@ -244,8 +246,12 @@ def run(
     ] = False,
     verbose: Annotated[
         int,
-        typer.Option("--verbose", "-v", count=True, help="Increase verbosity (-v info, -vv debug)."),
+        typer.Option("--verbose", "-v", count=True, help="Increase verbosity (-v per-attack progress + info logs, -vv debug logs)."),
     ] = 0,
+    quiet: Annotated[
+        bool,
+        typer.Option("--quiet", "-q", help="Suppress progress bars and non-error output."),
+    ] = False,
     save_report: Annotated[
         Optional[Path],
         typer.Option(help="Path to write the report JSON."),
@@ -273,6 +279,9 @@ def run(
     from dotenv import load_dotenv
 
     load_dotenv(override=False)
+
+    if quiet:
+        verbose = -1
     _configure_logging(verbose)
 
     from evaluatorq.redteam import red_team
@@ -320,7 +329,7 @@ def run(
                 output_dir=output_dir,
                 target_config=target_config,
                 attacker_instructions=attacker_instructions,
-                verbosity=verbose,
+                verbosity=verbose + 1,
             )
         )
     except CancelledError:

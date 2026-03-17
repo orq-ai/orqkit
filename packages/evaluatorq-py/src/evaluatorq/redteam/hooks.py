@@ -257,7 +257,8 @@ class RichHooks:
             self._console.print(f"[dim]  completed in {elapsed:.1f}s[/dim]")
 
     def _render_context_summary(self, meta: dict[str, Any]) -> None:
-        """Print a one-line summary after agent context retrieval."""
+        """Print a one-line per-target summary after agent context retrieval."""
+        target = meta.get("target", "?")
         num_tools = meta.get("num_tools", 0)
         num_memory = meta.get("num_memory_stores", 0)
         num_kb = meta.get("num_knowledge_bases", 0)
@@ -269,7 +270,7 @@ class RichHooks:
         if num_kb:
             parts.append(f"{num_kb} knowledge base{'s' if num_kb != 1 else ''}")
 
-        self._console.print(f"  Agent context: {', '.join(parts)}")
+        self._console.print(f"  [cyan]{target}[/cyan]: {', '.join(parts)}")
 
     # ------------------------------------------------------------------
     # on_confirm

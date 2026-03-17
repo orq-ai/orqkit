@@ -847,7 +847,8 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
     for r in results:
         if r.error:
             total_errors += 1
-            etype = r.error_type or 'unknown'
+            # Prefer error_code (specific) over error_type (generic)
+            etype = r.error_code or r.error_type or 'unknown'
             errors_by_type[etype] = errors_by_type.get(etype, 0) + 1
 
     return ReportSummary(
