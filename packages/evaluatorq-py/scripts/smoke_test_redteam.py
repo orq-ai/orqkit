@@ -45,7 +45,7 @@ async def main() -> None:
         max_static_datapoints=args.max_static_datapoints,
         attack_model=args.attack_model,
         evaluator_model=args.evaluator_model,
-        dataset_path=args.dataset_path,
+        dataset=args.dataset_path,
     )
     print(json.dumps(report.summary.model_dump(mode='json'), indent=2))
 

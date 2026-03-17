@@ -63,6 +63,7 @@ class ProgressDisplay:
         self._bar_task_ids: set[TaskID] = set()
         self._start_time: float = 0.0
         self._saved_handler_levels: list[tuple[logging.Handler, int]] = []
+        self._progress_token: contextvars.Token[ProgressDisplay | None] | None = None
 
     async def __aenter__(self) -> "ProgressDisplay":
         if not _ui_console.is_terminal or self._verbosity < 1:
@@ -97,7 +98,8 @@ class ProgressDisplay:
         return self
 
     async def __aexit__(self, *exc: object) -> None:
-        _active_progress_var.reset(self._progress_token)
+        if self._progress_token is not None:
+            _active_progress_var.reset(self._progress_token)
         if self._progress is not None:
             self._progress.stop()
             # Print a persistent completion line so the user sees the final count
@@ -578,7 +580,7 @@ class MultiTurnOrchestrator:
                         if not attack_prompt:
                             # Adversarial LLM signaled success but no more prompts needed
                             logger.info('Adversarial LLM signaled objective achieved')
-                            if task_id is not None:
+                            if progress is not None and task_id is not None:
                                 await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
@@ -637,7 +639,7 @@ class MultiTurnOrchestrator:
                                 Message(role='user', content=attack_prompt),
                                 Message(role='assistant', content=agent_response),
                             ])
-                            if task_id is not None:
+                            if progress is not None and task_id is not None:
                                 await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
@@ -670,7 +672,7 @@ class MultiTurnOrchestrator:
                                 Message(role='user', content=attack_prompt),
                                 Message(role='assistant', content=agent_response),
                             ])
-                            if task_id is not None:
+                            if progress is not None and task_id is not None:
                                 await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,

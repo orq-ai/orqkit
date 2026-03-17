@@ -84,7 +84,7 @@ async def _run(args: argparse.Namespace) -> int:
         generate_strategies=not args.no_generate_strategies,
         generated_strategy_count=args.generated_strategy_count,
         backend=args.backend,
-        dataset_path=dataset_path,
+        dataset=dataset_path,
         description='Hybrid red-team E2E test',
         output_dir=args.output_dir,
     )

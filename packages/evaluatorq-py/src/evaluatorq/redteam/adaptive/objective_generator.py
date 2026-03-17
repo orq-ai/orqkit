@@ -138,7 +138,7 @@ async def _call_llm_for_objectives_single(
     llm_client: AsyncOpenAI,
     model: str,
     count: int,
-    span_attributes: dict,
+    span_attributes: dict[str, Any],
     log_label: str,
     llm_kwargs: dict[str, Any] | None = None,
 ) -> list[GeneratedObjective]:
@@ -193,7 +193,7 @@ async def _call_llm_for_objectives(
     llm_client: AsyncOpenAI,
     model: str,
     count: int,
-    span_attributes: dict,
+    span_attributes: dict[str, Any],
     log_label: str,
     llm_kwargs: dict[str, Any] | None = None,
 ) -> list[GeneratedObjective]:

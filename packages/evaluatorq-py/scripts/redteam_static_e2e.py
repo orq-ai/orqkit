@@ -147,7 +147,7 @@ async def _run(args: argparse.Namespace) -> int:
         parallelism=args.parallelism,
         max_static_datapoints=args.max_static_datapoints,
         backend=args.backend,
-        dataset_path=str(dataset_path),
+        dataset=str(dataset_path),
         llm_client=llm_client,
         description='Local static red-team E2E smoke test',
     )

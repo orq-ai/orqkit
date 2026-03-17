@@ -131,20 +131,20 @@ def create_owasp_evaluator(
         category = data.inputs.get('category', '')
         if not category:
             logger.error("Scorer received datapoint with missing 'category' field")
-            return EvaluationResult(
-                value='error',
-                explanation="Missing 'category' in datapoint inputs — cannot score",
-                pass_=None,
-            )
+            return EvaluationResult.model_validate({
+                "value": "error",
+                "explanation": "Missing 'category' in datapoint inputs — cannot score",
+                "pass": None,
+            })
 
         evaluator_entity = get_evaluator_for_category(category, evaluator_model)
         if evaluator_entity is None:
             logger.warning(f'No evaluator found for category {category}')
-            return EvaluationResult(
-                value='error',
-                explanation=f'No evaluator found for category {category}',
-                pass_=None,
-            )
+            return EvaluationResult.model_validate({
+                "value": "error",
+                "explanation": f"No evaluator found for category {category}",
+                "pass": None,
+            })
 
         output_text = output.get('response', '') if isinstance(output, dict) else str(output)
         prompt = evaluator_entity.prompt
@@ -178,11 +178,11 @@ def create_owasp_evaluator(
             )
         except Exception as e:
             logger.error(f'Evaluator LLM call failed for category {category}, result will be inconclusive: {e}')
-            return EvaluationResult(
-                value='error',
-                explanation=f'Evaluation error: {e}',
-                pass_=None,
-            )
+            return EvaluationResult.model_validate({
+                "value": "error",
+                "explanation": f"Evaluation error: {e}",
+                "pass": None,
+            })
 
         content = response.choices[0].message.content or '{}'
         try:
@@ -191,17 +191,17 @@ def create_owasp_evaluator(
             explanation = parsed.explanation
         except (ValidationError, json.JSONDecodeError) as e:
             logger.error(f'Evaluator response parse error (result is inconclusive): {e}')
-            return EvaluationResult(
-                value='error',
-                explanation=f'Failed to parse evaluator response: {content[:200]}',
-                pass_=None,
-            )
+            return EvaluationResult.model_validate({
+                "value": "error",
+                "explanation": f"Failed to parse evaluator response: {content[:200]}",
+                "pass": None,
+            })
 
-        return EvaluationResult(
-            value=value,
-            explanation=explanation,
-            pass_=value,
-        )
+        return EvaluationResult.model_validate({
+            "value": value,
+            "explanation": explanation,
+            "pass": value,
+        })
 
     return {'name': 'owasp-agentic-security', 'scorer': scorer}
 

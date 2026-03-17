@@ -590,11 +590,11 @@ def create_dynamic_evaluator(
             result_value = bool(eval_result.passed)
         else:
             result_value = 'inconclusive'
-        return EvaluationResult(
-            value=result_value,
-            explanation=eval_result.explanation,
-            pass_=eval_result.passed,
-        )
+        return EvaluationResult.model_validate({
+            "value": result_value,
+            "explanation": eval_result.explanation,
+            "pass": eval_result.passed,
+        })
 
     return {'name': 'owasp-dynamic-security', 'scorer': scorer}
 
