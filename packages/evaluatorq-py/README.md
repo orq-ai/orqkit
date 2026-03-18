@@ -901,6 +901,8 @@ def exact_match_evaluator(
 
 Evaluatorq includes a red teaming module for automated security testing of LLMs and AI agents against OWASP vulnerability categories (LLM Top 10 and Agentic Security Initiative).
 
+> **Note:** The built-in frameworks (OWASP LLM Top 10, OWASP ASI) and their vulnerabilities, evaluators, and attack strategies are not runtime-extendable yet. Adding custom vulnerabilities currently requires modifying the package source. A runtime registration API is planned for a future release.
+
 ### Quick Start
 
 ```bash
