@@ -455,6 +455,7 @@ def _build_agent_comparison_section(report: RedTeamReport) -> ReportSection:
 
     # Group results by agent key
     agent_results: dict[str, list[RedTeamResult]] = {a: [] for a in agents}
+    _warned_agents: set[str] = set()
     for r in report.results:
         key = r.agent.key or r.agent.display_name or "unknown"
         display = r.agent.display_name or r.agent.key or "unknown"
@@ -463,7 +464,9 @@ def _build_agent_comparison_section(report: RedTeamReport) -> ReportSection:
         elif display in agent_results:
             agent_results[display].append(r)
         else:
-            logger.warning("Result agent {!r} (display={!r}) not in tested_agents, skipping", key, display)
+            if key not in _warned_agents:
+                logger.warning("Result agent {!r} (display={!r}) not in tested_agents, skipping", key, display)
+                _warned_agents.add(key)
 
     # Per-agent top-level metrics
     agent_metrics: list[dict[str, Any]] = []

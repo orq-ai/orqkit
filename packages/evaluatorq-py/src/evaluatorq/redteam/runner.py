@@ -1300,10 +1300,10 @@ async def _run_dynamic_or_hybrid(
             )
 
         merged.duration_seconds = pipeline_duration
-        merged.agent_contexts = {pt.target: pt.agent_context for pt in prepared_targets}
+        merged.agent_contexts = {pt.target_value: pt.agent_context for pt in prepared_targets}
         # Canonical tested_agents: use the same keys as agent_contexts so
         # dashboard/report lookups resolve correctly.
-        merged.tested_agents = [pt.target for pt in prepared_targets]
+        merged.tested_agents = [pt.target_value for pt in prepared_targets]
         if mode == Pipeline.HYBRID:
             merged.summary.datapoint_breakdown = _datapoint_breakdown(all_datapoints)
 
