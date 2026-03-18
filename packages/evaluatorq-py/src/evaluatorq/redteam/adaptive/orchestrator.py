@@ -693,7 +693,8 @@ class MultiTurnOrchestrator:
 
                     # Feed agent response (including errors) to adversarial LLM so it can adapt.
                     # Delimit the untrusted target response so the adversarial LLM treats it as data, not instructions.
-                    sanitized_response = f'<target_response>\n{agent_response}\n</target_response>'
+                    from evaluatorq.redteam.utils import xml_escape
+                    sanitized_response = f'<target_response>\n{xml_escape(agent_response)}\n</target_response>'
                     analysis_prompt = ADVERSARIAL_ANALYSIS_PROMPT.replace('{response}', sanitized_response)
                     adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
 

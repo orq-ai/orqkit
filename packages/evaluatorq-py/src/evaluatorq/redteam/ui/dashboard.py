@@ -2457,7 +2457,7 @@ def _render_disagreement_viewer(results: list[RedTeamResult], agents: list[str])
                     verdict = "VULNERABLE" if r.vulnerable else "RESISTANT"
                     verdict_color = COLORS['red_400'] if r.vulnerable else COLORS['success_400']
                     st.markdown(
-                        f"**{agent_name}** "
+                        f"**{_esc_html(agent_name)}** "
                         f"<span style='color:{verdict_color}; font-weight:bold;'>[{verdict}]</span>",
                         unsafe_allow_html=True,
                     )
