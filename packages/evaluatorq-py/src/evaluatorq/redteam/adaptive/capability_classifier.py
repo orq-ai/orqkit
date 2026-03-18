@@ -13,6 +13,8 @@ from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
+from evaluatorq.redteam.utils import safe_substitute
+
 from evaluatorq.redteam.contracts import (
     DEFAULT_PIPELINE_MODEL,
     PIPELINE_CONFIG,
@@ -180,12 +182,11 @@ async def _infer_resource_capabilities(
 ) -> ResourceCapabilityInference:
     """Infer memory/knowledge capabilities with structured LLM output."""
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools) or '- none'
-    prompt = (
-        RESOURCE_CAPABILITY_PROMPT
-        .replace('{has_memory_stores}', str(bool(agent_context.memory_stores)))
-        .replace('{has_knowledge_bases}', str(bool(agent_context.knowledge_bases)))
-        .replace('{tool_list}', tool_list)
-    )
+    prompt = safe_substitute(RESOURCE_CAPABILITY_PROMPT, {
+        '{has_memory_stores}': str(bool(agent_context.memory_stores)),
+        '{has_knowledge_bases}': str(bool(agent_context.knowledge_bases)),
+        '{tool_list}': tool_list,
+    })
     try:
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
@@ -237,7 +238,7 @@ async def _classify_tools(
     """
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = TOOL_CLASSIFICATION_PROMPT.replace('{tool_list}', tool_list)
+    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {'{tool_list}': tool_list})
 
     valid_values = {c.value for c in AgentCapability}
 

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from evaluatorq.redteam.contracts import AgentContext, AttackStrategy
 
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG
+from evaluatorq.redteam.utils import safe_substitute
 
 
 def fill_template(template: str, agent_context: AgentContext) -> str:
@@ -41,20 +42,13 @@ def fill_template(template: str, agent_context: AgentContext) -> str:
     Returns:
         Filled template string
     """
-    substitutions = {
-        'tool_name': agent_context.tools[0].name if agent_context.tools else 'the tool',
-        'tool_names': ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools',
-        'memory_store': (agent_context.memory_stores[0].key or 'memory') if agent_context.memory_stores else 'memory',
-        'agent_name': agent_context.display_name or agent_context.key,
-        'agent_description': agent_context.description or 'an AI assistant',
-    }
-
-    # Use .replace() instead of .format_map() to avoid "Invalid format specifier"
-    # errors when substitution values contain literal braces (e.g. JSON in tool descriptions).
-    result = template
-    for key, value in substitutions.items():
-        result = result.replace('{' + key + '}', value)
-    return result
+    return safe_substitute(template, {
+        '{tool_name}': agent_context.tools[0].name if agent_context.tools else 'the tool',
+        '{tool_names}': ', '.join(t.name for t in agent_context.tools) if agent_context.tools else 'tools',
+        '{memory_store}': (agent_context.memory_stores[0].key or 'memory') if agent_context.memory_stores else 'memory',
+        '{agent_name}': agent_context.display_name or agent_context.key,
+        '{agent_description}': agent_context.description or 'an AI assistant',
+    })
 
 
 def generate_attack_prompt(
@@ -168,13 +162,12 @@ async def adapt_prompt_to_tools(
 
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = (
-        TOOL_CLASSIFICATION_PROMPT
-        .replace('{attack_technique}', strategy.attack_technique.value)
-        .replace('{strategy_description}', strategy.description)
-        .replace('{base_prompt}', base_prompt)
-        .replace('{tool_list}', tool_list)
-    )
+    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {
+        '{attack_technique}': strategy.attack_technique.value,
+        '{strategy_description}': strategy.description,
+        '{base_prompt}': base_prompt,
+        '{tool_list}': tool_list,
+    })
 
     try:
         response = await llm_client.chat.completions.parse(

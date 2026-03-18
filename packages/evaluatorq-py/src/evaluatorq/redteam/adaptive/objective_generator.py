@@ -106,21 +106,22 @@ def _build_objective_prompt(
             f'All objectives MUST use turn_type="{turn_type.value}". Do not mix turn types in this output.'
         )
 
-    # Use .replace() instead of .format() to avoid "Invalid format specifier"
-    # errors when agent content (tools, instructions, etc.) contains literal braces.
-    # {count} is left as a late-bound placeholder for callers to fill per LLM call.
-    prompt = (
-        OBJECTIVE_GENERATION_PROMPT
-        .replace('{agent_name}', agent_context.display_name or agent_context.key)
-        .replace('{agent_description}', agent_context.description or 'An AI assistant')
-        .replace('{tools}', tools_str)
-        .replace('{memory_stores}', memory_str)
-        .replace('{instructions_excerpt}', instructions_excerpt)
-        .replace('{vulnerability_name}', vulnerability_name)
-        .replace('{category_code}', category_code)
-        .replace('{turn_type_guidance}', turn_type_guidance)
-        .replace('{max_turns}', str(max_turns))
-    )
+    # Single-pass substitution prevents cascading expansion from agent metadata
+    # containing placeholder strings. {count} is left as a late-bound placeholder
+    # for callers to fill per LLM call.
+    from evaluatorq.redteam.utils import safe_substitute
+
+    prompt = safe_substitute(OBJECTIVE_GENERATION_PROMPT, {
+        '{agent_name}': agent_context.display_name or agent_context.key,
+        '{agent_description}': agent_context.description or 'An AI assistant',
+        '{tools}': tools_str,
+        '{memory_stores}': memory_str,
+        '{instructions_excerpt}': instructions_excerpt,
+        '{vulnerability_name}': vulnerability_name,
+        '{category_code}': category_code,
+        '{turn_type_guidance}': turn_type_guidance,
+        '{max_turns}': str(max_turns),
+    })
 
     if attacker_instructions:
         prompt += f"\n\n## Additional Context from Operator\n{attacker_instructions}"

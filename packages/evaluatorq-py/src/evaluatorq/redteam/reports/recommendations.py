@@ -19,6 +19,7 @@ from evaluatorq.redteam.contracts import (
     RedTeamResult,
 )
 from evaluatorq.redteam.reports._utils import extract_prompt, extract_response
+from evaluatorq.redteam.utils import xml_escape
 from evaluatorq.redteam.reports.sections import SEVERITY_WEIGHTS, _compute_risk_score
 
 if TYPE_CHECKING:
@@ -44,13 +45,13 @@ def _format_trace(result: RedTeamResult) -> str:
 
     parts = [
         '<trace>',
-        f'  <technique>{attack.attack_technique.value}</technique>',
-        f'  <prompt>{prompt}</prompt>',
-        f'  <response>{response}</response>',
+        f'  <technique>{xml_escape(attack.attack_technique.value)}</technique>',
+        f'  <prompt>{xml_escape(prompt)}</prompt>',
+        f'  <response>{xml_escape(response)}</response>',
         '</trace>',
     ]
     if explanation:
-        parts.insert(-1, f'  <evaluator>{explanation}</evaluator>')
+        parts.insert(-1, f'  <evaluator>{xml_escape(explanation)}</evaluator>')
     return '\n'.join(parts)
 
 

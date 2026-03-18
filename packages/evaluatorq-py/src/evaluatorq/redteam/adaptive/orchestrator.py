@@ -243,16 +243,17 @@ def _build_adversarial_system_prompt(
         ', '.join(m.key or m.id for m in agent_context.memory_stores) if agent_context.memory_stores else 'None'
     )
 
-    prompt = (
-        ADVERSARIAL_SYSTEM_PROMPT
-        .replace('{objective}', objective)
-        .replace('{agent_name}', agent_context.display_name or agent_context.key)
-        .replace('{agent_description}', agent_context.description or 'An AI assistant')
-        .replace('{tools}', tools_str)
-        .replace('{memory_stores}', memory_str)
-        .replace('{strategy_description}', strategy.description)
-        .replace('{max_turns}', str(max_turns))
-    )
+    from evaluatorq.redteam.utils import safe_substitute
+
+    prompt = safe_substitute(ADVERSARIAL_SYSTEM_PROMPT, {
+        '{objective}': objective,
+        '{agent_name}': agent_context.display_name or agent_context.key,
+        '{agent_description}': agent_context.description or 'An AI assistant',
+        '{tools}': tools_str,
+        '{memory_stores}': memory_str,
+        '{strategy_description}': strategy.description,
+        '{max_turns}': str(max_turns),
+    })
 
     if attacker_instructions:
         prompt += f"\n\n## Additional Context from Operator\n{attacker_instructions}"
