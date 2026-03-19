@@ -18,7 +18,8 @@
       "!**/.taskmaster",
       "!**/.venv",
       "!**/__pycache__",
-      "!**/*.egg-info"
+      "!**/*.egg-info",
+      "!**/report.css"
     ]
   },
   "formatter": {
