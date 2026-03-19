@@ -12,10 +12,12 @@ When `llm_client` is provided, ALL LLM calls in the pipeline use it:
     - Model-under-test calls (static mode)
 
 Prerequisites:
-    - OPENAI_API_KEY set in environment (or credentials for your custom endpoint)
+    - OPENAI_API_KEY or ORQ_API_KEY set in environment
 
 Usage:
     OPENAI_API_KEY=sk-... python 05_custom_llm_client.py
+    # or
+    ORQ_API_KEY=orq-... python 05_custom_llm_client.py
 """
 
 import asyncio
@@ -36,9 +38,10 @@ async def main() -> None:
     api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("ORQ_API_KEY")
     if not api_key:
         raise RuntimeError("Set OPENAI_API_KEY or ORQ_API_KEY in your environment")
-    base_url = os.environ.get("OPENAI_BASE_URL")
-    if not base_url:
-        base_url = "https://my.orq.ai/v2/router" if not os.environ.get("OPENAI_API_KEY") else "https://api.openai.com/v1"
+    using_openai = bool(os.environ.get("OPENAI_API_KEY"))
+    base_url = os.environ.get("OPENAI_BASE_URL") or (
+        "https://api.openai.com/v1" if using_openai else "https://my.orq.ai/v2/router"
+    )
     client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
     report = await red_team(
