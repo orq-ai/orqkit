@@ -38,6 +38,9 @@ yarn-error.log
 testem.log
 /typings
 
+# evaluatorq local run artifacts
+.evaluatorq/
+
 # System Files
 .DS_Store
 Thumbs.db
@@ -53,3 +56,4 @@ Thumbs.db
 .venv
 **/*.tsbuildinfo
 *.env
+packages/evaluatorq-py/outputs/*

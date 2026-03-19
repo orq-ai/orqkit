@@ -13,32 +13,46 @@ Semantic convention throughout this package:
 
 from __future__ import annotations
 
+
+def _check_redteam_deps() -> None:
+    missing = []
+    for mod in ('openai', 'loguru', 'typer'):
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        raise ImportError(
+            f"Red teaming requires optional dependencies: {', '.join(missing)}. "
+            f"Install with: pip install 'evaluatorq[redteam]'"
+        )
+
+
+_check_redteam_deps()
+
 from typing import Any
 
 from evaluatorq.redteam.contracts import (
+    AgentCapability,
     AgentContext,
+    TargetConfig,
     AgentInfo,
-    AttackEvaluationRow,
     AttackInfo,
     AttackStrategy,
     AttackTechnique,
     CategorySummary,
-    DatasetInferenceRow,
     DeliveryMethod,
-    DynamicAttackResultRow,
-    DynamicCategorySummaryRow,
-    DynamicErrorAnalysisRow,
-    DynamicRunMetadata,
-    DynamicSummaryReportRow,
-    ErrorTypeDetails,
-    EvaluatedRow,
-    EvaluatedRowBase,
+    DeliveryMethodSummary,
+    DimensionSummary,
+    ErrorInfo,
     EvaluationPayload,
-    EvaluationResult,
+    AttackEvaluationResult,
+    EvaluationResult,  # backwards-compatible alias
     ExecutionDetails,
+    FocusAreaRecommendation,
     Framework,
+    FrameworkSummary,
     FunctionCall,
-    GeneratedPromptRow,
     JobOutputPayload,
     KnowledgeBaseInfo,
     MemoryStoreInfo,
@@ -46,38 +60,89 @@ from evaluatorq.redteam.contracts import (
     OrchestratorResult,
     Pipeline,
     PipelineLLMConfig,
+    PipelineStage,
+    RedTeamConfig,
     RedTeamInput,
     RedTeamReport,
     RedTeamResult,
     ReportSnapshot,
     ReportSummary,
-    Scope,
+    DomainSummary,
+    SEVERITY_DEFINITIONS,
     Severity,
-    StrategySelectionRow,
+    SeveritySummary,
+    TechniqueSummary,
     TokenUsage,
     ToolCall,
     ToolInfo,
     TurnType,
+    TurnTypeSummary,
     UnifiedEvaluationResult,
-    infer_framework,
+    Vulnerability,
+    VulnerabilityDef,
+    VulnerabilityDomain,
+    VulnerabilitySummary,
     normalize_category,
     normalize_framework,
 )
 
+from evaluatorq.redteam.runner import red_team
+from evaluatorq.redteam.reports.converters import merge_reports
+from evaluatorq.redteam.reports.display import print_report_summary
+from evaluatorq.redteam.adaptive.strategy_registry import (
+    get_category_info,
+    list_available_categories as list_categories,
+)
+from evaluatorq.redteam.vulnerability_registry import (
+    VULNERABILITY_DEFS,
+    get_vulnerability_name,
+    list_available_vulnerabilities,
+    resolve_category,
+    resolve_vulnerabilities,
+)
+from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
+from evaluatorq.redteam.backends.registry import register_backend
+from evaluatorq.redteam.hooks import (
+    ConfirmPayload,
+    DefaultHooks,
+    PipelineHooks,
+    RichHooks,
+)
+
 __all__ = [
+    # Entry points
+    "red_team",
+    "merge_reports",
+    "print_report_summary",
+    # Category introspection
+    "list_categories",
+    "get_category_info",
+    # Vulnerability introspection
+    "list_available_vulnerabilities",
+    "get_vulnerability_name",
+    "resolve_vulnerabilities",
+    "resolve_category",
+    "VULNERABILITY_DEFS",
+    # Hook system
+    "PipelineHooks",
+    "DefaultHooks",
+    "RichHooks",
+    "ConfirmPayload",
     # Core public types
     "RedTeamReport",
     "RedTeamResult",
     "AgentContext",
+    "TargetConfig",
     "TokenUsage",
     # Enums
     "TurnType",
     "AttackTechnique",
     "DeliveryMethod",
     "Severity",
-    "Scope",
     "Framework",
     "Pipeline",
+    "PipelineStage",
+    "AgentCapability",
     # Message models
     "FunctionCall",
     "ToolCall",
@@ -89,69 +154,46 @@ __all__ = [
     "MemoryStoreInfo",
     "KnowledgeBaseInfo",
     # Pipeline config
+    "RedTeamConfig",
     "PipelineLLMConfig",
     # Attack models
     "AttackStrategy",
     "AttackInfo",
     # Result models
     "OrchestratorResult",
-    "EvaluationResult",
+    "AttackEvaluationResult",
+    "EvaluationResult",  # backwards-compatible alias
     "UnifiedEvaluationResult",
     "EvaluationPayload",
     "JobOutputPayload",
     "ExecutionDetails",
     "AgentInfo",
+    # Vulnerability types
+    "Vulnerability",
+    "VulnerabilityDef",
+    "VulnerabilityDomain",
+    "VulnerabilitySummary",
+    # Error model
+    "ErrorInfo",
     # Report models
     "CategorySummary",
+    "DimensionSummary",
     "ReportSummary",
     "ReportSnapshot",
-    # Dynamic pipeline row models
-    "EvaluatedRowBase",
-    "EvaluatedRow",
-    "AttackEvaluationRow",
-    "DynamicAttackResultRow",
-    "DynamicCategorySummaryRow",
-    "ErrorTypeDetails",
-    "DynamicErrorAnalysisRow",
-    "DynamicRunMetadata",
-    "StrategySelectionRow",
-    "GeneratedPromptRow",
-    "DynamicSummaryReportRow",
-    "DatasetInferenceRow",
+    "TechniqueSummary",
+    "SeveritySummary",
+    "DeliveryMethodSummary",
+    "TurnTypeSummary",
+    "DomainSummary",
+    "FrameworkSummary",
     # Helper functions
     "normalize_framework",
     "normalize_category",
-    "infer_framework",
-    # Entry point stub
-    "red_team",
+    # Exceptions
+    "RedTeamError",
+    "CredentialError",
+    "BackendError",
+    "CancelledError",
+    # Backend extension
+    "register_backend",
 ]
-
-
-async def red_team(
-    target: str,
-    *,
-    mode: str = "dynamic",
-    categories: list[str] | None = None,
-    dataset_path: Any = None,
-    **kwargs: Any,
-) -> RedTeamReport:
-    """Unified entry point for red teaming.
-
-    Args:
-        target: Target identifier (e.g., "agent:my-agent-key").
-        mode: Execution mode — "dynamic", "static", or "hybrid".
-        categories: OWASP categories to test (e.g., ["ASI01", "ASI03"]).
-        dataset_path: Path to static dataset (required for static/hybrid modes).
-        **kwargs: Additional backend-specific options.
-
-    Returns:
-        RedTeamReport with results and summary.
-
-    Raises:
-        NotImplementedError: Until Phase 3 implementation is complete.
-    """
-    # Phase 3 stub — parameters are part of the public API contract.
-    _ = (target, mode, categories, dataset_path, kwargs)
-    raise NotImplementedError(
-        "red_team() is not yet implemented. This will be available after Phase 3 of the migration."
-    )
