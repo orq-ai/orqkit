@@ -130,15 +130,20 @@ The node returns:
    - Body: "{{ $node["Orq Agent"].json.response }}"
 ```
 
-#### Differences from Orq Deployment
+#### When to Use Orq Agent vs Orq Deployment
 
-| Feature       | Agent                          | Deployment                     |
-| ------------- | ------------------------------ | ------------------------------ |
-| Execution     | Async (long-running)           | Sync (immediate)               |
-| Response Time | Delayed (up to 2 minutes)      | Immediate (< 1s)               |
-| Use Case      | Complex reasoning, tools       | Simple LLM inference           |
-| Task States   | 8 states, requires polling     | Single immediate response      |
-| Best For      | Analysis, multi-step workflows | Text generation, summarization |
+These n8n nodes connect to different resource types in your Orq workspace:
+
+**Use Orq Agent when you need:**
+- **Tools & Actions**: Agent can call HTTP APIs, run Python code, or use built-in utilities
+- **Autonomous Iteration**: Agent works through multi-step problems independently to reach the final output
+
+**Use Orq Deployment when you need:**
+- **Direct LLM Calls**: Single prompt-to-response execution
+- **No Tool Complexity**: Just generate text without external actions
+- **Template Variables**: Parameterized prompts with inputs
+
+**Key Difference**: In Orq, Agents have access to tools and can autonomously iterate to solve problems, while Deployments are single LLM calls without tools or autonomous iteration.
 
 ### Orq Deployment
 
