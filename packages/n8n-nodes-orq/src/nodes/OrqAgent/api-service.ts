@@ -118,7 +118,7 @@ export async function pollTaskUntilDone(
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     try {
       const task = await getTaskStatus(context, agentKey, taskId);
-      consecutiveErrors = 0; // Reset on success
+      consecutiveErrors = 0;
       const state = task.status?.state;
 
       if (state && TERMINAL_TASK_STATES.includes(state)) {
@@ -127,9 +127,8 @@ export async function pollTaskUntilDone(
     } catch (error) {
       consecutiveErrors++;
       if (consecutiveErrors >= MAX_CONSECUTIVE_POLL_ERRORS) {
-        throw error; // Fail after max consecutive errors
+        throw error;
       }
-      // Otherwise, continue polling to tolerate transient failures
     }
 
     await sleep(POLL_INTERVAL_MS);
