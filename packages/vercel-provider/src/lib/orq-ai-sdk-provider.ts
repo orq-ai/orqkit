@@ -5,10 +5,10 @@ import {
   OpenAICompatibleImageModel,
 } from "@ai-sdk/openai-compatible";
 import type {
-  EmbeddingModelV2,
-  ImageModelV2,
-  LanguageModelV2,
-  ProviderV2,
+  EmbeddingModelV3,
+  ImageModelV3,
+  LanguageModelV3,
+  ProviderV3,
 } from "@ai-sdk/provider";
 import {
   type FetchFunction,
@@ -23,17 +23,19 @@ export interface OrqAiProviderSettings {
   headers?: Record<string, string>;
 }
 
-export interface OrqAiProvider extends ProviderV2 {
-  (modelId: string): LanguageModelV2;
-  languageModel(modelId: string): LanguageModelV2;
-  chatModel(modelId: string): LanguageModelV2;
-  completionModel(modelId: string): LanguageModelV2;
-  textEmbeddingModel(modelId: string): EmbeddingModelV2<string>;
-  imageModel(modelId: string): ImageModelV2;
+export interface OrqAiProvider extends ProviderV3 {
+  (modelId: string): LanguageModelV3;
+  languageModel(modelId: string): LanguageModelV3;
+  chatModel(modelId: string): LanguageModelV3;
+  completionModel(modelId: string): LanguageModelV3;
+  embeddingModel(modelId: string): EmbeddingModelV3;
+  /** @deprecated Use embeddingModel instead */
+  textEmbeddingModel(modelId: string): EmbeddingModelV3;
+  imageModel(modelId: string): ImageModelV3;
 }
 
 export function createOrqAiProvider(
-  options: OrqAiProviderSettings,
+    options: OrqAiProviderSettings,
 ): OrqAiProvider {
   const baseURL = withoutTrailingSlash(options.baseURL ?? DEFAULT_BASE_URL);
   const getHeaders = () => ({
@@ -59,41 +61,43 @@ export function createOrqAiProvider(
 
   const createChatModel = (modelId: string) => {
     return new OpenAICompatibleChatLanguageModel(
-      modelId,
-      getCommonModelConfig("chat"),
+        modelId,
+        getCommonModelConfig("chat"),
     );
   };
 
   const createCompletionModel = (modelId: string) =>
-    new OpenAICompatibleCompletionLanguageModel(
-      modelId,
-      getCommonModelConfig("completion"),
-    );
+      new OpenAICompatibleCompletionLanguageModel(
+          modelId,
+          getCommonModelConfig("completion"),
+      );
 
-  const createTextEmbeddingModel = (modelId: string) =>
-    new OpenAICompatibleEmbeddingModel(
-      modelId,
-      getCommonModelConfig("embedding"),
-    );
+  const createEmbeddingModel = (modelId: string) =>
+      new OpenAICompatibleEmbeddingModel(
+          modelId,
+          getCommonModelConfig("embedding"),
+      );
 
   const createImageModel = (modelId: string) =>
-    new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
+      new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
 
   const provider = function (modelId: string) {
     if (new.target) {
       throw new Error(
-        "The model factory function cannot be called with the new keyword.",
+          "The model factory function cannot be called with the new keyword.",
       );
     }
 
     return createChatModel(modelId);
   };
 
+  (provider as unknown as { specificationVersion: 'v3' }).specificationVersion = 'v3';
   provider.languageModel = createChatModel;
   provider.completionModel = createCompletionModel;
   provider.chatModel = createChatModel;
-  provider.textEmbeddingModel = createTextEmbeddingModel;
+  provider.embeddingModel = createEmbeddingModel;
+  provider.textEmbeddingModel = createEmbeddingModel;
   provider.imageModel = createImageModel;
 
-  return provider;
+  return provider as unknown as OrqAiProvider;
 }
