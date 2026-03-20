@@ -55,6 +55,7 @@
     ]
   },
   "devDependencies": {
+    "@orq-ai/node": "4.1.4",
     "n8n-workflow": "^1.103.0"
   },
   "peerDependencies": {

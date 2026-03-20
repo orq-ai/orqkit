@@ -9,6 +9,8 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type { TaskStatusMessage } from "@orq-ai/node/models/operations";
+
 import {
   getAgentKeys,
   getTaskMessages,
@@ -18,8 +20,8 @@ import {
 import { buildInvokeRequestBody } from "./builders";
 import { ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
-import type { OrqCredentials, OrqTaskMessage } from "./types";
-import { Validators } from "./validators";
+import type { OrqCredentials } from "./types";
+import { isTextPart, Validators } from "./validators";
 
 export class OrqAgent implements INodeType {
   description: INodeTypeDescription = {
@@ -88,13 +90,11 @@ export class OrqAgent implements INodeType {
         const messages = messagesResponse.data || [];
 
         const agentMessages = messages.filter(
-          (m: OrqTaskMessage) => m.role !== "user",
+          (m: TaskStatusMessage) => m.role !== "user",
         );
         const responseText = agentMessages
-          .flatMap((m: OrqTaskMessage) =>
-            m.parts
-              .filter((p) => p.kind === "text" && p.text != null)
-              .map((p) => p.text as string),
+          .flatMap((m: TaskStatusMessage) =>
+            m.parts.filter(isTextPart).map((p) => p.text),
           )
           .join("\n");
 

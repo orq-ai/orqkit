@@ -5,6 +5,13 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type {
+  InvokeAgentA2ATaskResponse,
+  InvokeAgentRequestBody,
+  ListAgentsData,
+  ListAgentsResponseBody,
+} from "@orq-ai/node/models/operations";
+
 import {
   AGENT_INVOKE_ENDPOINT,
   AGENT_TASK_ENDPOINT,
@@ -15,13 +22,7 @@ import {
   MAX_POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
 } from "./constants";
-import type {
-  OrqAgent,
-  OrqAgentInvokeRequest,
-  OrqAgentListResponse,
-  OrqTask,
-  OrqTaskMessagesResponse,
-} from "./types";
+import type { TaskMessagesResponse } from "./types";
 import { TERMINAL_TASK_STATES } from "./types";
 
 export async function getAgentKeys(
@@ -37,10 +38,10 @@ export async function getAgentKeys(
         url: requestUrl,
         json: true,
       },
-    )) as OrqAgentListResponse;
+    )) as ListAgentsResponseBody;
 
-    return (response?.data ?? []).map((agent: OrqAgent) => ({
-      name: agent.display_name || agent.key,
+    return (response?.data ?? []).map((agent: ListAgentsData) => ({
+      name: agent.displayName || agent.key,
       value: agent.key,
     }));
   } catch (error) {
@@ -56,8 +57,8 @@ export async function getAgentKeys(
 export async function invokeAgent(
   context: IExecuteFunctions,
   agentKey: string,
-  body: OrqAgentInvokeRequest,
-): Promise<OrqTask> {
+  body: InvokeAgentRequestBody,
+): Promise<InvokeAgentA2ATaskResponse> {
   return await context.helpers.requestWithAuthentication.call(
     context,
     "orqApi",
@@ -74,7 +75,7 @@ export async function getTaskStatus(
   context: IExecuteFunctions,
   agentKey: string,
   taskId: string,
-): Promise<OrqTask> {
+): Promise<InvokeAgentA2ATaskResponse> {
   return await context.helpers.requestWithAuthentication.call(
     context,
     "orqApi",
@@ -90,7 +91,7 @@ export async function getTaskMessages(
   context: IExecuteFunctions,
   agentKey: string,
   taskId: string,
-): Promise<OrqTaskMessagesResponse> {
+): Promise<TaskMessagesResponse> {
   return await context.helpers.requestWithAuthentication.call(
     context,
     "orqApi",
@@ -110,7 +111,7 @@ export async function pollTaskUntilDone(
   context: IExecuteFunctions,
   agentKey: string,
   taskId: string,
-): Promise<OrqTask> {
+): Promise<InvokeAgentA2ATaskResponse> {
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     const task = await getTaskStatus(context, agentKey, taskId);
     const state = task.status?.state;

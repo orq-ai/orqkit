@@ -1,6 +1,9 @@
 import type { INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type { TextPart } from "@orq-ai/node/models/components";
+import type { Parts } from "@orq-ai/node/models/operations";
+
 import { ERROR_MESSAGES } from "./constants";
 import type { OrqCredentials } from "./types";
 
@@ -25,6 +28,10 @@ export function validateCredentials(credentials: unknown, node: INode): void {
   if (!creds.apiKey) {
     throw new NodeOperationError(node, "API Key is required in credentials");
   }
+}
+
+export function isTextPart(part: Parts): part is TextPart {
+  return part.kind === "text";
 }
 
 export const Validators = {
