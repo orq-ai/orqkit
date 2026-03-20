@@ -8,7 +8,7 @@
 
 The v1 red teaming engine is shipped. It covers:
 
-- **20 vulnerabilities** across OWASP ASI (10) and OWASP LLM Top 10 (10)
+- **19 vulnerabilities** across OWASP ASI (10) and OWASP LLM Top 10 (9)
 - **Dynamic pipeline** — objective generation, capability-aware strategy selection, tool-adapted attack generation, LLM-as-judge evaluation
 - **Static mode** — load pre-built attack datasets from HuggingFace or the orq.ai platform
 - **Hybrid mode** — combine static datasets with dynamic generation
