@@ -19,6 +19,7 @@ import {
   AGENTS_LIST_ENDPOINT,
   DEFAULT_BASE_URL,
   ERROR_MESSAGES,
+  MAX_CONSECUTIVE_POLL_ERRORS,
   MAX_POLL_ATTEMPTS,
   POLL_INTERVAL_MS,
 } from "./constants";
@@ -112,12 +113,23 @@ export async function pollTaskUntilDone(
   agentKey: string,
   taskId: string,
 ): Promise<InvokeAgentA2ATaskResponse> {
-  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
-    const task = await getTaskStatus(context, agentKey, taskId);
-    const state = task.status?.state;
+  let consecutiveErrors = 0;
 
-    if (TERMINAL_TASK_STATES.includes(state)) {
-      return task;
+  for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+    try {
+      const task = await getTaskStatus(context, agentKey, taskId);
+      consecutiveErrors = 0; // Reset on success
+      const state = task.status?.state;
+
+      if (state && TERMINAL_TASK_STATES.includes(state)) {
+        return task;
+      }
+    } catch (error) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= MAX_CONSECUTIVE_POLL_ERRORS) {
+        throw error; // Fail after max consecutive errors
+      }
+      // Otherwise, continue polling to tolerate transient failures
     }
 
     await sleep(POLL_INTERVAL_MS);

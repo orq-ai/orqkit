@@ -10,6 +10,7 @@ export const AGENT_TASK_MESSAGES_ENDPOINT = (key: string, taskId: string) =>
 
 export const MAX_POLL_ATTEMPTS = 60;
 export const POLL_INTERVAL_MS = 2000;
+export const MAX_CONSECUTIVE_POLL_ERRORS = 3;
 
 export const ERROR_MESSAGES = {
   AGENT_KEY_REQUIRED: "Agent Key is required",
