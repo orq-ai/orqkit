@@ -15,8 +15,3 @@ export function buildInvokeRequestBody(text: string): InvokeAgentRequestBody {
     message: buildA2AMessage(text),
   };
 }
-
-export const MessageBuilder = {
-  buildA2AMessage,
-  buildInvokeRequestBody,
-};
