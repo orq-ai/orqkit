@@ -35,7 +35,7 @@ export interface OrqAiProvider extends ProviderV3 {
 }
 
 export function createOrqAiProvider(
-    options: OrqAiProviderSettings,
+  options: OrqAiProviderSettings,
 ): OrqAiProvider {
   const baseURL = withoutTrailingSlash(options.baseURL ?? DEFAULT_BASE_URL);
   const getHeaders = () => ({
@@ -61,37 +61,38 @@ export function createOrqAiProvider(
 
   const createChatModel = (modelId: string) => {
     return new OpenAICompatibleChatLanguageModel(
-        modelId,
-        getCommonModelConfig("chat"),
+      modelId,
+      getCommonModelConfig("chat"),
     );
   };
 
   const createCompletionModel = (modelId: string) =>
-      new OpenAICompatibleCompletionLanguageModel(
-          modelId,
-          getCommonModelConfig("completion"),
-      );
+    new OpenAICompatibleCompletionLanguageModel(
+      modelId,
+      getCommonModelConfig("completion"),
+    );
 
   const createEmbeddingModel = (modelId: string) =>
-      new OpenAICompatibleEmbeddingModel(
-          modelId,
-          getCommonModelConfig("embedding"),
-      );
+    new OpenAICompatibleEmbeddingModel(
+      modelId,
+      getCommonModelConfig("embedding"),
+    );
 
   const createImageModel = (modelId: string) =>
-      new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
+    new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
 
   const provider = function (modelId: string) {
     if (new.target) {
       throw new Error(
-          "The model factory function cannot be called with the new keyword.",
+        "The model factory function cannot be called with the new keyword.",
       );
     }
 
     return createChatModel(modelId);
   };
 
-  (provider as unknown as { specificationVersion: 'v3' }).specificationVersion = 'v3';
+  (provider as unknown as { specificationVersion: "v3" }).specificationVersion =
+    "v3";
   provider.languageModel = createChatModel;
   provider.completionModel = createCompletionModel;
   provider.chatModel = createChatModel;
