@@ -5,18 +5,17 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type { InvokeDeploymentRequest } from "@orq-ai/node/models/components";
+import type { DeploymentsData } from "@orq-ai/node/models/operations";
+import type { DeploymentInvokeResponseBody } from "@orq-ai/node/models/operations/deploymentinvoke";
+
 import {
   DEFAULT_BASE_URL,
   DEPLOYMENT_INVOKE_ENDPOINT,
   DEPLOYMENTS_LIST_ENDPOINT,
   ERROR_MESSAGES,
 } from "./constants";
-import type {
-  OrqApiResponse,
-  OrqDeployment,
-  OrqDeploymentListResponse,
-  OrqRequestBody,
-} from "./types";
+import type { OrqDeploymentListResponse } from "./types";
 
 export async function getDeploymentKeys(
   context: ILoadOptionsFunctions,
@@ -34,9 +33,9 @@ export async function getDeploymentKeys(
       },
     )) as OrqDeploymentListResponse;
 
-    const deployments = (response.data || response) as OrqDeployment[];
+    const deployments = (response.data || response) as DeploymentsData[];
 
-    return deployments.map((deployment: OrqDeployment) => ({
+    return deployments.map((deployment: DeploymentsData) => ({
       name: deployment.key,
       value: deployment.key,
     }));
@@ -52,8 +51,8 @@ export async function getDeploymentKeys(
 
 export async function invokeDeployment(
   context: IExecuteFunctions,
-  body: OrqRequestBody,
-): Promise<OrqApiResponse> {
+  body: InvokeDeploymentRequest,
+): Promise<DeploymentInvokeResponseBody> {
   const baseUrl = DEFAULT_BASE_URL;
 
   return await context.helpers.requestWithAuthentication.call(

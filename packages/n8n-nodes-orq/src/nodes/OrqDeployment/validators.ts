@@ -1,8 +1,9 @@
 import type { INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type { InputMessage } from "./builders";
 import { ERROR_MESSAGES, KEY_VALIDATION_REGEX } from "./constants";
-import type { OrqCredentials, OrqInputMessage } from "./types";
+import type { OrqCredentials } from "./types";
 
 export function validateDeploymentKey(
   deploymentKey: string,
@@ -13,10 +14,7 @@ export function validateDeploymentKey(
   }
 }
 
-export function validateMessages(
-  messages: OrqInputMessage[],
-  node: INode,
-): void {
+export function validateMessages(messages: InputMessage[], node: INode): void {
   if (messages.length === 0) {
     throw new NodeOperationError(node, ERROR_MESSAGES.MESSAGE_REQUIRED);
   }
