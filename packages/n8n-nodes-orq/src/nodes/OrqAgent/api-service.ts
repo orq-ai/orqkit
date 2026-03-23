@@ -98,7 +98,7 @@ export async function getTaskMessages(
     "orqApi",
     {
       method: "GET",
-      url: `${DEFAULT_BASE_URL}${AGENT_TASK_MESSAGES_ENDPOINT(agentKey, taskId)}`,
+      url: `${DEFAULT_BASE_URL}${AGENT_TASK_MESSAGES_ENDPOINT(agentKey, taskId)}?limit=100`,
       json: true,
     },
   );
