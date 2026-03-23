@@ -5,16 +5,16 @@ import type {
   INodePropertyOptions,
 } from "n8n-workflow";
 
+import type {
+  ListKnowledgeBasesData,
+  ListKnowledgeBasesResponseBody,
+  SearchKnowledgeResponseBody,
+} from "@orq-ai/node/models/operations";
+
 import { API_ENDPOINTS } from "./constants";
 import { ApiError } from "./errors";
-import type {
-  IOrqKnowledgeBase,
-  IOrqKnowledgeBaseApiResponse,
-  IOrqKnowledgeBaseListResponse,
-  IOrqKnowledgeBaseSearchRequest,
-  IOrqKnowledgeBaseSearchResponse,
-} from "./types";
-import { InputValidator } from "./validators";
+import type { ApiSearchRequest } from "./request-builder";
+import type { IOrqKnowledgeBase } from "./types";
 
 const DEFAULT_TIMEOUT = 30000;
 
@@ -29,7 +29,9 @@ export async function getKnowledgeBases(
 ): Promise<IOrqKnowledgeBase[]> {
   const options: IHttpRequestOptions = {
     method: "GET",
-    url: `${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.KNOWLEDGE_BASES}`,
+    baseURL: API_ENDPOINTS.BASE_URL,
+    url: API_ENDPOINTS.KNOWLEDGE_BASES,
+    qs: { limit: 50 },
     json: true,
     timeout: DEFAULT_TIMEOUT,
   };
@@ -74,25 +76,17 @@ export async function getKnowledgeBaseOptions(
 export async function searchKnowledgeBase(
   context: IExecuteFunctions,
   knowledgeId: string,
-  searchRequest: IOrqKnowledgeBaseSearchRequest,
-): Promise<IOrqKnowledgeBaseSearchResponse> {
-  const validatedId = InputValidator.validateKnowledgeBaseId(
-    context.getNode(),
-    knowledgeId,
-  );
-  const validatedRequest = InputValidator.validateSearchRequest(
-    context.getNode(),
-    searchRequest,
-  );
-
+  searchRequest: ApiSearchRequest,
+): Promise<SearchKnowledgeResponseBody> {
   const endpoint = API_ENDPOINTS.KNOWLEDGE_BASE_SEARCH.replace(
     "{knowledge_id}",
-    validatedId,
+    encodeURIComponent(knowledgeId),
   );
   const options: IHttpRequestOptions = {
     method: "POST",
-    url: `${API_ENDPOINTS.BASE_URL}${endpoint}`,
-    body: validatedRequest,
+    baseURL: API_ENDPOINTS.BASE_URL,
+    url: endpoint,
+    body: searchRequest,
     json: true,
     timeout: DEFAULT_TIMEOUT,
   };
@@ -123,7 +117,7 @@ function parseKnowledgeBasesResponse(response: unknown): IOrqKnowledgeBase[] {
   if (!response) return [];
 
   if (isOrqApiResponse(response)) {
-    const apiResponse = response as IOrqKnowledgeBaseListResponse;
+    const apiResponse = response as ListKnowledgeBasesResponseBody;
     return apiResponse.data.map((kb) => mapApiResponseToKnowledgeBase(kb));
   }
   if (Array.isArray(response)) {
@@ -135,7 +129,7 @@ function parseKnowledgeBasesResponse(response: unknown): IOrqKnowledgeBase[] {
 
 function isOrqApiResponse(
   response: unknown,
-): response is IOrqKnowledgeBaseListResponse {
+): response is ListKnowledgeBasesResponseBody {
   return Boolean(
     response &&
       typeof response === "object" &&
@@ -145,22 +139,30 @@ function isOrqApiResponse(
 }
 
 function mapApiResponseToKnowledgeBase(
-  kb: IOrqKnowledgeBaseApiResponse,
+  kb: ListKnowledgeBasesData,
 ): IOrqKnowledgeBase {
+  type RawKB = {
+    _id?: string;
+    id?: string;
+    key?: string;
+    description?: string;
+  };
+  const raw = kb as unknown as RawKB;
+
   return {
-    id: kb._id || "",
-    name: kb.key || kb._id || "Unnamed Knowledge Base",
+    id: kb.id || raw._id || "",
+    name: kb.key || kb.id || raw._id || "Unnamed Knowledge Base",
     description: kb.description || undefined,
   };
 }
 
 function validateSearchResponse(
   response: unknown,
-): IOrqKnowledgeBaseSearchResponse {
+): SearchKnowledgeResponseBody {
   if (!response || typeof response !== "object") {
     throw new Error("Invalid response format from Orq API");
   }
-  return response as IOrqKnowledgeBaseSearchResponse;
+  return response as SearchKnowledgeResponseBody;
 }
 
 function getErrorMessage(

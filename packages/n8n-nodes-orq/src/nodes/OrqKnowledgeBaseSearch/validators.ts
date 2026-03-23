@@ -2,7 +2,6 @@ import type { INode } from "n8n-workflow";
 
 import { SEARCH_CONFIG } from "./constants";
 import { ValidationError } from "./errors";
-import type { IOrqKnowledgeBaseSearchRequest } from "./types";
 
 export function validateKnowledgeBaseId(
   node: INode,
@@ -96,37 +95,6 @@ export function validateThreshold(
   return value;
 }
 
-export function validateSearchRequest(
-  node: INode,
-  request: IOrqKnowledgeBaseSearchRequest,
-): IOrqKnowledgeBaseSearchRequest {
-  const validated: IOrqKnowledgeBaseSearchRequest = {
-    query: validateQuery(node, request.query),
-  };
-
-  if (request.top_k !== undefined) {
-    validated.top_k = validateTopK(node, request.top_k);
-  }
-
-  if (request.threshold !== undefined) {
-    validated.threshold = validateThreshold(node, request.threshold);
-  }
-
-  if (request.filter_by !== undefined) {
-    validated.filter_by = request.filter_by;
-  }
-
-  if (request.search_options !== undefined) {
-    validated.search_options = request.search_options;
-  }
-
-  if (request.search_type !== undefined) {
-    validated.search_type = request.search_type;
-  }
-
-  return validated;
-}
-
 export function parseArrayValue(value: string): (string | number)[] {
   return value.split(",").map((v: string) => {
     const trimmed = v.trim();
@@ -144,13 +112,11 @@ export function parseValue(value: unknown): string | number {
   return String(value);
 }
 
-// Export for backward compatibility if needed
 export const InputValidator = {
   validateKnowledgeBaseId,
   validateQuery,
   validateTopK,
   validateThreshold,
-  validateSearchRequest,
   parseArrayValue,
   parseValue,
 };
