@@ -76,6 +76,13 @@ export class OrqAgent implements INodeType {
         const body = buildInvokeRequestBody(messageText);
         const task = await invokeAgent(this, agentKey, body);
 
+        if (!task.id) {
+          throw new NodeOperationError(
+            this.getNode(),
+            "Agent invoke did not return a task ID",
+          );
+        }
+
         const completedTask = await pollTaskUntilDone(this, agentKey, task.id);
         const finalState = completedTask.status?.state;
 
