@@ -76,15 +76,17 @@ export async function simulate(
       );
     }
 
-    // Generate first messages for each combination
+    // Generate first messages for each combination (in parallel)
     const firstMsgGen = new FirstMessageGenerator({ model });
-    datapoints = [];
-    for (const persona of personas) {
-      for (const scenario of scenarios) {
+    const pairs = personas.flatMap((persona) =>
+      scenarios.map((scenario) => ({ persona, scenario })),
+    );
+    datapoints = await Promise.all(
+      pairs.map(async ({ persona, scenario }) => {
         const firstMessage = await firstMsgGen.generate(persona, scenario);
-        datapoints.push(generateDatapoint(persona, scenario, firstMessage));
-      }
-    }
+        return generateDatapoint(persona, scenario, firstMessage);
+      }),
+    );
   }
 
   // Bridge agentKey to invoke() if no callback is provided
@@ -136,12 +138,13 @@ export async function simulate(
 
 export interface GenerateAndSimulateParams {
   evaluationName: string;
-  agentKey: string;
+  agentKey?: string;
   agentDescription: string;
   targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
   numPersonas?: number;
   numScenarios?: number;
   maxTurns?: number;
+  model?: string;
   evaluators?: string[];
   parallelism?: number;
 }
@@ -161,6 +164,7 @@ export async function generateAndSimulate(
     numPersonas = 5,
     numScenarios = 5,
     maxTurns = 10,
+    model = "azure/gpt-4o-mini",
     evaluators,
     parallelism = 5,
   } = params;
@@ -181,13 +185,17 @@ export async function generateAndSimulate(
   }
 
   // Dynamic import to avoid hard dependency on generators module
-  let PersonaGenerator: new () => {
+  let PersonaGenerator: new (config?: {
+    model?: string;
+  }) => {
     generate(params: {
       agentDescription: string;
       numPersonas: number;
     }): Promise<Persona[]>;
   };
-  let ScenarioGenerator: new () => {
+  let ScenarioGenerator: new (config?: {
+    model?: string;
+  }) => {
     generate(params: {
       agentDescription: string;
       numScenarios: number;
@@ -205,8 +213,8 @@ export async function generateAndSimulate(
   }
 
   // Generate personas and scenarios in parallel
-  const personaGen = new PersonaGenerator();
-  const scenarioGen = new ScenarioGenerator();
+  const personaGen = new PersonaGenerator({ model });
+  const scenarioGen = new ScenarioGenerator({ model });
 
   const [personas, scenarios] = await Promise.all([
     personaGen.generate({
@@ -226,6 +234,7 @@ export async function generateAndSimulate(
     personas,
     scenarios,
     maxTurns,
+    model,
     evaluators,
     parallelism,
   });

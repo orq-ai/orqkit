@@ -490,39 +490,16 @@ export class SimulationRunner {
         });
       }, timeoutMs);
 
-      this.run({ datapoint, maxTurns, signal: controller.signal })
-        .then((result) => {
+      // run() never throws — it catches all errors internally and returns
+      // an error SimulationResult. The .then() is sufficient.
+      this.run({ datapoint, maxTurns, signal: controller.signal }).then(
+        (result) => {
           clearTimeout(timer);
           if (!controller.signal.aborted) {
             resolve(result);
           }
-        })
-        .catch((e) => {
-          clearTimeout(timer);
-          if (!controller.signal.aborted) {
-            const errMsg = e instanceof Error ? e.message : String(e);
-            resolve({
-              messages: [],
-              terminated_by: "error",
-              reason: errMsg,
-              goal_achieved: false,
-              goal_completion_score: 0,
-              rules_broken: [],
-              turn_count: 0,
-              turn_metrics: [],
-              token_usage: {
-                prompt_tokens: 0,
-                completion_tokens: 0,
-                total_tokens: 0,
-              },
-              metadata: {
-                persona: datapoint.persona.name,
-                scenario: datapoint.scenario.name,
-                error: errMsg,
-              },
-            });
-          }
-        });
+        },
+      );
     });
   }
 }
