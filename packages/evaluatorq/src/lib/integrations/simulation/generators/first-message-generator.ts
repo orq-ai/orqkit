@@ -82,12 +82,20 @@ export class FirstMessageGenerator {
 
   constructor(config?: FirstMessageGeneratorConfig) {
     this.model = config?.model ?? "azure/gpt-4o-mini";
-    this.client =
-      config?.client ??
-      new OpenAI({
+    if (config?.client) {
+      this.client = config.client;
+    } else {
+      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
+      if (!apiKey) {
+        throw new Error(
+          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
+        );
+      }
+      this.client = new OpenAI({
         baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v2/router",
-        apiKey: config?.apiKey ?? process.env.ORQ_API_KEY,
+        apiKey,
       });
+    }
   }
 
   /**

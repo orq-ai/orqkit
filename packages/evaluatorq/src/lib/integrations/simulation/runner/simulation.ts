@@ -131,8 +131,14 @@ export class SimulationRunner {
 
   private getSharedClient(): OpenAI {
     if (!this.sharedClient) {
+      const apiKey = process.env.ORQ_API_KEY ?? process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error(
+          "ORQ_API_KEY environment variable is not set. Set it or pass a pre-configured client.",
+        );
+      }
       this.sharedClient = new OpenAI({
-        apiKey: process.env.ORQ_API_KEY ?? process.env.OPENAI_API_KEY,
+        apiKey,
         baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
       });
     }
