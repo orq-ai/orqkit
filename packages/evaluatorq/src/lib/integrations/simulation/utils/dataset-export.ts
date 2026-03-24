@@ -74,9 +74,15 @@ export function loadDatapointsFromJsonl(inputPath: string): Datapoint[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const data = JSON.parse(trimmed) as {
-      inputs?: Record<string, unknown>;
-    };
+    let data: { inputs?: Record<string, unknown> };
+    try {
+      data = JSON.parse(trimmed) as { inputs?: Record<string, unknown> };
+    } catch {
+      console.warn(
+        `loadDatapointsFromJsonl: skipping malformed line: ${trimmed.slice(0, 80)}`,
+      );
+      continue;
+    }
     const inputs = data.inputs ?? {};
 
     // Reconstruct persona
@@ -161,8 +167,17 @@ export function resultsToJsonl(
  * Parse a JSONL string into an array of objects.
  */
 export function parseJsonl<T = Record<string, unknown>>(content: string): T[] {
-  return content
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .map((line) => JSON.parse(line) as T);
+  const results: T[] = [];
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      results.push(JSON.parse(trimmed) as T);
+    } catch {
+      console.warn(
+        `parseJsonl: skipping malformed line: ${trimmed.slice(0, 80)}`,
+      );
+    }
+  }
+  return results;
 }

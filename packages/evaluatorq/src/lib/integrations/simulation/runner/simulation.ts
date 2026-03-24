@@ -33,7 +33,10 @@ export interface TargetAgent {
 
 /** Protocol for judge agents. */
 export interface JudgeProtocol {
-  evaluate(messages: ChatMessage[]): Promise<Judgment>;
+  evaluate(
+    messages: ChatMessage[],
+    options?: { signal?: AbortSignal },
+  ): Promise<Judgment>;
   getUsage?(): TokenUsage;
 }
 
@@ -248,6 +251,7 @@ export class SimulationRunner {
         // 2. Judge evaluates
         const judgment = await judge.evaluate(
           messages.map((m) => ({ role: m.role, content: m.content })),
+          { signal },
         );
 
         turnMetricsList.push(buildTurnMetrics(turn + 1, judgment, usageBefore));
@@ -276,6 +280,7 @@ export class SimulationRunner {
           checkCancelled();
           const userResponse = await userSimulator.respondAsync(
             messages.map((m) => ({ role: m.role, content: m.content })),
+            { signal },
           );
           messages.push({ role: "user", content: userResponse });
         }
@@ -397,7 +402,13 @@ export class SimulationRunner {
 
   /** Close and cleanup shared HTTP client. */
   async close(): Promise<void> {
-    this.sharedClient = null;
+    if (this.sharedClient) {
+      const client = this.sharedClient as unknown as {
+        _client?: { destroy?: () => void };
+      };
+      client._client?.destroy?.();
+      this.sharedClient = null;
+    }
   }
 
   // ---- private helpers ----

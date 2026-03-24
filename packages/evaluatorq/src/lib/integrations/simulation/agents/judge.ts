@@ -200,7 +200,10 @@ export class JudgeAgent extends BaseAgent {
    * @param messages - Conversation history to evaluate
    * @returns Judgment with termination decision and reasoning
    */
-  async evaluate(messages: ChatMessage[]): Promise<Judgment> {
+  async evaluate(
+    messages: ChatMessage[],
+    options?: { signal?: AbortSignal },
+  ): Promise<Judgment> {
     const evalMessages: ChatMessage[] = [
       ...messages,
       {
@@ -213,6 +216,7 @@ export class JudgeAgent extends BaseAgent {
     const result = await this.callLLM(evalMessages, {
       temperature: 0.0,
       tools: JUDGE_TOOLS,
+      signal: options?.signal,
     });
 
     return this.parseJudgment(result);

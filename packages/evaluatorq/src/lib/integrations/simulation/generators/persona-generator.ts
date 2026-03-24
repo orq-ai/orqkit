@@ -165,35 +165,25 @@ Generate ${numPersonas} diverse personas for testing this agent.
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: PERSONA_GENERATOR_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_CREATIVE,
-        max_tokens: 4000,
-      });
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: PERSONA_GENERATOR_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: TEMPERATURE_CREATIVE,
+      max_tokens: 4000,
+    });
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const personas = PersonaGenerator.parsePersonas(content);
+    const content = response.choices[0]?.message.content ?? "[]";
+    const personas = PersonaGenerator.parsePersonas(content);
 
-      if (personas.length < numPersonas) {
-        console.warn(
-          `PersonaGenerator: requested ${numPersonas} personas but only ${personas.length} were successfully parsed`,
-        );
-      }
-      return personas;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `PersonaGenerator: requested ${numPersonas} personas but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
+    if (personas.length < numPersonas) {
+      console.warn(
+        `PersonaGenerator: requested ${numPersonas} personas but only ${personas.length} were successfully parsed`,
+      );
     }
+    return personas;
   }
 
   /**
@@ -310,44 +300,34 @@ IMPORTANT:
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: PERSONA_GENERATOR_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_BALANCED,
-        max_tokens: 4000,
-      });
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: PERSONA_GENERATOR_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: TEMPERATURE_BALANCED,
+      max_tokens: 4000,
+    });
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      let personas = PersonaGenerator.parsePersonas(content);
+    const content = response.choices[0]?.message.content ?? "[]";
+    let personas = PersonaGenerator.parsePersonas(content);
 
-      // Validate coverage and fill gaps if needed
-      personas = this.ensureStyleCoverage(personas, styles);
-      this.logTraitCoverageGaps(personas);
+    // Validate coverage and fill gaps if needed
+    personas = this.ensureStyleCoverage(personas, styles);
+    this.logTraitCoverageGaps(personas);
 
-      // Trim to requested count (coverage adjustments may have kept extras)
-      if (personas.length > numPersonas) {
-        personas = personas.slice(0, numPersonas);
-      }
-
-      if (personas.length < numPersonas) {
-        console.warn(
-          `PersonaGenerator: requested ${numPersonas} personas (with coverage) but only ${personas.length} were successfully parsed`,
-        );
-      }
-      return personas;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `PersonaGenerator: requested ${numPersonas} personas but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
+    // Trim to requested count (coverage adjustments may have kept extras)
+    if (personas.length > numPersonas) {
+      personas = personas.slice(0, numPersonas);
     }
+
+    if (personas.length < numPersonas) {
+      console.warn(
+        `PersonaGenerator: requested ${numPersonas} personas (with coverage) but only ${personas.length} were successfully parsed`,
+      );
+    }
+    return personas;
   }
 
   /**

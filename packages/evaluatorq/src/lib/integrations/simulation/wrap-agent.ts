@@ -138,6 +138,12 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     if (!result) {
       throw new Error("Simulation produced no results");
     }
+    if (results.length > 1) {
+      console.warn(
+        `wrapSimulationAgent: ${results.length} simulations ran but only the first result is returned. ` +
+          "Use simulate() directly to collect all results.",
+      );
+    }
 
     const openResponsesOutput = toOpenResponses(result, model);
 

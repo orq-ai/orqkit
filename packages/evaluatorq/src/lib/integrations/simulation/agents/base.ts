@@ -66,9 +66,15 @@ export abstract class BaseAgent {
       this.client = config.client;
       this.clientOwned = false;
     } else {
+      const resolvedApiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
+      if (!resolvedApiKey) {
+        throw new Error(
+          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey in AgentConfig.",
+        );
+      }
       this.client = new OpenAI({
         baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
-        apiKey: config?.apiKey ?? process.env.ORQ_API_KEY ?? "",
+        apiKey: resolvedApiKey,
       });
       this.clientOwned = true;
     }
@@ -100,12 +106,18 @@ export abstract class BaseAgent {
    */
   async respondAsync(
     messages: ChatMessage[],
-    options?: { temperature?: number; maxTokens?: number; timeout?: number },
+    options?: {
+      temperature?: number;
+      maxTokens?: number;
+      timeout?: number;
+      signal?: AbortSignal;
+    },
   ): Promise<string> {
     const result = await this.callLLM(messages, {
       temperature: options?.temperature,
       maxTokens: options?.maxTokens,
       timeout: options?.timeout,
+      signal: options?.signal,
     });
 
     if (!result.content) {
@@ -165,6 +177,8 @@ export abstract class BaseAgent {
       maxTokens?: number;
       timeout?: number;
       tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
+      /** External abort signal — aborts in-flight LLM requests immediately. */
+      signal?: AbortSignal;
     },
   ): Promise<LLMResult> {
     const temperature = options?.temperature ?? 0.7;
@@ -183,8 +197,17 @@ export abstract class BaseAgent {
 
     for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
       try {
+        // Bail immediately if already cancelled
+        if (options?.signal?.aborted) {
+          throw new Error("Cancelled");
+        }
+
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutS * 1000);
+
+        // Link external signal to this request's controller
+        const onAbort = () => controller.abort();
+        options?.signal?.addEventListener("abort", onAbort, { once: true });
 
         try {
           const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming =
@@ -231,6 +254,7 @@ export abstract class BaseAgent {
           return result;
         } finally {
           clearTimeout(timer);
+          options?.signal?.removeEventListener("abort", onAbort);
         }
       } catch (err: unknown) {
         lastError = err;
