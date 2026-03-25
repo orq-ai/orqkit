@@ -260,6 +260,9 @@ class ORQAgentTarget:
             model=self.model,
         )
 
+    target_kind: str = 'agent'
+    """Used by the runner to populate report metadata correctly."""
+
     @property
     def name(self) -> str:
         """Return the agent key as the display name for reports and tracing."""

@@ -1293,7 +1293,7 @@ async def _run_dynamic_or_hybrid(
 
                 prepared_targets.append(PreparedTarget(
                     target=_at_label,
-                    target_kind='direct',
+                    target_kind=getattr(_at, 'target_kind', 'direct'),
                     target_value=_at_label,
                     safe_target=_at_safe,
                     agent_context=_at_ctx,

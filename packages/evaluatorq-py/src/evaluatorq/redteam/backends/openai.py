@@ -84,6 +84,9 @@ class OpenAIModelTarget:
             system_prompt=self.system_prompt,
         )
 
+    target_kind: str = 'openai'
+    """Used by the runner to populate report metadata correctly."""
+
     @property
     def name(self) -> str:
         """Return the model ID as the target name."""
