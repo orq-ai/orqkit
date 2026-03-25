@@ -139,8 +139,19 @@ Keep it natural - this is how they would actually open a conversation.`;
       console.debug(`Generated first message: ${message.substring(0, 100)}...`);
       return message;
     } catch (e) {
-      console.error(`Error generating first message: ${e}`);
-      // Fallback to a generic message based on scenario
+      // Re-throw auth errors — a bad API key should fail fast, not silently
+      // produce meaningless results for the entire simulation run.
+      if (
+        e instanceof Error &&
+        "status" in e &&
+        (e as { status: number }).status === 401
+      ) {
+        throw e;
+      }
+      console.warn(
+        `FirstMessageGenerator: API call failed, using generic fallback. Error: ${e}`,
+      );
+      // Fallback to a generic message based on scenario (no persona traits applied)
       return `Hi, I need help with: ${scenario.goal}`;
     }
   }

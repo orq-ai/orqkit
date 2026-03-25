@@ -78,6 +78,6 @@ export function toSimulationCallback<TOOLS extends ToolSet>(
           "If your agent only makes tool calls, ensure it also produces a final text response.",
       );
     }
-    return text;
+    return text ?? "";
   };
 }

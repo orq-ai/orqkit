@@ -101,14 +101,15 @@ function maxTurnsResult(
   tokenUsage: TokenUsage,
   persona?: Persona,
   scenario?: Scenario,
+  lastJudgment?: Judgment,
 ): SimulationResult {
   return {
     messages,
     terminated_by: "max_turns",
     reason: `Maximum turns (${maxTurns}) reached`,
-    goal_achieved: false,
-    goal_completion_score: 0,
-    rules_broken: [],
+    goal_achieved: lastJudgment?.goal_achieved ?? false,
+    goal_completion_score: lastJudgment?.goal_completion_score ?? 0,
+    rules_broken: lastJudgment?.rules_broken ?? [],
     turn_count: maxTurns,
     turn_metrics: turnMetrics,
     token_usage: tokenUsage,
@@ -264,6 +265,8 @@ export class SimulationRunner {
         : await userSimulator.generateFirstMessage();
       messages.push({ role: "user", content: firstMsg });
 
+      let lastJudgment: Judgment | undefined;
+
       for (let turn = 0; turn < maxTurns; turn++) {
         checkCancelled();
         const usageBefore = getTotalUsage();
@@ -283,6 +286,7 @@ export class SimulationRunner {
         );
 
         turnMetricsList.push(buildTurnMetrics(turn + 1, judgment, usageBefore));
+        lastJudgment = judgment;
 
         if (judgment.should_terminate) {
           return {
@@ -314,7 +318,8 @@ export class SimulationRunner {
         }
       }
 
-      // Max turns reached
+      // Max turns reached — preserve the last judge's assessment instead of
+      // hardcoding goal_achieved: false, so the final evaluation is not lost.
       return maxTurnsResult(
         maxTurns,
         messages,
@@ -322,8 +327,10 @@ export class SimulationRunner {
         getTotalUsage(),
         persona,
         scenario,
+        lastJudgment,
       );
     } catch (e) {
+      console.error("SimulationRunner.run() failed:", e);
       const errorMsg = e instanceof Error ? e.message : String(e);
       let usage: TokenUsage;
       try {
