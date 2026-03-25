@@ -5,6 +5,8 @@
  * either standalone or within the evaluatorq framework.
  */
 
+import OpenAI from "openai";
+
 import { fromOrqDeployment } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
@@ -77,8 +79,16 @@ export async function simulate(
       );
     }
 
+    // Create a shared HTTP client so the generator doesn't leak its own pool
+    const sharedClient = new OpenAI({
+      apiKey: process.env.ORQ_API_KEY,
+      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
+    });
     // Generate first messages for each combination (with bounded concurrency)
-    const firstMsgGen = new FirstMessageGenerator({ model });
+    const firstMsgGen = new FirstMessageGenerator({
+      model,
+      client: sharedClient,
+    });
     const pairs = personas.flatMap((persona) =>
       scenarios.map((scenario) => ({ persona, scenario })),
     );
