@@ -20,7 +20,7 @@ from loguru import logger
 
 from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt, generate_objective
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
-from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
+from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
 from evaluatorq.redteam.contracts import AttackStrategy, Message, OrchestratorResult, TokenUsage
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
@@ -135,9 +135,10 @@ def create_dynamic_redteam_job(
         max_turns: Maximum turns for multi-turn attacks
         target_factory: Factory for creating AgentTarget instances. Defaults to ORQ.
     """
-    resolved_factory: AgentTargetFactory = (
-        target_factory if target_factory is not None else resolve_backend('orq').target_factory
-    )
+    if target_factory is None:
+        msg = 'target_factory is required. The runner must resolve it from the target before calling this function.'
+        raise ValueError(msg)
+    resolved_factory: AgentTargetFactory = target_factory
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     safe_agent_key = ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in agent_key).strip('-')
     job_name = f'dynamic:redteam:agent:{safe_agent_key or "agent"}'
@@ -309,8 +310,8 @@ async def cleanup_memory_entities(
 
     Delegates to provided backend cleanup implementation.
     """
-    if memory_cleanup is not None:
-        await memory_cleanup.cleanup_memory(agent_context, entity_ids)
-        return
-    # Default fallback keeps existing ORQ behavior.
-    await resolve_backend('orq').memory_cleanup.cleanup_memory(agent_context, entity_ids)
+    if memory_cleanup is None:
+        from evaluatorq.redteam.backends.base import NoopMemoryCleanup
+
+        memory_cleanup = NoopMemoryCleanup()
+    await memory_cleanup.cleanup_memory(agent_context, entity_ids)

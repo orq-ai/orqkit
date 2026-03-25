@@ -2,7 +2,6 @@
 
 import ast
 import json
-from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
@@ -77,10 +76,12 @@ def _coerce_job_output_payload(raw_output: Any, _depth: int = 0) -> JobOutputPay
 
     model_dump = getattr(raw_output, 'model_dump', None)
     if callable(model_dump):
-        with suppress(ValidationError, TypeError):
+        try:
             dumped = model_dump(mode='json')
             if isinstance(dumped, dict):
                 return JobOutputPayload.model_validate(dumped)
+        except (ValidationError, TypeError) as e:
+            logger.debug(f'model_dump coercion failed for {type(raw_output).__name__}: {e}')
 
     if isinstance(raw_output, str):
         text = raw_output.strip()
@@ -92,12 +93,14 @@ def _coerce_job_output_payload(raw_output: Any, _depth: int = 0) -> JobOutputPay
                 if isinstance(parsed, str):
                     return _coerce_job_output_payload(parsed, _depth + 1)
             except json.JSONDecodeError:
-                with suppress(ValidationError, TypeError, ValueError, SyntaxError):
+                try:
                     parsed = ast.literal_eval(text)
                     if isinstance(parsed, dict):
                         return JobOutputPayload.model_validate(_normalize_output_dict(parsed))
                     if isinstance(parsed, str):
                         return _coerce_job_output_payload(parsed, _depth + 1)
+                except (ValidationError, TypeError, ValueError, SyntaxError) as e:
+                    logger.debug(f'ast.literal_eval coercion failed for job output: {e}')
         return JobOutputPayload()
 
     out: dict[str, Any] = {}
@@ -330,14 +333,38 @@ def static_results_to_report(
 
 def dynamic_evaluatorq_results_to_report(
     *,
-    agent_context: AgentContext,
+    target_contexts: dict[str, AgentContext],
     categories_tested: list[str],
     results: list[Any],
     duration_seconds: float | None = None,
     description: str | None = None,
 ) -> RedTeamReport:
-    """Convert evaluatorq dynamic results to a unified RedTeamReport."""
+    """Convert evaluatorq dynamic results to a unified RedTeamReport.
+
+    Handles multi-job results: each ``job_result`` is matched to its
+    :class:`AgentContext` via ``job_result.job_name``, so different targets
+    produce results with correct :class:`AgentInfo`.
+
+    Args:
+        target_contexts: Mapping of target label → AgentContext. For single-target
+            runs this has one entry; for multi-target it has one per target.
+    """
     unified: list[RedTeamResult] = []
+
+    # Build a lookup from job name to context.
+    # Job names follow "dynamic:redteam:agent:<safe_label>" pattern.
+    def _context_for_job(job_name: str) -> AgentContext:
+        """Resolve AgentContext from a job name or fall back to first context."""
+        # Job names follow "dynamic:redteam:agent:<safe_label>".
+        # Extract the exact last segment and match against sanitized labels.
+        job_suffix = job_name.rsplit(':', maxsplit=1)[-1] if ':' in job_name else job_name
+        for label, ctx in target_contexts.items():
+            safe = ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in label).strip('-')
+            if safe and safe == job_suffix:
+                return ctx
+        # Fallback to first context (single-target case)
+        logger.warning(f'Could not match job {job_name!r} to a target context, falling back to primary')
+        return next(iter(target_contexts.values()))
 
     for result in results:
         data_point = getattr(result, 'data_point', None)
@@ -351,35 +378,6 @@ def dynamic_evaluatorq_results_to_report(
         category = normalize_category(inputs.get('category', strategy.category))
 
         source = 'llm_generated_strategy' if strategy.is_generated else 'hardcoded_strategy'
-
-        job_output = JobOutputPayload()
-        eval_passed: bool | None = None
-        eval_explanation = ''
-        job_result = None
-
-        job_results = getattr(result, 'job_results', None) or []
-        if job_results:
-            job_result = job_results[0]
-            raw_output = getattr(job_result, 'output', None)
-            job_output = _coerce_job_output_payload(raw_output)
-
-            evaluator_scores = getattr(job_result, 'evaluator_scores', None) or []
-            if evaluator_scores:
-                score = evaluator_scores[0].score
-                eval_passed = _coerce_score_passed(score.value)
-                eval_explanation = score.explanation or ''
-
-        error = getattr(result, 'error', None) or job_output.error
-        error_type = job_output.error_type
-        error_stage = job_output.error_stage
-        error_code = job_output.error_code
-        error_details = job_output.error_details
-        vulnerable = eval_passed is False
-
-        token_usage = None
-        raw_usage = job_output.token_usage
-        if isinstance(raw_usage, TokenUsage):
-            token_usage = raw_usage
         evaluator_meta = get_evaluator_metadata_for_category(category) or {}
         evaluator_id = evaluator_meta.get('evaluator_id', category)
         evaluator_name = evaluator_meta.get('evaluator_name', OWASP_CATEGORY_NAMES.get(category))
@@ -399,45 +397,95 @@ def dynamic_evaluatorq_results_to_report(
             evaluator_name=evaluator_name,
         )
 
-        evaluation = UnifiedEvaluationResult(
-            passed=eval_passed,
-            explanation=eval_explanation,
-            evaluator_id=evaluator_id,
-            evaluator_name=evaluator_name,
-        )
+        dp_error = getattr(result, 'error', None)
+        job_results = getattr(result, 'job_results', None) or []
 
-        execution = ExecutionDetails(
-            turns=job_output.turns or 1,
-            duration_seconds=job_output.duration_seconds,
-            objective_achieved=job_output.objective_achieved,
-            token_usage=token_usage,
-        )
+        # Iterate over ALL job results (one per target in multi-target runs)
+        for job_result in job_results:
+            raw_output = getattr(job_result, 'output', None)
+            job_output = _coerce_job_output_payload(raw_output)
 
-        agent = AgentInfo(
-            key=agent_context.key,
-            model=agent_context.model,
-            display_name=agent_context.display_name,
-        )
+            eval_passed: bool | None = None
+            eval_explanation = ''
+            evaluator_scores = getattr(job_result, 'evaluator_scores', None) or []
+            if evaluator_scores:
+                score = evaluator_scores[0].score
+                eval_passed = _coerce_score_passed(score.value)
+                eval_explanation = score.explanation or ''
 
-        unified.append(
-            RedTeamResult(
-                attack=attack,
-                agent=agent,
-                messages=job_output.conversation,
-                response=_coerce_job_output_text(job_result.output if job_result is not None else job_output),
-                evaluation=evaluation,
-                vulnerable=vulnerable,
-                execution=execution,
-                error=error,
-                error_type=error_type,
-                error_stage=error_stage,
-                error_code=error_code,
-                error_details=error_details,
+            error = dp_error or job_output.error
+            vulnerable = eval_passed is False
+
+            token_usage = None
+            raw_usage = job_output.token_usage
+            if isinstance(raw_usage, TokenUsage):
+                token_usage = raw_usage
+
+            # Resolve agent context from job name
+            job_name = getattr(job_result, 'job_name', '')
+            agent_context = _context_for_job(job_name)
+
+            evaluation = UnifiedEvaluationResult(
+                passed=eval_passed,
+                explanation=eval_explanation,
+                evaluator_id=evaluator_id,
+                evaluator_name=evaluator_name,
             )
-        )
+
+            execution = ExecutionDetails(
+                turns=job_output.turns or 1,
+                duration_seconds=job_output.duration_seconds,
+                objective_achieved=job_output.objective_achieved,
+                token_usage=token_usage,
+            )
+
+            agent = AgentInfo(
+                key=agent_context.key,
+                model=agent_context.model,
+                display_name=agent_context.display_name,
+            )
+
+            unified.append(
+                RedTeamResult(
+                    attack=attack,
+                    agent=agent,
+                    messages=job_output.conversation,
+                    response=_coerce_job_output_text(job_result.output if job_result is not None else job_output),
+                    evaluation=evaluation,
+                    vulnerable=vulnerable,
+                    execution=execution,
+                    error=error,
+                    error_type=job_output.error_type,
+                    error_stage=job_output.error_stage,
+                    error_code=job_output.error_code,
+                    error_details=job_output.error_details,
+                )
+            )
+
+        # If no job results, still record the datapoint (error case)
+        if not job_results:
+            fallback_ctx = next(iter(target_contexts.values()))
+            unified.append(
+                RedTeamResult(
+                    attack=attack,
+                    agent=AgentInfo(key=fallback_ctx.key, model=fallback_ctx.model, display_name=fallback_ctx.display_name),
+                    messages=[],
+                    response=None,
+                    evaluation=None,
+                    vulnerable=False,
+                    error=dp_error,
+                )
+            )
 
     summary = compute_report_summary(unified)
     categories = [normalize_category(c) for c in categories_tested]
+    tested_agents = [
+        name
+        for ctx in target_contexts.values()
+        if (name := _agent_display_name(ctx))
+    ]
+    # Use first context for backward-compat agent_context field (single-target case)
+    primary_context = next(iter(target_contexts.values())) if target_contexts else None
 
     return RedTeamReport(
         created_at=datetime.now(tz=timezone.utc).astimezone(),
@@ -445,9 +493,9 @@ def dynamic_evaluatorq_results_to_report(
         pipeline=Pipeline.DYNAMIC,
         framework=_dominant_framework(unified),
         categories_tested=categories,
-        tested_agents=[name] if (name := _agent_display_name(agent_context)) else [],
+        tested_agents=tested_agents,
         total_results=len(unified),
-        agent_context=agent_context,
+        agent_context=primary_context,
         results=unified,
         summary=summary,
         duration_seconds=duration_seconds,

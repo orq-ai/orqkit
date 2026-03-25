@@ -189,6 +189,30 @@ class ORQAgentTarget:
         self._last_token_usage = None
         return usage
 
+    # -- SupportsAgentContext --------------------------------------------------
+
+    async def get_agent_context(self) -> AgentContext:
+        """Retrieve agent context from ORQ API (delegates to :class:`ORQContextProvider`)."""
+        return await ORQContextProvider(self.orq_client).get_agent_context(self.agent_key)
+
+    # -- SupportsTargetFactory -------------------------------------------------
+
+    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> ORQAgentTarget:
+        """Create a new :class:`ORQAgentTarget` for per-job isolation."""
+        return ORQAgentTarget(agent_key=agent_key, orq_client=self.orq_client, memory_entity_id=memory_entity_id)
+
+    # -- SupportsMemoryCleanup -------------------------------------------------
+
+    async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
+        """Clean up memory entities via ORQ API (delegates to :class:`ORQMemoryCleanup`)."""
+        await ORQMemoryCleanup(orq_client=self.orq_client).cleanup_memory(agent_context, entity_ids)
+
+    # -- SupportsErrorMapping --------------------------------------------------
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Classify ORQ exceptions (delegates to :class:`ORQErrorMapper`)."""
+        return ORQErrorMapper().map_error(exc)
+
 
 class ORQContextProvider:
     """Retrieves agent context from the ORQ API."""
@@ -337,13 +361,19 @@ class ORQTargetFactory:
 class ORQMemoryCleanup:
     """Cleans up memory entities created during red teaming via ORQ API."""
 
-    def __init__(self) -> None:
-        _require_orq_sdk()
-        # After _require_orq_sdk(), get_config is guaranteed non-None.
-        assert get_config is not None
-        config = get_config()
-        self._api_key: str = config.orq_api_key
-        self._server_url: str = config.orq_server_url
+    def __init__(self, orq_client: OrqClient | None = None) -> None:
+        if orq_client is not None:
+            security = getattr(orq_client, 'sdk_configuration', None)
+            security = getattr(security, 'security', None) if security else None
+            self._api_key: str = getattr(security, 'api_key', '') if security else ''
+            config = get_config() if get_config is not None else None
+            self._server_url: str = config.orq_server_url if config else 'https://api.orq.ai'
+        else:
+            _require_orq_sdk()
+            assert get_config is not None
+            config = get_config()
+            self._api_key = config.orq_api_key
+            self._server_url = config.orq_server_url
 
     async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
         """Delete memory entities for each memory store x entity_id combination."""
@@ -406,21 +436,47 @@ class ORQErrorMapper:
         return 'orq.unknown', f'{type(exc).__name__}: {exc}'
 
 
+def create_orq_agent_target(agent_key: str, orq_client: OrqClient | None = None) -> ORQAgentTarget:
+    """Create an :class:`ORQAgentTarget` from environment config.
+
+    This is the primary entry point for creating ORQ targets. The returned
+    target implements all optional capability protocols (context, factory,
+    cleanup, error mapping).
+
+    Args:
+        agent_key: ORQ agent key to target.
+        orq_client: Optional pre-configured ORQ SDK client. If *None*, one
+            is created from environment config.
+    """
+    if orq_client is None:
+        _require_orq_sdk()
+        assert get_config is not None and Orq is not None
+        config = get_config()
+        orq_client = Orq(
+            api_key=config.orq_api_key,
+            server_url=config.orq_server_url,
+            timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
+        )
+    return ORQAgentTarget(agent_key=agent_key, orq_client=orq_client)
+
+
 def create_orq_backend(
     orq_client: OrqClient | None = None,
 ) -> tuple[ORQTargetFactory, ORQContextProvider, ORQMemoryCleanup]:
     """Convenience function returning all three ORQ backend components.
 
-    Args:
-        orq_client: Optional pre-configured ORQ SDK client. If None, one is created
-                    from environment config.
-
-    Returns:
-        Tuple of (target_factory, context_provider, memory_cleanup)
+    .. deprecated::
+        Use :func:`create_orq_agent_target` instead. The target object now
+        implements all backend capabilities directly.
     """
+    import warnings
+    warnings.warn(
+        'create_orq_backend is deprecated. Use create_orq_agent_target() instead.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if orq_client is None:
         _require_orq_sdk()
-        # After _require_orq_sdk(), Orq and get_config are guaranteed non-None.
         assert get_config is not None
         assert Orq is not None
         config = get_config()

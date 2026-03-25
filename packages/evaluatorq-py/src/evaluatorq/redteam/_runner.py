@@ -3,22 +3,42 @@
 from __future__ import annotations
 
 import asyncio
+import warnings
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 from loguru import logger
 
 from evaluatorq.redteam.adaptive.strategy_registry import list_available_categories
+from evaluatorq.redteam.backends.base import (
+    DefaultErrorMapper,
+    DirectTargetFactory,
+    NoopMemoryCleanup,
+    is_agent_target,
+)
 from evaluatorq.redteam.contracts import AgentContext, RedTeamReport
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
-    from evaluatorq.redteam.backends.base import AgentTargetFactory, ErrorMapper, MemoryCleanup
+    from evaluatorq.redteam.backends.base import (
+        AgentTarget,
+        AgentTargetFactory,
+        ErrorMapper,
+        MemoryCleanup,
+    )
+
+#: Accepted types for the ``target`` parameter.
+TargetSpec = Union[str, 'AgentTarget', list[Union[str, 'AgentTarget']]]
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
 
 
 async def red_team(
-    target: str,
+    target: TargetSpec,
     *,
     mode: str = 'dynamic',
     categories: list[str] | None = None,
@@ -42,8 +62,13 @@ async def red_team(
     """Unified entry point for red teaming.
 
     Args:
-        target: Target identifier — ``"agent:<key>"`` for ORQ agents, or
-            ``"openai:<model>"`` for direct OpenAI-compatible endpoints.
+        target: What to attack. Accepts:
+
+            * A string like ``"agent:<key>"`` or ``"openai:<model>"``.
+            * An :class:`AgentTarget` object directly.
+            * A list mixing strings and/or :class:`AgentTarget` objects for
+              multi-target runs (each becomes a separate job in one run).
+
         mode: Execution mode — ``"dynamic"``, ``"static"``, or ``"hybrid"``.
         categories: OWASP categories to test (e.g., ``["ASI01", "ASI03"]``).
             Defaults to all available categories.
@@ -56,8 +81,13 @@ async def red_team(
         generated_strategy_count: Number of strategies to generate per category.
         max_datapoints: Cap total datapoints (None = no cap).
         cleanup_memory: Whether to clean up memory entities after dynamic runs.
-        backend: Backend name (``"orq"`` or ``"openai"``).
+        backend: Backend name (``"orq"`` or ``"openai"``). Ignored when
+            *target* is an :class:`AgentTarget` object.
         target_factory: Custom target factory (overrides backend default).
+
+            .. deprecated::
+                Pass an :class:`AgentTarget` instance as *target* instead.
+
         error_mapper: Custom error mapper (overrides backend default).
         memory_cleanup: Custom memory cleanup (overrides backend default).
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
@@ -69,8 +99,15 @@ async def red_team(
 
     Raises:
         ValueError: If mode is invalid or required arguments are missing.
-        NotImplementedError: For static/hybrid modes (Phase 4).
+        NotImplementedError: For hybrid mode.
     """
+    if target_factory is not None:
+        warnings.warn(
+            'target_factory is deprecated. Pass an AgentTarget instance as the target parameter instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     if mode == 'dynamic':
         return await _run_dynamic(
             target=target,
@@ -92,6 +129,10 @@ async def red_team(
             description=description,
         )
     if mode == 'static':
+        # Static mode only supports string targets for now.
+        if not isinstance(target, str):
+            msg = 'Static mode currently only supports string targets (e.g., "agent:<key>").'
+            raise ValueError(msg)
         return await _run_static(
             target=target,
             categories=categories,
@@ -112,6 +153,11 @@ async def red_team(
     raise ValueError(msg)
 
 
+# ---------------------------------------------------------------------------
+# Target resolution helpers
+# ---------------------------------------------------------------------------
+
+
 def _parse_target(target: str) -> tuple[str, str]:
     """Parse ``"kind:value"`` target string.
 
@@ -128,9 +174,91 @@ def _parse_target(target: str) -> tuple[str, str]:
     return kind.lower(), value
 
 
+def _resolve_string_target(target_str: str, backend: str, llm_client: AsyncOpenAI | None) -> AgentTarget:
+    """Resolve a target string to a concrete :class:`AgentTarget` object."""
+    kind, value = _parse_target(target_str)
+
+    if kind == 'agent' and backend != 'openai':
+        from evaluatorq.redteam.backends.orq import create_orq_agent_target
+
+        return create_orq_agent_target(value)
+
+    from evaluatorq.redteam.backends.openai import create_openai_target
+
+    return create_openai_target(value, client=llm_client)
+
+
+def _resolve_targets(
+    target: TargetSpec,
+    backend: str,
+    llm_client: AsyncOpenAI | None,
+) -> list[AgentTarget]:
+    """Normalize *target* to a list of :class:`AgentTarget` objects."""
+    raw_targets: list[str | AgentTarget] = [target] if not isinstance(target, list) else list(target)
+
+    if not raw_targets:
+        msg = 'target must not be empty.'
+        raise ValueError(msg)
+
+    resolved: list[AgentTarget] = []
+    for t in raw_targets:
+        if isinstance(t, str):
+            resolved.append(_resolve_string_target(t, backend, llm_client))
+        elif is_agent_target(t):
+            resolved.append(t)
+        else:
+            msg = f'Invalid target type: {type(t).__name__}. Expected str or AgentTarget.'
+            raise TypeError(msg)
+    return resolved
+
+
+def _get_target_label(target: AgentTarget) -> str:
+    """Best-effort label for a target (used in jobs and reports)."""
+    return getattr(target, 'name', None) or type(target).__name__
+
+
+def _get_target_factory(target: AgentTarget) -> AgentTargetFactory:
+    """Get the factory for per-job target creation."""
+    if callable(getattr(target, 'create_target', None)):
+        return target  # type: ignore[return-value]
+    return DirectTargetFactory(target)
+
+
+def _get_error_mapper(target: AgentTarget) -> ErrorMapper:
+    """Get the error mapper from a target, or use the default."""
+    if callable(getattr(target, 'map_error', None)):
+        return target  # type: ignore[return-value]
+    return DefaultErrorMapper()
+
+
+def _get_memory_cleanup(target: AgentTarget) -> MemoryCleanup:
+    """Get memory cleanup from a target, or use no-op."""
+    if callable(getattr(target, 'cleanup_memory', None)):
+        return target  # type: ignore[return-value]
+    return NoopMemoryCleanup()
+
+
+async def _get_agent_context(target: AgentTarget, label: str) -> AgentContext:
+    """Get agent context from a target, or return a minimal default."""
+    get_ctx = getattr(target, 'get_agent_context', None)
+    if callable(get_ctx):
+        return await get_ctx()
+    logger.warning(
+        f'Target {label!r} does not implement get_agent_context(); '
+        f'using minimal context (no tools/memory/knowledge). '
+        f'Strategy generation will not be tailored to agent capabilities.'
+    )
+    return AgentContext(key=label)
+
+
+# ---------------------------------------------------------------------------
+# Dynamic pipeline
+# ---------------------------------------------------------------------------
+
+
 async def _run_dynamic(
     *,
-    target: str,
+    target: TargetSpec,
     categories: list[str] | None,
     max_turns: int,
     max_per_category: int | None,
@@ -151,8 +279,7 @@ async def _run_dynamic(
     """Run dynamic red teaming via evaluatorq."""
     from evaluatorq import evaluatorq
 
-    from evaluatorq.redteam.backends.base import DefaultErrorMapper
-    from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
+    from evaluatorq.redteam.backends.registry import create_async_llm_client
     from evaluatorq.redteam.adaptive.pipeline import (
         cleanup_memory_entities,
         create_dynamic_evaluator,
@@ -161,31 +288,41 @@ async def _run_dynamic(
     )
     from evaluatorq.redteam.reports.converters import dynamic_evaluatorq_results_to_report
 
-    _target_kind, target_value = _parse_target(target)
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
-    # Resolve backend
-    backend_bundle = resolve_backend(backend, llm_client=llm_client)
-    resolved_factory = target_factory or backend_bundle.target_factory
-    resolved_error_mapper = error_mapper or DefaultErrorMapper()
-    resolved_memory_cleanup = memory_cleanup or backend_bundle.memory_cleanup
+    # ----- Resolve all targets -----
+    targets = _resolve_targets(target, backend, llm_client)
 
-    # Get agent context
-    agent_context: AgentContext = await backend_bundle.context_provider.get_agent_context(target_value)
+    # Resolve contexts for all targets (primary used for datapoint generation).
+    # Disambiguate duplicate labels to prevent silent overwrites.
+    target_contexts: dict[str, AgentContext] = {}
+    target_labels: list[str] = []
+    for i, t in enumerate(targets):
+        label = _get_target_label(t)
+        if label in target_contexts:
+            label = f'{label}-{i}'
+            logger.warning(f'Duplicate target label detected, disambiguating as {label!r}')
+        ctx = await _get_agent_context(t, label)
+        target_contexts[label] = ctx
+        target_labels.append(label)
+
+    primary_label = target_labels[0]
+    primary_context = target_contexts[primary_label]
     resolved_categories = categories or list_available_categories()
 
-    # Create LLM client for strategy generation
+    # ----- LLM client for strategy generation -----
     resolved_llm_client = llm_client
     if resolved_llm_client is None and generate_strategies:
         resolved_llm_client = create_async_llm_client()
 
-    # Stage 1: Generate datapoints
+    # ----- Stage 1: Generate datapoints (shared across all targets) -----
+    labels_display = ', '.join(target_labels)
     logger.info(
-        f'Generating attack datapoints for {target} '
-        + f'({len(resolved_categories)} categories, max_turns={max_turns})'
+        f'Generating attack datapoints for [{labels_display}] '
+        f'({len(resolved_categories)} categories, max_turns={max_turns})'
     )
     datapoints, _filtering_metadata = await generate_dynamic_datapoints(
-        agent_context=agent_context,
+        agent_context=primary_context,
         categories=resolved_categories,
         max_per_category=max_per_category,
         max_turns=max_turns,
@@ -201,67 +338,101 @@ async def _run_dynamic(
         msg = 'No datapoints generated. Check categories and agent capabilities.'
         raise ValueError(msg)
 
-    # Stage 2: Create job and evaluator
-    dynamic_job = create_dynamic_redteam_job(
-        agent_key=target_value,
-        agent_context=agent_context,
-        red_team_model=attack_model,
-        max_turns=max_turns,
-        target_factory=resolved_factory,
-        error_mapper=resolved_error_mapper,
-        attack_llm_client=resolved_llm_client,
-    )
+    # ----- Stage 2: Create one job per target -----
+    jobs = []
+    for t, label in zip(targets, target_labels):
+        ctx = target_contexts[label]
+        # Explicit overrides (backward compat for deprecated target_factory)
+        factory = target_factory or _get_target_factory(t)
+        mapper = error_mapper or _get_error_mapper(t)
+        job = create_dynamic_redteam_job(
+            agent_key=label,
+            agent_context=ctx,
+            red_team_model=attack_model,
+            max_turns=max_turns,
+            target_factory=factory,
+            error_mapper=mapper,
+            attack_llm_client=resolved_llm_client,
+        )
+        jobs.append(job)
+
     evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
-    # Stage 3: Run evaluatorq
-    logger.info(f'Running {len(datapoints)} attacks against {target} (parallelism={parallelism})')
+    # ----- Stage 3: Run evaluatorq (all jobs in one run) -----
+    logger.info(f'Running {len(datapoints)} attacks against [{labels_display}] (parallelism={parallelism})')
     try:
         results = await evaluatorq(
             'dynamic-red-team',
             data=datapoints,
-            jobs=[dynamic_job],
+            jobs=jobs,
             evaluators=[evaluator],
             parallelism=parallelism,
             print_results=False,
-            description=description or f'Dynamic red teaming for {target}',
+            description=description or f'Dynamic red teaming for [{labels_display}]',
         )
     except (asyncio.CancelledError, KeyboardInterrupt):
         logger.warning('Run cancelled — attempting memory cleanup')
-        if cleanup_memory and agent_context.has_memory:
-            try:
-                await cleanup_memory_entities(agent_context, [
-                    dp.inputs['memory_entity_id']
-                    for dp in datapoints
-                    if 'memory_entity_id' in dp.inputs
-                ], memory_cleanup=resolved_memory_cleanup)
-            except Exception as e:
-                logger.warning(f'Memory cleanup failed during cancellation: {type(e).__name__}: {e}')
+        if cleanup_memory:
+            await _cleanup_all_targets(targets, target_labels, target_contexts, datapoints, memory_cleanup)
+        raise
+    except Exception as exc:
+        logger.error(f'Evaluatorq run failed: {type(exc).__name__}: {exc} — attempting memory cleanup before re-raising')
+        if cleanup_memory:
+            await _cleanup_all_targets(targets, target_labels, target_contexts, datapoints, memory_cleanup)
         raise
 
     pipeline_duration = (datetime.now(tz=timezone.utc).astimezone() - pipeline_start).total_seconds()
 
-    # Stage 4: Normalize results
+    # ----- Stage 4: Normalize results -----
     logger.info(f'Normalizing results ({pipeline_duration:.1f}s elapsed)')
     report = dynamic_evaluatorq_results_to_report(
-        agent_context=agent_context,
+        target_contexts=target_contexts,
         categories_tested=resolved_categories,
         results=results,
         duration_seconds=pipeline_duration,
-        description=description or f'Dynamic red teaming for {target}',
+        description=description or f'Dynamic red teaming for [{labels_display}]',
     )
 
-    # Stage 5: Cleanup memory entities
-    if cleanup_memory and agent_context.has_memory:
-        entity_ids = [
-            dp.inputs['memory_entity_id']
-            for dp in datapoints
-            if 'memory_entity_id' in dp.inputs
-        ]
-        if entity_ids:
-            logger.info(f'Cleaning up {len(entity_ids)} memory entities')
-            await cleanup_memory_entities(agent_context, entity_ids, memory_cleanup=resolved_memory_cleanup)
+    # ----- Stage 5: Cleanup memory entities for all targets -----
+    if cleanup_memory:
+        await _cleanup_all_targets(targets, target_labels, target_contexts, datapoints, memory_cleanup)
 
     return report
+
+
+async def _cleanup_all_targets(
+    targets: list[AgentTarget],
+    target_labels: list[str],
+    target_contexts: dict[str, AgentContext],
+    datapoints: list[Any],
+    memory_cleanup_override: MemoryCleanup | None,
+) -> None:
+    """Clean up memory entities for all targets that support it."""
+    from evaluatorq.redteam.adaptive.pipeline import cleanup_memory_entities
+
+    entity_ids = [
+        dp.inputs['memory_entity_id']
+        for dp in datapoints
+        if 'memory_entity_id' in dp.inputs
+    ]
+    if not entity_ids:
+        return
+
+    for t, label in zip(targets, target_labels):
+        ctx = target_contexts.get(label)
+        if ctx is None or not ctx.has_memory:
+            continue
+        cleanup = memory_cleanup_override or _get_memory_cleanup(t)
+        logger.info(f'Cleaning up {len(entity_ids)} memory entities for {label}')
+        try:
+            await cleanup_memory_entities(ctx, entity_ids, memory_cleanup=cleanup)
+        except Exception as e:
+            logger.warning(f'Memory cleanup failed for {label}: {type(e).__name__}: {e}')
+
+
+# ---------------------------------------------------------------------------
+# Static pipeline
+# ---------------------------------------------------------------------------
 
 
 async def _run_static(

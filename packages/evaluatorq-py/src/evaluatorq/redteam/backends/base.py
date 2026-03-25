@@ -1,8 +1,8 @@
 """Backend protocols for dynamic red teaming agent targets.
 
 Defines the abstract interfaces that any agent backend must implement.
-The ORQ implementation lives in ``backends.orq``; other backends (HTTP,
-LangChain, custom callables) can implement these protocols independently.
+Targets self-describe their capabilities via optional protocols; the runner
+detects and uses them automatically.
 """
 
 from __future__ import annotations
@@ -11,8 +11,15 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from evaluatorq.redteam.contracts import AgentContext, TokenUsage
+
+
+# ---------------------------------------------------------------------------
+# Core protocol (required)
+# ---------------------------------------------------------------------------
 
 
 class AgentTarget(Protocol):
@@ -25,6 +32,11 @@ class AgentTarget(Protocol):
     def reset_conversation(self) -> None:
         """Reset conversation state for a new attack."""
         ...
+
+
+# ---------------------------------------------------------------------------
+# Optional capability protocols
+# ---------------------------------------------------------------------------
 
 
 class SupportsClone(Protocol):
@@ -49,6 +61,46 @@ class SupportsTargetMetadata(Protocol):
     def target_metadata(self) -> dict[str, object]:
         """Return provider/target metadata for diagnostics."""
         ...
+
+
+class SupportsAgentContext(Protocol):
+    """Optional: target provides its own agent context (tools, description, etc.)."""
+
+    async def get_agent_context(self) -> AgentContext:
+        """Return agent context for strategy generation and reporting."""
+        ...
+
+
+class SupportsTargetFactory(Protocol):
+    """Optional: target can create per-job instances.
+
+    Needed for parallel job safety and ORQ memory_entity_id routing.
+    """
+
+    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> AgentTarget:
+        """Create a new AgentTarget for the given agent key."""
+        ...
+
+
+class SupportsMemoryCleanup(Protocol):
+    """Optional: target can clean up memory entities it created."""
+
+    async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
+        """Delete memory entities created during a red teaming run."""
+        ...
+
+
+class SupportsErrorMapping(Protocol):
+    """Optional: target provides custom error classification."""
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Return normalized (error_code, error_message)."""
+        ...
+
+
+# ---------------------------------------------------------------------------
+# Legacy protocols (kept for backward compatibility)
+# ---------------------------------------------------------------------------
 
 
 class AgentContextProvider(Protocol):
@@ -83,9 +135,66 @@ class ErrorMapper(Protocol):
         ...
 
 
+# ---------------------------------------------------------------------------
+# Runtime helpers
+# ---------------------------------------------------------------------------
+
+
+def is_agent_target(obj: object) -> bool:
+    """Check if *obj* satisfies the :class:`AgentTarget` protocol at runtime."""
+    return callable(getattr(obj, 'send_prompt', None)) and callable(getattr(obj, 'reset_conversation', None))
+
+
+# ---------------------------------------------------------------------------
+# Fallback / default implementations
+# ---------------------------------------------------------------------------
+
+
+class DefaultErrorMapper:
+    """Fallback error mapper for unknown backends."""
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        return 'target_error', f'{type(exc).__name__}: {exc}'
+
+
+class DirectTargetFactory:
+    """Factory that wraps a pre-built :class:`AgentTarget`.
+
+    Uses ``clone()`` if available, otherwise reuses the same instance
+    (with a one-time warning about potential race conditions).
+    """
+
+    def __init__(self, target: AgentTarget) -> None:
+        self._target = target
+        self._clone_fn = getattr(target, 'clone', None) if callable(getattr(target, 'clone', None)) else None
+        if self._clone_fn is None:
+            logger.warning(
+                f'Target {type(target).__name__} does not implement clone(). '
+                f'Reusing the same instance across parallel jobs may cause race conditions. '
+                f'Consider implementing clone() or SupportsTargetFactory.create_target().'
+            )
+
+    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> AgentTarget:
+        if self._clone_fn is not None:
+            return self._clone_fn()
+        return self._target
+
+
+class NoopMemoryCleanup:
+    """No-op cleanup for targets without managed memory stores."""
+
+    async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
+        logger.debug('Skipping memory cleanup: target has no managed memory API')
+
+
 @dataclass(slots=True)
 class BackendBundle:
-    """Bundle of backend components used by dynamic runtime."""
+    """Bundle of backend components.
+
+    .. deprecated::
+        Targets now self-describe their capabilities via optional protocols.
+        This class is kept for backward compatibility only.
+    """
 
     name: str
     target_factory: AgentTargetFactory
@@ -94,11 +203,9 @@ class BackendBundle:
     error_mapper: ErrorMapper
 
 
-class DefaultErrorMapper:
-    """Fallback error mapper for unknown backends."""
-
-    def map_error(self, exc: Exception) -> tuple[str, str]:
-        return 'target_error', f'{type(exc).__name__}: {exc}'
+# ---------------------------------------------------------------------------
+# Error extraction utilities
+# ---------------------------------------------------------------------------
 
 
 def extract_status_code(exc: Exception) -> int | None:

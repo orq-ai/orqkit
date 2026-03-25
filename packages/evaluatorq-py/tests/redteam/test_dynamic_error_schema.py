@@ -90,7 +90,7 @@ def test_dynamic_results_to_report_maps_error_stage_code_and_details() -> None:
     )
 
     report = dynamic_evaluatorq_results_to_report(
-        agent_context=AgentContext(key='custom-1'),
+        target_contexts={'custom-1': AgentContext(key='custom-1')},
         categories_tested=['ASI01'],
         results=[result],
         duration_seconds=0.1,

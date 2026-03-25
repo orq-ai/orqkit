@@ -67,6 +67,17 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
     list_available_categories as list_categories,
 )
+from evaluatorq.redteam.backends.base import (
+    AgentTarget,
+    DirectTargetFactory,
+    SupportsAgentContext,
+    SupportsClone,
+    SupportsErrorMapping,
+    SupportsMemoryCleanup,
+    SupportsTargetFactory,
+    SupportsTokenUsage,
+    is_agent_target,
+)
 
 __all__ = [
     # Entry point
@@ -74,6 +85,16 @@ __all__ = [
     # Category introspection
     "list_categories",
     "get_category_info",
+    # Target protocols
+    "AgentTarget",
+    "SupportsClone",
+    "SupportsTokenUsage",
+    "SupportsAgentContext",
+    "SupportsTargetFactory",
+    "SupportsMemoryCleanup",
+    "SupportsErrorMapping",
+    "DirectTargetFactory",
+    "is_agent_target",
     # Core public types
     "RedTeamReport",
     "RedTeamResult",

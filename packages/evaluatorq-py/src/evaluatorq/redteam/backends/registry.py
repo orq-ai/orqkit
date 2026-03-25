@@ -4,18 +4,11 @@ from __future__ import annotations
 
 import logging
 import os
+import warnings
 
 from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
-
-from evaluatorq.redteam.backends.base import BackendBundle
-from evaluatorq.redteam.backends.openai import (
-    NoopMemoryCleanup,
-    OpenAIContextProvider,
-    OpenAIErrorMapper,
-    OpenAITargetFactory,
-)
 
 
 ORQ_DEFAULT_BASE_URL = "https://my.orq.ai"
@@ -55,18 +48,36 @@ def create_async_llm_client() -> AsyncOpenAI:
     raise RuntimeError(msg)
 
 
+# ---------------------------------------------------------------------------
+# Deprecated — kept for backward compatibility
+# ---------------------------------------------------------------------------
+
+# Re-export so existing ``from .registry import BackendBundle`` still works.
+from evaluatorq.redteam.backends.base import BackendBundle as BackendBundle  # noqa: E402, F401
+from evaluatorq.redteam.backends.base import NoopMemoryCleanup as NoopMemoryCleanup  # noqa: E402, F401
+
+from evaluatorq.redteam.backends.openai import (  # noqa: E402
+    OpenAIContextProvider,
+    OpenAIErrorMapper,
+    OpenAITargetFactory,
+)
+
+
 def resolve_backend(
     backend: str = "orq",
     llm_client: AsyncOpenAI | None = None,
 ) -> BackendBundle:
-    """Resolve runtime backend bundle with lazy optional imports.
+    """Resolve runtime backend bundle.
 
-    Args:
-        backend: Backend name (``"orq"`` or ``"openai"``).
-        llm_client: Pre-configured client for the OpenAI backend.
-            When provided, skips ``create_async_llm_client()`` for
-            the ``"openai"`` backend.
+    .. deprecated::
+        Use :func:`create_orq_agent_target` or :func:`create_openai_target`
+        instead. Target objects now carry their own backend capabilities.
     """
+    warnings.warn(
+        'resolve_backend is deprecated. Use create_orq_agent_target() or create_openai_target() instead.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     normalized = backend.strip().lower()
     if normalized == "openai":
         client = llm_client or create_async_llm_client()
@@ -88,7 +99,10 @@ def resolve_backend(
         msg = "ORQ backend requested but ORQ dependencies are unavailable. Install ORQ extras or use backend='openai'."
         raise RuntimeError(msg) from exc
 
-    target_factory, context_provider, memory_cleanup = create_orq_backend()
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        target_factory, context_provider, memory_cleanup = create_orq_backend()
+
     return BackendBundle(
         name="orq",
         target_factory=target_factory,
