@@ -945,14 +945,15 @@ async def _run_dynamic_or_hybrid(
     await init_tracing_if_needed()
     parent_context = await capture_parent_context()
 
-    _all_display_targets = list(targets) + [
+    _resolved_agent_targets = agent_targets or []
+    _all_target_labels = list(targets) + [
         getattr(at, 'name', None) or type(at).__name__
-        for at in (agent_targets or [])
+        for at in _resolved_agent_targets
     ]
     async with with_redteam_span(
         "orq.redteam.pipeline",
         attributes={
-            "orq.redteam.targets": ", ".join(_all_display_targets),
+            "orq.redteam.targets": ", ".join(_all_target_labels),
             "orq.redteam.mode": mode,
             "orq.redteam.backend": backend,
             "orq.redteam.max_turns": max_turns,
@@ -967,11 +968,6 @@ async def _run_dynamic_or_hybrid(
 
         _bundle = _resolve_backend(backend, llm_client=llm_client, target_config=target_config)
         all_agent_contexts: dict[str, AgentContext] = {}
-        _resolved_agent_targets = agent_targets or []
-        _all_target_labels = list(targets) + [
-            getattr(at, 'name', None) or type(at).__name__
-            for at in _resolved_agent_targets
-        ]
         resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": _all_target_labels})
         for _target_str in targets:
             _kind, _value = _parse_target(_target_str)
@@ -987,10 +983,15 @@ async def _run_dynamic_or_hybrid(
         _at_contexts: dict[int, AgentContext] = {}
         for _at in _resolved_agent_targets:
             _get_ctx = getattr(_at, 'get_agent_context', None)
+            _at_label = getattr(_at, 'name', None) or type(_at).__name__
             if callable(_get_ctx):
                 _at_ctx = await cast("Any", _get_ctx())
+                if not isinstance(_at_ctx, AgentContext):
+                    raise TypeError(
+                        f'{type(_at).__name__}.get_agent_context() returned {type(_at_ctx).__name__}, '
+                        f'expected AgentContext.'
+                    )
             else:
-                _at_label = getattr(_at, 'name', None) or type(_at).__name__
                 logger.warning(f'AgentTarget {_at_label!r} does not implement get_agent_context(); using minimal context.')
                 _at_ctx = AgentContext(key=_at_label)
             _at_contexts[id(_at)] = _at_ctx
