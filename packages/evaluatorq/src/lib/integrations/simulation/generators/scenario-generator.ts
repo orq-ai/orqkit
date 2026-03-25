@@ -484,7 +484,7 @@ Return ONLY a JSON array, no other text.`;
     const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Existing scenarios (avoid duplicating these):
-${JSON.stringify(existingNames, null, 2)}
+${delimit(JSON.stringify(existingNames, null, 2))}
 
 Generate ${numEdgeCases} EDGE CASE scenarios that:
 - Test boundary conditions

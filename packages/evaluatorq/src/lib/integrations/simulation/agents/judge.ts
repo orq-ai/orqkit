@@ -191,7 +191,7 @@ export class JudgeAgent extends BaseAgent {
       groundTruthText = `\n\nGROUND TRUTH (use this to score factual_accuracy):\n${delimit(this.groundTruth)}`;
     }
 
-    return `${DEFAULT_JUDGE_PROMPT}\n\n---\n\nUSER'S GOAL: ${this.goal}\n\nEVALUATION CRITERIA:\n${criteriaText}${groundTruthText}`;
+    return `${DEFAULT_JUDGE_PROMPT}\n\n---\n\nUSER'S GOAL: ${delimit(this.goal)}\n\nEVALUATION CRITERIA:\n${criteriaText}${groundTruthText}`;
   }
 
   /**

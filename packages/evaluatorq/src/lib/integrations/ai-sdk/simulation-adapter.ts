@@ -71,6 +71,13 @@ export function toSimulationCallback<TOOLS extends ToolSet>(
     }
 
     const result = await agent.generate({ messages: modelMessages });
-    return result.text;
+    const text = result.text;
+    if (!text) {
+      console.warn(
+        "AI SDK toSimulationCallback: agent result contained no text — returning empty string. " +
+          "If your agent only makes tool calls, ensure it also produces a final text response.",
+      );
+    }
+    return text;
   };
 }
