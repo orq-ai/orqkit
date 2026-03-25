@@ -144,12 +144,12 @@ describe("toOpenResponses", () => {
     });
   });
 
-  test("8. terminated_by 'error' → status 'incomplete' + error field", () => {
+  test("8. terminated_by 'error' → status 'failed' + error field", () => {
     const res = toOpenResponses(
       makeResult({ terminated_by: "error", reason: "LLM call failed" }),
     );
 
-    expect(res.status).toBe("incomplete");
+    expect(res.status).toBe("failed");
     expect(res.error).toEqual({ message: "LLM call failed" });
   });
 

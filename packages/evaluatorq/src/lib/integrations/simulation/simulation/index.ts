@@ -78,6 +78,11 @@ export async function simulate(
         "Either provide 'datapoints' or both 'personas' and 'scenarios'",
       );
     }
+    if (personas.length === 0 || scenarios.length === 0) {
+      throw new Error(
+        "'personas' and 'scenarios' arrays must both be non-empty",
+      );
+    }
 
     const apiKey = process.env.ORQ_API_KEY;
     if (!apiKey) {

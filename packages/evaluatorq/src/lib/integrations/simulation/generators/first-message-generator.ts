@@ -144,7 +144,8 @@ Keep it natural - this is how they would actually open a conversation.`;
       if (
         e instanceof Error &&
         "status" in e &&
-        (e as { status: number }).status === 401
+        ((e as { status: number }).status === 401 ||
+          (e as { status: number }).status === 403)
       ) {
         throw e;
       }

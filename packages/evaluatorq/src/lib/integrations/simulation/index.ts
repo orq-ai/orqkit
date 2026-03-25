@@ -49,8 +49,9 @@ export type {
 } from "./runner/simulation.js";
 // --- Runner (advanced usage) ---
 export { SimulationRunner } from "./runner/simulation.js";
-// --- Schemas (requires zod) ---
-export { CriterionSchema, PersonaSchema, ScenarioSchema } from "./schemas.js";
+// --- Schemas ---
+// Zod schemas are NOT re-exported here to avoid requiring zod at import time.
+// Import from "@orq-ai/evaluatorq/simulation/schemas" instead.
 export type {
   GenerateAndSimulateParams,
   SimulateParams,

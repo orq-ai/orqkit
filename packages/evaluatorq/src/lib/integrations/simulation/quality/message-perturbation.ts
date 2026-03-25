@@ -92,12 +92,13 @@ function applyUnicodeNoise(message: string): string {
 }
 
 function applyTruncation(message: string): string {
-  if (message.length <= 10) return message;
+  const codePoints = [...message];
+  if (codePoints.length <= 10) return message;
   const cutPoint = randomInt(
-    Math.floor(message.length * 0.4),
-    Math.floor(message.length * 0.8),
+    Math.floor(codePoints.length * 0.4),
+    Math.floor(codePoints.length * 0.8),
   );
-  return message.slice(0, cutPoint);
+  return codePoints.slice(0, cutPoint).join("");
 }
 
 function applyMarkdownInjection(message: string): string {

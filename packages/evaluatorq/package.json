@@ -65,6 +65,12 @@
       "types": "./dist/lib/integrations/simulation/index.d.ts",
       "import": "./dist/lib/integrations/simulation/index.js",
       "default": "./dist/lib/integrations/simulation/index.js"
+    },
+    "./simulation/schemas": {
+      "development": "./src/lib/integrations/simulation/schemas.ts",
+      "types": "./dist/lib/integrations/simulation/schemas.d.ts",
+      "import": "./dist/lib/integrations/simulation/schemas.js",
+      "default": "./dist/lib/integrations/simulation/schemas.js"
     }
   },
   "peerDependencies": {

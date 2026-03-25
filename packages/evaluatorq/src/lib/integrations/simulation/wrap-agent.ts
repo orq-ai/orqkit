@@ -104,13 +104,36 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     let scenarios: Scenario[] | undefined;
 
     if (inputs.datapoint) {
-      datapoints = [inputs.datapoint as Datapoint];
+      const dp = inputs.datapoint;
+      validateShape(dp, "datapoint", ["persona", "scenario", "first_message"]);
+      datapoints = [dp as Datapoint];
     } else if (inputs.datapoints) {
-      datapoints = inputs.datapoints as Datapoint[];
+      const dps = inputs.datapoints;
+      if (!Array.isArray(dps)) {
+        throw new Error("Expected 'datapoints' to be an array");
+      }
+      for (const dp of dps) {
+        validateShape(dp, "datapoints[]", [
+          "persona",
+          "scenario",
+          "first_message",
+        ]);
+      }
+      datapoints = dps as Datapoint[];
     } else if (inputs.persona && inputs.scenario) {
+      validateShape(inputs.persona, "persona", ["name"]);
+      validateShape(inputs.scenario, "scenario", ["name", "goal"]);
       personas = [inputs.persona as Persona];
       scenarios = [inputs.scenario as Scenario];
     } else if (inputs.personas && inputs.scenarios) {
+      if (!Array.isArray(inputs.personas) || !Array.isArray(inputs.scenarios)) {
+        throw new Error(
+          "Expected 'personas' and 'scenarios' to be arrays",
+        );
+      }
+      for (const p of inputs.personas) validateShape(p, "personas[]", ["name"]);
+      for (const s of inputs.scenarios)
+        validateShape(s, "scenarios[]", ["name", "goal"]);
       personas = inputs.personas as Persona[];
       scenarios = inputs.scenarios as Scenario[];
     } else {
@@ -150,4 +173,22 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
       output: openResponsesOutput as unknown as Output,
     };
   };
+}
+
+/** Lightweight runtime check that an object has the expected keys. */
+function validateShape(
+  value: unknown,
+  label: string,
+  requiredKeys: string[],
+): void {
+  if (typeof value !== "object" || value === null) {
+    throw new Error(`Expected '${label}' to be an object, got ${typeof value}`);
+  }
+  for (const key of requiredKeys) {
+    if (!(key in value)) {
+      throw new Error(
+        `Invalid '${label}': missing required field '${key}'`,
+      );
+    }
+  }
 }
