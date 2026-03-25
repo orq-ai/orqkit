@@ -247,16 +247,20 @@ class ORQAgentTarget:
         self._last_token_usage = None
         return usage
 
-    def clone(self) -> "ORQAgentTarget":
+    def clone(self, memory_entity_id: str | None = None) -> "ORQAgentTarget":
         """Create a fresh target instance with the same config but isolated state.
 
         Used by parallel job runners to ensure each worker has its own
         ``_task_id`` and ``_last_token_usage`` rather than sharing state.
+
+        Args:
+            memory_entity_id: Optional override for memory entity isolation.
+                When *None*, inherits from the source instance.
         """
         return ORQAgentTarget(
             agent_key=self.agent_key,
             orq_client=self.orq_client,
-            memory_entity_id=self.memory_entity_id,
+            memory_entity_id=memory_entity_id if memory_entity_id is not None else self.memory_entity_id,
             model=self.model,
         )
 

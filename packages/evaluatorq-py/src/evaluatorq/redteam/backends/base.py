@@ -96,6 +96,10 @@ class DirectTargetFactory:
 
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> AgentTarget:
         if self._clone_fn is not None:
+            import inspect
+            sig = inspect.signature(self._clone_fn)
+            if 'memory_entity_id' in sig.parameters:
+                return cast("AgentTarget", self._clone_fn(memory_entity_id=memory_entity_id))
             return cast("AgentTarget", self._clone_fn())
         return self._target
 
