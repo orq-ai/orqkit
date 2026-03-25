@@ -79,9 +79,15 @@ export async function simulate(
       );
     }
 
+    const apiKey = process.env.ORQ_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "ORQ_API_KEY environment variable is not set. Set it before calling simulate().",
+      );
+    }
     // Create a shared HTTP client so the generator doesn't leak its own pool
     const sharedClient = new OpenAI({
-      apiKey: process.env.ORQ_API_KEY,
+      apiKey,
       baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
     });
     // Generate first messages for each combination (with bounded concurrency)

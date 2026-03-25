@@ -404,10 +404,8 @@ export class SimulationRunner {
   /** Close and cleanup shared HTTP client. */
   async close(): Promise<void> {
     if (this.sharedClient) {
-      const client = this.sharedClient as unknown as {
-        _client?: { destroy?: () => void };
-      };
-      client._client?.destroy?.();
+      // The OpenAI SDK doesn't expose a public close(). Setting the reference
+      // to null allows GC to eventually release the connection pool.
       this.sharedClient = null;
     }
   }
@@ -464,16 +462,24 @@ export class SimulationRunner {
       this.run({ datapoint, maxTurns, signal: controller.signal }).then(
         (result) => {
           clearTimeout(timer);
-          if (!controller.signal.aborted) {
+          if (controller.signal.aborted) {
+            resolve({
+              ...result,
+              terminated_by: "timeout" as const,
+              reason: `Simulation timed out after ${timeoutMs}ms`,
+              metadata: {
+                ...(result.metadata as Record<string, unknown>),
+                timeout: timeoutMs,
+              },
+            });
+          } else {
             resolve(result);
           }
         },
         (err) => {
           clearTimeout(timer);
-          if (!controller.signal.aborted) {
-            const reason = err instanceof Error ? err.message : String(err);
-            resolve(errorResult(reason, datapoint.persona, datapoint.scenario));
-          }
+          const reason = err instanceof Error ? err.message : String(err);
+          resolve(errorResult(reason, datapoint.persona, datapoint.scenario));
         },
       );
     });
