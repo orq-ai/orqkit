@@ -127,9 +127,7 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
       scenarios = [inputs.scenario as Scenario];
     } else if (inputs.personas && inputs.scenarios) {
       if (!Array.isArray(inputs.personas) || !Array.isArray(inputs.scenarios)) {
-        throw new Error(
-          "Expected 'personas' and 'scenarios' to be arrays",
-        );
+        throw new Error("Expected 'personas' and 'scenarios' to be arrays");
       }
       for (const p of inputs.personas) validateShape(p, "personas[]", ["name"]);
       for (const s of inputs.scenarios)
@@ -186,9 +184,7 @@ function validateShape(
   }
   for (const key of requiredKeys) {
     if (!(key in value)) {
-      throw new Error(
-        `Invalid '${label}': missing required field '${key}'`,
-      );
+      throw new Error(`Invalid '${label}': missing required field '${key}'`);
     }
   }
 }
