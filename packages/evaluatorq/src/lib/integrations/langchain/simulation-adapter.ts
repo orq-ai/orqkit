@@ -95,10 +95,20 @@ export function toSimulationCallback(
 
     const result = await agent.invoke({ messages: langchainMessages });
 
+    // Handle agents that return a plain string directly
+    if (typeof result === "string") return result;
+    if (typeof (result as { output?: unknown }).output === "string") {
+      return (result as { output: string }).output;
+    }
+
     // Extract the last AI/assistant message from the result
     const resultMessages = (result as { messages?: unknown[] }).messages;
 
     if (!resultMessages || resultMessages.length === 0) {
+      console.warn(
+        "LangChain toSimulationCallback: agent result contained no messages — returning empty string. " +
+          "Ensure the agent returns a state with a `messages` array, or return a string directly.",
+      );
       return "";
     }
 

@@ -77,17 +77,24 @@ export async function simulate(
       );
     }
 
-    // Generate first messages for each combination (in parallel)
+    // Generate first messages for each combination (with bounded concurrency)
     const firstMsgGen = new FirstMessageGenerator({ model });
     const pairs = personas.flatMap((persona) =>
       scenarios.map((scenario) => ({ persona, scenario })),
     );
-    datapoints = await Promise.all(
-      pairs.map(async ({ persona, scenario }) => {
-        const firstMessage = await firstMsgGen.generate(persona, scenario);
-        return generateDatapoint(persona, scenario, firstMessage);
-      }),
-    );
+    const FIRST_MSG_CONCURRENCY = 5;
+    const generatedDatapoints: Datapoint[] = [];
+    for (let i = 0; i < pairs.length; i += FIRST_MSG_CONCURRENCY) {
+      const batch = pairs.slice(i, i + FIRST_MSG_CONCURRENCY);
+      const batchResults = await Promise.all(
+        batch.map(async ({ persona, scenario }) => {
+          const firstMessage = await firstMsgGen.generate(persona, scenario);
+          return generateDatapoint(persona, scenario, firstMessage);
+        }),
+      );
+      generatedDatapoints.push(...batchResults);
+    }
+    datapoints = generatedDatapoints;
   }
 
   if (!datapoints || datapoints.length === 0) {

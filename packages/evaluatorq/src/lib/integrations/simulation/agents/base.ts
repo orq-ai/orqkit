@@ -270,10 +270,14 @@ export abstract class BaseAgent {
         const isNetworkError =
           !isApiError &&
           err instanceof Error &&
-          ("code" in err ||
-            err.message.includes("ECONNREFUSED") ||
-            err.message.includes("ETIMEDOUT") ||
-            err.message.includes("fetch failed"));
+          "code" in err &&
+          typeof (err as NodeJS.ErrnoException).code === "string" &&
+          /^E(CONN|TIMEOUT|NOTFOUND|RESET)/.test(
+            (err as NodeJS.ErrnoException).code ?? "",
+          );
+
+        // Re-throw immediately for external cancellation
+        if (isAbort && options?.signal?.aborted) throw err;
 
         if (!isRetryableStatus(status) && !isNetworkError) {
           throw err;
@@ -284,7 +288,7 @@ export abstract class BaseAgent {
           const waitMs = Math.min(baseWait, RETRY_MAX_WAIT_MS);
           // Add jitter (0-25% of wait time)
           const jitter = Math.random() * waitMs * 0.25;
-          await sleep(waitMs + jitter);
+          await sleepCancellable(waitMs + jitter, options?.signal);
         }
       }
     }
@@ -300,6 +304,20 @@ export abstract class BaseAgent {
 // Utility
 // ---------------------------------------------------------------------------
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function sleepCancellable(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error("Cancelled"));
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(new Error("Cancelled"));
+      },
+      { once: true },
+    );
+  });
 }
