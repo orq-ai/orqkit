@@ -171,6 +171,21 @@ export interface ScenarioGeneratorConfig {
 }
 
 /**
+ * Safely parse a JSON string into an array of scenario dicts.
+ * Returns an empty array (with a warning) if the parsed result is not an array.
+ */
+function parseJsonArray(json: string): Record<string, unknown>[] {
+  const parsed: unknown = JSON.parse(json);
+  if (!Array.isArray(parsed)) {
+    console.warn(
+      "ScenarioGenerator: expected JSON array but got non-array response",
+    );
+    return [];
+  }
+  return parsed as Record<string, unknown>[];
+}
+
+/**
  * Parse raw scenario dicts from JSON into typed Scenario objects.
  */
 function parseScenarios(scenarioDicts: Record<string, unknown>[]): Scenario[] {
@@ -280,7 +295,7 @@ Return ONLY a JSON array, no other text.`;
 
       const content = response.choices[0]?.message.content ?? "[]";
       const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = JSON.parse(extracted) as Record<string, unknown>[];
+      const scenarioDicts = parseJsonArray(extracted);
       const scenarios = parseScenarios(scenarioDicts);
 
       if (scenarios.length < numScenarios) {
@@ -363,7 +378,7 @@ Return ONLY a JSON array, no other text.`;
 
       const content = response.choices[0]?.message.content ?? "[]";
       const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = JSON.parse(extracted) as Record<string, unknown>[];
+      const scenarioDicts = parseJsonArray(extracted);
       let scenarios = parseScenarios(scenarioDicts);
 
       // Validate coverage and fill gaps
@@ -494,7 +509,7 @@ Return ONLY a JSON array, no other text.`;
 
       const content = response.choices[0]?.message.content ?? "[]";
       const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = JSON.parse(extracted) as Record<string, unknown>[];
+      const scenarioDicts = parseJsonArray(extracted);
 
       // Force edge case flag
       for (const sDict of scenarioDicts) {
@@ -555,7 +570,7 @@ Return ONLY a JSON array, no other text.`;
 
       const content = response.choices[0]?.message.content ?? "[]";
       const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = JSON.parse(extracted) as Record<string, unknown>[];
+      const scenarioDicts = parseJsonArray(extracted);
 
       // Force edge case flag
       for (const sDict of scenarioDicts) {
@@ -639,7 +654,7 @@ Return ONLY a JSON array, no other text.`;
 
       const content = response.choices[0]?.message.content ?? "[]";
       const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = JSON.parse(extracted) as Record<string, unknown>[];
+      const scenarioDicts = parseJsonArray(extracted);
 
       // Force edge case flag
       for (const sDict of scenarioDicts) {

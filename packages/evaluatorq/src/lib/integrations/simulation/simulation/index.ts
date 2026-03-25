@@ -89,6 +89,12 @@ export async function simulate(
     );
   }
 
+  if (!datapoints || datapoints.length === 0) {
+    throw new Error(
+      "No datapoints to simulate — persona or scenario generation may have failed",
+    );
+  }
+
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
@@ -206,10 +212,18 @@ export async function generateAndSimulate(
     const generators = await import("../generators/index.js");
     PersonaGenerator = generators.PersonaGenerator;
     ScenarioGenerator = generators.ScenarioGenerator;
-  } catch {
-    throw new Error(
-      "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
-    );
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    if (
+      err.code === "MODULE_NOT_FOUND" ||
+      err.code === "ERR_MODULE_NOT_FOUND" ||
+      err.message?.includes("Cannot find module")
+    ) {
+      throw new Error(
+        "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
+      );
+    }
+    throw error;
   }
 
   // Generate personas and scenarios in parallel

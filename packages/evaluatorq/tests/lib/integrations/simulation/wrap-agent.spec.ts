@@ -8,7 +8,7 @@ import type { DataPoint } from "../../../../src/lib/types.js";
 // ---------------------------------------------------------------------------
 
 function makeSimulationResult(
-  _overrides: Partial<SimulationResult> = {},
+  overrides: Partial<SimulationResult> = {},
 ): SimulationResult {
   return {
     messages: [
@@ -24,6 +24,7 @@ function makeSimulationResult(
     token_usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
     turn_metrics: [],
     metadata: {},
+    ...overrides,
   };
 }
 

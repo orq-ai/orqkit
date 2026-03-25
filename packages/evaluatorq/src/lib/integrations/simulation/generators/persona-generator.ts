@@ -115,7 +115,12 @@ export class PersonaGenerator {
     const extracted = extractJsonFromResponse(content);
     let personaDicts: unknown[];
     try {
-      personaDicts = JSON.parse(extracted) as unknown[];
+      const parsed: unknown = JSON.parse(extracted);
+      if (!Array.isArray(parsed)) {
+        console.warn("Failed to parse personas: expected JSON array");
+        return [];
+      }
+      personaDicts = parsed;
     } catch {
       console.warn("Failed to parse personas JSON response");
       return [];

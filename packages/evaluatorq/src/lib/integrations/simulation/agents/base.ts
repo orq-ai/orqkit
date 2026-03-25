@@ -259,10 +259,14 @@ export abstract class BaseAgent {
       } catch (err: unknown) {
         lastError = err;
 
+        // Abort errors (from timeout cancellation) should never be retried
+        if (err instanceof Error && err.name === "AbortError") {
+          throw err;
+        }
+
         // Determine if retryable
         const isApiError = err instanceof OpenAI.APIError;
         const status = isApiError ? err.status : undefined;
-        const isAbort = err instanceof Error && err.name === "AbortError";
         const isNetworkError =
           !isApiError &&
           err instanceof Error &&
@@ -271,7 +275,7 @@ export abstract class BaseAgent {
             err.message.includes("ETIMEDOUT") ||
             err.message.includes("fetch failed"));
 
-        if (!isRetryableStatus(status) && !isAbort && !isNetworkError) {
+        if (!isRetryableStatus(status) && !isNetworkError) {
           throw err;
         }
 

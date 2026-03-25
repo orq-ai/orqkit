@@ -31,15 +31,6 @@ export interface TargetAgent {
   respond(messages: ChatMessage[]): Promise<string>;
 }
 
-/** Protocol for judge agents. */
-export interface JudgeProtocol {
-  evaluate(
-    messages: ChatMessage[],
-    options?: { signal?: AbortSignal },
-  ): Promise<Judgment>;
-  getUsage?(): TokenUsage;
-}
-
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
@@ -71,8 +62,14 @@ export interface RunBatchParams {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: create error SimulationResult
+// Helpers: create SimulationResult variants
 // ---------------------------------------------------------------------------
+
+const ZERO_USAGE: TokenUsage = {
+  prompt_tokens: 0,
+  completion_tokens: 0,
+  total_tokens: 0,
+};
 
 function errorResult(
   reason: string,
@@ -88,12 +85,57 @@ function errorResult(
     rules_broken: [],
     turn_count: 0,
     turn_metrics: [],
-    token_usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    token_usage: { ...ZERO_USAGE },
     metadata: {
       persona: persona?.name ?? "unknown",
       scenario: scenario?.name ?? "unknown",
       error: reason,
     },
+  };
+}
+
+function timeoutResult(
+  timeoutMs: number,
+  persona?: Persona,
+  scenario?: Scenario,
+): SimulationResult {
+  return {
+    messages: [],
+    terminated_by: "timeout",
+    reason: `Simulation timed out after ${timeoutMs}ms`,
+    goal_achieved: false,
+    goal_completion_score: 0,
+    rules_broken: [],
+    turn_count: 0,
+    turn_metrics: [],
+    token_usage: { ...ZERO_USAGE },
+    metadata: {
+      persona: persona?.name,
+      scenario: scenario?.name,
+      timeout: timeoutMs,
+    },
+  };
+}
+
+function maxTurnsResult(
+  maxTurns: number,
+  messages: Message[],
+  turnMetrics: TurnMetrics[],
+  tokenUsage: TokenUsage,
+  persona?: Persona,
+  scenario?: Scenario,
+): SimulationResult {
+  return {
+    messages,
+    terminated_by: "max_turns",
+    reason: `Maximum turns (${maxTurns}) reached`,
+    goal_achieved: false,
+    goal_completion_score: 0,
+    rules_broken: [],
+    turn_count: maxTurns,
+    turn_metrics: turnMetrics,
+    token_usage: tokenUsage,
+    metadata: { persona: persona?.name, scenario: scenario?.name },
   };
 }
 
@@ -131,7 +173,7 @@ export class SimulationRunner {
 
   private getSharedClient(): OpenAI {
     if (!this.sharedClient) {
-      const apiKey = process.env.ORQ_API_KEY ?? process.env.OPENAI_API_KEY;
+      const apiKey = process.env.ORQ_API_KEY;
       if (!apiKey) {
         throw new Error(
           "ORQ_API_KEY environment variable is not set. Set it or pass a pre-configured client.",
@@ -170,70 +212,75 @@ export class SimulationRunner {
 
     const maxTurns = params.maxTurns ?? this.maxTurns;
 
-    // Use stored system prompt if available, otherwise build from persona+scenario
-    const systemPrompt =
-      storedSystemPrompt ??
-      buildDatapointSystemPrompt(persona as Persona, scenario as Scenario);
-
-    const client = this.getSharedClient();
-
-    // Always create fresh agents per simulation (no shared state between concurrent runs)
-    const userSimulator = new UserSimulatorAgent({
-      model: this.model,
-      client,
-      systemPrompt: systemPrompt,
-    });
-
-    const judge = new JudgeAgent({
-      model: this.model,
-      client,
-      goal: scenario?.goal,
-      criteria: scenario?.criteria ?? [],
-      groundTruth: scenario?.ground_truth ?? "",
-    });
-
     const messages: Message[] = [];
     const turnMetricsList: TurnMetrics[] = [];
 
-    const getTotalUsage = (): TokenUsage => {
-      const usage = userSimulator.getUsage();
-      const judgeUsage = judge.getUsage();
-      usage.prompt_tokens += judgeUsage.prompt_tokens;
-      usage.completion_tokens += judgeUsage.completion_tokens;
-      usage.total_tokens += judgeUsage.total_tokens;
-      return usage;
-    };
-
-    const buildTurnMetrics = (
-      turnNum: number,
-      judgment: Judgment,
-      usageBefore: TokenUsage,
-    ): TurnMetrics => {
-      const usageAfter = getTotalUsage();
-      return {
-        turn_number: turnNum,
-        token_usage: {
-          prompt_tokens: usageAfter.prompt_tokens - usageBefore.prompt_tokens,
-          completion_tokens:
-            usageAfter.completion_tokens - usageBefore.completion_tokens,
-          total_tokens: usageAfter.total_tokens - usageBefore.total_tokens,
-        },
-        response_quality: judgment.response_quality ?? null,
-        hallucination_risk: judgment.hallucination_risk ?? null,
-        tone_appropriateness: judgment.tone_appropriateness ?? null,
-        factual_accuracy: judgment.factual_accuracy ?? null,
-        judge_reason: judgment.reason,
-      };
-    };
-
-    /** Check if this run has been cancelled (timeout). */
-    const checkCancelled = (): void => {
-      if (signal?.aborted) {
-        throw new Error("Simulation cancelled");
-      }
-    };
+    // Declare usage helper references — initialized inside try after agents are created
+    let getTotalUsage: (() => TokenUsage) | undefined;
 
     try {
+      // Use stored system prompt if available, otherwise build from persona+scenario
+      const systemPrompt =
+        storedSystemPrompt ??
+        buildDatapointSystemPrompt(persona as Persona, scenario as Scenario);
+
+      const client = this.getSharedClient();
+
+      // Always create fresh agents per simulation (no shared state between concurrent runs)
+      const userSimulator = new UserSimulatorAgent({
+        model: this.model,
+        client,
+        systemPrompt: systemPrompt,
+      });
+
+      const judge = new JudgeAgent({
+        model: this.model,
+        client,
+        goal: scenario?.goal,
+        criteria: scenario?.criteria ?? [],
+        groundTruth: scenario?.ground_truth ?? "",
+      });
+
+      getTotalUsage = (): TokenUsage => {
+        const usage = userSimulator.getUsage();
+        const judgeUsage = judge.getUsage();
+        usage.prompt_tokens += judgeUsage.prompt_tokens;
+        usage.completion_tokens += judgeUsage.completion_tokens;
+        usage.total_tokens += judgeUsage.total_tokens;
+        return usage;
+      };
+
+      const buildTurnMetrics = (
+        turnNum: number,
+        judgment: Judgment,
+        usageBefore: TokenUsage,
+      ): TurnMetrics => {
+        const usageAfter = (getTotalUsage as () => TokenUsage)();
+        return {
+          turn_number: turnNum,
+          token_usage: {
+            prompt_tokens:
+              usageAfter.prompt_tokens - usageBefore.prompt_tokens,
+            completion_tokens:
+              usageAfter.completion_tokens - usageBefore.completion_tokens,
+            total_tokens:
+              usageAfter.total_tokens - usageBefore.total_tokens,
+          },
+          response_quality: judgment.response_quality ?? null,
+          hallucination_risk: judgment.hallucination_risk ?? null,
+          tone_appropriateness: judgment.tone_appropriateness ?? null,
+          factual_accuracy: judgment.factual_accuracy ?? null,
+          judge_reason: judgment.reason,
+        };
+      };
+
+      /** Check if this run has been cancelled (timeout). */
+      const checkCancelled = (): void => {
+        if (signal?.aborted) {
+          throw new Error("Simulation cancelled");
+        }
+      };
+
       checkCancelled();
 
       // Generate or use first message
@@ -293,42 +340,29 @@ export class SimulationRunner {
       }
 
       // Max turns reached
-      return {
+      return maxTurnsResult(
+        maxTurns,
         messages,
-        terminated_by: "max_turns",
-        reason: `Maximum turns (${maxTurns}) reached`,
-        goal_achieved: false,
-        goal_completion_score: 0,
-        rules_broken: [],
-        turn_count: maxTurns,
-        turn_metrics: turnMetricsList,
-        token_usage: getTotalUsage(),
-        metadata: { persona: persona?.name, scenario: scenario?.name },
-      };
+        turnMetricsList,
+        getTotalUsage(),
+        persona,
+        scenario,
+      );
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e);
       let usage: TokenUsage;
       try {
-        usage = getTotalUsage();
-      } catch {
-        usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+        usage = getTotalUsage ? getTotalUsage() : { ...ZERO_USAGE };
+      } catch (usageErr) {
+        console.warn("Failed to collect token usage:", usageErr);
+        usage = { ...ZERO_USAGE };
       }
-      return {
-        messages,
-        terminated_by: "error",
-        reason: errorMsg,
-        goal_achieved: false,
-        goal_completion_score: 0,
-        rules_broken: [],
-        turn_count: messages.filter((m) => m.role === "assistant").length,
-        turn_metrics: turnMetricsList,
-        token_usage: usage,
-        metadata: {
-          persona: persona?.name ?? "unknown",
-          scenario: scenario?.name ?? "unknown",
-          error: errorMsg,
-        },
-      };
+      const result = errorResult(errorMsg, persona, scenario);
+      result.messages = messages;
+      result.turn_count = messages.filter((m) => m.role === "assistant").length;
+      result.turn_metrics = turnMetricsList;
+      result.token_usage = usage;
+      return result;
     }
   }
 
@@ -383,26 +417,12 @@ export class SimulationRunner {
         result.reason instanceof Error
           ? result.reason.message
           : String(result.reason);
-      return {
-        messages: [],
-        terminated_by: "error" as const,
-        reason: `${result.reason?.constructor?.name ?? "Error"}: ${errorMsg}`,
-        goal_achieved: false,
-        goal_completion_score: 0,
-        rules_broken: [],
-        turn_count: 0,
-        turn_metrics: [],
-        token_usage: {
-          prompt_tokens: 0,
-          completion_tokens: 0,
-          total_tokens: 0,
-        },
-        metadata: {
-          persona: datapoints[i]?.persona.name,
-          scenario: datapoints[i]?.scenario.name,
-          error: errorMsg,
-        },
-      };
+      const reason = `${result.reason?.constructor?.name ?? "Error"}: ${errorMsg}`;
+      return errorResult(
+        reason,
+        datapoints[i]?.persona,
+        datapoints[i]?.scenario,
+      );
     });
   }
 
@@ -464,42 +484,27 @@ export class SimulationRunner {
     }
 
     const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    return new Promise<SimulationResult>((resolve) => {
-      const timer = setTimeout(() => {
-        controller.abort();
-        resolve({
-          messages: [],
-          terminated_by: "timeout",
-          reason: `Simulation timed out after ${timeoutMs}ms`,
-          goal_achieved: false,
-          goal_completion_score: 0,
-          rules_broken: [],
-          turn_count: 0,
-          turn_metrics: [],
-          token_usage: {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-            total_tokens: 0,
-          },
-          metadata: {
-            persona: datapoint.persona.name,
-            scenario: datapoint.scenario.name,
-            timeout: timeoutMs,
-          },
-        });
-      }, timeoutMs);
+    try {
+      const result = await this.run({
+        datapoint,
+        maxTurns,
+        signal: controller.signal,
+      });
 
-      // run() never throws — it catches all errors internally and returns
-      // an error SimulationResult. The .then() is sufficient.
-      this.run({ datapoint, maxTurns, signal: controller.signal }).then(
-        (result) => {
-          clearTimeout(timer);
-          if (!controller.signal.aborted) {
-            resolve(result);
-          }
-        },
-      );
-    });
+      // If the abort fired during run(), override terminated_by to "timeout"
+      if (controller.signal.aborted) {
+        return timeoutResult(
+          timeoutMs,
+          datapoint.persona,
+          datapoint.scenario,
+        );
+      }
+
+      return result;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }

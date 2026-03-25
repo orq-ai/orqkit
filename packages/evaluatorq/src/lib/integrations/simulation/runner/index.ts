@@ -3,7 +3,6 @@
  */
 
 export {
-  type JudgeProtocol,
   type RunBatchParams,
   type RunParams,
   SimulationRunner,
