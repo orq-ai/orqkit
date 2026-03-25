@@ -141,7 +141,7 @@ describe("SimulationRunner.runBatch()", () => {
 			});
 
 			expect(results).toHaveLength(1);
-			expect(results[0]!.terminated_by).toBe("error");
+			expect(results[0]?.terminated_by).toBe("error");
 		} finally {
 			if (originalKey) {
 				process.env.ORQ_API_KEY = originalKey;
