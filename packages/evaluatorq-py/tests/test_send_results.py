@@ -1,5 +1,6 @@
 """Tests for send_results serialization behavior."""
 
+import json
 from collections.abc import Callable
 from typing import Any
 
@@ -121,6 +122,20 @@ class TestSendResultsSerialization:
             "type": "bert_score",
             "value": {"precision": 0.9, "recall": 0.8, "f1": 0.85},
         }
+
+    def test_stringifies_dict_output_with_nested_pydantic_model(self, build_results: Callable[..., list[DataPointResult]]):
+        from evaluatorq.redteam.contracts import TokenUsage
+
+        usage = TokenUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15, calls=1)
+        payload = serialize(
+            build_results(0.9, output={"response": "hello", "token_usage": usage})
+        )
+        output = payload["results"][0]["jobResults"][0]["output"]
+        assert isinstance(output, str)
+        parsed = json.loads(output)
+        assert parsed["response"] == "hello"
+        assert parsed["token_usage"]["prompt_tokens"] == 10
+        assert parsed["token_usage"]["total_tokens"] == 15
 
     def test_preserves_response_resource_output_as_is(self, build_results: Callable[..., list[DataPointResult]]):
         response_resource = {"object": "response", "id": "resp_123", "model": "gpt-4"}
