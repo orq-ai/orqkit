@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, cast
 
 if TYPE_CHECKING:
     from evaluatorq.redteam.contracts import AgentContext, TokenUsage
@@ -96,7 +96,7 @@ class DirectTargetFactory:
 
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> AgentTarget:
         if self._clone_fn is not None:
-            return self._clone_fn()
+            return cast("AgentTarget", self._clone_fn())
         return self._target
 
 

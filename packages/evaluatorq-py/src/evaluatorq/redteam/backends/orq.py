@@ -260,6 +260,11 @@ class ORQAgentTarget:
             model=self.model,
         )
 
+    @property
+    def name(self) -> str:
+        """Return the agent key as the display name for reports and tracing."""
+        return self.agent_key
+
     # -- SupportsAgentContext --
     async def get_agent_context(self) -> AgentContext:
         """Return agent context for this target's agent key."""

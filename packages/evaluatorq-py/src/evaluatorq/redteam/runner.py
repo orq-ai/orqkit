@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -474,6 +474,11 @@ async def red_team(
             llm_kwargs=llm_kwargs,
         )
     elif resolved_mode == Pipeline.STATIC:
+        if agent_targets:
+            raise ValueError(
+                'Static mode does not support direct AgentTarget objects. '
+                'Use a string target (e.g., "agent:<key>") or switch to dynamic/hybrid mode.'
+            )
         report = await _run_static(
             targets=targets,
             name=name,
@@ -983,7 +988,7 @@ async def _run_dynamic_or_hybrid(
         for _at in _resolved_agent_targets:
             _get_ctx = getattr(_at, 'get_agent_context', None)
             if callable(_get_ctx):
-                _at_ctx = await _get_ctx()
+                _at_ctx = await cast("Any", _get_ctx())
             else:
                 _at_label = getattr(_at, 'name', None) or type(_at).__name__
                 logger.warning(f'AgentTarget {_at_label!r} does not implement get_agent_context(); using minimal context.')
@@ -1138,6 +1143,7 @@ async def _run_dynamic_or_hybrid(
         )
 
         prepared_targets: list[PreparedTarget]
+        first_target: PreparedTarget | None = None
 
         if targets:
             first_target = await _prepare_target(
@@ -1182,7 +1188,7 @@ async def _run_dynamic_or_hybrid(
         # Step 4b: Prepare AgentTarget objects (direct targets)
         if _resolved_agent_targets:
             from evaluatorq import DataPoint, job
-            from evaluatorq.redteam.backends.base import DefaultErrorMapper, DirectTargetFactory, NoopMemoryCleanup as _NoopMemoryCleanup
+            from evaluatorq.redteam.backends.base import AgentTargetFactory as _AgentTargetFactory, DefaultErrorMapper, DirectTargetFactory, ErrorMapper as _ErrorMapper, MemoryCleanup as _MemoryCleanup, NoopMemoryCleanup as _NoopMemoryCleanup
             from evaluatorq.redteam.backends.registry import create_async_llm_client
             from evaluatorq.redteam.adaptive.pipeline import create_dynamic_redteam_job
 
@@ -1206,8 +1212,10 @@ async def _run_dynamic_or_hybrid(
 
                 _at_ctx = _at_contexts[id(_at)]
 
-                # Factory, mapper, cleanup — delegate to target if it supports them
-                _at_factory = _at if callable(getattr(_at, 'create_target', None)) else DirectTargetFactory(_at)
+                # For direct targets, always use DirectTargetFactory (which uses clone()).
+                # The target's create_target() expects an external agent_key string,
+                # which doesn't apply when the key is embedded in the object.
+                _at_factory = DirectTargetFactory(_at)
                 _at_mapper = _at if callable(getattr(_at, 'map_error', None)) else DefaultErrorMapper()
                 _at_cleanup = _at if callable(getattr(_at, 'cleanup_memory', None)) else _NoopMemoryCleanup()
 
@@ -1217,8 +1225,8 @@ async def _run_dynamic_or_hybrid(
                     agent_context=_at_ctx,
                     red_team_model=attack_model,
                     max_turns=max_turns,
-                    target_factory=_at_factory,
-                    error_mapper=_at_mapper,
+                    target_factory=cast("_AgentTargetFactory", _at_factory),
+                    error_mapper=cast("_ErrorMapper", _at_mapper),
                     attack_llm_client=_at_llm_client,
                     memory_entity_ids=_at_mem_ids,
                     attacker_instructions=attacker_instructions,
@@ -1294,7 +1302,7 @@ async def _run_dynamic_or_hybrid(
                     all_datapoints=list(_at_dps),
                     job=_at_target_job,
                     dynamic_job=_at_dyn_job,
-                    resolved_memory_cleanup=_at_cleanup,
+                    resolved_memory_cleanup=cast("_MemoryCleanup", _at_cleanup),
                     resolved_llm_client=_at_llm_client,
                     filtering_metadata=_at_filter_meta,
                     memory_entity_ids=_at_mem_ids,
@@ -1345,9 +1353,10 @@ async def _run_dynamic_or_hybrid(
                 return await static_evaluator['scorer'](params)
 
             evaluators: list[Any] = [{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}]
+            _first = first_target if first_target is not None else prepared_targets[0]
             log_label = (
-                f'{len(first_target.dynamic_datapoints)} dynamic + '
-                f'{len(first_target.static_datapoints)} static datapoints'
+                f'{len(_first.dynamic_datapoints)} dynamic + '
+                f'{len(_first.static_datapoints)} static datapoints'
             )
         else:
             evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)

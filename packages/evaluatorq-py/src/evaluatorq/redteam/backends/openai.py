@@ -150,13 +150,8 @@ class OpenAITargetFactory:
         return OpenAIModelTarget(model_id=agent_key, client=self._client, system_prompt=self._system_prompt)
 
 
-class NoopMemoryCleanup:
-    """No-op cleanup for backends without managed memory stores."""
-
-    async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
-        """No-op cleanup since OpenAI backend does not manage memory stores."""
-        _ = (agent_context, entity_ids)
-        logger.debug('Skipping memory cleanup: backend has no managed memory API')
+# Re-export from base for backward compatibility
+from evaluatorq.redteam.backends.base import NoopMemoryCleanup as NoopMemoryCleanup  # noqa: F811, E402
 
 
 class OpenAIErrorMapper:

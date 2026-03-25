@@ -378,7 +378,7 @@ class TestRedTeamWithAgentTarget:
     async def test_invalid_target_type_raises(self):
         """Passing an object that does not implement AgentTarget protocol raises TypeError."""
         with pytest.raises(TypeError, match='Invalid target type'):
-            await red_team(42)  # type: ignore[arg-type]
+            await red_team(42)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
 
     @pytest.mark.asyncio
     async def test_invalid_item_in_list_raises(self):
@@ -391,4 +391,4 @@ class TestRedTeamWithAgentTarget:
                 pass
 
         with pytest.raises(TypeError, match='Invalid target type'):
-            await red_team([MockTarget(), 42])  # type: ignore[list-item]
+            await red_team([MockTarget(), 42])  # type: ignore[list-item, arg-type]  # pyright: ignore[reportArgumentType]
