@@ -11,7 +11,9 @@ Output = str | int | float | bool | dict[str, Any] | None
 """Output type alias"""
 
 
-EvaluationResultCellValue = str | int | float | dict[str, "str | float | dict[str, str | float]"]
+EvaluationResultCellValue = (
+    str | int | float | dict[str, str | float | dict[str, str | float]]
+)
 
 
 class EvaluationResultCell(BaseModel):
@@ -21,6 +23,13 @@ class EvaluationResultCell(BaseModel):
 
 def _is_evaluation_result_cell_dict(value: dict[str, Any]) -> bool:
     return isinstance(value.get("type"), str) and isinstance(value.get("value"), dict)
+
+
+def _json_default(obj: Any) -> Any:
+    """Fallback for json.dumps: convert Pydantic models to dicts, else str."""
+    if isinstance(obj, BaseModel):
+        return obj.model_dump(mode="json")
+    return str(obj)
 
 
 class EvaluationResult(BaseModel):
@@ -36,7 +45,7 @@ class EvaluationResult(BaseModel):
         value: str | int | float | bool | EvaluationResultCell | dict[str, Any],
     ) -> Any:
         if isinstance(value, dict) and not _is_evaluation_result_cell_dict(value):
-            return json.dumps(value, default=str)
+            return json.dumps(value, default=_json_default)
 
         return value
 
@@ -58,7 +67,7 @@ class JobResult(BaseModel):
     @field_serializer("output", when_used="json")
     def serialize_output(self, output: Output) -> Any:
         if isinstance(output, dict) and output.get("object") != "response":
-            return json.dumps(output, default=str)
+            return json.dumps(output, default=_json_default)
 
         return output
 
@@ -119,7 +128,7 @@ Job = Callable[[DataPoint, int], Awaitable[dict[str, Any]]]
 
 
 class ScorerParameter(TypedDict):
-    """Parameters passed to a scorer function  
+    """Parameters passed to a scorer function
     Args:
         data: The data point being evaluated.
         output: The output produced by the job for the data point.
