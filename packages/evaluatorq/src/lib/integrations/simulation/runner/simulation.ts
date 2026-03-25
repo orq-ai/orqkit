@@ -259,12 +259,10 @@ export class SimulationRunner {
         return {
           turn_number: turnNum,
           token_usage: {
-            prompt_tokens:
-              usageAfter.prompt_tokens - usageBefore.prompt_tokens,
+            prompt_tokens: usageAfter.prompt_tokens - usageBefore.prompt_tokens,
             completion_tokens:
               usageAfter.completion_tokens - usageBefore.completion_tokens,
-            total_tokens:
-              usageAfter.total_tokens - usageBefore.total_tokens,
+            total_tokens: usageAfter.total_tokens - usageBefore.total_tokens,
           },
           response_quality: judgment.response_quality ?? null,
           hallucination_risk: judgment.hallucination_risk ?? null,
@@ -495,11 +493,7 @@ export class SimulationRunner {
 
       // If the abort fired during run(), override terminated_by to "timeout"
       if (controller.signal.aborted) {
-        return timeoutResult(
-          timeoutMs,
-          datapoint.persona,
-          datapoint.scenario,
-        );
+        return timeoutResult(timeoutMs, datapoint.persona, datapoint.scenario);
       }
 
       return result;
