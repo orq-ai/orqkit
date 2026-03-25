@@ -14,6 +14,7 @@
  */
 export function delimit(text: string): string {
   const sanitized = text
+    .replace(/&/g, "&amp;")           // must be first
     .replace(/<data>/gi, "&lt;data&gt;")
     .replace(/<\/data>/gi, "&lt;/data&gt;");
   return `<data>${sanitized}</data>`;
