@@ -94,29 +94,6 @@ function errorResult(
   };
 }
 
-function timeoutResult(
-  timeoutMs: number,
-  persona?: Persona,
-  scenario?: Scenario,
-): SimulationResult {
-  return {
-    messages: [],
-    terminated_by: "timeout",
-    reason: `Simulation timed out after ${timeoutMs}ms`,
-    goal_achieved: false,
-    goal_completion_score: 0,
-    rules_broken: [],
-    turn_count: 0,
-    turn_metrics: [],
-    token_usage: { ...ZERO_USAGE },
-    metadata: {
-      persona: persona?.name,
-      scenario: scenario?.name,
-      timeout: timeoutMs,
-    },
-  };
-}
-
 function maxTurnsResult(
   maxTurns: number,
   messages: Message[],
@@ -491,9 +468,17 @@ export class SimulationRunner {
         signal: controller.signal,
       });
 
-      // If the abort fired during run(), override terminated_by to "timeout"
+      // If the abort fired during run(), preserve partial data but mark as timeout
       if (controller.signal.aborted) {
-        return timeoutResult(timeoutMs, datapoint.persona, datapoint.scenario);
+        return {
+          ...result,
+          terminated_by: "timeout" as const,
+          reason: `Simulation timed out after ${timeoutMs}ms`,
+          metadata: {
+            ...(result.metadata as Record<string, unknown>),
+            timeout: timeoutMs,
+          },
+        };
       }
 
       return result;
