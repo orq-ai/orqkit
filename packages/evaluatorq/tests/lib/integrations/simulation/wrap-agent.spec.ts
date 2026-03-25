@@ -234,7 +234,7 @@ describe("wrapSimulationAgent", () => {
       inputs: { persona: samplePersona, scenario: sampleScenario },
     };
 
-    expect(job(data, 0)).rejects.toThrow(
+    await expect(job(data, 0)).rejects.toThrow(
       "wrapSimulationAgent requires either targetCallback or agentKey",
     );
   });
@@ -245,7 +245,9 @@ describe("wrapSimulationAgent", () => {
 
     const data: DataPoint = { inputs: {} };
 
-    expect(job(data, 0)).rejects.toThrow("Expected data.inputs to contain");
+    await expect(job(data, 0)).rejects.toThrow(
+      "Expected data.inputs to contain",
+    );
   });
 
   test("10. passes targetCallback through to simulate", async () => {

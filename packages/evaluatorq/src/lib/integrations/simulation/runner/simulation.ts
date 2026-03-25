@@ -419,11 +419,7 @@ export class SimulationRunner {
       return this.targetAgent.respond(messages);
     }
     if (this.targetCallback) {
-      const result = this.targetCallback(messages);
-      if (result instanceof Promise) {
-        return result;
-      }
-      return result;
+      return this.targetCallback(messages);
     }
     throw new Error("No target agent or callback configured");
   }
@@ -461,29 +457,25 @@ export class SimulationRunner {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const result = await this.run({
-        datapoint,
-        maxTurns,
-        signal: controller.signal,
-      });
-
-      // If the abort fired during run(), preserve partial data but mark as timeout
-      if (controller.signal.aborted) {
-        return {
-          ...result,
-          terminated_by: "timeout" as const,
-          reason: `Simulation timed out after ${timeoutMs}ms`,
-          metadata: {
-            ...(result.metadata as Record<string, unknown>),
-            timeout: timeoutMs,
-          },
-        };
-      }
-
-      return result;
-    } finally {
-      clearTimeout(timer);
-    }
+    return new Promise<SimulationResult>((resolve) => {
+      // run() never throws — it catches all errors internally and returns
+      // an error SimulationResult. The .catch() is a safety net in case
+      // that contract is ever broken.
+      this.run({ datapoint, maxTurns, signal: controller.signal }).then(
+        (result) => {
+          clearTimeout(timer);
+          if (!controller.signal.aborted) {
+            resolve(result);
+          }
+        },
+        (err) => {
+          clearTimeout(timer);
+          if (!controller.signal.aborted) {
+            const reason = err instanceof Error ? err.message : String(err);
+            resolve(errorResult(reason, datapoint.persona, datapoint.scenario));
+          }
+        },
+      );
+    });
   }
 }

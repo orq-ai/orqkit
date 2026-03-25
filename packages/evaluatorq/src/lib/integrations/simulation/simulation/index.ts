@@ -5,6 +5,7 @@
  * either standalone or within the evaluatorq framework.
  */
 
+import { fromOrqDeployment } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { SimulationRunner } from "../runner/simulation.js";
@@ -98,10 +99,7 @@ export async function simulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    const { invoke } = await import("../../../deployment-helper.js");
-    resolvedCallback = async (messages) => {
-      return invoke(params.agentKey as string, { messages });
-    };
+    resolvedCallback = fromOrqDeployment(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -178,10 +176,7 @@ export async function generateAndSimulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    const { invoke } = await import("../../../deployment-helper.js");
-    resolvedCallback = async (messages) => {
-      return invoke(params.agentKey as string, { messages });
-    };
+    resolvedCallback = fromOrqDeployment(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -212,18 +207,11 @@ export async function generateAndSimulate(
     const generators = await import("../generators/index.js");
     PersonaGenerator = generators.PersonaGenerator;
     ScenarioGenerator = generators.ScenarioGenerator;
-  } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    if (
-      err.code === "MODULE_NOT_FOUND" ||
-      err.code === "ERR_MODULE_NOT_FOUND" ||
-      err.message?.includes("Cannot find module")
-    ) {
-      throw new Error(
-        "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
-      );
-    }
-    throw error;
+  } catch (err) {
+    throw new Error(
+      "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
+      { cause: err },
+    );
   }
 
   // Generate personas and scenarios in parallel

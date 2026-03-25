@@ -11,6 +11,8 @@
  * ```
  */
 
+// --- Adapters ---
+export { fromChatCompletions, fromOrqDeployment } from "./adapters.js";
 export type { AgentConfig } from "./agents/base.js";
 // --- Agents (advanced usage) ---
 export { BaseAgent } from "./agents/base.js";
@@ -47,6 +49,8 @@ export type {
 } from "./runner/simulation.js";
 // --- Runner (advanced usage) ---
 export { SimulationRunner } from "./runner/simulation.js";
+// --- Schemas (requires zod) ---
+export { CriterionSchema, PersonaSchema, ScenarioSchema } from "./schemas.js";
 export type {
   GenerateAndSimulateParams,
   SimulateParams,
@@ -73,7 +77,6 @@ export type {
   TokenUsage,
   TurnMetrics,
 } from "./types.js";
-export { CriterionSchema, PersonaSchema, ScenarioSchema } from "./types.js";
 // --- Utils (advanced usage) ---
 export {
   exportDatapointsToJsonl,

@@ -23,6 +23,8 @@
  */
 
 export { convertToOpenResponses } from "./convert.js";
+export type { LangChainSimulationAdapterOptions } from "./simulation-adapter.js";
+export { toSimulationCallback } from "./simulation-adapter.js";
 export type {
   AgentJobOptions,
   ContentBlock,

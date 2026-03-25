@@ -5,6 +5,7 @@
  */
 
 import type { DataPoint, Job, Output } from "../../types.js";
+import { fromOrqDeployment } from "./adapters.js";
 import { toOpenResponses } from "./convert.js";
 import { simulate } from "./simulation/index.js";
 import type {
@@ -86,10 +87,7 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     // Resolve the target callback
     let resolvedCallback = targetCallback;
     if (!resolvedCallback && agentKey) {
-      const { invoke } = await import("../../deployment-helper.js");
-      resolvedCallback = async (messages: ChatMessage[]) => {
-        return invoke(agentKey, { messages });
-      };
+      resolvedCallback = fromOrqDeployment(agentKey);
     }
 
     if (!resolvedCallback) {
