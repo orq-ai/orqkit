@@ -31,7 +31,7 @@ const openai = createOpenAI({
 });
 
 const supportAgent = new ToolLoopAgent({
-  model: openai("gpt-4o"),
+  model: openai.chat("gpt-4o"),
   maxOutputTokens: 2500,
   tools: {
     lookupOrder: tool({
