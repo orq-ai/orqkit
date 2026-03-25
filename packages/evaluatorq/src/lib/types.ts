@@ -26,7 +26,9 @@ type EvaluationResult<T> = {
 
 export interface EvaluatorScore {
   evaluatorName: string;
-  score: EvaluationResult<number | boolean | string | EvaluationResultCell>;
+  score: EvaluationResult<
+    number | boolean | string | EvaluationResultCell | Record<string, unknown>
+  >;
   error?: Error;
 }
 
@@ -115,5 +117,7 @@ export type ScorerParameter = {
 export type Scorer = (
   params: ScorerParameter,
 ) => Promise<
-  EvaluationResult<string | number | boolean | EvaluationResultCell>
+  EvaluationResult<
+    string | number | boolean | EvaluationResultCell | Record<string, unknown>
+  >
 >;
