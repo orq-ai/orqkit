@@ -617,7 +617,7 @@ Return ONLY a JSON array, no other text.`;
         const normalized = cat.toUpperCase().replace("OWASP-", "");
         return `OWASP-${normalized}`;
       });
-      categoryFocus = `\nFocus on these OWASP categories: ${catNames.join(", ")}`;
+      categoryFocus = `\nFocus on these OWASP categories: ${delimit(catNames.join(", "))}`;
     }
 
     let seedText = "";
