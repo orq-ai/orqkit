@@ -277,7 +277,7 @@ export abstract class BaseAgent {
           );
 
         // Re-throw immediately for external cancellation
-        if (isAbort && options?.signal?.aborted) throw err;
+        if (options?.signal?.aborted) throw err;
 
         if (!isRetryableStatus(status) && !isNetworkError) {
           throw err;
