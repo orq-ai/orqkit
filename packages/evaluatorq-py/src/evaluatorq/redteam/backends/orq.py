@@ -260,6 +260,31 @@ class ORQAgentTarget:
             model=self.model,
         )
 
+    # -- SupportsAgentContext --
+    async def get_agent_context(self) -> AgentContext:
+        """Return agent context for this target's agent key."""
+        return await ORQContextProvider(self.orq_client).get_agent_context(self.agent_key)
+
+    # -- SupportsTargetFactory --
+    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> "ORQAgentTarget":
+        """Create a new ORQAgentTarget for the given agent key."""
+        return ORQAgentTarget(
+            agent_key=agent_key,
+            orq_client=self.orq_client,
+            memory_entity_id=memory_entity_id,
+            model=self.model,
+        )
+
+    # -- SupportsMemoryCleanup --
+    async def cleanup_memory(self, agent_context: AgentContext, entity_ids: list[str]) -> None:
+        """Clean up memory entities created during red teaming."""
+        await ORQMemoryCleanup(orq_client=self.orq_client).cleanup_memory(agent_context, entity_ids)
+
+    # -- SupportsErrorMapping --
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Map an exception to a normalized error code and message tuple."""
+        return ORQErrorMapper().map_error(exc)
+
 
 class ORQContextProvider:
     """Retrieves agent context from the ORQ API."""
@@ -451,6 +476,19 @@ class ORQErrorMapper:
         if 'ratelimit' in name or '429' in text:
             return 'orq.rate_limit', f'{type(exc).__name__}: {exc}'
         return 'orq.unknown', f'{type(exc).__name__}: {exc}'
+
+
+def create_orq_agent_target(agent_key: str, orq_client: Any = None) -> ORQAgentTarget:
+    """Create an ORQAgentTarget from environment config."""
+    if orq_client is None:
+        if _orq_cls is None:
+            raise ImportError("ORQ backend requires the orq-ai-sdk package.")
+        orq_client = _orq_cls(
+            api_key=_get_orq_api_key(),
+            server_url=_get_orq_server_url(),
+            timeout_ms=PIPELINE_CONFIG.target_agent_timeout_ms,
+        )
+    return ORQAgentTarget(agent_key=agent_key, orq_client=orq_client)
 
 
 def create_orq_backend(

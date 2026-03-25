@@ -328,3 +328,67 @@ class TestRedTeamMultiTarget:
             result = await red_team('agent:test')
             assert result is mock_report
             mock_pipeline.assert_awaited_once()
+
+
+class TestRedTeamWithAgentTarget:
+    """Tests for passing AgentTarget objects directly to red_team()."""
+
+    @pytest.mark.asyncio
+    async def test_agent_target_dispatches_to_dynamic(self):
+        from unittest.mock import AsyncMock, patch
+
+        class MockTarget:
+            async def send_prompt(self, prompt: str) -> str:
+                return 'response'
+
+            def reset_conversation(self) -> None:
+                pass
+
+        mock_report = _make_report()
+        with patch(
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
+            new_callable=AsyncMock,
+            return_value=mock_report,
+        ) as mock_dyn:
+            result = await red_team(MockTarget())
+            assert result is mock_report
+            mock_dyn.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_agent_target_list_dispatches(self):
+        from unittest.mock import AsyncMock, patch
+
+        class MockTarget:
+            async def send_prompt(self, prompt: str) -> str:
+                return 'response'
+
+            def reset_conversation(self) -> None:
+                pass
+
+        mock_report = _make_report()
+        with patch(
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
+            new_callable=AsyncMock,
+            return_value=mock_report,
+        ):
+            result = await red_team([MockTarget(), 'agent:test'])
+            assert result is mock_report
+
+    @pytest.mark.asyncio
+    async def test_invalid_target_type_raises(self):
+        """Passing an object that does not implement AgentTarget protocol raises TypeError."""
+        with pytest.raises(TypeError, match='Invalid target type'):
+            await red_team(42)  # type: ignore[arg-type]
+
+    @pytest.mark.asyncio
+    async def test_invalid_item_in_list_raises(self):
+        """Passing an invalid item inside a list raises TypeError."""
+        class MockTarget:
+            async def send_prompt(self, prompt: str) -> str:
+                return 'response'
+
+            def reset_conversation(self) -> None:
+                pass
+
+        with pytest.raises(TypeError, match='Invalid target type'):
+            await red_team([MockTarget(), 42])  # type: ignore[list-item]

@@ -205,7 +205,9 @@ if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
     from evaluatorq import DataPoint
-    from evaluatorq.redteam.backends.base import AgentTargetFactory, ErrorMapper, MemoryCleanup
+    from evaluatorq.redteam.backends.base import AgentTarget, AgentTargetFactory, ErrorMapper, MemoryCleanup
+
+from evaluatorq.redteam.backends.base import is_agent_target
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +243,7 @@ class PreparedTarget:
 # ---------------------------------------------------------------------------
 
 async def red_team(
-    target: str | list[str],
+    target: str | AgentTarget | list[str | AgentTarget],
     *,
     config: RedTeamConfig | None = None,
     mode: Pipeline | str = Pipeline.DYNAMIC,
@@ -334,10 +336,39 @@ async def red_team(
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     resolved_output_dir = Path(output_dir) if output_dir is not None else None
 
-    targets = [target] if isinstance(target, str) else list(target)
-    if not targets:
+    if target_factory is not None:
+        import warnings
+        warnings.warn(
+            'target_factory is deprecated. Pass an AgentTarget instance as the target parameter instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if isinstance(target, list):
+        raw_targets: list[str | AgentTarget] = list(target)
+    elif isinstance(target, str):
+        raw_targets = [target]
+    elif is_agent_target(target):
+        raw_targets = [target]
+    else:
+        raise TypeError(f'Invalid target type: {type(target).__name__}. Expected str or AgentTarget.')
+
+    if not raw_targets:
         msg = 'red_team() requires at least one target'
         raise ValueError(msg)
+
+    # Separate string targets from AgentTarget objects
+    string_targets: list[str] = []
+    agent_targets: list[AgentTarget] = []
+    for t in raw_targets:
+        if isinstance(t, str):
+            string_targets.append(t)
+        elif is_agent_target(t):
+            agent_targets.append(t)
+        else:
+            raise TypeError(f'Invalid target type: {type(t).__name__}. Expected str or AgentTarget.')
+
+    targets = string_targets  # existing code uses 'targets' as list[str]
 
     # Build or merge config -------------------------------------------------
     # When ``config`` is provided it is the source of truth for backend,
@@ -362,7 +393,7 @@ async def red_team(
     orq_prefixes = ('agent:', 'deployment:')
     has_orq_target = any(
         any(t.startswith(p) for p in orq_prefixes) or ':' not in t
-        for t in targets
+        for t in string_targets
     )
     if has_orq_target and backend != 'orq':
         logger.debug(
@@ -413,6 +444,7 @@ async def red_team(
     if resolved_mode in (Pipeline.DYNAMIC, Pipeline.HYBRID):
         report = await _run_dynamic_or_hybrid(
             targets=targets,
+            agent_targets=agent_targets,
             mode=resolved_mode,
             name=name,
             categories=resolved_categories,
@@ -837,6 +869,7 @@ async def _prepare_target(
 async def _run_dynamic_or_hybrid(
     *,
     targets: list[str],
+    agent_targets: list[AgentTarget] | None = None,
     mode: Pipeline,
     name: str | None = None,
     categories: list[str] | None,
@@ -907,10 +940,14 @@ async def _run_dynamic_or_hybrid(
     await init_tracing_if_needed()
     parent_context = await capture_parent_context()
 
+    _all_display_targets = list(targets) + [
+        getattr(at, 'name', None) or type(at).__name__
+        for at in (agent_targets or [])
+    ]
     async with with_redteam_span(
         "orq.redteam.pipeline",
         attributes={
-            "orq.redteam.targets": ", ".join(targets),
+            "orq.redteam.targets": ", ".join(_all_display_targets),
             "orq.redteam.mode": mode,
             "orq.redteam.backend": backend,
             "orq.redteam.max_turns": max_turns,
@@ -925,7 +962,12 @@ async def _run_dynamic_or_hybrid(
 
         _bundle = _resolve_backend(backend, llm_client=llm_client, target_config=target_config)
         all_agent_contexts: dict[str, AgentContext] = {}
-        resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": targets})
+        _resolved_agent_targets = agent_targets or []
+        _all_target_labels = list(targets) + [
+            getattr(at, 'name', None) or type(at).__name__
+            for at in _resolved_agent_targets
+        ]
+        resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": _all_target_labels})
         for _target_str in targets:
             _kind, _value = _parse_target(_target_str)
             _ctx = await _bundle.context_provider.get_agent_context(_value)
@@ -936,7 +978,25 @@ async def _run_dynamic_or_hybrid(
                 "num_memory_stores": len(_ctx.memory_stores) if _ctx.memory_stores else 0,
                 "num_knowledge_bases": len(_ctx.knowledge_bases) if _ctx.knowledge_bases else 0,
             })
-        first_agent_context = all_agent_contexts[targets[0]]
+        # Pre-fetch contexts for AgentTarget objects (they may provide their own context)
+        _at_contexts: dict[int, AgentContext] = {}
+        for _at in _resolved_agent_targets:
+            _get_ctx = getattr(_at, 'get_agent_context', None)
+            if callable(_get_ctx):
+                _at_ctx = await _get_ctx()
+            else:
+                _at_label = getattr(_at, 'name', None) or type(_at).__name__
+                logger.warning(f'AgentTarget {_at_label!r} does not implement get_agent_context(); using minimal context.')
+                _at_ctx = AgentContext(key=_at_label)
+            _at_contexts[id(_at)] = _at_ctx
+
+        if targets:
+            first_agent_context = all_agent_contexts[targets[0]]
+        elif _resolved_agent_targets:
+            first_agent_context = _at_contexts[id(_resolved_agent_targets[0])]
+        else:
+            msg = 'red_team() requires at least one target'
+            raise ValueError(msg)
 
         # Step 2: Estimate datapoint counts (cheap registry lookups, no LLM).
         from evaluatorq.redteam.adaptive.strategy_registry import (
@@ -1019,9 +1079,14 @@ async def _run_dynamic_or_hybrid(
         est_total = est_dynamic + (est_static or 0)
 
         # Confirm before expensive datapoint generation.
+        _at_contexts_by_label = {
+            (getattr(_at, 'name', None) or type(_at).__name__): _at_contexts[id(_at)]
+            for _at in _resolved_agent_targets
+        }
+        _all_contexts_for_confirm = {**all_agent_contexts, **_at_contexts_by_label}
         confirm_payload: ConfirmPayload = {
             "agent_contexts": {
-                t: ctx.model_dump(mode="json") for t, ctx in all_agent_contexts.items()
+                t: ctx.model_dump(mode="json") for t, ctx in _all_contexts_for_confirm.items()
             },
             "agent_context": first_agent_context.model_dump(mode="json"),
             "num_datapoints": est_total,
@@ -1035,7 +1100,7 @@ async def _run_dynamic_or_hybrid(
             "filtering_metadata": None,
             "strategy_breakdown": strategy_breakdown if strategy_breakdown else None,
             "mode": str(mode.value) if hasattr(mode, 'value') else str(mode),
-            "target": ", ".join(targets),
+            "target": ", ".join(_all_target_labels),
             "dataset_path": str(dataset) if dataset else None,
             "vulnerabilities": [v.value for v in resolved_vulns] if resolved_vulns else None,
         }
@@ -1071,43 +1136,172 @@ async def _run_dynamic_or_hybrid(
             verbosity=verbosity,
             llm_kwargs=llm_kwargs or {},
         )
-        first_target = await _prepare_target(
-            target=targets[0],
-            prefetched_agent_context=first_agent_context,
-            prefetched_static_data=static_data,
-            **_common_prepare_kwargs,
-        )
 
-        # Step 4: Prepare remaining targets with shared datapoints — skip generation.
-        if len(targets) > 1:
-            raw_results = await asyncio.gather(
-                *[
-                    _prepare_target(
-                        target=t,
-                        shared_datapoints=first_target.all_datapoints,
-                        prefetched_agent_context=all_agent_contexts.get(t),
-                        **_common_prepare_kwargs,
-                    )
-                    for t in targets[1:]
-                ],
-                return_exceptions=True,
+        prepared_targets: list[PreparedTarget]
+
+        if targets:
+            first_target = await _prepare_target(
+                target=targets[0],
+                prefetched_agent_context=first_agent_context,
+                prefetched_static_data=static_data,
+                **_common_prepare_kwargs,
             )
-            failed_targets: list[str] = []
-            for t, result in zip(targets[1:], raw_results):
-                if isinstance(result, BaseException):
-                    logger.error(f"Failed to prepare target {t}: {result}")
-                    failed_targets.append(f"{t}: {result}")
-            if failed_targets:
-                failure_summary = "; ".join(failed_targets)
-                msg = f"Aborting multi-target run — failed to prepare target(s): {failure_summary}"
-                raise RuntimeError(msg)
-            other_targets: list[PreparedTarget] = [r for r in raw_results if not isinstance(r, BaseException)]
-            prepared_targets: list[PreparedTarget] = [first_target] + other_targets
+
+            # Step 4: Prepare remaining string targets with shared datapoints — skip generation.
+            if len(targets) > 1:
+                raw_results = await asyncio.gather(
+                    *[
+                        _prepare_target(
+                            target=t,
+                            shared_datapoints=first_target.all_datapoints,
+                            prefetched_agent_context=all_agent_contexts.get(t),
+                            **_common_prepare_kwargs,
+                        )
+                        for t in targets[1:]
+                    ],
+                    return_exceptions=True,
+                )
+                failed_targets: list[str] = []
+                for t, result in zip(targets[1:], raw_results):
+                    if isinstance(result, BaseException):
+                        logger.error(f"Failed to prepare target {t}: {result}")
+                        failed_targets.append(f"{t}: {result}")
+                if failed_targets:
+                    failure_summary = "; ".join(failed_targets)
+                    msg = f"Aborting multi-target run — failed to prepare target(s): {failure_summary}"
+                    raise RuntimeError(msg)
+                other_prepared: list[PreparedTarget] = [r for r in raw_results if not isinstance(r, BaseException)]
+                prepared_targets = [first_target] + other_prepared
+            else:
+                prepared_targets = [first_target]
         else:
-            prepared_targets = [first_target]
+            # Pure AgentTarget run — no string targets at all.
+            # We still need to generate datapoints; use the first AgentTarget's context.
+            prepared_targets = []
+
+        # Step 4b: Prepare AgentTarget objects (direct targets)
+        if _resolved_agent_targets:
+            from evaluatorq import DataPoint, job
+            from evaluatorq.redteam.backends.base import DefaultErrorMapper, DirectTargetFactory, NoopMemoryCleanup as _NoopMemoryCleanup
+            from evaluatorq.redteam.backends.registry import create_async_llm_client
+            from evaluatorq.redteam.adaptive.pipeline import create_dynamic_redteam_job
+
+            _at_llm_client = llm_client
+            if _at_llm_client is None:
+                _at_llm_client = create_async_llm_client()
+
+            # If no string targets prepared yet, generate datapoints from first AgentTarget's context
+            _shared_at_dps: list[Any] | None = prepared_targets[0].all_datapoints if prepared_targets else None
+
+            for _at_idx, _at in enumerate(_resolved_agent_targets):
+                _at_label = getattr(_at, 'name', None) or type(_at).__name__
+
+                # Disambiguate duplicate labels
+                _existing_labels = {pt.target for pt in prepared_targets}
+                if _at_label in _existing_labels:
+                    _i = 1
+                    while f'{_at_label}-{_i}' in _existing_labels:
+                        _i += 1
+                    _at_label = f'{_at_label}-{_i}'
+
+                _at_ctx = _at_contexts[id(_at)]
+
+                # Factory, mapper, cleanup — delegate to target if it supports them
+                _at_factory = _at if callable(getattr(_at, 'create_target', None)) else DirectTargetFactory(_at)
+                _at_mapper = _at if callable(getattr(_at, 'map_error', None)) else DefaultErrorMapper()
+                _at_cleanup = _at if callable(getattr(_at, 'cleanup_memory', None)) else _NoopMemoryCleanup()
+
+                _at_mem_ids: list[str] = []
+                _at_dyn_job = create_dynamic_redteam_job(
+                    agent_key=_at_label,
+                    agent_context=_at_ctx,
+                    red_team_model=attack_model,
+                    max_turns=max_turns,
+                    target_factory=_at_factory,
+                    error_mapper=_at_mapper,
+                    attack_llm_client=_at_llm_client,
+                    memory_entity_ids=_at_mem_ids,
+                    attacker_instructions=attacker_instructions,
+                    verbosity=verbosity,
+                    llm_kwargs=llm_kwargs,
+                )
+
+                _at_safe = _make_safe_target(_at_label)
+
+                @job(f'redteam:dynamic:{_at_safe}')
+                async def _at_target_job(
+                    data: DataPoint,
+                    row: int,
+                    _inner: Any = _at_dyn_job,
+                ) -> Any:
+                    result = await _inner(data, row)
+                    return result.get('output', result) if isinstance(result, dict) else result
+
+                if _shared_at_dps is None:
+                    # This is the first target overall — generate datapoints
+                    from evaluatorq.redteam.adaptive.pipeline import (
+                        generate_dynamic_datapoints,
+                        generate_dynamic_datapoints_for_vulnerabilities,
+                    )
+                    resolved_hooks.on_stage_start(PipelineStage.DATAPOINT_GENERATION, {
+                        "num_categories": len(resolved_categories),
+                        "target": _at_label,
+                    })
+                    if resolved_vulns is not None:
+                        _at_dps, _at_filter_meta = await generate_dynamic_datapoints_for_vulnerabilities(
+                            agent_context=_at_ctx,
+                            vulnerabilities=resolved_vulns,
+                            max_per_category=max_per_category,
+                            max_turns=max_turns,
+                            generate_additional_strategies=generate_strategies,
+                            generated_strategy_count=generated_strategy_count,
+                            llm_client=_at_llm_client,
+                            attack_model=attack_model,
+                            parallelism=parallelism,
+                            attacker_instructions=attacker_instructions,
+                            llm_kwargs=llm_kwargs,
+                        )
+                    else:
+                        _at_dps, _at_filter_meta = await generate_dynamic_datapoints(
+                            agent_context=_at_ctx,
+                            categories=resolved_categories,
+                            max_per_category=max_per_category,
+                            max_turns=max_turns,
+                            generate_additional_strategies=generate_strategies,
+                            generated_strategy_count=generated_strategy_count,
+                            llm_client=_at_llm_client,
+                            attack_model=attack_model,
+                            parallelism=parallelism,
+                            attacker_instructions=attacker_instructions,
+                            llm_kwargs=llm_kwargs,
+                        )
+                    if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(_at_dps) > max_dynamic_datapoints:
+                        _at_dps = _cap_datapoints_balanced(_at_dps, max_dynamic_datapoints)
+                    resolved_hooks.on_stage_end(PipelineStage.DATAPOINT_GENERATION, {"num_datapoints": len(_at_dps)})
+                    _shared_at_dps = _at_dps
+                else:
+                    _at_dps = list(_shared_at_dps)
+                    _at_filter_meta = {}
+
+                prepared_targets.append(PreparedTarget(
+                    target=_at_label,
+                    target_kind='direct',
+                    target_value=_at_label,
+                    safe_target=_at_safe,
+                    agent_context=_at_ctx,
+                    dynamic_datapoints=list(_at_dps),
+                    static_datapoints=[],
+                    all_datapoints=list(_at_dps),
+                    job=_at_target_job,
+                    dynamic_job=_at_dyn_job,
+                    resolved_memory_cleanup=_at_cleanup,
+                    resolved_llm_client=_at_llm_client,
+                    filtering_metadata=_at_filter_meta,
+                    memory_entity_ids=_at_mem_ids,
+                ))
 
         # Step 5: Use the first target's datapoints as THE shared datapoints.
-        all_datapoints: list[Any] = first_target.all_datapoints
+        all_datapoints: list[Any] = prepared_targets[0].all_datapoints if prepared_targets else []
         all_jobs: list[Any] = [pt.job for pt in prepared_targets]
 
         if not all_datapoints:
@@ -1123,7 +1317,7 @@ async def _run_dynamic_or_hybrid(
         # Stage: attack_execution
         resolved_hooks.on_stage_start(PipelineStage.ATTACK_EXECUTION, {
             "num_datapoints": len(all_datapoints),
-            "targets": targets,
+            "targets": _all_target_labels,
         })
 
         resolved_llm_client = llm_client
@@ -1173,7 +1367,7 @@ async def _run_dynamic_or_hybrid(
                     print_results=False,
                     _exit_on_failure=False,
                     _send_results=False,
-                    description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+                    description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
                 )
             except (asyncio.CancelledError, KeyboardInterrupt):
                 logger.warning(f'Multi-target {mode} run cancelled — attempting memory cleanup')
@@ -1291,12 +1485,12 @@ async def _run_dynamic_or_hybrid(
         if not per_target_reports:
             merged = static_results_to_report(
                 [],
-                description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+                description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
             )
         else:
             merged = merge_reports(
                 *per_target_reports,
-                description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+                description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
             )
 
         merged.duration_seconds = pipeline_duration
@@ -1364,7 +1558,7 @@ async def _run_dynamic_or_hybrid(
         await _send_cleaned_results(
             results=results,
             name=resolved_name,
-            description=description or f'{mode.capitalize()} red teaming ({len(targets)} targets)',
+            description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
             start_time=pipeline_start,
         )
 

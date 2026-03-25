@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai.types.chat import ChatCompletionMessageParam
@@ -84,6 +84,32 @@ class OpenAIModelTarget:
             system_prompt=self.system_prompt,
         )
 
+    @property
+    def name(self) -> str:
+        """Return the model ID as the target name."""
+        return self.model_id
+
+    async def get_agent_context(self) -> AgentContext:
+        """Return a minimal agent context for this model target."""
+        return AgentContext(
+            key=self.model_id,
+            display_name=self.model_id,
+            description='OpenAI model target',
+            model=self.model_id,
+        )
+
+    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> OpenAIModelTarget:
+        """Create a new OpenAI model target for the given model ID."""
+        return OpenAIModelTarget(
+            model_id=agent_key,
+            client=self.client,
+            system_prompt=self.system_prompt,
+        )
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Map an OpenAI exception to a normalized error code and message tuple."""
+        return OpenAIErrorMapper().map_error(exc)
+
 
 class OpenAIContextProvider:
     """Context provider for plain model targets.
@@ -153,3 +179,10 @@ class OpenAIErrorMapper:
         if 'timeout' in name:
             return 'openai.timeout', f'{type(exc).__name__}: {exc}'
         return 'openai.unknown', f'{type(exc).__name__}: {exc}'
+
+
+def create_openai_target(model_id: str, client: Any = None) -> OpenAIModelTarget:
+    """Create an OpenAIModelTarget from environment config."""
+    from evaluatorq.redteam.backends.registry import create_async_llm_client
+    resolved = client or create_async_llm_client()
+    return OpenAIModelTarget(model_id=model_id, client=resolved)
