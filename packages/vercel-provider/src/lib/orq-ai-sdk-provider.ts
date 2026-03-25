@@ -5,10 +5,10 @@ import {
   OpenAICompatibleImageModel,
 } from "@ai-sdk/openai-compatible";
 import type {
-  EmbeddingModelV2,
-  ImageModelV2,
-  LanguageModelV2,
-  ProviderV2,
+  EmbeddingModelV3,
+  ImageModelV3,
+  LanguageModelV3,
+  ProviderV3,
 } from "@ai-sdk/provider";
 import {
   type FetchFunction,
@@ -23,13 +23,15 @@ export interface OrqAiProviderSettings {
   headers?: Record<string, string>;
 }
 
-export interface OrqAiProvider extends ProviderV2 {
-  (modelId: string): LanguageModelV2;
-  languageModel(modelId: string): LanguageModelV2;
-  chatModel(modelId: string): LanguageModelV2;
-  completionModel(modelId: string): LanguageModelV2;
-  textEmbeddingModel(modelId: string): EmbeddingModelV2<string>;
-  imageModel(modelId: string): ImageModelV2;
+export interface OrqAiProvider extends ProviderV3 {
+  (modelId: string): LanguageModelV3;
+  languageModel(modelId: string): LanguageModelV3;
+  chatModel(modelId: string): LanguageModelV3;
+  completionModel(modelId: string): LanguageModelV3;
+  embeddingModel(modelId: string): EmbeddingModelV3;
+  /** @deprecated Use embeddingModel instead */
+  textEmbeddingModel(modelId: string): EmbeddingModelV3;
+  imageModel(modelId: string): ImageModelV3;
 }
 
 export function createOrqAiProvider(
@@ -70,7 +72,7 @@ export function createOrqAiProvider(
       getCommonModelConfig("completion"),
     );
 
-  const createTextEmbeddingModel = (modelId: string) =>
+  const createEmbeddingModel = (modelId: string) =>
     new OpenAICompatibleEmbeddingModel(
       modelId,
       getCommonModelConfig("embedding"),
@@ -89,11 +91,14 @@ export function createOrqAiProvider(
     return createChatModel(modelId);
   };
 
+  (provider as unknown as { specificationVersion: "v3" }).specificationVersion =
+    "v3";
   provider.languageModel = createChatModel;
   provider.completionModel = createCompletionModel;
   provider.chatModel = createChatModel;
-  provider.textEmbeddingModel = createTextEmbeddingModel;
+  provider.embeddingModel = createEmbeddingModel;
+  provider.textEmbeddingModel = createEmbeddingModel;
   provider.imageModel = createImageModel;
 
-  return provider;
+  return provider as unknown as OrqAiProvider;
 }

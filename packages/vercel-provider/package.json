@@ -1,6 +1,6 @@
 {
   "name": "@orq-ai/vercel-provider",
-  "version": "1.2.0-rc.3",
+  "version": "1.2.2",
   "description": "Vercel AI SDK provider for seamless integration with Orq AI platform",
   "type": "module",
   "main": "./dist/index.js",
@@ -38,19 +38,18 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "dependencies": {
-    "@ai-sdk/provider": "^2.0.0",
-    "@ai-sdk/openai-compatible": "^1.0.1",
-    "@ai-sdk/provider-utils": "^3.0.0"
+    "@ai-sdk/provider": "^3.0.0",
+    "@ai-sdk/openai-compatible": "^2.0.0",
+    "@ai-sdk/provider-utils": "^4.0.0"
   },
   "peerDependencies": {
-    "ai": "^5.0.26"
+    "ai": "^6.0.0"
   },
   "peerDependenciesMeta": {
     "ai": {
