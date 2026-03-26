@@ -68,21 +68,21 @@ export function buildMessages(
               image_url: {
                 url: base64Data,
               },
-            } as ContentItem);
+            });
           } else if (item.imageSource === "url" && item.imageUrl) {
             contentItems.push({
               type: "image_url",
               image_url: {
                 url: item.imageUrl.trim(),
               },
-            } as ContentItem);
+            });
           } else if (!item.imageSource && item.imageUrl) {
             contentItems.push({
               type: "image_url",
               image_url: {
                 url: item.imageUrl.trim(),
               },
-            } as ContentItem);
+            });
           }
         }
 
