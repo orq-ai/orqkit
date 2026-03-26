@@ -19,7 +19,7 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
-import { toSimulationCallback } from "@orq-ai/evaluatorq/langchain";
+import { fromLangChainAgent } from "@orq-ai/evaluatorq/langchain";
 import type { Persona, Scenario } from "@orq-ai/evaluatorq/simulation";
 import { simulate } from "@orq-ai/evaluatorq/simulation";
 
@@ -75,7 +75,7 @@ const supportAgent = createReactAgent({
 // 2. Convert agent to simulation targetCallback
 // ============================================================
 
-const targetCallback = toSimulationCallback(supportAgent, {
+const targetCallback = fromLangChainAgent(supportAgent, {
   instructions:
     "You are a helpful customer support agent. Be polite, empathetic, and always try to resolve the customer's issue. Use your tools to look up orders and process refunds when needed.",
 });

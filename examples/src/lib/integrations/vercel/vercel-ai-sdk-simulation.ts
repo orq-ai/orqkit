@@ -18,7 +18,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { ToolLoopAgent, tool } from "ai";
 import { z } from "zod";
 
-import { toSimulationCallback } from "@orq-ai/evaluatorq/ai-sdk";
+import { fromAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
 import type { Persona, Scenario } from "@orq-ai/evaluatorq/simulation";
 import { simulate } from "@orq-ai/evaluatorq/simulation";
 
@@ -66,7 +66,7 @@ const supportAgent = new ToolLoopAgent({
 // 2. Convert agent to simulation targetCallback
 // ============================================================
 
-const targetCallback = toSimulationCallback(supportAgent, {
+const targetCallback = fromAISdkAgent(supportAgent, {
   instructions:
     "You are a helpful customer support agent. Be polite, empathetic, and always try to resolve the customer's issue. Use your tools to look up orders and process refunds when needed.",
 });

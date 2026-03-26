@@ -62,7 +62,7 @@ function extractTextContent(content: unknown): string {
  * ```typescript
  * import { ChatOpenAI } from "@langchain/openai";
  * import { createReactAgent } from "@langchain/langgraph/prebuilt";
- * import { toSimulationCallback } from "@orq-ai/evaluatorq/langchain";
+ * import { fromLangChainAgent } from "@orq-ai/evaluatorq/langchain";
  * import { simulate } from "@orq-ai/evaluatorq/simulation";
  *
  * const model = new ChatOpenAI({ model: "gpt-4o" });
@@ -70,13 +70,13 @@ function extractTextContent(content: unknown): string {
  *
  * const results = await simulate({
  *   evaluationName: "my-agent-sim",
- *   targetCallback: toSimulationCallback(agent),
+ *   targetCallback: fromLangChainAgent(agent),
  *   personas: [...],
  *   scenarios: [...],
  * });
  * ```
  */
-export function toSimulationCallback(
+export function fromLangChainAgent(
   agent: LangChainInvocable,
   options: LangChainSimulationAdapterOptions = {},
 ): (messages: ChatMessage[]) => Promise<string> {
@@ -106,7 +106,7 @@ export function toSimulationCallback(
 
     if (!resultMessages || resultMessages.length === 0) {
       console.warn(
-        "LangChain toSimulationCallback: agent result contained no messages — returning empty string. " +
+        "LangChain fromLangChainAgent: agent result contained no messages — returning empty string. " +
           "Ensure the agent returns a state with a `messages` array, or return a string directly.",
       );
       return "";

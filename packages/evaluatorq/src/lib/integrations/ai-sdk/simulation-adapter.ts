@@ -30,7 +30,7 @@ export interface AISdkSimulationAdapterOptions {
  * ```typescript
  * import { ToolLoopAgent, tool } from "ai";
  * import { createOpenAI } from "@ai-sdk/openai";
- * import { toSimulationCallback } from "@orq-ai/evaluatorq/ai-sdk";
+ * import { fromAISdkAgent } from "@orq-ai/evaluatorq/ai-sdk";
  * import { simulate } from "@orq-ai/evaluatorq/simulation";
  *
  * const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -41,13 +41,13 @@ export interface AISdkSimulationAdapterOptions {
  *
  * const results = await simulate({
  *   evaluationName: "my-agent-sim",
- *   targetCallback: toSimulationCallback(agent),
+ *   targetCallback: fromAISdkAgent(agent),
  *   personas: [...],
  *   scenarios: [...],
  * });
  * ```
  */
-export function toSimulationCallback<TOOLS extends ToolSet>(
+export function fromAISdkAgent<TOOLS extends ToolSet>(
   agent: Agent<never, TOOLS, never>,
   options: AISdkSimulationAdapterOptions = {},
 ): (messages: ChatMessage[]) => Promise<string> {
@@ -74,7 +74,7 @@ export function toSimulationCallback<TOOLS extends ToolSet>(
     const text = result.text;
     if (!text) {
       console.warn(
-        "AI SDK toSimulationCallback: agent result contained no text — returning empty string. " +
+        "AI SDK fromAISdkAgent: agent result contained no text — returning empty string. " +
           "If your agent only makes tool calls, ensure it also produces a final text response.",
       );
     }
