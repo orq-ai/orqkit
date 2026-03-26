@@ -1,3 +1,10 @@
+export interface RawKnowledgeBase {
+  _id: string;
+  key?: string;
+  id?: string;
+  description?: string;
+}
+
 export interface IOrqKnowledgeBase {
   id: string;
   name: string;
