@@ -20,7 +20,7 @@ export const ERROR_MESSAGES = {
   MESSAGE_REQUIRED: "Message is required",
   NO_CREDENTIALS: "No credentials configured. Please add Orq API credentials.",
   FETCH_AGENTS_FAILED: (error: string) => `Failed to fetch agents: ${error}`,
-  AGENT_INVOKE_FAILED: (error: string) => `Failed to invoke agent: ${error}`,
+  AGENT_INVOKE_FAILED: (error: string) => `Agent execution failed: ${error}`,
   TASK_POLL_TIMEOUT: "Agent task timed out waiting for completion",
   TASK_FAILED: (state: string) => `Agent task ended with state: ${state}`,
 };
