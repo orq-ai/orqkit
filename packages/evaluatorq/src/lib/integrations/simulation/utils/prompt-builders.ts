@@ -75,7 +75,7 @@ Patience: You are ${patienceDesc}
 Assertiveness: You are ${assertiveDesc}
 Politeness: You are ${politeDesc}
 Technical Level: You are ${techDesc}
-Communication Style: ${persona.communication_style}
+Communication Style: ${delimit(persona.communication_style)}
 
 Background: ${delimit(persona.background)}
 ${arcText}${culturalText}
@@ -105,10 +105,10 @@ export function buildScenarioUserContext(scenario: Scenario): string {
   if (scenario.criteria && scenario.criteria.length > 0) {
     const mustHappen = scenario.criteria
       .filter((c) => c.type === "must_happen")
-      .map((c) => c.description);
+      .map((c) => delimit(c.description));
     const mustNot = scenario.criteria
       .filter((c) => c.type === "must_not_happen")
-      .map((c) => c.description);
+      .map((c) => delimit(c.description));
 
     if (mustHappen.length > 0) {
       criteriaText += `\n\nYou expect the agent to: ${mustHappen.join(", ")}`;

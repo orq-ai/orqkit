@@ -65,7 +65,12 @@ export function toOpenResponses(
   }
 
   // Map terminated_by to status
-  const status = result.terminated_by === "judge" ? "completed" : "incomplete";
+  const status =
+    result.terminated_by === "judge"
+      ? "completed"
+      : result.terminated_by === "error"
+        ? "failed"
+        : "incomplete";
   const incompleteDetails: ResponseResource["incomplete_details"] =
     status === "incomplete"
       ? { reason: `${result.terminated_by}: ${result.reason}` }

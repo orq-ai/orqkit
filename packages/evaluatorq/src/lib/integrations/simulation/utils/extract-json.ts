@@ -47,14 +47,12 @@ export function extractJsonFromResponse(content: string): string {
  * Find the outermost balanced pair of open/close characters in content.
  * Respects JSON string literals to avoid counting brackets inside strings.
  */
-function extractBalanced(
+function extractBalancedFrom(
   content: string,
   open: string,
   close: string,
+  startIdx: number,
 ): string | null {
-  const startIdx = content.indexOf(open);
-  if (startIdx === -1) return null;
-
   let depth = 0;
   let inString = false;
   let escaped = false;
@@ -90,4 +88,42 @@ function extractBalanced(
   }
 
   return null;
+}
+
+/**
+ * Find the outermost balanced pair of open/close characters in content.
+ * Tries each candidate occurrence and returns the first that parses as valid JSON.
+ * Falls back to the first balanced extraction if none parse.
+ */
+function extractBalanced(
+  content: string,
+  open: string,
+  close: string,
+): string | null {
+  let firstMatch: string | null = null;
+  let searchFrom = 0;
+
+  while (searchFrom < content.length) {
+    const idx = content.indexOf(open, searchFrom);
+    if (idx === -1) break;
+
+    const candidate = extractBalancedFrom(content, open, close, idx);
+    if (!candidate) {
+      searchFrom = idx + 1;
+      continue;
+    }
+
+    if (!firstMatch) firstMatch = candidate;
+
+    try {
+      JSON.parse(candidate);
+      return candidate; // Valid JSON — use it
+    } catch {
+      // Not valid JSON, try next occurrence
+    }
+
+    searchFrom = idx + 1;
+  }
+
+  return firstMatch;
 }

@@ -5,6 +5,9 @@
  * either standalone or within the evaluatorq framework.
  */
 
+import OpenAI from "openai";
+
+import { fromOrqDeployment } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { SimulationRunner } from "../runner/simulation.js";
@@ -75,18 +78,44 @@ export async function simulate(
         "Either provide 'datapoints' or both 'personas' and 'scenarios'",
       );
     }
+    if (personas.length === 0 || scenarios.length === 0) {
+      throw new Error(
+        "'personas' and 'scenarios' arrays must both be non-empty",
+      );
+    }
 
-    // Generate first messages for each combination (in parallel)
-    const firstMsgGen = new FirstMessageGenerator({ model });
+    const apiKey = process.env.ORQ_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "ORQ_API_KEY environment variable is not set. Set it before calling simulate().",
+      );
+    }
+    // Create a shared HTTP client so the generator doesn't leak its own pool
+    const sharedClient = new OpenAI({
+      apiKey,
+      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
+    });
+    // Generate first messages for each combination (with bounded concurrency)
+    const firstMsgGen = new FirstMessageGenerator({
+      model,
+      client: sharedClient,
+    });
     const pairs = personas.flatMap((persona) =>
       scenarios.map((scenario) => ({ persona, scenario })),
     );
-    datapoints = await Promise.all(
-      pairs.map(async ({ persona, scenario }) => {
-        const firstMessage = await firstMsgGen.generate(persona, scenario);
-        return generateDatapoint(persona, scenario, firstMessage);
-      }),
-    );
+    const FIRST_MSG_CONCURRENCY = 5;
+    const generatedDatapoints: Datapoint[] = [];
+    for (let i = 0; i < pairs.length; i += FIRST_MSG_CONCURRENCY) {
+      const batch = pairs.slice(i, i + FIRST_MSG_CONCURRENCY);
+      const batchResults = await Promise.all(
+        batch.map(async ({ persona, scenario }) => {
+          const firstMessage = await firstMsgGen.generate(persona, scenario);
+          return generateDatapoint(persona, scenario, firstMessage);
+        }),
+      );
+      generatedDatapoints.push(...batchResults);
+    }
+    datapoints = generatedDatapoints;
   }
 
   if (!datapoints || datapoints.length === 0) {
@@ -98,10 +127,7 @@ export async function simulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    const { invoke } = await import("../../../deployment-helper.js");
-    resolvedCallback = async (messages) => {
-      return invoke(params.agentKey as string, { messages });
-    };
+    resolvedCallback = fromOrqDeployment(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -178,10 +204,7 @@ export async function generateAndSimulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    const { invoke } = await import("../../../deployment-helper.js");
-    resolvedCallback = async (messages) => {
-      return invoke(params.agentKey as string, { messages });
-    };
+    resolvedCallback = fromOrqDeployment(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -212,18 +235,11 @@ export async function generateAndSimulate(
     const generators = await import("../generators/index.js");
     PersonaGenerator = generators.PersonaGenerator;
     ScenarioGenerator = generators.ScenarioGenerator;
-  } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    if (
-      err.code === "MODULE_NOT_FOUND" ||
-      err.code === "ERR_MODULE_NOT_FOUND" ||
-      err.message?.includes("Cannot find module")
-    ) {
-      throw new Error(
-        "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
-      );
-    }
-    throw error;
+  } catch (err) {
+    throw new Error(
+      "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
+      { cause: err },
+    );
   }
 
   // Generate personas and scenarios in parallel

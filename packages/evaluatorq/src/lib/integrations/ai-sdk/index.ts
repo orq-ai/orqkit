@@ -5,5 +5,7 @@ export {
   buildOpenResponsesFromSteps,
   convertToOpenResponses,
 } from "./convert.js";
+export type { AISdkSimulationAdapterOptions } from "./simulation-adapter.js";
+export { fromAISdkAgent } from "./simulation-adapter.js";
 export type { AgentJobOptions, StepData } from "./types.js";
 export { wrapAISdkAgent } from "./wrap-agent.js";
