@@ -564,7 +564,7 @@ class PipelineLLMConfig(BaseModel):
     adversarial_temperature: float = 1.0
 
     # Target agent timeout (ms) for ORQ SDK calls
-    target_agent_timeout_ms: int = 120_000
+    target_agent_timeout_ms: int = 240_000
 
     # Adversarial LLM call timeout (ms) — separate from target agent timeout
     llm_call_timeout_ms: int = 60_000
