@@ -559,6 +559,42 @@ def _make_safe_target(value: str) -> str:
     return ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in value).strip('-') or 'unknown'
 
 
+def _deduplicate_target_labels(
+    string_targets: Sequence[str],
+    agent_targets: Sequence[Any],
+) -> tuple[list[str], dict[int, str]]:
+    """Build deduplicated labels for all targets.
+
+    String targets keep their names as-is. Agent target labels are derived from
+    ``.name`` (falling back to the class name) and suffixed with ``-1``, ``-2``
+    etc. when duplicates are found.
+
+    Args:
+        string_targets (Sequence[str]): String-based target identifiers
+            (e.g. ``"agent:my-bot"``).
+        agent_targets (Sequence[AgentTarget]): Direct ``AgentTarget`` objects
+            whose labels are derived from their ``.name`` attribute or class name.
+
+    Returns:
+        tuple[list[str], dict[int, str]]: A tuple of ``(all_labels, agent_label_map)``
+            where ``agent_label_map`` maps ``id(agent_target)`` to its deduplicated label.
+    """
+    agent_label_map: dict[int, str] = {}
+    seen: set[str] = set(string_targets)
+    for at in agent_targets:
+        label = getattr(at, 'name', None) or type(at).__name__
+        if label in seen:
+            suffix = 1
+            while f'{label}-{suffix}' in seen:
+                suffix += 1
+            label = f'{label}-{suffix}'
+        seen.add(label)
+        agent_label_map[id(at)] = label
+
+    all_labels = list(string_targets) + [agent_label_map[id(at)] for at in agent_targets]
+    return all_labels, agent_label_map
+
+
 def _create_job_for_target(
     target: str,
     llm_client: Any,
@@ -945,15 +981,12 @@ async def _run_dynamic_or_hybrid(
     await init_tracing_if_needed()
     parent_context = await capture_parent_context()
 
-    _resolved_agent_targets = agent_targets or []
-    _all_target_labels = list(targets) + [
-        getattr(at, 'name', None) or type(at).__name__
-        for at in _resolved_agent_targets
-    ]
+    resolved_agent_targets = agent_targets or []
+    all_target_labels, agent_target_labels = _deduplicate_target_labels(targets, resolved_agent_targets)
     async with with_redteam_span(
         "orq.redteam.pipeline",
         attributes={
-            "orq.redteam.targets": ", ".join(_all_target_labels),
+            "orq.redteam.targets": ", ".join(all_target_labels),
             "orq.redteam.mode": mode,
             "orq.redteam.backend": backend,
             "orq.redteam.max_turns": max_turns,
@@ -968,7 +1001,7 @@ async def _run_dynamic_or_hybrid(
 
         _bundle = _resolve_backend(backend, llm_client=llm_client, target_config=target_config)
         all_agent_contexts: dict[str, AgentContext] = {}
-        resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": _all_target_labels})
+        resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": all_target_labels})
         for _target_str in targets:
             _kind, _value = _parse_target(_target_str)
             _ctx = await _bundle.context_provider.get_agent_context(_value)
@@ -981,7 +1014,7 @@ async def _run_dynamic_or_hybrid(
             })
         # Pre-fetch contexts for AgentTarget objects (they may provide their own context)
         _at_contexts: dict[int, AgentContext] = {}
-        for _at in _resolved_agent_targets:
+        for _at in resolved_agent_targets:
             _get_ctx = getattr(_at, 'get_agent_context', None)
             _at_label = getattr(_at, 'name', None) or type(_at).__name__
             if callable(_get_ctx):
@@ -998,8 +1031,8 @@ async def _run_dynamic_or_hybrid(
 
         if targets:
             first_agent_context = all_agent_contexts[targets[0]]
-        elif _resolved_agent_targets:
-            first_agent_context = _at_contexts[id(_resolved_agent_targets[0])]
+        elif resolved_agent_targets:
+            first_agent_context = _at_contexts[id(resolved_agent_targets[0])]
         else:
             msg = 'red_team() requires at least one target'
             raise ValueError(msg)
@@ -1087,7 +1120,7 @@ async def _run_dynamic_or_hybrid(
         # Confirm before expensive datapoint generation.
         _at_contexts_by_label = {
             (getattr(_at, 'name', None) or type(_at).__name__): _at_contexts[id(_at)]
-            for _at in _resolved_agent_targets
+            for _at in resolved_agent_targets
         }
         _all_contexts_for_confirm = {**all_agent_contexts, **_at_contexts_by_label}
         confirm_payload: ConfirmPayload = {
@@ -1106,7 +1139,7 @@ async def _run_dynamic_or_hybrid(
             "filtering_metadata": None,
             "strategy_breakdown": strategy_breakdown if strategy_breakdown else None,
             "mode": str(mode.value) if hasattr(mode, 'value') else str(mode),
-            "target": ", ".join(_all_target_labels),
+            "target": ", ".join(all_target_labels),
             "dataset_path": str(dataset) if dataset else None,
             "vulnerabilities": [v.value for v in resolved_vulns] if resolved_vulns else None,
         }
@@ -1187,7 +1220,7 @@ async def _run_dynamic_or_hybrid(
             prepared_targets = []
 
         # Step 4b: Prepare AgentTarget objects (direct targets)
-        if _resolved_agent_targets:
+        if resolved_agent_targets:
             from evaluatorq import DataPoint, job
             from evaluatorq.redteam.backends.base import AgentTargetFactory as _AgentTargetFactory, DefaultErrorMapper, DirectTargetFactory, ErrorMapper as _ErrorMapper, MemoryCleanup as _MemoryCleanup, NoopMemoryCleanup as _NoopMemoryCleanup
             from evaluatorq.redteam.backends.registry import create_async_llm_client
@@ -1200,17 +1233,8 @@ async def _run_dynamic_or_hybrid(
             # If no string targets prepared yet, generate datapoints from first AgentTarget's context
             _shared_at_dps: list[Any] | None = prepared_targets[0].all_datapoints if prepared_targets else None
 
-            for _at_idx, _at in enumerate(_resolved_agent_targets):
-                _at_label = getattr(_at, 'name', None) or type(_at).__name__
-
-                # Disambiguate duplicate labels
-                _existing_labels = {pt.target for pt in prepared_targets}
-                if _at_label in _existing_labels:
-                    _i = 1
-                    while f'{_at_label}-{_i}' in _existing_labels:
-                        _i += 1
-                    _at_label = f'{_at_label}-{_i}'
-
+            for _at_idx, _at in enumerate(resolved_agent_targets):
+                _at_label = agent_target_labels[id(_at)]
                 _at_ctx = _at_contexts[id(_at)]
 
                 # For direct targets, always use DirectTargetFactory (which uses clone()).
@@ -1326,7 +1350,7 @@ async def _run_dynamic_or_hybrid(
         # Stage: attack_execution
         resolved_hooks.on_stage_start(PipelineStage.ATTACK_EXECUTION, {
             "num_datapoints": len(all_datapoints),
-            "targets": _all_target_labels,
+            "targets": all_target_labels,
         })
 
         resolved_llm_client = llm_client
@@ -1377,7 +1401,7 @@ async def _run_dynamic_or_hybrid(
                     print_results=False,
                     _exit_on_failure=False,
                     _send_results=False,
-                    description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
+                    description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
                 )
             except (asyncio.CancelledError, KeyboardInterrupt):
                 logger.warning(f'Multi-target {mode} run cancelled — attempting memory cleanup')
@@ -1495,12 +1519,12 @@ async def _run_dynamic_or_hybrid(
         if not per_target_reports:
             merged = static_results_to_report(
                 [],
-                description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
+                description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
             )
         else:
             merged = merge_reports(
                 *per_target_reports,
-                description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
+                description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
             )
 
         merged.duration_seconds = pipeline_duration
@@ -1568,7 +1592,7 @@ async def _run_dynamic_or_hybrid(
         await _send_cleaned_results(
             results=results,
             name=resolved_name,
-            description=description or f'{mode.capitalize()} red teaming ({len(_all_target_labels)} targets)',
+            description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
             start_time=pipeline_start,
         )
 
