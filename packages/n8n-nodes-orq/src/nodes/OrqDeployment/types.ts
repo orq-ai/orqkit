@@ -1,5 +1,7 @@
-// SDK types
-import type { DeploymentsData } from "@orq-ai/node/models/operations";
+export interface RawDeploymentListItem {
+  id: string;
+  key: string;
+}
 
 // N8n-specific UI types
 export interface OrqContextProperty {
@@ -35,12 +37,6 @@ export interface OrqFixedCollectionInputs {
 
 export interface OrqFixedCollectionContext {
   contextProperty: OrqContextProperty[];
-}
-
-export interface OrqDeploymentListResponse {
-  object: "list";
-  data: DeploymentsData[];
-  hasMore: boolean;
 }
 
 export interface OrqCredentials {

@@ -6,36 +6,27 @@ import type {
 import { NodeOperationError } from "n8n-workflow";
 
 import type { InvokeDeploymentRequest } from "@orq-ai/node/models/components";
-import type { DeploymentsData } from "@orq-ai/node/models/operations";
 import type { DeploymentInvokeResponseBody } from "@orq-ai/node/models/operations/deploymentinvoke";
 
+import { fetchAllPages } from "../../lib/pagination";
 import {
   DEFAULT_BASE_URL,
   DEPLOYMENT_INVOKE_ENDPOINT,
   DEPLOYMENTS_LIST_ENDPOINT,
   ERROR_MESSAGES,
 } from "./constants";
-import type { OrqDeploymentListResponse } from "./types";
+import type { RawDeploymentListItem } from "./types";
 
 export async function getDeploymentKeys(
   context: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  const baseUrl = DEFAULT_BASE_URL;
-
   try {
-    const response = (await context.helpers.requestWithAuthentication.call(
+    const deployments = await fetchAllPages<RawDeploymentListItem>(
       context,
-      "orqApi",
-      {
-        method: "GET",
-        url: `${baseUrl}${DEPLOYMENTS_LIST_ENDPOINT}?limit=50`,
-        json: true,
-      },
-    )) as OrqDeploymentListResponse;
+      `${DEFAULT_BASE_URL}${DEPLOYMENTS_LIST_ENDPOINT}`,
+    );
 
-    const deployments = (response.data || response) as DeploymentsData[];
-
-    return deployments.map((deployment: DeploymentsData) => ({
+    return deployments.map((deployment) => ({
       name: deployment.key,
       value: deployment.key,
     }));
