@@ -8,9 +8,6 @@ export const AGENT_TASK_ENDPOINT = (key: string, taskId: string) =>
 export const AGENT_TASK_MESSAGES_ENDPOINT = (key: string, taskId: string) =>
   `/v2/agents/${encodeURIComponent(key)}/tasks/${encodeURIComponent(taskId)}/messages`;
 
-export const PAGE_SIZE = 100;
-export const MAX_PAGES = 50;
-
 export const MAX_POLL_ATTEMPTS = 60;
 export const POLL_INTERVAL_MS = 2000;
 export const MAX_CONSECUTIVE_POLL_ERRORS = 3;

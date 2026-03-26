@@ -10,6 +10,7 @@ import type {
   InvokeAgentRequestBody,
 } from "@orq-ai/node/models/operations";
 
+import { fetchAllPages } from "../../lib/pagination";
 import {
   AGENT_INVOKE_ENDPOINT,
   AGENT_TASK_ENDPOINT,
@@ -18,46 +19,11 @@ import {
   DEFAULT_BASE_URL,
   ERROR_MESSAGES,
   MAX_CONSECUTIVE_POLL_ERRORS,
-  MAX_PAGES,
   MAX_POLL_ATTEMPTS,
-  PAGE_SIZE,
   POLL_INTERVAL_MS,
 } from "./constants";
-import type { PaginatedResponse, RawAgentListItem, RawTaskMessage } from "./types";
+import type { RawAgentListItem, RawTaskMessage } from "./types";
 import { TERMINAL_TASK_STATES } from "./types";
-
-async function fetchAllPages<T extends { _id: string }>(
-  context: ILoadOptionsFunctions | IExecuteFunctions,
-  baseUrl: string,
-): Promise<T[]> {
-  const results: T[] = [];
-  let cursor: string | undefined;
-  let pages = 0;
-
-  do {
-    const url = cursor
-      ? `${baseUrl}?limit=${PAGE_SIZE}&starting_after=${cursor}`
-      : `${baseUrl}?limit=${PAGE_SIZE}`;
-
-    const response = (await context.helpers.requestWithAuthentication.call(
-      context,
-      "orqApi",
-      { method: "GET", url, json: true },
-    )) as PaginatedResponse<T>;
-
-    const page = response?.data ?? [];
-    results.push(...page);
-
-    pages++;
-
-    cursor =
-      response?.has_more && page.length > 0 && pages < MAX_PAGES
-        ? page[page.length - 1]._id
-        : undefined;
-  } while (cursor);
-
-  return results;
-}
 
 export async function getAgentKeys(
   context: ILoadOptionsFunctions,
@@ -66,12 +32,15 @@ export async function getAgentKeys(
     const agents = await fetchAllPages<RawAgentListItem>(
       context,
       `${DEFAULT_BASE_URL}${AGENTS_LIST_ENDPOINT}`,
+      200,
     );
 
-    return agents.map((agent) => ({
-      name: agent.display_name || agent.key,
-      value: agent.key,
-    }));
+    return agents
+      .filter((agent) => agent.status === "live")
+      .map((agent) => ({
+        name: agent.display_name || agent.key,
+        value: agent.key,
+      }));
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

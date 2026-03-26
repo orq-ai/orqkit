@@ -3,16 +3,11 @@ import type {
   TaskStatusMessage,
 } from "@orq-ai/node/models/operations";
 
-export interface PaginatedResponse<T extends { _id: string }> {
-  object: "list";
-  data: T[];
-  has_more: boolean;
-}
-
 export interface RawAgentListItem {
   _id: string;
   key: string;
   display_name: string;
+  status: string;
 }
 
 export interface RawTaskMessage extends TaskStatusMessage {
