@@ -94,8 +94,7 @@ export class OrqAgent implements INodeType {
           );
         }
 
-        const messagesResponse = await getTaskMessages(this, agentKey, task.id);
-        const messages = messagesResponse.data || [];
+        const messages = await getTaskMessages(this, agentKey, task.id);
 
         const agentMessages = messages.filter(
           (m: TaskStatusMessage) => m.role !== "user",

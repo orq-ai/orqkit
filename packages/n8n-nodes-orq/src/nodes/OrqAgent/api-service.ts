@@ -8,8 +8,6 @@ import { NodeOperationError } from "n8n-workflow";
 import type {
   InvokeAgentA2ATaskResponse,
   InvokeAgentRequestBody,
-  ListAgentsData,
-  ListAgentsResponseBody,
 } from "@orq-ai/node/models/operations";
 
 import {
@@ -20,29 +18,58 @@ import {
   DEFAULT_BASE_URL,
   ERROR_MESSAGES,
   MAX_CONSECUTIVE_POLL_ERRORS,
+  MAX_PAGES,
   MAX_POLL_ATTEMPTS,
+  PAGE_SIZE,
   POLL_INTERVAL_MS,
 } from "./constants";
-import type { TaskMessagesResponse } from "./types";
+import type { PaginatedResponse, RawAgentListItem, RawTaskMessage } from "./types";
 import { TERMINAL_TASK_STATES } from "./types";
+
+async function fetchAllPages<T extends { _id: string }>(
+  context: ILoadOptionsFunctions | IExecuteFunctions,
+  baseUrl: string,
+): Promise<T[]> {
+  const results: T[] = [];
+  let cursor: string | undefined;
+  let pages = 0;
+
+  do {
+    const url = cursor
+      ? `${baseUrl}?limit=${PAGE_SIZE}&starting_after=${cursor}`
+      : `${baseUrl}?limit=${PAGE_SIZE}`;
+
+    const response = (await context.helpers.requestWithAuthentication.call(
+      context,
+      "orqApi",
+      { method: "GET", url, json: true },
+    )) as PaginatedResponse<T>;
+
+    const page = response?.data ?? [];
+    results.push(...page);
+
+    pages++;
+
+    cursor =
+      response?.has_more && page.length > 0 && pages < MAX_PAGES
+        ? page[page.length - 1]._id
+        : undefined;
+  } while (cursor);
+
+  return results;
+}
 
 export async function getAgentKeys(
   context: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-  const requestUrl = `${DEFAULT_BASE_URL}${AGENTS_LIST_ENDPOINT}?limit=100`;
   try {
-    const response = (await context.helpers.requestWithAuthentication.call(
+    const agents = await fetchAllPages<RawAgentListItem>(
       context,
-      "orqApi",
-      {
-        method: "GET",
-        url: requestUrl,
-        json: true,
-      },
-    )) as ListAgentsResponseBody;
+      `${DEFAULT_BASE_URL}${AGENTS_LIST_ENDPOINT}`,
+    );
 
-    return (response?.data ?? []).map((agent: ListAgentsData) => ({
-      name: agent.displayName || agent.key,
+    return agents.map((agent) => ({
+      name: agent.display_name || agent.key,
       value: agent.key,
     }));
   } catch (error) {
@@ -92,15 +119,10 @@ export async function getTaskMessages(
   context: IExecuteFunctions,
   agentKey: string,
   taskId: string,
-): Promise<TaskMessagesResponse> {
-  return await context.helpers.requestWithAuthentication.call(
+): Promise<RawTaskMessage[]> {
+  return fetchAllPages<RawTaskMessage>(
     context,
-    "orqApi",
-    {
-      method: "GET",
-      url: `${DEFAULT_BASE_URL}${AGENT_TASK_MESSAGES_ENDPOINT(agentKey, taskId)}?limit=100`,
-      json: true,
-    },
+    `${DEFAULT_BASE_URL}${AGENT_TASK_MESSAGES_ENDPOINT(agentKey, taskId)}`,
   );
 }
 
