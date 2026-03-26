@@ -117,7 +117,7 @@ export function buildContext(
     const key = item.key?.trim();
     const value = item.value?.trim();
 
-    if (key && value !== undefined) {
+    if (key && value) {
       Validators.validateKey(key, "context", node);
       contextObj[key] = value;
     }
@@ -140,7 +140,7 @@ export function buildInputs(
     const key = item.key?.trim();
     const value = item.value?.trim();
 
-    if (key && value !== undefined) {
+    if (key && value) {
       Validators.validateKey(key, "input", node);
       inputsObj[key] = value;
     }
