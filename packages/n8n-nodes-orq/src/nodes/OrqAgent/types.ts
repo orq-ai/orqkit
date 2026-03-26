@@ -20,3 +20,13 @@ export const TERMINAL_TASK_STATES: TaskState[] = [
 export interface OrqCredentials {
   apiKey: string;
 }
+
+export interface ApiError extends Error {
+  response?: { status?: number; data?: { message?: string } };
+  statusCode?: number;
+  description?: string;
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof Error;
+}

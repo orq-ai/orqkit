@@ -21,6 +21,7 @@ import { buildInvokeRequestBody } from "./builders";
 import { ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
 import type { OrqCredentials } from "./types";
+import { isApiError } from "./types";
 import { isTextPart, Validators } from "./validators";
 
 export class OrqAgent implements INodeType {
@@ -109,7 +110,7 @@ export class OrqAgent implements INodeType {
           taskId: task.id,
           agentKey,
           status: finalState,
-          success: finalState === "completed",
+          success: true,
           response: responseText,
           messages: messages as unknown as IDataObject[],
         };
@@ -119,38 +120,32 @@ export class OrqAgent implements INodeType {
           pairedItem: { item: i },
         });
       } catch (error: unknown) {
-        const errorObj = error as Error & {
-          response?: { status?: number; data?: { message?: string } };
-          statusCode?: number;
-          description?: string;
-          message?: string;
-        };
+        if (error instanceof NodeOperationError) {
+          throw error;
+        }
+
+        const errorObj = isApiError(error) ? error : null;
+        const message = errorObj?.message || "Request failed";
 
         if (this.continueOnFail()) {
           returnData.push({
             json: {
-              error: errorObj.message || "Request failed",
+              error: message,
               statusCode:
-                errorObj.response?.status || errorObj.statusCode || "Unknown",
+                errorObj?.response?.status || errorObj?.statusCode || "Unknown",
               details:
-                errorObj.response?.data || errorObj.description || undefined,
+                errorObj?.response?.data || errorObj?.description || undefined,
             },
             pairedItem: { item: i },
           });
           continue;
         }
 
-        if (error instanceof NodeOperationError) {
-          throw error;
-        }
-
         throw new NodeOperationError(
           this.getNode(),
-          ERROR_MESSAGES.AGENT_INVOKE_FAILED(
-            errorObj.message || "Request failed",
-          ),
+          ERROR_MESSAGES.AGENT_INVOKE_FAILED(message),
           {
-            description: `${errorObj.response?.data?.message || errorObj.description}`,
+            description: errorObj?.response?.data?.message ?? errorObj?.description ?? "No additional details",
           },
         );
       }
