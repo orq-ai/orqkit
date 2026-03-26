@@ -9,6 +9,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
