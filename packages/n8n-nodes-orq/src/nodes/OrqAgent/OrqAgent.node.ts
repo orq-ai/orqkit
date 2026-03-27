@@ -144,7 +144,10 @@ export class OrqAgent implements INodeType {
           this.getNode(),
           ERROR_MESSAGES.AGENT_INVOKE_FAILED(message),
           {
-            description: errorObj?.response?.data?.message ?? errorObj?.description ?? "No additional details",
+            description:
+              errorObj?.response?.data?.message ??
+              errorObj?.description ??
+              "No additional details",
           },
         );
       }
