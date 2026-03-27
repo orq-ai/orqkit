@@ -303,12 +303,12 @@ def run(
 
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
-    targets = target if len(target) > 1 else target[0]
+    targets: list[str] | str = target if len(target) > 1 else target[0]
 
     try:
         report = asyncio.run(
             red_team(
-                target=targets,
+                target=targets,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
                 name=name,
                 mode=mode,
                 categories=categories,

@@ -210,6 +210,21 @@ class Vulnerability(StrEnum):
     MISINFORMATION = 'misinformation'
 
 
+class TargetKind(StrEnum):
+    """Kind of target being red-teamed."""
+
+    AGENT = 'agent'
+    LLM = 'llm'
+    OPENAI = 'openai'
+    DEPLOYMENT = 'deployment'
+    DIRECT = 'direct'
+
+    @property
+    def is_model(self) -> bool:
+        """Return True if this target kind represents a model (not an agent)."""
+        return self in (TargetKind.LLM, TargetKind.OPENAI)
+
+
 class Pipeline(StrEnum):
     """Supported unified report pipeline identifiers."""
 
@@ -563,7 +578,7 @@ class PipelineLLMConfig(BaseModel):
     adversarial_temperature: float = 1.0
 
     # Target agent timeout (ms) for ORQ SDK calls
-    target_agent_timeout_ms: int = 120_000
+    target_agent_timeout_ms: int = 240_000
 
     # Adversarial LLM call timeout (ms) — separate from target agent timeout
     llm_call_timeout_ms: int = 60_000
