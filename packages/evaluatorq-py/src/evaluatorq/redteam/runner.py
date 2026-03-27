@@ -1017,7 +1017,7 @@ async def _run_dynamic_or_hybrid(
         _at_contexts: dict[int, AgentContext] = {}
         for _at in resolved_agent_targets:
             _get_ctx = getattr(_at, 'get_agent_context', None)
-            _at_label = getattr(_at, 'name', None) or type(_at).__name__
+            _at_deduped_label = agent_target_labels[id(_at)]
             if callable(_get_ctx):
                 _at_ctx = await cast("Any", _get_ctx())
                 if not isinstance(_at_ctx, AgentContext):
@@ -1026,8 +1026,8 @@ async def _run_dynamic_or_hybrid(
                         f'expected AgentContext.'
                     )
             else:
-                logger.warning(f'AgentTarget {_at_label!r} does not implement get_agent_context(); using minimal context.')
-                _at_ctx = AgentContext(key=_at_label)
+                logger.warning(f'AgentTarget {_at_deduped_label!r} does not implement get_agent_context(); using minimal context.')
+                _at_ctx = AgentContext(key=_at_deduped_label)
             _at_contexts[id(_at)] = _at_ctx
 
         if targets:
@@ -1262,15 +1262,6 @@ async def _run_dynamic_or_hybrid(
 
                 _at_safe = _make_safe_target(_at_label)
 
-                @job(f'redteam:dynamic:{_at_safe}')
-                async def _at_target_job(
-                    data: DataPoint,
-                    row: int,
-                    _inner: Any = _at_dyn_job,
-                ) -> Any:
-                    result = await _inner(data, row)
-                    return result.get('output', result) if isinstance(result, dict) else result
-
                 if _shared_at_dps is None:
                     # This is the first target overall — generate datapoints
                     from evaluatorq.redteam.adaptive.pipeline import (
@@ -1317,6 +1308,73 @@ async def _run_dynamic_or_hybrid(
                     _at_dps = list(_shared_at_dps)
                     _at_filter_meta = {}
 
+                # Build the appropriate job based on mode (hybrid vs dynamic-only)
+                _at_static_dps: list[Any] = []
+                if mode == Pipeline.HYBRID and static_data is not None:
+                    from evaluatorq.redteam.runtime.jobs import _build_messages
+
+                    _at_static_dps = list(static_data)
+                    # Tag datapoints with hybrid_source
+                    for dp in _at_dps:
+                        dp.inputs['hybrid_source'] = 'dynamic'
+                    for dp in _at_static_dps:
+                        dp.inputs['hybrid_source'] = 'static'
+
+                    # Build a static job that invokes the AgentTarget directly
+                    # Reuse the same DirectTargetFactory created for the dynamic job
+                    @job(f'redteam:static:{_at_safe}')
+                    async def _at_static_job(
+                        data: DataPoint,
+                        _row: int,
+                        _factory: Any = _at_factory,
+                        _label: str = _at_label,
+                    ) -> Any:
+                        """Send a static datapoint to the AgentTarget via send_prompt."""
+                        messages = _build_messages(data)
+                        prompt = '\n'.join(
+                            content for m in messages
+                            if m.get('role') == 'user' and (content := m.get('content'))
+                        )
+                        if not prompt:
+                            sample_id = data.inputs.get('id', 'unknown')
+                            raise ValueError(
+                                f'Static datapoint {sample_id!r} for target {_label!r} '
+                                f'produced an empty prompt ({len(messages)} messages, none with user content).'
+                            )
+                        target_instance = _factory.create_target(_label)
+                        response = await target_instance.send_prompt(prompt)
+                        from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
+                        _active_progress = _get_active_progress()
+                        if _active_progress is not None:
+                            await _active_progress.finish_attack(None)
+                        return {'response': response}
+
+                    @job(f'redteam:hybrid:{_at_safe}')
+                    async def _at_target_job(
+                        data: DataPoint,
+                        row: int,
+                        _dyn: Any = _at_dyn_job,
+                        _sta: Any = _at_static_job,
+                    ) -> Any:
+                        route = data.inputs.get('hybrid_source', 'static')
+                        inner = _dyn if route == 'dynamic' else _sta
+                        result = await inner(data, row)
+                        return result.get('output', result) if isinstance(result, dict) else result
+
+                    _at_all_dps = list(_at_dps) + _at_static_dps
+                else:
+                    _at_static_dps = []
+                    _at_all_dps = list(_at_dps)
+
+                    @job(f'redteam:dynamic:{_at_safe}')
+                    async def _at_target_job(
+                        data: DataPoint,
+                        row: int,
+                        _inner: Any = _at_dyn_job,
+                    ) -> Any:
+                        result = await _inner(data, row)
+                        return result.get('output', result) if isinstance(result, dict) else result
+
                 prepared_targets.append(PreparedTarget(
                     target=_at_label,
                     target_kind=getattr(_at, 'target_kind', 'direct'),
@@ -1324,8 +1382,8 @@ async def _run_dynamic_or_hybrid(
                     safe_target=_at_safe,
                     agent_context=_at_ctx,
                     dynamic_datapoints=list(_at_dps),
-                    static_datapoints=[],
-                    all_datapoints=list(_at_dps),
+                    static_datapoints=_at_static_dps,
+                    all_datapoints=_at_all_dps,
                     job=_at_target_job,
                     dynamic_job=_at_dyn_job,
                     resolved_memory_cleanup=cast("_MemoryCleanup", _at_cleanup),
