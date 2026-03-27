@@ -1120,7 +1120,7 @@ async def _run_dynamic_or_hybrid(
 
         # Confirm before expensive datapoint generation.
         _at_contexts_by_label = {
-            (getattr(_at, 'name', None) or type(_at).__name__): _at_contexts[id(_at)]
+            agent_target_labels[id(_at)]: _at_contexts[id(_at)]
             for _at in resolved_agent_targets
         }
         _all_contexts_for_confirm = {**all_agent_contexts, **_at_contexts_by_label}
