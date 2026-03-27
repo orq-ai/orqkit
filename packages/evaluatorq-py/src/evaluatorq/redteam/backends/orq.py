@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from evaluatorq.redteam.backends.registry import ORQ_DEFAULT_BASE_URL
+from evaluatorq.redteam.contracts import TargetKind
 from evaluatorq.redteam.exceptions import CredentialError
 
 if TYPE_CHECKING:
@@ -264,7 +265,7 @@ class ORQAgentTarget:
             model=self.model,
         )
 
-    target_kind: str = 'agent'
+    target_kind: TargetKind = TargetKind.AGENT
     """Used by the runner to populate report metadata correctly."""
 
     @property

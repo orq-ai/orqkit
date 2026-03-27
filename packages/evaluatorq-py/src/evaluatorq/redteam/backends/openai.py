@@ -8,7 +8,7 @@ from loguru import logger
 from openai.types.chat import ChatCompletionMessageParam
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.contracts import AgentContext, TokenUsage
+from evaluatorq.redteam.contracts import AgentContext, TargetKind, TokenUsage
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ class OpenAIModelTarget:
             system_prompt=self.system_prompt,
         )
 
-    target_kind: str = 'openai'
+    target_kind: TargetKind = TargetKind.OPENAI
     """Used by the runner to populate report metadata correctly."""
 
     @property

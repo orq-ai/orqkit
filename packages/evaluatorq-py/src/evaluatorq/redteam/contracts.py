@@ -211,6 +211,21 @@ class Vulnerability(StrEnum):
     UNBOUNDED_CONSUMPTION = 'unbounded_consumption'
 
 
+class TargetKind(StrEnum):
+    """Kind of target being red-teamed."""
+
+    AGENT = 'agent'
+    LLM = 'llm'
+    OPENAI = 'openai'
+    DEPLOYMENT = 'deployment'
+    DIRECT = 'direct'
+
+    @property
+    def is_model(self) -> bool:
+        """Return True if this target kind represents a model (not an agent)."""
+        return self in (TargetKind.LLM, TargetKind.OPENAI)
+
+
 class Pipeline(StrEnum):
     """Supported unified report pipeline identifiers."""
 
