@@ -137,7 +137,7 @@ class PipelineHooks(Protocol):
         """
         ...
 
-    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None, auto_save_path: str | None = None) -> None:
         """Called once with the final merged report after all targets complete.
 
         Args:
@@ -183,7 +183,7 @@ class DefaultHooks:
         )
         return True
 
-    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None, auto_save_path: str | None = None) -> None:
         """Log a brief summary and UI hint."""
         from pathlib import Path
 
@@ -201,6 +201,14 @@ class DefaultHooks:
                 report_path = str(Path(output_dir, "03_summary_report.json").relative_to(Path.cwd()))
             except ValueError:
                 report_path = f"{output_dir}/03_summary_report.json"
+            logger.info(
+                f'[redteam] Tip: visualise results with  "evaluatorq redteam ui {report_path}"'
+            )
+        elif auto_save_path:
+            try:
+                report_path = str(Path(auto_save_path).relative_to(Path.cwd()))
+            except ValueError:
+                report_path = auto_save_path
             logger.info(
                 f'[redteam] Tip: visualise results with  "evaluatorq redteam ui {report_path}"'
             )
@@ -543,7 +551,7 @@ class RichHooks:
     # on_complete
     # ------------------------------------------------------------------
 
-    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None) -> None:
+    def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None, auto_save_path: str | None = None) -> None:
         """Render the full report summary and a UI hint."""
         from pathlib import Path
         from rich.panel import Panel
@@ -562,6 +570,15 @@ class RichHooks:
                 report_path = str(Path(output_dir, "03_summary_report.json").relative_to(Path.cwd()))
             except ValueError:
                 report_path = f"{output_dir}/03_summary_report.json"
+        elif auto_save_path:
+            try:
+                report_path = str(Path(auto_save_path).relative_to(Path.cwd()))
+            except ValueError:
+                report_path = auto_save_path
+        else:
+            report_path = None
+
+        if report_path:
             self._console.print(
                 f'[dim]Tip:[/dim] Visualise results interactively with '
                 f'[bold cyan]"evaluatorq redteam ui {report_path}"[/bold cyan]'
