@@ -26,7 +26,7 @@ export function validateCredentials(credentials: unknown, node: INode): void {
 
   const creds = credentials as OrqCredentials;
   if (!creds.apiKey) {
-    throw new NodeOperationError(node, "API Key is required in credentials");
+    throw new NodeOperationError(node, ERROR_MESSAGES.API_KEY_REQUIRED);
   }
 }
 
