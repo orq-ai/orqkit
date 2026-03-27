@@ -33,6 +33,8 @@ export interface ApiError extends Error {
   description?: string;
 }
 
+// Broadly matches any Error so the catch block can extract .message;
+// API-specific fields (response, statusCode) are safely optional-chained at call sites.
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof Error;
 }
