@@ -5,16 +5,13 @@ import type {
   INodePropertyOptions,
 } from "n8n-workflow";
 
+import type { SearchKnowledgeResponseBody } from "@orq-ai/node/models/operations";
+
+import { fetchAllPages } from "../../lib/pagination";
 import { API_ENDPOINTS } from "./constants";
 import { ApiError } from "./errors";
-import type {
-  IOrqKnowledgeBase,
-  IOrqKnowledgeBaseApiResponse,
-  IOrqKnowledgeBaseListResponse,
-  IOrqKnowledgeBaseSearchRequest,
-  IOrqKnowledgeBaseSearchResponse,
-} from "./types";
-import { InputValidator } from "./validators";
+import type { ApiSearchRequest } from "./request-builder";
+import type { IOrqKnowledgeBase, RawKnowledgeBase } from "./types";
 
 const DEFAULT_TIMEOUT = 30000;
 
@@ -27,21 +24,17 @@ interface ErrorWithStatusCode {
 export async function getKnowledgeBases(
   context: ILoadOptionsFunctions | IExecuteFunctions,
 ): Promise<IOrqKnowledgeBase[]> {
-  const options: IHttpRequestOptions = {
-    method: "GET",
-    url: `${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.KNOWLEDGE_BASES}`,
-    json: true,
-    timeout: DEFAULT_TIMEOUT,
-  };
-
   try {
-    const response = await context.helpers.requestWithAuthentication.call(
+    const knowledgeBases = await fetchAllPages<RawKnowledgeBase>(
       context,
-      "orqApi",
-      options,
+      `${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.KNOWLEDGE_BASES}`,
     );
 
-    return parseKnowledgeBasesResponse(response);
+    return knowledgeBases.map((kb) => ({
+      id: kb.id || kb._id,
+      name: kb.key || kb.id || kb._id,
+      description: kb.description,
+    }));
   } catch (error) {
     const errorObj = error as ErrorWithStatusCode;
     if (errorObj.statusCode) {
@@ -74,25 +67,17 @@ export async function getKnowledgeBaseOptions(
 export async function searchKnowledgeBase(
   context: IExecuteFunctions,
   knowledgeId: string,
-  searchRequest: IOrqKnowledgeBaseSearchRequest,
-): Promise<IOrqKnowledgeBaseSearchResponse> {
-  const validatedId = InputValidator.validateKnowledgeBaseId(
-    context.getNode(),
-    knowledgeId,
-  );
-  const validatedRequest = InputValidator.validateSearchRequest(
-    context.getNode(),
-    searchRequest,
-  );
-
+  searchRequest: ApiSearchRequest,
+): Promise<SearchKnowledgeResponseBody> {
   const endpoint = API_ENDPOINTS.KNOWLEDGE_BASE_SEARCH.replace(
     "{knowledge_id}",
-    validatedId,
+    encodeURIComponent(knowledgeId),
   );
   const options: IHttpRequestOptions = {
     method: "POST",
-    url: `${API_ENDPOINTS.BASE_URL}${endpoint}`,
-    body: validatedRequest,
+    baseURL: API_ENDPOINTS.BASE_URL,
+    url: endpoint,
+    body: searchRequest,
     json: true,
     timeout: DEFAULT_TIMEOUT,
   };
@@ -119,48 +104,13 @@ export async function searchKnowledgeBase(
   }
 }
 
-function parseKnowledgeBasesResponse(response: unknown): IOrqKnowledgeBase[] {
-  if (!response) return [];
-
-  if (isOrqApiResponse(response)) {
-    const apiResponse = response as IOrqKnowledgeBaseListResponse;
-    return apiResponse.data.map((kb) => mapApiResponseToKnowledgeBase(kb));
-  }
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  return [];
-}
-
-function isOrqApiResponse(
-  response: unknown,
-): response is IOrqKnowledgeBaseListResponse {
-  return Boolean(
-    response &&
-      typeof response === "object" &&
-      "data" in response &&
-      Array.isArray((response as { data?: unknown }).data),
-  );
-}
-
-function mapApiResponseToKnowledgeBase(
-  kb: IOrqKnowledgeBaseApiResponse,
-): IOrqKnowledgeBase {
-  return {
-    id: kb._id || "",
-    name: kb.key || kb._id || "Unnamed Knowledge Base",
-    description: kb.description || undefined,
-  };
-}
-
 function validateSearchResponse(
   response: unknown,
-): IOrqKnowledgeBaseSearchResponse {
+): SearchKnowledgeResponseBody {
   if (!response || typeof response !== "object") {
     throw new Error("Invalid response format from Orq API");
   }
-  return response as IOrqKnowledgeBaseSearchResponse;
+  return response as SearchKnowledgeResponseBody;
 }
 
 function getErrorMessage(

@@ -15,7 +15,6 @@ import {
 } from "./knowledge-base-service";
 import { knowledgeBaseSearchProperties } from "./node-properties";
 import { RequestBuilder } from "./request-builder";
-import type { IOrqKnowledgeBaseSearchRequest } from "./types";
 import { InputValidator } from "./validators";
 
 export class OrqKnowledgeBaseSearch implements INodeType {
@@ -55,16 +54,16 @@ export class OrqKnowledgeBaseSearch implements INodeType {
     const returnData: INodeExecutionData[] = [];
 
     for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-      let knowledgeBaseId = "";
-      let searchRequest: IOrqKnowledgeBaseSearchRequest = { query: "" };
-
       try {
-        knowledgeBaseId = InputValidator.validateKnowledgeBaseId(
+        const knowledgeBaseId = InputValidator.validateKnowledgeBaseId(
           this.getNode(),
           this.getNodeParameter("knowledgeBase", itemIndex),
         );
 
-        searchRequest = RequestBuilder.buildSearchRequest(this, itemIndex);
+        const searchRequest = RequestBuilder.buildSearchRequest(
+          this,
+          itemIndex,
+        );
 
         const response = await searchKnowledgeBase(
           this,
@@ -72,8 +71,14 @@ export class OrqKnowledgeBaseSearch implements INodeType {
           searchRequest,
         );
 
+        const matches = (response as Record<string, unknown>)
+          .matches as unknown[];
         const outputData = {
           ...response,
+          _note:
+            matches && matches.length === 0
+              ? "No results found. Try adjusting your search query or filters."
+              : undefined,
         };
 
         returnData.push({

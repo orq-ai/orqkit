@@ -11,6 +11,7 @@ export const knowledgeBaseSearchProperties: INodeProperties[] = [
     typeOptions: {
       loadOptionsMethod: "getKnowledgeBases",
     },
+    options: [],
     default: "",
     required: true,
   },

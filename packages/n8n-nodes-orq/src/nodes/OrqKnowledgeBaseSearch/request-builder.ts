@@ -1,7 +1,8 @@
 import type { IExecuteFunctions } from "n8n-workflow";
 
+import type { FilterBy } from "@orq-ai/node/models/operations";
+
 import { FilterBuilder } from "./filter-builder";
-import type { IOrqKnowledgeBaseSearchRequest } from "./types";
 import { InputValidator } from "./validators";
 
 interface AdditionalOptions {
@@ -10,10 +11,23 @@ interface AdditionalOptions {
   search_type?: string;
 }
 
+export interface ApiSearchRequest {
+  query: string;
+  top_k?: number;
+  threshold?: number;
+  search_type?: string;
+  filter_by?: FilterBy;
+  search_options?: {
+    include_scores?: boolean;
+    include_metadata?: boolean;
+    include_vectors?: boolean;
+  };
+}
+
 export function buildSearchRequest(
   context: IExecuteFunctions,
   itemIndex: number,
-): IOrqKnowledgeBaseSearchRequest {
+): ApiSearchRequest {
   const query = context.getNodeParameter("query", itemIndex) as string;
   const additionalOptions = context.getNodeParameter(
     "additionalOptions",
@@ -21,7 +35,7 @@ export function buildSearchRequest(
     {},
   ) as AdditionalOptions;
 
-  const request: IOrqKnowledgeBaseSearchRequest = {
+  const request: ApiSearchRequest = {
     query: InputValidator.validateQuery(context.getNode(), query),
   };
 
@@ -64,7 +78,7 @@ export function buildSearchRequest(
     itemIndex,
   );
   if (filter) {
-    request.filter_by = filter;
+    request.filter_by = filter as FilterBy;
   }
 
   return request;
