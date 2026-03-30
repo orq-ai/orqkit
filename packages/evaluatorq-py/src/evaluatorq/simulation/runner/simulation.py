@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import os
 from collections.abc import Awaitable, Callable
@@ -368,7 +369,7 @@ class SimulationRunner:
             return await self._target_agent.respond(messages)
         if self._target_callback:
             result = self._target_callback(messages)
-            if asyncio.iscoroutine(result):
+            if inspect.isawaitable(result):
                 return cast(str, await result)
             return cast(str, result)
         raise RuntimeError("No target agent or callback configured")

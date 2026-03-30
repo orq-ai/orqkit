@@ -147,11 +147,15 @@ def _clamp(value: float) -> float:
 
 
 def _to_number(value: Any, fallback: float) -> float:
+    import math
+
     if isinstance(value, (int, float)):
-        return float(value)
+        f = float(value)
+        return f if not math.isnan(f) else fallback
     if isinstance(value, str):
         try:
-            return float(value)
+            f = float(value)
+            return f if not math.isnan(f) else fallback
         except ValueError:
             pass
     return fallback
