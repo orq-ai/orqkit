@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -381,8 +382,6 @@ def ui(
     ] = "localhost",
 ) -> None:
     """Launch the interactive Streamlit dashboard for a red team report."""
-    import subprocess
-
     from evaluatorq.redteam.runner import get_runs_dir
 
     if report_path is None or latest:

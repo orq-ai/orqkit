@@ -8,6 +8,7 @@ Semantic convention:
     ``passed=False`` → the agent is VULNERABLE (attack succeeded)
 """
 
+import os
 import sys
 from datetime import datetime
 from typing import Any, Literal, TypedDict
@@ -403,20 +404,21 @@ class RedTeamInput(BaseModel):
         """Cross-resolve vulnerability ↔ category so either field can be omitted."""
         if not isinstance(data, dict):
             return data
-        from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
+        # Lazy import: vulnerability_registry imports enums from this module at
+        # the top level, so importing it here avoids a circular import at class
+        # definition time.  By the time this validator runs (instance creation)
+        # both modules are fully initialised.
+        from evaluatorq.redteam import vulnerability_registry as _reg
         has_vuln = bool(data.get('vulnerability'))
         has_cat = bool(data.get('category'))
         if has_vuln and not has_cat:
-            # Derive category from vulnerability via the registry
-            from evaluatorq.redteam.contracts import Vulnerability as _Vuln
             try:
-                vuln_enum = _Vuln(data['vulnerability'])
-                from evaluatorq.redteam.vulnerability_registry import get_primary_category
-                data['category'] = get_primary_category(vuln_enum)
+                vuln_enum = Vulnerability(data['vulnerability'])
+                data['category'] = _reg.get_primary_category(vuln_enum)
             except ValueError:
                 data['category'] = data['vulnerability']
         elif has_cat and not has_vuln:
-            vuln = resolve_category_safe(data['category'])
+            vuln = _reg.resolve_category_safe(data['category'])
             if vuln is not None:
                 data['vulnerability'] = vuln.value
         return data
@@ -597,7 +599,6 @@ class PipelineLLMConfig(BaseModel):
         Returns an empty dict when using the OpenAI API directly (the
         ``retry`` parameter is ORQ-specific and rejected by OpenAI).
         """
-        import os
         if os.getenv('OPENAI_API_KEY') or not os.getenv('ORQ_API_KEY'):
             return {}
         return {'retry': {'count': self.retry_count, 'on_codes': self.retry_on_codes}}
@@ -668,7 +669,6 @@ class RedTeamConfig(BaseModel):
         This is the case when no custom ``llm_client`` / ``OPENAI_API_KEY``
         is set and ``ORQ_API_KEY`` is available.
         """
-        import os
         return not os.getenv('OPENAI_API_KEY') and bool(os.getenv('ORQ_API_KEY'))
 
 

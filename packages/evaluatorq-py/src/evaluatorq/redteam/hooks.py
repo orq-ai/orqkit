@@ -12,6 +12,7 @@ Public API:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, TypedDict, runtime_checkable
 
 from loguru import logger
@@ -185,8 +186,6 @@ class DefaultHooks:
 
     def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None, auto_save_path: str | None = None) -> None:
         """Log a brief summary and UI hint."""
-        from pathlib import Path
-
         for warning in report.pipeline_warnings:
             logger.warning(f'[redteam] PIPELINE WARNING: {warning}')
 
@@ -553,7 +552,6 @@ class RichHooks:
 
     def on_complete(self, report: RedTeamReport, *, output_dir: str | None = None, auto_save_path: str | None = None) -> None:
         """Render the full report summary and a UI hint."""
-        from pathlib import Path
         from rich.panel import Panel
 
         if report.pipeline_warnings:

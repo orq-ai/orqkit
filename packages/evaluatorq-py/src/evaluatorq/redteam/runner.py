@@ -9,21 +9,51 @@ import os
 import re
 import warnings
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
+from evaluatorq import DataPoint, EvaluationResult, job
+from evaluatorq.send_results import send_results_to_orq
+from evaluatorq.tracing import capture_parent_context, init_tracing_if_needed
+from evaluatorq.types import DataPointResult
+from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay, _get_active_progress
+from evaluatorq.redteam.adaptive.pipeline import (
+    cleanup_memory_entities,
+    create_dynamic_evaluator,
+    create_dynamic_redteam_job,
+    generate_dynamic_datapoints,
+    generate_dynamic_datapoints_for_vulnerabilities,
+)
 from evaluatorq.redteam.adaptive.strategy_registry import (
     get_category_info,
+    get_strategies_for_category,
+    get_strategies_for_vulnerability,
     list_available_categories,
+    select_applicable_strategies,
+    select_applicable_strategies_for_vulnerability,
 )
-from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, Pipeline, PipelineStage, RedTeamConfig, RedTeamReport, TargetConfig, TargetKind, Vulnerability
+from evaluatorq.redteam.backends.base import (
+    AgentTargetFactory,
+    DefaultErrorMapper,
+    DirectTargetFactory,
+    ErrorMapper,
+    MemoryCleanup,
+    NoopMemoryCleanup,
+    is_agent_target,
+)
+from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
+from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, Pipeline, PipelineStage, RedTeamConfig, RedTeamReport, TargetConfig, TargetKind, Vulnerability, normalize_category
 from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
+from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
+from evaluatorq.redteam.runtime.jobs import _build_messages, create_model_job
+from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
+from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_vulnerabilities
 
 
 def _save_stage(output_dir: Path | None, filename: str, content: str) -> None:
@@ -102,9 +132,6 @@ async def _send_cleaned_results(
     empty job results so the experiment shows one clean row per datapoint
     without duplication.
     """
-    from evaluatorq.send_results import send_results_to_orq
-    from evaluatorq.types import DataPointResult
-
     api_key = os.environ.get("ORQ_API_KEY")
     if not api_key:
         logger.debug("Skipping result upload to Orq platform: ORQ_API_KEY not set")
@@ -206,10 +233,7 @@ if TYPE_CHECKING:
 
     from openai import AsyncOpenAI
 
-    from evaluatorq import DataPoint
-    from evaluatorq.redteam.backends.base import AgentTarget, AgentTargetFactory, ErrorMapper, MemoryCleanup
-
-from evaluatorq.redteam.backends.base import is_agent_target
+    from evaluatorq.redteam.backends.base import AgentTarget
 
 
 # ---------------------------------------------------------------------------
@@ -426,11 +450,6 @@ async def red_team(
             'Set OPENAI_API_KEY for direct OpenAI access, or ORQ_API_KEY to use the ORQ router.'
         )
 
-    from evaluatorq.redteam.vulnerability_registry import (
-        get_primary_category,
-        resolve_vulnerabilities,
-    )
-
     resolved_vulns: list[Vulnerability] | None
     if vulnerabilities:
         resolved_vulns = resolve_vulnerabilities(vulnerabilities)
@@ -511,9 +530,6 @@ async def red_team(
     # Generate LLM-based recommendations for focus areas (opt-in)
     if generate_recommendations:
         try:
-            from evaluatorq.redteam.backends.registry import create_async_llm_client
-            from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
-
             rec_client = llm_client
             if rec_client is None:
                 rec_client = create_async_llm_client()
@@ -630,8 +646,6 @@ def _create_job_for_target(
     Returns:
         A job callable as returned by ``create_model_job``.
     """
-    from evaluatorq.redteam.runtime.jobs import create_model_job
-
     kind, value = _parse_target(target)
     if kind == 'agent':
         return create_model_job(agent_key=value, llm_client=llm_client, system_prompt=system_prompt)
@@ -711,16 +725,6 @@ async def _prepare_target(
     Returns:
         A :class:`PreparedTarget` instance with all per-target state.
     """
-    from evaluatorq import DataPoint, job
-
-    from evaluatorq.redteam.backends.base import DefaultErrorMapper
-    from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
-    from evaluatorq.redteam.adaptive.pipeline import (
-        create_dynamic_redteam_job,
-        generate_dynamic_datapoints,
-        generate_dynamic_datapoints_for_vulnerabilities,
-    )
-
     target_kind, target_value = _parse_target(target)
     safe_target = _make_safe_target(target_value)
 
@@ -831,7 +835,6 @@ async def _prepare_target(
                 static_datapoints = list(prefetched_static_data)
             else:
                 from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
-
                 # Load static datapoints
                 static_datapoints = load_owasp_agentic_dataset(
                     dataset=dataset,
@@ -965,23 +968,15 @@ async def _run_dynamic_or_hybrid(
     Args:
         mode: ``"dynamic"`` or ``"hybrid"``.
     """
-    from evaluatorq import EvaluationResult, evaluatorq
-
-    resolved_name = name or 'red-team'
-
-    from evaluatorq.redteam.adaptive.pipeline import (
-        cleanup_memory_entities,
-        create_dynamic_evaluator,
-    )
-    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
+    from evaluatorq import evaluatorq
     from evaluatorq.redteam.reports.converters import (
         dynamic_evaluatorq_results_to_report,
         merge_reports,
         static_evaluatorq_results_to_reports,
         static_results_to_report,
     )
-    from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
-    from evaluatorq.tracing import capture_parent_context, init_tracing_if_needed
+
+    resolved_name = name or 'red-team'
 
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
@@ -1007,8 +1002,6 @@ async def _run_dynamic_or_hybrid(
 
         # Step 1: Retrieve agent context for all targets (cheap) so we
         # can show capabilities in the confirmation prompt before expensive generation.
-        from evaluatorq.redteam.backends.registry import resolve_backend
-
         bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
         all_agent_contexts: dict[str, AgentContext] = {}
         resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": all_target_labels})
@@ -1048,13 +1041,6 @@ async def _run_dynamic_or_hybrid(
             raise ValueError(msg)
 
         # Step 2: Estimate datapoint counts (cheap registry lookups, no LLM).
-        from evaluatorq.redteam.adaptive.strategy_registry import (
-            get_strategies_for_category,
-            get_strategies_for_vulnerability,
-            select_applicable_strategies,
-            select_applicable_strategies_for_vulnerability,
-        )
-
         est_dynamic = 0
         strategy_breakdown: dict[str, Any] = {}
         if resolved_vulns is not None:
@@ -1235,11 +1221,6 @@ async def _run_dynamic_or_hybrid(
 
         # Step 4b: Prepare AgentTarget objects (direct targets)
         if resolved_agent_targets:
-            from evaluatorq import DataPoint, job
-            from evaluatorq.redteam.backends.base import AgentTargetFactory, DefaultErrorMapper, DirectTargetFactory, ErrorMapper, MemoryCleanup, NoopMemoryCleanup
-            from evaluatorq.redteam.backends.registry import create_async_llm_client
-            from evaluatorq.redteam.adaptive.pipeline import create_dynamic_redteam_job
-
             at_llm_client = llm_client
             if at_llm_client is None:
                 at_llm_client = create_async_llm_client()
@@ -1278,10 +1259,6 @@ async def _run_dynamic_or_hybrid(
 
                 if shared_at_dps is None:
                     # This is the first target overall — generate datapoints
-                    from evaluatorq.redteam.adaptive.pipeline import (
-                        generate_dynamic_datapoints,
-                        generate_dynamic_datapoints_for_vulnerabilities,
-                    )
                     resolved_hooks.on_stage_start(PipelineStage.DATAPOINT_GENERATION, {
                         "num_categories": len(resolved_categories),
                         "target": at_label,
@@ -1325,8 +1302,6 @@ async def _run_dynamic_or_hybrid(
                 # Build the appropriate job based on mode (hybrid vs dynamic-only)
                 at_static_dps: list[Any] = []
                 if mode == Pipeline.HYBRID and static_data is not None:
-                    from evaluatorq.redteam.runtime.jobs import _build_messages
-
                     at_static_dps = list(static_data)
                     # Tag datapoints with hybrid_source
                     for dp in at_dps:
@@ -1357,7 +1332,6 @@ async def _run_dynamic_or_hybrid(
                             )
                         target_instance = _factory.create_target(_label)
                         response = await target_instance.send_prompt(prompt)
-                        from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
                         _active_progress = _get_active_progress()
                         if _active_progress is not None:
                             await _active_progress.finish_attack(None)
@@ -1432,6 +1406,7 @@ async def _run_dynamic_or_hybrid(
         # dynamic evaluator directly.
         has_static = any(pt.static_datapoints for pt in prepared_targets)
         if mode == Pipeline.HYBRID and has_static:
+            from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
             dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
             static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
 
@@ -1460,8 +1435,6 @@ async def _run_dynamic_or_hybrid(
             evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
             evaluators = [evaluator]
             log_label = f'{len(all_datapoints)} datapoints'
-
-        from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay
 
         async with ProgressDisplay(est_total * len(prepared_targets), verbosity):
             try:
@@ -1738,25 +1711,19 @@ async def _run_static(
     then merged into one unified ``RedTeamReport``.
     """
     from evaluatorq import evaluatorq
-
-    resolved_name = name or 'red-team'
-
-    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
-        create_owasp_evaluator,
-        load_owasp_agentic_dataset,
-    )
-    from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
     from evaluatorq.redteam.reports.converters import (
         merge_reports,
         static_evaluatorq_results_to_reports,
         static_results_to_report,
     )
-    from evaluatorq.redteam.contracts import normalize_category
+
+    resolved_name = name or 'red-team'
 
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
 
     # Load the shared dataset once for all targets
+    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import load_owasp_agentic_dataset
     data = load_owasp_agentic_dataset(
         dataset=dataset,
         num_samples=max_static_datapoints,
@@ -1765,6 +1732,7 @@ async def _run_static(
 
     # Filter out datapoints whose category has no registered evaluator
     if data:
+        from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 
         skipped: Counter[str] = Counter()
         filtered_data: list[Any] = []
@@ -1792,6 +1760,7 @@ async def _run_static(
         for t in targets
     ]
 
+    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
     evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=llm_client, llm_kwargs=llm_kwargs)
 
     # Confirm hook — report aggregate counts
@@ -1874,7 +1843,6 @@ async def _run_static(
                 break
 
     # Fetch agent contexts for all targets (best-effort)
-    from evaluatorq.redteam.backends.registry import resolve_backend
     agent_contexts: dict[str, AgentContext] = {}
     try:
         backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
