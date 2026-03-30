@@ -6,9 +6,9 @@ so users don't need to wire the plumbing themselves.
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 from collections.abc import Awaitable, Callable
-from typing import Any, cast
+from typing import Any
 
 from evaluatorq.simulation.types import ChatMessage
 
@@ -41,8 +41,8 @@ def from_chat_completions(
 
     async def callback(messages: list[ChatMessage]) -> str:
         result = fn([{"role": m.role, "content": m.content} for m in messages])
-        if asyncio.iscoroutine(result):
-            return cast(str, await result)
-        return cast(str, result)
+        if inspect.isawaitable(result):
+            return await result
+        return result
 
     return callback
