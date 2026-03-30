@@ -581,7 +581,12 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
     if not value:
         msg = f'Target {target!r} is missing a value after the colon.'
         raise ValueError(msg)
-    return TargetKind(kind.lower()), value
+    try:
+        return TargetKind(kind.lower()), value
+    except ValueError:
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind)
+        msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
+        raise ValueError(msg) from None
 
 
 def _make_safe_target(value: str) -> str:
