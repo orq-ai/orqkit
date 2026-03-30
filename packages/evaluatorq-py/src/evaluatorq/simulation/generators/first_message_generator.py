@@ -9,6 +9,7 @@ import re
 from openai import APIStatusError, AsyncOpenAI
 
 from evaluatorq.simulation.types import Persona, Scenario
+from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.prompt_builders import (
     build_persona_system_prompt,
     build_scenario_user_context,
@@ -107,14 +108,17 @@ The message should immediately convey their goal and emotional state.
 Keep it natural - this is how they would actually open a conversation."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_FIRST_MESSAGE,
-                max_tokens=500,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_FIRST_MESSAGE,
+                    max_tokens=500,
+                ),
+                label="FirstMessageGenerator.generate",
             )
 
             message = response.choices[0].message.content if response.choices else ""

@@ -347,7 +347,9 @@ class SimulationRunner:
                     )
                 )
             else:
-                final_results.append(result)
+                raise RuntimeError(
+                    f"Unexpected result type from gather: {type(result).__name__}"
+                )
 
         return final_results
 

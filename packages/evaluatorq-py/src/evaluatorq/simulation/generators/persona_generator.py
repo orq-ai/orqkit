@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 
 from evaluatorq.simulation.types import CommunicationStyle, Persona
 from evaluatorq.simulation.utils.extract_json import extract_json_from_response
+from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
 
 logger = logging.getLogger(__name__)
@@ -158,14 +159,17 @@ Generate {num_personas} diverse personas for testing this agent.
 
 Return ONLY a JSON array, no other text."""
 
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=_TEMPERATURE_CREATIVE,
-            max_tokens=4000,
+        response = await with_retry(
+            lambda: self._client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=_TEMPERATURE_CREATIVE,
+                max_tokens=4000,
+            ),
+            label="PersonaGenerator.generate",
         )
 
         content = response.choices[0].message.content if response.choices else "[]"
@@ -270,14 +274,17 @@ IMPORTANT:
 
 Return ONLY a JSON array, no other text."""
 
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=_TEMPERATURE_BALANCED,
-            max_tokens=4000,
+        response = await with_retry(
+            lambda: self._client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=_TEMPERATURE_BALANCED,
+                max_tokens=4000,
+            ),
+            label="PersonaGenerator.generate_with_coverage",
         )
 
         content = response.choices[0].message.content if response.choices else "[]"

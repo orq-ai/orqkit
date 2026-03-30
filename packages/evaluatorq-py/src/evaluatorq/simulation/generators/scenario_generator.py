@@ -16,6 +16,7 @@ from evaluatorq.simulation.types import (
     StartingEmotion,
 )
 from evaluatorq.simulation.utils.extract_json import extract_json_from_response
+from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
 
 logger = logging.getLogger(__name__)
@@ -260,14 +261,17 @@ Generate {num_scenarios} diverse test scenarios for this agent.
 Return ONLY a JSON array, no other text."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_CREATIVE,
-                max_tokens=6000,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_CREATIVE,
+                    max_tokens=6000,
+                ),
+                label="ScenarioGenerator.generate",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
@@ -327,14 +331,17 @@ Additional requirements:
 Return ONLY a JSON array, no other text."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_BALANCED,
-                max_tokens=6000,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_BALANCED,
+                    max_tokens=6000,
+                ),
+                label="ScenarioGenerator.generate_with_coverage",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
@@ -394,14 +401,17 @@ Each scenario MUST have is_edge_case: true
 Return ONLY a JSON array, no other text."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_EDGE_CASE,
-                max_tokens=4000,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_EDGE_CASE,
+                    max_tokens=4000,
+                ),
+                label="ScenarioGenerator.generate_edge_cases",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
@@ -449,14 +459,17 @@ Each scenario MUST have is_edge_case: true
 Return ONLY a JSON array, no other text."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _BOUNDARY_SCENARIO_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_EDGE_CASE,
-                max_tokens=4000,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _BOUNDARY_SCENARIO_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_EDGE_CASE,
+                    max_tokens=4000,
+                ),
+                label="ScenarioGenerator.generate_boundary_scenarios",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
@@ -521,14 +534,17 @@ Requirements:
 Return ONLY a JSON array, no other text."""
 
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _SECURITY_SCENARIO_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_EDGE_CASE,
-                max_tokens=6000,
+            response = await with_retry(
+                lambda: self._client.chat.completions.create(
+                    model=self._model,
+                    messages=[
+                        {"role": "system", "content": _SECURITY_SCENARIO_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=_TEMPERATURE_EDGE_CASE,
+                    max_tokens=6000,
+                ),
+                label="ScenarioGenerator.generate_security_scenarios",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"

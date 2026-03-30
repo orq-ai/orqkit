@@ -252,17 +252,33 @@ async def generate_and_simulate(
         )
 
     # Generate personas and scenarios in parallel
-    persona_gen = PersonaGenerator(model=model)
-    scenario_gen = ScenarioGenerator(model=model)
+    from openai import AsyncOpenAI
 
-    personas, scenarios = await asyncio.gather(
-        persona_gen.generate(
-            agent_description=agent_description, num_personas=num_personas
-        ),
-        scenario_gen.generate(
-            agent_description=agent_description, num_scenarios=num_scenarios
-        ),
+    api_key = os.environ.get("ORQ_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "ORQ_API_KEY environment variable is not set. Set it before calling generate_and_simulate()."
+        )
+
+    shared_client = AsyncOpenAI(
+        api_key=api_key,
+        base_url=os.environ.get("ROUTER_BASE_URL", "https://api.orq.ai/v2/router"),
     )
+
+    try:
+        persona_gen = PersonaGenerator(model=model, client=shared_client)
+        scenario_gen = ScenarioGenerator(model=model, client=shared_client)
+
+        personas, scenarios = await asyncio.gather(
+            persona_gen.generate(
+                agent_description=agent_description, num_personas=num_personas
+            ),
+            scenario_gen.generate(
+                agent_description=agent_description, num_scenarios=num_scenarios
+            ),
+        )
+    finally:
+        await shared_client.close()
 
     # Run simulations
     return await simulate(
