@@ -408,17 +408,17 @@ class RedTeamInput(BaseModel):
         # the top level, so importing it here avoids a circular import at class
         # definition time.  By the time this validator runs (instance creation)
         # both modules are fully initialised.
-        from evaluatorq.redteam import vulnerability_registry as _reg
+        from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe
         has_vuln = bool(data.get('vulnerability'))
         has_cat = bool(data.get('category'))
         if has_vuln and not has_cat:
             try:
                 vuln_enum = Vulnerability(data['vulnerability'])
-                data['category'] = _reg.get_primary_category(vuln_enum)
+                data['category'] = get_primary_category(vuln_enum)
             except ValueError:
                 data['category'] = data['vulnerability']
         elif has_cat and not has_vuln:
-            vuln = _reg.resolve_category_safe(data['category'])
+            vuln = resolve_category_safe(data['category'])
             if vuln is not None:
                 data['vulnerability'] = vuln.value
         return data
