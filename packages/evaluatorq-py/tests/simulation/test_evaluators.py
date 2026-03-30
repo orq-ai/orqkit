@@ -1,5 +1,7 @@
 """Tests for simulation evaluators."""
 
+from typing import Any
+
 import pytest
 
 from evaluatorq.simulation.evaluators import (
@@ -17,8 +19,8 @@ from evaluatorq.simulation.types import (
 )
 
 
-def _make_result(**overrides):
-    defaults = dict(
+def _make_result(**overrides: Any) -> SimulationResult:
+    defaults: dict[str, Any] = dict(
         messages=[],
         terminated_by=TerminatedBy.judge,
         reason="test",
@@ -82,6 +84,14 @@ class TestTurnEfficiencyScorer:
         result = _make_result(goal_achieved=True, turn_count=10)
         assert turn_efficiency_scorer(result) == 0.6
 
+    def test_single_turn_resolution(self):
+        result = _make_result(goal_achieved=True, turn_count=1)
+        assert turn_efficiency_scorer(result) == 1.0
+
+    def test_floor_at_many_turns(self):
+        result = _make_result(goal_achieved=True, turn_count=20)
+        assert turn_efficiency_scorer(result) == 0.3
+
 
 class TestConversationQualityScorer:
     def test_perfect_score(self):
@@ -116,3 +126,8 @@ class TestEvaluatorRegistry:
         assert "criteria_met" in evaluators
         assert "turn_efficiency" in evaluators
         assert "conversation_quality" in evaluators
+
+    def test_get_all_returns_copy(self):
+        a = get_all_evaluators()
+        b = get_all_evaluators()
+        assert a is not b

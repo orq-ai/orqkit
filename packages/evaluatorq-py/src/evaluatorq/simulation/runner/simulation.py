@@ -353,7 +353,9 @@ class SimulationRunner:
 
     async def close(self) -> None:
         """Close and cleanup shared HTTP client."""
-        self._shared_client = None
+        if self._shared_client is not None:
+            await self._shared_client.close()
+            self._shared_client = None
 
     # ---------------------------------------------------------------------------
     # Private helpers

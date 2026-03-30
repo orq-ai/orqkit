@@ -1,5 +1,7 @@
 """Tests for prompt builders."""
 
+from typing import Any
+
 from evaluatorq.simulation.types import (
     CommunicationStyle,
     ConversationStrategy,
@@ -16,8 +18,8 @@ from evaluatorq.simulation.utils.prompt_builders import (
 )
 
 
-def _make_persona(**overrides):
-    defaults = dict(
+def _make_persona(**overrides: Any) -> Persona:
+    defaults: dict[str, Any] = dict(
         name="Test User",
         patience=0.5,
         assertiveness=0.5,
@@ -30,8 +32,10 @@ def _make_persona(**overrides):
     return Persona(**defaults)
 
 
-def _make_scenario(**overrides):
-    defaults = dict(name="Test Scenario", goal="Get help", context="Need assistance")
+def _make_scenario(**overrides: Any) -> Scenario:
+    defaults: dict[str, Any] = dict(
+        name="Test Scenario", goal="Get help", context="Need assistance"
+    )
     defaults.update(overrides)
     return Scenario(**defaults)
 
@@ -110,3 +114,69 @@ def test_generate_datapoint():
     assert dp.scenario.name == "Test Scenario"
     assert dp.first_message == "Hello!"
     assert dp.user_system_prompt != ""
+
+
+# --- Trait mapping tests ---
+
+
+def test_low_patience_maps_to_impatient():
+    p = _make_persona(patience=0.1)
+    prompt = build_persona_system_prompt(p)
+    assert "very impatient" in prompt
+
+
+def test_high_assertiveness():
+    p = _make_persona(assertiveness=0.9)
+    prompt = build_persona_system_prompt(p)
+    assert "very assertive" in prompt
+
+
+def test_low_politeness():
+    p = _make_persona(politeness=0.1)
+    prompt = build_persona_system_prompt(p)
+    assert "rude" in prompt
+
+
+def test_high_technical_level():
+    p = _make_persona(technical_level=0.9)
+    prompt = build_persona_system_prompt(p)
+    assert "technical expert" in prompt
+
+
+# --- Edge case tests ---
+
+
+def test_stable_arc_omits_emotional_section():
+    p = _make_persona(emotional_arc=EmotionalArc.stable)
+    prompt = build_persona_system_prompt(p)
+    assert "Emotional Arc" not in prompt
+
+
+def test_neutral_culture_omits_cultural_section():
+    from evaluatorq.simulation.types import CulturalContext
+
+    p = _make_persona(cultural_context=CulturalContext.neutral)
+    prompt = build_persona_system_prompt(p)
+    assert "Cultural Communication Style" not in prompt
+
+
+def test_scenario_without_criteria():
+    s = _make_scenario(criteria=None)
+    ctx = build_scenario_user_context(s)
+    assert "You expect" not in ctx
+    assert "dissatisfied" not in ctx
+
+
+def test_generate_datapoint_default_first_message():
+    p = _make_persona()
+    s = _make_scenario()
+    dp = generate_datapoint(p, s)
+    assert dp.first_message == ""
+
+
+def test_generate_datapoint_unique_ids():
+    p = _make_persona()
+    s = _make_scenario()
+    dp1 = generate_datapoint(p, s)
+    dp2 = generate_datapoint(p, s)
+    assert dp1.id != dp2.id

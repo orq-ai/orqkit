@@ -105,7 +105,7 @@ from evaluatorq.simulation.wrap_agent import wrap_simulation_agent  # noqa: E402
 
 async def simulate(
     *,
-    evaluation_name: str,
+    evaluation_name: str = "",
     agent_key: str | None = None,
     target_callback: Callable[[list[ChatMessage]], str | Awaitable[str]] | None = None,
     personas: list[Persona] | None = None,
@@ -136,8 +136,6 @@ async def simulate(
             raise ValueError(
                 "Either provide 'datapoints' or both 'personas' and 'scenarios'"
             )
-        if not personas or not scenarios:
-            raise ValueError("'personas' and 'scenarios' arrays must both be non-empty")
 
         api_key = os.environ.get("ORQ_API_KEY")
         if not api_key:
@@ -152,20 +150,25 @@ async def simulate(
 
         first_msg_gen = FirstMessageGenerator(model=model, client=shared_client)
 
-        pairs = [(persona, scenario) for persona in personas for scenario in scenarios]
+        try:
+            pairs = [
+                (persona, scenario) for persona in personas for scenario in scenarios
+            ]
 
-        generated_datapoints: list[Datapoint] = []
-        batch_size = 5
-        for i in range(0, len(pairs), batch_size):
-            batch = pairs[i : i + batch_size]
-            batch_results = await asyncio.gather(
-                *[
-                    _generate_single_datapoint(first_msg_gen, persona, scenario)
-                    for persona, scenario in batch
-                ]
-            )
-            generated_datapoints.extend(batch_results)
-        datapoints = generated_datapoints
+            generated_datapoints: list[Datapoint] = []
+            batch_size = 5
+            for i in range(0, len(pairs), batch_size):
+                batch = pairs[i : i + batch_size]
+                batch_results = await asyncio.gather(
+                    *[
+                        _generate_single_datapoint(first_msg_gen, persona, scenario)
+                        for persona, scenario in batch
+                    ]
+                )
+                generated_datapoints.extend(batch_results)
+            datapoints = generated_datapoints
+        finally:
+            await shared_client.close()
 
     if not datapoints:
         raise ValueError(
@@ -201,6 +204,8 @@ async def simulate(
             for scorer_name, fn in scorers:
                 scores[scorer_name] = fn(result)
             result.metadata["evaluator_scores"] = scores
+            if evaluation_name:
+                result.metadata["evaluation_name"] = evaluation_name
 
         return results
     finally:
@@ -221,7 +226,7 @@ async def _generate_single_datapoint(
 
 async def generate_and_simulate(
     *,
-    evaluation_name: str,
+    evaluation_name: str = "",
     agent_description: str,
     agent_key: str | None = None,
     target_callback: Callable[[list[ChatMessage]], str | Awaitable[str]] | None = None,

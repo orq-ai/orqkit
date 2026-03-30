@@ -70,3 +70,26 @@ class TestSimulationRunnerRun:
         )
         # Should get an error result (either from missing API key or actual error)
         assert result.terminated_by == TerminatedBy.error
+
+
+class TestSimulationRunnerMisc:
+    def test_accepts_valid_config(self):
+        runner = SimulationRunner(
+            target_callback=lambda msgs: "ok",
+            model="azure/gpt-4o-mini",
+            max_turns=5,
+        )
+        assert runner is not None
+
+    @pytest.mark.asyncio
+    async def test_close_can_be_called_multiple_times(self):
+        runner = SimulationRunner(target_callback=lambda msgs: "ok")
+        await runner.close()
+        await runner.close()
+
+    @pytest.mark.asyncio
+    async def test_run_batch_empty_datapoints(self, monkeypatch):
+        monkeypatch.setenv("ORQ_API_KEY", "test-key")
+        runner = SimulationRunner(target_callback=lambda msgs: "ok")
+        results = await runner.run_batch([])
+        assert results == []

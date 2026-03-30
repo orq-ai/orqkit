@@ -48,3 +48,27 @@ def test_extract_with_surrounding_text():
     )
     result = extract_json_from_response(content)
     assert result == '[{"name": "Alice"}]'
+
+
+def test_prefers_code_block_over_bare():
+    content = '{"bare": true}\n```json\n{"block": true}\n```'
+    result = extract_json_from_response(content)
+    assert result == '{"block": true}'
+
+
+def test_handles_escaped_quotes():
+    content = '{"key": "value with \\"quotes\\""}'
+    result = extract_json_from_response(content)
+    assert '"key"' in result
+    assert "quotes" in result
+
+
+def test_returns_trimmed_fallback():
+    result = extract_json_from_response("  no json here  ")
+    assert result == "no json here"
+
+
+def test_extracts_first_valid_json():
+    content = 'start {"a": 1} middle {"b": 2} end'
+    result = extract_json_from_response(content)
+    assert result == '{"a": 1}'

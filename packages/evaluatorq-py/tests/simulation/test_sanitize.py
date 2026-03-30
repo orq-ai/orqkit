@@ -28,3 +28,8 @@ def test_delimit_case_insensitive():
 
 def test_delimit_empty_string():
     assert delimit("") == "<data></data>"
+
+
+def test_preserves_non_data_tags():
+    result = delimit("<b>bold</b>")
+    assert "<b>bold</b>" in result

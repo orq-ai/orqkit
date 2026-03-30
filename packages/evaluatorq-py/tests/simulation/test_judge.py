@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from evaluatorq.simulation.agents.judge import JudgeAgent, JudgeAgentConfig
+from evaluatorq.simulation.agents.judge import JUDGE_TOOLS, JudgeAgent, JudgeAgentConfig
 from evaluatorq.simulation.agents.base import LLMResult
 from evaluatorq.simulation.types import Criterion
 
@@ -117,3 +117,32 @@ class TestJudgeAgent:
 
         assert judgment.goal_completion_score == 1.0
         assert judgment.response_quality == 0.0
+
+
+class TestJudgeTools:
+    def test_has_two_tools(self):
+        assert len(JUDGE_TOOLS) == 2
+
+    def test_first_tool_is_continue(self):
+        assert JUDGE_TOOLS[0]["function"]["name"] == "continue_conversation"
+
+    def test_second_tool_is_finish(self):
+        assert JUDGE_TOOLS[1]["function"]["name"] == "finish_conversation"
+
+    def test_finish_required_fields(self):
+        required = JUDGE_TOOLS[1]["function"]["parameters"]["required"]
+        assert "goal_achieved" in required
+        assert "rules_broken" in required
+        assert "goal_completion_score" in required
+        assert "reason" in required
+
+    def test_both_tools_have_quality_scores(self):
+        quality_fields = {
+            "response_quality",
+            "hallucination_risk",
+            "tone_appropriateness",
+            "factual_accuracy",
+        }
+        for tool in JUDGE_TOOLS:
+            props = tool["function"]["parameters"]["properties"]
+            assert quality_fields.issubset(props.keys())

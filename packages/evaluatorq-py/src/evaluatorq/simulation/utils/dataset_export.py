@@ -159,8 +159,10 @@ def results_to_jsonl(
     for r in results:
         dp = r["datapoint"]
         result = r["result"]
-        assert isinstance(dp, Datapoint)
-        assert isinstance(result, SimulationResult)
+        if not isinstance(dp, Datapoint):
+            raise TypeError(f"Expected Datapoint, got {type(dp).__name__}")
+        if not isinstance(result, SimulationResult):
+            raise TypeError(f"Expected SimulationResult, got {type(result).__name__}")
         lines.append(
             json.dumps(
                 {

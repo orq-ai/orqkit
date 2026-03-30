@@ -75,6 +75,7 @@ def test_scenario_model():
         ],
     )
     assert s.name == "Test Scenario"
+    assert s.criteria is not None
     assert len(s.criteria) == 2
     assert s.criteria[0].type == "must_happen"
 
