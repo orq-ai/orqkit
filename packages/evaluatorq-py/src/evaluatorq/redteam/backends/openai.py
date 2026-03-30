@@ -154,10 +154,6 @@ class OpenAITargetFactory:
         return OpenAIModelTarget(model_id=agent_key, client=self._client, system_prompt=self._system_prompt)
 
 
-# Re-export from base for backward compatibility
-from evaluatorq.redteam.backends.base import NoopMemoryCleanup as NoopMemoryCleanup  # noqa: F811, E402
-
-
 class OpenAIErrorMapper:
     """Normalize OpenAI exceptions into runtime error taxonomy."""
 
