@@ -9,21 +9,17 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from openai import APIStatusError, AsyncOpenAI
+from openai import AsyncOpenAI
 
 from evaluatorq.simulation.types import ChatMessage, TokenUsage
+from evaluatorq.simulation.utils.retry import with_retry
 
 logger = logging.getLogger(__name__)
 
-# Retry configuration
-MAX_RETRY_ATTEMPTS = 5
-RETRY_MIN_WAIT_S = 2.0
-RETRY_MAX_WAIT_S = 60.0
 DEFAULT_TIMEOUT_S = 60
 
 
@@ -42,12 +38,6 @@ class AgentConfig:
     model: str = "azure/gpt-4o-mini"
     client: AsyncOpenAI | None = None
     api_key: str | None = None
-
-
-def _is_retryable_status(status: int | None) -> bool:
-    if status is None:
-        return False
-    return status == 429 or status >= 500
 
 
 class BaseAgent(ABC):
@@ -152,7 +142,7 @@ class BaseAgent(ABC):
         """Call the LLM with retry logic (exponential backoff).
 
         Retries on rate-limit (429) and server errors (500+). All other errors
-        are raised immediately.
+        are raised immediately. ``asyncio.TimeoutError`` is never retried.
         """
         temp = temperature if temperature is not None else 0.7
         max_tok = max_tokens or 2048
@@ -163,61 +153,39 @@ class BaseAgent(ABC):
             *[{"role": m.role, "content": m.content} for m in messages],
         ]
 
-        last_error: BaseException | None = None
+        params: dict[str, Any] = {
+            "model": self._model,
+            "messages": full_messages,
+            "temperature": temp,
+            "max_tokens": max_tok,
+        }
 
-        for attempt in range(1, MAX_RETRY_ATTEMPTS + 1):
-            try:
-                params: dict[str, Any] = {
-                    "model": self._model,
-                    "messages": full_messages,
-                    "temperature": temp,
-                    "max_tokens": max_tok,
-                }
+        if tools:
+            params["tools"] = tools
+            params["tool_choice"] = "auto"
 
-                if tools:
-                    params["tools"] = tools
-                    params["tool_choice"] = "auto"
+        async def _do_call() -> LLMResult:
+            response = await asyncio.wait_for(
+                self._client.chat.completions.create(**params),
+                timeout=timeout_s,
+            )
 
-                response = await asyncio.wait_for(
-                    self._client.chat.completions.create(**params),
-                    timeout=timeout_s,
-                )
+            choice = response.choices[0] if response.choices else None
+            if not choice:
+                raise RuntimeError(f"{self.name}: No choices in response")
 
-                choice = response.choices[0] if response.choices else None
-                if not choice:
-                    raise RuntimeError(f"{self.name}: No choices in response")
+            message = choice.message
 
-                message = choice.message
+            # Accumulate token usage
+            if response.usage:
+                self._usage.prompt_tokens += response.usage.prompt_tokens
+                self._usage.completion_tokens += response.usage.completion_tokens
+                self._usage.total_tokens += response.usage.total_tokens
 
-                # Accumulate token usage
-                if response.usage:
-                    self._usage.prompt_tokens += response.usage.prompt_tokens
-                    self._usage.completion_tokens += response.usage.completion_tokens
-                    self._usage.total_tokens += response.usage.total_tokens
+            result = LLMResult(content=message.content or "")
+            if message.tool_calls:
+                result.tool_calls = list(message.tool_calls)
 
-                result = LLMResult(content=message.content or "")
-                if message.tool_calls:
-                    result.tool_calls = list(message.tool_calls)
+            return result
 
-                return result
-
-            except asyncio.TimeoutError:
-                raise
-
-            except Exception as err:
-                last_error = err
-
-                status = err.status_code if isinstance(err, APIStatusError) else None
-
-                if not _is_retryable_status(status):
-                    raise
-
-                if attempt < MAX_RETRY_ATTEMPTS:
-                    base_wait = RETRY_MIN_WAIT_S * (2 ** (attempt - 1))
-                    wait_s = min(base_wait, RETRY_MAX_WAIT_S)
-                    jitter = random.random() * wait_s * 0.25
-                    await asyncio.sleep(wait_s + jitter)
-
-        if last_error is not None:
-            raise last_error
-        raise RuntimeError(f"{self.name}: Max retries ({MAX_RETRY_ATTEMPTS}) exceeded")
+        return await with_retry(_do_call, label=f"{self.name}._call_llm")
