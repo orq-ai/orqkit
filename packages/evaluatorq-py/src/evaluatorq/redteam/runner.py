@@ -582,11 +582,16 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
         msg = f'Target {target!r} is missing a value after the colon.'
         raise ValueError(msg)
     try:
-        return TargetKind(kind.lower()), value
+        parsed_kind = TargetKind(kind.lower())
     except ValueError:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind)
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k.is_string_parseable)
         msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
         raise ValueError(msg) from None
+    if not parsed_kind.is_string_parseable:
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k.is_string_parseable)
+        msg = f'Target kind {kind!r} is not valid in string targets — pass an AgentTarget object directly instead. Valid string kinds: {valid}.'
+        raise ValueError(msg) from None
+    return parsed_kind, value
 
 
 def _make_safe_target(value: str) -> str:
@@ -1241,8 +1246,16 @@ async def _run_dynamic_or_hybrid(
                 # The target's create_target() expects an external agent_key string,
                 # which doesn't apply when the key is embedded in the object.
                 at_factory = DirectTargetFactory(at)
-                at_mapper = at if callable(getattr(at, 'map_error', None)) else DefaultErrorMapper()
-                at_cleanup = at if callable(getattr(at, 'cleanup_memory', None)) else NoopMemoryCleanup()
+                if callable(getattr(at, 'map_error', None)):
+                    at_mapper = at
+                else:
+                    logger.debug(f'AgentTarget {at_label!r} does not implement map_error(); using DefaultErrorMapper.')
+                    at_mapper = DefaultErrorMapper()
+                if callable(getattr(at, 'cleanup_memory', None)):
+                    at_cleanup = at
+                else:
+                    logger.debug(f'AgentTarget {at_label!r} does not implement cleanup_memory(); using NoopMemoryCleanup.')
+                    at_cleanup = NoopMemoryCleanup()
 
                 at_mem_ids: list[str] = []
                 all_at_cleanup_info.append((at_ctx, at_mem_ids, at_cleanup))
@@ -1370,7 +1383,7 @@ async def _run_dynamic_or_hybrid(
 
                 prepared_targets.append(PreparedTarget(
                     target=at_label,
-                    target_kind=TargetKind(getattr(at, 'target_kind', TargetKind.DIRECT)),
+                    target_kind=TargetKind(getattr(at, 'target_kind', TargetKind.CUSTOM)),
                     target_value=at_label,
                     safe_target=at_safe,
                     agent_context=at_ctx,

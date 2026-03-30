@@ -213,18 +213,33 @@ class Vulnerability(StrEnum):
 
 
 class TargetKind(StrEnum):
-    """Kind of target being red-teamed."""
+    """Kind of target being red-teamed.
+
+    String-parseable kinds (usable in ``"kind:value"`` target strings):
+        AGENT       — ORQ agent target (``"agent:my-bot"``, or bare ``"my-bot"``)
+        LLM         — model via configured LLM backend (``"llm:gpt-4o"``)
+        OPENAI      — model via direct OpenAI backend (``"openai:gpt-4o"``)
+        DEPLOYMENT  — ORQ deployment target (``"deployment:my-deployment"``)
+
+    Programmatic-only kinds (assigned automatically, not valid in target strings):
+        CUSTOM      — user-provided AgentTarget object passed directly
+    """
 
     AGENT = 'agent'
     LLM = 'llm'
     OPENAI = 'openai'
     DEPLOYMENT = 'deployment'
-    DIRECT = 'direct'
+    CUSTOM = 'custom'
 
     @property
     def is_model(self) -> bool:
         """Return True if this target kind represents a model (not an agent)."""
         return self in (TargetKind.LLM, TargetKind.OPENAI)
+
+    @property
+    def is_string_parseable(self) -> bool:
+        """Return True if this kind can appear in ``"kind:value"`` target strings."""
+        return self is not TargetKind.CUSTOM
 
 
 class Pipeline(StrEnum):
