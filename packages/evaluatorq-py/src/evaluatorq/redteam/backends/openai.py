@@ -76,8 +76,9 @@ class OpenAIModelTarget:
         """Stateless adapter; nothing to reset."""
         return
 
-    def clone(self) -> OpenAIModelTarget:
+    def clone(self, memory_entity_id: str | None = None) -> OpenAIModelTarget:
         """Create a fresh target instance for parallel job safety."""
+        _ = memory_entity_id  # OpenAI models have no server-side memory.
         return OpenAIModelTarget(
             model_id=self.model_id,
             client=self.client,

@@ -594,6 +594,16 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
     return parsed_kind, value
 
 
+def _resolve_target_kind(at: Any) -> TargetKind:
+    """Read ``target_kind`` from an AgentTarget, defaulting to CUSTOM."""
+    raw = getattr(at, 'target_kind', TargetKind.CUSTOM)
+    try:
+        return TargetKind(raw)
+    except ValueError:
+        logger.warning(f'AgentTarget {type(at).__name__} has invalid target_kind={raw!r}; defaulting to CUSTOM.')
+        return TargetKind.CUSTOM
+
+
 def _make_safe_target(value: str) -> str:
     """Return a job-name-safe slug from a target value."""
     return ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in value).strip('-') or 'unknown'
@@ -1031,7 +1041,13 @@ async def _run_dynamic_or_hybrid(
             get_ctx = getattr(at, 'get_agent_context', None)
             at_deduped_label = agent_target_labels[id(at)]
             if callable(get_ctx):
-                at_ctx = await cast("Any", get_ctx())
+                try:
+                    at_ctx = await cast("Any", get_ctx())
+                except Exception as exc:
+                    raise RuntimeError(
+                        f'Failed to retrieve agent context from {type(at).__name__}.get_agent_context(): {exc}. '
+                        f'Ensure the target implements get_agent_context() correctly.'
+                    ) from exc
                 if not isinstance(at_ctx, AgentContext):
                     raise TypeError(
                         f'{type(at).__name__}.get_agent_context() returned {type(at_ctx).__name__}, '
@@ -1383,7 +1399,7 @@ async def _run_dynamic_or_hybrid(
 
                 prepared_targets.append(PreparedTarget(
                     target=at_label,
-                    target_kind=TargetKind(getattr(at, 'target_kind', TargetKind.CUSTOM)),
+                    target_kind=_resolve_target_kind(at),
                     target_value=at_label,
                     safe_target=at_safe,
                     agent_context=at_ctx,

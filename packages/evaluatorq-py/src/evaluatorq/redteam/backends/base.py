@@ -7,7 +7,6 @@ LangChain, custom callables) can implement these protocols independently.
 
 from __future__ import annotations
 
-import inspect
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol, cast
@@ -31,7 +30,12 @@ class AgentTarget(Protocol):
 
 
 class SupportsClone(Protocol):
-    """Optional hook for target cloning per parallel job."""
+    """Optional hook for target cloning per parallel job.
+
+    Note: The runner detects this via duck-typing (``getattr``/``callable``),
+    not ``isinstance``.  Implementing this protocol is recommended for
+    documentation and static analysis but not strictly required.
+    """
 
     def clone(self, memory_entity_id: str | None = None) -> AgentTarget:
         """Return a fresh target instance, optionally with a different memory entity."""
@@ -99,13 +103,15 @@ class DirectTargetFactory:
     def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> AgentTarget:
         if self._clone_fn is not None:
             try:
-                sig = inspect.signature(self._clone_fn)
-                has_memory_param = 'memory_entity_id' in sig.parameters
-            except (ValueError, TypeError):
-                has_memory_param = False
-            if has_memory_param:
                 return cast("AgentTarget", self._clone_fn(memory_entity_id=memory_entity_id))
-            return cast("AgentTarget", self._clone_fn())
+            except TypeError:
+                # clone() doesn't accept memory_entity_id — fall back without it.
+                logger.warning(
+                    f'{type(self._target).__name__}.clone() does not accept memory_entity_id. '
+                    'Parallel jobs may share memory state. '
+                    'Add memory_entity_id: str | None = None to clone() to fix this.'
+                )
+                return cast("AgentTarget", self._clone_fn())
         return self._target
 
 
