@@ -582,26 +582,11 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
         msg = f'Target {target!r} is missing a value after the colon.'
         raise ValueError(msg)
     try:
-        parsed_kind = TargetKind(kind.lower())
+        return TargetKind(kind.lower()), value
     except ValueError:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k.is_string_parseable)
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind)
         msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
         raise ValueError(msg) from None
-    if not parsed_kind.is_string_parseable:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k.is_string_parseable)
-        msg = f'Target kind {kind!r} is not valid in string targets — pass an AgentTarget object directly instead. Valid string kinds: {valid}.'
-        raise ValueError(msg) from None
-    return parsed_kind, value
-
-
-def _resolve_target_kind(at: Any) -> TargetKind:
-    """Read ``target_kind`` from an AgentTarget, defaulting to CUSTOM."""
-    raw = getattr(at, 'target_kind', TargetKind.CUSTOM)
-    try:
-        return TargetKind(raw)
-    except ValueError:
-        logger.warning(f'AgentTarget {type(at).__name__} has invalid target_kind={raw!r}; defaulting to CUSTOM.')
-        return TargetKind.CUSTOM
 
 
 def _make_safe_target(value: str) -> str:
@@ -1041,13 +1026,7 @@ async def _run_dynamic_or_hybrid(
             get_ctx = getattr(at, 'get_agent_context', None)
             at_deduped_label = agent_target_labels[id(at)]
             if callable(get_ctx):
-                try:
-                    at_ctx = await cast("Any", get_ctx())
-                except Exception as exc:
-                    raise RuntimeError(
-                        f'Failed to retrieve agent context from {type(at).__name__}.get_agent_context(): {exc}. '
-                        f'Ensure the target implements get_agent_context() correctly.'
-                    ) from exc
+                at_ctx = await cast("Any", get_ctx())
                 if not isinstance(at_ctx, AgentContext):
                     raise TypeError(
                         f'{type(at).__name__}.get_agent_context() returned {type(at_ctx).__name__}, '
@@ -1262,16 +1241,8 @@ async def _run_dynamic_or_hybrid(
                 # The target's create_target() expects an external agent_key string,
                 # which doesn't apply when the key is embedded in the object.
                 at_factory = DirectTargetFactory(at)
-                if callable(getattr(at, 'map_error', None)):
-                    at_mapper = at
-                else:
-                    logger.debug(f'AgentTarget {at_label!r} does not implement map_error(); using DefaultErrorMapper.')
-                    at_mapper = DefaultErrorMapper()
-                if callable(getattr(at, 'cleanup_memory', None)):
-                    at_cleanup = at
-                else:
-                    logger.debug(f'AgentTarget {at_label!r} does not implement cleanup_memory(); using NoopMemoryCleanup.')
-                    at_cleanup = NoopMemoryCleanup()
+                at_mapper = at if callable(getattr(at, 'map_error', None)) else DefaultErrorMapper()
+                at_cleanup = at if callable(getattr(at, 'cleanup_memory', None)) else NoopMemoryCleanup()
 
                 at_mem_ids: list[str] = []
                 all_at_cleanup_info.append((at_ctx, at_mem_ids, at_cleanup))
@@ -1399,7 +1370,7 @@ async def _run_dynamic_or_hybrid(
 
                 prepared_targets.append(PreparedTarget(
                     target=at_label,
-                    target_kind=_resolve_target_kind(at),
+                    target_kind=TargetKind(getattr(at, 'target_kind', TargetKind.DIRECT)),
                     target_value=at_label,
                     safe_target=at_safe,
                     agent_context=at_ctx,
