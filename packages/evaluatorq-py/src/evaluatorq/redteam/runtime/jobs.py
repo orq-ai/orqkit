@@ -24,6 +24,7 @@ def create_model_job(
     agent_key: str | None = None,
     llm_client: AsyncOpenAI | None = None,
     system_prompt: str | None = None,
+    max_tokens: int = 5000,
 ) -> Job:
     """Create an evaluatorq job for router model, deployment, or ORQ agent.
 
@@ -95,6 +96,7 @@ def create_model_job(
         response = await client.chat.completions.create(
             model=model,
             messages=messages,  # pyright: ignore[reportArgumentType]
+            max_tokens=max_tokens,
         )
         content = response.choices[0].message.content or ''
         if not content:
