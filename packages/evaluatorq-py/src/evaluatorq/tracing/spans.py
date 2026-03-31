@@ -31,7 +31,7 @@ class JobSpanOptions:
     row_index: int
     job_name: str | None = None
     parent_context: Any | None = None
-    trace_type: str = "evaluation"
+    trace_type: str = "evaluatorq"
 
 
 @dataclass

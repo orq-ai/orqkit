@@ -62,7 +62,7 @@ async def evaluatorq(
     path: str | None = None,
     _exit_on_failure: bool = True,
     _send_results: bool = True,
-    _trace_type: str = "evaluation",
+    _trace_type: str = "evaluatorq",
 ) -> EvaluatorqResult:
     """
     Run an evaluation with the given parameters.

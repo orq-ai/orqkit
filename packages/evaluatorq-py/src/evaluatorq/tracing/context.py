@@ -28,8 +28,8 @@ class TracingContext:
     parent_context: Any | None = None
     """Parent OTEL context, if any"""
 
-    trace_type: str = "evaluation"
-    """Trace type identifier (``"evaluation"`` or ``"redteam"``)"""
+    trace_type: str = "evaluatorq"
+    """Trace type identifier for ``orq.trace_type`` span attribute"""
 
 
 def generate_run_id() -> str:
