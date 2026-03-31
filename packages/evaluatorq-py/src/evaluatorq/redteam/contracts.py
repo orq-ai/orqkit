@@ -1424,14 +1424,19 @@ class ReportSnapshot(BaseModel):
     top_techniques: dict[str, int] = Field(default_factory=dict)
 
 
+_deprecated_warned: set[str] = set()
+
+
 def __getattr__(name: str):
     if name == "EvaluationResult":
-        import warnings
-        warnings.warn(
-            "EvaluationResult is deprecated in evaluatorq.redteam.contracts. "
-            "Use AttackEvaluationResult instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        if name not in _deprecated_warned:
+            import warnings
+            _deprecated_warned.add(name)
+            warnings.warn(
+                "EvaluationResult is deprecated in evaluatorq.redteam.contracts. "
+                "Use AttackEvaluationResult instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return AttackEvaluationResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
