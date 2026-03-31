@@ -110,6 +110,11 @@ class DirectTargetFactory:
                 has_memory_param = False
             if has_memory_param:
                 return cast("AgentTarget", self._clone_fn(memory_entity_id=memory_entity_id))
+            logger.warning(
+                f'{type(self._target).__name__}.clone() does not accept memory_entity_id. '
+                'Parallel jobs may share memory state. '
+                'Add memory_entity_id: str | None = None to clone() to fix this.'
+            )
             return cast("AgentTarget", self._clone_fn())
         return self._target
 

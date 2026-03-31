@@ -584,7 +584,7 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
     try:
         return TargetKind(kind.lower()), value
     except ValueError:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind)
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k is not TargetKind.DIRECT)
         msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
         raise ValueError(msg) from None
 
