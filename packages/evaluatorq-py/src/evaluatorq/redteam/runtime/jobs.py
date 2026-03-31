@@ -28,10 +28,15 @@ def create_model_job(
 ) -> Job:
     """Create an evaluatorq job for router model, deployment, or ORQ agent.
 
+    ``max_tokens`` is applied to direct model calls and deployment invocations.
+    Agent targets manage their own token limits via platform configuration,
+    so ``max_tokens`` is ignored for agent jobs.
+
     Args:
         model: Model name for direct LLM calls via the ORQ router or OpenAI.
         deployment_key: ORQ deployment key for deployment-based inference.
-        agent_key: ORQ platform agent key.
+        agent_key: ORQ platform agent key (``max_tokens`` is not applied).
+        max_tokens: Maximum tokens for model/deployment responses (default 5000).
 
     Returns:
         An evaluatorq Job.
@@ -66,6 +71,7 @@ def create_model_job(
             completion = await deployment_client.deployments.invoke_async(
                 key=deployment_key,
                 messages=messages,  # pyright: ignore[reportArgumentType]
+                max_tokens=max_tokens,
             )
 
             # Advance the global progress bar for static attacks.

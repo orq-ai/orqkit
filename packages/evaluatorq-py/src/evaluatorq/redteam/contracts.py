@@ -578,10 +578,6 @@ class PipelineLLMConfig(BaseModel):
     retry_count: int = 3
     retry_on_codes: list[int] = Field(default=[429, 500, 502, 503, 504])
 
-    # Global default max_tokens for all LLM calls in the pipeline.
-    # Per-step fields override this when set explicitly.
-    default_max_tokens: int = 5000
-
     # Step 1: Capability classification — deterministic analysis of agent tools
     capability_classification_max_tokens: int = 5000
     capability_classification_temperature: float = 1.0
