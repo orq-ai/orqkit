@@ -1011,6 +1011,7 @@ async def _run_dynamic_or_hybrid(
     async with with_redteam_span(
         "orq.redteam.pipeline",
         attributes={
+            "orq.trace_type": "redteam",
             "orq.redteam.targets": ", ".join(all_target_labels),
             "orq.redteam.mode": mode,
             "orq.redteam.backend": backend,

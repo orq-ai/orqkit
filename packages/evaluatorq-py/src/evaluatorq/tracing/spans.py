@@ -73,6 +73,7 @@ async def with_job_span(
         parent_ctx = options.parent_context or otel_context.get_current()
 
         attributes: dict[str, Any] = {
+            "orq.trace_type": "evaluation",
             "orq.run_id": options.run_id,
             "orq.row_index": options.row_index,
         }
