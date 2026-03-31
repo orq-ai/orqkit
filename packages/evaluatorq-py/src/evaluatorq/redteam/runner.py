@@ -582,11 +582,16 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
         msg = f'Target {target!r} is missing a value after the colon.'
         raise ValueError(msg)
     try:
-        return TargetKind(kind.lower()), value
+        kind_enum = TargetKind(kind.lower())
     except ValueError:
         valid = ', '.join(f'"{k.value}"' for k in TargetKind if k is not TargetKind.DIRECT)
         msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
         raise ValueError(msg) from None
+    if kind_enum is TargetKind.DIRECT:
+        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k is not TargetKind.DIRECT)
+        msg = f'Target kind "direct" is not valid in string targets — pass an AgentTarget object directly instead. Valid string kinds: {valid}.'
+        raise ValueError(msg) from None
+    return kind_enum, value
 
 
 def _safe_resolve_target_kind(at: Any) -> TargetKind:
