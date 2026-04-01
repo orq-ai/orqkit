@@ -36,7 +36,7 @@ def create_model_job(
         model: Model name for direct LLM calls via the ORQ router or OpenAI.
         deployment_key: ORQ deployment key for deployment-based inference.
         agent_key: ORQ platform agent key (``max_tokens`` is not applied).
-        max_tokens: Maximum tokens for model/deployment responses (default 5000).
+        max_tokens: Maximum tokens for direct model responses (default 5000).
 
     Returns:
         An evaluatorq Job.
