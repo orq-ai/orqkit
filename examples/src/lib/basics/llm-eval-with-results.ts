@@ -23,7 +23,7 @@ const greet = job("greet", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
     max_tokens: 100,
-    model: "claude-3-5-haiku-latest",
+    model: "claude-haiku-4-5",
     system: `For testing purposes please be really lazy and sarcastic in your response, not polite at all.`,
     messages: [
       {
@@ -40,7 +40,7 @@ const joker = job("joker", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
     max_tokens: 100,
-    model: "claude-3-5-haiku-latest",
+    model: "claude-haiku-4-5",
     system: `You are a joker. You are funny and sarcastic. You are also a bit of a smartass. and make fun of the name of the user`,
     messages: [
       {
@@ -57,7 +57,7 @@ const calculator = job("calculator", async (data: DataPoint) => {
   const output = await claude.messages.create({
     stream: false,
     max_tokens: 100,
-    model: "claude-3-5-haiku-latest",
+    model: "claude-haiku-4-5",
     system: `You are a mathematician. You bring up a relating theory or a recent discovery when somebody talks to you.`,
     messages: [
       {
