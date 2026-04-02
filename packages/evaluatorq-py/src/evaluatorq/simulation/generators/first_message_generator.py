@@ -140,9 +140,3 @@ Keep it natural - this is how they would actually open a conversation."""
                 e,
             )
             return f"Hi, I need help with: {scenario.goal}"
-        except Exception as e:
-            logger.warning(
-                "FirstMessageGenerator: API call failed, using generic fallback. Error: %s",
-                e,
-            )
-            return f"Hi, I need help with: {scenario.goal}"

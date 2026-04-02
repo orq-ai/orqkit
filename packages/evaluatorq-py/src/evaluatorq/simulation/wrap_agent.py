@@ -96,6 +96,11 @@ def wrap_simulation_agent(
                 inputs["scenarios"], list
             ):
                 raise ValueError("Expected 'personas' and 'scenarios' to be arrays")
+            if len(inputs["personas"]) != 1 or len(inputs["scenarios"]) != 1:
+                raise ValueError(
+                    "wrap_simulation_agent DataPoint must encode exactly one persona-scenario pair. "
+                    "For batch simulations use simulate() directly."
+                )
             for p in inputs["personas"]:
                 _validate_shape(p, "personas[]", ["name"])
             for s in inputs["scenarios"]:

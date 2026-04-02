@@ -248,8 +248,6 @@ Return ONLY a JSON array, no other text."""
                 "ScenarioGenerator: LLM response was not valid JSON — returning empty array"
             )
             return []
-        except Exception:
-            raise
 
     async def generate_with_coverage(
         self,
@@ -327,8 +325,6 @@ Return ONLY a JSON array, no other text."""
                 "ScenarioGenerator: LLM response was not valid JSON — returning empty array"
             )
             return []
-        except Exception:
-            raise
 
     async def generate_edge_cases(
         self,
@@ -391,8 +387,6 @@ Return ONLY a JSON array, no other text."""
                 "ScenarioGenerator: LLM response was not valid JSON — returning empty array"
             )
             return []
-        except Exception:
-            raise
 
     async def generate_boundary_scenarios(
         self,
@@ -449,8 +443,6 @@ Return ONLY a JSON array, no other text."""
                 "ScenarioGenerator: LLM response was not valid JSON — returning empty array"
             )
             return []
-        except Exception:
-            raise
 
     async def generate_security_scenarios(
         self,
@@ -524,8 +516,6 @@ Return ONLY a JSON array, no other text."""
                 "ScenarioGenerator: LLM response was not valid JSON — returning empty array"
             )
             return []
-        except Exception:
-            raise
 
     # ---------------------------------------------------------------------------
     # Private helpers
