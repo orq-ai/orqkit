@@ -8,8 +8,7 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
-from evaluatorq.simulation.types import CommunicationStyle, Persona
-from evaluatorq.simulation.utils.extract_json import extract_json_from_response
+from evaluatorq.simulation.types import DEFAULT_MODEL, CommunicationStyle, Persona
 from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
 
@@ -17,11 +16,6 @@ logger = logging.getLogger(__name__)
 
 _TEMPERATURE_CREATIVE = 0.8
 _TEMPERATURE_BALANCED = 0.7
-_VALID_STYLES = {"formal", "casual", "terse", "verbose"}
-
-
-def _clamp01(value: float) -> float:
-    return max(0.0, min(1.0, value))
 
 
 _PERSONA_GENERATOR_PROMPT = """You are an expert persona designer for AI agent testing. Create realistic, memorable user personas that feel like real people, not stereotypes.
@@ -81,7 +75,7 @@ class PersonaGenerator:
     def __init__(
         self,
         *,
-        model: str = "azure/gpt-4o-mini",
+        model: str = DEFAULT_MODEL,
         client: AsyncOpenAI | None = None,
         api_key: str | None = None,
     ) -> None:
@@ -95,9 +89,7 @@ class PersonaGenerator:
                     "ORQ_API_KEY environment variable is not set. Set it or pass api_key/client."
                 )
             self._client = AsyncOpenAI(
-                base_url=os.environ.get(
-                    "ROUTER_BASE_URL", "https://api.orq.ai/v2/router"
-                ),
+                base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
                 api_key=resolved_key,
             )
 
@@ -105,34 +97,28 @@ class PersonaGenerator:
     def _parse_personas(content: str) -> list[Persona]:
         import json
 
-        extracted = extract_json_from_response(content)
         try:
-            parsed = json.loads(extracted)
-            if not isinstance(parsed, list):
-                logger.warning("Failed to parse personas: expected JSON array")
-                return []
+            parsed = json.loads(content)
         except (json.JSONDecodeError, ValueError):
             logger.warning("Failed to parse personas JSON response")
             return []
 
+        # json_object mode returns a top-level object; find the first list value
+        items: list[Any]
+        if isinstance(parsed, list):
+            items = parsed
+        elif isinstance(parsed, dict):
+            items = next(
+                (v for v in parsed.values() if isinstance(v, list)), []
+            )
+        else:
+            logger.warning("Failed to parse personas: unexpected JSON shape")
+            return []
+
         personas: list[Persona] = []
-        for p_dict in parsed:
+        for item in items:
             try:
-                p: dict[str, Any] = p_dict
-                raw_style = str(p.get("communication_style", "casual"))
-                personas.append(
-                    Persona(
-                        name=str(p.get("name", "")),
-                        patience=_clamp01(float(p.get("patience", 0.5))),
-                        assertiveness=_clamp01(float(p.get("assertiveness", 0.5))),
-                        politeness=_clamp01(float(p.get("politeness", 0.5))),
-                        technical_level=_clamp01(float(p.get("technical_level", 0.5))),
-                        communication_style=CommunicationStyle(raw_style)
-                        if raw_style in _VALID_STYLES
-                        else CommunicationStyle.casual,
-                        background=str(p.get("background", "")),
-                    )
-                )
+                personas.append(Persona.model_validate(item))
             except Exception as e:
                 logger.warning("Failed to parse persona: %s", e)
         return personas
@@ -168,6 +154,7 @@ Return ONLY a JSON array, no other text."""
                 ],
                 temperature=_TEMPERATURE_CREATIVE,
                 max_tokens=4000,
+                response_format={"type": "json_object"},
             ),
             label="PersonaGenerator.generate",
         )
@@ -283,6 +270,7 @@ Return ONLY a JSON array, no other text."""
                 ],
                 temperature=_TEMPERATURE_BALANCED,
                 max_tokens=4000,
+                response_format={"type": "json_object"},
             ),
             label="PersonaGenerator.generate_with_coverage",
         )

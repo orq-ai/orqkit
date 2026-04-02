@@ -11,6 +11,7 @@ from typing import Any
 from evaluatorq.simulation.adapters import from_orq_deployment
 from evaluatorq.simulation.convert import to_open_responses
 from evaluatorq.simulation.types import (
+    DEFAULT_MODEL,
     ChatMessage,
     Datapoint,
     Persona,
@@ -112,29 +113,20 @@ def wrap_simulation_agent(
             personas=personas,
             scenarios=scenarios,
             max_turns=max_turns,
-            model=model or "azure/gpt-4o-mini",
+            model=model or DEFAULT_MODEL,
             evaluator_names=evaluators,
         )
 
-        # Convert first result to OpenResponses format
-        result = results[0] if results else None
-        if not result:
+        if not results:
             raise RuntimeError("Simulation produced no results")
 
-        if len(results) > 1:
-            import logging
-
-            logging.getLogger(__name__).warning(
-                "wrap_simulation_agent: %d simulations ran but only the first result is returned. "
-                "Use simulate() directly to collect all results.",
-                len(results),
-            )
-
-        open_responses_output = to_open_responses(result, model or "azure/gpt-4o-mini")
+        # Convert all results to OpenResponses format
+        resolved_model = model or DEFAULT_MODEL
+        outputs = [to_open_responses(r, resolved_model) for r in results]
 
         return {
             "name": name,
-            "output": open_responses_output,
+            "output": outputs[0] if len(outputs) == 1 else outputs,
         }
 
     return job_fn

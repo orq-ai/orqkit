@@ -10,12 +10,11 @@ from typing import Any
 from openai import AsyncOpenAI
 
 from evaluatorq.simulation.types import (
-    ConversationStrategy,
+    DEFAULT_MODEL,
     Criterion,
     Scenario,
     StartingEmotion,
 )
-from evaluatorq.simulation.utils.extract_json import extract_json_from_response
 from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
 
@@ -24,18 +23,6 @@ logger = logging.getLogger(__name__)
 _TEMPERATURE_CREATIVE = 0.8
 _TEMPERATURE_BALANCED = 0.7
 _TEMPERATURE_EDGE_CASE = 0.9
-
-_VALID_EMOTIONS = {"neutral", "frustrated", "confused", "happy", "urgent"}
-_VALID_STRATEGIES = {
-    "cooperative",
-    "topic_switching",
-    "contradictory",
-    "multi_intent",
-    "evasive",
-    "repetitive",
-    "ambiguous",
-}
-_VALID_CRITERION_TYPES = {"must_happen", "must_not_happen"}
 
 _SCENARIO_GENERATOR_PROMPT = """You are an expert test scenario designer for AI agent evaluation. Create realistic, testable scenarios that thoroughly evaluate agent capabilities.
 
@@ -158,54 +145,26 @@ Each scenario must include:
 Return a JSON array of scenario objects."""
 
 
-def _parse_json_array(json_str: str) -> list[dict[str, Any]]:
-    parsed = json.loads(json_str)
-    if not isinstance(parsed, list):
-        logger.warning(
-            "ScenarioGenerator: expected JSON array but got non-array response"
-        )
-        return []
-    return parsed
+def _parse_json_list(content: str) -> list[dict[str, Any]]:
+    """Parse JSON content from json_object mode and extract the first list."""
+    parsed = json.loads(content)
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict):
+        for value in parsed.values():
+            if isinstance(value, list):
+                return value
+    logger.warning(
+        "ScenarioGenerator: expected JSON array but got non-array response"
+    )
+    return []
 
 
 def _parse_scenarios(scenario_dicts: list[dict[str, Any]]) -> list[Scenario]:
     scenarios: list[Scenario] = []
     for s_dict in scenario_dicts:
         try:
-            raw_criteria = s_dict.get("criteria", [])
-            criteria: list[Criterion] = []
-            if isinstance(raw_criteria, list):
-                for c in raw_criteria:
-                    if (
-                        isinstance(c, dict)
-                        and str(c.get("type", "")) in _VALID_CRITERION_TYPES
-                    ):
-                        criteria.append(
-                            Criterion(
-                                description=str(c.get("description", "")),
-                                type=c["type"],
-                                evaluator=c.get("evaluator"),
-                            )
-                        )
-
-            raw_emotion = str(s_dict.get("starting_emotion", "neutral"))
-            raw_strategy = str(s_dict.get("conversation_strategy", "cooperative"))
-
-            scenarios.append(
-                Scenario(
-                    name=str(s_dict.get("name", "")),
-                    goal=str(s_dict.get("goal", "")),
-                    context=str(s_dict.get("context", "")),
-                    starting_emotion=StartingEmotion(raw_emotion)
-                    if raw_emotion in _VALID_EMOTIONS
-                    else StartingEmotion.neutral,
-                    criteria=criteria,
-                    is_edge_case=bool(s_dict.get("is_edge_case", False)),
-                    conversation_strategy=ConversationStrategy(raw_strategy)
-                    if raw_strategy in _VALID_STRATEGIES
-                    else ConversationStrategy.cooperative,
-                )
-            )
+            scenarios.append(Scenario.model_validate(s_dict))
         except Exception as e:
             logger.warning("Failed to parse scenario: %s", e)
     return scenarios
@@ -217,7 +176,7 @@ class ScenarioGenerator:
     def __init__(
         self,
         *,
-        model: str = "azure/gpt-4o-mini",
+        model: str = DEFAULT_MODEL,
         client: AsyncOpenAI | None = None,
         api_key: str | None = None,
     ) -> None:
@@ -231,9 +190,7 @@ class ScenarioGenerator:
                     "ORQ_API_KEY environment variable is not set. Set it or pass api_key/client."
                 )
             self._client = AsyncOpenAI(
-                base_url=os.environ.get(
-                    "ROUTER_BASE_URL", "https://api.orq.ai/v2/router"
-                ),
+                base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
                 api_key=resolved_key,
             )
 
@@ -270,13 +227,13 @@ Return ONLY a JSON array, no other text."""
                     ],
                     temperature=_TEMPERATURE_CREATIVE,
                     max_tokens=6000,
+                    response_format={"type": "json_object"},
                 ),
                 label="ScenarioGenerator.generate",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
-            extracted = extract_json_from_response(content or "[]")
-            scenario_dicts = _parse_json_array(extracted)
+            scenario_dicts = _parse_json_list(content or "[]")
             scenarios = _parse_scenarios(scenario_dicts)
 
             if len(scenarios) < num_scenarios:
@@ -340,13 +297,13 @@ Return ONLY a JSON array, no other text."""
                     ],
                     temperature=_TEMPERATURE_BALANCED,
                     max_tokens=6000,
+                    response_format={"type": "json_object"},
                 ),
                 label="ScenarioGenerator.generate_with_coverage",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
-            extracted = extract_json_from_response(content or "[]")
-            scenario_dicts = _parse_json_array(extracted)
+            scenario_dicts = _parse_json_list(content or "[]")
             scenarios = _parse_scenarios(scenario_dicts)
 
             # Validate coverage
@@ -410,13 +367,13 @@ Return ONLY a JSON array, no other text."""
                     ],
                     temperature=_TEMPERATURE_EDGE_CASE,
                     max_tokens=4000,
+                    response_format={"type": "json_object"},
                 ),
                 label="ScenarioGenerator.generate_edge_cases",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
-            extracted = extract_json_from_response(content or "[]")
-            scenario_dicts = _parse_json_array(extracted)
+            scenario_dicts = _parse_json_list(content or "[]")
 
             for s_dict in scenario_dicts:
                 s_dict["is_edge_case"] = True
@@ -468,13 +425,13 @@ Return ONLY a JSON array, no other text."""
                     ],
                     temperature=_TEMPERATURE_EDGE_CASE,
                     max_tokens=4000,
+                    response_format={"type": "json_object"},
                 ),
                 label="ScenarioGenerator.generate_boundary_scenarios",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
-            extracted = extract_json_from_response(content or "[]")
-            scenario_dicts = _parse_json_array(extracted)
+            scenario_dicts = _parse_json_list(content or "[]")
 
             for s_dict in scenario_dicts:
                 s_dict["is_edge_case"] = True
@@ -543,13 +500,13 @@ Return ONLY a JSON array, no other text."""
                     ],
                     temperature=_TEMPERATURE_EDGE_CASE,
                     max_tokens=6000,
+                    response_format={"type": "json_object"},
                 ),
                 label="ScenarioGenerator.generate_security_scenarios",
             )
 
             content = response.choices[0].message.content if response.choices else "[]"
-            extracted = extract_json_from_response(content or "[]")
-            scenario_dicts = _parse_json_array(extracted)
+            scenario_dicts = _parse_json_list(content or "[]")
 
             for s_dict in scenario_dicts:
                 s_dict["is_edge_case"] = True

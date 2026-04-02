@@ -8,7 +8,7 @@ import re
 
 from openai import APIStatusError, AsyncOpenAI
 
-from evaluatorq.simulation.types import Persona, Scenario
+from evaluatorq.simulation.types import DEFAULT_MODEL, Persona, Scenario
 from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.prompt_builders import (
     build_persona_system_prompt,
@@ -72,7 +72,7 @@ class FirstMessageGenerator:
     def __init__(
         self,
         *,
-        model: str = "azure/gpt-4o-mini",
+        model: str = DEFAULT_MODEL,
         client: AsyncOpenAI | None = None,
         api_key: str | None = None,
     ) -> None:
@@ -86,9 +86,7 @@ class FirstMessageGenerator:
                     "ORQ_API_KEY environment variable is not set. Set it or pass api_key/client."
                 )
             self._client = AsyncOpenAI(
-                base_url=os.environ.get(
-                    "ROUTER_BASE_URL", "https://api.orq.ai/v2/router"
-                ),
+                base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
                 api_key=resolved_key,
             )
 
@@ -123,6 +121,12 @@ Keep it natural - this is how they would actually open a conversation."""
 
             message = response.choices[0].message.content if response.choices else ""
             message = re.sub(r'^["\']|["\']$', "", (message or "").strip())
+
+            if not message:
+                logger.warning(
+                    "FirstMessageGenerator: LLM returned empty content, using generic fallback"
+                )
+                return f"Hi, I need help with: {scenario.goal}"
 
             logger.debug("Generated first message: %s...", message[:100])
             return message

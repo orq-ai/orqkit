@@ -11,11 +11,10 @@ from typing import Any
 
 from evaluatorq.simulation.quality.message_perturbation import apply_random_perturbation
 from evaluatorq.simulation.types import (
-    CommunicationStyle,
+    DEFAULT_MODEL,
     Datapoint,
     Persona,
     Scenario,
-    StartingEmotion,
 )
 from evaluatorq.simulation.utils.prompt_builders import generate_datapoint
 from evaluatorq.simulation.generators.first_message_generator import (
@@ -40,7 +39,7 @@ class DatapointGenerator:
     def __init__(
         self,
         *,
-        model: str = "azure/gpt-4o-mini",
+        model: str = DEFAULT_MODEL,
         rate_limit_delay: float = _DEFAULT_RATE_LIMIT_DELAY,
         max_concurrent_calls: int = _DEFAULT_MAX_CONCURRENT_CALLS,
     ) -> None:
@@ -126,30 +125,16 @@ class DatapointGenerator:
             scenarios = [*scenarios, *security]
 
         if not personas:
-            logger.warning("No personas generated, using defaults")
-            personas = [
-                Persona(
-                    name="Default User",
-                    patience=0.5,
-                    assertiveness=0.5,
-                    politeness=0.5,
-                    technical_level=0.5,
-                    communication_style=CommunicationStyle.casual,
-                    background="",
-                )
-            ]
+            raise RuntimeError(
+                "Persona generation failed: no personas were produced. "
+                "Check LLM connectivity and response parsing."
+            )
 
         if not scenarios:
-            logger.warning("No scenarios generated, using defaults")
-            scenarios = [
-                Scenario(
-                    name="Default Scenario",
-                    goal="Get help",
-                    context="User needs general assistance",
-                    starting_emotion=StartingEmotion.neutral,
-                    criteria=[],
-                )
-            ]
+            raise RuntimeError(
+                "Scenario generation failed: no scenarios were produced. "
+                "Check LLM connectivity and response parsing."
+            )
 
         # Generate datapoints from all combinations
         datapoints = await self.generate_from_combinations(personas, scenarios)

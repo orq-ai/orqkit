@@ -64,6 +64,7 @@ from evaluatorq.simulation.quality.message_perturbation import (  # noqa: E402
 )
 from evaluatorq.simulation.runner.simulation import SimulationRunner, TargetAgent  # noqa: E402
 from evaluatorq.simulation.types import (  # noqa: E402
+    DEFAULT_MODEL,
     ChatMessage,
     CommunicationStyle,
     ConversationStrategy,
@@ -112,7 +113,7 @@ async def simulate(
     scenarios: list[Scenario] | None = None,
     datapoints: list[Datapoint] | None = None,
     max_turns: int = 10,
-    model: str = "azure/gpt-4o-mini",
+    model: str = DEFAULT_MODEL,
     evaluator_names: list[str] | None = None,
     parallelism: int = 5,
 ) -> list[SimulationResult]:
@@ -145,7 +146,7 @@ async def simulate(
 
         shared_client = AsyncOpenAI(
             api_key=api_key,
-            base_url=os.environ.get("ROUTER_BASE_URL", "https://api.orq.ai/v2/router"),
+            base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
         )
 
         first_msg_gen = FirstMessageGenerator(model=model, client=shared_client)
@@ -233,7 +234,7 @@ async def generate_and_simulate(
     num_personas: int = 5,
     num_scenarios: int = 5,
     max_turns: int = 10,
-    model: str = "azure/gpt-4o-mini",
+    model: str = DEFAULT_MODEL,
     evaluator_names: list[str] | None = None,
     parallelism: int = 5,
 ) -> list[SimulationResult]:
@@ -262,7 +263,7 @@ async def generate_and_simulate(
 
     shared_client = AsyncOpenAI(
         api_key=api_key,
-        base_url=os.environ.get("ROUTER_BASE_URL", "https://api.orq.ai/v2/router"),
+        base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
     )
 
     try:

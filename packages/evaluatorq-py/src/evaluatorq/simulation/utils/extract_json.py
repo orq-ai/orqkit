@@ -56,7 +56,7 @@ def _extract_balanced_from(
             escaped = False
             continue
 
-        if ch == "\\":
+        if ch == "\\" and in_string:
             escaped = True
             continue
 

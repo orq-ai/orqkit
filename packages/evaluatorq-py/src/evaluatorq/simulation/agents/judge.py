@@ -81,7 +81,7 @@ JUDGE_TOOLS: list[dict[str, Any]] = [
                     "rules_broken": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "List of criteria that were violated (empty if none)",
+                        "description": "List of criterion IDs that were violated, e.g. ['criteria_0', 'criteria_2'] (empty if none)",
                     },
                     "goal_completion_score": {
                         "type": "number",
@@ -115,6 +115,9 @@ Your task:
 - Evaluate whether the conversation should continue or end
 - Determine if the user's goal has been achieved
 - Check if any rules/criteria have been violated
+
+IMPORTANT: Each criterion has a unique ID (e.g., "criteria_0", "criteria_1").
+When reporting rules_broken, you MUST use the criterion ID exactly as listed, NOT paraphrase the description.
 
 Decision rules:
 1. FINISH if the user's goal is clearly achieved
@@ -333,19 +336,19 @@ class JudgeAgent(BaseAgent):
         if not self._criteria:
             return "No specific criteria defined."
 
-        must_happen = [
-            delimit(c.description) for c in self._criteria if c.type == "must_happen"
-        ]
-        must_not = [
-            delimit(c.description)
-            for c in self._criteria
-            if c.type == "must_not_happen"
-        ]
+        must_happen: list[str] = []
+        must_not: list[str] = []
+        for i, c in enumerate(self._criteria):
+            entry = f"- criteria_{i}: {delimit(c.description)} ({c.type})"
+            if c.type == "must_happen":
+                must_happen.append(entry)
+            elif c.type == "must_not_happen":
+                must_not.append(entry)
 
         text = ""
         if must_happen:
-            text += "MUST HAPPEN:\n" + "\n".join(f"- {c}" for c in must_happen) + "\n\n"
+            text += "MUST HAPPEN:\n" + "\n".join(must_happen) + "\n\n"
         if must_not:
-            text += "MUST NOT HAPPEN:\n" + "\n".join(f"- {c}" for c in must_not)
+            text += "MUST NOT HAPPEN:\n" + "\n".join(must_not)
 
         return text.strip() or "No specific criteria defined."

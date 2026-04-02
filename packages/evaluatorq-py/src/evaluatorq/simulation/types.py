@@ -10,6 +10,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+DEFAULT_MODEL = "azure/gpt-4o-mini"
+
 
 # ---------------------------------------------------------------------------
 # Literal union types (StrEnum for Python 3.10 compat)

@@ -17,6 +17,7 @@ from evaluatorq.simulation.agents.user_simulator import (
     UserSimulatorAgentConfig,
 )
 from evaluatorq.simulation.types import (
+    DEFAULT_MODEL,
     ChatMessage,
     Datapoint,
     Judgment,
@@ -33,6 +34,19 @@ from evaluatorq.simulation.utils.prompt_builders import build_datapoint_system_p
 logger = logging.getLogger(__name__)
 
 ZERO_USAGE = TokenUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
+
+
+def _invert_roles_for_simulator(messages: list[Message]) -> list[ChatMessage]:
+    """Swap roles so the user simulator sees the conversation from its perspective."""
+    inverted = []
+    for m in messages:
+        if m.role == "user":
+            inverted.append(ChatMessage(role="assistant", content=m.content))
+        elif m.role == "assistant":
+            inverted.append(ChatMessage(role="user", content=m.content))
+        else:
+            inverted.append(ChatMessage(role=m.role, content=m.content))
+    return inverted
 
 
 # ---------------------------------------------------------------------------
@@ -117,7 +131,7 @@ class SimulationRunner:
         target_agent: TargetAgent | None = None,
         target_callback: Callable[[list[ChatMessage]], str | Awaitable[str]]
         | None = None,
-        model: str = "azure/gpt-4o-mini",
+        model: str = DEFAULT_MODEL,
         max_turns: int = 10,
     ) -> None:
         if not target_agent and not target_callback:
@@ -140,9 +154,7 @@ class SimulationRunner:
                 raise ValueError("ORQ_API_KEY environment variable is not set.")
             self._shared_client = AsyncOpenAI(
                 api_key=api_key,
-                base_url=os.environ.get(
-                    "ROUTER_BASE_URL", "https://api.orq.ai/v2/router"
-                ),
+                base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
             )
         return self._shared_client
 
@@ -285,7 +297,7 @@ class SimulationRunner:
                 # 3. User simulator continues (if not last turn)
                 if turn < effective_max_turns - 1:
                     user_response = await user_simulator.respond_async(
-                        [ChatMessage(role=m.role, content=m.content) for m in messages],
+                        _invert_roles_for_simulator(messages),
                     )
                     messages.append(Message(role="user", content=user_response))
 
@@ -306,7 +318,8 @@ class SimulationRunner:
                 usage = (
                     get_total_usage() if get_total_usage else ZERO_USAGE.model_copy()
                 )
-            except Exception:
+            except Exception as e:
+                logger.warning("Failed to get token usage: %s", e)
                 usage = ZERO_USAGE.model_copy()
 
             result = _error_result(error_msg, persona, scenario)
@@ -381,8 +394,9 @@ class SimulationRunner:
         results: dict[str, bool] = {}
         criteria = scenario.criteria or []
         rules_broken = set(judgment.rules_broken)
-        for criterion in criteria:
-            results[criterion.description] = criterion.description not in rules_broken
+        for i, criterion in enumerate(criteria):
+            criterion_id = f"criteria_{i}"
+            results[criterion.description] = criterion_id not in rules_broken
         return results
 
     async def _run_with_timeout(

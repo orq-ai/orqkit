@@ -15,7 +15,7 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
-from evaluatorq.simulation.types import ChatMessage, TokenUsage
+from evaluatorq.simulation.types import DEFAULT_MODEL, ChatMessage, TokenUsage
 from evaluatorq.simulation.utils.retry import with_retry
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class LLMResult:
 class AgentConfig:
     """Configuration options for constructing an agent."""
 
-    model: str = "azure/gpt-4o-mini"
+    model: str = DEFAULT_MODEL
     client: AsyncOpenAI | None = None
     api_key: str | None = None
 
@@ -65,9 +65,7 @@ class BaseAgent(ABC):
                     "ORQ_API_KEY environment variable is not set. Set it or pass api_key in AgentConfig."
                 )
             self._client = AsyncOpenAI(
-                base_url=os.environ.get(
-                    "ROUTER_BASE_URL", "https://api.orq.ai/v2/router"
-                ),
+                base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
                 api_key=resolved_api_key,
             )
             self._client_owned = True
