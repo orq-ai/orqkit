@@ -46,6 +46,22 @@ class TestValidateShape:
             _validate_shape(None, "scenario", ["name"])
 
 
+_FULL_PERSONA = {
+    "name": "Persona A",
+    "patience": 0.5,
+    "assertiveness": 0.5,
+    "politeness": 0.5,
+    "technical_level": 0.5,
+    "communication_style": "casual",
+    "background": "Test persona",
+}
+
+_FULL_SCENARIO = {
+    "name": "Scenario A",
+    "goal": "Help",
+}
+
+
 class TestWrapSimulationAgent:
     @pytest.mark.asyncio
     async def test_returns_first_output_when_multiple_results(self, monkeypatch):
@@ -60,8 +76,8 @@ class TestWrapSimulationAgent:
         result = await job(
             DataPoint(
                 inputs={
-                    "personas": [{"name": "Persona A"}],
-                    "scenarios": [{"name": "Scenario A", "goal": "Help"}],
+                    "personas": [_FULL_PERSONA],
+                    "scenarios": [_FULL_SCENARIO],
                 }
             ),
             0,
@@ -83,8 +99,8 @@ class TestWrapSimulationAgent:
         result = await job(
             DataPoint(
                 inputs={
-                    "persona": {"name": "Persona A"},
-                    "scenario": {"name": "Scenario A", "goal": "Help"},
+                    "persona": _FULL_PERSONA,
+                    "scenario": _FULL_SCENARIO,
                 }
             ),
             0,
