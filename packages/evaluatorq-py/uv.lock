@@ -393,7 +393,7 @@ wheels = [
 
 [[package]]
 name = "evaluatorq"
-version = "1.2.3rc0"
+version = "1.2.3rc1"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
