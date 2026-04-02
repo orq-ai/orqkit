@@ -2,7 +2,31 @@
 
 import pytest
 
-from evaluatorq.simulation.wrap_agent import _validate_shape
+import evaluatorq.simulation as simulation_module
+from evaluatorq.simulation.types import Message, SimulationResult, TerminatedBy, TokenUsage
+from evaluatorq.simulation.wrap_agent import _validate_shape, wrap_simulation_agent
+from evaluatorq.types import DataPoint
+
+
+def _make_result(content: str) -> SimulationResult:
+    return SimulationResult(
+        messages=[
+            Message(role="user", content="Hello"),
+            Message(role="assistant", content=content),
+        ],
+        terminated_by=TerminatedBy.judge,
+        reason="Goal achieved",
+        goal_achieved=True,
+        goal_completion_score=1.0,
+        rules_broken=[],
+        turn_count=1,
+        token_usage=TokenUsage(
+            prompt_tokens=10,
+            completion_tokens=5,
+            total_tokens=15,
+        ),
+        turn_metrics=[],
+    )
 
 
 class TestValidateShape:
@@ -20,3 +44,50 @@ class TestValidateShape:
     def test_none_value(self):
         with pytest.raises(ValueError, match="Expected 'scenario' to be an object"):
             _validate_shape(None, "scenario", ["name"])
+
+
+class TestWrapSimulationAgent:
+    @pytest.mark.asyncio
+    async def test_returns_first_output_when_multiple_results(self, monkeypatch):
+        async def fake_simulate(**_kwargs):
+            return [_make_result("First"), _make_result("Second")]
+
+        monkeypatch.setattr(simulation_module, "simulate", fake_simulate)
+
+        job = wrap_simulation_agent(
+            target_callback=lambda _messages: "unused",
+        )
+        result = await job(
+            DataPoint(
+                inputs={
+                    "personas": [{"name": "Persona A"}],
+                    "scenarios": [{"name": "Scenario A", "goal": "Help"}],
+                }
+            ),
+            0,
+        )
+
+        assert isinstance(result["output"], dict)
+        assert result["output"]["output"][0]["content"][0]["text"] == "First"
+
+    @pytest.mark.asyncio
+    async def test_uses_simulation_model_by_default(self, monkeypatch):
+        async def fake_simulate(**_kwargs):
+            return [_make_result("Only result")]
+
+        monkeypatch.setattr(simulation_module, "simulate", fake_simulate)
+
+        job = wrap_simulation_agent(
+            target_callback=lambda _messages: "unused",
+        )
+        result = await job(
+            DataPoint(
+                inputs={
+                    "persona": {"name": "Persona A"},
+                    "scenario": {"name": "Scenario A", "goal": "Help"},
+                }
+            ),
+            0,
+        )
+
+        assert result["output"]["model"] == "simulation"

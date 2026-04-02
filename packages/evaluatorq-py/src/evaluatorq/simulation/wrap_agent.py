@@ -5,6 +5,7 @@ Follows the same pattern as wrap_langchain_agent().
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -19,6 +20,8 @@ from evaluatorq.simulation.types import (
     SimulationResult,
 )
 from evaluatorq.types import DataPoint
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_shape(value: Any, label: str, required_keys: list[str]) -> None:
@@ -120,13 +123,23 @@ def wrap_simulation_agent(
         if not results:
             raise RuntimeError("Simulation produced no results")
 
-        # Convert all results to OpenResponses format
-        resolved_model = model or DEFAULT_MODEL
-        outputs = [to_open_responses(r, resolved_model) for r in results]
+        if len(results) > 1:
+            logger.warning(
+                "wrap_simulation_agent ran %s simulations but only returns the first result. "
+                "Use simulate() directly to collect all outputs.",
+                len(results),
+            )
+
+        # Convert the first result to OpenResponses format
+        result = results[0]
 
         return {
             "name": name,
-            "output": outputs[0] if len(outputs) == 1 else outputs,
+            "output": (
+                to_open_responses(result, model)
+                if model
+                else to_open_responses(result)
+            ),
         }
 
     return job_fn
