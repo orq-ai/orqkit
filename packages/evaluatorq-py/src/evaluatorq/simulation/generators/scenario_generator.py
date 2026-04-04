@@ -8,6 +8,7 @@ import os
 from typing import Any
 
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from evaluatorq.simulation.types import (
     DEFAULT_MODEL,
@@ -15,8 +16,8 @@ from evaluatorq.simulation.types import (
     Scenario,
     StartingEmotion,
 )
-from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
+from evaluatorq.simulation.utils.structured_output import generate_structured
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,13 @@ Each scenario must include:
 }
 
 Return a JSON array of scenario objects."""
+
+
+class ScenarioListResponse(BaseModel):
+    """Wrapper for structured output parsing."""
+
+    scenarios: list[Scenario]
+
 
 _SECURITY_SCENARIO_PROMPT = """You are an expert security test scenario designer for AI agents. Create adversarial scenarios based on the OWASP Agentic Security Initiative (ASI) framework.
 
@@ -217,24 +225,27 @@ Generate {num_scenarios} diverse test scenarios for this agent.
 
 Return ONLY a JSON array, no other text."""
 
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=_TEMPERATURE_CREATIVE,
-                    max_tokens=6000,
-                    response_format={"type": "json_object"},
-                ),
+            parsed, raw = await generate_structured(
+                self._client,
+                model=self._model,
+                messages=messages,
+                response_format=ScenarioListResponse,
+                temperature=_TEMPERATURE_CREATIVE,
+                max_tokens=6000,
                 label="ScenarioGenerator.generate",
             )
 
-            content = response.choices[0].message.content if response.choices else "[]"
-            scenario_dicts = _parse_json_list(content or "[]")
-            scenarios = _parse_scenarios(scenario_dicts)
+            if parsed is not None:
+                scenarios = parsed.scenarios
+            else:
+                scenario_dicts = _parse_json_list(raw or "[]")
+                scenarios = _parse_scenarios(scenario_dicts)
 
             if len(scenarios) < num_scenarios:
                 logger.warning(
@@ -285,24 +296,27 @@ Additional requirements:
 
 Return ONLY a JSON array, no other text."""
 
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=_TEMPERATURE_BALANCED,
-                    max_tokens=6000,
-                    response_format={"type": "json_object"},
-                ),
+            parsed, raw = await generate_structured(
+                self._client,
+                model=self._model,
+                messages=messages,
+                response_format=ScenarioListResponse,
+                temperature=_TEMPERATURE_BALANCED,
+                max_tokens=6000,
                 label="ScenarioGenerator.generate_with_coverage",
             )
 
-            content = response.choices[0].message.content if response.choices else "[]"
-            scenario_dicts = _parse_json_list(content or "[]")
-            scenarios = _parse_scenarios(scenario_dicts)
+            if parsed is not None:
+                scenarios = parsed.scenarios
+            else:
+                scenario_dicts = _parse_json_list(raw or "[]")
+                scenarios = _parse_scenarios(scenario_dicts)
 
             # Validate coverage
             scenarios = self._ensure_emotion_coverage(
@@ -353,28 +367,32 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text."""
 
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _SCENARIO_GENERATOR_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=_TEMPERATURE_EDGE_CASE,
-                    max_tokens=4000,
-                    response_format={"type": "json_object"},
-                ),
+            parsed, raw = await generate_structured(
+                self._client,
+                model=self._model,
+                messages=messages,
+                response_format=ScenarioListResponse,
+                temperature=_TEMPERATURE_EDGE_CASE,
+                max_tokens=4000,
                 label="ScenarioGenerator.generate_edge_cases",
             )
 
-            content = response.choices[0].message.content if response.choices else "[]"
-            scenario_dicts = _parse_json_list(content or "[]")
+            if parsed is not None:
+                scenarios = [
+                    s.model_copy(update={"is_edge_case": True}) for s in parsed.scenarios
+                ]
+            else:
+                scenario_dicts = _parse_json_list(raw or "[]")
+                for s_dict in scenario_dicts:
+                    s_dict["is_edge_case"] = True
+                scenarios = _parse_scenarios(scenario_dicts)
 
-            for s_dict in scenario_dicts:
-                s_dict["is_edge_case"] = True
-
-            scenarios = _parse_scenarios(scenario_dicts)
             if len(scenarios) < num_edge_cases:
                 logger.warning(
                     "ScenarioGenerator: requested %d edge cases but only %d parsed",
@@ -409,28 +427,32 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text."""
 
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _BOUNDARY_SCENARIO_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _BOUNDARY_SCENARIO_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=_TEMPERATURE_EDGE_CASE,
-                    max_tokens=4000,
-                    response_format={"type": "json_object"},
-                ),
+            parsed, raw = await generate_structured(
+                self._client,
+                model=self._model,
+                messages=messages,
+                response_format=ScenarioListResponse,
+                temperature=_TEMPERATURE_EDGE_CASE,
+                max_tokens=4000,
                 label="ScenarioGenerator.generate_boundary_scenarios",
             )
 
-            content = response.choices[0].message.content if response.choices else "[]"
-            scenario_dicts = _parse_json_list(content or "[]")
+            if parsed is not None:
+                scenarios = [
+                    s.model_copy(update={"is_edge_case": True}) for s in parsed.scenarios
+                ]
+            else:
+                scenario_dicts = _parse_json_list(raw or "[]")
+                for s_dict in scenario_dicts:
+                    s_dict["is_edge_case"] = True
+                scenarios = _parse_scenarios(scenario_dicts)
 
-            for s_dict in scenario_dicts:
-                s_dict["is_edge_case"] = True
-
-            scenarios = _parse_scenarios(scenario_dicts)
             if len(scenarios) < num_scenarios:
                 logger.warning(
                     "ScenarioGenerator: requested %d boundary scenarios but only %d parsed",
@@ -482,28 +504,32 @@ Requirements:
 
 Return ONLY a JSON array, no other text."""
 
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _SECURITY_SCENARIO_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _SECURITY_SCENARIO_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=_TEMPERATURE_EDGE_CASE,
-                    max_tokens=6000,
-                    response_format={"type": "json_object"},
-                ),
+            parsed, raw = await generate_structured(
+                self._client,
+                model=self._model,
+                messages=messages,
+                response_format=ScenarioListResponse,
+                temperature=_TEMPERATURE_EDGE_CASE,
+                max_tokens=6000,
                 label="ScenarioGenerator.generate_security_scenarios",
             )
 
-            content = response.choices[0].message.content if response.choices else "[]"
-            scenario_dicts = _parse_json_list(content or "[]")
+            if parsed is not None:
+                scenarios = [
+                    s.model_copy(update={"is_edge_case": True}) for s in parsed.scenarios
+                ]
+            else:
+                scenario_dicts = _parse_json_list(raw or "[]")
+                for s_dict in scenario_dicts:
+                    s_dict["is_edge_case"] = True
+                scenarios = _parse_scenarios(scenario_dicts)
 
-            for s_dict in scenario_dicts:
-                s_dict["is_edge_case"] = True
-
-            scenarios = _parse_scenarios(scenario_dicts)
             if len(scenarios) < num_scenarios:
                 logger.warning(
                     "ScenarioGenerator: requested %d security scenarios but only %d parsed",

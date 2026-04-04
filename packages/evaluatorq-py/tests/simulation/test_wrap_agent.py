@@ -107,3 +107,19 @@ class TestWrapSimulationAgent:
         )
 
         assert result["output"]["model"] == "simulation"
+
+    @pytest.mark.asyncio
+    async def test_rejects_multiple_datapoints(self):
+        job = wrap_simulation_agent(
+            target_callback=lambda _messages: "unused",
+        )
+        dp = {
+            "persona": _FULL_PERSONA,
+            "scenario": _FULL_SCENARIO,
+            "first_message": "Hello",
+        }
+        with pytest.raises(ValueError, match="exactly one datapoint"):
+            await job(
+                DataPoint(inputs={"datapoints": [dp, dp]}),
+                0,
+            )

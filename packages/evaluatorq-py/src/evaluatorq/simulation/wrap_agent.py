@@ -81,6 +81,11 @@ def wrap_simulation_agent(
             dps = inputs["datapoints"]
             if not isinstance(dps, list):
                 raise ValueError("Expected 'datapoints' to be an array")
+            if len(dps) != 1:
+                raise ValueError(
+                    "wrap_simulation_agent DataPoint must encode exactly one datapoint. "
+                    "For batch simulations use simulate() directly."
+                )
             for dp in dps:
                 _validate_shape(
                     dp, "datapoints[]", ["persona", "scenario", "first_message"]

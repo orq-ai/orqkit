@@ -7,10 +7,11 @@ import os
 from typing import Any
 
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from evaluatorq.simulation.types import DEFAULT_MODEL, CommunicationStyle, Persona
-from evaluatorq.simulation.utils.retry import with_retry
 from evaluatorq.simulation.utils.sanitize import delimit
+from evaluatorq.simulation.utils.structured_output import generate_structured
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,12 @@ Each persona must include:
 }
 
 Return a JSON array of persona objects."""
+
+
+class PersonaListResponse(BaseModel):
+    """Wrapper for structured output parsing."""
+
+    personas: list[Persona]
 
 
 class PersonaGenerator:
@@ -145,22 +152,21 @@ Generate {num_personas} diverse personas for testing this agent.
 
 Return ONLY a JSON array, no other text."""
 
-        response = await with_retry(
-            lambda: self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_CREATIVE,
-                max_tokens=4000,
-                response_format={"type": "json_object"},
-            ),
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        parsed, raw = await generate_structured(
+            self._client,
+            model=self._model,
+            messages=messages,
+            response_format=PersonaListResponse,
+            temperature=_TEMPERATURE_CREATIVE,
+            max_tokens=4000,
             label="PersonaGenerator.generate",
         )
-
-        content = response.choices[0].message.content if response.choices else "[]"
-        personas = self._parse_personas(content or "[]")
+        personas = parsed.personas if parsed is not None else self._parse_personas(raw or "[]")
 
         if len(personas) < num_personas:
             logger.warning(
@@ -261,22 +267,21 @@ IMPORTANT:
 
 Return ONLY a JSON array, no other text."""
 
-        response = await with_retry(
-            lambda: self._client.chat.completions.create(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=_TEMPERATURE_BALANCED,
-                max_tokens=4000,
-                response_format={"type": "json_object"},
-            ),
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": _PERSONA_GENERATOR_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        parsed, raw = await generate_structured(
+            self._client,
+            model=self._model,
+            messages=messages,
+            response_format=PersonaListResponse,
+            temperature=_TEMPERATURE_BALANCED,
+            max_tokens=4000,
             label="PersonaGenerator.generate_with_coverage",
         )
-
-        content = response.choices[0].message.content if response.choices else "[]"
-        personas = self._parse_personas(content or "[]")
+        personas = parsed.personas if parsed is not None else self._parse_personas(raw or "[]")
 
         # Validate coverage and fill gaps
         personas = self._ensure_style_coverage(
