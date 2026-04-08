@@ -123,3 +123,35 @@ class TestWrapSimulationAgent:
                 DataPoint(inputs={"datapoints": [dp, dp]}),
                 0,
             )
+
+    @pytest.mark.asyncio
+    async def test_rejects_multiple_personas_or_scenarios(self):
+        job = wrap_simulation_agent(
+            target_callback=lambda _messages: "unused",
+        )
+        with pytest.raises(ValueError, match="exactly one persona-scenario pair"):
+            await job(
+                DataPoint(
+                    inputs={
+                        "personas": [_FULL_PERSONA, _FULL_PERSONA],
+                        "scenarios": [_FULL_SCENARIO],
+                    }
+                ),
+                0,
+            )
+
+    @pytest.mark.asyncio
+    async def test_rejects_multiple_scenarios(self):
+        job = wrap_simulation_agent(
+            target_callback=lambda _messages: "unused",
+        )
+        with pytest.raises(ValueError, match="exactly one persona-scenario pair"):
+            await job(
+                DataPoint(
+                    inputs={
+                        "personas": [_FULL_PERSONA],
+                        "scenarios": [_FULL_SCENARIO, _FULL_SCENARIO],
+                    }
+                ),
+                0,
+            )
