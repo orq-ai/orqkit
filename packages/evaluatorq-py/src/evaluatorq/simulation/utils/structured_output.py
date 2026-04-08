@@ -54,12 +54,21 @@ async def generate_structured(
             ),
             label=label,
         )
-        parsed = response.choices[0].message.parsed
+        message = response.choices[0].message
+        refusal = getattr(message, "refusal", None)
+        if refusal:
+            raise RuntimeError(f"{label}: model refused to generate: {refusal}")
+        parsed = message.parsed
         if parsed is not None:
             return parsed, ""
         logger.debug("%s: parse() returned None, falling back to json_object", label)
     except APIStatusError as e:
         if e.status_code != 400:
+            raise
+        # Only fall back if this looks like a schema-support issue
+        err_body = str(getattr(e, "body", None) or getattr(e, "message", "") or "").lower()
+        schema_keywords = ("structured", "response_format", "json_schema", "not supported")
+        if not any(kw in err_body for kw in schema_keywords):
             raise
         logger.debug(
             "%s: structured output not supported by model, falling back to json_object",
