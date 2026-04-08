@@ -2,9 +2,14 @@
 
 import pytest
 
-from evaluatorq.simulation.runner.simulation import SimulationRunner
+from evaluatorq.simulation.runner.simulation import (
+    SimulationRunner,
+    _invert_roles_for_simulator,
+)
 from evaluatorq.simulation.types import (
+    ChatMessage,
     CommunicationStyle,
+    Message,
     Persona,
     Scenario,
     TerminatedBy,
@@ -93,3 +98,47 @@ class TestSimulationRunnerMisc:
         runner = SimulationRunner(target_callback=lambda msgs: "ok")
         results = await runner.run_batch([])
         assert results == []
+
+
+class TestInvertRolesForSimulator:
+    """Tests for _invert_roles_for_simulator helper."""
+
+    def test_swaps_user_and_assistant(self):
+        messages = [
+            Message(role="user", content="Hello"),
+            Message(role="assistant", content="Hi there"),
+            Message(role="user", content="Help me"),
+        ]
+        result = _invert_roles_for_simulator(messages)
+
+        assert result[0] == ChatMessage(role="assistant", content="Hello")
+        assert result[1] == ChatMessage(role="user", content="Hi there")
+        assert result[2] == ChatMessage(role="assistant", content="Help me")
+
+    def test_preserves_system_role(self):
+        messages = [Message(role="system", content="You are helpful")]
+        result = _invert_roles_for_simulator(messages)
+        assert result[0] == ChatMessage(role="system", content="You are helpful")
+
+    def test_empty_messages(self):
+        assert _invert_roles_for_simulator([]) == []
+
+
+class TestSimulationRunnerBatchValidation:
+    def test_max_concurrency_validation(self):
+        runner = SimulationRunner(target_callback=lambda msgs: "ok")
+        with pytest.raises(ValueError, match="max_concurrency must be >= 1"):
+            import asyncio
+
+            asyncio.get_event_loop().run_until_complete(
+                runner.run_batch([], max_concurrency=0)
+            )
+
+    def test_negative_max_concurrency_validation(self):
+        runner = SimulationRunner(target_callback=lambda msgs: "ok")
+        with pytest.raises(ValueError, match="max_concurrency must be >= 1"):
+            import asyncio
+
+            asyncio.get_event_loop().run_until_complete(
+                runner.run_batch([], max_concurrency=-5)
+            )

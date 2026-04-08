@@ -338,6 +338,8 @@ class SimulationRunner:
         max_concurrency: int = 10,
     ) -> list[SimulationResult]:
         """Run simulations for multiple datapoints concurrently."""
+        if max_concurrency < 1:
+            raise ValueError(f"max_concurrency must be >= 1, got {max_concurrency}")
         semaphore = asyncio.Semaphore(max_concurrency)
 
         async def run_single(dp: Datapoint) -> SimulationResult:

@@ -105,3 +105,15 @@ def get_evaluator(name: str) -> SimulationScorer:
 def get_all_evaluators() -> dict[str, SimulationScorer]:
     """Get all built-in simulation evaluators."""
     return dict(SIMULATION_EVALUATORS)
+
+
+__all__ = [
+    "SimulationScorer",
+    "SIMULATION_EVALUATORS",
+    "get_evaluator",
+    "get_all_evaluators",
+    "goal_achieved_scorer",
+    "criteria_met_scorer",
+    "turn_efficiency_scorer",
+    "conversation_quality_scorer",
+]

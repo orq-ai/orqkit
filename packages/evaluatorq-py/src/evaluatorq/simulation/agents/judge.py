@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from typing import Any
 
-from evaluatorq.simulation.agents.base import AgentConfig, BaseAgent
+from evaluatorq.simulation.agents.base import AgentConfig, BaseAgent, LLMResult
 from evaluatorq.simulation.types import ChatMessage, Criterion, Judgment
 from evaluatorq.simulation.utils.sanitize import delimit
 
@@ -150,8 +151,6 @@ def _clamp(value: float) -> float:
 
 
 def _to_number(value: Any, fallback: float) -> float:
-    import math
-
     if isinstance(value, (int, float)):
         f = float(value)
         return f if not math.isnan(f) else fallback
@@ -233,7 +232,7 @@ class JudgeAgent(BaseAgent):
     # Private helpers
     # ---------------------------------------------------------------------------
 
-    def _parse_judgment(self, result: Any) -> Judgment:
+    def _parse_judgment(self, result: LLMResult) -> Judgment:
         tool_calls = result.tool_calls
 
         if not tool_calls:

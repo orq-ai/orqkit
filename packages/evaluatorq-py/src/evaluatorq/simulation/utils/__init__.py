@@ -4,6 +4,7 @@ from evaluatorq.simulation.utils.dataset_export import (
     export_datapoints_to_jsonl,
     export_results_to_jsonl,
     load_datapoints_from_jsonl,
+    parse_jsonl,
     results_to_jsonl,
 )
 from evaluatorq.simulation.utils.extract_json import extract_json_from_response
@@ -25,5 +26,6 @@ __all__ = [
     "extract_json_from_response",
     "generate_datapoint",
     "load_datapoints_from_jsonl",
+    "parse_jsonl",
     "results_to_jsonl",
 ]

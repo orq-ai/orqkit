@@ -445,6 +445,7 @@ __all__ = [
     "SimulationRunner",
     "TargetAgent",
     # Types
+    "DEFAULT_MODEL",
     "ChatMessage",
     "CommunicationStyle",
     "ConversationStrategy",
