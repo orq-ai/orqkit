@@ -125,20 +125,14 @@ class TestInvertRolesForSimulator:
 
 
 class TestSimulationRunnerBatchValidation:
-    def test_max_concurrency_validation(self):
+    @pytest.mark.asyncio
+    async def test_max_concurrency_validation(self):
         runner = SimulationRunner(target_callback=lambda msgs: "ok")
         with pytest.raises(ValueError, match="max_concurrency must be >= 1"):
-            import asyncio
+            await runner.run_batch([], max_concurrency=0)
 
-            asyncio.get_event_loop().run_until_complete(
-                runner.run_batch([], max_concurrency=0)
-            )
-
-    def test_negative_max_concurrency_validation(self):
+    @pytest.mark.asyncio
+    async def test_negative_max_concurrency_validation(self):
         runner = SimulationRunner(target_callback=lambda msgs: "ok")
         with pytest.raises(ValueError, match="max_concurrency must be >= 1"):
-            import asyncio
-
-            asyncio.get_event_loop().run_until_complete(
-                runner.run_batch([], max_concurrency=-5)
-            )
+            await runner.run_batch([], max_concurrency=-5)
