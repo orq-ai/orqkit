@@ -89,6 +89,19 @@ def _error_result(
     )
 
 
+def _build_criteria_results(
+    scenario: Scenario, judgment: Judgment
+) -> dict[str, bool]:
+    """Build a human-readable criteria results dict from scenario and judgment."""
+    results: dict[str, bool] = {}
+    criteria = scenario.criteria or []
+    rules_broken = set(judgment.rules_broken)
+    for i, criterion in enumerate(criteria):
+        criterion_id = f"criteria_{i}"
+        results[criterion.description] = criterion_id not in rules_broken
+    return results
+
+
 def _max_turns_result(
     max_turns: int,
     messages: list[Message],
@@ -98,6 +111,11 @@ def _max_turns_result(
     scenario: Scenario | None = None,
     last_judgment: Judgment | None = None,
 ) -> SimulationResult:
+    criteria_results = (
+        _build_criteria_results(scenario, last_judgment)
+        if scenario and last_judgment
+        else None
+    )
     return SimulationResult(
         messages=messages,
         terminated_by=TerminatedBy.max_turns,
@@ -110,6 +128,7 @@ def _max_turns_result(
         turn_count=max_turns,
         turn_metrics=turn_metrics,
         token_usage=token_usage,
+        criteria_results=criteria_results,
         metadata={
             "persona": persona.name if persona else None,
             "scenario": scenario.name if scenario else None,
@@ -393,13 +412,7 @@ class SimulationRunner:
     def _build_criteria_results(
         scenario: Scenario, judgment: Judgment
     ) -> dict[str, bool]:
-        results: dict[str, bool] = {}
-        criteria = scenario.criteria or []
-        rules_broken = set(judgment.rules_broken)
-        for i, criterion in enumerate(criteria):
-            criterion_id = f"criteria_{i}"
-            results[criterion.description] = criterion_id not in rules_broken
-        return results
+        return _build_criteria_results(scenario, judgment)
 
     async def _run_with_timeout(
         self,

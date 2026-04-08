@@ -119,6 +119,7 @@ def wrap_simulation_agent(
             )
 
         # Run simulation
+        effective_model = model or DEFAULT_MODEL
         results: list[SimulationResult] = await simulate(
             evaluation_name=name,
             target_callback=resolved_callback,
@@ -126,7 +127,7 @@ def wrap_simulation_agent(
             personas=personas,
             scenarios=scenarios,
             max_turns=max_turns,
-            model=model or DEFAULT_MODEL,
+            model=effective_model,
             evaluator_names=evaluators,
         )
 
@@ -145,11 +146,7 @@ def wrap_simulation_agent(
 
         return {
             "name": name,
-            "output": (
-                to_open_responses(result, model)
-                if model
-                else to_open_responses(result)
-            ),
+            "output": to_open_responses(result, effective_model),
         }
 
     return job_fn

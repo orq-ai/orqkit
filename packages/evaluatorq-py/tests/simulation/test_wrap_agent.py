@@ -3,7 +3,7 @@
 import pytest
 
 import evaluatorq.simulation as simulation_module
-from evaluatorq.simulation.types import Message, SimulationResult, TerminatedBy, TokenUsage
+from evaluatorq.simulation.types import DEFAULT_MODEL, Message, SimulationResult, TerminatedBy, TokenUsage
 from evaluatorq.simulation.wrap_agent import _validate_shape, wrap_simulation_agent
 from evaluatorq.types import DataPoint
 
@@ -106,7 +106,7 @@ class TestWrapSimulationAgent:
             0,
         )
 
-        assert result["output"]["model"] == "simulation"
+        assert result["output"]["model"] == DEFAULT_MODEL
 
     @pytest.mark.asyncio
     async def test_rejects_multiple_datapoints(self):
