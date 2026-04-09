@@ -1,6 +1,6 @@
 export const API_ENDPOINTS = {
   BASE_URL: "https://api.orq.ai",
-  KNOWLEDGE_BASES: "/v2/knowledge?limit=50",
+  KNOWLEDGE_BASES: "/v2/knowledge",
   KNOWLEDGE_BASE_SEARCH: "/v2/knowledge/{knowledge_id}/search",
 } as const;
 

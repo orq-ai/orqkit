@@ -1,27 +1,40 @@
 import type { INode } from "n8n-workflow";
 
+import type { InvokeDeploymentRequest } from "@orq-ai/node/models/components";
+
 import type {
-  OrqContentItem,
   OrqContextProperty,
   OrqFixedCollectionContext,
   OrqFixedCollectionInputs,
   OrqFixedCollectionMessages,
-  OrqInputMessage,
   OrqInputProperty,
-  OrqRequestBody,
 } from "./types";
 import { Validators } from "./validators";
 
+export interface ContentItem {
+  type: "text" | "image_url";
+  text?: string;
+  image_url?: {
+    url: string;
+    detail?: "low" | "high" | "auto";
+  };
+}
+
+export interface InputMessage {
+  role: "user" | "system" | "assistant";
+  content: string | ContentItem[];
+}
+
 export function buildMessages(
   messagesData: OrqFixedCollectionMessages,
-): OrqInputMessage[] {
-  const messages: OrqInputMessage[] = [];
+): InputMessage[] {
+  const messages: InputMessage[] = [];
 
   if (messagesData?.messageProperty?.length) {
     for (const item of messagesData.messageProperty) {
       if (!item.role) continue;
 
-      const message: OrqInputMessage = {
+      const message: InputMessage = {
         role: item.role,
         content: "",
       };
@@ -31,7 +44,7 @@ export function buildMessages(
         item.contentType &&
         item.contentType !== "text"
       ) {
-        const contentItems: OrqContentItem[] = [];
+        const contentItems: ContentItem[] = [];
 
         if (
           item.contentType === "image" &&
@@ -55,21 +68,21 @@ export function buildMessages(
               image_url: {
                 url: base64Data,
               },
-            } as OrqContentItem);
+            });
           } else if (item.imageSource === "url" && item.imageUrl) {
             contentItems.push({
               type: "image_url",
               image_url: {
                 url: item.imageUrl.trim(),
               },
-            } as OrqContentItem);
+            });
           } else if (!item.imageSource && item.imageUrl) {
             contentItems.push({
               type: "image_url",
               image_url: {
                 url: item.imageUrl.trim(),
               },
-            } as OrqContentItem);
+            });
           }
         }
 
@@ -104,7 +117,7 @@ export function buildContext(
     const key = item.key?.trim();
     const value = item.value?.trim();
 
-    if (key && value !== undefined) {
+    if (key && value) {
       Validators.validateKey(key, "context", node);
       contextObj[key] = value;
     }
@@ -127,7 +140,7 @@ export function buildInputs(
     const key = item.key?.trim();
     const value = item.value?.trim();
 
-    if (key && value !== undefined) {
+    if (key && value) {
       Validators.validateKey(key, "input", node);
       inputsObj[key] = value;
     }
@@ -138,13 +151,13 @@ export function buildInputs(
 
 export function buildRequestBody(
   deploymentKey: string,
-  messages: OrqInputMessage[],
+  messages: InputMessage[],
   context?: Record<string, string>,
   inputs?: Record<string, string>,
-): OrqRequestBody {
-  const body: OrqRequestBody = {
+): InvokeDeploymentRequest {
+  const body: InvokeDeploymentRequest = {
     key: deploymentKey,
-    messages: messages,
+    messages: messages as InvokeDeploymentRequest["messages"],
   };
 
   if (context) {
