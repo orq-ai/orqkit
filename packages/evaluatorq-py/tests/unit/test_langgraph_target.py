@@ -73,6 +73,15 @@ class TestLangGraphTarget:
             await target.send_prompt("hi")
 
     @pytest.mark.asyncio
+    async def test_raises_on_empty_messages_list(self) -> None:
+        graph = MagicMock()
+        graph.ainvoke = AsyncMock(return_value={"messages": []})
+        target = LangGraphTarget(graph)
+
+        with pytest.raises(ValueError, match="empty 'messages' list"):
+            await target.send_prompt("hi")
+
+    @pytest.mark.asyncio
     async def test_handles_dict_messages(self) -> None:
         graph = MagicMock()
         graph.ainvoke = AsyncMock(

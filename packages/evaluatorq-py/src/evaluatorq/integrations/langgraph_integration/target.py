@@ -65,6 +65,11 @@ class LangGraphTarget:
                 "(e.g. built with MessagesState). Got state keys: "
                 + str(list(result.keys()))
             )
+        if not messages:
+            raise ValueError(
+                "LangGraphTarget: graph returned an empty 'messages' list. "
+                "Ensure every execution path appends at least one AI message."
+            )
         last = messages[-1]
         # Support both dict and LangChain BaseMessage
         if isinstance(last, dict):
