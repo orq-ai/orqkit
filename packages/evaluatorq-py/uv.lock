@@ -548,8 +548,10 @@ all = [
     { name = "huggingface-hub" },
     { name = "kaleido" },
     { name = "langchain" },
+    { name = "langgraph" },
     { name = "loguru" },
     { name = "openai" },
+    { name = "openai-agents" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -565,6 +567,9 @@ export = [
 ]
 langchain = [
     { name = "langchain" },
+]
+langgraph = [
+    { name = "langgraph" },
 ]
 openai-agents = [
     { name = "openai-agents" },
@@ -618,11 +623,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "evaluatorq", extras = ["orq", "otel", "langchain", "redteam", "simulation", "ui", "export"], marker = "extra == 'all'" },
+    { name = "evaluatorq", extras = ["orq", "otel", "langchain", "langgraph", "openai-agents", "redteam", "simulation", "ui", "export"], marker = "extra == 'all'" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huggingface-hub", marker = "extra == 'redteam'", specifier = ">=0.20.0" },
     { name = "kaleido", marker = "extra == 'export'", specifier = ">=0.2.1" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "langgraph", marker = "extra == 'langgraph'", specifier = ">=0.2.0" },
     { name = "loguru", marker = "extra == 'redteam'", specifier = ">=0.6.0" },
     { name = "openai", marker = "extra == 'redteam'", specifier = ">=1.0.0,<3.0.0" },
     { name = "openai", marker = "extra == 'simulation'", specifier = ">=1.0.0,<3.0.0" },
@@ -640,7 +646,7 @@ requires-dist = [
     { name = "streamlit", marker = "extra == 'ui'", specifier = ">=1.30.0" },
     { name = "typer", marker = "extra == 'redteam'", specifier = ">=0.12.0" },
 ]
-provides-extras = ["orq", "otel", "langchain", "openai-agents", "redteam", "simulation", "ui", "export", "all"]
+provides-extras = ["orq", "otel", "langchain", "langgraph", "openai-agents", "redteam", "simulation", "ui", "export", "all"]
 
 [package.metadata.requires-dev]
 dev = [
