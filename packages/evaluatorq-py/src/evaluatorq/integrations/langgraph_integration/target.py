@@ -44,8 +44,9 @@ class LangGraphTarget:
 
     def _build_config(self) -> RunnableConfig:
         """Build the RunnableConfig with the current thread_id."""
+        extra = {k: v for k, v in self._extra_config.items() if k != "configurable"}
         return RunnableConfig(
-            **self._extra_config,
+            **extra,
             configurable={
                 **self._extra_config.get("configurable", {}),
                 "thread_id": self._thread_id,
@@ -73,8 +74,12 @@ class LangGraphTarget:
         last = messages[-1]
         # Support both dict and LangChain BaseMessage
         if isinstance(last, dict):
-            return last.get("content", "")
-        return getattr(last, "content", "")
+            content = last.get("content", "")
+        else:
+            content = getattr(last, "content", "")
+        if not isinstance(content, str):
+            content = str(content)
+        return content
 
     def reset_conversation(self) -> None:
         """Reset conversation state by starting a new thread."""
