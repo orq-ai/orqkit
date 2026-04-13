@@ -693,7 +693,7 @@ class MultiTurnOrchestrator:
 
                     # Feed agent response (including errors) to adversarial LLM so it can adapt.
                     # Delimit the untrusted target response so the adversarial LLM treats it as data, not instructions.
-                    sanitized_response = delimit(agent_response, tag="target_response")
+                    sanitized_response = delimit(f"\n{agent_response}\n", tag="target_response")
                     analysis_prompt = ADVERSARIAL_ANALYSIS_PROMPT.replace('{response}', sanitized_response)
                     adversarial_messages.append({'role': 'user', 'content': analysis_prompt})
 

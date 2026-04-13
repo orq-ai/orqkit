@@ -192,4 +192,4 @@ async def test_datapoint_system_prompt_always_rebuilt():
             await runner.run(datapoint=dp)
 
         assert len(captured_configs) == 1
-        assert captured_configs[0].system_prompt == expected_prompt
+        assert captured_configs[0].system_prompt == expected_prompt  # pyright: ignore[reportAttributeAccessIssue]
