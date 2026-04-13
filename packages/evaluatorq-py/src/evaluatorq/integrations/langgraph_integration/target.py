@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
 
@@ -41,15 +42,15 @@ class LangGraphTarget:
         self._extra_config = config or {}
         self._thread_id = uuid4().hex
 
-    def _build_config(self) -> dict[str, Any]:
+    def _build_config(self) -> RunnableConfig:
         """Build the RunnableConfig with the current thread_id."""
-        return {
+        return RunnableConfig(
             **self._extra_config,
-            "configurable": {
+            configurable={
                 **self._extra_config.get("configurable", {}),
                 "thread_id": self._thread_id,
             },
-        }
+        )
 
     async def send_prompt(self, prompt: str) -> str:
         """Send a prompt to the LangGraph agent and return its text response."""

@@ -11,7 +11,7 @@ imports so that importing this package does not fail when those libraries are
 not installed.
 """
 
-from . import langchain_integration
+from . import langchain_integration  # noqa: F401
 
 __all__ = [
     "callable_integration",
