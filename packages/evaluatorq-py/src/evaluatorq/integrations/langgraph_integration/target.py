@@ -57,9 +57,13 @@ class LangGraphTarget:
             {"messages": [{"role": "user", "content": prompt}]},
             config=self._build_config(),
         )
-        messages = result.get("messages", [])
-        if not messages:
-            return ""
+        messages = result.get("messages")
+        if messages is None:
+            raise ValueError(
+                "LangGraphTarget requires a graph whose state has a 'messages' key "
+                "(e.g. built with MessagesState). Got state keys: "
+                + str(list(result.keys()))
+            )
         last = messages[-1]
         # Support both dict and LangChain BaseMessage
         if isinstance(last, dict):
@@ -72,4 +76,4 @@ class LangGraphTarget:
 
     def clone(self, memory_entity_id: str | None = None) -> LangGraphTarget:
         """Create an independent copy for parallel red teaming jobs."""
-        return LangGraphTarget(self._graph, config=self._extra_config)
+        return LangGraphTarget(self._graph, config=dict(self._extra_config))
