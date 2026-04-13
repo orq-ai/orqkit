@@ -57,7 +57,7 @@ class CallableTarget:
         """Send a prompt to the callable and return its response."""
         if self._is_async:
             return await self._fn(prompt)  # type: ignore[misc]
-        return self._fn(prompt)  # type: ignore[return-value]
+        return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]
 
     def reset_conversation(self) -> None:
         """Reset conversation state via the optional reset callback."""
