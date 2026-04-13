@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 """Integration modules for evaluatorq.
 
 Available integrations:
@@ -11,7 +12,7 @@ imports so that importing this package does not fail when those libraries are
 not installed.
 """
 
-from . import langchain_integration  # noqa: F401
+from . import langchain_integration
 
 __all__ = [
     "callable_integration",
