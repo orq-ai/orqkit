@@ -7,8 +7,8 @@ Two complementary functions are provided:
   chosen tag inside the text so the boundary cannot be broken.  Use this
   whenever you embed untrusted strings into an LLM prompt.
 
-* ``xml_escape(text)`` — character-level XML escaping (``&``, ``<``, ``>``,
-  ``"``, ``'``).  Use this when you need to embed text inside XML tags that
+* ``xml_escape(text)`` — character-level XML escaping (``&``, ``<``, ``>``).
+  Use this when you need to embed text inside XML tags that
   are already controlled by the caller (e.g. building an XML payload where
   the tag structure is fixed but the content is untrusted).
 """
