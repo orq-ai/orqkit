@@ -138,7 +138,6 @@ export class OrqAgent implements INodeType {
         );
 
         const status = resp.status;
-        const { text, refusals } = extractOutput(resp.output);
 
         if (status === "failed") {
           throw new NodeOperationError(
@@ -163,20 +162,25 @@ export class OrqAgent implements INodeType {
           );
         }
 
+        const { text, refusals } = extractOutput(resp.output);
+
         const responseData: IDataObject = {
           responseId: resp.id,
           agentKey,
           status,
           success: status === "completed",
           response: text,
-          refusals,
           usage: (resp.usage ?? undefined) as IDataObject | undefined,
         };
+
+        if (refusals.length > 0) {
+          responseData.refusals = refusals;
+        }
 
         if (status === "incomplete") {
           responseData.incomplete = true;
           responseData.incompleteReason =
-            resp.incomplete_details?.reason ?? status;
+            resp.incomplete_details?.reason ?? "unknown";
         }
 
         if (includeRawResponse) {
@@ -191,11 +195,7 @@ export class OrqAgent implements INodeType {
         if (error instanceof NodeOperationError) {
           if (this.continueOnFail()) {
             returnData.push({
-              json: {
-                error: error.message,
-                statusCode: undefined,
-                details: undefined,
-              },
+              json: { error: error.message },
               pairedItem: { item: i },
             });
             continue;
