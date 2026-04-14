@@ -1,11 +1,15 @@
 import type { INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
-import type { TextPart } from "@orq-ai/node/models/components";
-import type { Parts } from "@orq-ai/node/models/operations";
-
 import { ERROR_MESSAGES } from "./constants";
-import type { OrqCredentials } from "./types";
+import type {
+  OrqCredentials,
+  ResponseOutputContent,
+  ResponseOutputItem,
+  ResponseOutputMessage,
+  ResponseOutputRefusalContent,
+  ResponseOutputTextContent,
+} from "./types";
 
 export function validateAgentKey(agentKey: string, node: INode): void {
   if (!agentKey || agentKey.trim() === "") {
@@ -30,12 +34,51 @@ export function validateCredentials(credentials: unknown, node: INode): void {
   }
 }
 
-export function isTextPart(part: Parts): part is TextPart {
-  return part.kind === "text";
+export function validateThreadingExclusivity(
+  previousResponseId: string | undefined,
+  conversationId: string | undefined,
+  node: INode,
+): void {
+  const hasPrev = !!previousResponseId && previousResponseId.trim() !== "";
+  const hasConv = !!conversationId && conversationId.trim() !== "";
+  if (hasPrev && hasConv) {
+    throw new NodeOperationError(
+      node,
+      ERROR_MESSAGES.CONVERSATION_AND_PREVIOUS_RESPONSE_EXCLUSIVE,
+    );
+  }
+}
+
+export function isOutputMessage(
+  item: ResponseOutputItem,
+): item is ResponseOutputMessage {
+  return (
+    item.type === "message" &&
+    Array.isArray((item as ResponseOutputMessage).content)
+  );
+}
+
+export function isOutputTextContent(
+  content: ResponseOutputContent,
+): content is ResponseOutputTextContent {
+  return (
+    content.type === "output_text" &&
+    typeof (content as ResponseOutputTextContent).text === "string"
+  );
+}
+
+export function isRefusalContent(
+  content: ResponseOutputContent,
+): content is ResponseOutputRefusalContent {
+  return (
+    content.type === "refusal" &&
+    typeof (content as ResponseOutputRefusalContent).refusal === "string"
+  );
 }
 
 export const Validators = {
   validateAgentKey,
   validateMessage,
   validateCredentials,
+  validateThreadingExclusivity,
 };
