@@ -170,8 +170,11 @@ export class OrqAgent implements INodeType {
           status,
           success: status === "completed",
           response: text,
-          usage: (resp.usage ?? undefined) as IDataObject | undefined,
         };
+
+        if (resp.usage) {
+          responseData.usage = resp.usage as IDataObject;
+        }
 
         if (refusals.length > 0) {
           responseData.refusals = refusals;

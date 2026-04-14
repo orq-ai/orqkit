@@ -14,7 +14,7 @@ export function buildCreateResponseBody({
   conversationId,
 }: BuildCreateResponseBodyArgs): CreateResponseBody {
   const body: CreateResponseBody = {
-    model: `agent/${agentKey}`,
+    model: `agent/${agentKey.trim()}`,
     input: input.trim(),
     stream: false,
   };
