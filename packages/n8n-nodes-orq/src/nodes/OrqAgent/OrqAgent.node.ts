@@ -9,20 +9,47 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
-import type { TaskStatusMessage } from "@orq-ai/node/models/operations";
-
-import {
-  getAgentKeys,
-  getTaskMessages,
-  invokeAgent,
-  pollTaskUntilDone,
-} from "./api-service";
-import { buildInvokeRequestBody } from "./builders";
-import { ERROR_MESSAGES } from "./constants";
+import { createResponse, getAgentKeys } from "./api-service";
+import { buildCreateResponseBody } from "./builders";
+import { DEFAULT_RESPONSE_TIMEOUT_MS, ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
-import type { OrqCredentials } from "./types";
+import type {
+  OrqCredentials,
+  ResponseOutputItem,
+  ResponseResource,
+} from "./types";
 import { isApiError } from "./types";
-import { isTextPart, Validators } from "./validators";
+import {
+  isOutputMessage,
+  isOutputTextContent,
+  isRefusalContent,
+  Validators,
+} from "./validators";
+
+interface ExtractedOutput {
+  text: string;
+  refusals: string[];
+}
+
+function extractOutput(
+  output: ResponseOutputItem[] | undefined,
+): ExtractedOutput {
+  const textChunks: string[] = [];
+  const refusals: string[] = [];
+
+  for (const item of output ?? []) {
+    if (!isOutputMessage(item)) continue;
+    for (const content of item.content) {
+      if (isOutputTextContent(content)) {
+        textChunks.push(content.text);
+      } else if (isRefusalContent(content)) {
+        refusals.push(content.refusal);
+      }
+    }
+  }
+
+  return { text: textChunks.join("\n"), refusals };
+}
 
 export class OrqAgent implements INodeType {
   description: INodeTypeDescription = {
@@ -65,54 +92,96 @@ export class OrqAgent implements INodeType {
       try {
         const agentKey = this.getNodeParameter("agentKey", i) as string;
         const messageText = this.getNodeParameter("message", i) as string;
+        const additionalFields = this.getNodeParameter(
+          "additionalFields",
+          i,
+          {},
+        ) as {
+          previousResponseId?: string;
+          conversationId?: string;
+          timeoutMs?: number;
+          includeRawResponse?: boolean;
+        };
+
+        const previousResponseId = additionalFields.previousResponseId;
+        const conversationId = additionalFields.conversationId;
+        const timeoutMs =
+          additionalFields.timeoutMs && additionalFields.timeoutMs > 0
+            ? additionalFields.timeoutMs
+            : DEFAULT_RESPONSE_TIMEOUT_MS;
+        const includeRawResponse = additionalFields.includeRawResponse === true;
 
         Validators.validateAgentKey(agentKey, this.getNode());
         Validators.validateMessage(messageText, this.getNode());
+        Validators.validateThreadingExclusivity(
+          previousResponseId,
+          conversationId,
+          this.getNode(),
+        );
 
         const credentials = (await this.getCredentials(
           "orqApi",
         )) as OrqCredentials;
         Validators.validateCredentials(credentials, this.getNode());
 
-        const body = buildInvokeRequestBody(messageText);
-        const task = await invokeAgent(this, agentKey, body);
+        const body = buildCreateResponseBody({
+          agentKey,
+          input: messageText,
+          previousResponseId,
+          conversationId,
+        });
 
-        if (!task.id) {
-          throw new NodeOperationError(
-            this.getNode(),
-            "Agent invoke did not return a task ID",
-          );
-        }
-
-        const completedTask = await pollTaskUntilDone(this, agentKey, task.id);
-        const finalState = completedTask.status?.state;
-
-        if (finalState !== "completed") {
-          throw new NodeOperationError(
-            this.getNode(),
-            ERROR_MESSAGES.TASK_FAILED(finalState ?? "unknown"),
-          );
-        }
-
-        const messages = await getTaskMessages(this, agentKey, task.id);
-
-        const agentMessages = messages.filter(
-          (m: TaskStatusMessage) => m.role !== "user",
+        const resp: ResponseResource = await createResponse(
+          this,
+          body,
+          timeoutMs,
         );
-        const responseText = agentMessages
-          .flatMap((m: TaskStatusMessage) =>
-            m.parts.filter(isTextPart).map((p) => p.text),
-          )
-          .join("\n");
+
+        const status = resp.status;
+        const { text, refusals } = extractOutput(resp.output);
+
+        if (status === "failed") {
+          throw new NodeOperationError(
+            this.getNode(),
+            ERROR_MESSAGES.RESPONSE_FAILED(
+              resp.error?.message ?? "unknown error",
+            ),
+          );
+        }
+
+        if (status === "requires_action") {
+          throw new NodeOperationError(
+            this.getNode(),
+            ERROR_MESSAGES.RESPONSE_REQUIRES_ACTION,
+          );
+        }
+
+        if (status !== "completed" && status !== "incomplete") {
+          throw new NodeOperationError(
+            this.getNode(),
+            ERROR_MESSAGES.RESPONSE_UNEXPECTED_STATUS(status ?? "unknown"),
+          );
+        }
 
         const responseData: IDataObject = {
-          taskId: task.id,
+          responseId: resp.id,
           agentKey,
-          status: finalState,
-          success: true,
-          response: responseText,
-          messages: messages as unknown as IDataObject[],
+          status,
+          success: status === "completed",
+          response: text,
+          refusals,
+          usage: (resp.usage ?? undefined) as IDataObject | undefined,
         };
+
+        if (status === "incomplete") {
+          responseData.incomplete = true;
+          responseData.incompleteReason =
+            resp.incomplete_details?.reason ?? status;
+        }
+
+        if (includeRawResponse) {
+          responseData.raw = resp as unknown as IDataObject;
+        }
 
         returnData.push({
           json: responseData,
@@ -120,6 +189,17 @@ export class OrqAgent implements INodeType {
         });
       } catch (error: unknown) {
         if (error instanceof NodeOperationError) {
+          if (this.continueOnFail()) {
+            returnData.push({
+              json: {
+                error: error.message,
+                statusCode: undefined,
+                details: undefined,
+              },
+              pairedItem: { item: i },
+            });
+            continue;
+          }
           throw error;
         }
 
