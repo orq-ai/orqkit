@@ -97,14 +97,10 @@ export class OrqAgent implements INodeType {
           i,
           {},
         ) as {
-          previousResponseId?: string;
-          conversationId?: string;
           timeoutMs?: number;
           includeRawResponse?: boolean;
         };
 
-        const previousResponseId = additionalFields.previousResponseId;
-        const conversationId = additionalFields.conversationId;
         const timeoutMs =
           additionalFields.timeoutMs && additionalFields.timeoutMs > 0
             ? additionalFields.timeoutMs
@@ -113,11 +109,6 @@ export class OrqAgent implements INodeType {
 
         Validators.validateAgentKey(agentKey, this.getNode());
         Validators.validateMessage(messageText, this.getNode());
-        Validators.validateThreadingExclusivity(
-          previousResponseId,
-          conversationId,
-          this.getNode(),
-        );
 
         const credentials = (await this.getCredentials(
           "orqApi",
@@ -127,8 +118,6 @@ export class OrqAgent implements INodeType {
         const body = buildCreateResponseBody({
           agentKey,
           input: messageText,
-          previousResponseId,
-          conversationId,
         });
 
         const resp: ResponseResource = await createResponse(

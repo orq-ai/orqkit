@@ -38,22 +38,6 @@ export const additionalFieldsProperty: INodeProperties = {
   default: {},
   options: [
     {
-      displayName: "Previous Response ID",
-      name: "previousResponseId",
-      type: "string",
-      default: "",
-      description:
-        "ID of a prior response to continue from. Mutually exclusive with Conversation ID.",
-    },
-    {
-      displayName: "Conversation ID",
-      name: "conversationId",
-      type: "string",
-      default: "",
-      description:
-        "ID of an existing conversation (conv_...) to thread this call into. Mutually exclusive with Previous Response ID.",
-    },
-    {
       displayName: "Timeout (ms)",
       name: "timeoutMs",
       type: "number",
