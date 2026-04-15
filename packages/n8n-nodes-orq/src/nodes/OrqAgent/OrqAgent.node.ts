@@ -11,7 +11,7 @@ import { NodeOperationError } from "n8n-workflow";
 
 import { createResponse, getAgentKeys } from "./api-service";
 import { buildCreateResponseBody } from "./builders";
-import { DEFAULT_RESPONSE_TIMEOUT_MS, ERROR_MESSAGES } from "./constants";
+import { DEFAULT_RESPONSE_TIMEOUT_SECONDS, ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
 import type {
   OrqCredentials,
@@ -92,20 +92,16 @@ export class OrqAgent implements INodeType {
       try {
         const agentKey = this.getNodeParameter("agentKey", i) as string;
         const messageText = this.getNodeParameter("message", i) as string;
-        const additionalFields = this.getNodeParameter(
-          "additionalFields",
+        const rawTimeoutSeconds = this.getNodeParameter(
+          "timeoutSeconds",
           i,
-          {},
-        ) as {
-          timeoutMs?: number;
-          includeRawResponse?: boolean;
-        };
-
-        const timeoutMs =
-          additionalFields.timeoutMs && additionalFields.timeoutMs > 0
-            ? additionalFields.timeoutMs
-            : DEFAULT_RESPONSE_TIMEOUT_MS;
-        const includeRawResponse = additionalFields.includeRawResponse === true;
+          DEFAULT_RESPONSE_TIMEOUT_SECONDS,
+        ) as number;
+        const timeoutSeconds =
+          rawTimeoutSeconds && rawTimeoutSeconds > 0
+            ? rawTimeoutSeconds
+            : DEFAULT_RESPONSE_TIMEOUT_SECONDS;
+        const timeoutMs = timeoutSeconds * 1000;
 
         Validators.validateAgentKey(agentKey, this.getNode());
         Validators.validateMessage(messageText, this.getNode());
@@ -159,6 +155,7 @@ export class OrqAgent implements INodeType {
           status,
           success: status === "completed",
           response: text,
+          raw: resp as unknown as IDataObject,
         };
 
         if (resp.usage) {
@@ -173,10 +170,6 @@ export class OrqAgent implements INodeType {
           responseData.incomplete = true;
           responseData.incompleteReason =
             resp.incomplete_details?.reason ?? "unknown";
-        }
-
-        if (includeRawResponse) {
-          responseData.raw = resp as unknown as IDataObject;
         }
 
         returnData.push({

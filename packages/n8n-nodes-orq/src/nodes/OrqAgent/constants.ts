@@ -3,7 +3,7 @@ export const DEFAULT_BASE_URL = "https://api.orq.ai";
 export const AGENTS_LIST_ENDPOINT = "/v2/agents";
 export const RESPONSES_ENDPOINT = "/v1/responses";
 
-export const DEFAULT_RESPONSE_TIMEOUT_MS = 600_000;
+export const DEFAULT_RESPONSE_TIMEOUT_SECONDS = 600;
 
 export const ERROR_MESSAGES = {
   AGENT_KEY_REQUIRED: "Agent Key is required",
