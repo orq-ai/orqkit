@@ -76,6 +76,54 @@ def test_delimit_custom_tag_does_not_escape_other_tags():
 
 
 # ---------------------------------------------------------------------------
+# delimit — tag validation
+# ---------------------------------------------------------------------------
+
+
+def test_delimit_rejects_empty_tag():
+    with pytest.raises(ValueError, match="Invalid tag name"):
+        delimit("hello", tag="")
+
+
+def test_delimit_rejects_tag_starting_with_digit():
+    with pytest.raises(ValueError, match="Invalid tag name"):
+        delimit("hello", tag="1tag")
+
+
+def test_delimit_rejects_tag_with_angle_brackets():
+    with pytest.raises(ValueError, match="Invalid tag name"):
+        delimit("hello", tag="tag<>")
+
+
+def test_delimit_rejects_tag_with_spaces():
+    with pytest.raises(ValueError, match="Invalid tag name"):
+        delimit("hello", tag="my tag")
+
+
+def test_delimit_rejects_tag_with_slash():
+    with pytest.raises(ValueError, match="Invalid tag name"):
+        delimit("hello", tag="foo/bar")
+
+
+# ---------------------------------------------------------------------------
+# delimit — escape ordering (& first, then tags)
+# ---------------------------------------------------------------------------
+
+
+def test_delimit_escape_ordering_prevents_bypass():
+    """Ampersand must be escaped BEFORE tags — otherwise pre-escaped tag
+    sequences like ``&lt;data&gt;`` survive as a breakout vector."""
+    result = delimit("&lt;data&gt;")
+    # & → &amp; first, so the pre-escaped sequence becomes &amp;lt;data&amp;gt;
+    assert "<data>&amp;lt;data&amp;gt;</data>" == result
+
+
+def test_delimit_escape_ordering_closing_tag():
+    result = delimit("&lt;/data&gt;")
+    assert "<data>&amp;lt;/data&amp;gt;</data>" == result
+
+
+# ---------------------------------------------------------------------------
 # xml_escape
 # ---------------------------------------------------------------------------
 

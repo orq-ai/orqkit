@@ -328,7 +328,7 @@ class SimulationRunner:
             )
 
         except Exception as e:
-            logger.error("SimulationRunner.run() failed: %s", e)
+            logger.error("SimulationRunner.run() failed: %s", e, exc_info=True)
             error_msg = str(e)
             try:
                 usage = (
