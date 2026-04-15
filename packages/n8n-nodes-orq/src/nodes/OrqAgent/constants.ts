@@ -11,7 +11,8 @@ export const ERROR_MESSAGES = {
   NO_CREDENTIALS: "No credentials configured. Please add Orq API credentials.",
   API_KEY_REQUIRED: "API Key is required in credentials",
   FETCH_AGENTS_FAILED: (error: string) => `Failed to fetch agents: ${error}`,
-  AGENT_INVOKE_FAILED: (error: string) => `Agent execution failed: ${error}`,
+  RESPONSE_REQUEST_FAILED: (error: string) =>
+    `Agent execution failed: ${error}`,
   RESPONSE_FAILED: (message: string) => `Agent response failed: ${message}`,
   RESPONSE_REQUIRES_ACTION:
     "Agent returned status 'requires_action' (e.g. human-approval tool). This is not yet supported by the n8n node.",

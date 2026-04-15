@@ -207,7 +207,7 @@ export class OrqAgent implements INodeType {
 
         throw new NodeOperationError(
           this.getNode(),
-          ERROR_MESSAGES.AGENT_INVOKE_FAILED(message),
+          ERROR_MESSAGES.RESPONSE_REQUEST_FAILED(message),
           {
             description:
               errorObj?.response?.data?.message ??
