@@ -54,6 +54,14 @@ export const additionalFieldsProperty: INodeProperties = {
         "ID of an existing conversation (conv_...) to thread this call into. Mutually exclusive with Previous Response ID.",
     },
     {
+      displayName: "Memory Entity ID",
+      name: "memoryEntityId",
+      type: "string",
+      default: "",
+      description:
+        "Attach a persistent memory entity so the agent can recall facts across calls.",
+    },
+    {
       displayName: "Variables",
       name: "variables",
       type: "fixedCollection",

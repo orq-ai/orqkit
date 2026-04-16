@@ -25,6 +25,10 @@ export interface ConversationParam {
   id: string;
 }
 
+export interface MemoryParam {
+  entity_id: string;
+}
+
 export type VariableValue = string | { secret: true; value: string };
 
 export interface CreateResponseBody {
@@ -33,6 +37,7 @@ export interface CreateResponseBody {
   stream?: boolean;
   previous_response_id?: string;
   conversation?: ConversationParam;
+  memory?: MemoryParam;
   variables?: Record<string, VariableValue>;
   metadata?: Record<string, string>;
 }

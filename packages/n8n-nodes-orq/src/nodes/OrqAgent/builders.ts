@@ -16,6 +16,7 @@ export interface BuildCreateResponseBodyArgs {
   input: string;
   previousResponseId?: string;
   conversationId?: string;
+  memoryEntityId?: string;
   variables?: VariableInput[];
   metadata?: MetadataInput[];
 }
@@ -52,6 +53,7 @@ export function buildCreateResponseBody({
   input,
   previousResponseId,
   conversationId,
+  memoryEntityId,
   variables,
   metadata,
 }: BuildCreateResponseBodyArgs): CreateResponseBody {
@@ -69,6 +71,11 @@ export function buildCreateResponseBody({
   const trimmedConv = conversationId?.trim();
   if (trimmedConv) {
     body.conversation = { id: trimmedConv };
+  }
+
+  const trimmedMemory = memoryEntityId?.trim();
+  if (trimmedMemory) {
+    body.memory = { entity_id: trimmedMemory };
   }
 
   const variablesMap = toVariablesMap(variables);
