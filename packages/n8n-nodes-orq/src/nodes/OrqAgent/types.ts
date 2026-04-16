@@ -21,10 +21,16 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof Error;
 }
 
+export interface ConversationParam {
+  id: string;
+}
+
 export interface CreateResponseBody {
   model: string;
   input: string;
   stream?: boolean;
+  previous_response_id?: string;
+  conversation?: ConversationParam;
 }
 
 export interface ResponseOutputTextContent {

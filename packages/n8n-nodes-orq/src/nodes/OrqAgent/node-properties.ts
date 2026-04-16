@@ -30,6 +30,32 @@ export const messageProperty: INodeProperties = {
   },
 };
 
+export const additionalFieldsProperty: INodeProperties = {
+  displayName: "Additional Fields",
+  name: "additionalFields",
+  type: "collection",
+  placeholder: "Add Field",
+  default: {},
+  options: [
+    {
+      displayName: "Previous Response ID",
+      name: "previousResponseId",
+      type: "string",
+      default: "",
+      description:
+        "ID of a prior response to continue from. Mutually exclusive with Conversation ID.",
+    },
+    {
+      displayName: "Conversation ID",
+      name: "conversationId",
+      type: "string",
+      default: "",
+      description:
+        "ID of an existing conversation (conv_...) to thread this call into. Mutually exclusive with Previous Response ID.",
+    },
+  ],
+};
+
 export const timeoutSecondsProperty: INodeProperties = {
   displayName: "Timeout (seconds)",
   name: "timeoutSeconds",
@@ -48,5 +74,6 @@ export const timeoutSecondsProperty: INodeProperties = {
 export const allProperties: INodeProperties[] = [
   agentKeyProperty,
   messageProperty,
+  additionalFieldsProperty,
   timeoutSecondsProperty,
 ];

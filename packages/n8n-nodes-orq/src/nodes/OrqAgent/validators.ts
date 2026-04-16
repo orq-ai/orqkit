@@ -34,6 +34,21 @@ export function validateCredentials(credentials: unknown, node: INode): void {
   }
 }
 
+export function validateThreadingExclusivity(
+  previousResponseId: string | undefined,
+  conversationId: string | undefined,
+  node: INode,
+): void {
+  const hasPrev = !!previousResponseId && previousResponseId.trim() !== "";
+  const hasConv = !!conversationId && conversationId.trim() !== "";
+  if (hasPrev && hasConv) {
+    throw new NodeOperationError(
+      node,
+      ERROR_MESSAGES.CONVERSATION_AND_PREVIOUS_RESPONSE_EXCLUSIVE,
+    );
+  }
+}
+
 export function isOutputMessage(
   item: ResponseOutputItem,
 ): item is ResponseOutputMessage {
@@ -65,4 +80,5 @@ export const Validators = {
   validateAgentKey,
   validateMessage,
   validateCredentials,
+  validateThreadingExclusivity,
 };
