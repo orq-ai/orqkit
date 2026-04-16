@@ -730,6 +730,12 @@ class MultiTurnOrchestrator:
             if progress is not None:
                 await progress.finish_attack(task_id)
 
+        if consecutive_adversarial_timeouts > 0 and error is None:
+            logger.warning(
+                f'Conversation for {strategy.name} ended with {consecutive_adversarial_timeouts} '
+                'unresolved adversarial timeout(s) — last turn was dropped silently'
+            )
+
         duration = time.time() - start_time
         logger.debug(
             f'Multi-turn attack completed: {len(conversation) // 2} turns, '
