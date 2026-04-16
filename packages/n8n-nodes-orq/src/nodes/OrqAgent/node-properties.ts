@@ -53,6 +53,44 @@ export const additionalFieldsProperty: INodeProperties = {
       description:
         "ID of an existing conversation (conv_...) to thread this call into. Mutually exclusive with Previous Response ID.",
     },
+    {
+      displayName: "Variables",
+      name: "variables",
+      type: "fixedCollection",
+      typeOptions: { multipleValues: true },
+      default: {},
+      description:
+        "Template variables passed to the agent's prompt. Turn on Secret to wrap the value so it isn't logged.",
+      options: [
+        {
+          displayName: "Variable",
+          name: "variable",
+          values: [
+            {
+              displayName: "Name",
+              name: "name",
+              type: "string",
+              default: "",
+              placeholder: "e.g. customerName",
+            },
+            {
+              displayName: "Value",
+              name: "value",
+              type: "string",
+              default: "",
+            },
+            {
+              displayName: "Secret",
+              name: "isSecret",
+              type: "boolean",
+              default: false,
+              description:
+                "Whether to wrap this value as a secret so Orq redacts it in logs.",
+            },
+          ],
+        },
+      ],
+    },
   ],
 };
 

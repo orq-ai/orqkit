@@ -25,12 +25,15 @@ export interface ConversationParam {
   id: string;
 }
 
+export type VariableValue = string | { secret: true; value: string };
+
 export interface CreateResponseBody {
   model: string;
   input: string;
   stream?: boolean;
   previous_response_id?: string;
   conversation?: ConversationParam;
+  variables?: Record<string, VariableValue>;
 }
 
 export interface ResponseOutputTextContent {
