@@ -35,6 +35,7 @@ export interface CreateResponseBody {
   model: string;
   input: string;
   stream?: boolean;
+  store?: boolean;
   previous_response_id?: string;
   conversation?: ConversationParam;
   memory?: MemoryParam;

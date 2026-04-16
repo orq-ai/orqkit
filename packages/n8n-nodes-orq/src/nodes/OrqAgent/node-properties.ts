@@ -62,6 +62,14 @@ export const additionalFieldsProperty: INodeProperties = {
         "Attach a persistent memory entity so the agent can recall facts across calls.",
     },
     {
+      displayName: "Store Response",
+      name: "store",
+      type: "boolean",
+      default: true,
+      description:
+        "Whether Orq should persist this response server-side. Turn off for ephemeral calls; note that Previous Response ID continuation requires this to stay on.",
+    },
+    {
       displayName: "Variables",
       name: "variables",
       type: "fixedCollection",

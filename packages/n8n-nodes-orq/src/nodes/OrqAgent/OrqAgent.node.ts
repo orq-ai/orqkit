@@ -100,6 +100,7 @@ export class OrqAgent implements INodeType {
           previousResponseId?: string;
           conversationId?: string;
           memoryEntityId?: string;
+          store?: boolean;
           variables?: {
             variable?: Array<{
               name?: string;
@@ -144,6 +145,7 @@ export class OrqAgent implements INodeType {
           previousResponseId: additionalFields.previousResponseId,
           conversationId: additionalFields.conversationId,
           memoryEntityId: additionalFields.memoryEntityId,
+          store: additionalFields.store,
           variables: additionalFields.variables?.variable,
           metadata: additionalFields.metadata?.entry,
         });

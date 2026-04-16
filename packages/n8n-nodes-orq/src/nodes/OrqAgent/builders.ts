@@ -14,6 +14,7 @@ export interface MetadataInput {
 export interface BuildCreateResponseBodyArgs {
   agentKey: string;
   input: string;
+  store?: boolean;
   previousResponseId?: string;
   conversationId?: string;
   memoryEntityId?: string;
@@ -51,6 +52,7 @@ export function toMetadataMap(
 export function buildCreateResponseBody({
   agentKey,
   input,
+  store,
   previousResponseId,
   conversationId,
   memoryEntityId,
@@ -62,6 +64,10 @@ export function buildCreateResponseBody({
     input: input.trim(),
     stream: false,
   };
+
+  if (typeof store === "boolean") {
+    body.store = store;
+  }
 
   const trimmedPrev = previousResponseId?.trim();
   if (trimmedPrev) {
