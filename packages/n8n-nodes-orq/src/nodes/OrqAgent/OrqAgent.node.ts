@@ -106,6 +106,12 @@ export class OrqAgent implements INodeType {
               isSecret?: boolean;
             }>;
           };
+          metadata?: {
+            entry?: Array<{
+              name?: string;
+              value?: string;
+            }>;
+          };
         };
         const rawTimeoutSeconds = this.getNodeParameter(
           "timeoutSeconds",
@@ -137,6 +143,7 @@ export class OrqAgent implements INodeType {
           previousResponseId: additionalFields.previousResponseId,
           conversationId: additionalFields.conversationId,
           variables: additionalFields.variables?.variable,
+          metadata: additionalFields.metadata?.entry,
         });
 
         const resp: ResponseResource = await createResponse(

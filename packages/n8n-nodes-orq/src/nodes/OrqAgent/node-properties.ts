@@ -91,6 +91,36 @@ export const additionalFieldsProperty: INodeProperties = {
         },
       ],
     },
+    {
+      displayName: "Metadata",
+      name: "metadata",
+      type: "fixedCollection",
+      typeOptions: { multipleValues: true },
+      default: {},
+      description:
+        "Key-value tags attached to this call; queryable later in the Orq dashboard. Max 16 pairs.",
+      options: [
+        {
+          displayName: "Entry",
+          name: "entry",
+          values: [
+            {
+              displayName: "Name",
+              name: "name",
+              type: "string",
+              default: "",
+              placeholder: "e.g. workflow",
+            },
+            {
+              displayName: "Value",
+              name: "value",
+              type: "string",
+              default: "",
+            },
+          ],
+        },
+      ],
+    },
   ],
 };
 

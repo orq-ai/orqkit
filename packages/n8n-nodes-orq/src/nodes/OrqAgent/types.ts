@@ -34,6 +34,7 @@ export interface CreateResponseBody {
   previous_response_id?: string;
   conversation?: ConversationParam;
   variables?: Record<string, VariableValue>;
+  metadata?: Record<string, string>;
 }
 
 export interface ResponseOutputTextContent {
