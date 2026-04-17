@@ -22,6 +22,8 @@ export interface BuildCreateResponseBodyArgs {
   metadata?: MetadataInput[];
 }
 
+const METADATA_MAX_PAIRS = 16;
+
 export function toVariablesMap(
   rows: VariableInput[] | undefined,
 ): Record<string, VariableValue> | undefined {
@@ -30,6 +32,9 @@ export function toVariablesMap(
   for (const row of rows) {
     const name = row.name?.trim();
     if (!name) continue;
+    if (name in map) {
+      throw new Error(`Duplicate variable name: "${name}"`);
+    }
     const value = row.value ?? "";
     map[name] = row.isSecret ? { secret: true, value } : value;
   }
@@ -44,9 +49,18 @@ export function toMetadataMap(
   for (const row of rows) {
     const name = row.name?.trim();
     if (!name) continue;
+    if (name in map) {
+      throw new Error(`Duplicate metadata name: "${name}"`);
+    }
     map[name] = row.value ?? "";
   }
-  return Object.keys(map).length > 0 ? map : undefined;
+  const keys = Object.keys(map);
+  if (keys.length > METADATA_MAX_PAIRS) {
+    throw new Error(
+      `Metadata exceeds the maximum of ${METADATA_MAX_PAIRS} pairs (got ${keys.length})`,
+    );
+  }
+  return keys.length > 0 ? map : undefined;
 }
 
 export function buildCreateResponseBody({

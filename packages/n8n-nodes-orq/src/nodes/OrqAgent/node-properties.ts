@@ -67,7 +67,7 @@ export const additionalFieldsProperty: INodeProperties = {
       type: "boolean",
       default: true,
       description:
-        "Whether Orq should persist this response server-side. Turn off for ephemeral calls; note that Previous Response ID continuation requires this to stay on.",
+        "Whether Orq should persist this response server-side. Turn off for ephemeral calls. When off, this response cannot later be referenced as Previous Response ID by another node. Using Previous Response ID on this call is unaffected.",
     },
     {
       displayName: "Variables",
