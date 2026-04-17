@@ -15,7 +15,7 @@ import {
 import type {
   CreateResponseBody,
   RawAgentListItem,
-  ResponseResource,
+  ResponseBody,
 } from "./types";
 
 export async function getAgentKeys(
@@ -48,8 +48,8 @@ export async function createResponse(
   context: IExecuteFunctions,
   body: CreateResponseBody,
   timeoutMs: number,
-): Promise<ResponseResource> {
-  return await context.helpers.requestWithAuthentication.call(
+): Promise<ResponseBody> {
+  return (await context.helpers.requestWithAuthentication.call(
     context,
     "orqApi",
     {
@@ -59,5 +59,5 @@ export async function createResponse(
       json: true,
       timeout: timeoutMs,
     },
-  );
+  )) as ResponseBody;
 }

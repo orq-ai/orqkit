@@ -1,3 +1,5 @@
+import type { Output } from "@orq-ai/node/models/operations";
+
 export interface RawAgentListItem {
   _id: string;
   key: string;
@@ -31,6 +33,9 @@ export interface MemoryParam {
 
 export type VariableValue = string | { secret: true; value: string };
 
+// Local request-body shape — the SDK's CreateResponseRequestBody in 4.7.7 does
+// not yet model conversation, memory, or variables (V3 alpha fields). Keep this
+// local until the SDK covers them; then swap this type for the SDK's.
 export interface CreateResponseBody {
   model: string;
   input: string;
@@ -43,31 +48,11 @@ export interface CreateResponseBody {
   metadata?: Record<string, string>;
 }
 
-export interface ResponseOutputTextContent {
-  type: "output_text";
-  text: string;
-}
-
-export interface ResponseOutputRefusalContent {
-  type: "refusal";
-  refusal: string;
-}
-
-export type ResponseOutputContent =
-  | ResponseOutputTextContent
-  | ResponseOutputRefusalContent
-  | { type: string; [key: string]: unknown };
-
-export interface ResponseOutputMessage {
-  type: "message";
-  content: ResponseOutputContent[];
-  [key: string]: unknown;
-}
-
-export type ResponseOutputItem =
-  | ResponseOutputMessage
-  | { type: string; [key: string]: unknown };
-
+// Local response-body shape in wire snake_case. The SDK's CreateResponseResponseBody
+// is camelCase (post-deserialization) and its status enum is missing "requires_action"
+// which the V3 server does emit (e.g. agents with function tools). Nested output items
+// (Output / Content1 / refusal content) are wire-compatible though, so we pull those
+// from the SDK.
 export interface ResponseUsage {
   input_tokens?: number;
   output_tokens?: number;
@@ -86,21 +71,10 @@ export interface ResponseIncompleteDetails {
   [key: string]: unknown;
 }
 
-export type ResponseStatus =
-  | "queued"
-  | "in_progress"
-  | "completed"
-  | "failed"
-  | "incomplete"
-  | "requires_action"
-  | string;
-
-export interface ResponseResource {
+export interface ResponseBody {
   id: string;
-  object?: string;
-  status: ResponseStatus;
-  model?: string;
-  output?: ResponseOutputItem[];
+  status: string;
+  output?: Output[];
   error?: ResponseError | null;
   usage?: ResponseUsage | null;
   incomplete_details?: ResponseIncompleteDetails | null;

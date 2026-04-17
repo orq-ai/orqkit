@@ -1,15 +1,15 @@
 import type { INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
-import { ERROR_MESSAGES } from "./constants";
 import type {
-  OrqCredentials,
-  ResponseOutputContent,
-  ResponseOutputItem,
-  ResponseOutputMessage,
-  ResponseOutputRefusalContent,
-  ResponseOutputTextContent,
-} from "./types";
+  Content1,
+  CreateResponseContentRouterResponses2,
+  Output,
+  Output1,
+} from "@orq-ai/node/models/operations";
+
+import { ERROR_MESSAGES } from "./constants";
+import type { OrqCredentials } from "./types";
 
 export function validateAgentKey(agentKey: string, node: INode): void {
   if (!agentKey || agentKey.trim() === "") {
@@ -49,31 +49,20 @@ export function validateThreadingExclusivity(
   }
 }
 
-export function isOutputMessage(
-  item: ResponseOutputItem,
-): item is ResponseOutputMessage {
-  return (
-    item.type === "message" &&
-    Array.isArray((item as ResponseOutputMessage).content)
-  );
+export function isOutputMessage(item: Output): item is Output1 {
+  return item.type === "message";
 }
 
 export function isOutputTextContent(
-  content: ResponseOutputContent,
-): content is ResponseOutputTextContent {
-  return (
-    content.type === "output_text" &&
-    typeof (content as ResponseOutputTextContent).text === "string"
-  );
+  content: Content1 | CreateResponseContentRouterResponses2,
+): content is Content1 {
+  return content.type === "output_text";
 }
 
 export function isRefusalContent(
-  content: ResponseOutputContent,
-): content is ResponseOutputRefusalContent {
-  return (
-    content.type === "refusal" &&
-    typeof (content as ResponseOutputRefusalContent).refusal === "string"
-  );
+  content: Content1 | CreateResponseContentRouterResponses2,
+): content is CreateResponseContentRouterResponses2 {
+  return content.type === "refusal";
 }
 
 export const Validators = {

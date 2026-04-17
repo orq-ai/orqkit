@@ -9,15 +9,13 @@ import type {
 } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
+import type { Output } from "@orq-ai/node/models/operations";
+
 import { createResponse, getAgentKeys } from "./api-service";
 import { buildCreateResponseBody } from "./builders";
 import { DEFAULT_RESPONSE_TIMEOUT_SECONDS, ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
-import type {
-  OrqCredentials,
-  ResponseOutputItem,
-  ResponseResource,
-} from "./types";
+import type { OrqCredentials } from "./types";
 import { isApiError } from "./types";
 import {
   isOutputMessage,
@@ -31,15 +29,13 @@ interface ExtractedOutput {
   refusals: string[];
 }
 
-function extractOutput(
-  output: ResponseOutputItem[] | undefined,
-): ExtractedOutput {
+function extractOutput(output: Output[] | undefined): ExtractedOutput {
   const textChunks: string[] = [];
   const refusals: string[] = [];
 
   for (const item of output ?? []) {
     if (!isOutputMessage(item)) continue;
-    for (const content of item.content) {
+    for (const content of item.content ?? []) {
       if (isOutputTextContent(content)) {
         textChunks.push(content.text);
       } else if (isRefusalContent(content)) {
@@ -150,11 +146,7 @@ export class OrqAgent implements INodeType {
           metadata: additionalFields.metadata?.entry,
         });
 
-        const resp: ResponseResource = await createResponse(
-          this,
-          body,
-          timeoutMs,
-        );
+        const resp = await createResponse(this, body, timeoutMs);
 
         const status = resp.status;
 
