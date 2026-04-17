@@ -15,7 +15,7 @@ import { createResponse, getAgentKeys } from "./api-service";
 import { buildCreateResponseBody } from "./builders";
 import { DEFAULT_RESPONSE_TIMEOUT_SECONDS, ERROR_MESSAGES } from "./constants";
 import { allProperties } from "./node-properties";
-import type { OrqCredentials } from "./types";
+import type { CreateResponseBody, OrqCredentials } from "./types";
 import { isApiError } from "./types";
 import {
   isOutputMessage,
@@ -135,16 +135,25 @@ export class OrqAgent implements INodeType {
         )) as OrqCredentials;
         Validators.validateCredentials(credentials, this.getNode());
 
-        const body = buildCreateResponseBody({
-          agentKey,
-          input: messageText,
-          previousResponseId: additionalFields.previousResponseId,
-          conversationId: additionalFields.conversationId,
-          memoryEntityId: additionalFields.memoryEntityId,
-          store: additionalFields.store,
-          variables: additionalFields.variables?.variable,
-          metadata: additionalFields.metadata?.entry,
-        });
+        let body: CreateResponseBody;
+        try {
+          body = buildCreateResponseBody({
+            agentKey,
+            input: messageText,
+            previousResponseId: additionalFields.previousResponseId,
+            conversationId: additionalFields.conversationId,
+            memoryEntityId: additionalFields.memoryEntityId,
+            store: additionalFields.store,
+            variables: additionalFields.variables?.variable,
+            metadata: additionalFields.metadata?.entry,
+          });
+        } catch (validationError: unknown) {
+          const msg =
+            validationError instanceof Error
+              ? validationError.message
+              : "Invalid input";
+          throw new NodeOperationError(this.getNode(), msg);
+        }
 
         const resp = await createResponse(this, body, timeoutMs);
 
