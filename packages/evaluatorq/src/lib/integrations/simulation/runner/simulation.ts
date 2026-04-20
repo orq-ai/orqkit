@@ -9,6 +9,11 @@ import OpenAI from "openai";
 
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
+import {
+  recordTokenUsage,
+  setSpanAttrs,
+  withSimulationSpan,
+} from "../tracing.js";
 import type {
   ChatMessage,
   Datapoint,
@@ -197,137 +202,227 @@ export class SimulationRunner {
     let getTotalUsage: (() => TokenUsage) | undefined;
 
     try {
-      // Use stored system prompt if available, otherwise build from persona+scenario
-      const systemPrompt =
-        storedSystemPrompt ??
-        buildDatapointSystemPrompt(persona as Persona, scenario as Scenario);
-
-      const client = this.getSharedClient();
-
-      // Always create fresh agents per simulation (no shared state between concurrent runs)
-      const userSimulator = new UserSimulatorAgent({
-        model: this.model,
-        client,
-        systemPrompt: systemPrompt,
-      });
-
-      const judge = new JudgeAgent({
-        model: this.model,
-        client,
-        goal: scenario?.goal,
-        criteria: scenario?.criteria ?? [],
-        groundTruth: scenario?.ground_truth ?? "",
-      });
-
-      getTotalUsage = (): TokenUsage => {
-        const usage = userSimulator.getUsage();
-        const judgeUsage = judge.getUsage();
-        usage.prompt_tokens += judgeUsage.prompt_tokens;
-        usage.completion_tokens += judgeUsage.completion_tokens;
-        usage.total_tokens += judgeUsage.total_tokens;
-        return usage;
-      };
-
-      const buildTurnMetrics = (
-        turnNum: number,
-        judgment: Judgment,
-        usageBefore: TokenUsage,
-      ): TurnMetrics => {
-        const usageAfter = (getTotalUsage as () => TokenUsage)();
-        return {
-          turn_number: turnNum,
-          token_usage: {
-            prompt_tokens: usageAfter.prompt_tokens - usageBefore.prompt_tokens,
-            completion_tokens:
-              usageAfter.completion_tokens - usageBefore.completion_tokens,
-            total_tokens: usageAfter.total_tokens - usageBefore.total_tokens,
-          },
-          response_quality: judgment.response_quality ?? null,
-          hallucination_risk: judgment.hallucination_risk ?? null,
-          tone_appropriateness: judgment.tone_appropriateness ?? null,
-          factual_accuracy: judgment.factual_accuracy ?? null,
-          judge_reason: judgment.reason,
-        };
-      };
-
-      /** Check if this run has been cancelled (timeout). */
-      const checkCancelled = (): void => {
-        if (signal?.aborted) {
-          throw new Error("Simulation cancelled");
-        }
-      };
-
-      checkCancelled();
-
-      // Generate or use first message
-      const firstMsg = firstMessage
-        ? firstMessage
-        : await userSimulator.generateFirstMessage();
-      messages.push({ role: "user", content: firstMsg });
-
-      let lastJudgment: Judgment | undefined;
-
-      for (let turn = 0; turn < maxTurns; turn++) {
-        checkCancelled();
-        const usageBefore = getTotalUsage();
-
-        // 1. Target agent responds
-        const agentResponse = await this.getTargetResponse(
-          messages.map((m) => ({ role: m.role, content: m.content })),
-        );
-        messages.push({ role: "assistant", content: agentResponse });
-
-        checkCancelled();
-
-        // 2. Judge evaluates
-        const judgment = await judge.evaluate(
-          messages.map((m) => ({ role: m.role, content: m.content })),
-          { signal },
-        );
-
-        turnMetricsList.push(buildTurnMetrics(turn + 1, judgment, usageBefore));
-        lastJudgment = judgment;
-
-        if (judgment.should_terminate) {
-          return {
-            messages,
-            terminated_by: "judge",
-            reason: judgment.reason,
-            goal_achieved: judgment.goal_achieved,
-            goal_completion_score: judgment.goal_completion_score,
-            rules_broken: judgment.rules_broken,
-            turn_count: turn + 1,
-            turn_metrics: turnMetricsList,
-            token_usage: getTotalUsage(),
-            criteria_results: this.buildCriteriaResults(
+      return await withSimulationSpan(
+        "orq.simulation.run",
+        {
+          "orq.simulation.persona": persona?.name,
+          "orq.simulation.scenario": scenario?.name,
+          "orq.simulation.max_turns": maxTurns,
+          "orq.simulation.model": this.model,
+        },
+        async (runSpan) => {
+          // Use stored system prompt if available, otherwise build from persona+scenario
+          const systemPrompt =
+            storedSystemPrompt ??
+            buildDatapointSystemPrompt(
+              persona as Persona,
               scenario as Scenario,
-              judgment,
-            ),
-            metadata: { persona: persona?.name, scenario: scenario?.name },
+            );
+
+          const client = this.getSharedClient();
+
+          // Always create fresh agents per simulation (no shared state between concurrent runs)
+          const userSimulator = new UserSimulatorAgent({
+            model: this.model,
+            client,
+            systemPrompt: systemPrompt,
+          });
+
+          const judge = new JudgeAgent({
+            model: this.model,
+            client,
+            goal: scenario?.goal,
+            criteria: scenario?.criteria ?? [],
+            groundTruth: scenario?.ground_truth ?? "",
+          });
+
+          getTotalUsage = (): TokenUsage => {
+            const usage = userSimulator.getUsage();
+            const judgeUsage = judge.getUsage();
+            usage.prompt_tokens += judgeUsage.prompt_tokens;
+            usage.completion_tokens += judgeUsage.completion_tokens;
+            usage.total_tokens += judgeUsage.total_tokens;
+            return usage;
           };
-        }
 
-        // 3. User simulator continues (if not last turn)
-        if (turn < maxTurns - 1) {
+          const buildTurnMetrics = (
+            turnNum: number,
+            judgment: Judgment,
+            usageBefore: TokenUsage,
+          ): TurnMetrics => {
+            const usageAfter = (getTotalUsage as () => TokenUsage)();
+            return {
+              turn_number: turnNum,
+              token_usage: {
+                prompt_tokens:
+                  usageAfter.prompt_tokens - usageBefore.prompt_tokens,
+                completion_tokens:
+                  usageAfter.completion_tokens - usageBefore.completion_tokens,
+                total_tokens:
+                  usageAfter.total_tokens - usageBefore.total_tokens,
+              },
+              response_quality: judgment.response_quality ?? null,
+              hallucination_risk: judgment.hallucination_risk ?? null,
+              tone_appropriateness: judgment.tone_appropriateness ?? null,
+              factual_accuracy: judgment.factual_accuracy ?? null,
+              judge_reason: judgment.reason,
+            };
+          };
+
+          /** Check if this run has been cancelled (timeout). */
+          const checkCancelled = (): void => {
+            if (signal?.aborted) {
+              throw new Error("Simulation cancelled");
+            }
+          };
+
           checkCancelled();
-          const userResponse = await userSimulator.respondAsync(
-            messages.map((m) => ({ role: m.role, content: m.content })),
-            { signal },
-          );
-          messages.push({ role: "user", content: userResponse });
-        }
-      }
 
-      // Max turns reached — preserve the last judge's assessment instead of
-      // hardcoding goal_achieved: false, so the final evaluation is not lost.
-      return maxTurnsResult(
-        maxTurns,
-        messages,
-        turnMetricsList,
-        getTotalUsage(),
-        persona,
-        scenario,
-        lastJudgment,
+          // Generate or use first message
+          const firstMsg = firstMessage
+            ? firstMessage
+            : await withSimulationSpan(
+                "orq.simulation.first_message_generation",
+                undefined,
+                async () => userSimulator.generateFirstMessage(),
+              );
+          messages.push({ role: "user", content: firstMsg });
+
+          let lastJudgment: Judgment | undefined;
+
+          for (let turn = 0; turn < maxTurns; turn++) {
+            checkCancelled();
+            const usageBefore = getTotalUsage();
+
+            await withSimulationSpan(
+              "orq.simulation.turn",
+              {
+                "orq.simulation.turn": turn + 1,
+                "orq.simulation.max_turns": maxTurns,
+              },
+              async (turnSpan) => {
+                // 1. Target agent responds
+                const agentResponse = await withSimulationSpan(
+                  "orq.simulation.target_call",
+                  undefined,
+                  async () =>
+                    this.getTargetResponse(
+                      messages.map((m) => ({
+                        role: m.role,
+                        content: m.content,
+                      })),
+                    ),
+                );
+                messages.push({ role: "assistant", content: agentResponse });
+
+                checkCancelled();
+
+                // 2. Judge evaluates
+                const judgment = await withSimulationSpan(
+                  "orq.simulation.judge_evaluation",
+                  undefined,
+                  async () =>
+                    judge.evaluate(
+                      messages.map((m) => ({
+                        role: m.role,
+                        content: m.content,
+                      })),
+                      { signal },
+                    ),
+                );
+
+                turnMetricsList.push(
+                  buildTurnMetrics(turn + 1, judgment, usageBefore),
+                );
+                lastJudgment = judgment;
+
+                setSpanAttrs(turnSpan, {
+                  "orq.simulation.goal_achieved": judgment.goal_achieved,
+                  "orq.simulation.goal_completion_score":
+                    judgment.goal_completion_score,
+                  "orq.simulation.should_terminate": judgment.should_terminate,
+                });
+
+                if (!judgment.should_terminate && turn < maxTurns - 1) {
+                  // 3. User simulator continues
+                  checkCancelled();
+                  const userResponse = await withSimulationSpan(
+                    "orq.simulation.user_simulator_call",
+                    undefined,
+                    async () =>
+                      userSimulator.respondAsync(
+                        messages.map((m) => ({
+                          role: m.role,
+                          content: m.content,
+                        })),
+                        { signal, llmPurpose: "user_simulator" },
+                      ),
+                  );
+                  messages.push({ role: "user", content: userResponse });
+                }
+              },
+            );
+
+            // Check if judge terminated after the turn span completes
+            if (lastJudgment?.should_terminate) {
+              const finalUsage = getTotalUsage();
+              recordTokenUsage(runSpan, {
+                promptTokens: finalUsage.prompt_tokens,
+                completionTokens: finalUsage.completion_tokens,
+                totalTokens: finalUsage.total_tokens,
+              });
+              setSpanAttrs(runSpan, {
+                "orq.simulation.terminated_by": "judge",
+                "orq.simulation.goal_achieved": lastJudgment.goal_achieved,
+                "orq.simulation.turn_count": turn + 1,
+              });
+
+              return {
+                messages,
+                terminated_by: "judge",
+                reason: lastJudgment.reason,
+                goal_achieved: lastJudgment.goal_achieved,
+                goal_completion_score: lastJudgment.goal_completion_score,
+                rules_broken: lastJudgment.rules_broken,
+                turn_count: turn + 1,
+                turn_metrics: turnMetricsList,
+                token_usage: finalUsage,
+                criteria_results: this.buildCriteriaResults(
+                  scenario as Scenario,
+                  lastJudgment,
+                ),
+                metadata: {
+                  persona: persona?.name,
+                  scenario: scenario?.name,
+                },
+              };
+            }
+          }
+
+          // Max turns reached
+          const finalUsage = getTotalUsage();
+          recordTokenUsage(runSpan, {
+            promptTokens: finalUsage.prompt_tokens,
+            completionTokens: finalUsage.completion_tokens,
+            totalTokens: finalUsage.total_tokens,
+          });
+          setSpanAttrs(runSpan, {
+            "orq.simulation.terminated_by": "max_turns",
+            "orq.simulation.goal_achieved":
+              lastJudgment?.goal_achieved ?? false,
+            "orq.simulation.turn_count": maxTurns,
+          });
+
+          return maxTurnsResult(
+            maxTurns,
+            messages,
+            turnMetricsList,
+            finalUsage,
+            persona,
+            scenario,
+            lastJudgment,
+          );
+        },
       );
     } catch (e) {
       console.error("SimulationRunner.run() failed:", e);

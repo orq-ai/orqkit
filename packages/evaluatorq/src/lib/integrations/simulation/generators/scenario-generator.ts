@@ -6,6 +6,12 @@
 
 import OpenAI from "openai";
 
+import {
+  getTraceContextHeaders,
+  recordLLMInput,
+  recordLLMResponse,
+  withSimulationSpan,
+} from "../tracing.js";
 import type {
   ConversationStrategy,
   Criterion,
@@ -261,16 +267,23 @@ export class ScenarioGenerator {
     numScenarios?: number;
     edgeCasePercentage?: number;
   }): Promise<Scenario[]> {
-    const {
-      agentDescription,
-      context = "",
-      numScenarios = 10,
-      edgeCasePercentage = 0.3,
-    } = params;
+    return withSimulationSpan(
+      "orq.simulation.scenario_generation",
+      {
+        "orq.simulation.num_scenarios": params.numScenarios ?? 10,
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const {
+          agentDescription,
+          context = "",
+          numScenarios = 10,
+          edgeCasePercentage = 0.3,
+        } = params;
 
-    const numEdgeCases = Math.floor(numScenarios * edgeCasePercentage);
+        const numEdgeCases = Math.floor(numScenarios * edgeCasePercentage);
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Additional Context: ${delimit(context || "None provided")}
 
@@ -282,37 +295,52 @@ Generate ${numScenarios} diverse test scenarios for this agent.
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_CREATIVE,
-        max_tokens: 6000,
-      });
+        try {
+          const genMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+            [
+              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+              { role: "user", content: userPrompt },
+            ];
+          recordLLMInput(span, [
+            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+            { role: "user", content: userPrompt },
+          ]);
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = parseJsonArray(extracted);
-      const scenarios = parseScenarios(scenarioDicts);
+          const traceHeaders = await getTraceContextHeaders();
+          const response = await this.client.chat.completions.create(
+            {
+              model: this.model,
+              messages: genMessages,
+              temperature: TEMPERATURE_CREATIVE,
+              max_tokens: 6000,
+            },
+            { headers: traceHeaders },
+          );
 
-      if (scenarios.length < numScenarios) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} scenarios but only ${scenarios.length} were successfully parsed`,
-        );
-      }
-      return scenarios;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
-    }
+          recordLLMResponse(span, response);
+
+          const content = response.choices[0]?.message.content ?? "[]";
+          const extracted = extractJsonFromResponse(content);
+          const scenarioDicts = parseJsonArray(extracted);
+          const scenarios = parseScenarios(scenarioDicts);
+
+          if (scenarios.length < numScenarios) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} scenarios but only ${scenarios.length} were successfully parsed`,
+            );
+          }
+          return scenarios;
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
+            );
+            return [];
+          }
+          throw e;
+        }
+      },
+    );
   }
 
   /**
@@ -324,32 +352,40 @@ Return ONLY a JSON array, no other text.`;
     numScenarios?: number;
     edgeCasePercentage?: number;
   }): Promise<Scenario[]> {
-    const {
-      agentDescription,
-      context = "",
-      numScenarios = 6,
-      edgeCasePercentage = 0.3,
-    } = params;
-
-    const emotions: StartingEmotion[] = [
-      "neutral",
-      "frustrated",
-      "confused",
-      "happy",
-      "urgent",
-    ];
-    const numEdgeCases = Math.floor(numScenarios * edgeCasePercentage);
-
-    const coverageInstructions = Array.from(
-      { length: numScenarios },
-      (_, i) => {
-        const emotion = emotions[i % emotions.length] as string;
-        const edgeLabel = i < numEdgeCases ? " (edge case)" : "";
-        return `- Scenario ${i + 1}: starting_emotion='${emotion}'${edgeLabel}`;
+    return withSimulationSpan(
+      "orq.simulation.scenario_generation",
+      {
+        "orq.simulation.num_scenarios": params.numScenarios ?? 6,
+        "orq.simulation.mode": "coverage",
+        "orq.simulation.model": this.model,
       },
-    ).join("\n");
+      async (span) => {
+        const {
+          agentDescription,
+          context = "",
+          numScenarios = 6,
+          edgeCasePercentage = 0.3,
+        } = params;
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const emotions: StartingEmotion[] = [
+          "neutral",
+          "frustrated",
+          "confused",
+          "happy",
+          "urgent",
+        ];
+        const numEdgeCases = Math.floor(numScenarios * edgeCasePercentage);
+
+        const coverageInstructions = Array.from(
+          { length: numScenarios },
+          (_, i) => {
+            const emotion = emotions[i % emotions.length] as string;
+            const edgeLabel = i < numEdgeCases ? " (edge case)" : "";
+            return `- Scenario ${i + 1}: starting_emotion='${emotion}'${edgeLabel}`;
+          },
+        ).join("\n");
+
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Additional Context: ${delimit(context || "None provided")}
 
@@ -365,46 +401,61 @@ Additional requirements:
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_BALANCED,
-        max_tokens: 6000,
-      });
+        try {
+          const covMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+            [
+              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+              { role: "user", content: userPrompt },
+            ];
+          recordLLMInput(span, [
+            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+            { role: "user", content: userPrompt },
+          ]);
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = parseJsonArray(extracted);
-      let scenarios = parseScenarios(scenarioDicts);
+          const traceHeaders = await getTraceContextHeaders();
+          const response = await this.client.chat.completions.create(
+            {
+              model: this.model,
+              messages: covMessages,
+              temperature: TEMPERATURE_BALANCED,
+              max_tokens: 6000,
+            },
+            { headers: traceHeaders },
+          );
 
-      // Validate coverage and fill gaps
-      scenarios = this.ensureEmotionCoverage(scenarios, emotions);
-      scenarios = this.ensureCriteriaCoverage(scenarios);
+          recordLLMResponse(span, response);
 
-      // Trim to requested count (coverage adjustments may have kept extras)
-      if (scenarios.length > numScenarios) {
-        scenarios = scenarios.slice(0, numScenarios);
-      }
+          const content = response.choices[0]?.message.content ?? "[]";
+          const extracted = extractJsonFromResponse(content);
+          const scenarioDicts = parseJsonArray(extracted);
+          let scenarios = parseScenarios(scenarioDicts);
 
-      if (scenarios.length < numScenarios) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} scenarios (with coverage) but only ${scenarios.length} were successfully parsed`,
-        );
-      }
-      return scenarios;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
-    }
+          // Validate coverage and fill gaps
+          scenarios = this.ensureEmotionCoverage(scenarios, emotions);
+          scenarios = this.ensureCriteriaCoverage(scenarios);
+
+          // Trim to requested count (coverage adjustments may have kept extras)
+          if (scenarios.length > numScenarios) {
+            scenarios = scenarios.slice(0, numScenarios);
+          }
+
+          if (scenarios.length < numScenarios) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} scenarios (with coverage) but only ${scenarios.length} were successfully parsed`,
+            );
+          }
+          return scenarios;
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
+            );
+            return [];
+          }
+          throw e;
+        }
+      },
+    );
   }
 
   /**
@@ -475,13 +526,25 @@ Return ONLY a JSON array, no other text.`;
     existingScenarios?: Scenario[];
     numEdgeCases?: number;
   }): Promise<Scenario[]> {
-    const { agentDescription, existingScenarios, numEdgeCases = 5 } = params;
+    return withSimulationSpan(
+      "orq.simulation.scenario_generation",
+      {
+        "orq.simulation.num_scenarios": params.numEdgeCases ?? 5,
+        "orq.simulation.mode": "edge_cases",
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const {
+          agentDescription,
+          existingScenarios,
+          numEdgeCases = 5,
+        } = params;
 
-    const existingNames = existingScenarios
-      ? existingScenarios.map((s) => s.name)
-      : [];
+        const existingNames = existingScenarios
+          ? existingScenarios.map((s) => s.name)
+          : [];
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Existing scenarios (avoid duplicating these):
 ${delimit(JSON.stringify(existingNames, null, 2))}
@@ -496,42 +559,57 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_EDGE_CASE,
-        max_tokens: 4000,
-      });
+        try {
+          const edgeMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+            [
+              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+              { role: "user", content: userPrompt },
+            ];
+          recordLLMInput(span, [
+            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+            { role: "user", content: userPrompt },
+          ]);
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = parseJsonArray(extracted);
+          const traceHeaders = await getTraceContextHeaders();
+          const response = await this.client.chat.completions.create(
+            {
+              model: this.model,
+              messages: edgeMessages,
+              temperature: TEMPERATURE_EDGE_CASE,
+              max_tokens: 4000,
+            },
+            { headers: traceHeaders },
+          );
 
-      // Force edge case flag
-      for (const sDict of scenarioDicts) {
-        sDict.is_edge_case = true;
-      }
+          recordLLMResponse(span, response);
 
-      const scenarios = parseScenarios(scenarioDicts);
-      if (scenarios.length < numEdgeCases) {
-        console.warn(
-          `ScenarioGenerator: requested ${numEdgeCases} edge cases but only ${scenarios.length} were successfully parsed`,
-        );
-      }
-      return scenarios;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `ScenarioGenerator: requested ${numEdgeCases} edge cases but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
-    }
+          const content = response.choices[0]?.message.content ?? "[]";
+          const extracted = extractJsonFromResponse(content);
+          const scenarioDicts = parseJsonArray(extracted);
+
+          // Force edge case flag
+          for (const sDict of scenarioDicts) {
+            sDict.is_edge_case = true;
+          }
+
+          const scenarios = parseScenarios(scenarioDicts);
+          if (scenarios.length < numEdgeCases) {
+            console.warn(
+              `ScenarioGenerator: requested ${numEdgeCases} edge cases but only ${scenarios.length} were successfully parsed`,
+            );
+          }
+          return scenarios;
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn(
+              `ScenarioGenerator: requested ${numEdgeCases} edge cases but LLM response was not valid JSON — returning empty array`,
+            );
+            return [];
+          }
+          throw e;
+        }
+      },
+    );
   }
 
   /**
@@ -541,9 +619,17 @@ Return ONLY a JSON array, no other text.`;
     agentDescription: string;
     numScenarios?: number;
   }): Promise<Scenario[]> {
-    const { agentDescription, numScenarios = 5 } = params;
+    return withSimulationSpan(
+      "orq.simulation.scenario_generation",
+      {
+        "orq.simulation.num_scenarios": params.numScenarios ?? 5,
+        "orq.simulation.mode": "boundary",
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const { agentDescription, numScenarios = 5 } = params;
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Generate ${numScenarios} BOUNDARY TEST scenarios that probe the limits of this agent's scope.
 
@@ -557,42 +643,57 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_EDGE_CASE,
-        max_tokens: 4000,
-      });
+        try {
+          const bndMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+            [
+              { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
+              { role: "user", content: userPrompt },
+            ];
+          recordLLMInput(span, [
+            { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
+            { role: "user", content: userPrompt },
+          ]);
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = parseJsonArray(extracted);
+          const traceHeaders = await getTraceContextHeaders();
+          const response = await this.client.chat.completions.create(
+            {
+              model: this.model,
+              messages: bndMessages,
+              temperature: TEMPERATURE_EDGE_CASE,
+              max_tokens: 4000,
+            },
+            { headers: traceHeaders },
+          );
 
-      // Force edge case flag
-      for (const sDict of scenarioDicts) {
-        sDict.is_edge_case = true;
-      }
+          recordLLMResponse(span, response);
 
-      const scenarios = parseScenarios(scenarioDicts);
-      if (scenarios.length < numScenarios) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} boundary scenarios but only ${scenarios.length} were successfully parsed`,
-        );
-      }
-      return scenarios;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} boundary scenarios but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
-    }
+          const content = response.choices[0]?.message.content ?? "[]";
+          const extracted = extractJsonFromResponse(content);
+          const scenarioDicts = parseJsonArray(extracted);
+
+          // Force edge case flag
+          for (const sDict of scenarioDicts) {
+            sDict.is_edge_case = true;
+          }
+
+          const scenarios = parseScenarios(scenarioDicts);
+          if (scenarios.length < numScenarios) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} boundary scenarios but only ${scenarios.length} were successfully parsed`,
+            );
+          }
+          return scenarios;
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} boundary scenarios but LLM response was not valid JSON — returning empty array`,
+            );
+            return [];
+          }
+          throw e;
+        }
+      },
+    );
   }
 
   /**
@@ -604,29 +705,37 @@ Return ONLY a JSON array, no other text.`;
     categories?: string[];
     numScenarios?: number;
   }): Promise<Scenario[]> {
-    const {
-      agentDescription,
-      seedExamples,
-      categories,
-      numScenarios = 10,
-    } = params;
+    return withSimulationSpan(
+      "orq.simulation.scenario_generation",
+      {
+        "orq.simulation.num_scenarios": params.numScenarios ?? 10,
+        "orq.simulation.mode": "security",
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const {
+          agentDescription,
+          seedExamples,
+          categories,
+          numScenarios = 10,
+        } = params;
 
-    let categoryFocus = "";
-    if (categories && categories.length > 0) {
-      const catNames = categories.map((cat) => {
-        const normalized = cat.toUpperCase().replace("OWASP-", "");
-        return `OWASP-${normalized}`;
-      });
-      categoryFocus = `\nFocus on these OWASP categories: ${delimit(catNames.join(", "))}`;
-    }
+        let categoryFocus = "";
+        if (categories && categories.length > 0) {
+          const catNames = categories.map((cat) => {
+            const normalized = cat.toUpperCase().replace("OWASP-", "");
+            return `OWASP-${normalized}`;
+          });
+          categoryFocus = `\nFocus on these OWASP categories: ${delimit(catNames.join(", "))}`;
+        }
 
-    let seedText = "";
-    if (seedExamples && seedExamples.length > 0) {
-      const examplesToShow = seedExamples.slice(0, 5);
-      seedText = `\n\nUse these attack patterns as INSPIRATION (generate NOVEL variations, not copies):\n${delimit(JSON.stringify(examplesToShow, null, 2))}`;
-    }
+        let seedText = "";
+        if (seedExamples && seedExamples.length > 0) {
+          const examplesToShow = seedExamples.slice(0, 5);
+          seedText = `\n\nUse these attack patterns as INSPIRATION (generate NOVEL variations, not copies):\n${delimit(JSON.stringify(examplesToShow, null, 2))}`;
+        }
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 ${categoryFocus}
 ${seedText}
 
@@ -641,41 +750,56 @@ Requirements:
 
 Return ONLY a JSON array, no other text.`;
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: "system", content: SECURITY_SCENARIO_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: TEMPERATURE_EDGE_CASE,
-        max_tokens: 6000,
-      });
+        try {
+          const secMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+            [
+              { role: "system", content: SECURITY_SCENARIO_PROMPT },
+              { role: "user", content: userPrompt },
+            ];
+          recordLLMInput(span, [
+            { role: "system", content: SECURITY_SCENARIO_PROMPT },
+            { role: "user", content: userPrompt },
+          ]);
 
-      const content = response.choices[0]?.message.content ?? "[]";
-      const extracted = extractJsonFromResponse(content);
-      const scenarioDicts = parseJsonArray(extracted);
+          const traceHeaders = await getTraceContextHeaders();
+          const response = await this.client.chat.completions.create(
+            {
+              model: this.model,
+              messages: secMessages,
+              temperature: TEMPERATURE_EDGE_CASE,
+              max_tokens: 6000,
+            },
+            { headers: traceHeaders },
+          );
 
-      // Force edge case flag
-      for (const sDict of scenarioDicts) {
-        sDict.is_edge_case = true;
-      }
+          recordLLMResponse(span, response);
 
-      const scenarios = parseScenarios(scenarioDicts);
-      if (scenarios.length < numScenarios) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} security scenarios but only ${scenarios.length} were successfully parsed`,
-        );
-      }
-      return scenarios;
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.warn(
-          `ScenarioGenerator: requested ${numScenarios} security scenarios but LLM response was not valid JSON — returning empty array`,
-        );
-        return [];
-      }
-      throw e;
-    }
+          const content = response.choices[0]?.message.content ?? "[]";
+          const extracted = extractJsonFromResponse(content);
+          const scenarioDicts = parseJsonArray(extracted);
+
+          // Force edge case flag
+          for (const sDict of scenarioDicts) {
+            sDict.is_edge_case = true;
+          }
+
+          const scenarios = parseScenarios(scenarioDicts);
+          if (scenarios.length < numScenarios) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} security scenarios but only ${scenarios.length} were successfully parsed`,
+            );
+          }
+          return scenarios;
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.warn(
+              `ScenarioGenerator: requested ${numScenarios} security scenarios but LLM response was not valid JSON — returning empty array`,
+            );
+            return [];
+          }
+          throw e;
+        }
+      },
+    );
   }
 }

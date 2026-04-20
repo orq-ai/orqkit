@@ -7,10 +7,16 @@
 
 import OpenAI from "openai";
 
+import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
 import { fromOrqDeployment } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { SimulationRunner } from "../runner/simulation.js";
+import {
+  recordTokenUsage,
+  setSpanAttrs,
+  withSimulationSpan,
+} from "../tracing.js";
 import type {
   ChatMessage,
   Datapoint,
@@ -49,118 +55,168 @@ export interface SimulateParams {
 export async function simulate(
   params: SimulateParams,
 ): Promise<SimulationResult[]> {
-  const {
-    targetCallback,
-    personas,
-    scenarios,
-    maxTurns = 10,
-    model = "azure/gpt-4o-mini",
-    evaluators: evaluatorNames,
-    parallelism = 5,
-  } = params;
-
-  let { datapoints } = params;
-
-  // Validate evaluator names early — throw on unknown names
-  const resolvedEvaluatorNames = evaluatorNames ?? [
-    "goal_achieved",
-    "criteria_met",
-  ];
-  const scorers = resolvedEvaluatorNames.map((name) => ({
-    name,
-    fn: getEvaluator(name),
-  }));
-
-  // Build datapoints from personas x scenarios if not provided
-  if (!datapoints) {
-    if (!personas || !scenarios) {
-      throw new Error(
-        "Either provide 'datapoints' or both 'personas' and 'scenarios'",
-      );
-    }
-    if (personas.length === 0 || scenarios.length === 0) {
-      throw new Error(
-        "'personas' and 'scenarios' arrays must both be non-empty",
-      );
-    }
-
-    const apiKey = process.env.ORQ_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "ORQ_API_KEY environment variable is not set. Set it before calling simulate().",
-      );
-    }
-    // Create a shared HTTP client so the generator doesn't leak its own pool
-    const sharedClient = new OpenAI({
-      apiKey,
-      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
-    });
-    // Generate first messages for each combination (with bounded concurrency)
-    const firstMsgGen = new FirstMessageGenerator({
-      model,
-      client: sharedClient,
-    });
-    const pairs = personas.flatMap((persona) =>
-      scenarios.map((scenario) => ({ persona, scenario })),
-    );
-    const FIRST_MSG_CONCURRENCY = 5;
-    const generatedDatapoints: Datapoint[] = [];
-    for (let i = 0; i < pairs.length; i += FIRST_MSG_CONCURRENCY) {
-      const batch = pairs.slice(i, i + FIRST_MSG_CONCURRENCY);
-      const batchResults = await Promise.all(
-        batch.map(async ({ persona, scenario }) => {
-          const firstMessage = await firstMsgGen.generate(persona, scenario);
-          return generateDatapoint(persona, scenario, firstMessage);
-        }),
-      );
-      generatedDatapoints.push(...batchResults);
-    }
-    datapoints = generatedDatapoints;
-  }
-
-  if (!datapoints || datapoints.length === 0) {
-    throw new Error(
-      "No datapoints to simulate — persona or scenario generation may have failed",
-    );
-  }
-
-  // Bridge agentKey to invoke() if no callback is provided
-  let resolvedCallback = targetCallback;
-  if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqDeployment(params.agentKey);
-  }
-
-  if (!resolvedCallback) {
-    throw new Error("Either targetCallback or agentKey is required");
-  }
-
-  // Create simulation runner
-  const runner = new SimulationRunner({
-    targetCallback: resolvedCallback,
-    model,
-    maxTurns,
-  });
+  // Initialize OTel tracing (no-op if already initialized or not configured)
+  await initTracingIfNeeded();
 
   try {
-    // Run simulations
-    const results = await runner.runBatch({
-      datapoints,
-      maxTurns,
-      maxConcurrency: parallelism,
-    });
+    return await withSimulationSpan(
+      "orq.simulation.pipeline",
+      {
+        "orq.simulation.evaluation_name": params.evaluationName,
+        "orq.simulation.max_turns": params.maxTurns ?? 10,
+        "orq.simulation.parallelism": params.parallelism ?? 5,
+      },
+      async (pipelineSpan) => {
+        const {
+          targetCallback,
+          personas,
+          scenarios,
+          maxTurns = 10,
+          model = "azure/gpt-4o-mini",
+          evaluators: evaluatorNames,
+          parallelism = 5,
+        } = params;
 
-    // Apply evaluators to results
-    for (const result of results) {
-      const scores: Record<string, number> = {};
-      for (const { name, fn } of scorers) {
-        scores[name] = fn(result);
-      }
-      (result.metadata as Record<string, unknown>).evaluator_scores = scores;
-    }
+        let { datapoints } = params;
 
-    return results;
+        // Validate evaluator names early — throw on unknown names
+        const resolvedEvaluatorNames = evaluatorNames ?? [
+          "goal_achieved",
+          "criteria_met",
+        ];
+        const scorers = resolvedEvaluatorNames.map((name) => ({
+          name,
+          fn: getEvaluator(name),
+        }));
+
+        // Build datapoints from personas x scenarios if not provided
+        if (!datapoints) {
+          if (!personas || !scenarios) {
+            throw new Error(
+              "Either provide 'datapoints' or both 'personas' and 'scenarios'",
+            );
+          }
+          if (personas.length === 0 || scenarios.length === 0) {
+            throw new Error(
+              "'personas' and 'scenarios' arrays must both be non-empty",
+            );
+          }
+
+          const apiKey = process.env.ORQ_API_KEY;
+          if (!apiKey) {
+            throw new Error(
+              "ORQ_API_KEY environment variable is not set. Set it before calling simulate().",
+            );
+          }
+          // Create a shared HTTP client so the generator doesn't leak its own pool
+          const sharedClient = new OpenAI({
+            apiKey,
+            baseURL:
+              process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
+          });
+          // Generate first messages for each combination (with bounded concurrency)
+          const firstMsgGen = new FirstMessageGenerator({
+            model,
+            client: sharedClient,
+          });
+          const pairs = personas.flatMap((persona) =>
+            scenarios.map((scenario) => ({ persona, scenario })),
+          );
+          const FIRST_MSG_CONCURRENCY = 5;
+          const generatedDatapoints: Datapoint[] = [];
+          for (let i = 0; i < pairs.length; i += FIRST_MSG_CONCURRENCY) {
+            const batch = pairs.slice(i, i + FIRST_MSG_CONCURRENCY);
+            const batchResults = await Promise.all(
+              batch.map(async ({ persona, scenario }) => {
+                const firstMessage = await firstMsgGen.generate(
+                  persona,
+                  scenario,
+                );
+                return generateDatapoint(persona, scenario, firstMessage);
+              }),
+            );
+            generatedDatapoints.push(...batchResults);
+          }
+          datapoints = generatedDatapoints;
+        }
+
+        if (!datapoints || datapoints.length === 0) {
+          throw new Error(
+            "No datapoints to simulate — persona or scenario generation may have failed",
+          );
+        }
+
+        setSpanAttrs(pipelineSpan, {
+          "orq.simulation.datapoints_count": datapoints.length,
+        });
+
+        // Bridge agentKey to invoke() if no callback is provided
+        let resolvedCallback = targetCallback;
+        if (!resolvedCallback && params.agentKey) {
+          resolvedCallback = fromOrqDeployment(params.agentKey);
+        }
+
+        if (!resolvedCallback) {
+          throw new Error("Either targetCallback or agentKey is required");
+        }
+
+        // Create simulation runner
+        const runner = new SimulationRunner({
+          targetCallback: resolvedCallback,
+          model,
+          maxTurns,
+        });
+
+        try {
+          // Run simulations
+          const results = await runner.runBatch({
+            datapoints,
+            maxTurns,
+            maxConcurrency: parallelism,
+          });
+
+          // Apply evaluators to results
+          for (const result of results) {
+            const scores: Record<string, number> = {};
+            for (const { name, fn } of scorers) {
+              scores[name] = fn(result);
+            }
+            (result.metadata as Record<string, unknown>).evaluator_scores =
+              scores;
+          }
+
+          // Record aggregate token usage on the pipeline span
+          const totalUsage = results.reduce(
+            (acc, r) => ({
+              prompt: acc.prompt + (r.token_usage?.prompt_tokens ?? 0),
+              completion:
+                acc.completion + (r.token_usage?.completion_tokens ?? 0),
+              total: acc.total + (r.token_usage?.total_tokens ?? 0),
+            }),
+            { prompt: 0, completion: 0, total: 0 },
+          );
+          recordTokenUsage(pipelineSpan, {
+            promptTokens: totalUsage.prompt,
+            completionTokens: totalUsage.completion,
+            totalTokens: totalUsage.total,
+          });
+
+          setSpanAttrs(pipelineSpan, {
+            "orq.simulation.results_count": results.length,
+            "orq.simulation.goal_achieved_count": results.filter(
+              (r) => r.goal_achieved,
+            ).length,
+          });
+
+          return results;
+        } finally {
+          await runner.close();
+        }
+      },
+    );
   } finally {
-    await runner.close();
+    // Flush pending spans to ensure they're exported before the process exits
+    await flushTracing();
   }
 }
 
@@ -242,7 +298,7 @@ export async function generateAndSimulate(
     );
   }
 
-  // Generate personas and scenarios in parallel
+  // Generate personas and scenarios in parallel (spans are created inside generators)
   const personaGen = new PersonaGenerator({ model });
   const scenarioGen = new ScenarioGenerator({ model });
 
@@ -257,7 +313,7 @@ export async function generateAndSimulate(
     }),
   ]);
 
-  // Run simulations
+  // Run simulations (pipeline span is created inside simulate())
   return simulate({
     evaluationName,
     targetCallback: resolvedCallback,
