@@ -442,6 +442,7 @@ redteam = [
 ]
 simulation = [
     { name = "openai" },
+    { name = "orq-ai-sdk" },
 ]
 ui = [
     { name = "plotly" },
@@ -485,6 +486,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'otel'", specifier = ">=1.20.0" },
     { name = "opentelemetry-semantic-conventions", marker = "extra == 'otel'", specifier = ">=0.41b0" },
     { name = "orq-ai-sdk", marker = "extra == 'orq'", specifier = ">=4.4.7" },
+    { name = "orq-ai-sdk", marker = "extra == 'simulation'", specifier = ">=4.4.7" },
     { name = "plotly", marker = "extra == 'ui'", specifier = ">=5.18.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "python-dotenv", marker = "extra == 'redteam'", specifier = ">=1.0.0" },
