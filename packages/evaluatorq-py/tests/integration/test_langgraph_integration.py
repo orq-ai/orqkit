@@ -13,15 +13,16 @@ pytest.importorskip("langgraph")
 
 from langchain_core.language_models.fake_chat_models import FakeListChatModel  # noqa: E402
 from langgraph.graph import END, MessagesState, StateGraph  # noqa: E402
+from langgraph.graph.state import CompiledStateGraph  # noqa: E402
 
 from evaluatorq.integrations.langgraph_integration import LangGraphTarget  # noqa: E402
 
 
-def _build_echo_graph() -> StateGraph:
+def _build_echo_graph() -> CompiledStateGraph:  # pyright: ignore[reportMissingTypeArgument]
     """Build a minimal LangGraph that uses a fake LLM to respond."""
     model = FakeListChatModel(responses=["I am a helpful assistant.", "Sure, I can help with that."])
 
-    def agent_node(state: MessagesState) -> dict:
+    def agent_node(state: MessagesState) -> dict[str, object]:
         response = model.invoke(state["messages"])
         return {"messages": [response]}
 

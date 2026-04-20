@@ -17,6 +17,7 @@ warnings.filterwarnings("ignore", message=".*create_react_agent.*")
 from dotenv import load_dotenv  # noqa: E402
 from langchain_openai import ChatOpenAI  # noqa: E402
 from langgraph.checkpoint.memory import MemorySaver  # noqa: E402
+from langgraph.graph.state import CompiledStateGraph  # noqa: E402
 from langgraph.prebuilt import create_react_agent  # noqa: E402
 
 from evaluatorq.integrations.langgraph_integration import LangGraphTarget
@@ -41,12 +42,12 @@ def check(name: str, condition: bool, detail: str = "") -> None:
         print(f"  ✗ {name} — {detail}")
 
 
-def make_graph() -> object:
+def make_graph() -> CompiledStateGraph:  # pyright: ignore[reportMissingTypeArgument]
     api_key = os.environ["ORQ_API_KEY"]
     model = ChatOpenAI(
         model="openai/gpt-4o-mini",
         base_url="https://api.orq.ai/v2/router",
-        api_key=api_key,
+        api_key=api_key,  # pyright: ignore[reportArgumentType]
     )
     return create_react_agent(model, tools=[], checkpointer=MemorySaver())
 

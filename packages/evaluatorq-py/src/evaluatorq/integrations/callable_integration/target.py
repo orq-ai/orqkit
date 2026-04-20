@@ -57,8 +57,8 @@ class CallableTarget:
         """Send a prompt to the callable and return its response."""
         try:
             if self._is_async:
-                return await self._fn(prompt)  # type: ignore[misc]
-            return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]
+                return await self._fn(prompt)  # type: ignore[misc]  # pyright: ignore[reportReturnType, reportGeneralTypeIssues]
+            return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]  # pyright: ignore[reportReturnType]
         except Exception as exc:
             raise RuntimeError(f"CallableTarget: callable raised {exc!r}") from exc
 
