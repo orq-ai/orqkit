@@ -38,7 +38,7 @@ class TestLangGraphTarget:
         assert messages == [{"role": "user", "content": "test prompt"}]
 
     @pytest.mark.asyncio
-    async def test_send_prompt_passesmemory_entity_id(self) -> None:
+    async def test_send_prompt_passes_memory_entity_id(self) -> None:
         graph = _make_graph()
         target = LangGraphTarget(graph)
         await target.send_prompt("hi")
@@ -47,7 +47,7 @@ class TestLangGraphTarget:
         assert "thread_id" in config["configurable"]
 
     @pytest.mark.asyncio
-    async def test_reset_changesmemory_entity_id(self) -> None:
+    async def test_reset_changes_memory_entity_id(self) -> None:
         graph = _make_graph()
         target = LangGraphTarget(graph)
         old_thread = target.memory_entity_id

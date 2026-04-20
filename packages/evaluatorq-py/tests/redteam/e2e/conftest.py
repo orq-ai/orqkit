@@ -7,6 +7,7 @@ helpers so all pipeline modes can be tested without any API keys.
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -130,7 +131,6 @@ class MockAgentTarget:
     """Deterministic agent target with leak/refuse/safe logic."""
 
     def __init__(self, agent_key: str) -> None:
-        import uuid
         self.agent_key = agent_key
         self.memory_entity_id: str | None = f"red-team-{uuid.uuid4().hex[:12]}"
         self._conversation: list[dict[str, str]] = []

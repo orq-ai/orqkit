@@ -81,7 +81,9 @@ class ORQAgentTarget:
         """
         self.agent_key = agent_key
         self.orq_client = orq_client
-        self.memory_entity_id: str | None = memory_entity_id or f'red-team-{uuid.uuid4().hex[:12]}'
+        self.memory_entity_id: str | None = (
+            memory_entity_id if memory_entity_id is not None else f"red-team-{uuid.uuid4().hex[:12]}"
+        )
         self.model = model
         self._task_id: str | None = None
         self._last_token_usage: TokenUsage | None = None
