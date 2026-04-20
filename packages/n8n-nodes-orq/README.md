@@ -119,6 +119,8 @@ The node returns:
 - **raw**: Full response body for anything else you need
 - **usage**: Token counts, when present
 - **refusals**: Array of refusal strings, when present
+- **incomplete**: `true` when status is `incomplete`
+- **incompleteReason**: Reason for the incomplete status, when present
 
 #### Example Use Cases
 
