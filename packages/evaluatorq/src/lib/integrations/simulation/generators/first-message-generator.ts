@@ -10,6 +10,7 @@ import {
   getTraceContextHeaders,
   recordLLMInput,
   recordLLMResponse,
+  withLLMSpan,
   withSimulationSpan,
 } from "../tracing.js";
 import type { Persona, Scenario } from "../types.js";
@@ -142,26 +143,38 @@ Keep it natural - this is how they would actually open a conversation.`;
               { role: "system", content: FIRST_MESSAGE_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(
-            span,
-            llmMessages.map((m) => ({
-              role: m.role,
-              content: typeof m.content === "string" ? m.content : "",
-            })),
-          );
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: llmMessages,
               temperature: TEMPERATURE_FIRST_MESSAGE,
-              max_tokens: 500,
+              maxTokens: 500,
+              purpose: "first_message",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(
+                llmSpan,
+                llmMessages.map((m) => ({
+                  role: m.role,
+                  content: typeof m.content === "string" ? m.content : "",
+                })),
+              );
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: llmMessages,
+                  temperature: TEMPERATURE_FIRST_MESSAGE,
+                  max_tokens: 500,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           let message = response.choices[0]?.message.content ?? "";
           message = message.trim().replace(/^["']|["']$/g, "");

@@ -10,6 +10,7 @@ import {
   getTraceContextHeaders,
   recordLLMInput,
   recordLLMResponse,
+  withLLMSpan,
   withSimulationSpan,
 } from "../tracing.js";
 import type { CommunicationStyle, Persona } from "../types.js";
@@ -196,26 +197,38 @@ Return ONLY a JSON array, no other text.`;
             { role: "system", content: PERSONA_GENERATOR_PROMPT },
             { role: "user", content: userPrompt },
           ];
-        recordLLMInput(
-          span,
-          llmMessages.map((m) => ({
-            role: m.role,
-            content: typeof m.content === "string" ? m.content : "",
-          })),
-        );
 
-        const traceHeaders = await getTraceContextHeaders();
-        const response = await this.client.chat.completions.create(
+        const response = await withLLMSpan(
           {
             model: this.model,
-            messages: llmMessages,
             temperature: TEMPERATURE_CREATIVE,
-            max_tokens: 4000,
+            maxTokens: 4000,
+            purpose: "persona_generation",
           },
-          { headers: traceHeaders },
-        );
+          async (llmSpan) => {
+            recordLLMInput(
+              llmSpan,
+              llmMessages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === "string" ? m.content : "",
+              })),
+            );
 
-        recordLLMResponse(span, response);
+            const traceHeaders = await getTraceContextHeaders();
+            const res = await this.client.chat.completions.create(
+              {
+                model: this.model,
+                messages: llmMessages,
+                temperature: TEMPERATURE_CREATIVE,
+                max_tokens: 4000,
+              },
+              { headers: traceHeaders },
+            );
+
+            recordLLMResponse(llmSpan, res);
+            return res;
+          },
+        );
 
         const content = response.choices[0]?.message.content ?? "[]";
         const personas = PersonaGenerator.parsePersonas(content);
@@ -357,26 +370,38 @@ Return ONLY a JSON array, no other text.`;
             { role: "system", content: PERSONA_GENERATOR_PROMPT },
             { role: "user", content: userPrompt },
           ];
-        recordLLMInput(
-          span,
-          covMessages.map((m) => ({
-            role: m.role,
-            content: typeof m.content === "string" ? m.content : "",
-          })),
-        );
 
-        const traceHeaders = await getTraceContextHeaders();
-        const response = await this.client.chat.completions.create(
+        const response = await withLLMSpan(
           {
             model: this.model,
-            messages: covMessages,
             temperature: TEMPERATURE_BALANCED,
-            max_tokens: 4000,
+            maxTokens: 4000,
+            purpose: "persona_generation_coverage",
           },
-          { headers: traceHeaders },
-        );
+          async (llmSpan) => {
+            recordLLMInput(
+              llmSpan,
+              covMessages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === "string" ? m.content : "",
+              })),
+            );
 
-        recordLLMResponse(span, response);
+            const traceHeaders = await getTraceContextHeaders();
+            const res = await this.client.chat.completions.create(
+              {
+                model: this.model,
+                messages: covMessages,
+                temperature: TEMPERATURE_BALANCED,
+                max_tokens: 4000,
+              },
+              { headers: traceHeaders },
+            );
+
+            recordLLMResponse(llmSpan, res);
+            return res;
+          },
+        );
 
         const content = response.choices[0]?.message.content ?? "[]";
         let personas = PersonaGenerator.parsePersonas(content);

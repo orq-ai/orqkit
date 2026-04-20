@@ -10,6 +10,7 @@ import {
   getTraceContextHeaders,
   recordLLMInput,
   recordLLMResponse,
+  withLLMSpan,
   withSimulationSpan,
 } from "../tracing.js";
 import type {
@@ -301,23 +302,35 @@ Return ONLY a JSON array, no other text.`;
               { role: "system", content: SCENARIO_GENERATOR_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(span, [
-            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-            { role: "user", content: userPrompt },
-          ]);
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: genMessages,
               temperature: TEMPERATURE_CREATIVE,
-              max_tokens: 6000,
+              maxTokens: 6000,
+              purpose: "scenario_generation",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(llmSpan, [
+                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+                { role: "user", content: userPrompt },
+              ]);
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: genMessages,
+                  temperature: TEMPERATURE_CREATIVE,
+                  max_tokens: 6000,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           const content = response.choices[0]?.message.content ?? "[]";
           const extracted = extractJsonFromResponse(content);
@@ -407,23 +420,35 @@ Return ONLY a JSON array, no other text.`;
               { role: "system", content: SCENARIO_GENERATOR_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(span, [
-            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-            { role: "user", content: userPrompt },
-          ]);
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: covMessages,
               temperature: TEMPERATURE_BALANCED,
-              max_tokens: 6000,
+              maxTokens: 6000,
+              purpose: "scenario_generation_coverage",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(llmSpan, [
+                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+                { role: "user", content: userPrompt },
+              ]);
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: covMessages,
+                  temperature: TEMPERATURE_BALANCED,
+                  max_tokens: 6000,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           const content = response.choices[0]?.message.content ?? "[]";
           const extracted = extractJsonFromResponse(content);
@@ -565,23 +590,35 @@ Return ONLY a JSON array, no other text.`;
               { role: "system", content: SCENARIO_GENERATOR_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(span, [
-            { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-            { role: "user", content: userPrompt },
-          ]);
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: edgeMessages,
               temperature: TEMPERATURE_EDGE_CASE,
-              max_tokens: 4000,
+              maxTokens: 4000,
+              purpose: "scenario_edge_cases",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(llmSpan, [
+                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
+                { role: "user", content: userPrompt },
+              ]);
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: edgeMessages,
+                  temperature: TEMPERATURE_EDGE_CASE,
+                  max_tokens: 4000,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           const content = response.choices[0]?.message.content ?? "[]";
           const extracted = extractJsonFromResponse(content);
@@ -649,23 +686,35 @@ Return ONLY a JSON array, no other text.`;
               { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(span, [
-            { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
-            { role: "user", content: userPrompt },
-          ]);
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: bndMessages,
               temperature: TEMPERATURE_EDGE_CASE,
-              max_tokens: 4000,
+              maxTokens: 4000,
+              purpose: "scenario_boundary",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(llmSpan, [
+                { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
+                { role: "user", content: userPrompt },
+              ]);
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: bndMessages,
+                  temperature: TEMPERATURE_EDGE_CASE,
+                  max_tokens: 4000,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           const content = response.choices[0]?.message.content ?? "[]";
           const extracted = extractJsonFromResponse(content);
@@ -756,23 +805,35 @@ Return ONLY a JSON array, no other text.`;
               { role: "system", content: SECURITY_SCENARIO_PROMPT },
               { role: "user", content: userPrompt },
             ];
-          recordLLMInput(span, [
-            { role: "system", content: SECURITY_SCENARIO_PROMPT },
-            { role: "user", content: userPrompt },
-          ]);
 
-          const traceHeaders = await getTraceContextHeaders();
-          const response = await this.client.chat.completions.create(
+          const response = await withLLMSpan(
             {
               model: this.model,
-              messages: secMessages,
               temperature: TEMPERATURE_EDGE_CASE,
-              max_tokens: 6000,
+              maxTokens: 6000,
+              purpose: "scenario_security",
             },
-            { headers: traceHeaders },
-          );
+            async (llmSpan) => {
+              recordLLMInput(llmSpan, [
+                { role: "system", content: SECURITY_SCENARIO_PROMPT },
+                { role: "user", content: userPrompt },
+              ]);
 
-          recordLLMResponse(span, response);
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: secMessages,
+                  temperature: TEMPERATURE_EDGE_CASE,
+                  max_tokens: 6000,
+                },
+                { headers: traceHeaders },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
 
           const content = response.choices[0]?.message.content ?? "[]";
           const extracted = extractJsonFromResponse(content);
