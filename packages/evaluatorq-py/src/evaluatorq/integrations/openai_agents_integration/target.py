@@ -40,7 +40,19 @@ class OpenAIAgentTarget:
         if self._history:
             input_data = [*self._history, {"role": "user", "content": prompt}]
 
-        result = await Runner.run(self._agent, input_data, **self._run_kwargs)
+        try:
+            result = await Runner.run(self._agent, input_data, **self._run_kwargs)
+        except Exception as exc:
+            raise RuntimeError(
+                f"OpenAIAgentTarget: Runner.run() raised an error: {exc}"
+            ) from exc
+
+        if result.final_output is None:
+            raise ValueError(
+                "OpenAIAgentTarget: Runner.run() returned final_output=None. "
+                "Ensure the agent produces a text response."
+            )
+
         self._history = result.to_input_list()
         return str(result.final_output)
 
@@ -48,6 +60,6 @@ class OpenAIAgentTarget:
         """Reset conversation state by clearing the message history."""
         self._history = []
 
-    def clone(self, memory_entity_id: str | None = None) -> OpenAIAgentTarget:
+    def clone(self) -> OpenAIAgentTarget:
         """Create an independent copy for parallel red teaming jobs."""
         return OpenAIAgentTarget(self._agent, run_kwargs=dict(self._run_kwargs))

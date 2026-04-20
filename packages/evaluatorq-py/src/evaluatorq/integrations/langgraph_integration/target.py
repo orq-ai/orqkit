@@ -86,5 +86,12 @@ class LangGraphTarget:
         self._thread_id = uuid4().hex
 
     def clone(self, memory_entity_id: str | None = None) -> LangGraphTarget:
-        """Create an independent copy for parallel red teaming jobs."""
-        return LangGraphTarget(self._graph, config=dict(self._extra_config))
+        """Create an independent copy for parallel red teaming jobs.
+
+        If ``memory_entity_id`` is provided it is used as the thread_id,
+        ensuring each memory entity gets its own isolated conversation thread.
+        """
+        cloned = LangGraphTarget(self._graph, config=dict(self._extra_config))
+        if memory_entity_id is not None:
+            cloned._thread_id = memory_entity_id
+        return cloned

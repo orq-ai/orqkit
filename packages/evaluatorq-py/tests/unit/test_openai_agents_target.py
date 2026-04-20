@@ -80,3 +80,56 @@ class TestOpenAIAgentTarget:
         assert cloned._agent is agent
         assert cloned._run_kwargs is not target._run_kwargs
         assert cloned._run_kwargs == {"max_turns": 5}
+
+    @pytest.mark.asyncio
+    async def test_raises_when_final_output_is_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        result = MagicMock()
+        result.final_output = None
+        result.to_input_list.return_value = []
+        runner = MagicMock()
+        runner.run = AsyncMock(return_value=result)
+        monkeypatch.setattr("evaluatorq.integrations.openai_agents_integration.target.Runner", runner)
+
+        target = OpenAIAgentTarget(MagicMock())
+        with pytest.raises(ValueError, match="final_output=None"):
+            await target.send_prompt("hi")
+
+    @pytest.mark.asyncio
+    async def test_runner_error_is_wrapped_with_context(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        runner = MagicMock()
+        runner.run = AsyncMock(side_effect=RuntimeError("model overloaded"))
+        monkeypatch.setattr("evaluatorq.integrations.openai_agents_integration.target.Runner", runner)
+
+        target = OpenAIAgentTarget(MagicMock())
+        with pytest.raises(RuntimeError, match="OpenAIAgentTarget: Runner.run\\(\\) raised"):
+            await target.send_prompt("hi")
+
+    @pytest.mark.asyncio
+    async def test_history_accumulates_across_turns(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        call_count = 0
+
+        async def fake_run(agent, input_data, **kwargs):  # noqa: ANN001, ANN003
+            nonlocal call_count
+            call_count += 1
+            if isinstance(input_data, str):
+                history = [
+                    {"role": "user", "content": input_data},
+                    {"role": "assistant", "content": f"Reply {call_count}"},
+                ]
+            else:
+                history = [*input_data, {"role": "assistant", "content": f"Reply {call_count}"}]
+            result = MagicMock()
+            result.final_output = f"Reply {call_count}"
+            result.to_input_list.return_value = history
+            return result
+
+        runner = MagicMock()
+        runner.run = fake_run
+        monkeypatch.setattr("evaluatorq.integrations.openai_agents_integration.target.Runner", runner)
+
+        target = OpenAIAgentTarget(MagicMock())
+        r1 = await target.send_prompt("Hello")
+        assert r1 == "Reply 1"
+        r2 = await target.send_prompt("Follow up")
+        assert r2 == "Reply 2"
+        assert len(target._history) > 2

@@ -100,3 +100,32 @@ class TestLangGraphTarget:
         assert cloned._graph is graph
         assert cloned._extra_config is not target._extra_config
         assert cloned._extra_config == {"recursion_limit": 50}
+
+    def test_clone_with_memory_entity_id_uses_it_as_thread_id(self) -> None:
+        graph = _make_graph()
+        target = LangGraphTarget(graph)
+        cloned = target.clone(memory_entity_id="entity-abc")
+        assert cloned._thread_id == "entity-abc"
+
+    @pytest.mark.asyncio
+    async def test_configurable_key_collision_preserves_user_keys(self) -> None:
+        """config={"configurable": {"custom_key": "val"}} must not be overwritten by thread_id injection."""
+        graph = _make_graph()
+        target = LangGraphTarget(graph, config={"configurable": {"custom_key": "val"}})
+        await target.send_prompt("hi")
+
+        config = graph.ainvoke.call_args[1]["config"]
+        assert config["configurable"]["custom_key"] == "val"
+        assert "thread_id" in config["configurable"]
+
+    @pytest.mark.asyncio
+    async def test_non_string_content_is_coerced_to_str(self) -> None:
+        """List-type content (e.g. multimodal messages) must be coerced to str."""
+        graph = MagicMock()
+        msg = MagicMock()
+        msg.content = [{"type": "text", "text": "multimodal content"}]
+        graph.ainvoke = AsyncMock(return_value={"messages": [msg]})
+        target = LangGraphTarget(graph)
+        result = await target.send_prompt("hi")
+        assert isinstance(result, str)
+        assert "multimodal content" in result

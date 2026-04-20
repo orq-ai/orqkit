@@ -55,15 +55,18 @@ class CallableTarget:
 
     async def send_prompt(self, prompt: str) -> str:
         """Send a prompt to the callable and return its response."""
-        if self._is_async:
-            return await self._fn(prompt)  # type: ignore[misc]
-        return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]
+        try:
+            if self._is_async:
+                return await self._fn(prompt)  # type: ignore[misc]
+            return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]
+        except Exception as exc:
+            raise RuntimeError(f"CallableTarget: callable raised {exc!r}") from exc
 
     def reset_conversation(self) -> None:
         """Reset conversation state via the optional reset callback."""
         if self._reset_fn is not None:
             self._reset_fn()
 
-    def clone(self, memory_entity_id: str | None = None) -> CallableTarget:
+    def clone(self) -> CallableTarget:
         """Create a copy sharing the same callable."""
         return CallableTarget(self._fn, reset_fn=self._reset_fn)
