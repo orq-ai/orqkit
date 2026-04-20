@@ -1,8 +1,12 @@
 import type { INode } from "n8n-workflow";
 import { NodeOperationError } from "n8n-workflow";
 
-import type { TextPart } from "@orq-ai/node/models/components";
-import type { Parts } from "@orq-ai/node/models/operations";
+import type {
+  Content1,
+  CreateResponseContentRouterResponses2,
+  Output,
+  Output1,
+} from "@orq-ai/node/models/operations";
 
 import { ERROR_MESSAGES } from "./constants";
 import type { OrqCredentials } from "./types";
@@ -30,12 +34,40 @@ export function validateCredentials(credentials: unknown, node: INode): void {
   }
 }
 
-export function isTextPart(part: Parts): part is TextPart {
-  return part.kind === "text";
+export function validateThreadingExclusivity(
+  previousResponseId: string | undefined,
+  conversationId: string | undefined,
+  node: INode,
+): void {
+  const hasPrev = !!previousResponseId && previousResponseId.trim() !== "";
+  const hasConv = !!conversationId && conversationId.trim() !== "";
+  if (hasPrev && hasConv) {
+    throw new NodeOperationError(
+      node,
+      ERROR_MESSAGES.CONVERSATION_AND_PREVIOUS_RESPONSE_EXCLUSIVE,
+    );
+  }
+}
+
+export function isOutputMessage(item: Output): item is Output1 {
+  return item.type === "message";
+}
+
+export function isOutputTextContent(
+  content: Content1 | CreateResponseContentRouterResponses2,
+): content is Content1 {
+  return content.type === "output_text";
+}
+
+export function isRefusalContent(
+  content: Content1 | CreateResponseContentRouterResponses2,
+): content is CreateResponseContentRouterResponses2 {
+  return content.type === "refusal";
 }
 
 export const Validators = {
   validateAgentKey,
   validateMessage,
   validateCredentials,
+  validateThreadingExclusivity,
 };
