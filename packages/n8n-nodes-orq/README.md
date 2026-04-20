@@ -113,7 +113,7 @@ The node returns:
 
 - **responseId**: Unique identifier for this response (use as Previous Response ID in a downstream node)
 - **agentKey**: The agent that was invoked
-- **status**: Final status (`completed`, `failed`, etc.)
+- **status**: Final status (`completed` or `incomplete`)
 - **success**: Boolean indicating if the response completed successfully
 - **response**: The agent's response text
 - **raw**: Full response body for anything else you need
