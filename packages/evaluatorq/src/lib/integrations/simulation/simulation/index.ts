@@ -8,7 +8,7 @@
 import OpenAI from "openai";
 
 import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
-import { fromOrqDeployment } from "../adapters.js";
+import { fromOrqAgent } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { SimulationRunner } from "../runner/simulation.js";
@@ -164,7 +164,7 @@ async function _simulateCore(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqDeployment(params.agentKey);
+    resolvedCallback = fromOrqAgent(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -266,7 +266,7 @@ export async function generateAndSimulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqDeployment(params.agentKey);
+    resolvedCallback = fromOrqAgent(params.agentKey);
   }
 
   if (!resolvedCallback) {

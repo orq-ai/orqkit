@@ -10,6 +10,7 @@ import OpenAI from "openai";
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
 import {
+  recordLLMInput,
   recordTokenUsage,
   setSpanAttrs,
   withSimulationSpan,
@@ -302,16 +303,22 @@ export class SimulationRunner {
               },
               async (turnSpan) => {
                 // 1. Target agent responds
+                const targetMessages = messages.map((m) => ({
+                  role: m.role,
+                  content: m.content,
+                }));
                 const agentResponse = await withSimulationSpan(
                   "orq.simulation.target_call",
                   undefined,
-                  async () =>
-                    this.getTargetResponse(
-                      messages.map((m) => ({
-                        role: m.role,
-                        content: m.content,
-                      })),
-                    ),
+                  async (targetSpan) => {
+                    recordLLMInput(targetSpan, targetMessages);
+                    const response =
+                      await this.getTargetResponse(targetMessages);
+                    setSpanAttrs(targetSpan, {
+                      output: response,
+                    });
+                    return response;
+                  },
                 );
                 messages.push({ role: "assistant", content: agentResponse });
 
