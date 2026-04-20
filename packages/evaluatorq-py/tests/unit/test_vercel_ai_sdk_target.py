@@ -222,6 +222,14 @@ class TestVercelAISdkTargetAgentContext:
         assert ctx.description == "opaque Vercel AI SDK HTTP target"
 
     @pytest.mark.asyncio
+    async def test_get_agent_context_strips_credentials_from_url_key(self) -> None:
+        target = VercelAISdkTarget("https://user:secret@api.example.com/chat?token=abc")
+        ctx = await target.get_agent_context()
+        assert "secret" not in ctx.key
+        assert "token" not in ctx.key
+        assert ctx.key == "https://api.example.com/chat"
+
+    @pytest.mark.asyncio
     async def test_get_agent_context_returns_override(self) -> None:
         from evaluatorq.redteam.contracts import AgentContext, ToolInfo
 

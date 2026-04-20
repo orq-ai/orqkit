@@ -147,6 +147,7 @@ def _introspect_tools(graph: CompiledStateGraph[Any, Any, Any, Any]) -> list[Too
     (LangGraph's ``ToolNode``). Falls back to an empty list on anything else.
     """
     tools: list[ToolInfo] = []
+    seen: set[str] = set()
     nodes = getattr(graph, "nodes", None)
     if not nodes:
         return tools
@@ -156,9 +157,13 @@ def _introspect_tools(graph: CompiledStateGraph[Any, Any, Any, Any]) -> list[Too
         if not isinstance(tools_by_name, dict):
             continue
         for name, tool in tools_by_name.items():
+            name_str = str(name)
+            if name_str in seen:
+                continue
+            seen.add(name_str)
             tools.append(
                 ToolInfo(
-                    name=str(name),
+                    name=name_str,
                     description=getattr(tool, "description", None),
                     parameters=None,
                 )

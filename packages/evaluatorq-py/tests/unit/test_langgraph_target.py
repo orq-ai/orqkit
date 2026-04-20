@@ -134,14 +134,14 @@ class TestLangGraphTarget:
 
 class TestLangGraphTargetAgentContext:
     @pytest.mark.asyncio
-    async def test_get_agent_context_from_react_agent(self) -> None:
+    async def test_get_agent_context_from_react_agent(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Tools bound via create_react_agent show up in the agent context."""
-        import os
-
         from langchain_core.tools import tool
         from langgraph.prebuilt import create_react_agent
 
-        os.environ.setdefault("OPENAI_API_KEY", "sk-test-stub")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-stub")
 
         @tool
         def add(a: int, b: int) -> int:
@@ -184,6 +184,28 @@ class TestLangGraphTargetAgentContext:
         assert len(ctx.memory_stores) == 1
         assert isinstance(ctx.memory_stores[0], MemoryStoreInfo)
         assert ctx.memory_stores[0].id == target.memory_entity_id
+
+    @pytest.mark.asyncio
+    async def test_get_agent_context_dedupes_tools_across_nodes(self) -> None:
+        """Same tool registered in multiple ToolNodes must yield a single entry."""
+        shared_tool = MagicMock()
+        shared_tool.description = "shared"
+        bound_a = MagicMock()
+        bound_a.tools_by_name = {"shared": shared_tool}
+        bound_b = MagicMock()
+        bound_b.tools_by_name = {"shared": shared_tool, "extra": MagicMock(description=None)}
+        node_a = MagicMock(bound=bound_a)
+        node_b = MagicMock(bound=bound_b)
+
+        graph = _make_graph()
+        graph.nodes = {"tools_a": node_a, "tools_b": node_b}
+        graph.checkpointer = None
+        target = LangGraphTarget(graph)
+
+        ctx = await target.get_agent_context()
+        names = [t.name for t in ctx.tools]
+        assert names.count("shared") == 1
+        assert sorted(names) == ["extra", "shared"]
 
     @pytest.mark.asyncio
     async def test_get_agent_context_override_returns_verbatim(self) -> None:

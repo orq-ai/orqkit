@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -111,7 +112,14 @@ class VercelAISdkTarget(AgentTarget):
         """Return the user-provided agent context, or a minimal placeholder."""
         if self._agent_context is not None:
             return self._agent_context
-        return AgentContext(key=self._url, description="opaque Vercel AI SDK HTTP target")
+        # Strip userinfo and query/fragment so embedded credentials never leak
+        # into logs/reports, and to keep the key free of URL-reserved chars
+        # that may break downstream consumers (file naming, dict keying).
+        parsed = urlparse(self._url)
+        host = parsed.hostname or parsed.netloc.split("@")[-1]
+        port = f":{parsed.port}" if parsed.port else ""
+        safe_key = f"{parsed.scheme}://{host}{port}{parsed.path}".rstrip("/") or self._url
+        return AgentContext(key=safe_key, description="opaque Vercel AI SDK HTTP target")
 
     def clone(self) -> VercelAISdkTarget:
         """Create an independent copy for parallel red teaming jobs."""
