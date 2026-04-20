@@ -284,7 +284,11 @@ export class SimulationRunner {
             ? firstMessage
             : await withSimulationSpan(
                 "orq.simulation.first_message_generation",
-                undefined,
+                {
+                  "orq.simulation.persona": persona?.name,
+                  "orq.simulation.scenario": scenario?.name,
+                  "orq.simulation.model": this.model,
+                },
                 async () => userSimulator.generateFirstMessage(),
               );
           messages.push({ role: "user", content: firstMsg });

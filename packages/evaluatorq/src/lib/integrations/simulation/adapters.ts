@@ -116,7 +116,7 @@ export function fromOrqAgent(
     );
 
     // Consume stream and extract the final agent message
-    let lastMessage = "";
+    let lastMessage: string | undefined;
     for await (const event of stream) {
       const data = (event as Record<string, unknown>).data as
         | Record<string, unknown>
@@ -125,6 +125,13 @@ export function fromOrqAgent(
         const innerData = data.data as Record<string, unknown> | undefined;
         lastMessage = (innerData?.lastMessage as string) ?? "";
       }
+    }
+
+    if (lastMessage === undefined) {
+      throw new Error(
+        `Agent stream for "${agentKey}" ended without an event.agents.inactive event. ` +
+          "The agent may have errored out server-side.",
+      );
     }
 
     return lastMessage;
