@@ -71,7 +71,7 @@ export function fromOrqAgent(
   }
 
   // Cache client across calls to avoid creating a new one per turn
-  // biome-ignore lint: dynamic import type
+  // biome-ignore lint/suspicious/noExplicitAny: cached client type depends on dynamic import
   let cachedClient: any = null;
 
   return async (messages: ChatMessage[]): Promise<string> => {
