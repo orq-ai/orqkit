@@ -128,7 +128,6 @@ The node returns:
 - Complex document processing
 - Multi-step reasoning tasks
 - Tool use and function calling
-- Tasks requiring intermediate human input
 
 #### Example Workflow
 
