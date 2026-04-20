@@ -5,6 +5,7 @@ Available integrations:
 - langchain_integration: LangChain agent wrapper for OpenResponses format
 - langgraph_integration: LangGraph red teaming target
 - openai_agents_integration: OpenAI Agents SDK red teaming target
+- vercel_ai_sdk_integration: Vercel AI SDK red teaming target (HTTP)
 - callable_integration: Custom callable red teaming target
 
 Integrations with optional dependencies (langgraph, openai-agents) use lazy
@@ -19,6 +20,7 @@ __all__ = [
     "langchain_integration",
     "langgraph_integration",
     "openai_agents_integration",
+    "vercel_ai_sdk_integration",
 ]
 
 
@@ -31,6 +33,10 @@ def __getattr__(name: str):  # noqa: ANN202
         from . import openai_agents_integration
 
         return openai_agents_integration
+    if name == "vercel_ai_sdk_integration":
+        from . import vercel_ai_sdk_integration
+
+        return vercel_ai_sdk_integration
     if name == "callable_integration":
         from . import callable_integration
 
