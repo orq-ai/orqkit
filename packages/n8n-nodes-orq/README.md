@@ -77,7 +77,7 @@ The nodes will appear as "OrqAgent", "OrqDeployment" and "OrqKnowledgeBaseSearch
 
 ### Orq Agent
 
-Run Orq AI Agents for complex, long-running tasks with multi-step reasoning, tool use, and human input handling.
+Run Orq AI Agents for complex, long-running tasks with multi-step reasoning and tool use.
 
 #### How It Works
 
