@@ -130,3 +130,72 @@ class TestLangGraphTarget:
         result = await target.send_prompt("hi")
         assert isinstance(result, str)
         assert "multimodal content" in result
+
+
+class TestLangGraphTargetAgentContext:
+    @pytest.mark.asyncio
+    async def test_get_agent_context_from_react_agent(self) -> None:
+        """Tools bound via create_react_agent show up in the agent context."""
+        import os
+
+        from langchain_core.tools import tool
+        from langgraph.prebuilt import create_react_agent
+
+        os.environ.setdefault("OPENAI_API_KEY", "sk-test-stub")
+
+        @tool
+        def add(a: int, b: int) -> int:
+            """Add two integers."""
+            return a + b
+
+        graph = create_react_agent("openai:gpt-4o-mini", tools=[add])
+        target = LangGraphTarget(graph)
+
+        ctx = await target.get_agent_context()
+        assert ctx.key == "langgraph_target"
+        tool_names = ctx.get_tool_names()
+        assert "add" in tool_names
+        # create_react_agent does not set a checkpointer by default → no memory entries
+        assert ctx.memory_stores == []
+
+    @pytest.mark.asyncio
+    async def test_get_agent_context_handles_graph_without_tools_node(self) -> None:
+        graph = _make_graph()
+        graph.nodes = {}
+        graph.checkpointer = None
+        target = LangGraphTarget(graph)
+        ctx = await target.get_agent_context()
+        assert ctx.key == "langgraph_target"
+        assert ctx.tools == []
+        assert ctx.memory_stores == []
+
+    @pytest.mark.asyncio
+    async def test_get_agent_context_emits_memory_store_when_checkpointer_present(self) -> None:
+        from evaluatorq.redteam.contracts import MemoryStoreInfo
+
+        graph = _make_graph()
+        graph.nodes = {}
+        checkpointer = MagicMock()
+        checkpointer.__class__.__name__ = "InMemorySaver"
+        graph.checkpointer = checkpointer
+        target = LangGraphTarget(graph)
+
+        ctx = await target.get_agent_context()
+        assert len(ctx.memory_stores) == 1
+        assert isinstance(ctx.memory_stores[0], MemoryStoreInfo)
+        assert ctx.memory_stores[0].id == target.memory_entity_id
+
+    @pytest.mark.asyncio
+    async def test_get_agent_context_override_returns_verbatim(self) -> None:
+        from evaluatorq.redteam.contracts import AgentContext, ToolInfo
+
+        override = AgentContext(
+            key="my-custom-agent",
+            tools=[ToolInfo(name="custom_tool")],
+            description="explicitly-provided context",
+        )
+        graph = _make_graph()
+        target = LangGraphTarget(graph, agent_context=override)
+
+        ctx = await target.get_agent_context()
+        assert ctx is override

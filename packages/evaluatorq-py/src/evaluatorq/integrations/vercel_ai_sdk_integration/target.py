@@ -19,6 +19,7 @@ from typing import Any
 import httpx
 
 from evaluatorq.redteam.backends.base import AgentTarget
+from evaluatorq.redteam.contracts import AgentContext
 
 
 class VercelAISdkTarget(AgentTarget):
@@ -56,6 +57,7 @@ class VercelAISdkTarget(AgentTarget):
         headers: dict[str, str] | None = None,
         extra_body: dict[str, Any] | None = None,
         timeout: float = 120.0,
+        agent_context: AgentContext | None = None,
     ) -> None:
         """Create a Vercel AI SDK red teaming target.
 
@@ -65,12 +67,20 @@ class VercelAISdkTarget(AgentTarget):
             extra_body: Optional extra fields merged into the request body
                 alongside ``messages`` (e.g. ``{"model": "gpt-4o"}``).
             timeout: HTTP request timeout in seconds.
+            agent_context: Optional :class:`AgentContext` describing the
+                remote agent's tools, memory, system prompt, etc. The red
+                teaming pipeline uses this for capability-aware strategy
+                filtering — without it, all strategies (including
+                nonsensical ones) will be applied. The HTTP handler cannot
+                be introspected from Python, so this must be supplied by
+                the caller when capability-aware filtering matters.
         """
         self._url = url
         self._headers = headers or {}
         self._extra_body = extra_body or {}
         self._timeout = timeout
         self._history: list[dict[str, str]] = []
+        self._agent_context = agent_context
 
     async def send_prompt(self, prompt: str) -> str:
         """Send a prompt to the AI SDK endpoint and return its text response."""
@@ -97,6 +107,12 @@ class VercelAISdkTarget(AgentTarget):
         """Reset conversation state by clearing the message history."""
         self._history = []
 
+    async def get_agent_context(self) -> AgentContext:
+        """Return the user-provided agent context, or a minimal placeholder."""
+        if self._agent_context is not None:
+            return self._agent_context
+        return AgentContext(key=self._url, description="opaque Vercel AI SDK HTTP target")
+
     def clone(self) -> VercelAISdkTarget:
         """Create an independent copy for parallel red teaming jobs."""
         return VercelAISdkTarget(
@@ -104,6 +120,7 @@ class VercelAISdkTarget(AgentTarget):
             headers=dict(self._headers),
             extra_body=dict(self._extra_body),
             timeout=self._timeout,
+            agent_context=self._agent_context,
         )
 
     @staticmethod
