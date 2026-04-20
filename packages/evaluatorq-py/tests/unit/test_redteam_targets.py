@@ -38,7 +38,9 @@ class TestCallableTarget:
         target.reset_conversation()  # should not raise
 
     def test_clone_returns_independent_instance(self) -> None:
-        fn = lambda p: p  # noqa: E731
+        def fn(p: str) -> str:
+            return p
+
         reset = MagicMock()
         target = CallableTarget(fn, reset_fn=reset)
         cloned = target.clone()
