@@ -782,6 +782,24 @@ Pass extra LangGraph config (e.g., recursion limits) via the `config` parameter:
 target = LangGraphTarget(graph, config={"recursion_limit": 50})
 ```
 
+### LangChain Agents
+
+LangChain agents are covered by the integrations above — no separate target is needed:
+
+- **Agents built with `create_react_agent` or `StateGraph`** (the [recommended approach](https://python.langchain.com/docs/concepts/agents/)) run on LangGraph under the hood → use `LangGraphTarget` directly.
+- **Custom chains or legacy `AgentExecutor`** → wrap with `CallableTarget`:
+
+```python
+from evaluatorq.integrations.callable_integration import CallableTarget
+
+# Any LangChain chain or AgentExecutor
+async def run_chain(prompt: str) -> str:
+    result = await chain.ainvoke({"input": prompt})
+    return result["output"]
+
+target = CallableTarget(run_chain)
+```
+
 ### OpenAI Agents SDK
 
 Wrap an OpenAI Agents SDK `Agent` as a red teaming target.
