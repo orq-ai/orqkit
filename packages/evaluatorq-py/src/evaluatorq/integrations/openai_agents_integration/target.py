@@ -6,8 +6,10 @@ from typing import Any
 
 from agents import Agent, Runner
 
+from evaluatorq.redteam.backends.base import AgentTarget
 
-class OpenAIAgentTarget:
+
+class OpenAIAgentTarget(AgentTarget):
     """Wraps an OpenAI Agents SDK Agent as a red teaming target.
 
     Usage::

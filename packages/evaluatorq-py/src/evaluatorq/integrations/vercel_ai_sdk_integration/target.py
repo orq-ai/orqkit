@@ -18,8 +18,10 @@ from typing import Any
 
 import httpx
 
+from evaluatorq.redteam.backends.base import AgentTarget
 
-class VercelAISdkTarget:
+
+class VercelAISdkTarget(AgentTarget):
     """Wraps a Vercel AI SDK HTTP endpoint as a red teaming target.
 
     The endpoint must accept POST requests with a JSON body containing

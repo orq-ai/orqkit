@@ -8,8 +8,10 @@ from uuid import uuid4
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
+from evaluatorq.redteam.backends.base import AgentTarget
 
-class LangGraphTarget:
+
+class LangGraphTarget(AgentTarget):
     """Wraps a LangGraph CompiledStateGraph as a red teaming target.
 
     Usage::

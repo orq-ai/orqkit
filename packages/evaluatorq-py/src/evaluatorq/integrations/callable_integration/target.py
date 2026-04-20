@@ -6,12 +6,13 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Union
 
+from evaluatorq.redteam.backends.base import AgentTarget
 
 # Accepted callable signatures
 AgentCallable = Union[Callable[[str], Awaitable[str]], Callable[[str], str]]
 
 
-class CallableTarget:
+class CallableTarget(AgentTarget):
     """Wraps any sync or async function as a red teaming target.
 
     Use this as an escape hatch for frameworks that don't have a dedicated
