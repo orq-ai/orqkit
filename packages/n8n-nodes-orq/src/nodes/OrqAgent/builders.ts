@@ -1,17 +1,112 @@
-import type {
-  InvokeAgentA2AMessage,
-  InvokeAgentRequestBody,
-} from "@orq-ai/node/models/operations";
+import type { CreateResponseBody, VariableValue } from "./types";
 
-export function buildA2AMessage(text: string): InvokeAgentA2AMessage {
-  return {
-    role: "user",
-    parts: [{ kind: "text", text: text.trim() }],
-  };
+export interface VariableInput {
+  name?: string;
+  value?: string;
+  isSecret?: boolean;
 }
 
-export function buildInvokeRequestBody(text: string): InvokeAgentRequestBody {
-  return {
-    message: buildA2AMessage(text),
+export interface MetadataInput {
+  name?: string;
+  value?: string;
+}
+
+export interface BuildCreateResponseBodyArgs {
+  agentKey: string;
+  input: string;
+  store?: boolean;
+  previousResponseId?: string;
+  conversationId?: string;
+  memoryEntityId?: string;
+  variables?: VariableInput[];
+  metadata?: MetadataInput[];
+}
+
+const METADATA_MAX_PAIRS = 16;
+
+export function toVariablesMap(
+  rows: VariableInput[] | undefined,
+): Record<string, VariableValue> | undefined {
+  if (!rows || rows.length === 0) return undefined;
+  const map: Record<string, VariableValue> = {};
+  for (const row of rows) {
+    const name = row.name?.trim();
+    if (!name) continue;
+    if (name in map) {
+      throw new Error(`Duplicate variable name: "${name}"`);
+    }
+    const value = row.value ?? "";
+    map[name] = row.isSecret ? { secret: true, value } : value;
+  }
+  return Object.keys(map).length > 0 ? map : undefined;
+}
+
+export function toMetadataMap(
+  rows: MetadataInput[] | undefined,
+): Record<string, string> | undefined {
+  if (!rows || rows.length === 0) return undefined;
+  const map: Record<string, string> = {};
+  for (const row of rows) {
+    const name = row.name?.trim();
+    if (!name) continue;
+    if (name in map) {
+      throw new Error(`Duplicate metadata name: "${name}"`);
+    }
+    map[name] = row.value ?? "";
+  }
+  const keys = Object.keys(map);
+  if (keys.length > METADATA_MAX_PAIRS) {
+    throw new Error(
+      `Metadata exceeds the maximum of ${METADATA_MAX_PAIRS} pairs (got ${keys.length})`,
+    );
+  }
+  return keys.length > 0 ? map : undefined;
+}
+
+export function buildCreateResponseBody({
+  agentKey,
+  input,
+  store,
+  previousResponseId,
+  conversationId,
+  memoryEntityId,
+  variables,
+  metadata,
+}: BuildCreateResponseBodyArgs): CreateResponseBody {
+  const body: CreateResponseBody = {
+    model: `agent/${agentKey.trim()}`,
+    input: input.trim(),
+    stream: false,
   };
+
+  if (typeof store === "boolean") {
+    body.store = store;
+  }
+
+  const trimmedPrev = previousResponseId?.trim();
+  if (trimmedPrev) {
+    body.previous_response_id = trimmedPrev;
+  }
+
+  const trimmedConv = conversationId?.trim();
+  if (trimmedConv) {
+    body.conversation = { id: trimmedConv };
+  }
+
+  const trimmedMemory = memoryEntityId?.trim();
+  if (trimmedMemory) {
+    body.memory = { entity_id: trimmedMemory };
+  }
+
+  const variablesMap = toVariablesMap(variables);
+  if (variablesMap) {
+    body.variables = variablesMap;
+  }
+
+  const metadataMap = toMetadataMap(metadata);
+  if (metadataMap) {
+    body.metadata = metadataMap;
+  }
+
+  return body;
 }

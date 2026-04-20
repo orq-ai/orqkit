@@ -1,16 +1,9 @@
 export const DEFAULT_BASE_URL = "https://api.orq.ai";
 
 export const AGENTS_LIST_ENDPOINT = "/v2/agents";
-export const AGENT_INVOKE_ENDPOINT = (key: string) =>
-  `/v2/agents/${encodeURIComponent(key)}/task`;
-export const AGENT_TASK_ENDPOINT = (key: string, taskId: string) =>
-  `/v2/agents/${encodeURIComponent(key)}/tasks/${encodeURIComponent(taskId)}`;
-export const AGENT_TASK_MESSAGES_ENDPOINT = (key: string, taskId: string) =>
-  `/v2/agents/${encodeURIComponent(key)}/tasks/${encodeURIComponent(taskId)}/messages`;
+export const RESPONSES_ENDPOINT = "/v1/responses";
 
-export const MAX_POLL_ATTEMPTS = 60;
-export const POLL_INTERVAL_MS = 2000;
-export const MAX_CONSECUTIVE_POLL_ERRORS = 3;
+export const DEFAULT_RESPONSE_TIMEOUT_SECONDS = 600;
 
 export const ERROR_MESSAGES = {
   AGENT_KEY_REQUIRED: "Agent Key is required",
@@ -18,7 +11,13 @@ export const ERROR_MESSAGES = {
   NO_CREDENTIALS: "No credentials configured. Please add Orq API credentials.",
   API_KEY_REQUIRED: "API Key is required in credentials",
   FETCH_AGENTS_FAILED: (error: string) => `Failed to fetch agents: ${error}`,
-  AGENT_INVOKE_FAILED: (error: string) => `Agent execution failed: ${error}`,
-  TASK_POLL_TIMEOUT: "Agent task timed out waiting for completion",
-  TASK_FAILED: (state: string) => `Agent task ended with state: ${state}`,
+  RESPONSE_REQUEST_FAILED: (error: string) =>
+    `Agent execution failed: ${error}`,
+  RESPONSE_FAILED: (message: string) => `Agent response failed: ${message}`,
+  RESPONSE_REQUIRES_ACTION:
+    "Agent returned status 'requires_action' (e.g. human-approval tool). This is not yet supported by the n8n node.",
+  RESPONSE_UNEXPECTED_STATUS: (status: string) =>
+    `Agent returned unexpected status: ${status}`,
+  CONVERSATION_AND_PREVIOUS_RESPONSE_EXCLUSIVE:
+    "Conversation ID and Previous Response ID are mutually exclusive; provide only one.",
 };
