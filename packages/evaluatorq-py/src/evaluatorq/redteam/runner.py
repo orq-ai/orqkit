@@ -300,6 +300,7 @@ async def red_team(
     attacker_instructions: str | None = None,
     verbosity: int = 0,
     llm_kwargs: dict[str, Any] | None = None,
+    save: bool = True,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -351,6 +352,8 @@ async def red_team(
             prompts and objective generation prompts.
         verbosity: Verbosity level (0=silent, 1=summary progress bar,
             2=per-attack progress bars). Defaults to ``0``.
+        save: Whether to auto-save the run report to ``.evaluatorq/runs/`` for
+            later listing via ``evaluatorq redteam runs``. Defaults to ``True``.
 
     Returns:
         RedTeamReport with results and summary statistics.
@@ -549,11 +552,13 @@ async def red_team(
             )
 
     # Auto-save to .evaluatorq/runs/ for the `runs` CLI command.
-    auto_save_path = _auto_save_run(report, name=name)
-    if auto_save_path is None:
-        report.pipeline_warnings.append(
-            'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
-        )
+    auto_save_path: Path | None = None
+    if save:
+        auto_save_path = _auto_save_run(report, name=name)
+        if auto_save_path is None:
+            report.pipeline_warnings.append(
+                'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
+            )
 
     resolved_hooks.on_complete(
         report,

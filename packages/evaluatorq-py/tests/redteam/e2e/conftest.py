@@ -129,9 +129,10 @@ class DeterministicAsyncOpenAI:
 class MockAgentTarget:
     """Deterministic agent target with leak/refuse/safe logic."""
 
-    def __init__(self, agent_key: str, memory_entity_id: str | None = None) -> None:
+    def __init__(self, agent_key: str) -> None:
+        import uuid
         self.agent_key = agent_key
-        self.memory_entity_id = memory_entity_id
+        self.memory_entity_id: str | None = f"red-team-{uuid.uuid4().hex[:12]}"
         self._conversation: list[dict[str, str]] = []
 
     async def send_prompt(self, prompt: str) -> str:
@@ -152,8 +153,8 @@ class MockTargetFactory:
     def __init__(self) -> None:
         self.created_targets: list[MockAgentTarget] = []
 
-    def create_target(self, agent_key: str, memory_entity_id: str | None = None) -> MockAgentTarget:
-        target = MockAgentTarget(agent_key, memory_entity_id)
+    def create_target(self, agent_key: str) -> MockAgentTarget:
+        target = MockAgentTarget(agent_key)
         self.created_targets.append(target)
         return target
 
