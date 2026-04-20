@@ -245,6 +245,9 @@ export interface GenerateAndSimulateParams {
 export async function generateAndSimulate(
   params: GenerateAndSimulateParams,
 ): Promise<SimulationResult[]> {
+  // Initialize tracing early so generation spans are captured
+  await initTracingIfNeeded();
+
   const {
     evaluationName,
     agentDescription,
@@ -298,32 +301,48 @@ export async function generateAndSimulate(
     );
   }
 
-  // Generate personas and scenarios in parallel (spans are created inside generators)
-  const personaGen = new PersonaGenerator({ model });
-  const scenarioGen = new ScenarioGenerator({ model });
+  try {
+    return await withSimulationSpan(
+      "orq.simulation.pipeline",
+      {
+        "orq.simulation.evaluation_name": evaluationName,
+        "orq.simulation.mode": "generate_and_simulate",
+        "orq.simulation.num_personas": numPersonas,
+        "orq.simulation.num_scenarios": numScenarios,
+      },
+      async () => {
+        // Generate personas and scenarios in parallel (under the pipeline span)
+        const personaGen = new PersonaGenerator({ model });
+        const scenarioGen = new ScenarioGenerator({ model });
 
-  const [personas, scenarios] = await Promise.all([
-    personaGen.generate({
-      agentDescription,
-      numPersonas,
-    }),
-    scenarioGen.generate({
-      agentDescription,
-      numScenarios,
-    }),
-  ]);
+        const [personas, scenarios] = await Promise.all([
+          personaGen.generate({
+            agentDescription,
+            numPersonas,
+          }),
+          scenarioGen.generate({
+            agentDescription,
+            numScenarios,
+          }),
+        ]);
 
-  // Run simulations (pipeline span is created inside simulate())
-  return simulate({
-    evaluationName,
-    targetCallback: resolvedCallback,
-    personas,
-    scenarios,
-    maxTurns,
-    model,
-    evaluators,
-    parallelism,
-  });
+        // Run simulations (simulate() skips creating a duplicate pipeline span
+        // when called with pre-built personas/scenarios)
+        return simulate({
+          evaluationName,
+          targetCallback: resolvedCallback,
+          personas,
+          scenarios,
+          maxTurns,
+          model,
+          evaluators,
+          parallelism,
+        });
+      },
+    );
+  } finally {
+    await flushTracing();
+  }
 }
 
 // Re-export evaluator utilities for convenience

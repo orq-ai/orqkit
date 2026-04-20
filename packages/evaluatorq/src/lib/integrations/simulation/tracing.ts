@@ -41,47 +41,48 @@ export async function withSimulationSpan<T>(
     return fn(undefined);
   }
 
+  let SpanStatusCode: typeof import("@opentelemetry/api").SpanStatusCode;
   try {
-    const { SpanStatusCode } = await import("@opentelemetry/api");
-
-    const cleanAttrs: Record<string, string | number | boolean> = {};
-    if (attributes) {
-      for (const [k, v] of Object.entries(attributes)) {
-        if (v !== undefined) {
-          cleanAttrs[k] = v;
-        }
-      }
-    }
-
-    return await tracer.startActiveSpan(
-      name,
-      { attributes: cleanAttrs },
-      async (span: Span) => {
-        try {
-          const result = await fn(span);
-          span.setStatus({ code: SpanStatusCode.OK });
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          if (error instanceof Error) {
-            span.setAttribute("error.type", error.constructor.name);
-          }
-          throw error;
-        } finally {
-          span.end();
-        }
-      },
-    );
+    ({ SpanStatusCode } = await import("@opentelemetry/api"));
   } catch {
     // OTEL not available, run without span
     return fn(undefined);
   }
+
+  const cleanAttrs: Record<string, string | number | boolean> = {};
+  if (attributes) {
+    for (const [k, v] of Object.entries(attributes)) {
+      if (v !== undefined) {
+        cleanAttrs[k] = v;
+      }
+    }
+  }
+
+  return tracer.startActiveSpan(
+    name,
+    { attributes: cleanAttrs },
+    async (span: Span) => {
+      try {
+        const result = await fn(span);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        span.recordException(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        if (error instanceof Error) {
+          span.setAttribute("error.type", error.constructor.name);
+        }
+        throw error;
+      } finally {
+        span.end();
+      }
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -112,58 +113,60 @@ export async function withLLMSpan<T>(
     return fn(undefined);
   }
 
+  let SpanKind: typeof import("@opentelemetry/api").SpanKind;
+  let SpanStatusCode: typeof import("@opentelemetry/api").SpanStatusCode;
   try {
-    const { SpanKind, SpanStatusCode } = await import("@opentelemetry/api");
-
-    const operation = options.operation ?? "chat";
-    const provider = options.provider ?? deriveProvider(options.model);
-    const spanName = `${operation} ${options.model}`;
-
-    const attrs: Record<string, string | number | boolean> = {
-      "gen_ai.operation.name": operation,
-      "gen_ai.system": provider,
-      "gen_ai.provider.name": provider,
-      "gen_ai.request.model": options.model,
-    };
-
-    if (options.temperature !== undefined) {
-      attrs["gen_ai.request.temperature"] = options.temperature;
-    }
-    if (options.maxTokens !== undefined) {
-      attrs["gen_ai.request.max_tokens"] = options.maxTokens;
-    }
-    if (options.purpose) {
-      attrs["orq.simulation.llm_purpose"] = options.purpose;
-    }
-
-    return await tracer.startActiveSpan(
-      spanName,
-      { kind: SpanKind.CLIENT, attributes: attrs },
-      async (span: Span) => {
-        try {
-          const result = await fn(span);
-          span.setStatus({ code: SpanStatusCode.OK });
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-          if (error instanceof Error) {
-            span.setAttribute("error.type", error.constructor.name);
-          }
-          throw error;
-        } finally {
-          span.end();
-        }
-      },
-    );
+    ({ SpanKind, SpanStatusCode } = await import("@opentelemetry/api"));
   } catch {
     return fn(undefined);
   }
+
+  const operation = options.operation ?? "chat";
+  const provider = options.provider ?? deriveProvider(options.model);
+  const spanName = `${operation} ${options.model}`;
+
+  const attrs: Record<string, string | number | boolean> = {
+    "gen_ai.operation.name": operation,
+    "gen_ai.system": provider,
+    "gen_ai.provider.name": provider,
+    "gen_ai.request.model": options.model,
+  };
+
+  if (options.temperature !== undefined) {
+    attrs["gen_ai.request.temperature"] = options.temperature;
+  }
+  if (options.maxTokens !== undefined) {
+    attrs["gen_ai.request.max_tokens"] = options.maxTokens;
+  }
+  if (options.purpose) {
+    attrs["orq.simulation.llm_purpose"] = options.purpose;
+  }
+
+  return tracer.startActiveSpan(
+    spanName,
+    { kind: SpanKind.CLIENT, attributes: attrs },
+    async (span: Span) => {
+      try {
+        const result = await fn(span);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        span.recordException(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        if (error instanceof Error) {
+          span.setAttribute("error.type", error.constructor.name);
+        }
+        throw error;
+      } finally {
+        span.end();
+      }
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -190,7 +193,7 @@ export function recordTokenUsage(
 
   const prompt = usage.promptTokens ?? 0;
   const completion = usage.completionTokens ?? 0;
-  const total = usage.totalTokens || prompt + completion;
+  const total = usage.totalTokens ?? prompt + completion;
 
   // OTel GenAI semantic convention names
   span.setAttribute("gen_ai.usage.input_tokens", prompt);
