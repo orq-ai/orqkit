@@ -13,10 +13,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, get_args
 
 SaveMode = Literal['none', 'final', 'detail']
-_SAVE_MODES: frozenset[str] = frozenset({'none', 'final', 'detail'})
+_SAVE_MODES: frozenset[str] = frozenset(get_args(SaveMode))
 
 from loguru import logger
 
@@ -587,8 +587,15 @@ async def red_team(
                 report.pipeline_warnings.append(
                     'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
                 )
-    elif save == 'detail' and resolved_output_dir is not None:
-        auto_save_path = resolved_output_dir / '03_summary_report.json'
+    elif save == 'detail':
+        if resolved_output_dir is not None:
+            auto_save_path = resolved_output_dir / '03_summary_report.json'
+        # Also index in .evaluatorq/runs/ so the run appears in `evaluatorq
+        # redteam runs`, matching the behavior of save='final'.
+        if _auto_save_run(report, name=name) is None:
+            report.pipeline_warnings.append(
+                'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
+            )
 
     resolved_hooks.on_complete(
         report,

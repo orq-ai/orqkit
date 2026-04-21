@@ -10,10 +10,10 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Optional, cast
+from typing import TYPE_CHECKING, Annotated, Any, Optional
 
-if TYPE_CHECKING:
-    from evaluatorq.redteam.runner import SaveMode
+from evaluatorq.redteam.runner import SaveMode
+
 
 import typer
 
@@ -245,7 +245,7 @@ def run(
         typer.Option(help="Directory for saved JSON files. Required with --save detail."),
     ] = None,
     save: Annotated[
-        str,
+        SaveMode,
         typer.Option(help="What to persist: 'none' (no files), 'final' (summary only), or 'detail' (all stage artifacts)."),
     ] = 'final',
     yes: Annotated[
@@ -335,7 +335,7 @@ def run(
                 dataset=dataset,
                 hooks=RichHooks(skip_confirm=yes),
                 output_dir=output_dir,
-                save=cast('SaveMode', save),
+                save=save,
                 target_config=target_config,
                 attacker_instructions=attacker_instructions,
                 verbosity=verbose + 1,
