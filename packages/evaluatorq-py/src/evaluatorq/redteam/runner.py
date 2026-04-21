@@ -13,10 +13,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast, get_args
+from typing import TYPE_CHECKING, Any, cast
 
-SaveMode = Literal['none', 'final', 'detail']
-_SAVE_MODES: frozenset[str] = frozenset(get_args(SaveMode))
+from evaluatorq.redteam.contracts import SaveMode
 
 from loguru import logger
 
@@ -303,7 +302,7 @@ async def red_team(
     attacker_instructions: str | None = None,
     verbosity: int = 0,
     llm_kwargs: dict[str, Any] | None = None,
-    save: SaveMode = 'final',
+    save: SaveMode = SaveMode.FINAL,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
 
@@ -372,9 +371,6 @@ async def red_team(
             ``save='detail'`` is passed without ``output_dir``.
         CancelledError: If hooks.on_confirm returns False.
     """
-    if save not in _SAVE_MODES:
-        msg = f"Invalid save mode {save!r}. Must be one of: {sorted(_SAVE_MODES)}."
-        raise ValueError(msg)
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     user_output_dir = Path(output_dir) if output_dir is not None else None
     # Inner pipelines (_run_dynamic, _run_static) only write 01/02/03 to their
