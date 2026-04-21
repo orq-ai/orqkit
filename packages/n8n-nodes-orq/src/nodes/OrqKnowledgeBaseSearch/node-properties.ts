@@ -2,7 +2,6 @@ import type { INodeProperties } from "n8n-workflow";
 
 export const knowledgeBaseSearchProperties: INodeProperties[] = [
   {
-    // eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
     displayName: "Knowledge Base",
     name: "knowledgeBase",
     type: "options",
@@ -28,7 +27,6 @@ export const knowledgeBaseSearchProperties: INodeProperties[] = [
     displayName: "Metadata Filter Type",
     name: "metadataFilterType",
     type: "options",
-    // eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
     options: [
       {
         name: "None",

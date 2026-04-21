@@ -8,6 +8,7 @@
     "declaration": true,
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
+    "importHelpers": false,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
