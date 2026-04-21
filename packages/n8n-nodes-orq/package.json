@@ -55,6 +55,7 @@
     ]
   },
   "devDependencies": {
+    "@n8n/node-cli": "^0.23.1",
     "@orq-ai/node": "4.7.7",
     "n8n-workflow": "^1.103.0"
   },

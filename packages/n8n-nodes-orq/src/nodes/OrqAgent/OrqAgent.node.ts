@@ -54,6 +54,7 @@ export class OrqAgent implements INodeType {
     icon: "file:orq.svg",
     group: ["transform"],
     version: 1,
+    usableAsTool: true,
     subtitle: '={{"Invoke: " + $parameter["agentKey"]}}',
     description: "Invoke an Orq AI Agent",
     defaults: {

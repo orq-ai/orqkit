@@ -24,6 +24,7 @@ export class OrqKnowledgeBaseSearch implements INodeType {
     icon: "file:orq.svg",
     group: ["transform"],
     version: 1,
+    usableAsTool: true,
     description: "Search content in an Orq.ai knowledge base",
     defaults: {
       name: "Orq Knowledge Base Search",

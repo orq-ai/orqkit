@@ -32,6 +32,7 @@ export class OrqDeployment implements INodeType {
     icon: "file:orq.svg",
     group: ["transform"],
     version: 1,
+    usableAsTool: true,
     subtitle: '={{"Invoke: " + $parameter["deploymentKey"]}}',
     description: "Invoke Orq AI deployment",
     defaults: {
