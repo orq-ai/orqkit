@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Annotated, Any, Optional
 
 
+import click
 import typer
 
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, SaveMode, Vulnerability
