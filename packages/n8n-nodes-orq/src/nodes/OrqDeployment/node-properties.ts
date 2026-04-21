@@ -1,7 +1,6 @@
 import type { INodeProperties } from "n8n-workflow";
 
 export const deploymentKeyProperty: INodeProperties = {
-  // eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
   displayName: "Deployment Key",
   name: "deploymentKey",
   type: "options",
@@ -27,7 +26,6 @@ export const messagesProperty: INodeProperties = {
     {
       displayName: "Message Property",
       name: "messageProperty",
-      // eslint-disable-next-line n8n-nodes-base/node-param-fixed-collection-type-unsorted-items
       values: [
         {
           displayName: "Role",

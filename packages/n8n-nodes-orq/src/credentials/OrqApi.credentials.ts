@@ -8,6 +8,7 @@ import type {
 export class OrqApi implements ICredentialType {
   name = "orqApi";
   displayName = "Orq API";
+  icon = "file:orq.svg" as const;
   documentationUrl = "https://docs.orq.ai";
   properties: INodeProperties[] = [
     {

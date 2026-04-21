@@ -3,7 +3,6 @@ import type { INodeProperties } from "n8n-workflow";
 import { DEFAULT_RESPONSE_TIMEOUT_SECONDS } from "./constants";
 
 export const agentKeyProperty: INodeProperties = {
-  // eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
   displayName: "Agent",
   name: "agentKey",
   type: "options",
