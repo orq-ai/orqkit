@@ -153,8 +153,8 @@ async def _call_llm_for_objectives_single(
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
-            temperature=cfg.strategy_generation_temperature,
-            max_tokens=cfg.strategy_generation_max_tokens,
+            temperature=cfg.attacker.temperature,
+            max_tokens=cfg.attacker.max_tokens,
             input_messages=gen_messages,
             attributes={
                 "orq.redteam.llm_purpose": "generate_strategies",
@@ -166,10 +166,10 @@ async def _call_llm_for_objectives_single(
                 model=model,
                 messages=gen_messages,
                 response_format=GeneratedObjectives,
-                temperature=cfg.strategy_generation_temperature,
-                max_completion_tokens=cfg.strategy_generation_max_tokens,
+                temperature=cfg.attacker.temperature,
+                max_completion_tokens=cfg.attacker.max_tokens,
                 extra_body=cfg.retry_config,
-                **(llm_kwargs or {}),
+                **cfg.attacker.extra_kwargs,
             )
             record_llm_response(
                 gen_span, response,
