@@ -160,14 +160,22 @@ class OpenAIContextProvider:
 class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
-    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None):
+    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int = 5000, timeout_ms: int = 90_000):
         """Initialize the factory with a shared async OpenAI client and optional system prompt."""
         self._client = client
         self._system_prompt = system_prompt
+        self._max_tokens = max_tokens
+        self._timeout_ms = timeout_ms
 
     def create_target(self, agent_key: str) -> OpenAIModelTarget:
         """Create a new OpenAI model target instance."""
-        return OpenAIModelTarget(model=agent_key, system_prompt=self._system_prompt, client=self._client)
+        return OpenAIModelTarget(
+            model=agent_key,
+            system_prompt=self._system_prompt,
+            client=self._client,
+            max_tokens=self._max_tokens,
+            timeout_ms=self._timeout_ms,
+        )
 
 
 class OpenAIErrorMapper:
