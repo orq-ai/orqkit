@@ -280,7 +280,7 @@ def create_dynamic_redteam_job(
     """
     cfg = pipeline_config or PIPELINE_CONFIG
     resolved_factory: AgentTargetFactory = (
-        target_factory if target_factory is not None else resolve_backend('orq').target_factory
+        target_factory if target_factory is not None else resolve_backend('orq', pipeline_config=cfg).target_factory
     )
     resolved_error_mapper = error_mapper or DefaultErrorMapper()
     safe_agent_key = ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in agent_key).strip('-')
