@@ -55,13 +55,12 @@ from evaluatorq.redteam.contracts import (
     FunctionCall,
     JobOutputPayload,
     KnowledgeBaseInfo,
+    LLMConfig,
     MemoryStoreInfo,
     Message,
     OrchestratorResult,
     Pipeline,
-    PipelineLLMConfig,
     PipelineStage,
-    RedTeamConfig,
     RedTeamInput,
     RedTeamReport,
     RedTeamResult,
@@ -85,6 +84,7 @@ from evaluatorq.redteam.contracts import (
     normalize_category,
     normalize_framework,
 )
+from evaluatorq.redteam.backends.openai import OpenAIModelTarget
 
 from evaluatorq.redteam.runner import red_team
 from evaluatorq.redteam.reports.converters import merge_reports
@@ -165,8 +165,8 @@ __all__ = [
     "MemoryStoreInfo",
     "KnowledgeBaseInfo",
     # Pipeline config
-    "RedTeamConfig",
-    "PipelineLLMConfig",
+    "LLMConfig",
+    "OpenAIModelTarget",
     # Attack models
     "AttackStrategy",
     "AttackInfo",
@@ -222,6 +222,17 @@ _deprecated_warned: set[str] = set()
 
 
 def __getattr__(name: str):
+    if name in ('RedTeamConfig', 'PipelineLLMConfig'):
+        if name not in _deprecated_warned:
+            import warnings
+            _deprecated_warned.add(name)
+            warnings.warn(
+                f'{name} is deprecated. Use LLMConfig instead.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        from evaluatorq.redteam.contracts import LLMConfig
+        return LLMConfig
     if name == "EvaluationResult":
         if name not in _deprecated_warned:
             import warnings
