@@ -139,6 +139,7 @@ class TestLangGraphTargetAgentContext:
     ) -> None:
         """Tools bound via create_react_agent show up in the agent context."""
         from langchain_core.tools import tool
+        from langchain_openai import ChatOpenAI
         from langgraph.prebuilt import create_react_agent
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test-stub")
@@ -148,7 +149,7 @@ class TestLangGraphTargetAgentContext:
             """Add two integers."""
             return a + b
 
-        graph = create_react_agent("openai:gpt-4o-mini", tools=[add])
+        graph = create_react_agent(ChatOpenAI(model="gpt-4o-mini"), tools=[add])
         target = LangGraphTarget(graph)
 
         ctx = await target.get_agent_context()
