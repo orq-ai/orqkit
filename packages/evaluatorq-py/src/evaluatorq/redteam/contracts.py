@@ -280,8 +280,8 @@ class AttackSource(StrEnum):
     AGENT_DOJO = 'AgentDojo'
     ORQ_GENERATED = 'orq_generated'
     ORQ_DATASET = 'orq_dataset'
-    PREDEFINED_STRATEGY = 'predefined_strategy'
-    LLM_GENERATED_STRATEGY = 'llm_generated_strategy'
+    TEMPLATE_DYNAMIC = 'template_dynamic'
+    GENERATED_DYNAMIC = 'generated_dynamic'
 
 
 # ---------------------------------------------------------------------------
@@ -891,7 +891,7 @@ class AttackInfo(BaseModel):
         default=None, description='Vulnerability domain (null for dynamic attacks without a fixed domain)'
     )
     source: str = Field(
-        description="Origin: 'AgentDojo', 'orq_generated', 'predefined_strategy', 'llm_generated_strategy'"
+        description="Origin: 'AgentDojo', 'orq_generated', 'template_dynamic', 'generated_dynamic'"
     )
     strategy_name: str | None = Field(default=None, description="Dynamic strategy name (e.g., 'tool_output_hijack')")
     objective: str | None = Field(default=None, description='Filled objective template (dynamic only)')

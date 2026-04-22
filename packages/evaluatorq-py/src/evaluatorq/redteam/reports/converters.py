@@ -364,7 +364,7 @@ def dynamic_evaluatorq_results_to_report(
             vuln = resolve_category_safe(category)
             vulnerability_str = vuln.value if vuln else ''
 
-        source = AttackSource.LLM_GENERATED_STRATEGY if strategy.is_generated else AttackSource.PREDEFINED_STRATEGY
+        source = AttackSource.GENERATED_DYNAMIC if strategy.is_generated else AttackSource.TEMPLATE_DYNAMIC
 
         job_output = JobOutputPayload()
         eval_passed: bool | None = None
