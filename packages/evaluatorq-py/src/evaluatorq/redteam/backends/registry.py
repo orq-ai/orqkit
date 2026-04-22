@@ -102,7 +102,7 @@ def resolve_backend(
 def _create_openai_backend(
     llm_client: "AsyncOpenAI | None" = None,
     target_config: TargetConfig | None = None,
-    pipeline_config: LLMConfig | None = None,
+    **kwargs: object,
 ) -> BackendBundle:
     system_prompt = target_config.system_prompt if target_config else None
     client = llm_client or create_async_llm_client()
