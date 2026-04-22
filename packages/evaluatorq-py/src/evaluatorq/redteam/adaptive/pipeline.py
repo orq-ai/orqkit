@@ -24,7 +24,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, DEFAULT_TARGET_TIMEOUT_MS, LLMConfig, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage, Vulnerability
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, LLMConfig, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage, Vulnerability
 from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe, resolve_vulnerabilities
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator, _get_active_progress
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories, plan_strategies_for_vulnerabilities
@@ -326,7 +326,7 @@ def create_dynamic_redteam_job(
                 error_code = None
                 error_details = None
                 token_usage = None
-                target_timeout_s = DEFAULT_TARGET_TIMEOUT_MS / 1000.0
+                target_timeout_s = 240_000 / 1000.0
                 try:
                     async with with_redteam_span(
                         "orq.redteam.target_call",
@@ -357,7 +357,7 @@ def create_dynamic_redteam_job(
                     error_stage = 'target_call'
                     error_code = 'target.timeout'
                     error_details = {
-                        'timeout_ms': DEFAULT_TARGET_TIMEOUT_MS,
+                        'timeout_ms': 240_000,
                     }
                 except Exception as e:
                     if isinstance(e, (TypeError, AttributeError, ImportError, NameError)):

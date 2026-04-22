@@ -20,7 +20,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn
 
 from evaluatorq.redteam.backends.base import AgentTarget, DefaultErrorMapper, ErrorMapper
 from evaluatorq.redteam.contracts import (
-    DEFAULT_PIPELINE_MODEL, DEFAULT_TARGET_TIMEOUT_MS, PIPELINE_CONFIG,
+    DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG,
     AgentContext,
     AttackStrategy,
     LLMConfig,
@@ -608,7 +608,7 @@ class MultiTurnOrchestrator:
                             break
 
                     # Send attack to target agent
-                    target_timeout_s = DEFAULT_TARGET_TIMEOUT_MS / 1000.0
+                    target_timeout_s = 240_000 / 1000.0
                     try:
                         async with with_redteam_span(
                             "orq.redteam.target_call",
@@ -650,7 +650,7 @@ class MultiTurnOrchestrator:
                             error_stage = 'target_call'
                             error_code = 'target.timeout'
                             error_details = {
-                                'timeout_ms': DEFAULT_TARGET_TIMEOUT_MS,
+                                'timeout_ms': 240_000,
                                 'consecutive_errors': consecutive_agent_errors,
                             }
                             error_turn = turn + 1
