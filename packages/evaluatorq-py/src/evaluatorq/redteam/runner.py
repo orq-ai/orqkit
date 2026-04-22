@@ -288,9 +288,6 @@ async def red_team(
     max_static_datapoints: int | None = None,
     cleanup_memory: bool = True,
     backend: str = 'openai',
-    target_factory: AgentTargetFactory | None = None,
-    error_mapper: ErrorMapper | None = None,
-    memory_cleanup: MemoryCleanup | None = None,
     llm_client: AsyncOpenAI | None = None,
     name: str | None = None,
     description: str | None = None,
@@ -329,9 +326,6 @@ async def red_team(
         max_static_datapoints: Cap static (dataset) datapoints (None = no cap).
         cleanup_memory: Whether to clean up memory entities after dynamic runs.
         backend: Backend name (``"orq"`` or ``"openai"``).
-        target_factory: Custom target factory (overrides backend default).
-        error_mapper: Custom error mapper (overrides backend default).
-        memory_cleanup: Custom memory cleanup (overrides backend default).
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
         name: Optional experiment name for the run. Used as the evaluatorq experiment
             name and for the auto-saved run filename. Defaults to ``'red-team'``.
@@ -394,13 +388,6 @@ async def red_team(
             msg = "save='detail' requires output_dir to be set."
             raise ValueError(msg)
         resolved_output_dir = user_output_dir
-
-    if target_factory is not None:
-        warnings.warn(
-            'target_factory is deprecated. Pass an AgentTarget instance as the target parameter instead.',
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     if isinstance(target, list):
         raw_targets: list[str | AgentTarget] = list(target)
@@ -521,9 +508,6 @@ async def red_team(
             max_static_datapoints=max_static_datapoints,
             cleanup_memory=cleanup_memory,
             backend=backend,
-            target_factory=target_factory,
-            error_mapper=error_mapper,
-            memory_cleanup=memory_cleanup,
             llm_client=llm_client,
             description=description,
             dataset=dataset,
@@ -758,9 +742,6 @@ async def _prepare_target(
     max_dynamic_datapoints: int | None,
     max_static_datapoints: int | None,
     backend: str,
-    target_factory: AgentTargetFactory | None,
-    error_mapper: ErrorMapper | None,
-    memory_cleanup: MemoryCleanup | None,
     llm_client: AsyncOpenAI | None,
     dataset: Any,
     hooks: PipelineHooks,
@@ -800,9 +781,9 @@ async def _prepare_target(
     safe_target = _make_safe_target(target_value)
 
     backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
-    resolved_factory = target_factory or backend_bundle.target_factory
-    resolved_error_mapper = error_mapper or DefaultErrorMapper()
-    resolved_memory_cleanup_t = memory_cleanup or backend_bundle.memory_cleanup
+    resolved_factory = backend_bundle.target_factory
+    resolved_error_mapper = DefaultErrorMapper()
+    resolved_memory_cleanup_t = backend_bundle.memory_cleanup
 
     # Context retrieval (skip if already fetched for the confirm step)
     if prefetched_agent_context is not None:
@@ -1010,9 +991,6 @@ async def _run_dynamic_or_hybrid(
     max_static_datapoints: int | None,
     cleanup_memory: bool,
     backend: str,
-    target_factory: AgentTargetFactory | None,
-    error_mapper: ErrorMapper | None,
-    memory_cleanup: MemoryCleanup | None,
     llm_client: AsyncOpenAI | None,
     description: str | None,
     dataset: Any,
@@ -1236,9 +1214,6 @@ async def _run_dynamic_or_hybrid(
             max_dynamic_datapoints=max_dynamic_datapoints,
             max_static_datapoints=max_static_datapoints,
             backend=backend,
-            target_factory=target_factory,
-            error_mapper=error_mapper,
-            memory_cleanup=memory_cleanup,
             llm_client=llm_client,
             dataset=dataset,
             hooks=resolved_hooks,

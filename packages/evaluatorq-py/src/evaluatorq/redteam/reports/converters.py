@@ -399,6 +399,8 @@ def dynamic_evaluatorq_results_to_report(
         evaluator_id = evaluator_meta.get('evaluator_id', category)
         evaluator_name = evaluator_meta.get('evaluator_name', OWASP_CATEGORY_NAMES.get(category))
 
+        vuln_key = strategy.vulnerability or resolve_category_safe(category)
+        vuln_def = VULNERABILITY_DEFS.get(vuln_key) if vuln_key else None
         attack = AttackInfo(
             id=inputs.get('id', f'{category}-{strategy.name}'),
             vulnerability=vulnerability_str,
@@ -408,6 +410,7 @@ def dynamic_evaluatorq_results_to_report(
             delivery_methods=strategy.delivery_methods,
             turn_type=strategy.turn_type,
             severity=strategy.severity,
+            vulnerability_domain=vuln_def.domain if vuln_def else None,
             source=source,
             strategy_name=strategy.name,
             objective=inputs.get('objective'),

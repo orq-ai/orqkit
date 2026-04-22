@@ -227,7 +227,7 @@ class TestOpenAIModelTarget:
             client=mock_client,
             system_prompt="Custom prompt",
         )
-        cloned = target.clone()
+        cloned = target.new()
 
         assert isinstance(cloned, OpenAIModelTarget)
         assert cloned is not target

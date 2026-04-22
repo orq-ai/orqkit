@@ -121,7 +121,6 @@ async def test_dynamic_memory_cleanup(
             parallelism=2,
             backend="openai",
             llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
-            memory_cleanup=mock_backend_bundle.memory_cleanup,
         )
 
     cleanup: MockMemoryCleanup = cast(MockMemoryCleanup, mock_backend_bundle.memory_cleanup)

@@ -75,12 +75,8 @@ class OpenAIModelTarget:
         self._last_token_usage = None
         return usage
 
-    def reset_conversation(self) -> None:
-        """Stateless adapter; nothing to reset."""
-        return
-
-    def clone(self) -> OpenAIModelTarget:
-        """Create a fresh target instance for parallel job safety."""
+    def new(self) -> OpenAIModelTarget:
+        """Return a fresh target instance for parallel job safety."""
         return OpenAIModelTarget(
             model_id=self.model_id,
             client=self.client,
