@@ -265,6 +265,7 @@ class ORQAgentTarget:
             agent_key=self.agent_key,
             orq_client=self.orq_client,
             model=self.model,
+            timeout_ms=self._timeout_ms,
         )
 
     target_kind: TargetKind = TargetKind.AGENT
@@ -291,6 +292,7 @@ class ORQAgentTarget:
             agent_key=agent_key,
             orq_client=self.orq_client,
             model=self.model,
+            timeout_ms=self._timeout_ms,
         )
 
     # -- SupportsMemoryCleanup --
