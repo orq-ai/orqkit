@@ -399,7 +399,7 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def reset_conversation(self) -> None:
+            def new(self) -> None:
                 pass
 
         mock_report = _make_report()
@@ -422,7 +422,7 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def reset_conversation(self) -> None:
+            def new(self) -> None:
                 pass
 
         mock_report = _make_report()
@@ -449,7 +449,7 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def reset_conversation(self) -> None:
+            def new(self) -> None:
                 pass
 
         with pytest.raises(TypeError, match='Invalid target type'):

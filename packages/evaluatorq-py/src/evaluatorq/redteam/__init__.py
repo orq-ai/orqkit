@@ -105,7 +105,6 @@ from evaluatorq.redteam.backends.base import (
     AgentTarget,
     DirectTargetFactory,
     SupportsAgentContext,
-    SupportsClone,
     SupportsErrorMapping,
     SupportsMemoryCleanup,
     SupportsTargetFactory,
@@ -207,7 +206,6 @@ __all__ = [
     "register_backend",
     # Target protocols
     "AgentTarget",
-    "SupportsClone",
     "SupportsTokenUsage",
     "SupportsAgentContext",
     "SupportsTargetFactory",

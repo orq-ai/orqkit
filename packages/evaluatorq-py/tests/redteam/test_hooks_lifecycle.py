@@ -466,9 +466,7 @@ class TestDynamicInternalStageOrdering:
             context_provider=MagicMock(
                 get_agent_context=AsyncMock(return_value=agent_context)
             ),
-            target_factory=MagicMock(),
             memory_cleanup=MagicMock(),
-            error_mapper=MagicMock(),
         )
 
     @pytest.mark.asyncio
@@ -565,9 +563,6 @@ class TestDynamicInternalStageOrdering:
                 max_static_datapoints=None,
                 cleanup_memory=False,
                 backend="openai",
-                target_factory=None,
-                error_mapper=None,
-                memory_cleanup=None,
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -687,9 +682,6 @@ class TestDynamicInternalStageOrdering:
                 max_static_datapoints=None,
                 cleanup_memory=False,
                 backend="openai",
-                target_factory=None,
-                error_mapper=None,
-                memory_cleanup=None,
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -724,9 +716,7 @@ class TestDynamicConfirmPayload:
             context_provider=MagicMock(
                 get_agent_context=AsyncMock(return_value=agent_ctx)
             ),
-            target_factory=MagicMock(),
             memory_cleanup=MagicMock(),
-            error_mapper=MagicMock(),
         )
 
         with (
@@ -807,9 +797,6 @@ class TestDynamicConfirmPayload:
                 max_static_datapoints=None,
                 cleanup_memory=False,
                 backend="openai",
-                target_factory=None,
-                error_mapper=None,
-                memory_cleanup=None,
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -859,9 +846,7 @@ class TestDynamicConfirmPayload:
             context_provider=MagicMock(
                 get_agent_context=AsyncMock(return_value=agent_ctx)
             ),
-            target_factory=MagicMock(),
             memory_cleanup=MagicMock(),
-            error_mapper=MagicMock(),
         )
 
         gen_mock = AsyncMock(return_value=([], {}))
@@ -914,9 +899,6 @@ class TestDynamicConfirmPayload:
                     max_static_datapoints=None,
                     cleanup_memory=False,
                     backend="openai",
-                    target_factory=None,
-                    error_mapper=None,
-                    memory_cleanup=None,
                     llm_client=MagicMock(),
                     description="test",
                     dataset=None,
@@ -942,9 +924,7 @@ class TestDynamicConfirmPayload:
             context_provider=MagicMock(
                 get_agent_context=AsyncMock(return_value=agent_ctx)
             ),
-            target_factory=MagicMock(),
             memory_cleanup=MagicMock(),
-            error_mapper=MagicMock(),
         )
 
         with (
@@ -1021,9 +1001,6 @@ class TestDynamicConfirmPayload:
                 max_static_datapoints=None,
                 cleanup_memory=False,
                 backend="openai",
-                target_factory=None,
-                error_mapper=None,
-                memory_cleanup=None,
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,

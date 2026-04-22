@@ -306,7 +306,6 @@ def create_dynamic_redteam_job(
             # Inject model info for tracing if the target supports it
             if hasattr(target, 'model') and agent_context.model:
                 object.__setattr__(target, 'model', agent_context.model)  # type: ignore[misc]
-            target.reset_conversation()
 
             if strategy.prompt_template and strategy.turn_type == TurnType.SINGLE:
                 # Fixed template: fill and send directly (no adversarial LLM needed)

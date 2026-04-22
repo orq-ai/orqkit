@@ -246,21 +246,16 @@ class ORQAgentTarget:
                 logger.error(f'ORQ agent call failed: {e}')
                 raise
 
-    def reset_conversation(self) -> None:
-        """Reset conversation state for a new attack."""
-        self._task_id = None
-        self._last_token_usage = None
-
     def consume_last_token_usage(self) -> TokenUsage | None:
         """Return and clear usage from the last send_prompt() call."""
         usage = self._last_token_usage
         self._last_token_usage = None
         return usage
 
-    def clone(self) -> "ORQAgentTarget":
-        """Create a fresh target instance with isolated state.
+    def new(self) -> "ORQAgentTarget":
+        """Return a fresh target instance with isolated state.
 
-        Each clone gets its own ``memory_entity_id`` (auto-generated in
+        Each call gets its own ``memory_entity_id`` (auto-generated in
         ``__init__``), own ``_task_id``, and own ``_last_token_usage`` so
         parallel jobs never share server-side memory or conversation state.
         """

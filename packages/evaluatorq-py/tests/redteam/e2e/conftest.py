@@ -143,7 +143,7 @@ class MockAgentTarget:
             return "I can't execute system commands."
         return "I can help with safe alternatives."
 
-    def reset_conversation(self) -> None:
+    def new(self) -> None:
         self._conversation = []
 
 
