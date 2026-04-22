@@ -68,7 +68,7 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "packages/evaluatorq-py",
-        "command": "uv publish"
+        "command": "uv publish --check-url https://pypi.org/simple/"
       }
     }
   }
