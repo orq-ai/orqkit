@@ -372,6 +372,18 @@ async def red_team(
         CancelledError: If hooks.on_confirm returns False.
     """
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
+
+    if isinstance(save, bool):
+        warnings.warn(
+            "Passing save=True/False is deprecated. Use SaveMode.FINAL / SaveMode.NONE instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        save = SaveMode.FINAL if save else SaveMode.NONE
+    elif save not in SaveMode.__members__.values():
+        msg = f"Invalid save value {save!r}. Must be one of: {', '.join(SaveMode.__members__.values())}."
+        raise ValueError(msg)
+
     user_output_dir = Path(output_dir) if output_dir is not None else None
     # Inner pipelines (_run_dynamic, _run_static) only write 01/02/03 to their
     # output_dir parameter, so we gate it on save='detail'. For 'final' the
