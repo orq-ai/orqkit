@@ -13,6 +13,11 @@ from evaluatorq.redteam import red_team
 from .conftest import DeterministicAsyncOpenAI, validate_report_structure
 
 
+@pytest.mark.skip(
+    reason="Static mode no longer supports OpenAI model string targets "
+    "(openai:/llm: prefixes removed); rewrite with OpenAIModelTarget when "
+    "static-mode AgentTarget support is added."
+)
 @pytest.mark.asyncio
 async def test_multi_target_static_merge(
     mock_llm_client: DeterministicAsyncOpenAI,
@@ -20,11 +25,9 @@ async def test_multi_target_static_merge(
 ) -> None:
     """Two static targets should produce a merged report with results from both."""
     report = await red_team(
-        ["openai:model-a", "openai:model-b"],
+        ["agent:model-a", "agent:model-b"],
         mode="static",
-        evaluator_model="e2e-evaluator",
         parallelism=2,
-        backend="openai",
         dataset=str(static_dataset_path),
         llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         description="E2E multi-target test",

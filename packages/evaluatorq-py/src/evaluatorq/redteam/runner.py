@@ -49,7 +49,7 @@ from evaluatorq.redteam.backends.base import (
     is_agent_target,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
-from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, Pipeline, PipelineStage, RedTeamConfig, RedTeamReport, TargetConfig, TargetKind, Vulnerability, normalize_category
+from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, LLMConfig, PIPELINE_CONFIG, Pipeline, PipelineStage, RedTeamConfig, RedTeamReport, TargetConfig, TargetKind, Vulnerability, normalize_category
 from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
@@ -279,15 +279,12 @@ async def red_team(
     vulnerabilities: list[str] | None = None,
     max_turns: int = 5,
     max_per_category: int | None = None,
-    attack_model: str = DEFAULT_PIPELINE_MODEL,
-    evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     parallelism: int = 10,
     generate_strategies: bool = True,
     generated_strategy_count: int = 2,
     max_dynamic_datapoints: int | None = None,
     max_static_datapoints: int | None = None,
     cleanup_memory: bool = True,
-    backend: str = 'openai',
     llm_client: AsyncOpenAI | None = None,
     name: str | None = None,
     description: str | None = None,
@@ -298,7 +295,6 @@ async def red_team(
     generate_recommendations: bool = False,
     attacker_instructions: str | None = None,
     verbosity: int = 0,
-    llm_kwargs: dict[str, Any] | None = None,
     save: SaveMode = SaveMode.FINAL,
 ) -> RedTeamReport:
     """Unified entry point for red teaming.
@@ -425,43 +421,22 @@ async def red_team(
     targets = deduped_str  # existing code uses 'targets' as list[str]
 
     # Build or merge config -------------------------------------------------
-    # When ``config`` is provided it is the source of truth for backend,
-    # models, llm tuning, and llm_kwargs.  Individual params that were
-    # *not* overridden by the caller still fall back to the config values.
+    # When ``config`` is provided it is the source of truth for models, llm
+    # tuning, and llm_kwargs.
     if config is None:
         config = RedTeamConfig()
 
-    # Config fields are defaults — explicit caller params win.
-    if attack_model == DEFAULT_PIPELINE_MODEL:
-        attack_model = config.attack_model
-    if evaluator_model == DEFAULT_PIPELINE_MODEL:
-        evaluator_model = config.evaluator_model
-    if not llm_kwargs and config.llm_kwargs:
-        llm_kwargs = config.llm_kwargs
-
-    # Resolve backend via config (handles auto-detection).
-    # Only override the default 'openai' when config specifies a non-openai backend.
-    backend = config.resolve_backend(targets) if backend == 'openai' and config.backend != 'openai' else backend
-
-    # Auto-detect backend: agent:/deployment: targets require the orq backend.
-    orq_prefixes = ('agent:', 'deployment:')
-    has_orq_target = any(
-        any(t.startswith(p) for p in orq_prefixes) or ':' not in t
-        for t in string_targets
-    )
-    if has_orq_target and backend != 'orq':
-        logger.debug(
-            f'Auto-selected orq backend for agent/deployment target(s) (was {backend!r})',
-        )
-        backend = 'orq'
+    # Explicit rebind so downstream code doesn't need to read config repeatedly
+    llm_kwargs = config.llm_kwargs
 
     resolved_mode = Pipeline(mode)
 
     # When using the orq router (no custom llm_client, no OPENAI_API_KEY),
     # model IDs need a provider prefix (e.g. "openai/gpt-5-mini").
+    # Property alone doesn't know about the llm_client param — check both:
     uses_orq_router = llm_client is None and config.uses_orq_router
-    attack_model = config.resolve_model(attack_model, uses_orq_router=uses_orq_router)
-    evaluator_model = config.resolve_model(evaluator_model, uses_orq_router=uses_orq_router)
+    attack_model = config.resolve_model(config.attack_model, uses_orq_router=uses_orq_router)
+    evaluator_model = config.resolve_model(config.evaluator_model, uses_orq_router=uses_orq_router)
 
     # Early credential validation — fail fast with a clear message
     if llm_client is None and not os.getenv('OPENAI_API_KEY') and not os.getenv('ORQ_API_KEY'):
@@ -507,7 +482,6 @@ async def red_team(
             max_dynamic_datapoints=max_dynamic_datapoints,
             max_static_datapoints=max_static_datapoints,
             cleanup_memory=cleanup_memory,
-            backend=backend,
             llm_client=llm_client,
             description=description,
             dataset=dataset,
@@ -517,6 +491,7 @@ async def red_team(
             attacker_instructions=attacker_instructions,
             verbosity=verbosity,
             llm_kwargs=llm_kwargs,
+            pipeline_config=config,
         )
     elif resolved_mode == Pipeline.STATIC:
         if agent_targets:
@@ -531,7 +506,6 @@ async def red_team(
             evaluator_model=evaluator_model,
             parallelism=parallelism,
             max_static_datapoints=max_static_datapoints,
-            backend=backend,
             dataset=dataset,
             description=description,
             llm_client=llm_client,
@@ -539,6 +513,7 @@ async def red_team(
             output_dir=resolved_output_dir,
             target_config=target_config,
             llm_kwargs=llm_kwargs,
+            pipeline_config=config,
         )
     else:
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
@@ -607,22 +582,36 @@ def _parse_target(target: str) -> tuple[TargetKind, str]:
         Tuple of (TargetKind, value), e.g. (``TargetKind.AGENT``, ``"my-agent-key"``).
     """
     if ':' not in target:
-        # Default to agent kind
         return TargetKind.AGENT, target
     kind, _, value = target.partition(':')
     if not value:
-        msg = f'Target {target!r} is missing a value after the colon.'
-        raise ValueError(msg)
+        raise ValueError(f'Target {target!r} is missing a value after the colon.')
+    if kind.lower() in ('llm', 'openai'):
+        raise ValueError(
+            f'The "{kind}:" target prefix has been removed. '
+            f'Use OpenAIModelTarget to test OpenAI models directly:\n'
+            f'    from evaluatorq.redteam import OpenAIModelTarget\n'
+            f'    await red_team(OpenAIModelTarget("{value}"))'
+        )
     try:
         kind_enum = TargetKind(kind.lower())
     except ValueError:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k is not TargetKind.DIRECT)
-        msg = f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
-        raise ValueError(msg) from None
+        valid = ', '.join(
+            f'"{k.value}"' for k in TargetKind
+            if k not in (TargetKind.DIRECT, TargetKind.OPENAI)
+        )
+        raise ValueError(
+            f'Unknown target kind {kind!r} in {target!r}. Valid kinds: {valid}.'
+        ) from None
     if kind_enum is TargetKind.DIRECT:
-        valid = ', '.join(f'"{k.value}"' for k in TargetKind if k is not TargetKind.DIRECT)
-        msg = f'Target kind "direct" is not valid in string targets — pass an AgentTarget object directly instead. Valid string kinds: {valid}.'
-        raise ValueError(msg) from None
+        valid = ', '.join(
+            f'"{k.value}"' for k in TargetKind
+            if k not in (TargetKind.DIRECT, TargetKind.OPENAI)
+        )
+        raise ValueError(
+            f'Target kind "direct" is not valid in string targets — '
+            f'pass an AgentTarget object directly instead. Valid string kinds: {valid}.'
+        )
     return kind_enum, value
 
 
@@ -681,44 +670,31 @@ def _create_job_for_target(
     target: str,
     llm_client: Any,
     system_prompt: str | None,
+    pipeline_config: LLMConfig | None = None,
 ) -> Any:
     """Create a model job for the given target string.
 
-    Dispatches on the target kind (``agent``, ``llm``, ``deployment``, or
-    fallback to model) and returns the appropriate
+    Dispatches on the target kind (``agent``, ``deployment``, or fallback to
+    model) and returns the appropriate
     :func:`~evaluatorq.redteam.runtime.jobs.create_model_job` result.
 
-    Uses ``PIPELINE_CONFIG.target_max_tokens`` for the response token limit.
-
     Args:
-        target:        Full target string, e.g. ``"agent:my-key"`` or
-                       ``"llm:openai/gpt-4o"``.
+        target:        Full target string, e.g. ``"agent:my-key"``.
         llm_client:    Optional pre-configured :class:`openai.AsyncOpenAI`
                        client.
         system_prompt: Optional system prompt to pass to the job.
+        pipeline_config: Optional ``LLMConfig`` for ``target_max_tokens``.
 
     Returns:
         A job callable as returned by ``create_model_job``.
     """
+    cfg = pipeline_config or PIPELINE_CONFIG
     kind, value = _parse_target(target)
-    common = dict(llm_client=llm_client, system_prompt=system_prompt, max_tokens=PIPELINE_CONFIG.target_max_tokens)
-    if kind == 'agent':
+    common = dict(llm_client=llm_client, system_prompt=system_prompt, max_tokens=cfg.target_max_tokens)
+    if kind == TargetKind.AGENT:
         return create_model_job(agent_key=value, **common)
-    elif kind == 'deployment':
+    elif kind == TargetKind.DEPLOYMENT:
         return create_model_job(deployment_key=value, **common)
-    elif kind in ('llm', 'openai'):
-        has_orq = bool(os.environ.get('ORQ_API_KEY'))
-        has_openai = bool(os.environ.get('OPENAI_API_KEY'))
-        if has_orq:
-            logger.info(f"Routing llm target '{value}' via Orq proxy (ORQ_API_KEY is set)")
-        elif has_openai:
-            logger.info(f"Routing llm target '{value}' via OpenAI directly (OPENAI_API_KEY is set)")
-        else:
-            logger.warning(
-                f"No API key found for llm target '{value}'. "
-                "Set ORQ_API_KEY (for Orq proxy) or OPENAI_API_KEY (for direct OpenAI)."
-            )
-        return create_model_job(model=value, **common)
     else:
         return create_model_job(model=value, **common)
 
@@ -741,7 +717,6 @@ async def _prepare_target(
     generated_strategy_count: int,
     max_dynamic_datapoints: int | None,
     max_static_datapoints: int | None,
-    backend: str,
     llm_client: AsyncOpenAI | None,
     dataset: Any,
     hooks: PipelineHooks,
@@ -754,6 +729,7 @@ async def _prepare_target(
     prefetched_static_data: list[Any] | None = None,
     verbosity: int = 0,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> PreparedTarget:
     """Prepare all per-target state for a dynamic or hybrid run.
 
@@ -780,7 +756,7 @@ async def _prepare_target(
     target_kind, target_value = _parse_target(target)
     safe_target = _make_safe_target(target_value)
 
-    backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
+    backend_bundle = resolve_backend('orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config)
     resolved_factory = backend_bundle.target_factory
     resolved_error_mapper = DefaultErrorMapper()
     resolved_memory_cleanup_t = backend_bundle.memory_cleanup
@@ -827,6 +803,7 @@ async def _prepare_target(
                 parallelism=parallelism,
                 attacker_instructions=attacker_instructions,
                 llm_kwargs=llm_kwargs,
+                pipeline_config=pipeline_config,
             )
         else:
             # Fallback: categories that could not be resolved to vulnerabilities
@@ -842,6 +819,7 @@ async def _prepare_target(
                 parallelism=parallelism,
                 attacker_instructions=attacker_instructions,
                 llm_kwargs=llm_kwargs,
+                pipeline_config=pipeline_config,
             )
 
         if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(dynamic_datapoints) > max_dynamic_datapoints:
@@ -865,6 +843,7 @@ async def _prepare_target(
         attacker_instructions=attacker_instructions,
         verbosity=verbosity,
         llm_kwargs=llm_kwargs,
+        pipeline_config=pipeline_config,
     )
 
     # --- Mode-specific path ---------------------------------------------------
@@ -911,7 +890,7 @@ async def _prepare_target(
 
         # Build the static job via shared helper
         sys_prompt = target_config.system_prompt if target_config else None
-        static_job = _create_job_for_target(target, resolved_llm_client, sys_prompt)
+        static_job = _create_job_for_target(target, resolved_llm_client, sys_prompt, pipeline_config=pipeline_config)
 
         # Build the hybrid dispatcher job
         @job(f'redteam:hybrid:{safe_target}')
@@ -990,7 +969,6 @@ async def _run_dynamic_or_hybrid(
     max_dynamic_datapoints: int | None,
     max_static_datapoints: int | None,
     cleanup_memory: bool,
-    backend: str,
     llm_client: AsyncOpenAI | None,
     description: str | None,
     dataset: Any,
@@ -1000,6 +978,7 @@ async def _run_dynamic_or_hybrid(
     attacker_instructions: str | None = None,
     verbosity: int = 0,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> RedTeamReport:
     """Run dynamic or hybrid red teaming for multiple targets in a single evaluatorq call.
 
@@ -1043,7 +1022,7 @@ async def _run_dynamic_or_hybrid(
             "orq.trace_type": "evaluatorq",
             "orq.redteam.targets": ", ".join(all_target_labels),
             "orq.redteam.mode": mode,
-            "orq.redteam.backend": backend,
+            "orq.redteam.backend": "orq",
             "orq.redteam.max_turns": max_turns,
             "orq.redteam.parallelism": parallelism,
         },
@@ -1052,7 +1031,7 @@ async def _run_dynamic_or_hybrid(
 
         # Step 1: Retrieve agent context for all targets (cheap) so we
         # can show capabilities in the confirmation prompt before expensive generation.
-        bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
+        bundle = resolve_backend('orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config)
         all_agent_contexts: dict[str, AgentContext] = {}
         resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": all_target_labels})
         for target_str in targets:
@@ -1213,7 +1192,6 @@ async def _run_dynamic_or_hybrid(
             generated_strategy_count=generated_strategy_count,
             max_dynamic_datapoints=max_dynamic_datapoints,
             max_static_datapoints=max_static_datapoints,
-            backend=backend,
             llm_client=llm_client,
             dataset=dataset,
             hooks=resolved_hooks,
@@ -1223,6 +1201,7 @@ async def _run_dynamic_or_hybrid(
             attacker_instructions=attacker_instructions,
             verbosity=verbosity,
             llm_kwargs=llm_kwargs or {},
+            pipeline_config=pipeline_config,
         )
 
         prepared_targets: list[PreparedTarget]
@@ -1306,6 +1285,7 @@ async def _run_dynamic_or_hybrid(
                     attacker_instructions=attacker_instructions,
                     verbosity=verbosity,
                     llm_kwargs=llm_kwargs,
+                    pipeline_config=pipeline_config,
                 )
 
                 at_safe = _make_safe_target(at_label)
@@ -1329,6 +1309,7 @@ async def _run_dynamic_or_hybrid(
                             parallelism=parallelism,
                             attacker_instructions=attacker_instructions,
                             llm_kwargs=llm_kwargs,
+                            pipeline_config=pipeline_config,
                         )
                     else:
                         at_dps, at_filter_meta = await generate_dynamic_datapoints(
@@ -1343,6 +1324,7 @@ async def _run_dynamic_or_hybrid(
                             parallelism=parallelism,
                             attacker_instructions=attacker_instructions,
                             llm_kwargs=llm_kwargs,
+                            pipeline_config=pipeline_config,
                         )
                     if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(at_dps) > max_dynamic_datapoints:
                         at_dps = _cap_datapoints_balanced(at_dps, max_dynamic_datapoints)
@@ -1748,7 +1730,6 @@ async def _run_static(
     evaluator_model: str,
     parallelism: int,
     max_static_datapoints: int | None,
-    backend: str,
     dataset: Any,
     description: str | None,
     llm_client: AsyncOpenAI | None = None,
@@ -1756,6 +1737,7 @@ async def _run_static(
     output_dir: Path | None = None,
     target_config: TargetConfig | None = None,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> RedTeamReport:
     """Run static red teaming for multiple targets in a single ``evaluatorq()`` call.
 
@@ -1810,7 +1792,7 @@ async def _run_static(
     # Build one job per target using the shared helper
     sys_prompt = target_config.system_prompt if target_config else None
     jobs: list[Any] = [
-        _create_job_for_target(t, llm_client, sys_prompt)
+        _create_job_for_target(t, llm_client, sys_prompt, pipeline_config=pipeline_config)
         for t in targets
     ]
 
@@ -1900,7 +1882,7 @@ async def _run_static(
     # Fetch agent contexts for all targets (best-effort)
     agent_contexts: dict[str, AgentContext] = {}
     try:
-        backend_bundle = resolve_backend(backend, llm_client=llm_client, target_config=target_config)
+        backend_bundle = resolve_backend('orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config)
         for t in targets:
             kind, value = _parse_target(t)
             try:

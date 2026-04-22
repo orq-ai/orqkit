@@ -89,7 +89,7 @@ def _make_report(**kwargs: Any) -> RedTeamReport:
         pipeline=Pipeline.DYNAMIC,
         framework=None,
         categories_tested=["ASI01"],
-        tested_agents=["llm:gpt-4o-mini"],
+        tested_agents=["agent:gpt-4o-mini"],
         total_results=0,
         results=[],
         summary=ReportSummary(),
@@ -142,7 +142,7 @@ class TestStaticPipelineHooks:
                 return_value={},
             ),
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=MagicMock(
                     context_provider=MagicMock(
                         get_agent_context=AsyncMock(return_value=_make_agent_context())
@@ -179,7 +179,7 @@ class TestStaticPipelineHooks:
                         "evaluator_model": "gpt-4o-mini",
                         "max_turns": 1,
                         "parallelism": 1,
-                        "target": "llm:gpt-4o-mini",
+                        "target": "agent:gpt-4o-mini",
                         "dataset_path": None,
                         "vulnerabilities": [],
                         "agent_context": None,
@@ -188,7 +188,7 @@ class TestStaticPipelineHooks:
                         "filtering_metadata": None,
                     }
                 )
-                h.on_stage_start(PipelineStage.ATTACK_EXECUTION, {"num_datapoints": 2, "targets": ["llm:gpt-4o-mini"]})
+                h.on_stage_start(PipelineStage.ATTACK_EXECUTION, {"num_datapoints": 2, "targets": ["agent:gpt-4o-mini"]})
                 h.on_stage_end(PipelineStage.ATTACK_EXECUTION, {"num_results": 0})
                 h.on_stage_start(PipelineStage.REPORT_GENERATION, {"num_results": 0})
                 h.on_stage_end(PipelineStage.REPORT_GENERATION, {"resistance_rate": 1.0, "elapsed_s": 0.1})
@@ -197,7 +197,7 @@ class TestStaticPipelineHooks:
         from evaluatorq.redteam.runner import red_team
 
         with patch("evaluatorq.redteam.runner._run_static", side_effect=_fake_run_static):
-            await red_team("llm:gpt-4o-mini", mode="static", hooks=spy)
+            await red_team("agent:gpt-4o-mini", mode="static", hooks=spy)
 
         starts = spy.stage_starts()
         ends = spy.stage_ends()
@@ -252,7 +252,7 @@ class TestStaticPipelineHooks:
                 return_value={},
             ),
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=MagicMock(
                     context_provider=MagicMock(
                         get_agent_context=AsyncMock(return_value=_make_agent_context())
@@ -263,12 +263,11 @@ class TestStaticPipelineHooks:
             from evaluatorq.redteam.runner import _run_static
 
             await _run_static(
-                targets=["llm:gpt-4o-mini"],
+                targets=["agent:gpt-4o-mini"],
                 categories=["ASI01"],
                 evaluator_model="gpt-4o-mini",
                 parallelism=2,
                 max_static_datapoints=None,
-                backend="openai",
                 dataset=None,
                 description="test",
                 hooks=spy,
@@ -318,12 +317,11 @@ class TestStaticPipelineHooks:
 
             with pytest.raises(CancelledError, match="cancelled by confirmation callback"):
                 await _run_static(
-                    targets=["llm:gpt-4o-mini"],
+                    targets=["agent:gpt-4o-mini"],
                     categories=["ASI01"],
                     evaluator_model="gpt-4o-mini",
                     parallelism=1,
                     max_static_datapoints=None,
-                    backend="openai",
                     dataset=None,
                     description="test",
                     hooks=spy,
@@ -346,7 +344,7 @@ class TestStaticPipelineHooks:
         ):
             spy = SpyHooks()
             result = await red_team(
-                "llm:gpt-4o-mini",
+                "agent:gpt-4o-mini",
                 mode="static",
                 hooks=spy,
                 output_dir=None,
@@ -370,7 +368,7 @@ class TestStaticPipelineHooks:
         ):
             spy = SpyHooks()
             result = await red_team(
-                "llm:gpt-4o-mini",
+                "agent:gpt-4o-mini",
                 mode="static",
                 hooks=spy,
                 output_dir=str(tmp_path),
@@ -408,7 +406,7 @@ class TestDynamicPipelineHooksViaRunner:
             new_callable=AsyncMock,
             return_value=mock_report,
         ):
-            result = await red_team("llm:gpt-4o-mini", mode="dynamic", hooks=spy)
+            result = await red_team("agent:gpt-4o-mini", mode="dynamic", hooks=spy)
 
         assert result is mock_report
         assert spy.received_complete_report is mock_report
@@ -426,7 +424,7 @@ class TestDynamicPipelineHooksViaRunner:
             new_callable=AsyncMock,
             return_value=mock_report,
         ):
-            await red_team("llm:gpt-4o-mini", mode="dynamic", hooks=spy)
+            await red_team("agent:gpt-4o-mini", mode="dynamic", hooks=spy)
 
         assert isinstance(spy.received_complete_report, RedTeamReport)
 
@@ -443,7 +441,7 @@ class TestDynamicPipelineHooksViaRunner:
             new_callable=AsyncMock,
             return_value=mock_report,
         ):
-            await red_team("llm:gpt-4o-mini", mode="dynamic", hooks=spy)
+            await red_team("agent:gpt-4o-mini", mode="dynamic", hooks=spy)
 
         assert spy.method_names()[-1] == "on_complete"
 
@@ -483,7 +481,7 @@ class TestDynamicInternalStageOrdering:
 
         with (
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=backend_mock,
             ),
             patch(
@@ -548,21 +546,20 @@ class TestDynamicInternalStageOrdering:
             patch("evaluatorq.redteam.runner._send_cleaned_results", new_callable=AsyncMock),
         ):
             await _run_dynamic_or_hybrid(
-                targets=["llm:gpt-4o-mini"],
+                targets=["agent:gpt-4o-mini"],
                 mode=Pipeline.DYNAMIC,
                 categories=["ASI01"],
+                attack_model="gpt-4o-mini",
+                evaluator_model="gpt-4o-mini",
                 resolved_vulns=None,
                 max_turns=1,
                 max_per_category=1,
-                attack_model="gpt-4o-mini",
-                evaluator_model="gpt-4o-mini",
                 parallelism=1,
                 generate_strategies=False,
                 generated_strategy_count=0,
                 max_dynamic_datapoints=1,
                 max_static_datapoints=None,
                 cleanup_memory=False,
-                backend="openai",
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -602,7 +599,7 @@ class TestDynamicInternalStageOrdering:
 
         with (
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=backend_mock,
             ),
             patch(
@@ -667,21 +664,20 @@ class TestDynamicInternalStageOrdering:
             patch("evaluatorq.redteam.runner._send_cleaned_results", new_callable=AsyncMock),
         ):
             await _run_dynamic_or_hybrid(
-                targets=["llm:gpt-4o-mini"],
+                targets=["agent:gpt-4o-mini"],
                 mode=Pipeline.DYNAMIC,
                 categories=["ASI01"],
+                attack_model="gpt-4o-mini",
+                evaluator_model="gpt-4o-mini",
                 resolved_vulns=None,
                 max_turns=1,
                 max_per_category=1,
-                attack_model="gpt-4o-mini",
-                evaluator_model="gpt-4o-mini",
                 parallelism=1,
                 generate_strategies=False,
                 generated_strategy_count=0,
                 max_dynamic_datapoints=1,
                 max_static_datapoints=None,
                 cleanup_memory=False,
-                backend="openai",
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -721,7 +717,7 @@ class TestDynamicConfirmPayload:
 
         with (
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=backend_mock,
             ),
             patch(
@@ -782,21 +778,20 @@ class TestDynamicConfirmPayload:
             patch("evaluatorq.redteam.runner._send_cleaned_results", new_callable=AsyncMock),
         ):
             await _run_dynamic_or_hybrid(
-                targets=["llm:gpt-4o-mini"],
+                targets=["agent:gpt-4o-mini"],
                 mode=Pipeline.DYNAMIC,
                 categories=["ASI01"],
+                attack_model="gpt-4o-mini",
+                evaluator_model="gpt-4o-mini",
                 resolved_vulns=None,
                 max_turns=3,
                 max_per_category=2,
-                attack_model="gpt-4o-mini",
-                evaluator_model="gpt-4o-mini",
                 parallelism=4,
                 generate_strategies=False,
                 generated_strategy_count=0,
                 max_dynamic_datapoints=5,
                 max_static_datapoints=None,
                 cleanup_memory=False,
-                backend="openai",
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
@@ -853,7 +848,7 @@ class TestDynamicConfirmPayload:
 
         with (
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=backend_mock,
             ),
             patch(
@@ -884,21 +879,20 @@ class TestDynamicConfirmPayload:
         ):
             with pytest.raises(CancelledError, match="cancelled by confirmation callback"):
                 await _run_dynamic_or_hybrid(
-                    targets=["llm:gpt-4o-mini"],
+                    targets=["agent:gpt-4o-mini"],
                     mode=Pipeline.DYNAMIC,
                     categories=["ASI01"],
+                    attack_model="gpt-4o-mini",
+                    evaluator_model="gpt-4o-mini",
                     resolved_vulns=None,
                     max_turns=1,
                     max_per_category=1,
-                    attack_model="gpt-4o-mini",
-                    evaluator_model="gpt-4o-mini",
                     parallelism=1,
                     generate_strategies=False,
                     generated_strategy_count=0,
                     max_dynamic_datapoints=None,
                     max_static_datapoints=None,
                     cleanup_memory=False,
-                    backend="openai",
                     llm_client=MagicMock(),
                     description="test",
                     dataset=None,
@@ -929,7 +923,7 @@ class TestDynamicConfirmPayload:
 
         with (
             patch(
-                "evaluatorq.redteam.backends.registry.resolve_backend",
+                "evaluatorq.redteam.runner.resolve_backend",
                 return_value=backend_mock,
             ),
             patch(
@@ -986,21 +980,20 @@ class TestDynamicConfirmPayload:
             patch("evaluatorq.redteam.runner._send_cleaned_results", new_callable=AsyncMock),
         ):
             await _run_dynamic_or_hybrid(
-                targets=["llm:gpt-4o-mini"],
+                targets=["agent:gpt-4o-mini"],
                 mode=Pipeline.DYNAMIC,
                 categories=["ASI01"],
+                attack_model="gpt-4o-mini",
+                evaluator_model="gpt-4o-mini",
                 resolved_vulns=None,
                 max_turns=1,
                 max_per_category=None,
-                attack_model="gpt-4o-mini",
-                evaluator_model="gpt-4o-mini",
                 parallelism=1,
                 generate_strategies=False,
                 generated_strategy_count=0,
                 max_dynamic_datapoints=None,
                 max_static_datapoints=None,
                 cleanup_memory=False,
-                backend="openai",
                 llm_client=MagicMock(),
                 description="test",
                 dataset=None,
