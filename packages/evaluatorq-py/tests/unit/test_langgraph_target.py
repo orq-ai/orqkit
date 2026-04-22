@@ -13,6 +13,7 @@ from evaluatorq.integrations.langgraph_integration import LangGraphTarget  # noq
 
 def _make_graph(response_content: str = "I'm fine") -> MagicMock:
     graph = MagicMock()
+    graph.name = "test_graph"
     msg = MagicMock()
     msg.content = response_content
     graph.ainvoke = AsyncMock(return_value={"messages": [msg]})
@@ -153,7 +154,7 @@ class TestLangGraphTargetAgentContext:
         target = LangGraphTarget(graph)
 
         ctx = await target.get_agent_context()
-        assert ctx.key == "langgraph_target"
+        assert ctx.key.startswith("LangGraph_")
         tool_names = ctx.get_tool_names()
         assert "add" in tool_names
         # create_react_agent does not set a checkpointer by default → no memory entries
@@ -166,7 +167,7 @@ class TestLangGraphTargetAgentContext:
         graph.checkpointer = None
         target = LangGraphTarget(graph)
         ctx = await target.get_agent_context()
-        assert ctx.key == "langgraph_target"
+        assert ctx.key.startswith("test_graph_")
         assert ctx.tools == []
         assert ctx.memory_stores == []
 

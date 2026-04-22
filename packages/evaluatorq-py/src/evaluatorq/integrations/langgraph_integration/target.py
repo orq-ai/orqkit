@@ -56,6 +56,8 @@ class LangGraphTarget(AgentTarget):
         self._extra_config = config or {}
         self.memory_entity_id: str = uuid4().hex
         self._agent_context = agent_context
+        graph_name: str = getattr(graph, "name", None) or "langgraph_target"
+        self._key = f"{graph_name}_{uuid4().hex[:8]}"
 
     def _build_config(self) -> RunnableConfig:
         """Build the RunnableConfig with the current thread_id."""
@@ -121,7 +123,7 @@ class LangGraphTarget(AgentTarget):
         memory_stores = _introspect_memory_stores(self._graph, self.memory_entity_id)
 
         return AgentContext(
-            key="langgraph_target",
+            key=self._key,
             description="LangGraph compiled state graph target",
             tools=tools,
             memory_stores=memory_stores,
@@ -133,11 +135,13 @@ class LangGraphTarget(AgentTarget):
         The clone gets a fresh ``memory_entity_id`` (and thus a fresh LangGraph
         thread), so parallel workers never share checkpointer state.
         """
-        return LangGraphTarget(
+        cloned = LangGraphTarget(
             self._graph,
             config=dict(self._extra_config),
             agent_context=self._agent_context,
         )
+        cloned._key = self._key
+        return cloned
 
 
 def _introspect_tools(graph: CompiledStateGraph[Any, Any, Any, Any]) -> list[ToolInfo]:
