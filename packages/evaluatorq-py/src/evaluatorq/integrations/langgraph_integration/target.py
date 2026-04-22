@@ -89,8 +89,8 @@ class LangGraphTarget(AgentTarget):
         return content
 
     def reset_conversation(self) -> None:
-        """Reset conversation state by starting a new thread."""
-        self.memory_entity_id = uuid4().hex
+        """Reset conversation state. Thread ID is fixed at construction; clone() provides isolation."""
+        pass
 
     def clone(self) -> LangGraphTarget:
         """Create an independent copy for parallel red teaming jobs.

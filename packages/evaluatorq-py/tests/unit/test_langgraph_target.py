@@ -47,12 +47,12 @@ class TestLangGraphTarget:
         assert "thread_id" in config["configurable"]
 
     @pytest.mark.asyncio
-    async def test_reset_changes_memory_entity_id(self) -> None:
+    async def test_reset_preserves_memory_entity_id(self) -> None:
         graph = _make_graph()
         target = LangGraphTarget(graph)
         old_thread = target.memory_entity_id
         target.reset_conversation()
-        assert target.memory_entity_id != old_thread
+        assert target.memory_entity_id == old_thread
 
     @pytest.mark.asyncio
     async def test_extra_config_is_preserved(self) -> None:
