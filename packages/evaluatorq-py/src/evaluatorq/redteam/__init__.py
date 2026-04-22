@@ -38,6 +38,7 @@ from evaluatorq.redteam.contracts import (
     TargetConfig,
     AgentInfo,
     AttackInfo,
+    AttackSource,
     AttackStrategy,
     AttackTechnique,
     CategorySummary,
@@ -145,6 +146,7 @@ __all__ = [
     "TokenUsage",
     # Enums
     "TurnType",
+    "AttackSource",
     "AttackTechnique",
     "DeliveryMethod",
     "Severity",

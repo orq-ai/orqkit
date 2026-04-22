@@ -392,7 +392,7 @@ def create_dynamic_redteam_job(
                 if _active_progress is not None:
                     await _active_progress.finish_attack(None)
 
-                return result_dict.model_dump(mode='json')
+                return {**result_dict.model_dump(mode='json'), 'max_turns': effective_max_turns}
 
             # Dynamic single-turn (max_turns=1) or multi-turn — orchestrator handles both
             llm_client = attack_llm_client or create_async_llm_client()
@@ -474,7 +474,7 @@ def create_dynamic_redteam_job(
             if result_dict.final_response:
                 set_span_attrs(attack_span, {'output': result_dict.final_response})
             _set_attack_span_attrs(attack_span, result_dict)
-            return result_dict.model_dump(mode='json')
+            return {**result_dict.model_dump(mode='json'), 'max_turns': effective_max_turns}
 
     return dynamic_job
 
