@@ -275,6 +275,16 @@ class SaveMode(StrEnum):
     DETAIL = 'detail'
 
 
+class AttackSource(StrEnum):
+    """Origin of an attack datapoint."""
+
+    AGENT_DOJO = 'AgentDojo'
+    ORQ_GENERATED = 'orq_generated'
+    ORQ_DATASET = 'orq_dataset'
+    PREDEFINED_STRATEGY = 'predefined_strategy'
+    LLM_GENERATED_STRATEGY = 'llm_generated_strategy'
+
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -919,7 +929,7 @@ class AttackInfo(BaseModel):
         default=None, description='Vulnerability domain (null for dynamic attacks without a fixed domain)'
     )
     source: str = Field(
-        description="Origin: 'AgentDojo', 'orq_generated', 'hardcoded_strategy', 'llm_generated_strategy'"
+        description="Origin: 'AgentDojo', 'orq_generated', 'predefined_strategy', 'llm_generated_strategy'"
     )
     strategy_name: str | None = Field(default=None, description="Dynamic strategy name (e.g., 'tool_output_hijack')")
     objective: str | None = Field(default=None, description='Filled objective template (dynamic only)')
@@ -993,6 +1003,7 @@ class JobOutputPayload(BaseModel):
     response: str | None = None
     output: str | None = None
     turns: int | None = None
+    max_turns: int | None = None
     objective_achieved: bool | None = None
     duration_seconds: float | None = None
     token_usage: TokenUsage | None = None
