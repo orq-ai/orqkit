@@ -562,7 +562,6 @@ class AgentContext(BaseModel):
 # and evaluation. Uses the OpenAI model name directly (works with both the
 # openai and orq backends — the orq backend accepts this format as-is).
 DEFAULT_PIPELINE_MODEL: str = 'gpt-5-mini'
-DEFAULT_TARGET_TIMEOUT_MS: int = 240_000
 DEFAULT_TARGET_MAX_TOKENS: int = 5000
 
 

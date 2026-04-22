@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
 
-def create_async_llm_client() -> AsyncOpenAI:
+def create_async_llm_client(role_config=None) -> AsyncOpenAI:
     """Lazy proxy to :func:`~evaluatorq.redteam.backends.registry.create_async_llm_client`.
 
     Defined here so that tests can patch
@@ -25,7 +25,7 @@ def create_async_llm_client() -> AsyncOpenAI:
     """
     from evaluatorq.redteam.backends.registry import create_async_llm_client as _create
 
-    return _create()
+    return _create(role_config)
 
 
 class OpenAIModelTarget:
@@ -40,6 +40,8 @@ class OpenAIModelTarget:
         system_prompt: str | None = None,
         *,
         client: AsyncOpenAI | None = None,
+        max_tokens: int = 5000,
+        timeout_ms: int = 90_000,
     ):
         """Initialize the target with a model name, optional async client, and optional system prompt.
 
@@ -49,6 +51,8 @@ class OpenAIModelTarget:
         self.model = model
         self.client = client or create_async_llm_client()
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
+        self.max_tokens = max_tokens
+        self.timeout_ms = timeout_ms
         self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
@@ -65,6 +69,7 @@ class OpenAIModelTarget:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
+                max_tokens=self.max_tokens,
             )
             content = response.choices[0].message.content or ''
             record_llm_response(span, response, output_content=content)
@@ -95,7 +100,7 @@ class OpenAIModelTarget:
 
     def clone(self) -> OpenAIModelTarget:
         """Return a fresh target instance for parallel job safety."""
-        return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client)
+        return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
 
     def new(self) -> OpenAIModelTarget:
         """Return a fresh target instance (alias for :meth:`clone`, satisfies ``AgentTarget`` protocol)."""
@@ -120,7 +125,7 @@ class OpenAIModelTarget:
 
     def create_target(self, agent_key: str) -> OpenAIModelTarget:
         """Create a new OpenAI model target for the given model name."""
-        return OpenAIModelTarget(model=agent_key, system_prompt=self.system_prompt, client=self.client)
+        return OpenAIModelTarget(model=agent_key, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
         """Map an OpenAI exception to a normalized error code and message tuple."""

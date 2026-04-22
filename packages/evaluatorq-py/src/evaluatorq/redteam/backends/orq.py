@@ -46,7 +46,6 @@ def _get_orq_server_url() -> str:
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
 from evaluatorq.redteam.contracts import (
-    DEFAULT_TARGET_TIMEOUT_MS,
     AgentContext,
     KnowledgeBaseInfo,
     MemoryStoreInfo,
