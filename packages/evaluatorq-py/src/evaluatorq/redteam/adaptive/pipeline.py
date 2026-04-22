@@ -24,7 +24,7 @@ from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt,
 from evaluatorq.redteam.backends.base import DefaultErrorMapper
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage, Vulnerability
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, LLMConfig, PIPELINE_CONFIG, AttackOutput, AttackStrategy, EvaluatorConfig, Message, OrchestratorResult, TokenUsage, Vulnerability
 from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe, resolve_vulnerabilities
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator, _get_active_progress
 from evaluatorq.redteam.adaptive.strategy_planner import plan_strategies_for_categories, plan_strategies_for_vulnerabilities
@@ -70,6 +70,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
     parallelism: int = 5,
     attacker_instructions: str | None = None,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming, keyed by Vulnerability enum.
 
@@ -89,6 +90,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
         per-vulnerability counts of all/applicable/generated/filtered strategies.
         The metadata keys are vulnerability ID strings (e.g. 'goal_hijacking').
     """
+    cfg = pipeline_config or PIPELINE_CONFIG
     all_vuln_strategies, filtering_metadata_by_vuln, _agent_capabilities = await plan_strategies_for_vulnerabilities(
         agent_context=agent_context,
         vulnerabilities=vulnerabilities,
@@ -101,6 +103,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
         generation_parallelism=parallelism,
         attacker_instructions=attacker_instructions,
         llm_kwargs=llm_kwargs,
+        pipeline_config=cfg,
     )
 
     # Convert Vulnerability-keyed metadata to string keys for external consumption
@@ -142,6 +145,7 @@ async def generate_dynamic_datapoints(
     parallelism: int = 5,
     attacker_instructions: str | None = None,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming.
 
@@ -185,6 +189,7 @@ async def generate_dynamic_datapoints(
             parallelism=parallelism,
             attacker_instructions=attacker_instructions,
             llm_kwargs=llm_kwargs,
+            pipeline_config=pipeline_config,
         )
         # Remap metadata keys from vulnerability IDs back to original category strings
         # so callers that expect category-keyed metadata continue to work.
@@ -210,6 +215,7 @@ async def generate_dynamic_datapoints(
         generation_parallelism=parallelism,
         attacker_instructions=attacker_instructions,
         llm_kwargs=llm_kwargs,
+        pipeline_config=pipeline_config,
     )
 
     datapoints = []
@@ -249,6 +255,7 @@ def create_dynamic_redteam_job(
     attacker_instructions: str | None = None,
     verbosity: int = 0,
     llm_kwargs: dict[str, Any] | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> Job:
     """Create an evaluatorq Job that runs a red-team attack.
 
@@ -271,6 +278,7 @@ def create_dynamic_redteam_job(
         max_turns: Maximum turns for multi-turn attacks
         target_factory: Factory for creating AgentTarget instances. Defaults to ORQ.
     """
+    cfg = pipeline_config or PIPELINE_CONFIG
     resolved_factory: AgentTargetFactory = (
         target_factory if target_factory is not None else resolve_backend('orq').target_factory
     )
@@ -317,7 +325,7 @@ def create_dynamic_redteam_job(
                 error_code = None
                 error_details = None
                 token_usage = None
-                target_timeout_s = PIPELINE_CONFIG.target_agent_timeout_ms / 1000.0
+                target_timeout_s = cfg.target_agent_timeout_ms / 1000.0
                 try:
                     async with with_redteam_span(
                         "orq.redteam.target_call",
@@ -348,7 +356,7 @@ def create_dynamic_redteam_job(
                     error_stage = 'target_call'
                     error_code = 'target.timeout'
                     error_details = {
-                        'timeout_ms': PIPELINE_CONFIG.target_agent_timeout_ms,
+                        'timeout_ms': cfg.target_agent_timeout_ms,
                     }
                 except Exception as e:
                     if isinstance(e, (TypeError, AttributeError, ImportError, NameError)):
@@ -403,6 +411,7 @@ def create_dynamic_redteam_job(
                 attacker_instructions=attacker_instructions,
                 verbosity=verbosity,
                 llm_kwargs=llm_kwargs,
+                pipeline_config=cfg,
             )
 
             try:
@@ -581,6 +590,7 @@ async def cleanup_memory_entities(
     agent_context: AgentContext,
     entity_ids: list[str],
     memory_cleanup: MemoryCleanup | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> str | None:
     """Delete memory entities created during a red teaming run.
 
@@ -589,7 +599,8 @@ async def cleanup_memory_entities(
 
     Returns None on success, or an error message string on failure.
     """
-    cleanup_timeout_s = PIPELINE_CONFIG.cleanup_timeout_ms / 1000.0
+    cfg = pipeline_config or PIPELINE_CONFIG
+    cleanup_timeout_s = cfg.cleanup_timeout_ms / 1000.0
     try:
         if memory_cleanup is not None:
             await asyncio.wait_for(
