@@ -581,18 +581,16 @@ async def red_team(
         if user_output_dir is not None:
             _save_report(user_output_dir, '03_summary_report.json', report)
             auto_save_path = user_output_dir / '03_summary_report.json'
-        else:
-            auto_save_path = _auto_save_run(report, name=name)
-            if auto_save_path is None:
-                report.pipeline_warnings.append(
-                    'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
-                )
     elif save == 'detail':
         if resolved_output_dir is not None:
             auto_save_path = resolved_output_dir / '03_summary_report.json'
-        # Also index in .evaluatorq/runs/ so the run appears in `evaluatorq
-        # redteam runs`, matching the behavior of save='final'.
-        if _auto_save_run(report, name=name) is None:
+
+    # Index in .evaluatorq/runs/ so the run appears in `evaluatorq redteam runs`.
+    if save != 'none':
+        run_path = _auto_save_run(report, name=name)
+        if auto_save_path is None:
+            auto_save_path = run_path
+        if run_path is None:
             report.pipeline_warnings.append(
                 'Failed to auto-save run report. The run will not appear in `evaluatorq redteam runs`.'
             )
