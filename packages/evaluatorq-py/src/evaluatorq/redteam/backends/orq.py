@@ -46,7 +46,7 @@ def _get_orq_server_url() -> str:
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
 from evaluatorq.redteam.contracts import (
-    PIPELINE_CONFIG,
+    DEFAULT_TARGET_TIMEOUT_MS,
     AgentContext,
     KnowledgeBaseInfo,
     MemoryStoreInfo,
@@ -71,7 +71,7 @@ class ORQAgentTarget:
         orq_client: Any,
         memory_entity_id: str | None = None,
         model: str | None = None,
-        timeout_ms: int = PIPELINE_CONFIG.target_agent_timeout_ms,
+        timeout_ms: int = DEFAULT_TARGET_TIMEOUT_MS,
     ):
         """Initialize the ORQ agent target with client and configuration.
 
@@ -413,7 +413,7 @@ class ORQTargetFactory:
         self,
         orq_client: Any = None,
         model: str | None = None,
-        timeout_ms: int = PIPELINE_CONFIG.target_agent_timeout_ms,
+        timeout_ms: int = DEFAULT_TARGET_TIMEOUT_MS,
     ):
         """Initialize the factory, creating an ORQ client from environment if none is provided."""
         self._timeout_ms = timeout_ms
@@ -447,7 +447,7 @@ class ORQTargetFactory:
 class ORQMemoryCleanup:
     """Cleans up memory entities created during red teaming via ORQ SDK."""
 
-    def __init__(self, orq_client: Any = None, timeout_ms: int = PIPELINE_CONFIG.target_agent_timeout_ms):
+    def __init__(self, orq_client: Any = None, timeout_ms: int = DEFAULT_TARGET_TIMEOUT_MS):
         """Initialize the cleanup handler, creating an ORQ client from environment if none is provided."""
         if orq_client is not None:
             self._orq_client = orq_client
@@ -511,7 +511,7 @@ class ORQErrorMapper:
 def create_orq_agent_target(
     agent_key: str,
     orq_client: Any = None,
-    timeout_ms: int = PIPELINE_CONFIG.target_agent_timeout_ms,
+    timeout_ms: int = DEFAULT_TARGET_TIMEOUT_MS,
 ) -> ORQAgentTarget:
     """Create an ORQAgentTarget from environment config."""
     if orq_client is None:
@@ -527,7 +527,7 @@ def create_orq_agent_target(
 
 def create_orq_backend(
     orq_client: Any = None,
-    timeout_ms: int = PIPELINE_CONFIG.target_agent_timeout_ms,
+    timeout_ms: int = DEFAULT_TARGET_TIMEOUT_MS,
 ) -> tuple[ORQTargetFactory, ORQContextProvider, ORQMemoryCleanup]:
     """Convenience function returning all three ORQ backend components.
 

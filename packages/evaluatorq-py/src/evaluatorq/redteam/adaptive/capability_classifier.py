@@ -197,8 +197,8 @@ async def _infer_resource_capabilities(
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
-            temperature=cfg.capability_classification_temperature,
-            max_tokens=cfg.capability_classification_max_tokens,
+            temperature=cfg.attacker.temperature,
+            max_tokens=cfg.attacker.max_tokens,
             input_messages=infer_messages,
             attributes={"orq.redteam.llm_purpose": "infer_resources"},
         ) as res_span:
@@ -206,10 +206,10 @@ async def _infer_resource_capabilities(
                 model=model,
                 messages=infer_messages,
                 response_format=ResourceCapabilityInference,
-                temperature=cfg.capability_classification_temperature,
-                max_completion_tokens=cfg.capability_classification_max_tokens,
+                temperature=cfg.attacker.temperature,
+                max_completion_tokens=cfg.attacker.max_tokens,
                 extra_body=cfg.retry_config,
-                **(llm_kwargs or {}),
+                **cfg.attacker.extra_kwargs,
             )
             parsed = response.choices[0].message.parsed
             record_llm_response(
@@ -254,8 +254,8 @@ async def _classify_tools(
         classify_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
-            temperature=cfg.capability_classification_temperature,
-            max_tokens=cfg.capability_classification_max_tokens,
+            temperature=cfg.attacker.temperature,
+            max_tokens=cfg.attacker.max_tokens,
             input_messages=classify_messages,
             attributes={
                 "orq.redteam.llm_purpose": "classify_tools",
@@ -266,10 +266,10 @@ async def _classify_tools(
                 model=model,
                 messages=classify_messages,
                 response_format=ToolCapabilitiesResponse,
-                temperature=cfg.capability_classification_temperature,
-                max_completion_tokens=cfg.capability_classification_max_tokens,
+                temperature=cfg.attacker.temperature,
+                max_completion_tokens=cfg.attacker.max_tokens,
                 extra_body=cfg.retry_config,
-                **(llm_kwargs or {}),
+                **cfg.attacker.extra_kwargs,
             )
             record_llm_response(
                 cls_span, response,
