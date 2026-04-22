@@ -168,6 +168,7 @@ async def generate_dynamic_datapoints(
         Tuple of (datapoints, filtering_metadata) where filtering_metadata contains
         per-category counts of all/applicable/generated/filtered strategies.
     """
+    cfg = pipeline_config or PIPELINE_CONFIG
     # Try resolving all categories to vulnerabilities for the primary path
     try:
         resolved_vulnerabilities = resolve_vulnerabilities(categories)
@@ -189,7 +190,7 @@ async def generate_dynamic_datapoints(
             parallelism=parallelism,
             attacker_instructions=attacker_instructions,
             llm_kwargs=llm_kwargs,
-            pipeline_config=pipeline_config,
+            pipeline_config=cfg,
         )
         # Remap metadata keys from vulnerability IDs back to original category strings
         # so callers that expect category-keyed metadata continue to work.
@@ -215,7 +216,7 @@ async def generate_dynamic_datapoints(
         generation_parallelism=parallelism,
         attacker_instructions=attacker_instructions,
         llm_kwargs=llm_kwargs,
-        pipeline_config=pipeline_config,
+        pipeline_config=cfg,
     )
 
     datapoints = []

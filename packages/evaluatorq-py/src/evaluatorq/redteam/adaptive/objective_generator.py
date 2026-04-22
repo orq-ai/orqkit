@@ -147,8 +147,7 @@ async def _call_llm_for_objectives_single(
 
     ``prompt_template`` must contain a ``{count}`` placeholder.
     """
-    if cfg is None:
-        cfg = PIPELINE_CONFIG
+    cfg = cfg or PIPELINE_CONFIG
     try:
         prompt = prompt_template.replace('{count}', str(count))
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
@@ -206,6 +205,7 @@ async def _call_llm_for_objectives(
     ``prompt_template`` must contain a ``{count}`` placeholder. Each batch
     fills it with the batch size so the LLM generates the right number.
     """
+    cfg = cfg or PIPELINE_CONFIG
     if count <= _MAX_PER_LLM_CALL:
         return await _call_llm_for_objectives_single(
             prompt_template, llm_client, model, count, span_attributes, log_label, llm_kwargs, cfg,

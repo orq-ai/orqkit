@@ -186,8 +186,7 @@ async def _infer_resource_capabilities(
     cfg: LLMConfig | None = None,
 ) -> ResourceCapabilityInference:
     """Infer memory/knowledge capabilities with structured LLM output."""
-    if cfg is None:
-        cfg = PIPELINE_CONFIG
+    cfg = cfg or PIPELINE_CONFIG
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools) or '- none'
     prompt = safe_substitute(RESOURCE_CAPABILITY_PROMPT, {
         '{has_memory_stores}': str(bool(agent_context.memory_stores)),
@@ -244,8 +243,7 @@ async def _classify_tools(
         Tuple of (capabilities dict, success bool). success=False when
         classification failed due to an exception.
     """
-    if cfg is None:
-        cfg = PIPELINE_CONFIG
+    cfg = cfg or PIPELINE_CONFIG
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
     prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {'{tool_list}': tool_list})
