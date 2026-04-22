@@ -55,6 +55,7 @@ from evaluatorq.redteam.contracts import (
     FunctionCall,
     JobOutputPayload,
     KnowledgeBaseInfo,
+    LLMCallConfig,
     LLMConfig,
     MemoryStoreInfo,
     Message,
@@ -165,6 +166,7 @@ __all__ = [
     "MemoryStoreInfo",
     "KnowledgeBaseInfo",
     # Pipeline config
+    "LLMCallConfig",
     "LLMConfig",
     "OpenAIModelTarget",
     # Attack models

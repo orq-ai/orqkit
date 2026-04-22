@@ -313,9 +313,10 @@ async def red_team(
             Takes precedence over ``categories``.
         max_turns: Maximum conversation turns for multi-turn attacks.
         max_per_category: Cap strategies per category (None = no cap).
-        config: Optional :class:`LLMConfig` for model selection (``attack_model``,
-            ``evaluator_model``), per-step temperatures, timeouts, retry behaviour,
-            and ``llm_kwargs`` forwarded to every LLM call.
+        config: Role-based LLM configuration. Use ``LLMConfig(attacker=LLMCallConfig(...),
+            evaluator=LLMCallConfig(...))`` to control model, temperature, and other
+            per-role settings. Defaults to ``LLMConfig()`` which uses the default model
+            for both attacker and evaluator roles.
         parallelism: Maximum concurrent evaluatorq jobs.
         generate_strategies: Whether to generate additional LLM-based strategies.
         generated_strategy_count: Number of strategies to generate per category.
