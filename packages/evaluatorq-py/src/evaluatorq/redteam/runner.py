@@ -313,15 +313,16 @@ async def red_team(
             Takes precedence over ``categories``.
         max_turns: Maximum conversation turns for multi-turn attacks.
         max_per_category: Cap strategies per category (None = no cap).
-        attack_model: Model for adversarial prompt generation.
-        evaluator_model: Model for OWASP evaluation scoring.
+        config: Role-based LLM configuration. Use ``LLMConfig(attacker=LLMCallConfig(...),
+            evaluator=LLMCallConfig(...))`` to control model, temperature, and other
+            per-role settings. Defaults to ``LLMConfig()`` which uses the default model
+            for both attacker and evaluator roles.
         parallelism: Maximum concurrent evaluatorq jobs.
         generate_strategies: Whether to generate additional LLM-based strategies.
         generated_strategy_count: Number of strategies to generate per category.
         max_dynamic_datapoints: Cap dynamic (generated) datapoints (None = no cap).
         max_static_datapoints: Cap static (dataset) datapoints (None = no cap).
         cleanup_memory: Whether to clean up memory entities after dynamic runs.
-        backend: Backend name (``"orq"`` or ``"openai"``).
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
         name: Optional experiment name for the run. Used as the evaluatorq experiment
             name and for the auto-saved run filename. Defaults to ``'red-team'``.

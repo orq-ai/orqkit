@@ -308,9 +308,10 @@ def run(
     targets: list[str] | str = target if len(target) > 1 else target[0]
 
     # Build LLMConfig from CLI flags
+    from evaluatorq.redteam.contracts import LLMCallConfig
     config = LLMConfig(
-        attack_model=attack_model,
-        evaluator_model=evaluator_model,
+        attacker=LLMCallConfig(model=attack_model),
+        evaluator=LLMCallConfig(model=evaluator_model),
     )
 
     try:
