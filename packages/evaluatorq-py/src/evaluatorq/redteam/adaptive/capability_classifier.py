@@ -6,14 +6,11 @@ while memory and knowledge capabilities are inferred from explicit
 agent configuration (memory tools / knowledge bases).
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI
-from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
-
-from evaluatorq.redteam.utils import safe_substitute
 
 from evaluatorq.redteam.contracts import (
     DEFAULT_PIPELINE_MODEL,
@@ -23,6 +20,10 @@ from evaluatorq.redteam.contracts import (
     LLMConfig,
 )
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
+from evaluatorq.redteam.utils import safe_substitute
+
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletionMessageParam
 
 
 class ToolCapabilities(BaseModel):
@@ -164,8 +165,8 @@ async def classify_agent_capabilities(
     # Classify tools via LLM
     classification_failed = False
     if agent_context.tools:
-        tool_caps, _classify_ok = await _classify_tools(agent_context, llm_client, model, llm_kwargs, cfg)
-        classification_failed = not _classify_ok
+        tool_caps, classify_ok = await _classify_tools(agent_context, llm_client, model, llm_kwargs, cfg)
+        classification_failed = not classify_ok
         capabilities.update(tool_caps)
 
     all_caps = set()
@@ -191,7 +192,7 @@ async def _infer_resource_capabilities(
     prompt = safe_substitute(RESOURCE_CAPABILITY_PROMPT, {
         '{has_memory_stores}': str(bool(agent_context.memory_stores)),
         '{has_knowledge_bases}': str(bool(agent_context.knowledge_bases)),
-        '{tool_list}': tool_list,
+        f'{tool_list}': tool_list,
     })
     try:
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
@@ -246,7 +247,7 @@ async def _classify_tools(
     cfg = cfg or PIPELINE_CONFIG
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {'{tool_list}': tool_list})
+    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {f'{tool_list}': tool_list})
 
     valid_values = {c.value for c in AgentCapability}
 

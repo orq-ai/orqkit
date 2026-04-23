@@ -6,12 +6,14 @@ This module provides commonly used evaluators that can be used with the evaluato
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .types import Evaluator, ScorerParameter
+if TYPE_CHECKING:
+    from .types import Evaluator, ScorerParameter
 
 
 def string_contains_evaluator(
+    *,
     case_insensitive: bool = True,
     name: str = "string-contains",
 ) -> Evaluator:
@@ -37,7 +39,7 @@ def string_contains_evaluator(
         my_evaluator = string_contains_evaluator(name="my-contains-check")
     """
 
-    async def scorer(params: ScorerParameter) -> dict[str, Any]:
+    def scorer(params: ScorerParameter) -> dict[str, Any]:
         data = params["data"]
         output = params["output"]
 
@@ -68,12 +70,11 @@ def string_contains_evaluator(
                 "pass_": True,
                 "explanation": f'Output contains "{truncated_expected}"',
             }
-        else:
-            return {
-                "value": 0.0,
-                "pass_": False,
-                "explanation": f'Expected "{truncated_expected}" not found in: "{truncated_actual}"',
-            }
+        return {
+            "value": 0.0,
+            "pass_": False,
+            "explanation": f'Expected "{truncated_expected}" not found in: "{truncated_actual}"',
+        }
 
     return {
         "name": name,
@@ -105,7 +106,7 @@ def exact_match_evaluator(
         loose_evaluator = exact_match_evaluator(case_insensitive=True)
     """
 
-    async def scorer(params: ScorerParameter) -> dict[str, Any]:
+    def scorer(params: ScorerParameter) -> dict[str, Any]:
         data = params["data"]
         output = params["output"]
 
@@ -136,12 +137,11 @@ def exact_match_evaluator(
                 "pass_": True,
                 "explanation": "Output exactly matches expected output",
             }
-        else:
-            return {
-                "value": 0.0,
-                "pass_": False,
-                "explanation": f'Expected "{truncated_expected}" but got "{truncated_actual}"',
-            }
+        return {
+            "value": 0.0,
+            "pass_": False,
+            "explanation": f'Expected "{truncated_expected}" but got "{truncated_actual}"',
+        }
 
     return {
         "name": name,

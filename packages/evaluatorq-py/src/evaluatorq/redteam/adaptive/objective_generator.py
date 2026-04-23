@@ -5,16 +5,26 @@ the agent's tools, memory configuration, and system prompt.
 """
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI
-from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field
 
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, OWASP_CATEGORY_NAMES
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentCapability, AgentContext, AttackStrategy, LLMConfig
-from evaluatorq.redteam.contracts import AttackTechnique, DeliveryMethod, Severity, TurnType, Vulnerability
+from evaluatorq.redteam.contracts import (
+    DEFAULT_PIPELINE_MODEL,
+    OWASP_CATEGORY_NAMES,
+    PIPELINE_CONFIG,
+    AgentCapability,
+    AgentContext,
+    AttackStrategy,
+    AttackTechnique,
+    DeliveryMethod,
+    LLMConfig,
+    Severity,
+    TurnType,
+    Vulnerability,
+)
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 from evaluatorq.redteam.utils import safe_substitute
 from evaluatorq.redteam.vulnerability_registry import (
@@ -22,6 +32,9 @@ from evaluatorq.redteam.vulnerability_registry import (
     get_primary_category,
     resolve_category_safe,
 )
+
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletionMessageParam
 
 
 class GeneratedObjective(BaseModel):
@@ -115,11 +128,11 @@ def _build_objective_prompt(
         '{agent_description}': agent_context.description or 'An AI assistant',
         '{tools}': tools_str,
         '{memory_stores}': memory_str,
-        '{instructions_excerpt}': instructions_excerpt,
-        '{vulnerability_name}': vulnerability_name,
-        '{category_code}': category_code,
-        '{turn_type_guidance}': turn_type_guidance,
-        '{max_turns}': str(max_turns),
+        f'{instructions_excerpt}': instructions_excerpt,
+        f'{vulnerability_name}': vulnerability_name,
+        f'{category_code}': category_code,
+        f'{turn_type_guidance}': turn_type_guidance,
+        f'{max_turns}': str(max_turns),
     })
 
     if attacker_instructions:
@@ -149,7 +162,7 @@ async def _call_llm_for_objectives_single(
     """
     cfg = cfg or PIPELINE_CONFIG
     try:
-        prompt = prompt_template.replace('{count}', str(count))
+        prompt = prompt_template.replace(f'{count}', str(count))
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,
@@ -402,7 +415,7 @@ def create_strategy_from_objective(
         technique = VULNERABILITY_DEFS[resolved_vuln].default_attack_technique
         # Ensure category reflects the canonical code for this vulnerability when
         # the caller supplied a vulnerability but a bare/unknown category string.
-        effective_category = category if category else get_primary_category(resolved_vuln)
+        effective_category = category or get_primary_category(resolved_vuln)
     else:
         logger.warning(
             'Cannot resolve category %r to a known vulnerability — '

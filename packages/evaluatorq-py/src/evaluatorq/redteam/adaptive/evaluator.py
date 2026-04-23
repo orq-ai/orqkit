@@ -9,16 +9,15 @@ from loguru import logger
 from openai import APIConnectionError, APIStatusError
 from pydantic import BaseModel
 
-from openai.types.chat import ChatCompletionMessageParam
-
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category, get_evaluator_for_vulnerability
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, AttackEvaluationResult, TokenUsage, Vulnerability
+from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category, get_evaluator_for_vulnerability
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+    from openai.types.chat import ChatCompletionMessageParam
 
     from evaluatorq.redteam.contracts import Message
 
@@ -216,5 +215,3 @@ def _serialize_messages(messages: list[dict[str, Any]] | list[Message]) -> list[
             continue
         serialized.append({'role': str(msg.role), 'content': str(msg.content or '')})
     return serialized
-
-

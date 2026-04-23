@@ -7,10 +7,10 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from evaluatorq import DataPoint, EvaluationResult
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
+from evaluatorq import DataPoint, EvaluationResult
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, EvaluatorConfig, RedTeamInput, StaticDataset
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
