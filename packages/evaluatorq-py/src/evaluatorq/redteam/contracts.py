@@ -23,7 +23,6 @@ else:
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
@@ -295,10 +294,7 @@ def normalize_framework(framework: 'Framework | str') -> 'Framework':
 
     OWASP-AGENTIC is an alias for OWASP-ASI.
     """
-    if isinstance(framework, Framework):
-        value = framework.value
-    else:
-        value = framework
+    value = framework.value if isinstance(framework, Framework) else framework
     if value == Framework.OWASP_AGENTIC.value:
         return Framework.OWASP_ASI
     return Framework(value)
@@ -846,7 +842,6 @@ class AttackEvaluationResult(BaseModel):
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
     raw_output: dict[str, Any] | None = Field(default=None, description='Raw evaluator output')
-
 
 
 # ---------------------------------------------------------------------------

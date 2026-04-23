@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from openai.types.chat import ChatCompletionMessageParam
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
 from evaluatorq.redteam.contracts import AgentContext, TargetKind, TokenUsage
@@ -13,6 +12,7 @@ from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+    from openai.types.chat import ChatCompletionMessageParam
 
 
 def create_async_llm_client(role_config=None) -> AsyncOpenAI:
@@ -77,14 +77,14 @@ class OpenAIModelTarget:
             # Store usage for consume_last_token_usage()
             usage = getattr(response, 'usage', None)
             if usage is not None:
-                _prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-                _completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-                _raw_total = getattr(usage, 'total_tokens', None)
-                _total = int(_raw_total) if _raw_total else (_prompt + _completion)
+                prompt_ = int(getattr(usage, 'prompt_tokens', 0) or 0)
+                completion = int(getattr(usage, 'completion_tokens', 0) or 0)
+                raw_total = getattr(usage, 'total_tokens', None)
+                total = int(raw_total) if raw_total else (prompt_ + completion)
                 self._last_token_usage = TokenUsage(
-                    prompt_tokens=_prompt,
-                    completion_tokens=_completion,
-                    total_tokens=_total,
+                    prompt_tokens=prompt_,
+                    completion_tokens=completion,
+                    total_tokens=total,
                     calls=1,
                 )
             else:
@@ -198,5 +198,3 @@ class OpenAIErrorMapper:
         if 'timeout' in name:
             return 'openai.timeout', f'{type(exc).__name__}: {exc}'
         return 'openai.unknown', f'{type(exc).__name__}: {exc}'
-
-

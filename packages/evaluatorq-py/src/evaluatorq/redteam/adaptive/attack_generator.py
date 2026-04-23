@@ -168,8 +168,8 @@ async def adapt_prompt_to_tools(
     prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {
         '{attack_technique}': strategy.attack_technique.value,
         '{strategy_description}': strategy.description,
-        '{base_prompt}': base_prompt,
-        '{tool_list}': tool_list,
+        f'{base_prompt}': base_prompt,
+        f'{tool_list}': tool_list,
     })
 
     try:
