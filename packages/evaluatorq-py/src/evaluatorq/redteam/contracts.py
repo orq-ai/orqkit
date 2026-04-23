@@ -586,7 +586,7 @@ class LLMConfig(BaseModel):
     """Unified LLM configuration for the red teaming pipeline.
 
     Configure per-role LLM behaviour via ``attacker`` and ``evaluator``.
-    Pass an instance as ``config=LLMConfig(...)`` to :func:`red_team`.
+    Pass an instance as ``llm_config=LLMConfig(...)`` to :func:`red_team`.
 
     Example::
 
