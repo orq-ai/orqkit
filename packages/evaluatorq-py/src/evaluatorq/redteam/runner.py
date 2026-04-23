@@ -273,7 +273,7 @@ class PreparedTarget:
 async def red_team(
     target: str | AgentTarget | list[str | AgentTarget],
     *,
-    config: LLMConfig | None = None,
+    llm_config: LLMConfig | None = None,
     mode: Pipeline | str = Pipeline.DYNAMIC,
     categories: list[str] | None = None,
     vulnerabilities: list[str] | None = None,
@@ -422,10 +422,9 @@ async def red_team(
     targets = deduped_str  # existing code uses 'targets' as list[str]
 
     # Build or merge config -------------------------------------------------
-    # When ``config`` is provided it is the source of truth for models and
+    # When ``llm_config`` is provided it is the source of truth for models and
     # per-role LLM tuning.
-    if config is None:
-        config = LLMConfig()
+    config = llm_config or LLMConfig()
 
     resolved_mode = Pipeline(mode)
 

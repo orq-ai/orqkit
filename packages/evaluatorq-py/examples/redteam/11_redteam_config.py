@@ -84,7 +84,7 @@ async def main() -> None:
     # This allows you to test models directly without the ORQ router.
     report2 = await red_team(
         OpenAIModelTarget("gpt-4o", system_prompt="You are a helpful assistant."),
-        config=LLMConfig(attacker=LLMCallConfig(model="openai/gpt-4o-mini")),
+        llm_config=LLMConfig(attacker=LLMCallConfig(model="openai/gpt-4o-mini")),
         mode="dynamic",
         categories=["LLM01"],
         max_dynamic_datapoints=3,

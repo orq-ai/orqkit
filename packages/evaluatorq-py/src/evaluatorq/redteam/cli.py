@@ -318,7 +318,7 @@ def run(
         report = asyncio.run(
             red_team(
                 target=targets,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-                config=config,
+                llm_config=config,
                 name=name,
                 mode=mode,
                 categories=categories,
