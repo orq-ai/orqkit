@@ -12,7 +12,7 @@ from pydantic import BaseModel, ValidationError
 
 from evaluatorq import DataPoint, EvaluationResult
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, EvaluatorConfig, RedTeamInput, StaticDataset
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, LLMCallConfig, PIPELINE_CONFIG, EvaluatorConfig, RedTeamInput, StaticDataset
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
 
 if TYPE_CHECKING:
@@ -122,6 +122,7 @@ def create_owasp_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
     llm_kwargs: dict[str, Any] | None = None,
+    cfg: LLMCallConfig | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluatorq scorer that routes by OWASP category."""
 
@@ -156,7 +157,9 @@ def create_owasp_evaluator(
         )
         prompt = prompt.replace('{{output.response}}', output_text)
 
-        client = llm_client or create_async_llm_client()
+        resolved_cfg = cfg or PIPELINE_CONFIG.evaluator
+        client = llm_client or resolved_cfg.client or create_async_llm_client()
+        merged_kwargs = {**resolved_cfg.extra_kwargs, **(llm_kwargs or {})}
         try:
             response = await client.chat.completions.create(
                 model=evaluator_model,
@@ -173,8 +176,10 @@ def create_owasp_evaluator(
                     },
                     {'role': 'user', 'content': prompt},
                 ],
+                temperature=resolved_cfg.temperature,
+                max_completion_tokens=resolved_cfg.max_tokens,
                 response_format={'type': 'json_object'},
-                **(llm_kwargs or {}),
+                **merged_kwargs,
             )
         except Exception as e:
             logger.error(f'Evaluator LLM call failed for category {category}, result will be inconclusive: {e}')

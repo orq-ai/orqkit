@@ -524,9 +524,9 @@ async def red_team(
     # Generate LLM-based recommendations for focus areas (opt-in)
     if generate_recommendations:
         try:
-            rec_client = llm_client
+            rec_client = llm_client or config.evaluator.client
             if rec_client is None:
-                rec_client = create_async_llm_client()
+                rec_client = create_async_llm_client(role_config=config.evaluator)
 
             report.focus_area_recommendations = await generate_focus_area_recommendations(
                 report=report,
@@ -1437,8 +1437,9 @@ async def _run_dynamic_or_hybrid(
         has_static = any(pt.static_datapoints for pt in prepared_targets)
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
-            dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client)
-            static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client)
+            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+            dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
+            static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
 
             async def hybrid_scorer(params: Any) -> EvaluationResult:
                 """Route evaluation to the dynamic or static OWASP scorer based on datapoint source."""
@@ -1462,7 +1463,8 @@ async def _run_dynamic_or_hybrid(
                 f'{len(first.static_datapoints)} static datapoints'
             )
         else:
-            evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client)
+            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+            evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
             evaluators = [evaluator]
             log_label = f'{len(all_datapoints)} datapoints'
 
@@ -1793,7 +1795,8 @@ async def _run_static(
     from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
     evaluator_client = pipeline_config.evaluator.client if pipeline_config else None
     evaluator_client = evaluator_client or llm_client
-    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client)
+    evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
 
     # Confirm hook — report aggregate counts
     vulnerabilities: list[str] = list({

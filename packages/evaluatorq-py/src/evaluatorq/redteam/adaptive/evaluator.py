@@ -10,7 +10,7 @@ from openai import APIConnectionError, APIStatusError
 from pydantic import BaseModel
 
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, AttackEvaluationResult, TokenUsage, Vulnerability
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, AttackEvaluationResult, LLMCallConfig, PIPELINE_CONFIG, TokenUsage, Vulnerability
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category, get_evaluator_for_vulnerability
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
@@ -37,11 +37,13 @@ class OWASPEvaluator:
         evaluator_model: str = DEFAULT_PIPELINE_MODEL,
         llm_client: AsyncOpenAI | None = None,
         llm_kwargs: dict[str, Any] | None = None,
+        cfg: LLMCallConfig | None = None,
     ):
         """Initialize the evaluator with the given model and optional async LLM client."""
+        self._cfg = cfg or PIPELINE_CONFIG.evaluator
         self.evaluator_model = evaluator_model
-        self.client = llm_client or create_async_llm_client()
-        self.llm_kwargs = llm_kwargs or {}
+        self.client = llm_client or self._cfg.client or create_async_llm_client()
+        self.llm_kwargs = {**self._cfg.extra_kwargs, **(llm_kwargs or {})}
         logger.debug(f'Initialized OWASPEvaluator with model: {evaluator_model}')
 
     async def evaluate_vulnerability(
@@ -155,6 +157,8 @@ class OWASPEvaluator:
                 llm_response = await self.client.chat.completions.create(
                     model=self.evaluator_model,
                     messages=eval_messages,
+                    temperature=self._cfg.temperature,
+                    max_completion_tokens=self._cfg.max_tokens,
                     response_format={'type': 'json_object'},
                     **self.llm_kwargs,
                 )
