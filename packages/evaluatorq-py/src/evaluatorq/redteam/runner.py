@@ -45,6 +45,7 @@ from evaluatorq.redteam.backends.registry import create_async_llm_client, resolv
 from evaluatorq.redteam.contracts import (
     AgentContext,
     LLMConfig,
+    PIPELINE_CONFIG,
     Pipeline,
     PipelineStage,
     RedTeamReport,
@@ -738,6 +739,7 @@ def _create_job_for_target(
     target: str,
     llm_client: Any,
     system_prompt: str | None,
+    pipeline_config: LLMConfig | None = None,
 ) -> Any:
     """Create a model job for the given target string.
 
@@ -750,10 +752,12 @@ def _create_job_for_target(
         llm_client:    Optional pre-configured :class:`openai.AsyncOpenAI`
                        client.
         system_prompt: Optional system prompt to pass to the job.
+        pipeline_config: Optional ``LLMConfig`` for ``target_max_tokens``.
 
     Returns:
         A job callable as returned by ``create_model_job``.
     """
+    cfg = pipeline_config or PIPELINE_CONFIG
     kind, value = _parse_target(target)
     common = dict(llm_client=llm_client, system_prompt=system_prompt)
     if kind == TargetKind.AGENT:
@@ -953,7 +957,7 @@ async def _prepare_target(
 
         # Build the static job via shared helper
         sys_prompt = target_config.system_prompt if target_config else None
-        static_job = _create_job_for_target(target, resolved_llm_client, sys_prompt)
+        static_job = _create_job_for_target(target, resolved_llm_client, sys_prompt, pipeline_config=pipeline_config)
 
         # Build the hybrid dispatcher job
         @job(f'redteam:hybrid:{safe_target}')
@@ -1855,7 +1859,7 @@ async def _run_static(
     # Build one job per target using the shared helper
     sys_prompt = target_config.system_prompt if target_config else None
     jobs: list[Any] = [
-        _create_job_for_target(t, llm_client, sys_prompt)
+        _create_job_for_target(t, llm_client, sys_prompt, pipeline_config=pipeline_config)
         for t in targets
     ]
     jobs.extend(

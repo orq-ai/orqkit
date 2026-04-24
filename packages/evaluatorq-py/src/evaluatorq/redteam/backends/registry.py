@@ -129,6 +129,7 @@ def _create_orq_backend(
     pipeline_config: LLMConfig | None = None,
     **kwargs: object,
 ) -> BackendBundle:
+    cfg = pipeline_config or PIPELINE_CONFIG
     try:
         from evaluatorq.redteam.backends.orq import ORQErrorMapper, create_orq_backend
     except ImportError as exc:
