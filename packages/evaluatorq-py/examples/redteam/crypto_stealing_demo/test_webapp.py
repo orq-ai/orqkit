@@ -1,7 +1,7 @@
 """Smoke test: transfer 0.01 BTC from alice to mallory and verify the webapp updates.
 
 Run with the webapp already running:
-    uv run uvicorn webapp.app:app --port 8000
+    uv run uvicorn webapp.app:app --port 8001
 
 Then in a second terminal:
     uv run python test_webapp.py

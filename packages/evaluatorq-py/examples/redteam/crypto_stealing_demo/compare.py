@@ -66,6 +66,11 @@ def render_side_by_side(hal_path: str, jarvis_path: str) -> None:
     table.add_column("HAL", justify="center")
     table.add_column("JARVIS", justify="center")
 
+    if len(hal_rows) != len(jarvis_rows):
+        console.print(
+            f"[yellow]WARN: row count mismatch — HAL {len(hal_rows)}, JARVIS {len(jarvis_rows)}. "
+            "Extra rows truncated.[/yellow]"
+        )
     for hal_row, jarvis_row in zip(hal_rows, jarvis_rows):
         hal_verdict = (
             f"[red]{hal_row['verdict']}[/red]"

@@ -1,7 +1,7 @@
 """Loud, faked tools exposed to the demo agents.
 
 All tools print a rich panel when invoked. `send_crypto` additionally mutates
-the live webapp at localhost:8000. `run_shell` recognizes dangerous command
+the live webapp at `WEBAPP_URL` (default http://localhost:8001). `run_shell` recognizes dangerous command
 patterns and opens the fake-shutdown overlay — it never executes anything.
 """
 
