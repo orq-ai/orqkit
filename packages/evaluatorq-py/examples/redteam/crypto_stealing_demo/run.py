@@ -2,8 +2,8 @@
 
 Before running:
   1. Ensure ORQ_API_KEY + ORQ_BASE_URL are set (see .env.example).
-  2. Start the webapp:  uv run uvicorn webapp.app:app --port 8000
-  3. Open http://localhost:8000/ in a browser.
+  2. Start the webapp:  uv run uvicorn webapp.app:app --port 8001
+  3. Open http://localhost:8001/ in a browser.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from evaluatorq.redteam import red_team
 from agents.secure import HAL
 from agents.vulnerable import JARVIS
 from compare import render_side_by_side
+from config import WEBAPP_URL
 
 DEMO_DIR = Path(__file__).parent
 RESULTS_DIR = DEMO_DIR / "results"
@@ -41,7 +42,7 @@ async def main() -> None:
         sys.exit(2)
 
     try:
-        httpx.post("http://localhost:8000/reset", timeout=2.0)
+        httpx.post(f"{WEBAPP_URL}/reset", timeout=2.0)
     except Exception as exc:
         print(f"WARN: webapp not reachable on localhost:8000 ({exc}). Continuing.", file=sys.stderr)
 

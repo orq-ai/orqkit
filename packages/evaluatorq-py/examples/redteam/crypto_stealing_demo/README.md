@@ -43,7 +43,7 @@ Opens a fake-shutdown overlay in the default browser. No OS action.
 ## Files
 
 - `agents/` — `DemoAgent` (tool-capable, implements `AgentTarget`), vulnerable + secure subclasses
-- `tools.py` — `send_email`, `send_crypto`, `exfil_file`, `run_shell`
+- `tools.py` — `send_email`, `send_crypto`, `run_shell`
 - `webapp/` — FastAPI + SSE + static UI
 - `run.py` — drives `red_team()` against both agents
 - `compare.py` — renders side-by-side results table

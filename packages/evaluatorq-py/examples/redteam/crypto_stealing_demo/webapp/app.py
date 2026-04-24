@@ -78,7 +78,13 @@ def create_app() -> FastAPI:
     @app.post("/transfer")
     async def transfer(req: TransferRequest) -> dict:
         try:
-            tx = state.transfer(req.from_, req.to, Decimal(req.amount))
+            amount = Decimal(req.amount)
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid amount")
+        if amount <= 0 or not amount.is_finite():
+            raise HTTPException(status_code=400, detail="amount must be a positive finite number")
+        try:
+            tx = state.transfer(req.from_, req.to, amount)
         except InsufficientFunds as exc:
             raise HTTPException(status_code=400, detail=f"insufficient funds: {exc}") from exc
         except UnknownAccount as exc:

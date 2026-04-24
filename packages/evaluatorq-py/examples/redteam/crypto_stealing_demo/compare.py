@@ -41,23 +41,23 @@ def _rows(report: dict[str, Any]) -> list[dict[str, Any]]:
 
 def render_side_by_side(hal_path: str, jarvis_path: str) -> None:
     console = Console()
-    v = _load(hal_path)
-    s = _load(jarvis_path)
-    v_rows = _rows(v)
-    s_rows = _rows(s)
+    hal_report = _load(hal_path)
+    jarvis_report = _load(jarvis_path)
+    hal_rows = _rows(hal_report)
+    jarvis_rows = _rows(jarvis_report)
 
-    v_summary = v.get("summary", {})
-    s_summary = s.get("summary", {})
+    hal_summary = hal_report.get("summary", {})
+    jarvis_summary = jarvis_report.get("summary", {})
 
     console.print(
         f"\n[bold]HAL[/bold]:    "
-        f"{v_summary.get('vulnerabilities_found', '?')}/{v_summary.get('total_attacks', '?')} attacks succeeded · "
-        f"resistance {v_summary.get('resistance_rate', 0.0):.0%}"
+        f"{hal_summary.get('vulnerabilities_found', '?')}/{hal_summary.get('total_attacks', '?')} attacks succeeded · "
+        f"resistance {hal_summary.get('resistance_rate', 0.0):.0%}"
     )
     console.print(
         f"[bold]JARVIS[/bold]: "
-        f"{s_summary.get('vulnerabilities_found', '?')}/{s_summary.get('total_attacks', '?')} attacks succeeded · "
-        f"resistance {s_summary.get('resistance_rate', 0.0):.0%}\n"
+        f"{jarvis_summary.get('vulnerabilities_found', '?')}/{jarvis_summary.get('total_attacks', '?')} attacks succeeded · "
+        f"resistance {jarvis_summary.get('resistance_rate', 0.0):.0%}\n"
     )
 
     table = Table(title="Attack-by-attack comparison", show_lines=True)
@@ -66,18 +66,18 @@ def render_side_by_side(hal_path: str, jarvis_path: str) -> None:
     table.add_column("HAL", justify="center")
     table.add_column("JARVIS", justify="center")
 
-    for v_row, s_row in zip(v_rows, s_rows):
-        v_verdict = (
-            f"[red]{v_row['verdict']}[/red]"
-            if "VULN" in v_row["verdict"].upper()
-            else f"[green]{v_row['verdict']}[/green]"
+    for hal_row, jarvis_row in zip(hal_rows, jarvis_rows):
+        hal_verdict = (
+            f"[red]{hal_row['verdict']}[/red]"
+            if "VULN" in hal_row["verdict"].upper()
+            else f"[green]{hal_row['verdict']}[/green]"
         )
-        s_verdict = (
-            f"[red]{s_row['verdict']}[/red]"
-            if "VULN" in s_row["verdict"].upper()
-            else f"[green]{s_row['verdict']}[/green]"
+        jarvis_verdict = (
+            f"[red]{jarvis_row['verdict']}[/red]"
+            if "VULN" in jarvis_row["verdict"].upper()
+            else f"[green]{jarvis_row['verdict']}[/green]"
         )
-        table.add_row(v_row["vulnerability"], v_row["preview"], v_verdict, s_verdict)
+        table.add_row(hal_row["vulnerability"], hal_row["preview"], hal_verdict, jarvis_verdict)
 
     console.print(table)
 
