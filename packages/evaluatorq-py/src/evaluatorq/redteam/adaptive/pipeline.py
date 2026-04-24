@@ -35,6 +35,7 @@ from evaluatorq.redteam.contracts import (
     AttackOutput,
     AttackStrategy,
     EvaluatorConfig,
+    LLMCallConfig,
     LLMConfig,
     Message,
     OrchestratorResult,
@@ -344,7 +345,7 @@ def create_dynamic_redteam_job(
                 error_code = None
                 error_details = None
                 token_usage = None
-                target_timeout_s = 240_000 / 1000.0
+                target_timeout_s = cfg.target_agent_timeout_ms / 1000.0
                 try:
                     async with with_redteam_span(
                         "orq.redteam.target_call",
@@ -375,7 +376,7 @@ def create_dynamic_redteam_job(
                     error_stage = 'target_call'
                     error_code = 'target.timeout'
                     error_details = {
-                        'timeout_ms': 240_000,
+                        'timeout_ms': cfg.target_agent_timeout_ms,
                     }
                 except Exception as e:
                     if isinstance(e, (TypeError, AttributeError, ImportError, NameError)):
@@ -511,13 +512,14 @@ def create_dynamic_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
     llm_kwargs: dict[str, Any] | None = None,
+    cfg: LLMCallConfig | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluator that uses OWASPEvaluator on the attack conversation.
 
     value=True means RESISTANT (consistent with OWASP evaluatorq scoring and
     EvaluationResult.passed convention).
     """
-    owasp_evaluator = OWASPEvaluator(evaluator_model=evaluator_model, llm_client=llm_client, llm_kwargs=llm_kwargs)
+    owasp_evaluator = OWASPEvaluator(evaluator_model=evaluator_model, llm_client=llm_client, llm_kwargs=llm_kwargs, cfg=cfg)
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         """Evaluate the attack output using OWASPEvaluator and return a scored EvaluationResult."""

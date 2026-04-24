@@ -226,12 +226,12 @@ _deprecated_warned: set[str] = set()  # noqa: RUF067
 
 
 def __getattr__(name: str):
-    if name in ('RedTeamConfig', 'PipelineLLMConfig'):
+    if name in ("RedTeamConfig", "PipelineLLMConfig"):
         if name not in _deprecated_warned:
             import warnings
             _deprecated_warned.add(name)
             warnings.warn(
-                f'{name} is deprecated. Use LLMConfig instead.',
+                f"{name} has been renamed to LLMConfig. Update your imports.",
                 DeprecationWarning,
                 stacklevel=2,
             )

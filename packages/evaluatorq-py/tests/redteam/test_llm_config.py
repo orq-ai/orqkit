@@ -45,7 +45,6 @@ def test_llm_config_has_retry_and_timeout_fields():
     cfg = LLMConfig()
     assert cfg.retry_count == 3
     assert cfg.cleanup_timeout_ms == 60_000
-    assert cfg.log_level == 'INFO'
 
 
 def test_llm_config_no_backend_field():
@@ -89,3 +88,16 @@ def test_uses_orq_router_false_with_openai_key(monkeypatch):
     monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
     cfg = LLMConfig()
     assert cfg.uses_orq_router is False
+
+
+@pytest.mark.asyncio
+async def test_red_team_accepts_legacy_config_keyword(monkeypatch):
+    from evaluatorq.redteam import red_team
+    from evaluatorq.redteam.exceptions import CredentialError
+
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('ORQ_API_KEY', raising=False)
+
+    with pytest.deprecated_call(match='config= is deprecated'):
+        with pytest.raises(CredentialError):
+            await red_team('agent:test', config=LLMConfig())

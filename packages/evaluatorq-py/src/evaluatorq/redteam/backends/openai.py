@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.contracts import AgentContext, TargetKind, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_TARGET_MAX_TOKENS, DEFAULT_TARGET_TIMEOUT_MS, AgentContext, TargetKind, TokenUsage
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
@@ -40,8 +41,8 @@ class OpenAIModelTarget:
         system_prompt: str | None = None,
         *,
         client: AsyncOpenAI | None = None,
-        max_tokens: int = 5000,
-        timeout_ms: int = 90_000,
+        max_tokens: int | None = None,
+        timeout_ms: int | None = None,
     ):
         """Initialize the target with a model name, optional async client, and optional system prompt.
 
@@ -51,8 +52,8 @@ class OpenAIModelTarget:
         self.model = model
         self.client = client or create_async_llm_client()
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
-        self.max_tokens = max_tokens
-        self.timeout_ms = timeout_ms
+        self.max_tokens = max_tokens or DEFAULT_TARGET_MAX_TOKENS
+        self.timeout_ms = timeout_ms or DEFAULT_TARGET_TIMEOUT_MS
         self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
@@ -66,10 +67,13 @@ class OpenAIModelTarget:
             input_messages=messages,
             attributes={"orq.redteam.llm_purpose": "target"},
         ) as span:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=self.max_tokens,
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=self.max_tokens,
+                ),
+                timeout=self.timeout_ms / 1000.0,
             )
             content = response.choices[0].message.content or ''
             record_llm_response(span, response, output_content=content)
@@ -160,7 +164,7 @@ class OpenAIContextProvider:
 class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
-    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int = 5000, timeout_ms: int = 90_000):
+    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int | None = None, timeout_ms: int | None = None):
         """Initialize the factory with a shared async OpenAI client and optional system prompt."""
         self._client = client
         self._system_prompt = system_prompt

@@ -396,8 +396,8 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def new(self) -> None:
-                pass
+            def new(self) -> MockTarget:
+                return MockTarget()
 
         mock_report = _make_report()
         with patch(
@@ -419,8 +419,8 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def new(self) -> None:
-                pass
+            def new(self) -> MockTarget:
+                return MockTarget()
 
         mock_report = _make_report()
         with patch(
@@ -446,8 +446,8 @@ class TestRedTeamWithAgentTarget:
             async def send_prompt(self, prompt: str) -> str:
                 return 'response'
 
-            def new(self) -> None:
-                pass
+            def new(self) -> MockTarget:
+                return MockTarget()
 
         with pytest.raises(TypeError, match='Invalid target type'):
             await red_team([MockTarget(), 42])  # type: ignore[list-item, arg-type]  # pyright: ignore[reportArgumentType]

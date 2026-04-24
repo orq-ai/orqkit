@@ -252,13 +252,13 @@ def _build_adversarial_system_prompt(
     )
 
     prompt = safe_substitute(ADVERSARIAL_SYSTEM_PROMPT, {
-        '{objective}': objective,  # noqa: RUF027
+        '{objective}': objective,
         '{agent_name}': agent_context.display_name or agent_context.key,
         '{agent_description}': agent_context.description or 'An AI assistant',
         '{tools}': tools_str,
         '{memory_stores}': memory_str,
         '{strategy_description}': strategy.description,
-        '{max_turns}': str(max_turns),  # noqa: RUF027
+        '{max_turns}': str(max_turns),
     })
 
     if attacker_instructions:
@@ -305,7 +305,7 @@ class MultiTurnOrchestrator:
             error_mapper: Optional custom error mapper
             attacker_instructions: Optional domain-specific context to steer attack generation
             verbosity: Verbosity level (0=silent, 1=summary progress bar, 2=per-attack progress bars)
-            llm_kwargs: Optional extra keyword arguments merged into every chat.completions call
+            llm_kwargs: Deprecated — merged into pipeline_config.attacker.extra_kwargs at init. Use LLMCallConfig.extra_kwargs instead.
             pipeline_config: Optional LLMConfig instance. Defaults to module-level PIPELINE_CONFIG.
         """
         self.llm_client = llm_client
@@ -313,8 +313,12 @@ class MultiTurnOrchestrator:
         self.error_mapper = error_mapper or DefaultErrorMapper()
         self.attacker_instructions = attacker_instructions
         self.verbosity = verbosity
-        self.llm_kwargs = llm_kwargs or {}
         self._cfg = pipeline_config or PIPELINE_CONFIG
+        if llm_kwargs:
+            merged = {**self._cfg.attacker.extra_kwargs, **llm_kwargs}
+            self._cfg = self._cfg.model_copy(
+                update={'attacker': self._cfg.attacker.model_copy(update={'extra_kwargs': merged})}
+            )
 
     async def generate_single_prompt(
         self,
@@ -611,7 +615,7 @@ class MultiTurnOrchestrator:
                             break
 
                     # Send attack to target agent
-                    target_timeout_s = 240_000 / 1000.0
+                    target_timeout_s = self._cfg.target_agent_timeout_ms / 1000.0
                     try:
                         async with with_redteam_span(
                             "orq.redteam.target_call",
@@ -653,7 +657,7 @@ class MultiTurnOrchestrator:
                             error_stage = 'target_call'
                             error_code = 'target.timeout'
                             error_details = {
-                                'timeout_ms': 240_000,
+                                'timeout_ms': self._cfg.target_agent_timeout_ms,
                                 'consecutive_errors': consecutive_agent_errors,
                             }
                             error_turn = turn + 1

@@ -8,3 +8,6 @@ results/
 .quarto/
 docs/
 .evaluatorq/
+
+/.quarto/
+**/*.quarto_ipynb

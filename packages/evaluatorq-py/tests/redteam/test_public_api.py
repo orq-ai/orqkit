@@ -1,6 +1,6 @@
 # tests/redteam/test_public_api.py
+
 import warnings
-import pytest
 
 
 def test_llm_config_importable():
@@ -18,38 +18,37 @@ def test_openai_model_target_importable():
     assert OpenAIModelTarget is not None
 
 
-@pytest.fixture(autouse=True)
-def reset_deprecated_warned():
-    """Clear the deprecation-warned set so warnings fire afresh each test."""
-    import evaluatorq.redteam as rt
-    rt._deprecated_warned.clear()
-    yield
-    rt._deprecated_warned.clear()
+def _reset_deprecation_cache(name: str) -> None:
+    """Clear the module-level once-per-name guard so warnings fire each test."""
+    from evaluatorq import redteam as _rt
+    _rt._deprecated_warned.discard(name)
 
 
-def test_red_team_config_alias_warns():
-    import evaluatorq.redteam as rt
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        _ = rt.RedTeamConfig  # triggers __getattr__
-    dep = [x for x in w if issubclass(x.category, DeprecationWarning)]
-    assert dep, "Expected DeprecationWarning, got none"
-    assert any('LLMConfig' in str(x.message) for x in dep)
+def test_redteamconfig_deprecation_shim():
+    from evaluatorq import redteam as _rt
+    from evaluatorq.redteam import LLMConfig
+
+    _reset_deprecation_cache("RedTeamConfig")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        alias = _rt.RedTeamConfig
+
+    assert alias is LLMConfig
+    deprecation_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert deprecation_warnings, "Expected a DeprecationWarning for RedTeamConfig"
+    assert "LLMConfig" in str(deprecation_warnings[0].message)
 
 
-def test_pipeline_llm_config_alias_warns():
-    import evaluatorq.redteam as rt
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        _ = rt.PipelineLLMConfig
-    dep = [x for x in w if issubclass(x.category, DeprecationWarning)]
-    assert dep, "Expected DeprecationWarning, got none"
-    assert any('LLMConfig' in str(x.message) for x in dep)
+def test_pipelinellmconfig_deprecation_shim():
+    from evaluatorq import redteam as _rt
+    from evaluatorq.redteam import LLMConfig
 
+    _reset_deprecation_cache("PipelineLLMConfig")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        alias = _rt.PipelineLLMConfig
 
-def test_red_team_config_still_returns_llm_config_class():
-    import evaluatorq.redteam as rt
-    from evaluatorq.redteam.contracts import LLMConfig
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter('always')
-        assert rt.RedTeamConfig is LLMConfig
+    assert alias is LLMConfig
+    deprecation_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert deprecation_warnings, "Expected a DeprecationWarning for PipelineLLMConfig"
+    assert "LLMConfig" in str(deprecation_warnings[0].message)

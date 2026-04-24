@@ -223,3 +223,93 @@ class TestLangGraphTargetAgentContext:
 
         ctx = await target.get_agent_context()
         assert ctx is override
+
+
+class TestLangGraphTargetTokenUsage:
+    """Token usage capture mirrors the ORQ/OpenAI backends so the red team
+    pipeline's ``consume_last_token_usage`` hook picks up usage from LangGraph
+    agents."""
+
+    def _ai_msg(self, *, content: str, usage: dict[str, int] | None) -> MagicMock:
+        msg = MagicMock()
+        msg.content = content
+        # ``usage_metadata`` is a dict on LangChain AIMessage; set to None when
+        # the model did not report usage.
+        msg.usage_metadata = usage
+        return msg
+
+    @pytest.mark.asyncio
+    async def test_consume_returns_aggregated_usage_for_turn(self) -> None:
+        # Two AI messages in the same turn (e.g. tool call + final answer):
+        # both should be summed.
+        tool_msg = self._ai_msg(
+            content="",
+            usage={"input_tokens": 100, "output_tokens": 10, "total_tokens": 110},
+        )
+        final_msg = self._ai_msg(
+            content="done",
+            usage={"input_tokens": 120, "output_tokens": 30, "total_tokens": 150},
+        )
+        graph = MagicMock()
+        graph.name = "test_graph"
+        graph.ainvoke = AsyncMock(return_value={"messages": [tool_msg, final_msg]})
+
+        target = LangGraphTarget(graph)
+        await target.send_prompt("hi")
+
+        usage = target.consume_last_token_usage()
+        assert usage is not None
+        assert usage.prompt_tokens == 220
+        assert usage.completion_tokens == 40
+        assert usage.total_tokens == 260
+        assert usage.calls == 2
+
+        # Consume clears state — second call must return None.
+        assert target.consume_last_token_usage() is None
+
+    @pytest.mark.asyncio
+    async def test_consume_returns_none_when_no_usage_reported(self) -> None:
+        msg = self._ai_msg(content="hi", usage=None)
+        graph = MagicMock()
+        graph.name = "test_graph"
+        graph.ainvoke = AsyncMock(return_value={"messages": [msg]})
+
+        target = LangGraphTarget(graph)
+        await target.send_prompt("hi")
+
+        assert target.consume_last_token_usage() is None
+
+    @pytest.mark.asyncio
+    async def test_checkpointer_cumulative_history_counts_only_new_messages(self) -> None:
+        # Simulate a checkpointed graph: each ainvoke returns the full cumulative
+        # history. Only usage from the newly appended messages should be counted
+        # per turn, otherwise we would double-count tokens on multi-turn attacks.
+        turn1 = self._ai_msg(
+            content="turn1",
+            usage={"input_tokens": 50, "output_tokens": 5, "total_tokens": 55},
+        )
+        turn2 = self._ai_msg(
+            content="turn2",
+            usage={"input_tokens": 60, "output_tokens": 7, "total_tokens": 67},
+        )
+
+        graph = MagicMock()
+        graph.name = "test_graph"
+        graph.ainvoke = AsyncMock()
+        graph.ainvoke.return_value = {"messages": [turn1]}
+
+        target = LangGraphTarget(graph)
+        await target.send_prompt("first")
+        first_usage = target.consume_last_token_usage()
+        assert first_usage is not None
+        assert first_usage.prompt_tokens == 50
+        assert first_usage.completion_tokens == 5
+
+        # Second turn: checkpointer returns both historical and new message.
+        graph.ainvoke.return_value = {"messages": [turn1, turn2]}
+        await target.send_prompt("second")
+        second_usage = target.consume_last_token_usage()
+        assert second_usage is not None
+        assert second_usage.prompt_tokens == 60
+        assert second_usage.completion_tokens == 7
+        assert second_usage.calls == 1

@@ -8,7 +8,7 @@ from typing import cast
 import pytest
 from openai import AsyncOpenAI
 
-from evaluatorq.redteam import red_team
+from evaluatorq.redteam import OpenAIModelTarget, red_team
 
 from .conftest import DeterministicAsyncOpenAI, validate_report_structure
 
@@ -33,23 +33,19 @@ async def test_full_static_run(
     assert report.total_results == 3
 
 
-@pytest.mark.skip(
-    reason="Static mode no longer routes string targets to OpenAI models "
-    "(openai:/llm: prefixes removed); rewrite once static-mode AgentTarget "
-    "support is added."
-)
 @pytest.mark.asyncio
 async def test_static_vulnerability_detection(
     mock_llm_client: DeterministicAsyncOpenAI,
     static_dataset_path: Path,
 ) -> None:
     """ASI01/LLM07 should be vulnerable (mock leaks), ASI05 resistant (mock refuses)."""
+    client = cast(AsyncOpenAI, cast(object, mock_llm_client))
     report = await red_team(
-        "agent:e2e-static-model",
+        OpenAIModelTarget("e2e-static-model", client=client),
         mode="static",
         parallelism=2,
         dataset=str(static_dataset_path),
-        llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
+        llm_client=client,
     )
 
     results_by_cat = {r.attack.category: r for r in report.results}

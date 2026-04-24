@@ -283,6 +283,7 @@ class AttackSource(StrEnum):
     GENERATED_DYNAMIC = 'generated_dynamic'
 
 
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -558,6 +559,7 @@ class AgentContext(BaseModel):
 # openai and orq backends — the orq backend accepts this format as-is).
 DEFAULT_PIPELINE_MODEL: str = 'gpt-5-mini'
 DEFAULT_TARGET_MAX_TOKENS: int = 5000
+DEFAULT_TARGET_TIMEOUT_MS: int = 240_000
 
 
 class LLMCallConfig(BaseModel):
@@ -603,8 +605,8 @@ class LLMConfig(BaseModel):
     # --- Cleanup timeout ------------------------------------------------------
     cleanup_timeout_ms: int = 60_000
 
-    # --- Logging --------------------------------------------------------------
-    log_level: str = 'INFO'
+    # --- Target agent timeout -------------------------------------------------
+    target_agent_timeout_ms: int = 240_000
 
     @property
     def retry_config(self) -> dict[str, Any]:
@@ -631,11 +633,6 @@ class LLMConfig(BaseModel):
 # Module-level default used by internal pipeline components.
 # Import this in other modules; tests can monkeypatch it.
 PIPELINE_CONFIG = LLMConfig()
-
-# Backward-compatibility aliases — emit DeprecationWarning when
-# accessed via ``evaluatorq.redteam`` (handled in __init__.py).
-RedTeamConfig = LLMConfig
-PipelineLLMConfig = LLMConfig
 
 
 # ---------------------------------------------------------------------------
@@ -874,7 +871,7 @@ class AttackInfo(BaseModel):
         default=None, description='Vulnerability domain (null for dynamic attacks without a fixed domain)'
     )
     source: str = Field(
-        description="Origin: 'AgentDojo', 'orq_generated', 'template_dynamic', 'generated_dynamic'"
+        description="Origin: 'AgentDojo', 'orq_generated', 'orq_dataset', 'template_dynamic', 'generated_dynamic'"
     )
     strategy_name: str | None = Field(default=None, description="Dynamic strategy name (e.g., 'tool_output_hijack')")
     objective: str | None = Field(default=None, description='Filled objective template (dynamic only)')
