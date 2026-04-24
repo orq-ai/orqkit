@@ -217,6 +217,7 @@ export class JudgeAgent extends BaseAgent {
       temperature: 0.0,
       tools: JUDGE_TOOLS,
       signal: options?.signal,
+      llmPurpose: "judge",
     });
 
     return this.parseJudgment(result);

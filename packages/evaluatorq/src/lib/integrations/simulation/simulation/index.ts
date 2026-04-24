@@ -7,10 +7,16 @@
 
 import OpenAI from "openai";
 
-import { fromOrqDeployment } from "../adapters.js";
+import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
+import { fromOrqAgent } from "../adapters.js";
 import { getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { SimulationRunner } from "../runner/simulation.js";
+import {
+  recordTokenUsage,
+  setSpanAttrs,
+  withSimulationSpan,
+} from "../tracing.js";
 import type {
   ChatMessage,
   Datapoint,
@@ -48,6 +54,33 @@ export interface SimulateParams {
  */
 export async function simulate(
   params: SimulateParams,
+): Promise<SimulationResult[]> {
+  // Initialize OTel tracing (no-op if already initialized or not configured)
+  await initTracingIfNeeded();
+
+  try {
+    return await withSimulationSpan(
+      "orq.simulation.pipeline",
+      {
+        "orq.simulation.evaluation_name": params.evaluationName,
+        "orq.simulation.max_turns": params.maxTurns ?? 10,
+        "orq.simulation.parallelism": params.parallelism ?? 5,
+      },
+      (pipelineSpan) => _simulateCore(params, pipelineSpan),
+    );
+  } finally {
+    // Flush pending spans to ensure they're exported before the process exits
+    await flushTracing();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Core simulation logic (shared by simulate and generateAndSimulate)
+// ---------------------------------------------------------------------------
+
+async function _simulateCore(
+  params: SimulateParams,
+  pipelineSpan: import("@opentelemetry/api").Span | undefined,
 ): Promise<SimulationResult[]> {
   const {
     targetCallback,
@@ -124,10 +157,14 @@ export async function simulate(
     );
   }
 
+  setSpanAttrs(pipelineSpan, {
+    "orq.simulation.datapoints_count": datapoints.length,
+  });
+
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqDeployment(params.agentKey);
+    resolvedCallback = fromOrqAgent(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -157,6 +194,28 @@ export async function simulate(
       }
       (result.metadata as Record<string, unknown>).evaluator_scores = scores;
     }
+
+    // Record aggregate token usage on the pipeline span
+    const totalUsage = results.reduce(
+      (acc, r) => ({
+        prompt: acc.prompt + (r.token_usage?.prompt_tokens ?? 0),
+        completion: acc.completion + (r.token_usage?.completion_tokens ?? 0),
+        total: acc.total + (r.token_usage?.total_tokens ?? 0),
+      }),
+      { prompt: 0, completion: 0, total: 0 },
+    );
+    recordTokenUsage(pipelineSpan, {
+      promptTokens: totalUsage.prompt,
+      completionTokens: totalUsage.completion,
+      totalTokens: totalUsage.total,
+    });
+
+    setSpanAttrs(pipelineSpan, {
+      "orq.simulation.results_count": results.length,
+      "orq.simulation.goal_achieved_count": results.filter(
+        (r) => r.goal_achieved,
+      ).length,
+    });
 
     return results;
   } finally {
@@ -189,6 +248,9 @@ export interface GenerateAndSimulateParams {
 export async function generateAndSimulate(
   params: GenerateAndSimulateParams,
 ): Promise<SimulationResult[]> {
+  // Initialize tracing early so generation spans are captured
+  await initTracingIfNeeded();
+
   const {
     evaluationName,
     agentDescription,
@@ -204,7 +266,7 @@ export async function generateAndSimulate(
   // Bridge agentKey to invoke() if no callback is provided
   let resolvedCallback = targetCallback;
   if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqDeployment(params.agentKey);
+    resolvedCallback = fromOrqAgent(params.agentKey);
   }
 
   if (!resolvedCallback) {
@@ -242,32 +304,52 @@ export async function generateAndSimulate(
     );
   }
 
-  // Generate personas and scenarios in parallel
-  const personaGen = new PersonaGenerator({ model });
-  const scenarioGen = new ScenarioGenerator({ model });
+  try {
+    return await withSimulationSpan(
+      "orq.simulation.pipeline",
+      {
+        "orq.simulation.evaluation_name": evaluationName,
+        "orq.simulation.mode": "generate_and_simulate",
+        "orq.simulation.num_personas": numPersonas,
+        "orq.simulation.num_scenarios": numScenarios,
+        "orq.simulation.max_turns": maxTurns,
+        "orq.simulation.parallelism": parallelism,
+      },
+      async (pipelineSpan) => {
+        // Generate personas and scenarios in parallel (under the pipeline span)
+        const personaGen = new PersonaGenerator({ model });
+        const scenarioGen = new ScenarioGenerator({ model });
 
-  const [personas, scenarios] = await Promise.all([
-    personaGen.generate({
-      agentDescription,
-      numPersonas,
-    }),
-    scenarioGen.generate({
-      agentDescription,
-      numScenarios,
-    }),
-  ]);
+        const [personas, scenarios] = await Promise.all([
+          personaGen.generate({
+            agentDescription,
+            numPersonas,
+          }),
+          scenarioGen.generate({
+            agentDescription,
+            numScenarios,
+          }),
+        ]);
 
-  // Run simulations
-  return simulate({
-    evaluationName,
-    targetCallback: resolvedCallback,
-    personas,
-    scenarios,
-    maxTurns,
-    model,
-    evaluators,
-    parallelism,
-  });
+        // Delegate to core logic (no duplicate pipeline span)
+        return _simulateCore(
+          {
+            evaluationName,
+            targetCallback: resolvedCallback,
+            personas,
+            scenarios,
+            maxTurns,
+            model,
+            evaluators,
+            parallelism,
+          },
+          pipelineSpan,
+        );
+      },
+    );
+  } finally {
+    await flushTracing();
+  }
 }
 
 // Re-export evaluator utilities for convenience

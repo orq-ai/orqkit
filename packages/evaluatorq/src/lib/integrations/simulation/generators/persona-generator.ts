@@ -6,6 +6,13 @@
 
 import OpenAI from "openai";
 
+import {
+  getTraceContextHeaders,
+  recordLLMInput,
+  recordLLMResponse,
+  withLLMSpan,
+  withSimulationSpan,
+} from "../tracing.js";
 import type { CommunicationStyle, Persona } from "../types.js";
 import { extractJsonFromResponse } from "../utils/extract-json.js";
 import { delimit } from "../utils/sanitize.js";
@@ -158,16 +165,23 @@ export class PersonaGenerator {
     numPersonas?: number;
     edgeCasePercentage?: number;
   }): Promise<Persona[]> {
-    const {
-      agentDescription,
-      context = "",
-      numPersonas = 5,
-      edgeCasePercentage = 0.2,
-    } = params;
+    return withSimulationSpan(
+      "orq.simulation.persona_generation",
+      {
+        "orq.simulation.num_personas": params.numPersonas ?? 5,
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const {
+          agentDescription,
+          context = "",
+          numPersonas = 5,
+          edgeCasePercentage = 0.2,
+        } = params;
 
-    const numEdgeCases = Math.floor(numPersonas * edgeCasePercentage);
+        const numEdgeCases = Math.floor(numPersonas * edgeCasePercentage);
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Additional Context: ${delimit(context || "None provided")}
 
@@ -178,25 +192,55 @@ Generate ${numPersonas} diverse personas for testing this agent.
 
 Return ONLY a JSON array, no other text.`;
 
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: PERSONA_GENERATOR_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: TEMPERATURE_CREATIVE,
-      max_tokens: 4000,
-    });
+        const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+          [
+            { role: "system", content: PERSONA_GENERATOR_PROMPT },
+            { role: "user", content: userPrompt },
+          ];
 
-    const content = response.choices[0]?.message.content ?? "[]";
-    const personas = PersonaGenerator.parsePersonas(content);
+        const response = await withLLMSpan(
+          {
+            model: this.model,
+            temperature: TEMPERATURE_CREATIVE,
+            maxTokens: 4000,
+            purpose: "persona_generation",
+          },
+          async (llmSpan) => {
+            recordLLMInput(
+              llmSpan,
+              llmMessages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === "string" ? m.content : "",
+              })),
+            );
 
-    if (personas.length < numPersonas) {
-      console.warn(
-        `PersonaGenerator: requested ${numPersonas} personas but only ${personas.length} were successfully parsed`,
-      );
-    }
-    return personas;
+            const traceHeaders = await getTraceContextHeaders();
+            const res = await this.client.chat.completions.create(
+              {
+                model: this.model,
+                messages: llmMessages,
+                temperature: TEMPERATURE_CREATIVE,
+                max_tokens: 4000,
+              },
+              { headers: traceHeaders },
+            );
+
+            recordLLMResponse(llmSpan, res);
+            return res;
+          },
+        );
+
+        const content = response.choices[0]?.message.content ?? "[]";
+        const personas = PersonaGenerator.parsePersonas(content);
+
+        if (personas.length < numPersonas) {
+          console.warn(
+            `PersonaGenerator: requested ${numPersonas} personas but only ${personas.length} were successfully parsed`,
+          );
+        }
+        return personas;
+      },
+    );
   }
 
   /**
@@ -211,91 +255,99 @@ Return ONLY a JSON array, no other text.`;
     numPersonas?: number;
     edgeCasePercentage?: number;
   }): Promise<Persona[]> {
-    const {
-      agentDescription,
-      context = "",
-      numPersonas = 8,
-      edgeCasePercentage = 0.2,
-    } = params;
+    return withSimulationSpan(
+      "orq.simulation.persona_generation",
+      {
+        "orq.simulation.num_personas": params.numPersonas ?? 8,
+        "orq.simulation.mode": "coverage",
+        "orq.simulation.model": this.model,
+      },
+      async (span) => {
+        const {
+          agentDescription,
+          context = "",
+          numPersonas = 8,
+          edgeCasePercentage = 0.2,
+        } = params;
 
-    const styles: CommunicationStyle[] = [
-      "formal",
-      "casual",
-      "terse",
-      "verbose",
-    ];
+        const styles: CommunicationStyle[] = [
+          "formal",
+          "casual",
+          "terse",
+          "verbose",
+        ];
 
-    // Explicit trait combinations covering the FULL range (0.0-1.0)
-    const traitTargets = [
-      {
-        patience: 0.1,
-        assertiveness: 0.1,
-        politeness: 0.1,
-        technical_level: 0.1,
-      },
-      {
-        patience: 0.9,
-        assertiveness: 0.1,
-        politeness: 0.9,
-        technical_level: 0.9,
-      },
-      {
-        patience: 0.1,
-        assertiveness: 0.9,
-        politeness: 0.1,
-        technical_level: 0.5,
-      },
-      {
-        patience: 0.5,
-        assertiveness: 0.9,
-        politeness: 0.9,
-        technical_level: 0.1,
-      },
-      {
-        patience: 0.5,
-        assertiveness: 0.5,
-        politeness: 0.5,
-        technical_level: 0.5,
-      },
-      {
-        patience: 0.3,
-        assertiveness: 0.7,
-        politeness: 0.6,
-        technical_level: 0.3,
-      },
-      {
-        patience: 0.7,
-        assertiveness: 0.3,
-        politeness: 0.8,
-        technical_level: 0.7,
-      },
-      {
-        patience: 0.2,
-        assertiveness: 0.8,
-        politeness: 0.3,
-        technical_level: 0.8,
-      },
-    ];
+        // Explicit trait combinations covering the FULL range (0.0-1.0)
+        const traitTargets = [
+          {
+            patience: 0.1,
+            assertiveness: 0.1,
+            politeness: 0.1,
+            technical_level: 0.1,
+          },
+          {
+            patience: 0.9,
+            assertiveness: 0.1,
+            politeness: 0.9,
+            technical_level: 0.9,
+          },
+          {
+            patience: 0.1,
+            assertiveness: 0.9,
+            politeness: 0.1,
+            technical_level: 0.5,
+          },
+          {
+            patience: 0.5,
+            assertiveness: 0.9,
+            politeness: 0.9,
+            technical_level: 0.1,
+          },
+          {
+            patience: 0.5,
+            assertiveness: 0.5,
+            politeness: 0.5,
+            technical_level: 0.5,
+          },
+          {
+            patience: 0.3,
+            assertiveness: 0.7,
+            politeness: 0.6,
+            technical_level: 0.3,
+          },
+          {
+            patience: 0.7,
+            assertiveness: 0.3,
+            politeness: 0.8,
+            technical_level: 0.7,
+          },
+          {
+            patience: 0.2,
+            assertiveness: 0.8,
+            politeness: 0.3,
+            technical_level: 0.8,
+          },
+        ];
 
-    const numEdgeCases = Math.floor(numPersonas * edgeCasePercentage);
+        const numEdgeCases = Math.floor(numPersonas * edgeCasePercentage);
 
-    const coverageInstructions = Array.from(
-      { length: Math.min(numPersonas, 8) },
-      (_, i) => {
-        const target = traitTargets[
-          i % traitTargets.length
-        ] as (typeof traitTargets)[number];
-        return (
-          `- Persona ${i + 1}: communication_style='${styles[i % styles.length]}', ` +
-          `patience=${target.patience.toFixed(1)}, ` +
-          `assertiveness=${target.assertiveness.toFixed(1)}, ` +
-          `politeness=${target.politeness.toFixed(1)}, ` +
-          `technical_level=${target.technical_level.toFixed(1)}`
-        );
-      },
-    ).join("\n");
+        const coverageInstructions = Array.from(
+          { length: Math.min(numPersonas, 8) },
+          (_, i) => {
+            const target = traitTargets[
+              i % traitTargets.length
+            ] as (typeof traitTargets)[number];
+            return (
+              `- Persona ${i + 1}: communication_style='${styles[i % styles.length]}', ` +
+              `patience=${target.patience.toFixed(1)}, ` +
+              `assertiveness=${target.assertiveness.toFixed(1)}, ` +
+              `politeness=${target.politeness.toFixed(1)}, ` +
+              `technical_level=${target.technical_level.toFixed(1)}`
+            );
+          },
+        ).join("\n");
 
-    const userPrompt = `Agent Description: ${delimit(agentDescription)}
+        const userPrompt = `Agent Description: ${delimit(agentDescription)}
 
 Additional Context: ${delimit(context || "None provided")}
 
@@ -313,34 +365,64 @@ IMPORTANT:
 
 Return ONLY a JSON array, no other text.`;
 
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: PERSONA_GENERATOR_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: TEMPERATURE_BALANCED,
-      max_tokens: 4000,
-    });
+        const covMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+          [
+            { role: "system", content: PERSONA_GENERATOR_PROMPT },
+            { role: "user", content: userPrompt },
+          ];
 
-    const content = response.choices[0]?.message.content ?? "[]";
-    let personas = PersonaGenerator.parsePersonas(content);
+        const response = await withLLMSpan(
+          {
+            model: this.model,
+            temperature: TEMPERATURE_BALANCED,
+            maxTokens: 4000,
+            purpose: "persona_generation_coverage",
+          },
+          async (llmSpan) => {
+            recordLLMInput(
+              llmSpan,
+              covMessages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === "string" ? m.content : "",
+              })),
+            );
 
-    // Validate coverage and fill gaps if needed
-    personas = this.ensureStyleCoverage(personas, styles);
-    this.logTraitCoverageGaps(personas);
+            const traceHeaders = await getTraceContextHeaders();
+            const res = await this.client.chat.completions.create(
+              {
+                model: this.model,
+                messages: covMessages,
+                temperature: TEMPERATURE_BALANCED,
+                max_tokens: 4000,
+              },
+              { headers: traceHeaders },
+            );
 
-    // Trim to requested count (coverage adjustments may have kept extras)
-    if (personas.length > numPersonas) {
-      personas = personas.slice(0, numPersonas);
-    }
+            recordLLMResponse(llmSpan, res);
+            return res;
+          },
+        );
 
-    if (personas.length < numPersonas) {
-      console.warn(
-        `PersonaGenerator: requested ${numPersonas} personas (with coverage) but only ${personas.length} were successfully parsed`,
-      );
-    }
-    return personas;
+        const content = response.choices[0]?.message.content ?? "[]";
+        let personas = PersonaGenerator.parsePersonas(content);
+
+        // Validate coverage and fill gaps if needed
+        personas = this.ensureStyleCoverage(personas, styles);
+        this.logTraitCoverageGaps(personas);
+
+        // Trim to requested count (coverage adjustments may have kept extras)
+        if (personas.length > numPersonas) {
+          personas = personas.slice(0, numPersonas);
+        }
+
+        if (personas.length < numPersonas) {
+          console.warn(
+            `PersonaGenerator: requested ${numPersonas} personas (with coverage) but only ${personas.length} were successfully parsed`,
+          );
+        }
+        return personas;
+      },
+    );
   }
 
   /**
