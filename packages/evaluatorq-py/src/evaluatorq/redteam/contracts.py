@@ -649,11 +649,6 @@ class LLMConfig(BaseModel):
 # Import this in other modules; tests can monkeypatch it.
 PIPELINE_CONFIG = LLMConfig()
 
-# Backward-compatibility aliases — emit DeprecationWarning when
-# accessed via ``evaluatorq.redteam`` (handled in __init__.py).
-RedTeamConfig = LLMConfig
-PipelineLLMConfig = LLMConfig
-
 
 # ---------------------------------------------------------------------------
 # OWASP category names (self-contained, no external dependency)

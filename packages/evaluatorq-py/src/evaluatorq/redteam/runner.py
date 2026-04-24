@@ -49,7 +49,7 @@ from evaluatorq.redteam.backends.base import (
     is_agent_target,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
-from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, LLMConfig, PIPELINE_CONFIG, Pipeline, PipelineStage, RedTeamConfig, RedTeamReport, TargetConfig, TargetKind, Vulnerability, normalize_category
+from evaluatorq.redteam.contracts import AgentContext, DEFAULT_PIPELINE_MODEL, LLMConfig, PIPELINE_CONFIG, Pipeline, PipelineStage, RedTeamReport, TargetConfig, TargetKind, Vulnerability, normalize_category
 from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
@@ -273,7 +273,7 @@ class PreparedTarget:
 async def red_team(
     target: str | AgentTarget | list[str | AgentTarget],
     *,
-    config: RedTeamConfig | None = None,
+    config: LLMConfig | None = None,
     mode: Pipeline | str = Pipeline.DYNAMIC,
     categories: list[str] | None = None,
     vulnerabilities: list[str] | None = None,
@@ -424,7 +424,7 @@ async def red_team(
     # When ``config`` is provided it is the source of truth for models, llm
     # tuning, and llm_kwargs.
     if config is None:
-        config = RedTeamConfig()
+        config = LLMConfig()
 
     # Explicit rebind so downstream code doesn't need to read config repeatedly
     llm_kwargs = config.llm_kwargs
