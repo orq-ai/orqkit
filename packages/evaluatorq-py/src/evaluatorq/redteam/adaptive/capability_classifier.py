@@ -192,7 +192,7 @@ async def _infer_resource_capabilities(
     prompt = safe_substitute(RESOURCE_CAPABILITY_PROMPT, {
         '{has_memory_stores}': str(bool(agent_context.memory_stores)),
         '{has_knowledge_bases}': str(bool(agent_context.knowledge_bases)),
-        f'{tool_list}': tool_list,
+        '{tool_list}': tool_list,
     })
     try:
         infer_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
@@ -247,7 +247,7 @@ async def _classify_tools(
     cfg = cfg or PIPELINE_CONFIG
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools)
 
-    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {f'{tool_list}': tool_list})
+    prompt = safe_substitute(TOOL_CLASSIFICATION_PROMPT, {'{tool_list}': tool_list})
 
     valid_values = {c.value for c in AgentCapability}
 

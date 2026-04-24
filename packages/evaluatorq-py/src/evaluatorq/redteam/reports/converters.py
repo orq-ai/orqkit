@@ -331,7 +331,6 @@ def static_results_to_report(
         total_results=len(unified),
         results=unified,
         summary=summary,
-        token_usage_summary=summary.token_usage_total,
     )
 
 
@@ -476,7 +475,6 @@ def dynamic_evaluatorq_results_to_report(
         agent_context=agent_context,
         results=unified,
         summary=summary,
-        token_usage_summary=summary.token_usage_total,
         duration_seconds=duration_seconds,
     )
 
@@ -965,5 +963,4 @@ def merge_reports(
         agent_contexts=merged_agent_contexts,
         results=all_results,
         summary=summary,
-        token_usage_summary=summary.token_usage_total,
     )

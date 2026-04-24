@@ -8,43 +8,10 @@ from uuid import uuid4
 from langchain_core.runnables import RunnableConfig
 
 from evaluatorq.redteam.backends.base import AgentTarget
-from evaluatorq.redteam.contracts import AgentContext, MemoryStoreInfo, TokenUsage, ToolInfo
+from evaluatorq.redteam.contracts import AgentContext, MemoryStoreInfo, ToolInfo
 
 if TYPE_CHECKING:
     from langgraph.graph.state import CompiledStateGraph
-
-
-def _aggregate_langchain_usage(messages: list[Any]) -> TokenUsage | None:
-    """Sum ``usage_metadata`` across LangChain messages.
-
-    Each AI message emitted by a chat model carries a ``usage_metadata`` dict
-    (``input_tokens`` / ``output_tokens`` / ``total_tokens``). Messages without
-    usage (humans, tool results, models that did not report usage) are skipped.
-    Returns ``None`` when no message reports usage — callers use this to
-    preserve the "usage unavailable" signal.
-    """
-    prompt_total = completion_total = token_total = calls = 0
-    found = False
-    for msg in messages:
-        meta = msg.get("usage_metadata") if isinstance(msg, dict) else getattr(msg, "usage_metadata", None)
-        if not meta:
-            continue
-        prompt = int(meta.get("input_tokens", 0) or 0)
-        completion = int(meta.get("output_tokens", 0) or 0)
-        total = int(meta.get("total_tokens", prompt + completion) or 0)
-        prompt_total += prompt
-        completion_total += completion
-        token_total += total
-        calls += 1
-        found = True
-    if not found:
-        return None
-    return TokenUsage(
-        prompt_tokens=prompt_total,
-        completion_tokens=completion_total,
-        total_tokens=token_total,
-        calls=calls,
-    )
 
 
 class LangGraphTarget(AgentTarget):
@@ -93,12 +60,6 @@ class LangGraphTarget(AgentTarget):
         self._agent_context = agent_context
         graph_name: str = getattr(graph, "name", None) or "langgraph_target"
         self._key = f"{graph_name}_{uuid4().hex[:8]}"
-        # Token usage is captured off the last ainvoke result. Checkpointer-backed
-        # graphs return the full cumulative message history per call, so we track
-        # how many messages we have already accounted for and only aggregate usage
-        # from messages added by the most recent turn.
-        self._last_token_usage: TokenUsage | None = None
-        self._seen_message_count: int = 0
 
     def _build_config(self) -> RunnableConfig:
         """Build the RunnableConfig with the current thread_id."""
@@ -129,21 +90,12 @@ class LangGraphTarget(AgentTarget):
                 "LangGraphTarget: graph returned an empty 'messages' list. "
                 "Ensure every execution path appends at least one AI message."
             )
-        new_messages = messages[self._seen_message_count:]
-        self._last_token_usage = _aggregate_langchain_usage(new_messages)
-        self._seen_message_count = len(messages)
         last = messages[-1]
         # Support both dict and LangChain BaseMessage
         content = last.get("content", "") if isinstance(last, dict) else getattr(last, "content", "")
         if not isinstance(content, str):
             content = str(content)
         return content
-
-    def consume_last_token_usage(self) -> TokenUsage | None:
-        """Return and clear usage captured during the last ``send_prompt`` call."""
-        usage = self._last_token_usage
-        self._last_token_usage = None
-        return usage
 
     async def get_agent_context(self) -> AgentContext:
         """Return agent context introspected from the compiled graph.
