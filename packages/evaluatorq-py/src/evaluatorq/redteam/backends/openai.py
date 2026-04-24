@@ -57,6 +57,8 @@ class OpenAIModelTarget:
 
     async def send_prompt(self, prompt: str) -> str:
         """Send a prompt to the OpenAI model and return its response."""
+        import asyncio
+
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
             {'role': 'user', 'content': prompt},
@@ -66,10 +68,13 @@ class OpenAIModelTarget:
             input_messages=messages,
             attributes={"orq.redteam.llm_purpose": "target"},
         ) as span:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=self.max_tokens,
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=self.max_tokens,
+                ),
+                timeout=self.timeout_ms / 1000.0,
             )
             content = response.choices[0].message.content or ''
             record_llm_response(span, response, output_content=content)
