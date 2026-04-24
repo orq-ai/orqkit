@@ -177,6 +177,8 @@ export interface TokenUsageAttrs {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
 }
 
 /**
@@ -199,6 +201,13 @@ export function recordTokenUsage(
   span.setAttribute("gen_ai.usage.input_tokens", prompt);
   span.setAttribute("gen_ai.usage.output_tokens", completion);
   span.setAttribute("gen_ai.usage.total_tokens", total);
+
+  if (usage.cacheReadInputTokens !== undefined) {
+    span.setAttribute("gen_ai.usage.cache_read.input_tokens", usage.cacheReadInputTokens);
+  }
+  if (usage.cacheCreationInputTokens !== undefined) {
+    span.setAttribute("gen_ai.usage.cache_creation.input_tokens", usage.cacheCreationInputTokens);
+  }
 
   // Aliases for platform compatibility
   span.setAttribute("gen_ai.usage.prompt_tokens", prompt);
@@ -261,6 +270,7 @@ export function recordLLMResponse(
       prompt_tokens: number;
       completion_tokens: number;
       total_tokens: number;
+      prompt_tokens_details?: { cached_tokens?: number } | null;
     } | null;
     choices?: Array<{
       finish_reason?: string | null;
@@ -282,6 +292,7 @@ export function recordLLMResponse(
       promptTokens: response.usage.prompt_tokens,
       completionTokens: response.usage.completion_tokens,
       totalTokens: response.usage.total_tokens,
+      cacheReadInputTokens: response.usage.prompt_tokens_details?.cached_tokens,
     });
   }
 
@@ -300,12 +311,9 @@ export function recordLLMResponse(
 
   const finishReasons = response.choices
     ?.map((c) => c.finish_reason)
-    .filter(Boolean);
+    .filter((r): r is string => Boolean(r));
   if (finishReasons && finishReasons.length > 0) {
-    span.setAttribute(
-      "gen_ai.response.finish_reasons",
-      JSON.stringify(finishReasons),
-    );
+    span.setAttribute("gen_ai.response.finish_reasons", finishReasons);
   }
 }
 
