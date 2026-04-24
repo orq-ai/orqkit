@@ -81,7 +81,7 @@ def create_app() -> FastAPI:
             amount = Decimal(req.amount)
         except Exception:
             raise HTTPException(status_code=400, detail="invalid amount")
-        if amount <= 0 or not amount.is_finite():
+        if not amount.is_finite() or amount <= 0:
             raise HTTPException(status_code=400, detail="amount must be a positive finite number")
         try:
             tx = state.transfer(req.from_, req.to, amount)

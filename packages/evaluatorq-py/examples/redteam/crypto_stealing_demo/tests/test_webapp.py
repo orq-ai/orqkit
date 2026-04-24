@@ -76,3 +76,38 @@ def test_balances_endpoint():
     response = client.get("/balances")
     assert response.status_code == 200
     assert response.json() == {"balances": {"alice": "1.00000", "mallory": "0.00000"}}
+
+
+def test_transfer_rejects_negative_amount():
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/transfer", json={"from": "alice", "to": "mallory", "amount": "-0.1"})
+    assert response.status_code == 400
+
+
+def test_transfer_rejects_zero_amount():
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/transfer", json={"from": "alice", "to": "mallory", "amount": "0"})
+    assert response.status_code == 400
+
+
+def test_transfer_rejects_infinity():
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/transfer", json={"from": "alice", "to": "mallory", "amount": "Infinity"})
+    assert response.status_code == 400
+
+
+def test_transfer_rejects_nan():
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/transfer", json={"from": "alice", "to": "mallory", "amount": "NaN"})
+    assert response.status_code == 400
+
+
+def test_transfer_rejects_non_numeric():
+    app = create_app()
+    client = TestClient(app)
+    response = client.post("/transfer", json={"from": "alice", "to": "mallory", "amount": "abc"})
+    assert response.status_code == 400
