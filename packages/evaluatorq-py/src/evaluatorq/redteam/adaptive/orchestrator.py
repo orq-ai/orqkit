@@ -611,7 +611,7 @@ class MultiTurnOrchestrator:
                             break
 
                     # Send attack to target agent
-                    target_timeout_s = 240_000 / 1000.0
+                    target_timeout_s = self._cfg.target_agent_timeout_ms / 1000.0
                     try:
                         async with with_redteam_span(
                             "orq.redteam.target_call",
@@ -653,7 +653,7 @@ class MultiTurnOrchestrator:
                             error_stage = 'target_call'
                             error_code = 'target.timeout'
                             error_details = {
-                                'timeout_ms': 240_000,
+                                'timeout_ms': self._cfg.target_agent_timeout_ms,
                                 'consecutive_errors': consecutive_agent_errors,
                             }
                             error_turn = turn + 1

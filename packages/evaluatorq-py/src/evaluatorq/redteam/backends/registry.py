@@ -13,6 +13,7 @@ from evaluatorq.redteam.backends.openai import (
     OpenAIErrorMapper,
     OpenAITargetFactory,
 )
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG
 from evaluatorq.redteam.exceptions import BackendError, CredentialError
 
 if TYPE_CHECKING:
@@ -126,6 +127,7 @@ def _create_openai_backend(
 def _create_orq_backend(
     llm_client: AsyncOpenAI | None = None,
     target_config: TargetConfig | None = None,
+    pipeline_config: LLMConfig | None = None,
     **kwargs: object,
 ) -> BackendBundle:
     try:
@@ -133,8 +135,9 @@ def _create_orq_backend(
     except ImportError as exc:
         msg = "ORQ backend requested but ORQ dependencies are unavailable."
         raise BackendError(msg) from exc
+    cfg = pipeline_config or PIPELINE_CONFIG
     target_factory, context_provider, memory_cleanup = create_orq_backend(
-        timeout_ms=240_000,
+        timeout_ms=cfg.target_agent_timeout_ms,
     )
     return BackendBundle(
         name="orq",

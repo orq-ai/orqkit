@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.contracts import AgentContext, TargetKind, TokenUsage
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext, TargetKind, TokenUsage
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
@@ -40,8 +40,8 @@ class OpenAIModelTarget:
         system_prompt: str | None = None,
         *,
         client: AsyncOpenAI | None = None,
-        max_tokens: int = 5000,
-        timeout_ms: int = 90_000,
+        max_tokens: int | None = None,
+        timeout_ms: int | None = None,
     ):
         """Initialize the target with a model name, optional async client, and optional system prompt.
 
@@ -51,8 +51,8 @@ class OpenAIModelTarget:
         self.model = model
         self.client = client or create_async_llm_client()
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
-        self.max_tokens = max_tokens
-        self.timeout_ms = timeout_ms
+        self.max_tokens = max_tokens or PIPELINE_CONFIG.attacker.max_tokens
+        self.timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
         self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
@@ -160,7 +160,7 @@ class OpenAIContextProvider:
 class OpenAITargetFactory:
     """Factory creating OpenAI model targets."""
 
-    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int = 5000, timeout_ms: int = 90_000):
+    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int | None = None, timeout_ms: int | None = None):
         """Initialize the factory with a shared async OpenAI client and optional system prompt."""
         self._client = client
         self._system_prompt = system_prompt
