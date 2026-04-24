@@ -51,6 +51,7 @@ from evaluatorq.redteam.contracts import (
     SaveMode,
     TargetConfig,
     TargetKind,
+    TokenUsage,
     Vulnerability,
     normalize_category,
 )
@@ -58,6 +59,7 @@ from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
 from evaluatorq.redteam.runtime.jobs import _build_messages, create_model_job
+from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
 from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
 from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_vulnerabilities
 from evaluatorq.send_results import send_results_to_orq
@@ -510,13 +512,9 @@ async def red_team(
             pipeline_config=config,
         )
     elif resolved_mode == Pipeline.STATIC:
-        if agent_targets:
-            raise ValueError(
-                'Static mode does not support direct AgentTarget objects. '
-                'Use a string target (e.g., "agent:<key>") or switch to dynamic/hybrid mode.'
-            )
         report = await _run_static(
             targets=targets,
+            agent_targets=agent_targets,
             name=name,
             categories=resolved_categories,
             evaluator_model=evaluator_model,
@@ -678,6 +676,62 @@ def _deduplicate_target_labels(
 
     all_labels = list(string_targets) + [agent_label_map[id(at)] for at in agent_targets]
     return all_labels, agent_label_map
+
+
+def _extract_static_prompt(data: DataPoint) -> str:
+    """Flatten a static datapoint's messages into a single prompt string.
+
+    Static OWASP datapoints are typically single-turn. When multiple user turns
+    are present we join them with blank lines so all adversarial content is
+    delivered to the target. System messages are skipped — targets manage
+    their own system prompt via ``TargetConfig`` / ``AgentTarget.system_prompt``.
+    """
+    messages = _build_messages(data)
+    user_parts: list[str] = []
+    for m in messages:
+        role = m.get('role')
+        content = m.get('content')
+        if role == 'system' or content is None:
+            continue
+        if isinstance(content, list):
+            content = '\n'.join(
+                str(part.get('text', '')) for part in content
+                if isinstance(part, dict) and part.get('type') == 'text'
+            )
+        user_parts.append(str(content))
+    return '\n\n'.join(p for p in user_parts if p)
+
+
+def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
+    """Create an evaluatorq static job that drives an :class:`AgentTarget`.
+
+    The job extracts the datapoint's messages as a single prompt, creates
+    an isolated target via ``at.new()`` for each attack, and returns the
+    response in the dict shape expected by the OWASP evaluator.
+    """
+    safe = _sanitize_job_name(label)
+
+    @job(f'redteam:static:{safe}')
+    async def agent_target_job(data: DataPoint, _row: int) -> dict[str, Any]:
+        prompt = _extract_static_prompt(data)
+        target = at.new()
+        response = await target.send_prompt(prompt)
+
+        usage: TokenUsage | None = None
+        consume = getattr(target, 'consume_last_token_usage', None)
+        if callable(consume):
+            usage = consume()
+
+        _active_progress = _get_active_progress()
+        if _active_progress is not None:
+            await _active_progress.finish_attack(None)
+
+        return {
+            'response': response,
+            'token_usage': usage,
+        }
+
+    return agent_target_job
 
 
 def _create_job_for_target(
@@ -1735,6 +1789,7 @@ async def _run_dynamic_or_hybrid(
 async def _run_static(
     *,
     targets: list[str],
+    agent_targets: list[AgentTarget] | None = None,
     name: str | None = None,
     categories: list[str] | None,
     evaluator_model: str,
@@ -1763,6 +1818,11 @@ async def _run_static(
     )
 
     resolved_name = name or 'red-team'
+    resolved_agent_targets: list[AgentTarget] = list(agent_targets or [])
+    _, agent_target_labels = _deduplicate_target_labels(targets, resolved_agent_targets)
+    all_target_labels = list(targets) + [
+        agent_target_labels[id(at)] for at in resolved_agent_targets
+    ]
 
     resolved_hooks: PipelineHooks = hooks or DefaultHooks()
     pipeline_start = datetime.now(tz=timezone.utc).astimezone()
@@ -1804,6 +1864,10 @@ async def _run_static(
         _create_job_for_target(t, llm_client, sys_prompt)
         for t in targets
     ]
+    jobs.extend(
+        _create_static_job_for_agent_target(at, agent_target_labels[id(at)])
+        for at in resolved_agent_targets
+    )
 
     from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
     evaluator_client = pipeline_config.evaluator.client if pipeline_config else None
@@ -1828,7 +1892,7 @@ async def _run_static(
         "parallelism": parallelism,
         "filtering_metadata": None,
         "mode": "static",
-        "target": ", ".join(targets),
+        "target": ", ".join(all_target_labels),
         "dataset_path": str(dataset) if dataset else None,
         "vulnerabilities": vulnerabilities,
     }
@@ -1838,7 +1902,7 @@ async def _run_static(
 
     resolved_hooks.on_stage_start(PipelineStage.ATTACK_EXECUTION, {
         "num_datapoints": len(data) if isinstance(data, list) else 0,  # type: ignore[arg-type]
-        "targets": targets,
+        "targets": all_target_labels,
     })
 
     results = await evaluatorq(
@@ -1851,7 +1915,7 @@ async def _run_static(
         _exit_on_failure=False,
         _send_results=False,
         _trace_type="evaluatorq",
-        description=description or f'Static red teaming ({len(targets)} targets)',
+        description=description or f'Static red teaming ({len(all_target_labels)} targets)',
     )
 
     resolved_hooks.on_stage_end(PipelineStage.ATTACK_EXECUTION, {"num_results": len(results)})
@@ -1871,6 +1935,10 @@ async def _run_static(
         # create_model_job names follow "redteam:static:<safe_target>" convention;
         # use the safe slug for the lookup key to handle collisions gracefully.
         job_name_to_target[safe] = (t_kind, t_value)
+    for at in resolved_agent_targets:
+        label = agent_target_labels[id(at)]
+        safe = _sanitize_job_name(label)
+        job_name_to_target[safe] = (_safe_resolve_target_kind(at), label)
 
     # static_evaluatorq_results_to_reports groups by job_name already.
     # We call it once with all results; it returns a dict keyed by job_name.
@@ -1905,16 +1973,27 @@ async def _run_static(
     except Exception:
         logger.debug('Could not resolve backend for agent context retrieval — skipping')
 
+    # Pull agent context from AgentTarget objects that expose it.
+    for at in resolved_agent_targets:
+        label = agent_target_labels[id(at)]
+        provider = getattr(at, 'get_agent_context', None)
+        if not callable(provider):
+            continue
+        try:
+            agent_contexts[label] = await provider()
+        except Exception:
+            logger.debug(f'Could not retrieve agent context for {label} — skipping')
+
     all_job_reports = list(per_job_reports.values())
     if not all_job_reports:
         merged = static_results_to_report(
             [],
-            description=description or f'Static red teaming ({len(targets)} targets)',
+            description=description or f'Static red teaming ({len(all_target_labels)} targets)',
         )
     else:
         merged = merge_reports(
             *all_job_reports,
-            description=description or f'Static red teaming ({len(targets)} targets)',
+            description=description or f'Static red teaming ({len(all_target_labels)} targets)',
         )
 
     merged.duration_seconds = pipeline_duration
@@ -1932,7 +2011,7 @@ async def _run_static(
     await _send_cleaned_results(
         results=results,
         name=resolved_name,
-        description=description or f'Static red teaming ({len(targets)} targets)',
+        description=description or f'Static red teaming ({len(all_target_labels)} targets)',
         start_time=pipeline_start,
     )
 

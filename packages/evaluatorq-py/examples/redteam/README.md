@@ -80,7 +80,7 @@ When your application is an ORQ agent, the pipeline auto-discovers its tools, me
 `LLMConfig` centralizes role-based model selection and LLM call settings:
 
 ```python
-from evaluatorq.redteam import LLMCallConfig, LLMConfig, red_team
+from evaluatorq.redteam import LLMCallConfig, LLMConfig, OpenAIModelTarget, red_team
 
 config = LLMConfig(
     attacker=LLMCallConfig(
@@ -99,7 +99,6 @@ report = await red_team("agent:my-agent", llm_config=config)
 ```
 
 `red_team(..., config=...)` still works as a deprecated alias for backward compatibility, but new code should use `llm_config=`.
-
 ## Vulnerabilities vs Categories
 
 There are two ways to scope what gets tested:
@@ -107,14 +106,15 @@ There are two ways to scope what gets tested:
 **Categories** group tests by OWASP standard (e.g. `LLM01`, `ASI01`). Each category contains multiple vulnerability types.
 
 ```python
-report = await red_team("llm:gpt-5-mini", categories=["LLM01", "ASI01"])
+target = OpenAIModelTarget("gpt-5-mini", system_prompt="You are helpful.")
+report = await red_team(target, categories=["LLM01", "ASI01"])
 ```
 
 **Vulnerabilities** target specific attack vectors (e.g. `prompt_injection`, `goal_hijacking`). Use `list_available_vulnerabilities()` to discover all IDs.
 
 ```python
 report = await red_team(
-    "llm:gpt-5-mini",
+    target,
     vulnerabilities=["prompt_injection", "goal_hijacking"],
 )
 ```
@@ -133,41 +133,42 @@ evaluatorq redteam run --help
 
 ### Target types
 
-- **`llm:<model>`** — Test an LLM directly. Set `OPENAI_API_KEY` or `ORQ_API_KEY` and use `--system-prompt`.
-- **`agent:<key>`** — Test an ORQ agent. Set `ORQ_API_KEY`. Backend auto-selects to `orq`.
+- **`agent:<key>`** — Test an ORQ agent. Set `ORQ_API_KEY`.
+- **`deployment:<key>`** — Test an ORQ deployment. Set `ORQ_API_KEY`.
+- **`<model>`** — Test an LLM directly (e.g. `gpt-5-mini`). Set `OPENAI_API_KEY` or `ORQ_API_KEY` and use `--system-prompt`. For programmatic use from Python, prefer :class:`OpenAIModelTarget`.
 
 ### OpenAI examples
 
 ```bash
 # Basic dynamic run
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "gpt-5-mini" \
   --system-prompt "You are a helpful assistant." \
   --max-turns 2 --max-dynamic-datapoints 5 -y
 
 # Filter to specific categories
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "gpt-5-mini" \
   -c LLM01 -c LLM07 \
   --system-prompt "You are a helpful assistant." \
   --max-turns 2 --max-dynamic-datapoints 3 -y
 
 # Filter to specific vulnerabilities
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "gpt-5-mini" \
   -V prompt_injection -V goal_hijacking \
   --system-prompt "You are a helpful assistant." \
   --max-turns 2 --max-dynamic-datapoints 5 -y
 
 # Compare two models
-eq redteam run -t "llm:gpt-5-mini" -t "llm:gpt-4o" \
+eq redteam run -t "gpt-5-mini" -t "gpt-4o" \
   -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 -y
 
 # Domain-specific attack steering
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "gpt-5-mini" \
   --attacker-instructions "This agent handles financial transactions, try to approve fraudulent ones" \
   --system-prompt "You are a bank assistant." \
   --max-turns 3 --max-dynamic-datapoints 5 -y
 
 # Export reports
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "gpt-5-mini" \
   -c LLM07 --max-dynamic-datapoints 5 \
   --save-report ./report.json --export-md ./reports --export-html ./reports -y
 ```
@@ -175,7 +176,7 @@ eq redteam run -t "llm:gpt-5-mini" \
 ### ORQ platform examples
 
 ```bash
-# Dynamic run against an ORQ agent (backend auto-detected)
+# Dynamic run against an ORQ agent
 eq redteam run -t "agent:my-agent-key" \
   -c LLM01 -c ASI01 --max-turns 3 --max-dynamic-datapoints 5 -y
 
@@ -190,10 +191,9 @@ eq redteam run -t "agent:my-agent-key" \
 |-----------------------------|-----------------------------------------------------|
 | `-t` / `--target`           | Target (repeatable for multi-target)                |
 | `--mode`                    | `dynamic`, `static`, or `hybrid`                    |
-| `--backend`                 | `openai` (default) or `orq` (auto-detected for agents) |
 | `-c` / `--category`         | OWASP category filter (LLM01-10, ASI01-10)          |
 | `-V` / `--vulnerability`    | Vulnerability ID filter (e.g. `prompt_injection`)   |
-| `--system-prompt`           | System message for `llm:` targets                   |
+| `--system-prompt`           | System message for model/agent targets              |
 | `--attacker-instructions`   | Domain context to steer attack generation           |
 | `--max-turns`               | Max conversation turns per attack                   |
 | `--max-dynamic-datapoints`  | Cap on generated attack datapoints                  |
