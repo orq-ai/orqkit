@@ -222,6 +222,17 @@ _deprecated_warned: set[str] = set()
 
 
 def __getattr__(name: str):
+    if name in ("RedTeamConfig", "PipelineLLMConfig"):
+        if name not in _deprecated_warned:
+            import warnings
+            _deprecated_warned.add(name)
+            warnings.warn(
+                f"{name} has been renamed to LLMConfig. Update your imports.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        from evaluatorq.redteam.contracts import LLMConfig
+        return LLMConfig
     if name == "EvaluationResult":
         if name not in _deprecated_warned:
             import warnings

@@ -884,7 +884,7 @@ class AttackInfo(BaseModel):
         default=None, description='Vulnerability domain (null for dynamic attacks without a fixed domain)'
     )
     source: str = Field(
-        description="Origin: 'AgentDojo', 'orq_generated', 'template_dynamic', 'generated_dynamic'"
+        description="Origin: 'AgentDojo', 'orq_generated', 'orq_dataset', 'template_dynamic', 'generated_dynamic'"
     )
     strategy_name: str | None = Field(default=None, description="Dynamic strategy name (e.g., 'tool_output_hijack')")
     objective: str | None = Field(default=None, description='Filled objective template (dynamic only)')

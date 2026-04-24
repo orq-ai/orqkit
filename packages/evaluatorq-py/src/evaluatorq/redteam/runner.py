@@ -304,8 +304,8 @@ async def red_team(
     single report.
 
     Args:
-        target: Target identifier(s). A single string like ``"agent:<key>"``
-            or ``"llm:<model>"``, or a list of such strings for multi-target runs.
+        target: Target identifier(s). A single string like ``"agent:<key>"``,
+            an :class:`AgentTarget` instance, or a list of either for multi-target runs.
         mode: Execution mode — ``"dynamic"``, ``"static"``, or ``"hybrid"``.
         categories: OWASP categories to test (e.g., ``["ASI01", "ASI03"]``).
             Defaults to all available categories. Ignored if ``vulnerabilities`` is set.
@@ -313,15 +313,15 @@ async def red_team(
             Takes precedence over ``categories``.
         max_turns: Maximum conversation turns for multi-turn attacks.
         max_per_category: Cap strategies per category (None = no cap).
-        attack_model: Model for adversarial prompt generation.
-        evaluator_model: Model for OWASP evaluation scoring.
+        config: Optional :class:`LLMConfig` for model selection (``attack_model``,
+            ``evaluator_model``), per-step temperatures, timeouts, retry behaviour,
+            and ``llm_kwargs`` forwarded to every LLM call.
         parallelism: Maximum concurrent evaluatorq jobs.
         generate_strategies: Whether to generate additional LLM-based strategies.
         generated_strategy_count: Number of strategies to generate per category.
         max_dynamic_datapoints: Cap dynamic (generated) datapoints (None = no cap).
         max_static_datapoints: Cap static (dataset) datapoints (None = no cap).
         cleanup_memory: Whether to clean up memory entities after dynamic runs.
-        backend: Backend name (``"orq"`` or ``"openai"``).
         llm_client: Pre-configured AsyncOpenAI client for attack/strategy generation.
         name: Optional experiment name for the run. Used as the evaluatorq experiment
             name and for the auto-saved run filename. Defaults to ``'red-team'``.
