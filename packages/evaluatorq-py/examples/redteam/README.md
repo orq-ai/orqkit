@@ -70,36 +70,35 @@ When your application is an ORQ agent, the pipeline auto-discovers its tools, me
 
 | # | File | Description |
 |---|------|-------------|
-| 11 | `11_redteam_config.py` | Centralized `RedTeamConfig` for backend, models, and LLM tuning |
+| 11 | `11_redteam_config.py` | Centralized `LLMConfig` and `LLMCallConfig` for role-based model tuning |
 | 12 | `12_vulnerability_filter.py` | Target specific vulnerability IDs instead of broad categories |
 | 13 | `13_attacker_instructions.py` | Domain-specific context to generate more targeted attacks |
 | 14 | `14_recommendations_and_artifacts.py` | LLM-generated remediation advice + debug artifacts |
 
-## RedTeamConfig
+## LLMConfig
 
-`RedTeamConfig` is a single object that centralizes backend routing, model selection, and LLM call settings:
+`LLMConfig` centralizes role-based model selection and LLM call settings:
 
 ```python
-from evaluatorq.redteam import RedTeamConfig, PipelineLLMConfig, red_team
+from evaluatorq.redteam import LLMCallConfig, LLMConfig, red_team
 
-config = RedTeamConfig(
-    # "auto" picks orq for agent: targets, openai for llm: targets
-    backend="auto",
-    attack_model="gpt-5-mini",
-    evaluator_model="gpt-5-mini",
-    # Extra kwargs merged into every LLM API call
-    llm_kwargs={"reasoning_effort": "medium"},
-    # Fine-tune pipeline LLM settings
-    llm=PipelineLLMConfig(
-        adversarial_temperature=0.7,
-        llm_call_timeout_ms=90_000,
+config = LLMConfig(
+    attacker=LLMCallConfig(
+        model="openai/gpt-5-mini",
+        temperature=0.7,
+        timeout_ms=90_000,
+        extra_kwargs={"reasoning_effort": "medium"},
+    ),
+    evaluator=LLMCallConfig(
+        model="openai/gpt-5-mini",
+        temperature=0.0,
     ),
 )
 
-report = await red_team("agent:my-agent", config=config)
+report = await red_team("agent:my-agent", llm_config=config)
 ```
 
-Individual parameters on `red_team()` (like `attack_model`, `backend`) take precedence over config values — config provides defaults.
+`red_team(..., config=...)` still works as a deprecated alias for backward compatibility, but new code should use `llm_config=`.
 
 ## Vulnerabilities vs Categories
 

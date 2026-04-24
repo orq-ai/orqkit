@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import TYPE_CHECKING, Any
 
@@ -154,13 +155,16 @@ class OWASPEvaluator:
                 input_messages=eval_messages,
                 attributes=span_attributes,
             ) as eval_llm_span:
-                llm_response = await self.client.chat.completions.create(
-                    model=self.evaluator_model,
-                    messages=eval_messages,
-                    temperature=self._cfg.temperature,
-                    max_completion_tokens=self._cfg.max_tokens,
-                    response_format={'type': 'json_object'},
-                    **self.llm_kwargs,
+                llm_response = await asyncio.wait_for(
+                    self.client.chat.completions.create(
+                        model=self.evaluator_model,
+                        messages=eval_messages,
+                        temperature=self._cfg.temperature,
+                        max_completion_tokens=self._cfg.max_tokens,
+                        response_format={'type': 'json_object'},
+                        **self.llm_kwargs,
+                    ),
+                    timeout=self._cfg.timeout_ms / 1000.0,
                 )
                 raw_content = llm_response.choices[0].message.content or '{}'
                 record_llm_response(eval_llm_span, llm_response, output_content=raw_content)
@@ -181,6 +185,19 @@ class OWASPEvaluator:
             )
         except (APIConnectionError, APIStatusError):
             raise
+        except asyncio.TimeoutError:
+            logger.error(
+                f'Evaluation timed out for {evaluator_id} after {self._cfg.timeout_ms}ms'
+            )
+            return AttackEvaluationResult(
+                passed=None,
+                explanation=f'Evaluation timed out after {self._cfg.timeout_ms}ms',
+                evaluator_id=evaluator_id,
+                raw_output={
+                    'error': 'timeout',
+                    'timeout_ms': self._cfg.timeout_ms,
+                },
+            )
         except Exception as e:
             logger.error(f'Evaluation failed for {evaluator_id}, result will be inconclusive: {e}')
             return AttackEvaluationResult(

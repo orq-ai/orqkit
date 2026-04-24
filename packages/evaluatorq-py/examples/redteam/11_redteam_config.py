@@ -62,7 +62,7 @@ async def main() -> None:
     # directly to red_team(). Config handles the backend/model/LLM layer.
     report = await red_team(
         "agent:myagent/deployment:mydeployment",
-        config=config,
+        llm_config=config,
         mode="dynamic",
         categories=["LLM07"],
         max_dynamic_datapoints=3,
