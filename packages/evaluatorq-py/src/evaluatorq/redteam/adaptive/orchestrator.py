@@ -252,13 +252,13 @@ def _build_adversarial_system_prompt(
     )
 
     prompt = safe_substitute(ADVERSARIAL_SYSTEM_PROMPT, {
-        '{objective}': objective,  # noqa: RUF027
+        '{objective}': objective,
         '{agent_name}': agent_context.display_name or agent_context.key,
         '{agent_description}': agent_context.description or 'An AI assistant',
         '{tools}': tools_str,
         '{memory_stores}': memory_str,
         '{strategy_description}': strategy.description,
-        '{max_turns}': str(max_turns),  # noqa: RUF027
+        '{max_turns}': str(max_turns),
     })
 
     if attacker_instructions:

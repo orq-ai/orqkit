@@ -128,11 +128,11 @@ def _build_objective_prompt(
         '{agent_description}': agent_context.description or 'An AI assistant',
         '{tools}': tools_str,
         '{memory_stores}': memory_str,
-        f'{instructions_excerpt}': instructions_excerpt,
-        f'{vulnerability_name}': vulnerability_name,
-        f'{category_code}': category_code,
-        f'{turn_type_guidance}': turn_type_guidance,
-        f'{max_turns}': str(max_turns),
+        '{instructions_excerpt}': instructions_excerpt,
+        '{vulnerability_name}': vulnerability_name,
+        '{category_code}': category_code,
+        '{turn_type_guidance}': turn_type_guidance,
+        '{max_turns}': str(max_turns),
     })
 
     if attacker_instructions:
@@ -162,7 +162,7 @@ async def _call_llm_for_objectives_single(
     """
     cfg = cfg or PIPELINE_CONFIG
     try:
-        prompt = prompt_template.replace(f'{count}', str(count))
+        prompt = prompt_template.replace('{count}', str(count))
         gen_messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': prompt}]
         async with with_llm_span(
             model=model,

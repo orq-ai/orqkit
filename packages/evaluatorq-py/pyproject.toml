@@ -40,6 +40,7 @@ ignore = [
     "ANN202", "ANN204", "C901", "TRY301", "TRY401", "T201", "G201", "TRY300",
     "E402", "ARG002", "F841", "SIM102", "S603", "S607", "S404", "ASYNC230",
     "PTH123", "DOC201", "DOC501", "DOC502", "ARG001", "E501", "S311",
+    "RUF027",
 ]
 
 [tool.basedpyright]

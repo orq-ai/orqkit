@@ -344,7 +344,7 @@ def create_dynamic_redteam_job(
                 error_code = None
                 error_details = None
                 token_usage = None
-                target_timeout_s = 240_000 / 1000.0
+                target_timeout_s = cfg.target_agent_timeout_ms / 1000.0
                 try:
                     async with with_redteam_span(
                         "orq.redteam.target_call",
@@ -375,7 +375,7 @@ def create_dynamic_redteam_job(
                     error_stage = 'target_call'
                     error_code = 'target.timeout'
                     error_details = {
-                        'timeout_ms': 240_000,
+                        'timeout_ms': cfg.target_agent_timeout_ms,
                     }
                 except Exception as e:
                     if isinstance(e, (TypeError, AttributeError, ImportError, NameError)):
