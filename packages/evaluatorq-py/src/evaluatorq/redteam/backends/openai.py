@@ -29,19 +29,6 @@ def create_async_llm_client(role_config=None) -> AsyncOpenAI:
     return _create(role_config)
 
 
-def create_async_llm_client() -> AsyncOpenAI:
-    """Lazy proxy to :func:`~evaluatorq.redteam.backends.registry.create_async_llm_client`.
-
-    Defined here so that tests can patch
-    ``evaluatorq.redteam.backends.openai.create_async_llm_client`` and to avoid
-    a circular import between this module and ``registry.py`` (which imports our
-    classes at the top level).
-    """
-    from evaluatorq.redteam.backends.registry import create_async_llm_client as _create
-
-    return _create()
-
-
 class OpenAIModelTarget:
     """Target adapter that treats ``agent_key`` as an OpenAI model identifier."""
 

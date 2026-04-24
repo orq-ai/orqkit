@@ -13,6 +13,7 @@ from evaluatorq.redteam.backends.openai import (
     OpenAIErrorMapper,
     OpenAITargetFactory,
 )
+from evaluatorq.redteam.contracts import PIPELINE_CONFIG
 from evaluatorq.redteam.exceptions import BackendError, CredentialError
 
 if TYPE_CHECKING:

@@ -721,7 +721,7 @@ def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
         usage: TokenUsage | None = None
         consume = getattr(target, 'consume_last_token_usage', None)
         if callable(consume):
-            usage = consume()
+            usage = cast('TokenUsage | None', consume())
 
         _active_progress = _get_active_progress()
         if _active_progress is not None:
@@ -1978,7 +1978,7 @@ async def _run_static(
         if not callable(provider):
             continue
         try:
-            agent_contexts[label] = await provider()
+            agent_contexts[label] = await cast('Any', provider)()
         except Exception:
             logger.debug(f'Could not retrieve agent context for {label} — skipping')
 
