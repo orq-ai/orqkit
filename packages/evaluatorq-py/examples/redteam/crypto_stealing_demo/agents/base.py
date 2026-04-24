@@ -154,4 +154,4 @@ class DemoAgent(AgentTarget):
                 self._last_tool_calls.append(result)
                 self._conversation.append({"role": "tool", "tool_call_id": tc.id, "content": result.result})
 
-        return ""
+        return "[max tool iterations reached]"

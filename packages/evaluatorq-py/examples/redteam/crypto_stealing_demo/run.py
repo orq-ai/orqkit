@@ -44,7 +44,7 @@ async def main() -> None:
     try:
         httpx.post(f"{WEBAPP_URL}/reset", timeout=2.0)
     except Exception as exc:
-        print(f"WARN: webapp not reachable on localhost:8000 ({exc}). Continuing.", file=sys.stderr)
+        print(f"WARN: webapp not reachable on {WEBAPP_URL} ({exc}). Continuing.", file=sys.stderr)
 
     attacker_instructions = (DEMO_DIR / "attacker_instructions.txt").read_text()
     RESULTS_DIR.mkdir(exist_ok=True)
