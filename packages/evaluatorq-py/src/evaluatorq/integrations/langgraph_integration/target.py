@@ -44,10 +44,10 @@ class _TokenUsageCollector(BaseCallbackHandler):
                 # underlying API call; iterating all candidates would multiply-count.
                 gen = inner[0]
                 meta = getattr(getattr(gen, "message", None), "usage_metadata", None)
-                if not meta:
+                if meta is None:
                     continue
-                prompt = int(meta.get("input_tokens") or 0)
-                completion = int(meta.get("output_tokens") or 0)
+                prompt = int(meta.get("input_tokens")) if meta.get("input_tokens") is not None else 0
+                completion = int(meta.get("output_tokens")) if meta.get("output_tokens") is not None else 0
                 raw_total = meta.get("total_tokens")
                 # CRITICAL: use `is not None`, not truthiness — total_tokens=0 is valid.
                 total = int(raw_total) if raw_total is not None else prompt + completion
@@ -126,6 +126,8 @@ class LangGraphTarget(AgentTarget):
         self._extra_config = config or {}
         self.memory_entity_id: str = uuid4().hex
         self._agent_context = agent_context
+        # NOTE: _last_token_usage is not safe for concurrent send_prompt calls on
+        # the same instance — use .new() to get independent instances for parallel use.
         self._last_token_usage: TokenUsage | None = None
         graph_name: str = getattr(graph, "name", None) or "langgraph_target"
         self._key = f"{graph_name}_{uuid4().hex[:8]}"
@@ -160,6 +162,11 @@ class LangGraphTarget(AgentTarget):
             new_callbacks = manager_copy
         else:
             # Unknown type — wrap alongside existing without mutating.
+            logger.warning(
+                "LangGraphTarget: unrecognised callbacks type %s; wrapping in list. "
+                "Pass a list or BaseCallbackManager instead.",
+                type(existing).__name__,
+            )
             new_callbacks = [existing, collector]
 
         new_config: RunnableConfig = {**base_config, "callbacks": new_callbacks}
@@ -194,7 +201,12 @@ class LangGraphTarget(AgentTarget):
         return content
 
     def consume_last_token_usage(self) -> TokenUsage | None:
-        """Return and clear token usage from the last send_prompt() call."""
+        """Return and clear token usage from the last send_prompt() call.
+
+        Must be called between send_prompt() calls to avoid silently dropping
+        usage from earlier calls — each new send_prompt() overwrites the stored
+        value regardless of whether it has been consumed.
+        """
         usage = self._last_token_usage
         self._last_token_usage = None
         return usage
