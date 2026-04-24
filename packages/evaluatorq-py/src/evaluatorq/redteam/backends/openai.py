@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 
 from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.contracts import PIPELINE_CONFIG, AgentContext, TargetKind, TokenUsage
+from evaluatorq.redteam.contracts import DEFAULT_TARGET_MAX_TOKENS, DEFAULT_TARGET_TIMEOUT_MS, AgentContext, TargetKind, TokenUsage
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
 if TYPE_CHECKING:
@@ -51,8 +51,8 @@ class OpenAIModelTarget:
         self.model = model
         self.client = client or create_async_llm_client()
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
-        self.max_tokens = max_tokens or PIPELINE_CONFIG.attacker.max_tokens
-        self.timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
+        self.max_tokens = max_tokens or DEFAULT_TARGET_MAX_TOKENS
+        self.timeout_ms = timeout_ms or DEFAULT_TARGET_TIMEOUT_MS
         self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> str:
