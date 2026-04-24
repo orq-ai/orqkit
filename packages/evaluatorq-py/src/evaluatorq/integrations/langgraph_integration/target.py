@@ -55,7 +55,7 @@ class _TokenUsageCollector(BaseCallbackHandler):
                 self.completion_tokens += completion
                 self.total_tokens += total
                 self.calls += 1
-        except BaseException as exc:
+        except Exception as exc:
             logger.warning("_TokenUsageCollector.on_llm_end: failed to extract usage: %s", exc)
 
     def on_llm_error(self, error: BaseException, **kwargs: Any) -> None:
@@ -67,7 +67,7 @@ class _TokenUsageCollector(BaseCallbackHandler):
                 partial_result = getattr(response, "llm_result", None) or getattr(response, "llm_output", None)
                 if isinstance(partial_result, LLMResult):
                     self.on_llm_end(partial_result)
-        except BaseException as exc:
+        except Exception as exc:
             logger.warning("_TokenUsageCollector.on_llm_error: failed to extract partial usage: %s", exc)
 
     def to_token_usage(self) -> TokenUsage | None:
@@ -152,10 +152,10 @@ class LangGraphTarget(AgentTarget):
             new_callbacks: Any = [collector]
         elif isinstance(existing, list):
             new_callbacks = [*existing, collector]
-        elif isinstance(existing, BaseCallbackManager):
+        elif isinstance(existing, BaseCallbackManager) and hasattr(existing, "copy"):
             # Copy before mutating — avoid accumulating stale collectors on the
             # original manager across repeated send_prompt calls and .new() clones.
-            manager_copy = existing.copy() if hasattr(existing, "copy") else existing
+            manager_copy = existing.copy()
             manager_copy.add_handler(collector, inherit=True)
             new_callbacks = manager_copy
         else:
