@@ -88,3 +88,16 @@ def test_uses_orq_router_false_with_openai_key(monkeypatch):
     monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
     cfg = LLMConfig()
     assert cfg.uses_orq_router is False
+
+
+@pytest.mark.asyncio
+async def test_red_team_accepts_legacy_config_keyword(monkeypatch):
+    from evaluatorq.redteam import red_team
+    from evaluatorq.redteam.exceptions import CredentialError
+
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('ORQ_API_KEY', raising=False)
+
+    with pytest.deprecated_call(match='config=.*deprecated|config= is deprecated'):
+        with pytest.raises(CredentialError):
+            await red_team('agent:test', config=LLMConfig())
