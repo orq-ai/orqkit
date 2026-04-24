@@ -1524,16 +1524,10 @@ async def _run_dynamic_or_hybrid(
                 return await static_evaluator['scorer'](params)
 
             evaluators: list[Any] = [{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}]
-            first = first_target if first_target is not None else prepared_targets[0]
-            log_label = (
-                f'{len(first.dynamic_datapoints)} dynamic + '
-                f'{len(first.static_datapoints)} static datapoints'
-            )
         else:
             evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
             evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
             evaluators = [evaluator]
-            log_label = f'{len(all_datapoints)} datapoints'
 
         async with ProgressDisplay(est_total * len(prepared_targets), verbosity):
             try:
