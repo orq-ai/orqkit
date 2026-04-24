@@ -8,7 +8,7 @@ All notable changes to `evaluatorq` are documented here.
 
 ### Breaking Changes
 
-- `red_team()` parameter renamed: `config=` → `llm_config=`
+- `red_team()` parameter renamed: `config=` → `llm_config=`. The old `config=` keyword still works in 1.3.0 but emits a `DeprecationWarning` and **will be removed in 1.4.0**.
 - `LLMConfig` flat fields removed: `attack_model`, `evaluator_model`, `adversarial_temperature`, `adversarial_max_tokens`, `llm_call_timeout_ms`, `llm_kwargs` — replaced by role-based `attacker` / `evaluator` sub-configs (`LLMCallConfig`)
 
 **Migration:**

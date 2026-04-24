@@ -98,6 +98,6 @@ async def test_red_team_accepts_legacy_config_keyword(monkeypatch):
     monkeypatch.delenv('OPENAI_API_KEY', raising=False)
     monkeypatch.delenv('ORQ_API_KEY', raising=False)
 
-    with pytest.deprecated_call(match='config=.*deprecated|config= is deprecated'):
+    with pytest.deprecated_call(match='config= is deprecated'):
         with pytest.raises(CredentialError):
             await red_team('agent:test', config=LLMConfig())
