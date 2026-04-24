@@ -1442,8 +1442,8 @@ async def _run_dynamic_or_hybrid(
         has_static = any(pt.static_datapoints for pt in prepared_targets)
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
-            dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
-            static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
+            dynamic_evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client, llm_kwargs=llm_kwargs)
+            static_evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client, llm_kwargs=llm_kwargs)
 
             async def hybrid_scorer(params: Any) -> EvaluationResult:
                 """Route evaluation to the dynamic or static OWASP scorer based on datapoint source."""
@@ -1467,7 +1467,7 @@ async def _run_dynamic_or_hybrid(
                 f'{len(first.static_datapoints)} static datapoints'
             )
         else:
-            evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client)
+            evaluator = create_dynamic_evaluator(evaluator_model=evaluator_model, llm_client=resolved_llm_client, llm_kwargs=llm_kwargs)
             evaluators = [evaluator]
             log_label = f'{len(all_datapoints)} datapoints'
 

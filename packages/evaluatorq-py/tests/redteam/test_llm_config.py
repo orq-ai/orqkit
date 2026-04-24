@@ -19,7 +19,6 @@ def test_llm_config_has_pipeline_fields():
     assert cfg.target_agent_timeout_ms == 240_000
     assert cfg.cleanup_timeout_ms == 60_000
     assert cfg.retry_count == 3
-    assert cfg.log_level == 'INFO'
 
 
 def test_llm_config_has_model_fields():

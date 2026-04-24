@@ -612,9 +612,6 @@ class LLMConfig(BaseModel):
     llm_call_timeout_ms: int = 90_000
     cleanup_timeout_ms: int = 60_000
 
-    # --- Logging --------------------------------------------------------------
-    log_level: str = 'INFO'
-
     @property
     def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``.
