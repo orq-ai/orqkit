@@ -5,3 +5,6 @@ __pycache__/
 .ruff_cache/
 results/
 *.egg-info/
+.quarto/
+docs/
+.evaluatorq/

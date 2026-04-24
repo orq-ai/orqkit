@@ -2,6 +2,15 @@
 
 Runnable demo for the 30-minute talk at AI Builders Amsterdam.
 
+## Slides
+
+Quarto revealjs deck (`presentation.qmd`).
+
+```bash
+quarto render presentation.qmd
+open docs/presentation.html
+```
+
 ## Setup
 
 ```bash
