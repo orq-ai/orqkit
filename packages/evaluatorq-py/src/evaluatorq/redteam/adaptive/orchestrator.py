@@ -305,7 +305,7 @@ class MultiTurnOrchestrator:
             error_mapper: Optional custom error mapper
             attacker_instructions: Optional domain-specific context to steer attack generation
             verbosity: Verbosity level (0=silent, 1=summary progress bar, 2=per-attack progress bars)
-            llm_kwargs: Optional extra keyword arguments merged into every chat.completions call
+            llm_kwargs: Deprecated — merged into pipeline_config.attacker.extra_kwargs at init. Use LLMCallConfig.extra_kwargs instead.
             pipeline_config: Optional LLMConfig instance. Defaults to module-level PIPELINE_CONFIG.
         """
         self.llm_client = llm_client
@@ -313,8 +313,12 @@ class MultiTurnOrchestrator:
         self.error_mapper = error_mapper or DefaultErrorMapper()
         self.attacker_instructions = attacker_instructions
         self.verbosity = verbosity
-        self.llm_kwargs = llm_kwargs or {}
         self._cfg = pipeline_config or PIPELINE_CONFIG
+        if llm_kwargs:
+            merged = {**self._cfg.attacker.extra_kwargs, **llm_kwargs}
+            self._cfg = self._cfg.model_copy(
+                update={'attacker': self._cfg.attacker.model_copy(update={'extra_kwargs': merged})}
+            )
 
     async def generate_single_prompt(
         self,

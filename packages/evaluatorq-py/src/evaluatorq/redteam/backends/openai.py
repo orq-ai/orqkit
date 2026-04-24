@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from loguru import logger
@@ -57,8 +58,6 @@ class OpenAIModelTarget:
 
     async def send_prompt(self, prompt: str) -> str:
         """Send a prompt to the OpenAI model and return its response."""
-        import asyncio
-
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
             {'role': 'user', 'content': prompt},
