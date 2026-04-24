@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from agents import Agent, Runner
 
 from evaluatorq.redteam.backends.base import AgentTarget
-from evaluatorq.redteam.contracts import AgentContext, ToolInfo
+from evaluatorq.redteam.contracts import AgentContext, AgentResponse, ExecutedToolCall, ToolInfo
 
 
 class OpenAIAgentTarget(AgentTarget):
@@ -41,9 +42,10 @@ class OpenAIAgentTarget(AgentTarget):
         self._run_kwargs = run_kwargs or {}
         self._history: list[Any] = []
 
-    async def send_prompt(self, prompt: str) -> str:
-        """Send a prompt to the agent and return its text response."""
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Send a prompt to the agent and return its response with tool calls."""
         input_data: str | list[Any] = prompt
+        prev_len = len(self._history)
         if self._history:
             input_data = [*self._history, {"role": "user", "content": prompt}]
 
@@ -61,7 +63,38 @@ class OpenAIAgentTarget(AgentTarget):
             )
 
         self._history = result.to_input_list()
-        return str(result.final_output)
+
+        # Extract tool calls only from items added in this turn (not accumulated history)
+        # prev_len items were present before this call; everything after is new
+        tool_calls: list[ExecutedToolCall] = []
+        for item in self._history[prev_len:]:
+            # Handle dict format (standard OpenAI message format)
+            if isinstance(item, dict) and item.get("role") == "assistant":
+                for tc in (item.get("tool_calls") or []):
+                    if isinstance(tc, dict):
+                        func = tc.get("function", {})
+                        name = func.get("name", "") if isinstance(func, dict) else ""
+                        args_str = func.get("arguments", "{}") if isinstance(func, dict) else "{}"
+                        try:
+                            args = json.loads(args_str)
+                        except (json.JSONDecodeError, ValueError):
+                            args = {"raw": args_str}
+                        tool_calls.append(ExecutedToolCall(name=name, arguments=args))
+            # Handle typed SDK objects (future-proofing if to_input_list() returns non-dict items)
+            elif not isinstance(item, dict) and getattr(item, "role", None) == "assistant":
+                for tc in (getattr(item, "tool_calls", None) or []):
+                    tc_name = getattr(tc, "name", None) or getattr(getattr(tc, "function", None), "name", "") or ""
+                    tc_args_raw = getattr(tc, "arguments", None) or getattr(getattr(tc, "function", None), "arguments", "{}")
+                    if isinstance(tc_args_raw, str):
+                        try:
+                            tc_args: dict[str, Any] = json.loads(tc_args_raw)
+                        except (json.JSONDecodeError, ValueError):
+                            tc_args = {"raw": tc_args_raw}
+                    else:
+                        tc_args = tc_args_raw if isinstance(tc_args_raw, dict) else {}
+                    tool_calls.append(ExecutedToolCall(name=str(tc_name), arguments=tc_args))
+
+        return AgentResponse(text=str(result.final_output), tool_calls=tool_calls)
 
     def reset_conversation(self) -> None:
         """Reset conversation state by clearing the message history."""
