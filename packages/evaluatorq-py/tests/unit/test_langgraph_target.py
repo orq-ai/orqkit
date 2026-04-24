@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -401,7 +402,7 @@ class TestLangGraphTargetTokenUsage:
         # We use a custom ainvoke side-effect to simulate the callback being fired.
         captured_collectors: list[_TokenUsageCollector] = []
 
-        def _fake_ainvoke(input_dict: dict, *, config: dict) -> dict:
+        def _fake_ainvoke(input_dict: dict[str, Any], *, config: dict[str, Any]) -> dict[str, Any]:
             callbacks = config.get("callbacks", [])
             for cb in (callbacks if isinstance(callbacks, list) else []):
                 if isinstance(cb, _TokenUsageCollector):
@@ -486,7 +487,7 @@ class TestLangGraphTargetTokenUsage:
 
         from evaluatorq.integrations.langgraph_integration.target import _TokenUsageCollector
 
-        def _fake_ainvoke(input_dict: dict, *, config: dict) -> dict:
+        def _fake_ainvoke(input_dict: dict[str, Any], *, config: dict[str, Any]) -> dict[str, Any]:
             callbacks = config.get("callbacks", [])
             for cb in (callbacks if isinstance(callbacks, list) else []):
                 if isinstance(cb, _TokenUsageCollector):
