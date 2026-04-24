@@ -604,6 +604,9 @@ class LLMConfig(BaseModel):
     # --- Cleanup timeout ------------------------------------------------------
     cleanup_timeout_ms: int = 60_000
 
+    # --- Target agent timeout -------------------------------------------------
+    target_agent_timeout_ms: int = 240_000
+
     @property
     def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``.
