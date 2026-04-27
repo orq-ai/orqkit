@@ -4,7 +4,7 @@ Community nodes for integrating [Orq AI](https://orq.ai) with n8n workflows. The
 
 ## Features
 
-- **Agent Invocation**: Invoke Orq AI Agents for complex, multi-step workflows with async task execution
+- **Agent Execution**: Run Orq AI Agents for complex, multi-step workflows
 - **Deployment Invocation**: Execute Orq AI deployments with messages, context, and inputs
 - **Knowledge Base Search**: Search and retrieve content from Orq knowledge bases
 - **Dynamic Configuration**: Automatically load available agents, deployments, and knowledge bases
@@ -77,38 +77,50 @@ The nodes will appear as "OrqAgent", "OrqDeployment" and "OrqKnowledgeBaseSearch
 
 ### Orq Agent
 
-Invoke Orq AI Agents for complex, long-running tasks with multi-step reasoning, tool use, and human input handling.
+Run Orq AI Agents for complex, long-running tasks with multi-step reasoning and tool use.
 
 #### How It Works
 
-1. **Invoke**: Send a message to an agent
-2. **Async Execution**: The agent processes the request (may take seconds to minutes)
-3. **Poll**: The node automatically polls the agent task status until completion
-4. **Retrieve Results**: Extract the final agent response and full conversation history
+1. **Run**: Send a message to an agent
+2. **Execute**: The server runs the agent turn (including any tools it has configured) and returns when done
+3. **Retrieve Results**: Extract the final agent response
 
 #### Configuration
 
-- **Agent Key**: Select from your available agents or specify via expression
+- **Agent**: Select from your available agents or specify via expression
 - **Message**: Send your instruction or data to the agent
+- **Timeout (seconds)**: How long to wait for the agent to finish (default 600)
 
-#### Task States
+**Additional Fields** (optional)
+- **Previous Response ID**: Continue from a prior response by passing its `responseId`
+- **Conversation ID**: Thread multiple calls into a long-lived conversation (pre-create via the Orq API; mutually exclusive with Previous Response ID)
+- **Memory Entity ID**: Attach a persistent memory entity so the agent can recall facts across calls
+- **Store Response**: Whether Orq persists this response server-side (default on)
+- **Variables**: Templated prompt variables; each row has Name, Value, and a Secret toggle for log redaction
+- **Metadata**: Key-value tags (max 16 pairs)
 
-The agent task goes through states during execution:
+#### Response Statuses
 
-- `submitted` → `working` → `completed` (or `failed`, `canceled`, `input-required`, `rejected`, `auth-required`)
+The node branches on the agent's final status:
 
-The node automatically waits for a terminal state (max 120 seconds).
+- `completed` — success, response text extracted
+- `incomplete` — partial response returned with an `incomplete` flag
+- `failed` — throws with the server error message
 
 #### Output
 
 The node returns:
 
-- **taskId**: Unique identifier for this agent execution
+- **responseId**: Unique identifier for this response (use as Previous Response ID in a downstream node)
 - **agentKey**: The agent that was invoked
-- **status**: Final task state (`completed`, `failed`, etc.)
-- **success**: Boolean indicating if task completed successfully
-- **response**: The agent's response text (formatted markdown)
-- **messages**: Full conversation history with all message parts
+- **status**: Final status (`completed` or `incomplete`)
+- **success**: Boolean indicating if the response completed successfully
+- **response**: The agent's response text
+- **raw**: Full response body for anything else you need
+- **usage**: Token counts, when present
+- **refusals**: Array of refusal strings, when present
+- **incomplete**: `true` when status is `incomplete`
+- **incompleteReason**: Reason for the incomplete status, when present
 
 #### Example Use Cases
 
@@ -116,7 +128,6 @@ The node returns:
 - Complex document processing
 - Multi-step reasoning tasks
 - Tool use and function calling
-- Tasks requiring intermediate human input
 
 #### Example Workflow
 
