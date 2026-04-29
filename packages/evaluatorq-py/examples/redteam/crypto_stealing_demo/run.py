@@ -44,7 +44,7 @@ def _next_run_index() -> int:
 
 def _preflight() -> None:
     env_file = DEMO_DIR / ".env"
-    if not env_file.exists():
+    if not env_file.exists() and not os.environ.get("ORQ_API_KEY"):
         print(f"ERROR: {env_file} not found. Copy .env.example to .env and fill it in.", file=sys.stderr)
         sys.exit(2)
 
@@ -56,7 +56,7 @@ def _preflight() -> None:
 
     base_url = os.environ.get("ORQ_BASE_URL", "https://my.orq.ai")
     try:
-        r = httpx.get(f"{base_url}/health", timeout=5.0)
+        r = httpx.get(f"{base_url.rstrip('/')}/health", timeout=5.0)
         if r.status_code >= 500:
             print(f"WARN: ORQ health check returned {r.status_code}", file=sys.stderr)
     except Exception as exc:

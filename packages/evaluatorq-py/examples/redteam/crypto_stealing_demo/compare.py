@@ -84,6 +84,12 @@ def render_side_by_side(hal_path: str, jarvis_path: str) -> None:
             "Extra rows truncated.[/yellow]"
         )
     for jarvis_row, hal_row in zip(jarvis_rows, hal_rows):
+        if jarvis_row["vulnerability"] != hal_row["vulnerability"]:
+            console.print(
+                f"[yellow]WARN: row order mismatch — "
+                f"JARVIS '{jarvis_row['vulnerability']}' vs HAL '{hal_row['vulnerability']}'. "
+                "Comparison may be unreliable.[/yellow]"
+            )
         jarvis_verdict = (
             f"[red]{jarvis_row['verdict']}[/red]"
             if "VULN" in jarvis_row["verdict"].upper()

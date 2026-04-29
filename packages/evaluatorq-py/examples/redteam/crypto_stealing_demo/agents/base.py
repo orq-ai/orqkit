@@ -94,6 +94,7 @@ class DemoAgent(AgentTarget):
     def __init__(self) -> None:
         base_url = os.environ.get("ORQ_BASE_URL", "https://my.orq.ai").rstrip("/") + "/v2/router"
         self.client = AsyncOpenAI(base_url=base_url, api_key=os.environ["ORQ_API_KEY"])
+        self.memory_entity_id: str | None = None
         self._conversation: list[dict[str, Any]] = []
         self._last_tool_calls: list[ToolCall] = []
 
