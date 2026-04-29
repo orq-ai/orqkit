@@ -107,7 +107,7 @@ class DirectTargetFactory:
 
     def create_target(self, agent_key: str) -> AgentTarget:
         result = self._target.new()
-        if result is None:
+        if result is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError(
                 f"{type(self._target).__name__}.new() returned None. "
                 "It must return a fresh AgentTarget instance."
