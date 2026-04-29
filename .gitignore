@@ -57,3 +57,4 @@ Thumbs.db
 **/*.tsbuildinfo
 *.env
 packages/evaluatorq-py/outputs/*
+outputs/
