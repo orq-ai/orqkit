@@ -7,7 +7,7 @@
       "path": "./packages/evaluatorq"
     },
     {
-      "path": "./examples"
+      "path": "./packages/evaluatorq/examples"
     },
     {
       "path": "./packages/cli"
