@@ -1,13 +1,13 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "files": [],
   "include": [],
   "references": [
     {
-      "path": "../packages/evaluators"
+      "path": "../../evaluators"
     },
     {
-      "path": "../packages/evaluatorq"
+      "path": ".."
     },
     {
       "path": "./tsconfig.lib.json"
