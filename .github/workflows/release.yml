@@ -108,7 +108,9 @@ jobs:
           cat $GITHUB_OUTPUT
 
       - name: Run Nx Release (version, changelog & publish)
-        run: bun nx release ${{ steps.version.outputs.specifier }} --yes
+        # @orq-ai/cli is deprecated for this version — excluded from release.
+        # Remove the --exclude flag to resume publishing the CLI.
+        run: bun nx release ${{ steps.version.outputs.specifier }} --exclude=@orq-ai/cli --yes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TAG: ${{ steps.version.outputs.npm_tag }}
