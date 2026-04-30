@@ -89,7 +89,7 @@ Run Orq AI Agents for complex, long-running tasks with multi-step reasoning and 
 
 - **Agent**: Select from your available agents or specify via expression
 - **Message**: Send your instruction or data to the agent
-- **Timeout (seconds)**: How long to wait for the agent to finish (default 600)
+- **Timeout (Seconds)**: How long to wait for the agent to finish (default 600)
 
 **Additional Fields** (optional)
 - **Previous Response ID**: Continue from a prior response by passing its `responseId`
