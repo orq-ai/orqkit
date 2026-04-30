@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "src",
@@ -13,10 +13,10 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
-      "path": "../packages/evaluators/tsconfig.lib.json"
+      "path": "../../evaluators/tsconfig.lib.json"
     },
     {
-      "path": "../packages/evaluatorq/tsconfig.lib.json"
+      "path": "../tsconfig.lib.json"
     }
   ]
 }
