@@ -32,7 +32,8 @@
     "url": "https://github.com/orq-ai/orqkit/issues"
   },
   "author": {
-    "name": "orq.ai"
+    "name": "orq.ai",
+    "email": "kevin.lopez@orq.ai"
   },
   "engines": {
     "node": ">=20.15"
