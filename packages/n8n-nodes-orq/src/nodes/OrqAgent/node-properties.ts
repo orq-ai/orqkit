@@ -140,7 +140,7 @@ export const additionalFieldsProperty: INodeProperties = {
 };
 
 export const timeoutSecondsProperty: INodeProperties = {
-  displayName: "Timeout (seconds)",
+  displayName: "Timeout (Seconds)",
   name: "timeoutSeconds",
   type: "number",
   default: DEFAULT_RESPONSE_TIMEOUT_SECONDS,
