@@ -1,0 +1,6 @@
+input,expected_output
+What is the weather in San Francisco?,The weather in San Francisco is around 72°F (22°C).
+What is the weather in New York?,The weather in New York is around 68°F (20°C).
+What is the weather in London?,The weather in London is around 59°F (15°C).
+What is the weather in Tokyo?,The weather in Tokyo is around 75°F (24°C).
+What is the temperature in Berlin in Celsius?,The temperature in Berlin is around 18°C.

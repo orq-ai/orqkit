@@ -1,0 +1,172 @@
+{
+  "name": "Orq Agent - Sales Data Analysis",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-416, -208],
+      "id": "9a48d892-0e86-44f4-b8d1-66d8b23e4282",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac8692a9-648c-4cb7-a2c2-7312f751c58c",
+              "name": "csvData",
+              "value": "Month,Sales,Units,Region\nJanuary,45000,150,North\nFebruary,52000,175,North\nMarch,48000,160,North\nApril,61000,200,North\nMay,72000,240,North\nJune,68000,225,North\nJuly,85000,280,North\nAugust,78000,260,North\nJanuary,35000,120,South\nFebruary,38000,130,South\nMarch,41000,140,South\nApril,48000,160,South\nMay,56000,185,South\nJune,62000,205,South\nJuly,70000,230,South\nAugust,65000,215,South\nJanuary,28000,95,West\nFebruary,32000,110,West\nMarch,36000,125,West\nApril,42000,145,West\nMay,51000,175,West\nJune,58000,200,West\nJuly,64000,220,West\nAugust,59000,205,West",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-224, -208],
+      "id": "4500838c-09c2-4e8e-a8be-8c6073c75853",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "agentKey": "data-analyst",
+        "message": "Analyze this regional sales data and provide insights:\n\nCSV Data:\n{{ $json.csvData }}\n\nPlease provide:\n1. Overall trend (is sales growing or declining?)\n2. Best performing region and month\n3. Growth rate per region\n4. Any seasonal patterns you notice\n5. Top 3 actionable recommendations"
+      },
+      "type": "@orq-ai/n8n-nodes-orq.orqAgent",
+      "typeVersion": 1,
+      "position": [-32, -208],
+      "id": "fa3f235e-1680-4679-a2cb-c6f5c2df7334",
+      "name": "Orq Agent",
+      "credentials": {
+        "orqApi": {
+          "id": "your-orq-credentials",
+          "name": "Orq API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5042e0ce-a8e2-4a35-b6a6-82d388ed8076",
+              "leftValue": "={{ $node[\"Orq Agent\"].json.status === \"completed\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [176, -208],
+      "id": "52a91b3f-60ec-4b25-8975-a54577481495",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [450, -100],
+      "id": "noop-success",
+      "name": "Analysis Complete"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [450, -300],
+      "id": "noop-failed",
+      "name": "Analysis Failed"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Orq Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orq Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Analysis Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analysis Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analysis Complete": {
+      "main": [[]]
+    },
+    "Analysis Failed": {
+      "main": [[]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "orq-agent-example-workflow",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": ["orq-agent", "data-analysis", "example"]
+}

@@ -19,7 +19,7 @@
   "scripts": {},
   "workspaces": [
     "packages/*",
-    "examples"
+    "packages/evaluatorq/examples"
   ],
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",

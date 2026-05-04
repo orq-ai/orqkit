@@ -19,7 +19,10 @@
       "!**/.venv",
       "!**/__pycache__",
       "!**/*.egg-info",
-      "!**/report.css"
+      "!**/report.css",
+      "!**/crypto_stealing_demo/orq-theme.css",
+      "!**/crypto_stealing_demo/styles.scss",
+      "!**/crypto_stealing_demo/presentation.qmd"
     ]
   },
   "formatter": {
