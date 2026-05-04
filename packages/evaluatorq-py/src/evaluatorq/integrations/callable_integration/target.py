@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 
 from evaluatorq.redteam.backends.base import AgentTarget
-from evaluatorq.redteam.contracts import AgentContext
+from evaluatorq.redteam.contracts import AgentContext, SendResult, TokenUsage
+
+logger = logging.getLogger(__name__)
 
 # Accepted callable signatures
 AgentCallable = Callable[[str], Awaitable[str]] | Callable[[str], str]
@@ -33,6 +36,12 @@ class CallableTarget(AgentTarget):
         # Or a simple sync function
         target = CallableTarget(lambda prompt: "I can't help with that.")
 
+        # Plumb token counts via usage_fn
+        def get_usage(prompt: str, response: str) -> TokenUsage:
+            return TokenUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15, calls=1)
+
+        target = CallableTarget(my_agent, usage_fn=get_usage)
+
         # Pass to red teaming
         config = DynamicRunConfig(targets=[target])
     """
@@ -46,6 +55,7 @@ class CallableTarget(AgentTarget):
         fn: AgentCallable,
         *,
         reset_fn: Callable[[], None] | None = None,
+        usage_fn: Callable[[str, str], TokenUsage | None] | None = None,
         agent_context: AgentContext | None = None,
     ) -> None:
         """Create a callable red teaming target.
@@ -53,6 +63,11 @@ class CallableTarget(AgentTarget):
         Args:
             fn: A sync or async function that takes a prompt and returns a response.
             reset_fn: Optional callback invoked on ``new()`` to clear shared callable state between attacks.
+            usage_fn: Optional callable taking ``(prompt, response) -> TokenUsage | None``.
+                Use this to plumb token counts from your underlying framework when the
+                callable itself only returns a string. The function must be synchronous;
+                async usage extraction is not supported. Exceptions raised by ``usage_fn``
+                are logged as warnings and result in ``usage=None``.
             agent_context: Optional :class:`AgentContext` describing the wrapped
                 callable's tools, memory, system prompt, etc. The red teaming
                 pipeline uses this for capability-aware strategy filtering —
@@ -62,16 +77,25 @@ class CallableTarget(AgentTarget):
         self._fn = fn
         self._is_async = asyncio.iscoroutinefunction(fn)
         self._reset_fn = reset_fn
+        self._usage_fn = usage_fn
         self._agent_context = agent_context
 
-    async def send_prompt(self, prompt: str) -> str:
-        """Send a prompt to the callable and return its response."""
+    async def send_prompt_with_usage(self, prompt: str) -> SendResult:
+        """Send a prompt to the callable and return its response with usage."""
         try:
             if self._is_async:
-                return await self._fn(prompt)  # type: ignore[misc]  # pyright: ignore[reportReturnType, reportGeneralTypeIssues]
-            return await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]  # pyright: ignore[reportReturnType]
+                text = await self._fn(prompt)  # type: ignore[misc]  # pyright: ignore[reportReturnType, reportGeneralTypeIssues]
+            else:
+                text = await asyncio.to_thread(self._fn, prompt)  # type: ignore[return-value]  # pyright: ignore[reportReturnType]
         except Exception as exc:
             raise RuntimeError(f"CallableTarget: callable raised {exc!r}") from exc
+        usage: TokenUsage | None = None
+        if self._usage_fn is not None:
+            try:
+                usage = self._usage_fn(prompt, str(text))
+            except Exception as e:
+                logger.warning("usage_fn raised %s; using usage=None", e)
+        return SendResult(text=str(text), usage=usage)
 
     async def get_agent_context(self) -> AgentContext:
         """Return the user-provided agent context, or a minimal placeholder."""
@@ -84,4 +108,4 @@ class CallableTarget(AgentTarget):
         """Return a fresh copy sharing the same callable, with state reset via reset_fn."""
         if self._reset_fn is not None:
             self._reset_fn()
-        return CallableTarget(self._fn, reset_fn=self._reset_fn, agent_context=self._agent_context)
+        return CallableTarget(self._fn, reset_fn=self._reset_fn, usage_fn=self._usage_fn, agent_context=self._agent_context)
