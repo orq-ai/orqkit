@@ -10,6 +10,7 @@ Semantic convention:
 
 import os
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, TypedDict
 
@@ -608,6 +609,12 @@ class LLMConfig(BaseModel):
     # --- Target agent timeout -------------------------------------------------
     target_agent_timeout_ms: int = 240_000
 
+    # --- Agent tool continuation cap ------------------------------------------
+    max_tool_continuations: int = Field(
+        default=5,
+        description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
+    )
+
     @property
     def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``.
@@ -736,9 +743,17 @@ class AttackStrategy(BaseModel):
 
 
 class TokenUsage(BaseModel):
-    """Token usage and cost for an LLM call or aggregation of calls."""
+    """Token usage and cost for an LLM call or aggregation of calls.
 
-    total_tokens: int = Field(default=0, description='Total tokens used')
+    ``total_tokens`` is stored as provided by the upstream provider and is
+    never overridden. This preserves provider-specific token breakdowns
+    (cached_tokens, reasoning_tokens, audio tokens, etc.) that would be
+    silently corrupted by a normalisation step.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    total_tokens: int = Field(default=0, description='Total tokens used as reported by the provider')
     prompt_tokens: int = Field(default=0, description='Prompt/input tokens')
     completion_tokens: int = Field(default=0, description='Completion/output tokens')
     calls: int = Field(default=0, description='Number of LLM API calls')
@@ -753,6 +768,43 @@ class TokenUsage(BaseModel):
         completion = int(getattr(usage, 'completion_tokens', 0) or 0)
         total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
         return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
+
+    def __add__(self, other: 'TokenUsage | None') -> 'TokenUsage':
+        if other is None:
+            return self.model_copy()
+        return TokenUsage(
+            prompt_tokens=self.prompt_tokens + other.prompt_tokens,
+            completion_tokens=self.completion_tokens + other.completion_tokens,
+            total_tokens=self.total_tokens + other.total_tokens,
+            calls=self.calls + other.calls,
+        )
+
+    def __radd__(self, other: object) -> 'TokenUsage':
+        """Support sum() which starts with integer 0, and reflected addition."""
+        if isinstance(other, int) and other == 0:
+            return self.model_copy()  # safe copy, no shared reference
+        if isinstance(other, TokenUsage):
+            return other.__add__(self)
+        return NotImplemented
+
+
+# Intentionally a dataclass (not Pydantic BaseModel) for hot-path performance —
+# SendResult is an internal value object produced on every target call and is
+# never serialized outside this module. Pydantic validation overhead per call is
+# unnecessary here.
+@dataclass(slots=True, frozen=True, kw_only=True)
+class SendResult:
+    """Result of an ``AgentTarget.send_prompt_with_usage()`` call.
+
+    Returns text and token usage together. On exception the caller does not
+    observe partial usage via the return value.
+    """
+
+    text: str
+    usage: 'TokenUsage | None' = None
+    model: 'str | None' = None
+    response_id: 'str | None' = None
+    finish_reason: 'str | None' = None
 
 
 # ---------------------------------------------------------------------------
