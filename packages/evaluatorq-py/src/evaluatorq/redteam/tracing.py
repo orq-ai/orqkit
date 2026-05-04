@@ -343,9 +343,7 @@ def _default_span_max_text_chars() -> int | None:
     """Read EVALUATORQ_SPAN_MAX_TEXT_CHARS once. Default ``None`` = unlimited.
 
     Set the env var to a positive integer to cap span text payloads. ``0``
-    is also treated as unlimited. Invalid values (non-integer, negative)
-    are warn-and-ignored: a misconfigured env var must never crash a
-    red-teaming run from the hot-path span recorders that call this.
+    is also treated as unlimited. Negative values raise ``ValueError``.
 
     Use ``_default_span_max_text_chars.cache_clear()`` in tests to force
     re-read after changing the env var.
@@ -362,11 +360,9 @@ def _default_span_max_text_chars() -> int | None:
         )
         return None
     if value < 0:
-        logger.warning(
-            'EVALUATORQ_SPAN_MAX_TEXT_CHARS=%r is negative; ignoring (truncation disabled)',
-            raw,
+        raise ValueError(
+            f'EVALUATORQ_SPAN_MAX_TEXT_CHARS must be non-negative, got {value}'
         )
-        return None
     return value
 
 
@@ -374,10 +370,8 @@ def truncate_for_span(text: object, *, max_chars: int | None = None) -> str:
     """Truncate text for span attribute storage.
 
     Defaults to ``EVALUATORQ_SPAN_MAX_TEXT_CHARS`` env var (or ``None`` =
-    unlimited if unset). ``None``, ``0``, and negative values all disable
-    truncation. Symmetric with ``_default_span_max_text_chars``: a misconfig
-    on either path degrades to "unlimited" with a warning rather than
-    crashing the surrounding span recorder on a non-fatal config issue.
+    unlimited if unset). ``None`` and ``0`` both disable truncation.
+    Negative values raise ``ValueError``.
 
     Output never exceeds ``max_chars``: the marker ``... [truncated]`` is
     reserved within the budget when truncation fires.
@@ -394,11 +388,7 @@ def truncate_for_span(text: object, *, max_chars: int | None = None) -> str:
     if max_chars is None or max_chars == 0:
         return s
     if max_chars < 0:
-        logger.warning(
-            'truncate_for_span: max_chars=%r is negative; treating as unlimited',
-            max_chars,
-        )
-        return s
+        raise ValueError(f'max_chars must be non-negative, got {max_chars}')
     if len(s) <= max_chars:
         return s
     marker_len = len(_TRUNCATION_MARKER)
