@@ -99,15 +99,11 @@ def is_agent_target(obj: object) -> bool:
 
 
 def validate_agent_target(obj: object) -> None:
-    """Surface the pre-1.3 ``clone()`` -> ``new()`` migration error.
+    """Raise ``TypeError`` with a migration message if obj uses the removed ``clone()`` API.
 
-    Narrow on purpose: raises ``TypeError`` only when ``obj`` exposes neither
-    ``send_prompt_with_usage`` nor ``new`` but still has the removed
-    ``clone()`` method, since that pattern uniquely identifies a target stuck
-    on the pre-1.3 API. All other contract violations (missing
-    ``send_prompt_with_usage``, missing ``new``, etc.) are intentionally left
-    to :func:`is_agent_target` so the predicate stays side-effect free; call
-    both in tandem if you want the full check.
+    Callers that need a hard error on stale implementations can call this in
+    addition to :func:`is_agent_target`. Separating the concern keeps the
+    predicate function free of side effects.
     """
     has_send = callable(getattr(obj, 'send_prompt_with_usage', None))
     has_new = callable(getattr(obj, 'new', None))
@@ -142,19 +138,10 @@ def adapt_legacy_target(obj: object) -> object:
     )
 
     async def _adapted(prompt: str) -> SendResult:
-        text = await obj.send_prompt(prompt)  # pyright: ignore[reportAttributeAccessIssue]
+        text = await obj.send_prompt(prompt)  # type: ignore[attr-defined]
         return SendResult(text=text)
 
-    try:
-        obj.send_prompt_with_usage = _adapted  # pyright: ignore[reportAttributeAccessIssue]
-    except AttributeError as exc:
-        # Targets defining ``__slots__`` without ``send_prompt_with_usage`` cannot
-        # accept a runtime attribute assignment. Surface a clear migration hint
-        # rather than the cryptic AttributeError from the slot machinery.
-        raise TypeError(
-            f"{type(obj).__name__} uses __slots__ and cannot be adapted at runtime. "
-            "Implement `async send_prompt_with_usage(prompt) -> SendResult` directly on the class instead."
-        ) from exc
+    obj.send_prompt_with_usage = _adapted  # type: ignore[attr-defined]
     return obj
 
 
@@ -171,7 +158,7 @@ class DirectTargetFactory:
                 f"{type(self._target).__name__}.new() returned None. "
                 "It must return a fresh AgentTarget instance."
             )
-        return adapt_legacy_target(result)  # pyright: ignore[reportReturnType]
+        return adapt_legacy_target(result)  # type: ignore[return-value]
 
 
 class NoopMemoryCleanup:
