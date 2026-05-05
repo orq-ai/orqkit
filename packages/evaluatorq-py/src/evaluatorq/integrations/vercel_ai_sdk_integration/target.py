@@ -92,13 +92,19 @@ class VercelAISdkTarget(AgentTarget):
             **self._extra_body,
         }
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.post(
-                self._url,
-                json=body,
-                headers={"Content-Type": "application/json", **self._headers},
-            )
-            response.raise_for_status()
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
+                    self._url,
+                    json=body,
+                    headers={"Content-Type": "application/json", **self._headers},
+                )
+                response.raise_for_status()
+        except Exception:
+            # Roll back the user turn so the next call doesn't forward a
+            # malformed conversation with a hanging user message.
+            self._history.pop()
+            raise
 
         text, usage = self._parse_response(response)
         self._history.append({"role": "assistant", "content": text})
@@ -190,7 +196,8 @@ def _parse_data_stream(raw: str) -> tuple[str, TokenUsage | None]:
                 p = int(u.get('promptTokens', 0) or 0)
                 c = int(u.get('completionTokens', 0) or 0)
                 t = u.get('totalTokens')
-                total = int(t) if isinstance(t, int) and t > 0 else p + c
+                # JSON numbers with a decimal point decode to float, so accept both.
+                total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
                 usage = TokenUsage(
                     prompt_tokens=p,
                     completion_tokens=c,
@@ -231,7 +238,8 @@ def _parse_json_response(raw: str) -> tuple[str, TokenUsage | None]:
                 p = int(u.get("promptTokens", 0) or 0)
                 c = int(u.get("completionTokens", 0) or 0)
             t = u.get("total_tokens") or u.get("totalTokens")
-            total = int(t) if isinstance(t, int) and t > 0 else p + c
+            # JSON numbers with a decimal point decode to float, so accept both.
+            total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
             if p > 0 or c > 0:
                 usage = TokenUsage(
                     prompt_tokens=p,

@@ -48,6 +48,7 @@ from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
     KnowledgeBaseInfo,
+    LLMConfig,
     MemoryStoreInfo,
     SendResult,
     TokenUsage,
@@ -72,6 +73,7 @@ class ORQAgentTarget:
         memory_entity_id: str | None = None,
         model: str | None = None,
         timeout_ms: int | None = None,
+        pipeline_config: LLMConfig | None = None,
     ):
         """Initialize the ORQ agent target with client and configuration.
 
@@ -79,8 +81,14 @@ class ORQAgentTarget:
         instance owns a ``memory_entity_id`` so parallel jobs stay isolated;
         if not provided, one is generated. The pipeline reads this attribute
         after construction to track entities for cleanup.
+
+        ``pipeline_config`` overrides the module-level ``PIPELINE_CONFIG``
+        singleton for this instance. Pass a per-run ``LLMConfig`` to honor
+        caller-supplied values like ``max_tool_continuations`` without
+        mutating global state.
         """
-        timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
+        config = pipeline_config or PIPELINE_CONFIG
+        timeout_ms = timeout_ms or config.target_agent_timeout_ms
         self.agent_key = agent_key
         self.orq_client = orq_client
         self.memory_entity_id: str | None = (
@@ -89,6 +97,7 @@ class ORQAgentTarget:
         self.model = model
         self._timeout_ms = timeout_ms
         self._task_id: str | None = None
+        self._pipeline_config: LLMConfig | None = pipeline_config
 
     async def send_prompt_with_usage(self, prompt: str) -> SendResult:
         """Send a prompt to the ORQ agent and return text + accumulated usage.
@@ -175,7 +184,7 @@ class ORQAgentTarget:
 
                 # Some agent tool flows require client-provided tool_result parts.
                 # Continue the same task with synthetic tool results so the thread can progress.
-                max_tool_continuations = PIPELINE_CONFIG.max_tool_continuations
+                max_tool_continuations = (self._pipeline_config or PIPELINE_CONFIG).max_tool_continuations
                 pending_ids = _pending_tool_call_ids(response)
                 continuation_count = 0
                 while pending_ids and continuation_count < max_tool_continuations:
@@ -274,6 +283,7 @@ class ORQAgentTarget:
             orq_client=self.orq_client,
             model=self.model,
             timeout_ms=self._timeout_ms,
+            pipeline_config=self._pipeline_config,
         )
 
     target_kind: TargetKind = TargetKind.AGENT
@@ -301,6 +311,7 @@ class ORQAgentTarget:
             orq_client=self.orq_client,
             model=self.model,
             timeout_ms=self._timeout_ms,
+            pipeline_config=self._pipeline_config,
         )
 
     # -- SupportsMemoryCleanup --
@@ -422,9 +433,11 @@ class ORQTargetFactory:
         orq_client: Any = None,
         model: str | None = None,
         timeout_ms: int | None = None,
+        pipeline_config: LLMConfig | None = None,
     ):
         """Initialize the factory, creating an ORQ client from environment if none is provided."""
-        timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
+        config = pipeline_config or PIPELINE_CONFIG
+        timeout_ms = timeout_ms or config.target_agent_timeout_ms
         self._timeout_ms = timeout_ms
         if orq_client is not None:
             self._orq_client = orq_client
@@ -438,6 +451,7 @@ class ORQTargetFactory:
                 timeout_ms=self._timeout_ms,
             )
         self._model = model
+        self._pipeline_config = pipeline_config
 
     def create_target(self, agent_key: str) -> AgentTarget:
         """Create a new ORQAgentTarget for the given agent key.
@@ -450,6 +464,7 @@ class ORQTargetFactory:
             orq_client=self._orq_client,
             model=self._model,
             timeout_ms=self._timeout_ms,
+            pipeline_config=self._pipeline_config,
         )
 
 
@@ -522,9 +537,11 @@ def create_orq_agent_target(
     agent_key: str,
     orq_client: Any = None,
     timeout_ms: int | None = None,
+    pipeline_config: LLMConfig | None = None,
 ) -> ORQAgentTarget:
     """Create an ORQAgentTarget from environment config."""
-    timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
+    config = pipeline_config or PIPELINE_CONFIG
+    timeout_ms = timeout_ms or config.target_agent_timeout_ms
     if orq_client is None:
         if _orq_cls is None:
             raise ImportError('ORQ backend requires the orq-ai-sdk package.')
@@ -533,7 +550,12 @@ def create_orq_agent_target(
             server_url=_get_orq_server_url(),
             timeout_ms=timeout_ms,
         )
-    return ORQAgentTarget(agent_key=agent_key, orq_client=orq_client, timeout_ms=timeout_ms)
+    return ORQAgentTarget(
+        agent_key=agent_key,
+        orq_client=orq_client,
+        timeout_ms=timeout_ms,
+        pipeline_config=pipeline_config,
+    )
 
 
 def create_orq_backend(

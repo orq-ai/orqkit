@@ -141,7 +141,16 @@ def adapt_legacy_target(obj: object) -> object:
         text = await obj.send_prompt(prompt)  # type: ignore[attr-defined]
         return SendResult(text=text)
 
-    obj.send_prompt_with_usage = _adapted  # type: ignore[attr-defined]
+    try:
+        obj.send_prompt_with_usage = _adapted  # type: ignore[attr-defined]
+    except AttributeError as exc:
+        # Targets defining ``__slots__`` without ``send_prompt_with_usage`` cannot
+        # accept a runtime attribute assignment. Surface a clear migration hint
+        # rather than the cryptic AttributeError from the slot machinery.
+        raise TypeError(
+            f"{type(obj).__name__} uses __slots__ and cannot be adapted at runtime. "
+            "Implement `async send_prompt_with_usage(prompt) -> SendResult` directly on the class instead."
+        ) from exc
     return obj
 
 
