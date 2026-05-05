@@ -5,6 +5,7 @@ the agent's tools, memory configuration, and system prompt.
 """
 
 import asyncio
+import hashlib
 import random
 from typing import TYPE_CHECKING, Any
 
@@ -446,7 +447,8 @@ def create_strategy_from_objective(
         )
         effective_category = category
 
-    technique = random.choice(ATTACK_TECHNIQUE_POOL)
+    seed = int(hashlib.sha256(objective.objective.encode()).hexdigest(), 16)
+    technique = random.Random(seed).choice(ATTACK_TECHNIQUE_POOL)
     resolved_turn_type = turn_type or objective.turn_type
     delivery_method = objective.delivery_method
 

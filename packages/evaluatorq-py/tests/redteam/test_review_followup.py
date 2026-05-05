@@ -119,15 +119,14 @@ class TestTokenUsageFromCompletion:
 # truncate_for_span + _default_span_max_text_chars
 # ---------------------------------------------------------------------------
 class TestTruncateForSpanNegativeArg:
-    def test_negative_max_chars_warns_and_returns_unchanged(self, caplog: Any) -> None:
-        # Symmetric with env-var negative handling: a misconfig must not
-        # crash the surrounding span recorder. Returns the original text
-        # untouched and emits a warning so the caller can diagnose.
+    def test_negative_max_chars_raises(self) -> None:
+        # truncate_for_span raises ValueError for negative max_chars.
+        # _default_span_max_text_chars (env var path) warns-and-returns-None instead;
+        # the two codepaths differ by design.
         from evaluatorq.redteam.tracing import truncate_for_span
 
-        text = "x" * 50
-        result = truncate_for_span(text, max_chars=-1)
-        assert result == text  # unlimited fallback
+        with pytest.raises(ValueError, match="non-negative"):
+            truncate_for_span("x" * 50, max_chars=-1)
 
 
 class TestSpanMaxTextCharsCacheMemoization:

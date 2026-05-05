@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, AttackTechnique, DeliveryMethod, SendResult, TurnType
+from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, AttackTechnique, DeliveryMethod, SendResult, TokenUsage, TurnType
 from evaluatorq.redteam.adaptive.orchestrator import (
     ADVERSARIAL_SYSTEM_PROMPT,
     MultiTurnOrchestrator,

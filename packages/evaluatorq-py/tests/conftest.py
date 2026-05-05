@@ -24,4 +24,7 @@ def _propagate_loguru_to_stdlib():
 
     handler_id = logger.add(_LoguruPropagateHandler(), format="{message}", level="DEBUG")
     yield
-    logger.remove(handler_id)
+    try:
+        logger.remove(handler_id)
+    except ValueError:
+        pass  # cli.py calls logger.remove() globally; handler may already be gone

@@ -199,14 +199,15 @@ def _parse_data_stream(raw: str) -> tuple[str, TokenUsage | None]:
             if isinstance(u, dict):
                 p = int(u.get('promptTokens', 0) or 0)
                 c = int(u.get('completionTokens', 0) or 0)
-                t = u.get('totalTokens')
-                total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
-                usage = TokenUsage(
-                    prompt_tokens=p,
-                    completion_tokens=c,
-                    total_tokens=total,
-                    calls=1,
-                )
+                if p > 0 or c > 0:
+                    t = u.get('totalTokens')
+                    total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
+                    usage = TokenUsage(
+                        prompt_tokens=p,
+                        completion_tokens=c,
+                        total_tokens=total,
+                        calls=1,
+                    )
     return ''.join(parts), usage
 
 

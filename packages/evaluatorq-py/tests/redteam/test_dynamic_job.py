@@ -27,6 +27,7 @@ from evaluatorq.redteam.contracts import (
     MemoryStoreInfo,
     OrchestratorResult,
     SendResult,
+    TokenUsage,
     TurnType,
     Vulnerability,
 )
