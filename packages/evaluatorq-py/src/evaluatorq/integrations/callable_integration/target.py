@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import Awaitable, Callable
+
+from loguru import logger
 
 from evaluatorq.redteam.backends.base import AgentTarget
 from evaluatorq.redteam.contracts import AgentContext, SendResult, TokenUsage
-
-logger = logging.getLogger(__name__)
 
 # Accepted callable signatures
 AgentCallable = Callable[[str], Awaitable[str]] | Callable[[str], str]
@@ -93,8 +92,8 @@ class CallableTarget(AgentTarget):
         if self._usage_fn is not None:
             try:
                 usage = self._usage_fn(prompt, str(text))
-            except Exception as e:
-                logger.warning("usage_fn raised %s; using usage=None", e)
+            except Exception:
+                logger.exception("usage_fn raised an exception; using usage=None")
         return SendResult(text=str(text), usage=usage)
 
     async def get_agent_context(self) -> AgentContext:

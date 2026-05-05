@@ -754,9 +754,9 @@ class TokenUsage(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     total_tokens: int = Field(default=0, description='Total tokens used as reported by the provider')
-    prompt_tokens: int = Field(default=0, description='Prompt/input tokens')
-    completion_tokens: int = Field(default=0, description='Completion/output tokens')
-    calls: int = Field(default=0, description='Number of LLM API calls')
+    prompt_tokens: int = Field(default=0, ge=0, description='Prompt/input tokens')
+    completion_tokens: int = Field(default=0, ge=0, description='Completion/output tokens')
+    calls: int = Field(default=0, ge=0, description='Number of LLM API calls')
 
     @classmethod
     def from_completion(cls, response: Any) -> 'TokenUsage | None':

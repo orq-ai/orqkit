@@ -91,6 +91,23 @@ def test_record_token_usage_with_span():
     mock_span.set_attribute.assert_any_call("gen_ai.usage.completion_tokens", 50)
     mock_span.set_attribute.assert_any_call("gen_ai.usage.total_tokens", 150)
     mock_span.set_attribute.assert_any_call("total_tokens", 150)
+    # calls=2 should set both gen_ai.usage.calls and calls attributes
+    mock_span.set_attribute.assert_any_call("gen_ai.usage.calls", 2)
+    mock_span.set_attribute.assert_any_call("calls", 2)
+
+
+def test_record_token_usage_calls_zero_omits_calls_attribute():
+    """When calls=0, gen_ai.usage.calls is NOT set (conditional branch)."""
+    from evaluatorq.redteam.tracing import record_token_usage
+
+    mock_span = MagicMock()
+    record_token_usage(mock_span, prompt_tokens=10, completion_tokens=5, total_tokens=15, calls=0)
+    # Verify gen_ai.usage.calls was never set
+    calls_in_attrs = [
+        call for call in mock_span.set_attribute.call_args_list
+        if call.args and call.args[0] == "gen_ai.usage.calls"
+    ]
+    assert calls_in_attrs == [], "gen_ai.usage.calls must not be set when calls=0"
 
 
 def test_record_llm_response_sets_both_token_conventions():

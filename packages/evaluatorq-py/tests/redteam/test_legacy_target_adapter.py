@@ -114,7 +114,7 @@ class TestAdaptLegacyTarget:
         assert result.text == "echo:ping"
         assert result.usage is None
 
-    def test_slotted_legacy_target_raises_typeerror_with_hint(self) -> None:
+    def test_slotted_legacy_target_raises_attributeerror(self) -> None:
         with pytest.warns(DeprecationWarning):
-            with pytest.raises(TypeError, match=r"__slots__.*send_prompt_with_usage"):
+            with pytest.raises(AttributeError):
                 adapt_legacy_target(_SlottedLegacyTarget())

@@ -100,7 +100,6 @@ class VercelAISdkTarget(AgentTarget):
                     headers={"Content-Type": "application/json", **self._headers},
                 )
                 response.raise_for_status()
-            text, usage = self._parse_response(response)
         except (httpx.HTTPError, ValueError, KeyError):
             # Roll back the user turn so the next call doesn't forward a
             # malformed conversation with a hanging user message. Catches
@@ -201,7 +200,7 @@ def _parse_data_stream(raw: str) -> tuple[str, TokenUsage | None]:
                 p = int(u.get('promptTokens', 0) or 0)
                 c = int(u.get('completionTokens', 0) or 0)
                 t = u.get('totalTokens')
-                total = int(t) if isinstance(t, int) and t > 0 else p + c
+                total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
                 usage = TokenUsage(
                     prompt_tokens=p,
                     completion_tokens=c,
@@ -242,7 +241,7 @@ def _parse_json_response(raw: str) -> tuple[str, TokenUsage | None]:
                 p = int(u.get("promptTokens", 0) or 0)
                 c = int(u.get("completionTokens", 0) or 0)
             t = u.get("total_tokens") or u.get("totalTokens")
-            total = int(t) if isinstance(t, int) and t > 0 else p + c
+            total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
             if p > 0 or c > 0:
                 usage = TokenUsage(
                     prompt_tokens=p,
@@ -270,4 +269,4 @@ def _parse_json_response(raw: str) -> tuple[str, TokenUsage | None]:
             if isinstance(choice_msg, dict):
                 return str(choice_msg.get("content", "")), usage
 
-    return raw.strip(), None
+    return raw.strip(), usage
