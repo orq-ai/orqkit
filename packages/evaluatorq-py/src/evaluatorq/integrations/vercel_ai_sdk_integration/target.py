@@ -292,4 +292,7 @@ def _parse_json_response(raw: str) -> tuple[str, TokenUsage | None]:
             if isinstance(choice_msg, dict):
                 return str(choice_msg.get("content", "")), usage
 
-    return raw.strip(), None
+    # Fallback: dict had no recognised text key but may still carry a valid
+    # usage block parsed above — preserve it so token telemetry isn't lost
+    # for shapes like {"result": "...", "usage": {...}}.
+    return raw.strip(), usage
