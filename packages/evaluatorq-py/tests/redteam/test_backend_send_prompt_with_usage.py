@@ -57,7 +57,7 @@ def _make_orq_response(
     prompt_tokens: int = 20,
     completion_tokens: int = 10,
     total_tokens: int = 30,
-    pending_tool_calls: list[Any] | None = None,
+    pending_tool_calls: list | None = None,
     model: str | None = None,
 ) -> MagicMock:
     """Build a minimal fake ORQ agent response."""
@@ -223,17 +223,15 @@ class TestORQAgentTargetSendPromptWithUsage:
 
     @pytest.mark.asyncio
     async def test_continuation_exhaustion_raises_runtime_error(self) -> None:
-        """5 continuations all returning pending_tool_calls raises RuntimeError
-        so the orchestrator's existing circuit-breaker counts it as an agent
-        error and continues with other runs (rather than treating an empty/
-        partial response as a successful answer)."""
+        """5 continuations all returning pending_tool_calls raises RuntimeError."""
         target, orq_client = self._make_target()
 
         pending_call = MagicMock()
         pending_call.id = "tool-call-persist"
 
+        # All responses keep returning pending tool calls
         continuing_response = _make_orq_response(
-            text="partial",
+            text="",
             task_id="task-001",
             prompt_tokens=5,
             completion_tokens=2,
@@ -345,16 +343,17 @@ class TestORQAgentTargetSendPromptWithUsage:
         assert result.usage.total_tokens == 15  # falls back to prompt + completion
 
     @pytest.mark.asyncio
-    async def test_orq_continuation_loop_call_count(self) -> None:
-        """Hardcoded cap is 5 — 1 initial call + 5 continuation calls = 6 total
-        before exhaustion raises."""
+    async def test_orq_uses_pipeline_config_max_continuations(self) -> None:
+        """Loop bails after PIPELINE_CONFIG.max_tool_continuations continuations."""
+        from evaluatorq.redteam import contracts as contracts_module
+
         target, _ = self._make_target()
 
         pending_call = MagicMock()
         pending_call.id = "tool-call-persist"
 
         continuing_response = _make_orq_response(
-            text="partial",
+            text="",
             task_id="task-001",
             prompt_tokens=5,
             completion_tokens=2,
@@ -369,14 +368,22 @@ class TestORQAgentTargetSendPromptWithUsage:
             call_count += 1
             return continuing_response
 
-        with (
-            patch("asyncio.to_thread", side_effect=count_calls),
-            patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
-            pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
-        ):
-            await target.send_prompt_with_usage("prompt")
+        original_max = contracts_module.PIPELINE_CONFIG.max_tool_continuations
+        try:
+            # Monkeypatch to 2 so the loop stops after 2 continuations instead of 5
+            contracts_module.PIPELINE_CONFIG.max_tool_continuations = 2
 
-        assert call_count == 6
+            with (
+                patch("asyncio.to_thread", side_effect=count_calls),
+                patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
+                pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
+            ):
+                await target.send_prompt_with_usage("prompt")
+        finally:
+            contracts_module.PIPELINE_CONFIG.max_tool_continuations = original_max
+
+        # 1 initial call + 2 continuation calls = 3 total
+        assert call_count == 3
 
 
 # ===========================================================================
@@ -498,7 +505,7 @@ class TestLangGraphTargetSendPromptWithUsage:
         graph = MagicMock()
         graph.name = "test_graph"
 
-        def _fake_ainvoke(input_dict: Any, *, config: Any) -> dict[str, Any]:
+        def _fake_ainvoke(input_dict: Any, *, config: Any) -> dict:
             callbacks = config.get("callbacks", [])
             for cb in (callbacks if isinstance(callbacks, list) else []):
                 if isinstance(cb, _TokenUsageCollector):
