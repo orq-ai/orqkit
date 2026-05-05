@@ -263,10 +263,8 @@ class TestTruncateForSpanEnvOverride:
         try:
             with caplog.at_level(logging.WARNING):
                 _default_span_max_text_chars()
-            # Either loguru or stdlib warning should contain the bad value
-            # (loguru propagates to stdlib by default in test environments)
             all_messages = " ".join(caplog.messages)
-            # If loguru doesn't propagate, the function still returns None correctly
+            assert "bad_value" in all_messages, f"Expected bad_value in warning, got: {all_messages!r}"
             assert _default_span_max_text_chars.cache_info().currsize >= 1
         finally:
             _default_span_max_text_chars.cache_clear()
