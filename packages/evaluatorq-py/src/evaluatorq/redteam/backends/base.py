@@ -138,11 +138,11 @@ def adapt_legacy_target(obj: object) -> object:
     )
 
     async def _adapted(prompt: str) -> SendResult:
-        text = await obj.send_prompt(prompt)  # type: ignore[attr-defined]
+        text = await obj.send_prompt(prompt)  # pyright: ignore[reportAttributeAccessIssue]
         return SendResult(text=text)
 
     try:
-        obj.send_prompt_with_usage = _adapted  # type: ignore[attr-defined]
+        obj.send_prompt_with_usage = _adapted  # pyright: ignore[reportAttributeAccessIssue]
     except AttributeError as exc:
         # Targets defining ``__slots__`` without ``send_prompt_with_usage`` cannot
         # accept a runtime attribute assignment. Surface a clear migration hint
@@ -167,7 +167,7 @@ class DirectTargetFactory:
                 f"{type(self._target).__name__}.new() returned None. "
                 "It must return a fresh AgentTarget instance."
             )
-        return adapt_legacy_target(result)  # type: ignore[return-value]
+        return adapt_legacy_target(result)  # pyright: ignore[reportReturnType]
 
 
 class NoopMemoryCleanup:

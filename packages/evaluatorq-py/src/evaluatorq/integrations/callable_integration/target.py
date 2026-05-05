@@ -97,6 +97,10 @@ class CallableTarget(AgentTarget):
                 logger.warning("usage_fn raised %s; using usage=None", e)
         return SendResult(text=str(text), usage=usage)
 
+    async def send_prompt(self, prompt: str) -> str:
+        """Back-compat wrapper. Returns text only; new code should use ``send_prompt_with_usage``."""
+        return (await self.send_prompt_with_usage(prompt)).text
+
     async def get_agent_context(self) -> AgentContext:
         """Return the user-provided agent context, or a minimal placeholder."""
         if self._agent_context is not None:
