@@ -374,8 +374,10 @@ def truncate_for_span(text: object, *, max_chars: int | None = None) -> str:
     """Truncate text for span attribute storage.
 
     Defaults to ``EVALUATORQ_SPAN_MAX_TEXT_CHARS`` env var (or ``None`` =
-    unlimited if unset). ``None`` and ``0`` both disable truncation.
-    Negative values raise ``ValueError``.
+    unlimited if unset). ``None``, ``0``, and negative values all disable
+    truncation. Symmetric with ``_default_span_max_text_chars``: a misconfig
+    on either path degrades to "unlimited" with a warning rather than
+    crashing the surrounding span recorder on a non-fatal config issue.
 
     Output never exceeds ``max_chars``: the marker ``... [truncated]`` is
     reserved within the budget when truncation fires.
@@ -392,7 +394,11 @@ def truncate_for_span(text: object, *, max_chars: int | None = None) -> str:
     if max_chars is None or max_chars == 0:
         return s
     if max_chars < 0:
-        raise ValueError(f'max_chars must be non-negative, got {max_chars}')
+        logger.warning(
+            'truncate_for_span: max_chars=%r is negative; treating as unlimited',
+            max_chars,
+        )
+        return s
     if len(s) <= max_chars:
         return s
     marker_len = len(_TRUNCATION_MARKER)

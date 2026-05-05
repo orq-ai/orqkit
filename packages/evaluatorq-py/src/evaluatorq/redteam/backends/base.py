@@ -99,11 +99,15 @@ def is_agent_target(obj: object) -> bool:
 
 
 def validate_agent_target(obj: object) -> None:
-    """Raise ``TypeError`` with a migration message if obj uses the removed ``clone()`` API.
+    """Surface the pre-1.3 ``clone()`` -> ``new()`` migration error.
 
-    Callers that need a hard error on stale implementations can call this in
-    addition to :func:`is_agent_target`. Separating the concern keeps the
-    predicate function free of side effects.
+    Narrow on purpose: raises ``TypeError`` only when ``obj`` exposes neither
+    ``send_prompt_with_usage`` nor ``new`` but still has the removed
+    ``clone()`` method, since that pattern uniquely identifies a target stuck
+    on the pre-1.3 API. All other contract violations (missing
+    ``send_prompt_with_usage``, missing ``new``, etc.) are intentionally left
+    to :func:`is_agent_target` so the predicate stays side-effect free; call
+    both in tandem if you want the full check.
     """
     has_send = callable(getattr(obj, 'send_prompt_with_usage', None))
     has_new = callable(getattr(obj, 'new', None))

@@ -96,17 +96,19 @@ class TestTruncateForSpanExplicitMaxChars:
         assert result == _TRUNCATION_MARKER[:1]
         assert len(result) == 1
 
-    def test_negative_max_chars_raises_value_error(self) -> None:
+    def test_negative_max_chars_warns_and_returns_unchanged(self) -> None:
+        # Symmetric with env-var negative handling: a misconfig must not
+        # crash the surrounding span recorder. Warn and treat as unlimited.
         from evaluatorq.redteam.tracing import truncate_for_span
 
-        with pytest.raises(ValueError, match="non-negative"):
-            truncate_for_span("hello", max_chars=-1)
+        text = "hello"
+        assert truncate_for_span(text, max_chars=-1) == text
 
-    def test_large_negative_max_chars_raises_value_error(self) -> None:
+    def test_large_negative_max_chars_warns_and_returns_unchanged(self) -> None:
         from evaluatorq.redteam.tracing import truncate_for_span
 
-        with pytest.raises(ValueError):
-            truncate_for_span("hello", max_chars=-999)
+        text = "hello"
+        assert truncate_for_span(text, max_chars=-999) == text
 
     def test_non_string_input_coerced_via_str(self) -> None:
         """Non-string input is coerced via str() before truncation."""
