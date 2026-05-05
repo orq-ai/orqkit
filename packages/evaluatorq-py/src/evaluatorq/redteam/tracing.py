@@ -343,7 +343,9 @@ def _default_span_max_text_chars() -> int | None:
     """Read EVALUATORQ_SPAN_MAX_TEXT_CHARS once. Default ``None`` = unlimited.
 
     Set the env var to a positive integer to cap span text payloads. ``0``
-    is also treated as unlimited. Negative values raise ``ValueError``.
+    is also treated as unlimited. Invalid values (non-integer, negative)
+    are warn-and-ignored: a misconfigured env var must never crash a
+    red-teaming run from the hot-path span recorders that call this.
 
     Use ``_default_span_max_text_chars.cache_clear()`` in tests to force
     re-read after changing the env var.
@@ -360,9 +362,11 @@ def _default_span_max_text_chars() -> int | None:
         )
         return None
     if value < 0:
-        raise ValueError(
-            f'EVALUATORQ_SPAN_MAX_TEXT_CHARS must be non-negative, got {value}'
+        logger.warning(
+            'EVALUATORQ_SPAN_MAX_TEXT_CHARS=%r is negative; ignoring (truncation disabled)',
+            raw,
         )
+        return None
     return value
 
 

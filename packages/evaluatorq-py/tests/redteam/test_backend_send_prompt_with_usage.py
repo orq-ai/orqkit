@@ -222,16 +222,17 @@ class TestORQAgentTargetSendPromptWithUsage:
         assert result.usage.completion_tokens == 13  # 5 + 8
 
     @pytest.mark.asyncio
-    async def test_continuation_exhaustion_raises_runtime_error(self) -> None:
-        """5 continuations all returning pending_tool_calls raises RuntimeError."""
+    async def test_continuation_exhaustion_logs_and_returns_partial(self) -> None:
+        """5 continuations all returning pending_tool_calls logs an error and
+        returns the partial response so the surrounding pipeline can continue
+        with other runs (tool execution is intentionally not supported here)."""
         target, orq_client = self._make_target()
 
         pending_call = MagicMock()
         pending_call.id = "tool-call-persist"
 
-        # All responses keep returning pending tool calls
         continuing_response = _make_orq_response(
-            text="",
+            text="partial",
             task_id="task-001",
             prompt_tokens=5,
             completion_tokens=2,
@@ -245,9 +246,10 @@ class TestORQAgentTargetSendPromptWithUsage:
         with (
             patch("asyncio.to_thread", side_effect=always_pending),
             patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
-            pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
         ):
-            await target.send_prompt_with_usage("prompt")
+            result = await target.send_prompt_with_usage("prompt")
+
+        assert result.text == "partial"
 
     @pytest.mark.asyncio
     async def test_no_usage_in_response_yields_none(self) -> None:
@@ -343,17 +345,17 @@ class TestORQAgentTargetSendPromptWithUsage:
         assert result.usage.total_tokens == 15  # falls back to prompt + completion
 
     @pytest.mark.asyncio
-    async def test_orq_uses_pipeline_config_max_continuations(self) -> None:
-        """Loop bails after PIPELINE_CONFIG.max_tool_continuations continuations."""
-        from evaluatorq.redteam import contracts as contracts_module
-
+    async def test_orq_unresolved_tool_calls_logs_and_returns(self) -> None:
+        """When pending tool calls cannot be resolved within the hardcoded cap (5),
+        the target logs an error and returns the partial response instead of raising
+        so the surrounding pipeline can continue with other runs."""
         target, _ = self._make_target()
 
         pending_call = MagicMock()
         pending_call.id = "tool-call-persist"
 
         continuing_response = _make_orq_response(
-            text="",
+            text="partial",
             task_id="task-001",
             prompt_tokens=5,
             completion_tokens=2,
@@ -368,22 +370,16 @@ class TestORQAgentTargetSendPromptWithUsage:
             call_count += 1
             return continuing_response
 
-        original_max = contracts_module.PIPELINE_CONFIG.max_tool_continuations
-        try:
-            # Monkeypatch to 2 so the loop stops after 2 continuations instead of 5
-            contracts_module.PIPELINE_CONFIG.max_tool_continuations = 2
+        with (
+            patch("asyncio.to_thread", side_effect=count_calls),
+            patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
+        ):
+            result = await target.send_prompt_with_usage("prompt")
 
-            with (
-                patch("asyncio.to_thread", side_effect=count_calls),
-                patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
-                pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
-            ):
-                await target.send_prompt_with_usage("prompt")
-        finally:
-            contracts_module.PIPELINE_CONFIG.max_tool_continuations = original_max
-
-        # 1 initial call + 2 continuation calls = 3 total
-        assert call_count == 3
+        # 1 initial call + 5 continuation calls = 6 total
+        assert call_count == 6
+        # Loop returned partial text rather than raising
+        assert result.text == "partial"
 
 
 # ===========================================================================
