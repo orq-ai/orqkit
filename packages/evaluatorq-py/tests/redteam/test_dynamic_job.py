@@ -25,6 +25,7 @@ from evaluatorq.redteam.contracts import (
     DeliveryMethod,
     MemoryStoreInfo,
     OrchestratorResult,
+    SendResult,
     TurnType,
     Vulnerability,
 )
@@ -104,9 +105,8 @@ def _make_datapoint(
 
 def _make_target(memory_entity_id: str | None = None) -> MagicMock:
     target = MagicMock()
-    target.send_prompt = AsyncMock(return_value="Safe response from agent.")
+    target.send_prompt_with_usage = AsyncMock(return_value=SendResult(text="Safe response from agent."))
     target.new = MagicMock()
-    target.consume_last_token_usage = MagicMock(return_value=None)
     target.memory_entity_id = memory_entity_id
     return target
 
@@ -261,8 +261,8 @@ class TestTemplateSingleTurnPath:
             output = await _call_dynamic_job(job_fn, datapoint)
 
         # Target should have been called once
-        target.send_prompt.assert_called_once()
-        sent_prompt = target.send_prompt.call_args[0][0]
+        target.send_prompt_with_usage.assert_called_once()
+        sent_prompt = target.send_prompt_with_usage.call_args[0][0]
         # The template substitution should have occurred (not contain raw {agent_name})
         assert "{agent_name}" not in sent_prompt
 
@@ -579,7 +579,7 @@ class TestProgrammingErrorsPropagate:
             prompt_template="Static attack for {agent_name}.",
         )
         target = _make_target()
-        target.send_prompt = AsyncMock(side_effect=TypeError("type mismatch"))
+        target.send_prompt_with_usage = AsyncMock(side_effect=TypeError("type mismatch"))
         factory = _make_target_factory(target)
         agent_context = _make_agent_context()
         datapoint = _make_datapoint(strategy=strategy)
@@ -771,7 +771,7 @@ class TestRuntimeErrorsProduceErrorOutput:
             prompt_template="Static attack for {agent_name}.",
         )
         target = _make_target()
-        target.send_prompt = AsyncMock(side_effect=RuntimeError("Service unavailable"))
+        target.send_prompt_with_usage = AsyncMock(side_effect=RuntimeError("Service unavailable"))
         factory = _make_target_factory(target)
         agent_context = _make_agent_context()
         datapoint = _make_datapoint(strategy=strategy)
@@ -810,7 +810,7 @@ class TestRuntimeErrorsProduceErrorOutput:
             prompt_template="Static attack for {agent_name}.",
         )
         target = _make_target()
-        target.send_prompt = AsyncMock(side_effect=asyncio.TimeoutError())
+        target.send_prompt_with_usage = AsyncMock(side_effect=asyncio.TimeoutError())
         factory = _make_target_factory(target)
         agent_context = _make_agent_context()
         datapoint = _make_datapoint(strategy=strategy)
