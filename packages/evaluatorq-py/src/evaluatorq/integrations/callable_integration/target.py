@@ -93,8 +93,11 @@ class CallableTarget(AgentTarget):
         if self._usage_fn is not None:
             try:
                 usage = self._usage_fn(prompt, str(text))
-            except Exception as e:
-                logger.warning("usage_fn raised %s; using usage=None", e)
+            except Exception:
+                # Surface the full traceback so a buggy user-supplied callback
+                # is debuggable. usage drops to None — token telemetry will
+                # under-count but the call still succeeds.
+                logger.exception("CallableTarget: usage_fn raised; using usage=None")
         return SendResult(text=str(text), usage=usage)
 
     async def send_prompt(self, prompt: str) -> str:

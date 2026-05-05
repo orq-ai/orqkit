@@ -97,6 +97,10 @@ class OpenAIModelTarget:
                 finish_reason=finish_reason,
             )
 
+    async def send_prompt(self, prompt: str) -> str:
+        """Back-compat wrapper. Returns text only; new code should use ``send_prompt_with_usage``."""
+        return (await self.send_prompt_with_usage(prompt)).text
+
     def new(self) -> OpenAIModelTarget:
         """Return a fresh target instance for parallel job safety (satisfies ``AgentTarget`` protocol)."""
         return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)

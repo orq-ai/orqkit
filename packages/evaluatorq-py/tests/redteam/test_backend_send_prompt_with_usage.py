@@ -222,10 +222,11 @@ class TestORQAgentTargetSendPromptWithUsage:
         assert result.usage.completion_tokens == 13  # 5 + 8
 
     @pytest.mark.asyncio
-    async def test_continuation_exhaustion_logs_and_returns_partial(self) -> None:
-        """5 continuations all returning pending_tool_calls logs an error and
-        returns the partial response so the surrounding pipeline can continue
-        with other runs (tool execution is intentionally not supported here)."""
+    async def test_continuation_exhaustion_raises_runtime_error(self) -> None:
+        """5 continuations all returning pending_tool_calls raises RuntimeError
+        so the orchestrator's existing circuit-breaker counts it as an agent
+        error and continues with other runs (rather than treating an empty/
+        partial response as a successful answer)."""
         target, orq_client = self._make_target()
 
         pending_call = MagicMock()
@@ -246,10 +247,9 @@ class TestORQAgentTargetSendPromptWithUsage:
         with (
             patch("asyncio.to_thread", side_effect=always_pending),
             patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
+            pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
         ):
-            result = await target.send_prompt_with_usage("prompt")
-
-        assert result.text == "partial"
+            await target.send_prompt_with_usage("prompt")
 
     @pytest.mark.asyncio
     async def test_no_usage_in_response_yields_none(self) -> None:
@@ -345,10 +345,9 @@ class TestORQAgentTargetSendPromptWithUsage:
         assert result.usage.total_tokens == 15  # falls back to prompt + completion
 
     @pytest.mark.asyncio
-    async def test_orq_unresolved_tool_calls_logs_and_returns(self) -> None:
-        """When pending tool calls cannot be resolved within the hardcoded cap (5),
-        the target logs an error and returns the partial response instead of raising
-        so the surrounding pipeline can continue with other runs."""
+    async def test_orq_continuation_loop_call_count(self) -> None:
+        """Hardcoded cap is 5 — 1 initial call + 5 continuation calls = 6 total
+        before exhaustion raises."""
         target, _ = self._make_target()
 
         pending_call = MagicMock()
@@ -373,13 +372,11 @@ class TestORQAgentTargetSendPromptWithUsage:
         with (
             patch("asyncio.to_thread", side_effect=count_calls),
             patch("evaluatorq.redteam.tracing.get_tracer", return_value=None),
+            pytest.raises(RuntimeError, match="Unresolved pending tool calls"),
         ):
-            result = await target.send_prompt_with_usage("prompt")
+            await target.send_prompt_with_usage("prompt")
 
-        # 1 initial call + 5 continuation calls = 6 total
         assert call_count == 6
-        # Loop returned partial text rather than raising
-        assert result.text == "partial"
 
 
 # ===========================================================================

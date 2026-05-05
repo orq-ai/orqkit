@@ -739,10 +739,12 @@ class AttackStrategy(BaseModel):
 class TokenUsage(BaseModel):
     """Token usage and cost for an LLM call or aggregation of calls.
 
-    ``total_tokens`` is stored as provided by the upstream provider and is
-    never overridden. This preserves provider-specific token breakdowns
-    (cached_tokens, reasoning_tokens, audio tokens, etc.) that would be
-    silently corrupted by a normalisation step.
+    ``total_tokens`` reflects the provider's reported total when available
+    (``> 0``); otherwise it falls back to ``prompt_tokens + completion_tokens``.
+    The model intentionally does not enforce ``total == prompt + completion``
+    so provider-reported totals — which on some providers include extra
+    counts for cached, reasoning, or audio tokens that this struct does not
+    break out — are not silently corrupted by a naive normalisation step.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -760,7 +762,12 @@ class TokenUsage(BaseModel):
             return None
         prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
         completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-        total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
+        # Mirror the > 0 guard used by other integrations: a provider-reported
+        # total of 0 (or absent) falls back to prompt+completion rather than
+        # propagating the zero, which would silently under-count totals on
+        # responses where prompt+completion are non-zero.
+        raw_total = getattr(usage, 'total_tokens', None)
+        total = int(raw_total) if raw_total is not None and int(raw_total) > 0 else prompt + completion
         return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
 
     def __add__(self, other: 'TokenUsage | None') -> 'TokenUsage':

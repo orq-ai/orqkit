@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, AttackTechnique, DeliveryMethod, SendResult, TurnType
+from evaluatorq.redteam.contracts import AgentContext, AttackStrategy, AttackTechnique, DeliveryMethod, SendResult, TokenUsage, TurnType
 from evaluatorq.redteam.adaptive.orchestrator import (
     ADVERSARIAL_SYSTEM_PROMPT,
     MultiTurnOrchestrator,
@@ -246,6 +246,55 @@ class TestMultiTurnOrchestrator:
         )
 
         assert result.objective_achieved is True
+
+    @pytest.mark.asyncio
+    async def test_run_attack_propagates_target_token_usage(self):
+        """End-to-end: target tokens from SendResult.usage flow into
+        OrchestratorResult.token_usage_target so RedTeamReport totals
+        reflect what the target actually consumed. This is the contract
+        the whole RES-715 work exists to deliver — without coverage here
+        a future refactor could silently break aggregation."""
+        mock_llm = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = 'OBJECTIVE_ACHIEVED done'
+        mock_llm.chat.completions.create = AsyncMock(return_value=mock_response)
+
+        target_usage = TokenUsage(prompt_tokens=12, completion_tokens=7, total_tokens=19, calls=1)
+        mock_target = AsyncMock()
+        mock_target.send_prompt_with_usage = AsyncMock(
+            return_value=SendResult(text='ok', usage=target_usage)
+        )
+
+        orchestrator = MultiTurnOrchestrator(llm_client=mock_llm, model='azure/gpt-5-mini')
+        strategy = AttackStrategy(
+            category='ASI01',
+            name='test',
+            description='Test',
+            attack_technique=AttackTechnique.INDIRECT_INJECTION,
+            delivery_methods=[DeliveryMethod.CRESCENDO],
+            turn_type=TurnType.MULTI,
+            objective_template='Test',
+        )
+        context = AgentContext(key='test_agent')
+
+        result = await orchestrator.run_attack(
+            target=mock_target,
+            strategy=strategy,
+            objective='Test',
+            agent_context=context,
+            max_turns=5,
+        )
+
+        # Orchestrator may invoke the target across multiple turns until
+        # OBJECTIVE_ACHIEVED is detected; per-call usage is 12/7/19 with
+        # calls=1, so totals must be a positive multiple of those values.
+        assert result.token_usage_target is not None
+        n = result.token_usage_target.calls
+        assert n >= 1
+        assert result.token_usage_target.prompt_tokens == 12 * n
+        assert result.token_usage_target.completion_tokens == 7 * n
+        assert result.token_usage_target.total_tokens == 19 * n
 
 
 class TestAdversarialSystemPrompt:

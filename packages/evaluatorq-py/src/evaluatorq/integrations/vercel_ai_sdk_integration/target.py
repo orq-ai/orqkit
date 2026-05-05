@@ -100,13 +100,17 @@ class VercelAISdkTarget(AgentTarget):
                     headers={"Content-Type": "application/json", **self._headers},
                 )
                 response.raise_for_status()
-        except Exception:
+            text, usage = self._parse_response(response)
+        except (httpx.HTTPError, ValueError, KeyError):
             # Roll back the user turn so the next call doesn't forward a
-            # malformed conversation with a hanging user message.
+            # malformed conversation with a hanging user message. Catches
+            # HTTP errors (network/status) and parser errors (ValueError
+            # from json.loads, KeyError from missing fields). Programming
+            # bugs (TypeError, AttributeError) propagate without rollback
+            # so they aren't masked as transient failures.
             self._history.pop()
             raise
 
-        text, usage = self._parse_response(response)
         self._history.append({"role": "assistant", "content": text})
         return SendResult(text=text, usage=usage)
 
@@ -199,15 +203,19 @@ def _parse_data_stream(raw: str) -> tuple[str, TokenUsage | None]:
             if isinstance(u, dict):
                 p = int(u.get('promptTokens', 0) or 0)
                 c = int(u.get('completionTokens', 0) or 0)
-                t = u.get('totalTokens')
-                # JSON numbers with a decimal point decode to float, so accept both.
-                total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
-                usage = TokenUsage(
-                    prompt_tokens=p,
-                    completion_tokens=c,
-                    total_tokens=total,
-                    calls=1,
-                )
+                # Mirror the JSON-response parser's zero-guard: an all-zeros
+                # usage block carries no information and would skew aggregates
+                # by adding a spurious calls=1 with zero tokens.
+                if p > 0 or c > 0:
+                    t = u.get('totalTokens')
+                    # JSON numbers with a decimal point decode to float, so accept both.
+                    total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
+                    usage = TokenUsage(
+                        prompt_tokens=p,
+                        completion_tokens=c,
+                        total_tokens=total,
+                        calls=1,
+                    )
     return ''.join(parts), usage
 
 

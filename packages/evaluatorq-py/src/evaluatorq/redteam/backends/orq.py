@@ -212,9 +212,9 @@ class ORQAgentTarget:
                     pending_ids = _pending_tool_call_ids(response)
 
                 if pending_ids:
-                    logger.error(
-                        f'{self.agent_key}: {len(pending_ids)} pending tool call(s) unresolved after '
-                        f'{max_tool_continuations} continuations. Returning partial response.'
+                    raise RuntimeError(
+                        f'Unresolved pending tool calls after {max_tool_continuations} continuations '
+                        f'({len(pending_ids)} remaining)'
                     )
 
                 response_model = getattr(response, 'model', None)
@@ -262,6 +262,10 @@ class ORQAgentTarget:
                         total_tokens=total_tokens,
                         calls=total_calls,
                     )
+
+    async def send_prompt(self, prompt: str) -> str:
+        """Back-compat wrapper. Returns text only; new code should use ``send_prompt_with_usage``."""
+        return (await self.send_prompt_with_usage(prompt)).text
 
     def new(self) -> ORQAgentTarget:
         """Return a fresh target instance with isolated state.
