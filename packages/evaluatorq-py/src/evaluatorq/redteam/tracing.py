@@ -358,7 +358,6 @@ def _default_span_max_text_chars() -> int | None:
             'EVALUATORQ_SPAN_MAX_TEXT_CHARS={!r} is not a valid int; ignoring (truncation disabled)',
             raw,
         )
-        )
         return None
     if value < 0:
         logger.warning(
