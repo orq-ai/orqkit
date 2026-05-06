@@ -5,6 +5,7 @@
  * so users don't need to wire the plumbing themselves.
  */
 
+import { randomUUID } from "node:crypto";
 import type { ChatMessage } from "./types.js";
 
 /**
@@ -104,7 +105,7 @@ export function fromOrqAgent(
 
     let threadId = threadIds.get(firstUserMessage.content);
     if (!threadId) {
-      threadId = crypto.randomUUID();
+      threadId = randomUUID();
       threadIds.set(firstUserMessage.content, threadId);
     }
 
