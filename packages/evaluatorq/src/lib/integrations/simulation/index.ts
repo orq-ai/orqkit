@@ -12,7 +12,11 @@
  */
 
 // --- Adapters ---
-export { fromChatCompletions, fromOrqDeployment } from "./adapters.js";
+export {
+  fromChatCompletions,
+  fromOrqAgent,
+  fromOrqDeployment,
+} from "./adapters.js";
 export type { AgentConfig } from "./agents/base.js";
 // --- Agents (advanced usage) ---
 export { BaseAgent } from "./agents/base.js";
