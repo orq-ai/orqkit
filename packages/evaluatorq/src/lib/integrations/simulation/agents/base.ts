@@ -221,6 +221,11 @@ export abstract class BaseAgent {
           })),
         );
 
+        // Inject W3C trace context so the router links its spans to the
+        // current simulation trace. The active span and trace context don't
+        // change across retries, so compute the headers once.
+        const traceHeaders = await getTraceContextHeaders();
+
         let lastError: unknown;
 
         for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
@@ -250,10 +255,6 @@ export abstract class BaseAgent {
                 params.tools = options.tools;
                 params.tool_choice = "auto";
               }
-
-              // Inject W3C trace context so the router links its
-              // spans to the current simulation trace.
-              const traceHeaders = await getTraceContextHeaders();
 
               const response = await this.client.chat.completions.create(
                 params,

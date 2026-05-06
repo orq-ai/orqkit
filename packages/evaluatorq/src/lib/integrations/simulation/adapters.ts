@@ -74,6 +74,13 @@ export function fromOrqAgent(
   // biome-ignore lint/suspicious/noExplicitAny: cached client type depends on dynamic import
   let cachedClient: any = null;
 
+  // Thread continuity: the agent stream API accepts one user message per call,
+  // so multi-turn context is maintained server-side via thread.id. We mint a
+  // fresh thread id on the first turn of a conversation and reuse it on
+  // subsequent turns. The first user message uniquely identifies a simulation
+  // conversation (each persona/scenario produces a distinct opener).
+  const threadIds = new Map<string, string>();
+
   return async (messages: ChatMessage[]): Promise<string> => {
     const apiKey = process.env.ORQ_API_KEY;
     if (!apiKey) {
@@ -88,7 +95,21 @@ export function fromOrqAgent(
       cachedClient = new Orq({ apiKey, serverURL });
     }
 
-    // Build the user message from the last user message in the conversation
+    const firstUserMessage = messages.find((m) => m.role === "user");
+    if (!firstUserMessage) {
+      throw new Error(
+        `fromOrqAgent: conversation has no user message to send to "${agentKey}".`,
+      );
+    }
+
+    let threadId = threadIds.get(firstUserMessage.content);
+    if (!threadId) {
+      threadId = crypto.randomUUID();
+      threadIds.set(firstUserMessage.content, threadId);
+    }
+
+    // Send only the latest user message; prior turns are reconstructed
+    // server-side from the thread.
     const lastUserMessage = [...messages]
       .reverse()
       .find((m) => m.role === "user");
@@ -110,6 +131,7 @@ export function fromOrqAgent(
           role: "user",
           parts: [{ kind: "text" as const, text: messageText }],
         },
+        thread: { id: threadId },
       },
       agentKey,
       { headers: traceHeaders },

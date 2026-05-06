@@ -203,10 +203,16 @@ export function recordTokenUsage(
   span.setAttribute("gen_ai.usage.total_tokens", total);
 
   if (usage.cacheReadInputTokens !== undefined) {
-    span.setAttribute("gen_ai.usage.cache_read.input_tokens", usage.cacheReadInputTokens);
+    span.setAttribute(
+      "gen_ai.usage.cache_read.input_tokens",
+      usage.cacheReadInputTokens,
+    );
   }
   if (usage.cacheCreationInputTokens !== undefined) {
-    span.setAttribute("gen_ai.usage.cache_creation.input_tokens", usage.cacheCreationInputTokens);
+    span.setAttribute(
+      "gen_ai.usage.cache_creation.input_tokens",
+      usage.cacheCreationInputTokens,
+    );
   }
 
   // Aliases for platform compatibility
@@ -239,20 +245,50 @@ function serializeMessages(
 }
 
 /**
+ * The OTel GenAI semconv classifies `gen_ai.input.messages` and
+ * `gen_ai.output.messages` as opt-in because they may carry PII. Honor the
+ * spec env var; default to enabled for the platform UI to keep working.
+ */
+function captureMessageContent(): boolean {
+  const flag = process.env.OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT;
+  if (flag === undefined) return true;
+  return flag.toLowerCase() === "true" || flag === "1";
+}
+
+/**
  * Record LLM input messages on a span.
  *
  * Sets both `gen_ai.input.messages` (OTel GenAI convention) and `input`
  * (platform fallback), matching the redteam module's dual-attribute pattern.
+ * Suppressed when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
  */
 export function recordLLMInput(
   span: Span | undefined,
   messages: Array<{ role: string; content: string }>,
 ): void {
   if (!span || messages.length === 0) return;
+  if (!captureMessageContent()) return;
 
   const serialized = serializeMessages(messages);
   span.setAttribute("gen_ai.input.messages", serialized);
   span.setAttribute("input", serialized);
+}
+
+/**
+ * Record a single LLM output string on a span.
+ *
+ * Sets `gen_ai.output.messages` and `output` (platform fallback). Suppressed
+ * when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
+ */
+export function recordLLMOutput(span: Span | undefined, output: string): void {
+  if (!span || !output) return;
+  if (!captureMessageContent()) return;
+
+  const serialized = serializeMessages([
+    { role: "assistant", content: output },
+  ]);
+  span.setAttribute("gen_ai.output.messages", serialized);
+  span.setAttribute("output", serialized);
 }
 
 /**
@@ -296,17 +332,19 @@ export function recordLLMResponse(
     });
   }
 
-  // Record output content (dual-attribute pattern)
-  const outputMessages = response.choices
-    ?.filter((c) => c.message?.content)
-    .map((c) => ({
-      role: c.message?.role ?? "assistant",
-      content: c.message?.content ?? "",
-    }));
-  if (outputMessages && outputMessages.length > 0) {
-    const serialized = serializeMessages(outputMessages);
-    span.setAttribute("gen_ai.output.messages", serialized);
-    span.setAttribute("output", serialized);
+  // Record output content (dual-attribute pattern). Opt-in per GenAI semconv.
+  if (captureMessageContent()) {
+    const outputMessages = response.choices
+      ?.filter((c) => c.message?.content)
+      .map((c) => ({
+        role: c.message?.role ?? "assistant",
+        content: c.message?.content ?? "",
+      }));
+    if (outputMessages && outputMessages.length > 0) {
+      const serialized = serializeMessages(outputMessages);
+      span.setAttribute("gen_ai.output.messages", serialized);
+      span.setAttribute("output", serialized);
+    }
   }
 
   const finishReasons = response.choices
@@ -360,9 +398,16 @@ export async function getTraceContextHeaders(): Promise<
 // Helpers
 // ---------------------------------------------------------------------------
 
+// OTel GenAI semconv `gen_ai.system` enum values. The router uses prefixes
+// like "azure/" that don't map 1:1 to the spec — translate the known ones.
+const PROVIDER_ALIASES: Record<string, string> = {
+  azure: "azure.ai.openai",
+};
+
 function deriveProvider(model: string): string {
   if (model.includes("/")) {
-    return model.split("/")[0] as string;
+    const prefix = model.split("/")[0] as string;
+    return PROVIDER_ALIASES[prefix] ?? prefix;
   }
   return "openai";
 }

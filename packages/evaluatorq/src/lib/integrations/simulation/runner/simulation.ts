@@ -11,6 +11,7 @@ import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
 import {
   recordLLMInput,
+  recordLLMOutput,
   recordTokenUsage,
   setSpanAttrs,
   withSimulationSpan,
@@ -318,9 +319,7 @@ export class SimulationRunner {
                     recordLLMInput(targetSpan, targetMessages);
                     const response =
                       await this.getTargetResponse(targetMessages);
-                    setSpanAttrs(targetSpan, {
-                      output: response,
-                    });
+                    recordLLMOutput(targetSpan, response);
                     return response;
                   },
                 );
