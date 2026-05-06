@@ -5,6 +5,8 @@
  * so users don't need to wire the plumbing themselves.
  */
 
+import { randomUUID } from "node:crypto";
+
 import type { ChatMessage } from "./types.js";
 
 /**
@@ -79,6 +81,9 @@ export function fromOrqAgent(
   // turns, we pass the task_id from the previous response to continue the
   // conversation. Use first message content to identify conversations.
   const conversationTasks = new Map<string, string>();
+  // Unique per adapter instance — used as map key prefix to prevent cross-simulation
+  // key collisions when two simulations share the same opening message content.
+  const adapterInstanceId = randomUUID();
 
   return async (messages: ChatMessage[]): Promise<string> => {
     const apiKey = process.env.ORQ_API_KEY;
@@ -102,8 +107,9 @@ export function fromOrqAgent(
     }
 
     // Check if this is a continuation of an existing conversation
-    // Use first message content as conversation identifier
-    const conversationKey = firstUserMessage.content;
+    // Key prefixed with adapterInstanceId to prevent collisions across simulations
+    // with identical opening messages.
+    const conversationKey = `${adapterInstanceId}:${firstUserMessage.content}`;
     const existingTaskId = conversationTasks.get(conversationKey);
 
     // Send only the latest user message; prior turns are reconstructed
