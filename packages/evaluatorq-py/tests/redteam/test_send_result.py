@@ -40,17 +40,17 @@ class TestSendResultFrozen:
     def test_cannot_assign_text(self) -> None:
         result = SendResult(text="original")
         with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
-            result.text = "mutated"  # type: ignore[misc]
+            result.text = "mutated"  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_cannot_assign_usage(self) -> None:
         result = SendResult(text="original")
         with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
-            result.usage = TokenUsage()  # type: ignore[misc]
+            result.usage = TokenUsage()  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_cannot_assign_model(self) -> None:
         result = SendResult(text="original")
         with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
-            result.model = "gpt-5"  # type: ignore[misc]
+            result.model = "gpt-5"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 class TestSendResultSlots:
@@ -62,7 +62,7 @@ class TestSendResultSlots:
         """
         result = SendResult(text="hi")
         with pytest.raises((AttributeError, TypeError)):
-            result.arbitrary_new_attr = "should fail"  # type: ignore[attr-defined]
+            result.arbitrary_new_attr = "should fail"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 class TestSendResultIsInstance:

@@ -57,7 +57,7 @@ def _make_orq_response(
     prompt_tokens: int = 20,
     completion_tokens: int = 10,
     total_tokens: int = 30,
-    pending_tool_calls: list | None = None,
+    pending_tool_calls: list[Any] | None = None,
     model: str | None = None,
 ) -> MagicMock:
     """Build a minimal fake ORQ agent response."""
@@ -505,7 +505,7 @@ class TestLangGraphTargetSendPromptWithUsage:
         graph = MagicMock()
         graph.name = "test_graph"
 
-        def _fake_ainvoke(input_dict: Any, *, config: Any) -> dict:
+        def _fake_ainvoke(input_dict: Any, *, config: Any) -> dict[str, Any]:
             callbacks = config.get("callbacks", [])
             for cb in (callbacks if isinstance(callbacks, list) else []):
                 if isinstance(cb, _TokenUsageCollector):

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from loguru import logger
 
@@ -114,7 +114,7 @@ def validate_agent_target(obj: object) -> None:
         )
 
 
-def adapt_legacy_target(obj: object) -> object:
+def adapt_legacy_target(obj: object) -> AgentTarget:
     """Adapt a legacy target with only send_prompt() to the new send_prompt_with_usage interface.
 
     Emits a DeprecationWarning. Remove in next minor.
@@ -126,9 +126,9 @@ def adapt_legacy_target(obj: object) -> object:
     import warnings
 
     if callable(getattr(obj, 'send_prompt_with_usage', None)):
-        return obj
+        return cast(AgentTarget, obj)
     if not callable(getattr(obj, 'send_prompt', None)):
-        return obj
+        return cast(AgentTarget, obj)
     warnings.warn(
         f"{type(obj).__name__} implements legacy `send_prompt` only. "
         "Migrate to `async send_prompt_with_usage(prompt) -> SendResult`. "
@@ -137,12 +137,14 @@ def adapt_legacy_target(obj: object) -> object:
         stacklevel=2,
     )
 
+    legacy = cast(Any, obj)
+
     async def _adapted(prompt: str) -> SendResult:
-        text = await obj.send_prompt(prompt)  # type: ignore[attr-defined]
+        text = await legacy.send_prompt(prompt)
         return SendResult(text=text)
 
-    obj.send_prompt_with_usage = _adapted  # type: ignore[attr-defined]
-    return obj
+    legacy.send_prompt_with_usage = _adapted
+    return cast(AgentTarget, obj)
 
 
 class DirectTargetFactory:
