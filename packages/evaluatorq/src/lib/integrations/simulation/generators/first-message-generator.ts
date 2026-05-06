@@ -123,7 +123,7 @@ export class FirstMessageGenerator {
         "orq.simulation.scenario": scenario.name,
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const personaContext = buildPersonaSystemPrompt(persona);
         const scenarioContext = buildScenarioUserContext(scenario);
 

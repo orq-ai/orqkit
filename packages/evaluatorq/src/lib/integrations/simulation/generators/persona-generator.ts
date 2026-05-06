@@ -171,7 +171,7 @@ export class PersonaGenerator {
         "orq.simulation.num_personas": params.numPersonas ?? 5,
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           context = "",
@@ -262,7 +262,7 @@ Return ONLY a JSON array, no other text.`;
         "orq.simulation.mode": "coverage",
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           context = "",

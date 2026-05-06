@@ -274,7 +274,7 @@ export class ScenarioGenerator {
         "orq.simulation.num_scenarios": params.numScenarios ?? 10,
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           context = "",
@@ -372,7 +372,7 @@ Return ONLY a JSON array, no other text.`;
         "orq.simulation.mode": "coverage",
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           context = "",
@@ -558,7 +558,7 @@ Return ONLY a JSON array, no other text.`;
         "orq.simulation.mode": "edge_cases",
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           existingScenarios,
@@ -663,7 +663,7 @@ Return ONLY a JSON array, no other text.`;
         "orq.simulation.mode": "boundary",
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const { agentDescription, numScenarios = 5 } = params;
 
         const userPrompt = `Agent Description: ${delimit(agentDescription)}
@@ -761,7 +761,7 @@ Return ONLY a JSON array, no other text.`;
         "orq.simulation.mode": "security",
         "orq.simulation.model": this.model,
       },
-      async (span) => {
+      async (_span) => {
         const {
           agentDescription,
           seedExamples,
