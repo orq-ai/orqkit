@@ -198,6 +198,7 @@ Keep it natural - this is how they would actually open a conversation.`;
             `FirstMessageGenerator: API call failed, using generic fallback. Error: ${e}`,
           );
           // Fallback to a generic message based on scenario (no persona traits applied)
+          _span?.setAttribute("orq.simulation.first_message_fallback", true);
           return `Hi, I need help with: ${scenario.goal}`;
         }
       },

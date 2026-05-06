@@ -79,8 +79,9 @@ export function fromOrqAgent(
   // Thread continuity: the agent stream API accepts one user message per call,
   // so multi-turn context is maintained server-side via thread.id. We mint a
   // fresh thread id on the first turn of a conversation and reuse it on
-  // subsequent turns. The first user message uniquely identifies a simulation
-  // conversation (each persona/scenario produces a distinct opener).
+  // subsequent turns. Use adapter instance ID + first message to avoid
+  // collisions across different simulation batches.
+  const adapterInstanceId = randomUUID();
   const threadIds = new Map<string, string>();
 
   return async (messages: ChatMessage[]): Promise<string> => {
@@ -104,10 +105,12 @@ export function fromOrqAgent(
       );
     }
 
-    let threadId = threadIds.get(firstUserMessage.content);
+    // Create collision-resistant key: adapter instance + first message content
+    const threadKey = `${adapterInstanceId}:${firstUserMessage.content}`;
+    let threadId = threadIds.get(threadKey);
     if (!threadId) {
       threadId = randomUUID();
-      threadIds.set(firstUserMessage.content, threadId);
+      threadIds.set(threadKey, threadId);
     }
 
     // Send only the latest user message; prior turns are reconstructed
@@ -151,7 +154,7 @@ export function fromOrqAgent(
       }
     }
 
-    if (lastMessage === undefined) {
+    if (!lastMessage) {
       throw new Error(
         `Agent stream for "${agentKey}" ended without an event.agents.inactive event. ` +
           "The agent may have errored out server-side.",
