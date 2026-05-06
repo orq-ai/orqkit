@@ -5,8 +5,6 @@
  * so users don't need to wire the plumbing themselves.
  */
 
-import { randomUUID } from "node:crypto";
-
 import type { ChatMessage } from "./types.js";
 
 /**
@@ -76,13 +74,11 @@ export function fromOrqAgent(
   // biome-ignore lint/suspicious/noExplicitAny: cached client type depends on dynamic import
   let cachedClient: any = null;
 
-  // Thread continuity: the agent stream API accepts one user message per call,
-  // so multi-turn context is maintained server-side via thread.id. We mint a
-  // fresh thread id on the first turn of a conversation and reuse it on
-  // subsequent turns. Use adapter instance ID + first message to avoid
-  // collisions across different simulation batches.
-  const adapterInstanceId = randomUUID();
-  const threadIds = new Map<string, string>();
+  // Multi-turn continuity: the agent stream API maintains conversation state
+  // via task_id. On the first turn, we start a new conversation. On subsequent
+  // turns, we pass the task_id from the previous response to continue the
+  // conversation. Use first message content to identify conversations.
+  const conversationTasks = new Map<string, string>();
 
   return async (messages: ChatMessage[]): Promise<string> => {
     const apiKey = process.env.ORQ_API_KEY;
@@ -105,16 +101,13 @@ export function fromOrqAgent(
       );
     }
 
-    // Create collision-resistant key: adapter instance + first message content
-    const threadKey = `${adapterInstanceId}:${firstUserMessage.content}`;
-    let threadId = threadIds.get(threadKey);
-    if (!threadId) {
-      threadId = randomUUID();
-      threadIds.set(threadKey, threadId);
-    }
+    // Check if this is a continuation of an existing conversation
+    // Use first message content as conversation identifier
+    const conversationKey = firstUserMessage.content;
+    const existingTaskId = conversationTasks.get(conversationKey);
 
     // Send only the latest user message; prior turns are reconstructed
-    // server-side from the thread.
+    // server-side from the task_id.
     const lastUserMessage = [...messages]
       .reverse()
       .find((m) => m.role === "user");
@@ -130,20 +123,22 @@ export function fromOrqAgent(
       // Tracing not available — continue without propagation
     }
 
-    const stream = await cachedClient.agents.stream(
-      {
-        message: {
-          role: "user",
-          parts: [{ kind: "text" as const, text: messageText }],
-        },
-        thread: { id: threadId },
+    // Build request with optional taskId for conversation continuation
+    const streamRequest = {
+      message: {
+        role: "user",
+        parts: [{ kind: "text" as const, text: messageText }],
       },
-      agentKey,
-      { headers: traceHeaders },
-    );
+      ...(existingTaskId && { taskId: existingTaskId }),
+    };
 
-    // Consume stream and extract the final agent message
+    const stream = await cachedClient.agents.stream(streamRequest, agentKey, {
+      headers: traceHeaders,
+    });
+
+    // Consume stream and extract the final agent message + task ID
     let lastMessage: string | undefined;
+    let taskId: string | undefined;
     for await (const event of stream) {
       const data = (event as Record<string, unknown>).data as
         | Record<string, unknown>
@@ -151,6 +146,7 @@ export function fromOrqAgent(
       if (data?.type === "event.agents.inactive") {
         const innerData = data.data as Record<string, unknown> | undefined;
         lastMessage = (innerData?.lastMessage as string) ?? "";
+        taskId = (innerData?.taskId as string) ?? undefined;
       }
     }
 
@@ -159,6 +155,11 @@ export function fromOrqAgent(
         `Agent stream for "${agentKey}" ended without an event.agents.inactive event. ` +
           "The agent may have errored out server-side.",
       );
+    }
+
+    // Store task ID for conversation continuation
+    if (taskId) {
+      conversationTasks.set(conversationKey, taskId);
     }
 
     return lastMessage;
