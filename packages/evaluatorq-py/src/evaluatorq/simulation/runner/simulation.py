@@ -51,16 +51,16 @@ logger = logging.getLogger(__name__)
 ZERO_USAGE = TokenUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
 
 
-def _invert_roles_for_simulator(messages: list[Message]) -> list[ChatMessage]:
+def _invert_roles_for_simulator(messages: list[Message]) -> list[Message]:
     """Swap roles so the user simulator sees the conversation from its perspective."""
-    inverted = []
+    inverted: list[Message] = []
     for m in messages:
         if m.role == "user":
-            inverted.append(ChatMessage(role="assistant", content=m.content))
+            inverted.append(Message(role="assistant", content=m.content))
         elif m.role == "assistant":
-            inverted.append(ChatMessage(role="user", content=m.content))
+            inverted.append(Message(role="user", content=m.content))
         else:
-            inverted.append(ChatMessage(role=m.role, content=m.content))
+            inverted.append(Message(role=m.role, content=m.content))
     return inverted
 
 
@@ -426,17 +426,14 @@ class SimulationRunner:
                 },
             ) as turn_span:
                 # 1. Target agent responds
-                target_messages = [
-                    ChatMessage(role=m.role, content=m.content) for m in messages
-                ]
                 async with with_simulation_span(
                     "orq.simulation.target_call", None
                 ) as target_span:
                     record_llm_input(
                         target_span,
-                        [{"role": m.role, "content": m.content} for m in target_messages],
+                        [{"role": m.role, "content": m.content or ""} for m in messages],
                     )
-                    agent_response = await self._get_target_response(target_messages)
+                    agent_response = await self._get_target_response(messages)
                     record_llm_output(target_span, agent_response)
                 messages.append(Message(role="assistant", content=agent_response))
 
@@ -444,9 +441,7 @@ class SimulationRunner:
                 async with with_simulation_span(
                     "orq.simulation.judge_evaluation", None
                 ):
-                    judgment = await judge.evaluate(
-                        [ChatMessage(role=m.role, content=m.content) for m in messages]
-                    )
+                    judgment = await judge.evaluate(messages)
 
                 turn_metrics_list.append(
                     _build_turn_metrics(turn + 1, judgment, usage_before)

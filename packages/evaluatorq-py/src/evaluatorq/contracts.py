@@ -189,15 +189,95 @@ class AgentResponse:
         return result
 
 
+# ---------------------------------------------------------------------------
+# Shared message + token-usage types (RES-596)
+# ---------------------------------------------------------------------------
+# These were previously duplicated across simulation/types.py and
+# redteam/contracts.py. The redteam variants are the supersets — Message
+# supports tool calls and the "tool" role; TokenUsage carries an extra
+# ``calls`` field plus ``from_completion()``. Both are re-exported from the
+# subpackage modules so legacy import paths keep working.
+
+
+class FunctionCall(BaseModel):
+    """Function call details in OpenAI tool call format."""
+
+    name: str = Field(description="Function name to call")
+    arguments: str = Field(description="JSON string of function arguments")
+
+
+class StrategyToolCall(BaseModel):
+    """Tool call in assistant message (OpenAI format)."""
+
+    id: str = Field(description="Unique tool call ID (e.g., call_abc123)")
+    type: Literal["function"] = Field(default="function", description="Tool type")
+    function: FunctionCall = Field(description="Function call details")
+
+
+class Message(BaseModel):
+    """Single message in conversation history (OpenAI format with tool support).
+
+    Supports both simple messages and tool calls:
+    - Simple: ``{"role": "user", "content": "Hello"}``
+    - Tool call: ``{"role": "assistant", "tool_calls": [...]}``
+    - Tool response: ``{"role": "tool", "tool_call_id": "...", "name": "...", "content": "..."}``
+    """
+
+    role: Literal["user", "assistant", "tool", "system"]
+    content: str | None = Field(
+        default=None,
+        description="Message content (required for user/system, optional for assistant with tool_calls)",
+    )
+
+    # Tool call fields (OpenAI format)
+    tool_calls: list[StrategyToolCall] | None = Field(
+        default=None, description="Tool calls made by assistant"
+    )
+    tool_call_id: str | None = Field(
+        default=None,
+        description="ID linking tool response to call (for role=tool)",
+    )
+    name: str | None = Field(default=None, description="Function name (for role=tool)")
+
+
+class TokenUsage(BaseModel):
+    """Token usage and cost for an LLM call or aggregation of calls."""
+
+    total_tokens: int = Field(default=0, description="Total tokens used")
+    prompt_tokens: int = Field(default=0, description="Prompt/input tokens")
+    completion_tokens: int = Field(default=0, description="Completion/output tokens")
+    calls: int = Field(default=0, description="Number of LLM API calls")
+
+    @classmethod
+    def from_completion(cls, response: Any) -> "TokenUsage | None":
+        """Extract token usage from an OpenAI-compatible completion response."""
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return None
+        prompt = int(getattr(usage, "prompt_tokens", 0) or 0)
+        completion = int(getattr(usage, "completion_tokens", 0) or 0)
+        total = int(getattr(usage, "total_tokens", prompt + completion) or 0)
+        return cls(
+            prompt_tokens=prompt,
+            completion_tokens=completion,
+            total_tokens=total,
+            calls=1,
+        )
+
+
 __all__ = [
     "DEFAULT_PIPELINE_MODEL",
     "DEFAULT_TARGET_MAX_TOKENS",
     "DEFAULT_TARGET_TIMEOUT_MS",
     "AgentResponse",
     "ExecutedToolCall",
+    "FunctionCall",
     "LLMCallConfig",
+    "Message",
     "OutputMessage",
     "ReasoningOutputItem",
+    "StrategyToolCall",
     "TextOutputItem",
+    "TokenUsage",
     "ToolCallOutputItem",
 ]

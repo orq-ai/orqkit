@@ -5,10 +5,19 @@ Uses Pydantic models for maximum compatibility with generators/runner/agents.
 
 from __future__ import annotations
 
-from enum import Enum
+import sys
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # type: ignore[no-redef]
+        """String enum compatible with Python 3.10. Mirrors redteam.contracts."""
+
 
 DEFAULT_MODEL = "azure/gpt-4o-mini"
 
@@ -18,14 +27,14 @@ DEFAULT_MODEL = "azure/gpt-4o-mini"
 # ---------------------------------------------------------------------------
 
 
-class CommunicationStyle(str, Enum):
+class CommunicationStyle(StrEnum):
     formal = "formal"
     casual = "casual"
     terse = "terse"
     verbose = "verbose"
 
 
-class StartingEmotion(str, Enum):
+class StartingEmotion(StrEnum):
     neutral = "neutral"
     frustrated = "frustrated"
     confused = "confused"
@@ -33,7 +42,7 @@ class StartingEmotion(str, Enum):
     urgent = "urgent"
 
 
-class EmotionalArc(str, Enum):
+class EmotionalArc(StrEnum):
     stable = "stable"
     escalating = "escalating"
     de_escalating = "de_escalating"
@@ -42,7 +51,7 @@ class EmotionalArc(str, Enum):
     hostile = "hostile"
 
 
-class CulturalContext(str, Enum):
+class CulturalContext(StrEnum):
     neutral = "neutral"
     direct = "direct"
     indirect = "indirect"
@@ -51,7 +60,7 @@ class CulturalContext(str, Enum):
     hierarchical = "hierarchical"
 
 
-class ConversationStrategy(str, Enum):
+class ConversationStrategy(StrEnum):
     cooperative = "cooperative"
     topic_switching = "topic_switching"
     contradictory = "contradictory"
@@ -61,7 +70,7 @@ class ConversationStrategy(str, Enum):
     ambiguous = "ambiguous"
 
 
-class InputFormat(str, Enum):
+class InputFormat(StrEnum):
     plain_text = "plain_text"
     with_url = "with_url"
     with_attachment = "with_attachment"
@@ -70,7 +79,7 @@ class InputFormat(str, Enum):
     mixed_media = "mixed_media"
 
 
-class TerminatedBy(str, Enum):
+class TerminatedBy(StrEnum):
     judge = "judge"
     max_turns = "max_turns"
     error = "error"
@@ -214,20 +223,15 @@ INPUT_FORMAT_INSTRUCTIONS: dict[InputFormat, str] = {
 # ---------------------------------------------------------------------------
 
 
-class ChatMessage(BaseModel):
-    role: Literal["user", "assistant", "system"]
-    content: str
-
-
 # ---------------------------------------------------------------------------
-# Token usage
+# Shared types — re-exported from evaluatorq.contracts (RES-596 consolidation).
+# ``ChatMessage`` is kept as a deprecated alias for ``Message`` since they had
+# identical schemas before consolidation.
 # ---------------------------------------------------------------------------
 
+from evaluatorq.contracts import Message, TokenUsage  # noqa: E402
 
-class TokenUsage(BaseModel):
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    total_tokens: int = 0
+ChatMessage = Message
 
 
 # ---------------------------------------------------------------------------
@@ -295,11 +299,6 @@ class Judgment(BaseModel):
 # ---------------------------------------------------------------------------
 # Message
 # ---------------------------------------------------------------------------
-
-
-class Message(BaseModel):
-    role: Literal["user", "assistant", "system"]
-    content: str
 
 
 # ---------------------------------------------------------------------------

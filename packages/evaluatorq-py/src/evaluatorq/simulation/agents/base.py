@@ -219,7 +219,7 @@ class BaseAgent(ABC):
 
         full_messages: list[dict[str, Any]] = [
             {"role": "system", "content": self.system_prompt},
-            *[{"role": m.role, "content": m.content} for m in messages],
+            *[{"role": m.role, "content": m.content or ""} for m in messages],
         ]
 
         params: dict[str, Any] = {
@@ -304,7 +304,7 @@ class BaseAgent(ABC):
         """
         timeout_s = timeout or DEFAULT_TIMEOUT_S
 
-        input_messages = [{"role": m.role, "content": m.content} for m in messages]
+        input_messages = [{"role": m.role, "content": m.content or ""} for m in messages]
 
         params: dict[str, Any] = {
             "model": self._model,
