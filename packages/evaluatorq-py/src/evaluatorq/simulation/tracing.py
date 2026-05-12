@@ -223,6 +223,47 @@ def _serialize_messages(messages: list[dict[str, Any]]) -> str:
     )
 
 
+def _serialize_tool_call_content(tool_calls: list[dict[str, Any]]) -> str:
+    """Render tool-call-only outputs into assistant content for trace display."""
+    return json.dumps({"tool_calls": tool_calls}, ensure_ascii=False)
+
+
+def _extract_chat_tool_call_payloads(tool_calls: Any) -> list[dict[str, str]]:
+    payloads: list[dict[str, str]] = []
+    for tool_call in tool_calls or []:
+        function = getattr(tool_call, "function", None)
+        name = getattr(function, "name", None) or getattr(tool_call, "name", None)
+        arguments = getattr(function, "arguments", None) or getattr(
+            tool_call, "arguments", None
+        )
+        payload: dict[str, str] = {}
+        if name:
+            payload["name"] = str(name)
+        if arguments is not None:
+            payload["arguments"] = str(arguments)
+        if payload:
+            payloads.append(payload)
+    return payloads
+
+
+def _extract_response_tool_call_payloads(output_items: list[Any]) -> list[dict[str, str]]:
+    payloads: list[dict[str, str]] = []
+    for item in output_items:
+        call_id = getattr(item, "call_id", None)
+        name = getattr(item, "name", None)
+        arguments = getattr(item, "arguments", None)
+        if call_id or name or arguments is not None:
+            payload: dict[str, str] = {}
+            if call_id:
+                payload["call_id"] = str(call_id)
+            if name:
+                payload["name"] = str(name)
+            if arguments is not None:
+                payload["arguments"] = str(arguments)
+            payloads.append(payload)
+    return payloads
+
+
 def _capture_message_content() -> bool:
     """Honor ``OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT`` env flag.
 
@@ -317,6 +358,18 @@ def record_llm_response(span: Span | None, response: Any) -> None:
                 if content:
                     role = getattr(message, "role", None) or "assistant"
                     output_messages.append({"role": role, "content": content})
+                    continue
+                tool_payloads = _extract_chat_tool_call_payloads(
+                    getattr(message, "tool_calls", None) if message else None
+                )
+                if tool_payloads:
+                    role = getattr(message, "role", None) or "assistant"
+                    output_messages.append(
+                        {
+                            "role": role,
+                            "content": _serialize_tool_call_content(tool_payloads),
+                        }
+                    )
         else:
             # Responses API: response.output is a list of typed items.
             # Prefer the SDK helper response.output_text when available,
@@ -346,6 +399,15 @@ def record_llm_response(span: Span | None, response: Any) -> None:
                     output_messages.append(
                         {"role": "assistant", "content": joined}
                     )
+                else:
+                    tool_payloads = _extract_response_tool_call_payloads(output_items)
+                    if tool_payloads:
+                        output_messages.append(
+                            {
+                                "role": "assistant",
+                                "content": _serialize_tool_call_content(tool_payloads),
+                            }
+                        )
 
         if output_messages:
             serialized = _serialize_messages(output_messages)

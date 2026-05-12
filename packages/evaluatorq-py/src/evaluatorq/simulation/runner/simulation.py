@@ -5,10 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-import os
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
-
-from openai import AsyncOpenAI
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from evaluatorq.simulation.agents.judge import JudgeAgent, JudgeAgentConfig
 from evaluatorq.simulation.agents.user_simulator import (
@@ -44,6 +41,7 @@ from evaluatorq.simulation.utils.prompt_builders import (
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from openai import AsyncOpenAI
     from opentelemetry.trace import Span
 
     from evaluatorq.simulation.agents.base import BaseAgent
@@ -249,16 +247,45 @@ class SimulationRunner:
                     "orq.simulation.model": self._model,
                 },
             ) as run_span:
-                return await self._run_inner(
-                    persona=persona,
-                    scenario=scenario,
-                    first_message=first_message,
-                    effective_max_turns=effective_max_turns,
-                    messages=messages,
-                    turn_metrics_list=turn_metrics_list,
-                    run_span=run_span,
-                    usage_holder=usage_holder,
-                )
+                try:
+                    return await self._run_inner(
+                        persona=persona,
+                        scenario=scenario,
+                        first_message=first_message,
+                        effective_max_turns=effective_max_turns,
+                        messages=messages,
+                        turn_metrics_list=turn_metrics_list,
+                        run_span=run_span,
+                        usage_holder=usage_holder,
+                    )
+                except Exception:
+                    get_total_usage = usage_holder.get("get_total_usage")
+                    try:
+                        usage = (
+                            get_total_usage()
+                            if get_total_usage
+                            else ZERO_USAGE.model_copy()
+                        )
+                    except Exception as usage_err:
+                        logger.warning("Failed to collect token usage: %s", usage_err)
+                        usage = ZERO_USAGE.model_copy()
+                    record_token_usage(
+                        run_span,
+                        prompt_tokens=usage.prompt_tokens,
+                        completion_tokens=usage.completion_tokens,
+                        total_tokens=usage.total_tokens,
+                    )
+                    set_span_attrs(
+                        run_span,
+                        {
+                            "orq.simulation.terminated_by": "error",
+                            "orq.simulation.goal_achieved": False,
+                            "orq.simulation.turn_count": sum(
+                                1 for m in messages if m.role == "assistant"
+                            ),
+                        },
+                    )
+                    raise
         except Exception as e:
             logger.error("SimulationRunner.run() failed: %s", e, exc_info=True)
             error_msg = str(e)

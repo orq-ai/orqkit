@@ -296,6 +296,46 @@ async def test_record_llm_response_responses_api_shape(
 
 
 @pytest.mark.asyncio
+async def test_record_llm_response_tool_call_only_chat_output(
+    span_collector: _CollectingExporter,
+):
+    from evaluatorq.simulation.tracing import record_llm_response, with_llm_span
+
+    class _Function:
+        name = "finish_conversation"
+        arguments = '{"reason":"done"}'
+
+    class _ToolCall:
+        function = _Function()
+
+    class _Message:
+        role = "assistant"
+        content = None
+        tool_calls = [_ToolCall()]
+
+    class _Choice:
+        finish_reason = "tool_calls"
+        message = _Message()
+
+    class _Resp:
+        id = "resp_tool"
+        model = "openai/gpt-4o"
+        usage = None
+        choices = [_Choice()]
+
+    async with with_llm_span(model="openai/gpt-4o") as span:
+        record_llm_response(span, _Resp())
+
+    a = _attrs(_find(span_collector, "chat openai/gpt-4o"))
+    parsed = json.loads(a["gen_ai.output.messages"])
+    assert parsed[0]["role"] == "assistant"
+    payload = json.loads(parsed[0]["content"])
+    assert payload["tool_calls"] == [
+        {"name": "finish_conversation", "arguments": '{"reason":"done"}'}
+    ]
+
+
+@pytest.mark.asyncio
 async def test_simulation_span_records_asyncio_cancellation(
     span_collector: _CollectingExporter,
 ):
@@ -666,6 +706,222 @@ async def test_traceparent_injected_into_chat_completions_call(
     headers = captured.get("extra_headers")
     assert isinstance(headers, dict)
     assert "traceparent" in headers, f"expected traceparent in {headers}"
+
+
+@pytest.mark.asyncio
+async def test_traceparent_injected_into_first_message_generation_call(
+    span_collector: _CollectingExporter,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("ORQ_API_KEY", "test-key")
+
+    captured: dict[str, object] = {}
+
+    class _Choice:
+        finish_reason = "stop"
+
+        class message:  # noqa: N801
+            content = "Need help with my order"
+            role = "assistant"
+
+    class _Usage:
+        prompt_tokens = 2
+        completion_tokens = 3
+        total_tokens = 5
+        prompt_tokens_details = None
+
+    class _Resp:
+        id = "fm_1"
+        model = "test"
+        usage = _Usage()
+        choices = [_Choice()]
+
+    async def fake_create(**kwargs: object) -> _Resp:
+        captured.update(kwargs)
+        return _Resp()
+
+    fake_client = MagicMock()
+    fake_client.chat = MagicMock()
+    fake_client.chat.completions = MagicMock()
+    fake_client.chat.completions.create = AsyncMock(side_effect=fake_create)
+
+    from evaluatorq.simulation.generators.first_message_generator import (
+        FirstMessageGenerator,
+    )
+    from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.types import (
+        CommunicationStyle,
+        Persona,
+        Scenario,
+    )
+
+    persona = Persona(
+        name="Tester",
+        patience=0.5,
+        assertiveness=0.5,
+        politeness=0.5,
+        technical_level=0.5,
+        communication_style=CommunicationStyle.casual,
+        background="A test user",
+    )
+    scenario = Scenario(name="Order", goal="Get order help")
+    gen = FirstMessageGenerator(model="test", client=fake_client)
+
+    async with with_simulation_span("orq.simulation.first_message_generation", None):
+        message = await gen.generate(persona, scenario)
+
+    assert message == "Need help with my order"
+    headers = captured.get("extra_headers")
+    assert isinstance(headers, dict)
+    assert "traceparent" in headers, f"expected traceparent in {headers}"
+    llm = _find(span_collector, "chat test")
+    parent = _find(span_collector, "orq.simulation.first_message_generation")
+    assert llm.parent.span_id == parent.context.span_id
+
+
+@pytest.mark.asyncio
+async def test_generated_datapoint_first_message_has_simulation_span(
+    span_collector: _CollectingExporter,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("ORQ_API_KEY", "test-key")
+
+    class _Choice:
+        finish_reason = "stop"
+
+        class message:  # noqa: N801
+            content = "Hello there"
+            role = "assistant"
+
+    class _Usage:
+        prompt_tokens = 1
+        completion_tokens = 1
+        total_tokens = 2
+        prompt_tokens_details = None
+
+    class _Resp:
+        id = "dp_1"
+        model = "test"
+        usage = _Usage()
+        choices = [_Choice()]
+
+    fake_client = MagicMock()
+    fake_client.chat = MagicMock()
+    fake_client.chat.completions = MagicMock()
+    fake_client.chat.completions.create = AsyncMock(return_value=_Resp())
+
+    from evaluatorq.simulation.api import _generate_single_datapoint
+    from evaluatorq.simulation.generators.first_message_generator import (
+        FirstMessageGenerator,
+    )
+    from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.types import (
+        CommunicationStyle,
+        Persona,
+        Scenario,
+    )
+
+    persona = Persona(
+        name="Tester",
+        patience=0.5,
+        assertiveness=0.5,
+        politeness=0.5,
+        technical_level=0.5,
+        communication_style=CommunicationStyle.casual,
+        background="A test user",
+    )
+    scenario = Scenario(name="Billing", goal="Fix a billing issue")
+    gen = FirstMessageGenerator(model="test", client=fake_client)
+
+    async with with_simulation_span("orq.simulation.pipeline", None):
+        datapoint = await _generate_single_datapoint(gen, persona, scenario)
+
+    assert datapoint.first_message == "Hello there"
+    pipeline = _find(span_collector, "orq.simulation.pipeline")
+    first_msg = _find(span_collector, "orq.simulation.first_message_generation")
+    llm = _find(span_collector, "chat test")
+    assert first_msg.parent.span_id == pipeline.context.span_id
+    assert llm.parent.span_id == first_msg.context.span_id
+
+
+@pytest.mark.asyncio
+async def test_run_span_records_error_metadata_and_usage(
+    span_collector: _CollectingExporter,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("ORQ_API_KEY", "test-key")
+
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+    from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.types import (
+        ChatMessage,
+        CommunicationStyle,
+        Datapoint,
+        Persona,
+        Scenario,
+        TokenUsage,
+        TerminatedBy,
+    )
+
+    judge = MagicMock()
+    judge.evaluate = AsyncMock(side_effect=RuntimeError("judge failed"))
+    judge.get_usage = MagicMock(
+        return_value=TokenUsage(prompt_tokens=5, completion_tokens=7, total_tokens=12)
+    )
+
+    user_sim = MagicMock()
+    user_sim.get_usage = MagicMock(
+        return_value=TokenUsage(prompt_tokens=2, completion_tokens=3, total_tokens=5)
+    )
+    user_sim.generate_first_message = AsyncMock(return_value="hello")
+
+    async def target_cb(messages: list[ChatMessage]) -> str:
+        return "agent reply"
+
+    runner = SimulationRunner(
+        target_callback=target_cb,
+        model="test",
+        max_turns=1,
+        user_simulator=user_sim,
+        judge=judge,
+    )
+
+    persona = Persona(
+        name="Tester",
+        patience=0.5,
+        assertiveness=0.5,
+        politeness=0.5,
+        technical_level=0.5,
+        communication_style=CommunicationStyle.casual,
+        background="A test user",
+    )
+    scenario = Scenario(name="Failure", goal="Get help")
+    dp = Datapoint(
+        id="dp-error",
+        persona=persona,
+        scenario=scenario,
+        user_system_prompt="sys",
+        first_message="Hello",
+    )
+
+    async with with_simulation_span("orq.simulation.pipeline", None):
+        result = await runner.run(datapoint=dp)
+
+    assert result.terminated_by == TerminatedBy.error
+    assert result.turn_count == 1
+    assert result.token_usage.total_tokens == 17
+
+    run = _find(span_collector, "orq.simulation.run")
+    attrs = _attrs(run)
+    assert attrs["orq.simulation.terminated_by"] == "error"
+    assert attrs["orq.simulation.turn_count"] == 1
+    assert attrs["gen_ai.usage.total_tokens"] == 17
 
 
 @pytest.mark.asyncio
