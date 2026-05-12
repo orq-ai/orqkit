@@ -145,6 +145,38 @@ def test_record_llm_response_sets_both_token_conventions():
     mock_span.set_attribute.assert_any_call("gen_ai.response.model", "gpt-5-mini")
 
 
+@pytest.mark.parametrize(
+    "raw_total, expected_total",
+    [
+        (0, 150),       # total=0 → fallback to prompt + completion (silent-undercount fix)
+        (None, 150),    # total=None → fallback to prompt + completion
+        (200, 200),     # total>0 → use provider-reported value (override branch)
+    ],
+)
+def test_record_llm_response_total_tokens_override_branch(raw_total, expected_total):
+    """record_llm_response uses raw_total only when > 0, else falls back to prompt+completion."""
+    from evaluatorq.redteam.tracing import record_llm_response
+
+    mock_span = MagicMock()
+    mock_usage = MagicMock()
+    mock_usage.prompt_tokens = 100
+    mock_usage.completion_tokens = 50
+    mock_usage.total_tokens = raw_total
+    mock_usage.prompt_tokens_details = None
+    mock_usage.completion_tokens_details = None
+
+    mock_response = MagicMock()
+    mock_response.id = "resp-abc"
+    mock_response.model = "gpt-test"
+    mock_response.usage = mock_usage
+    mock_response.choices = []
+
+    record_llm_response(mock_span, mock_response)
+
+    mock_span.set_attribute.assert_any_call("gen_ai.usage.total_tokens", expected_total)
+    mock_span.set_attribute.assert_any_call("total_tokens", expected_total)
+
+
 def test_record_llm_response_without_cached_tokens():
     """record_llm_response works when usage has no detailed breakdowns."""
     from evaluatorq.redteam.tracing import record_llm_response

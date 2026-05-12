@@ -7,6 +7,7 @@ LangChain, custom callables) can implement these protocols independently.
 
 from __future__ import annotations
 
+import inspect
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, cast
@@ -138,9 +139,12 @@ def adapt_legacy_target(obj: object) -> AgentTarget:
     )
 
     legacy = cast(Any, obj)
+    send_prompt = legacy.send_prompt
+    is_async = inspect.iscoroutinefunction(send_prompt)
 
     async def _adapted(prompt: str) -> SendResult:
-        text = await legacy.send_prompt(prompt)
+        result = send_prompt(prompt)
+        text = await result if is_async else result
         return SendResult(text=text)
 
     legacy.send_prompt_with_usage = _adapted
