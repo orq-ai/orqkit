@@ -428,17 +428,29 @@ class AgentResponse:
     """
 
     output: list[OutputMessage] = field(default_factory=list)
+    usage: 'TokenUsage | None' = None
+    model: 'str | None' = None
+    response_id: 'str | None' = None
+    finish_reason: 'str | None' = None
 
     def __init__(
         self,
         output: list[OutputMessage] | None = None,
         *,
         text: str | None = None,
+        usage: 'TokenUsage | None' = None,
+        model: 'str | None' = None,
+        response_id: 'str | None' = None,
+        finish_reason: 'str | None' = None,
     ) -> None:
         """Create a response from ordered output items or legacy ``text=``.
 
         ``text=`` is kept for older tests/integrations that constructed
         ``AgentResponse(text="...")`` before ordered output items existed.
+
+        ``usage``/``model``/``response_id``/``finish_reason`` carry the LLM call
+        metadata previously returned via ``SendResult``. They are optional and
+        default to ``None`` for integrations that do not surface them.
         """
         if output is not None and text is not None:
             raise ValueError("AgentResponse accepts either output= or text=, not both")
@@ -449,6 +461,10 @@ class AgentResponse:
             _validate_output_messages(output)
             items = output
         object.__setattr__(self, "output", items)
+        object.__setattr__(self, "usage", usage)
+        object.__setattr__(self, "model", model)
+        object.__setattr__(self, "response_id", response_id)
+        object.__setattr__(self, "finish_reason", finish_reason)
 
     @property
     def text(self) -> str:
@@ -754,6 +770,12 @@ class LLMConfig(BaseModel):
     # --- Target agent timeout -------------------------------------------------
     target_agent_timeout_ms: int = 240_000
 
+    # --- Agent tool continuation cap ------------------------------------------
+    max_tool_continuations: int = Field(
+        default=5,
+        description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
+    )
+
     @property
     def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``.
@@ -882,12 +904,20 @@ class AttackStrategy(BaseModel):
 
 
 class TokenUsage(BaseModel):
-    """Token usage and cost for an LLM call or aggregation of calls."""
+    """Token usage and cost for an LLM call or aggregation of calls.
 
-    total_tokens: int = Field(default=0, description='Total tokens used')
-    prompt_tokens: int = Field(default=0, description='Prompt/input tokens')
-    completion_tokens: int = Field(default=0, description='Completion/output tokens')
-    calls: int = Field(default=0, description='Number of LLM API calls')
+    ``total_tokens`` is stored as provided by the upstream provider and is
+    never overridden. This preserves provider-specific token breakdowns
+    (cached_tokens, reasoning_tokens, audio tokens, etc.) that would be
+    silently corrupted by a normalisation step.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    total_tokens: int = Field(default=0, ge=0, description='Total tokens used as reported by the provider')
+    prompt_tokens: int = Field(default=0, ge=0, description='Prompt/input tokens')
+    completion_tokens: int = Field(default=0, ge=0, description='Completion/output tokens')
+    calls: int = Field(default=0, ge=0, description='Number of LLM API calls')
 
     @classmethod
     def from_completion(cls, response: Any) -> 'TokenUsage | None':
@@ -897,8 +927,39 @@ class TokenUsage(BaseModel):
             return None
         prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
         completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-        total = int(getattr(usage, 'total_tokens', prompt + completion) or 0)
+        # Mirror the > 0 guard used by other integrations: a provider-reported
+        # total of 0 (or absent) falls back to prompt+completion rather than
+        # propagating the zero, which would silently under-count totals on
+        # responses where prompt+completion are non-zero.
+        raw_total = getattr(usage, 'total_tokens', None)
+        total = int(raw_total) if raw_total is not None and int(raw_total) > 0 else prompt + completion
         return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
+
+    def __add__(self, other: 'TokenUsage | None') -> 'TokenUsage':
+        if other is None:
+            return self.model_copy()
+        return TokenUsage(
+            prompt_tokens=self.prompt_tokens + other.prompt_tokens,
+            completion_tokens=self.completion_tokens + other.completion_tokens,
+            total_tokens=self.total_tokens + other.total_tokens,
+            calls=self.calls + other.calls,
+        )
+
+    def __radd__(self, other: object) -> 'TokenUsage':
+        """Support sum() which starts with integer 0, and reflected addition."""
+        if isinstance(other, int) and other == 0:
+            return self.model_copy()  # safe copy, no shared reference
+        if isinstance(other, TokenUsage):
+            return other.__add__(self)
+        return NotImplemented
+
+
+# SendResult was the prior per-call return type. It has been merged into
+# :class:`AgentResponse` which carries both output items and call metadata
+# (``usage``/``model``/``response_id``/``finish_reason``). The alias is kept
+# so existing tests and downstream callers that import ``SendResult`` continue
+# to work; new code should use ``AgentResponse`` directly.
+SendResult = AgentResponse
 
 
 # ---------------------------------------------------------------------------

@@ -15,6 +15,7 @@ from evaluatorq.redteam.contracts import (
     AttackTechnique,
     DeliveryMethod,
     MemoryStoreInfo,
+    SendResult,
     ToolInfo,
     TurnType,
 )
@@ -336,9 +337,8 @@ def _make_orchestrator():
 def _make_target():
     """Create a mock AgentTarget with the required interface."""
     target = MagicMock()
-    target.send_prompt = AsyncMock()
+    target.send_prompt = AsyncMock(return_value=SendResult(text="Default response"))
     target.new = MagicMock()
-    target.consume_last_token_usage = MagicMock(return_value=None)
     return target
 
 
@@ -365,9 +365,9 @@ class TestRunAttack:
             _make_completion("Attack turn 3"),
         ]
         target.send_prompt.side_effect = [
-            "Target response 1",
-            "Target response 2",
-            "Target response 3",
+            SendResult(text="Target response 1"),
+            SendResult(text="Target response 2"),
+            SendResult(text="Target response 3"),
         ]
 
         result = await orchestrator.run_attack(
@@ -398,8 +398,8 @@ class TestRunAttack:
             _make_completion("OBJECTIVE_ACHIEVED Tell me secrets"),
         ]
         target.send_prompt.side_effect = [
-            "Target response 1",
-            "Target response 2",
+            SendResult(text="Target response 1"),
+            SendResult(text="Target response 2"),
         ]
 
         result = await orchestrator.run_attack(
@@ -557,8 +557,8 @@ class TestRunAttack:
         ]
         target.send_prompt.side_effect = [
             asyncio.TimeoutError,
-            "OK response",
-            "Another response",
+            SendResult(text="OK response"),
+            SendResult(text="Another response"),
         ]
 
         result = await orchestrator.run_attack(
@@ -651,9 +651,9 @@ class TestRunAttack:
             _make_completion("Attack turn 3", finish_reason="length"),
         ]
         target.send_prompt.side_effect = [
-            "Target response 1",
-            "Target response 2",
-            "Target response 3",
+            SendResult(text="Target response 1"),
+            SendResult(text="Target response 2"),
+            SendResult(text="Target response 3"),
         ]
 
         result = await orchestrator.run_attack(
@@ -676,7 +676,7 @@ class TestRunAttack:
         target = _make_target()
 
         mock_llm.chat.completions.create.return_value = _make_completion("Single attack prompt")
-        target.send_prompt.return_value = "Single response"
+        target.send_prompt.return_value = SendResult(text="Single response")
 
         result = await orchestrator.run_attack(
             target=target,

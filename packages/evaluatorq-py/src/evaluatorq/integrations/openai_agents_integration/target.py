@@ -14,6 +14,7 @@ from evaluatorq.redteam.contracts import (
     AgentResponse,
     OutputMessage,
     TextOutputItem,
+    TokenUsage,
     ToolCallOutputItem,
     ToolInfo,
 )
@@ -51,7 +52,7 @@ class OpenAIAgentTarget(AgentTarget):
         self._history: list[Any] = []
 
     async def send_prompt(self, prompt: str) -> AgentResponse:
-        """Send a prompt to the agent and return its response with tool calls."""
+        """Send a prompt to the agent and return its response with usage + tool calls."""
         input_data: str | list[Any] = prompt
         prev_len = len(self._history)
         if self._history:
@@ -144,7 +145,26 @@ class OpenAIAgentTarget(AgentTarget):
         )
         if last_text != final_text:
             output_items.append(TextOutputItem(text=final_text, annotations=[]))
-        return AgentResponse(output=output_items)
+
+        usage: TokenUsage | None = None
+        ctx = getattr(result, 'context_wrapper', None)
+        agent_usage = getattr(ctx, 'usage', None) if ctx is not None else None
+        if agent_usage is not None:
+            prompt_tokens = int(getattr(agent_usage, 'input_tokens', 0) or 0)
+            completion_tokens = int(getattr(agent_usage, 'output_tokens', 0) or 0)
+            total = getattr(agent_usage, 'total_tokens', None)
+            if total is not None and int(total) > 0:
+                total_tokens = int(total)
+            else:
+                total_tokens = prompt_tokens + completion_tokens
+            usage = TokenUsage(
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                calls=1,
+            )
+
+        return AgentResponse(output=output_items, usage=usage)
 
     async def get_agent_context(self) -> AgentContext:
         """Return agent context derived from the wrapped Agent instance.

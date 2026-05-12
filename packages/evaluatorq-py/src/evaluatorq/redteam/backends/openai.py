@@ -66,10 +66,9 @@ class OpenAIModelTarget:
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
         self.max_tokens = max_tokens or DEFAULT_TARGET_MAX_TOKENS
         self.timeout_ms = timeout_ms or DEFAULT_TARGET_TIMEOUT_MS
-        self._last_token_usage: TokenUsage | None = None
 
     async def send_prompt(self, prompt: str) -> AgentResponse:
-        """Send a prompt to the OpenAI model and return its response with any tool calls."""
+        """Send a prompt to the OpenAI model and return its response with usage + any tool calls."""
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
             {'role': 'user', 'content': prompt},
@@ -91,8 +90,8 @@ class OpenAIModelTarget:
             content = msg.content or ''
             record_llm_response(span, response, output_content=content)
 
-            # Capture tool calls made by the model
-            # Only ChatCompletionMessageToolCall has a .function attribute; skip custom tool calls
+            # Capture tool calls made by the model.
+            # Only ChatCompletionMessageToolCall has a .function attribute; skip custom tool calls.
             executed_tool_calls: list[ExecutedToolCall] = []
             for tc in (getattr(msg, 'tool_calls', None) or []):
                 func = getattr(tc, 'function', None)
@@ -104,42 +103,29 @@ class OpenAIModelTarget:
                     args = {'raw': func.arguments}
                 executed_tool_calls.append(ExecutedToolCall(name=func.name, arguments=args))
 
-            # Store usage for consume_last_token_usage()
-            usage = getattr(response, 'usage', None)
-            if usage is not None:
-                prompt_ = int(getattr(usage, 'prompt_tokens', 0) or 0)
-                completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-                raw_total = getattr(usage, 'total_tokens', None)
-                total = int(raw_total) if raw_total else (prompt_ + completion)
-                self._last_token_usage = TokenUsage(
-                    prompt_tokens=prompt_,
-                    completion_tokens=completion,
-                    total_tokens=total,
-                    calls=1,
-                )
-            else:
-                self._last_token_usage = None
+            usage = TokenUsage.from_completion(response)
+            response_id = getattr(response, 'id', None)
+            finish_reason = None
+            choices = getattr(response, 'choices', None) or []
+            if choices:
+                finish_reason = getattr(choices[0], 'finish_reason', None)
 
         output: list[OutputMessage] = cast(
             'list[OutputMessage]',
-            [ToolCallOutputItem(name=tc.name, arguments=json.dumps(tc.arguments)) for tc in executed_tool_calls],
+            [ToolCallOutputItem(name=tc.name, arguments=json.dumps(tc.arguments, default=str)) for tc in executed_tool_calls],
         )
         output.append(TextOutputItem(text=content, annotations=[]))
-        return AgentResponse(output=output)
-
-    def consume_last_token_usage(self) -> TokenUsage | None:
-        """Return and clear usage from last call."""
-        usage = self._last_token_usage
-        self._last_token_usage = None
-        return usage
-
-    def clone(self) -> OpenAIModelTarget:
-        """Return a fresh target instance for parallel job safety."""
-        return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
+        return AgentResponse(
+            output=output,
+            usage=usage,
+            model=getattr(response, 'model', None),
+            response_id=response_id,
+            finish_reason=finish_reason,
+        )
 
     def new(self) -> OpenAIModelTarget:
-        """Return a fresh target instance (alias for :meth:`clone`, satisfies ``AgentTarget`` protocol)."""
-        return self.clone()
+        """Return a fresh target instance for parallel job safety (satisfies ``AgentTarget`` protocol)."""
+        return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
 
     target_kind: TargetKind = TargetKind.OPENAI
     """Used by the runner to populate report metadata correctly."""

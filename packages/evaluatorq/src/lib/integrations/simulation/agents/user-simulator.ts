@@ -83,7 +83,10 @@ export class UserSimulatorAgent extends BaseAgent {
         "Generate your first message to start the conversation. Remember your goal and persona.",
     });
 
-    return this.respondAsync(promptMessages, { temperature: 0.8 });
+    return this.respondAsync(promptMessages, {
+      temperature: 0.8,
+      llmPurpose: "first_message",
+    });
   }
 
   /**
