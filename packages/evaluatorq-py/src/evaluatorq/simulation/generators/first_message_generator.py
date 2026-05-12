@@ -8,6 +8,12 @@ import re
 
 from openai import APIStatusError, AsyncOpenAI
 
+from evaluatorq.simulation.tracing import (
+    get_trace_context_headers,
+    record_llm_input,
+    record_llm_response,
+    with_llm_span,
+)
 from evaluatorq.simulation.types import DEFAULT_MODEL, Persona, Scenario
 from evaluatorq.simulation.utils.prompt_builders import (
     build_persona_system_prompt,
@@ -105,19 +111,41 @@ Generate the FIRST message this user would send to start the conversation.
 The message should immediately convey their goal and emotional state.
 Keep it natural - this is how they would actually open a conversation."""
 
+        messages = [
+            {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+
         try:
-            response = await with_retry(
-                lambda: self._client.chat.completions.create(
-                    model=self._model,
-                    messages=[
-                        {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
-                        {"role": "user", "content": user_prompt},
+            async with with_llm_span(
+                model=self._model,
+                operation="chat",
+                temperature=_TEMPERATURE_FIRST_MESSAGE,
+                max_tokens=500,
+                purpose="first_message",
+            ) as span:
+                record_llm_input(
+                    span,
+                    [
+                        {"role": str(m["role"]), "content": str(m["content"])}
+                        for m in messages
                     ],
-                    temperature=_TEMPERATURE_FIRST_MESSAGE,
-                    max_tokens=500,
-                ),
-                label="FirstMessageGenerator.generate",
-            )
+                )
+                trace_headers = await get_trace_context_headers()
+                extra: dict[str, object] = (
+                    {"extra_headers": trace_headers} if trace_headers else {}
+                )
+                response = await with_retry(
+                    lambda: self._client.chat.completions.create(
+                        model=self._model,
+                        messages=messages,
+                        temperature=_TEMPERATURE_FIRST_MESSAGE,
+                        max_tokens=500,
+                        **extra,
+                    ),
+                    label="FirstMessageGenerator.generate",
+                )
+                record_llm_response(span, response)
 
             message = response.choices[0].message.content if response.choices else ""
             message = re.sub(r'^["\']|["\']$', "", (message or "").strip())
