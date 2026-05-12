@@ -925,6 +925,81 @@ async def test_run_span_records_error_metadata_and_usage(
 
 
 @pytest.mark.asyncio
+async def test_run_span_records_cancellation_metadata_and_usage(
+    span_collector: _CollectingExporter,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import asyncio
+
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("ORQ_API_KEY", "test-key")
+
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+    from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.types import (
+        ChatMessage,
+        CommunicationStyle,
+        Datapoint,
+        Persona,
+        Scenario,
+        TokenUsage,
+    )
+
+    judge = MagicMock()
+    judge.evaluate = AsyncMock(side_effect=asyncio.CancelledError())
+    judge.get_usage = MagicMock(
+        return_value=TokenUsage(prompt_tokens=5, completion_tokens=7, total_tokens=12)
+    )
+
+    user_sim = MagicMock()
+    user_sim.get_usage = MagicMock(
+        return_value=TokenUsage(prompt_tokens=2, completion_tokens=3, total_tokens=5)
+    )
+    user_sim.generate_first_message = AsyncMock(return_value="hello")
+
+    async def target_cb(messages: list[ChatMessage]) -> str:
+        return "agent reply"
+
+    runner = SimulationRunner(
+        target_callback=target_cb,
+        model="test",
+        max_turns=1,
+        user_simulator=user_sim,
+        judge=judge,
+    )
+
+    persona = Persona(
+        name="Tester",
+        patience=0.5,
+        assertiveness=0.5,
+        politeness=0.5,
+        technical_level=0.5,
+        communication_style=CommunicationStyle.casual,
+        background="A test user",
+    )
+    scenario = Scenario(name="Cancelled", goal="Get help")
+    dp = Datapoint(
+        id="dp-cancelled",
+        persona=persona,
+        scenario=scenario,
+        user_system_prompt="sys",
+        first_message="Hello",
+    )
+
+    with pytest.raises(asyncio.CancelledError):
+        async with with_simulation_span("orq.simulation.pipeline", None):
+            await runner.run(datapoint=dp)
+
+    run = _find(span_collector, "orq.simulation.run")
+    attrs = _attrs(run)
+    assert attrs["orq.simulation.terminated_by"] == "error"
+    assert attrs["orq.simulation.turn_count"] == 1
+    assert attrs["gen_ai.usage.total_tokens"] == 17
+    assert attrs["error.type"] == "CancelledError"
+
+
+@pytest.mark.asyncio
 async def test_concurrent_runs_share_pipeline_parent(
     span_collector: _CollectingExporter,
 ):

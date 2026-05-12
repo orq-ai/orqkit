@@ -258,7 +258,7 @@ class SimulationRunner:
                         run_span=run_span,
                         usage_holder=usage_holder,
                     )
-                except Exception:
+                except BaseException:
                     get_total_usage = usage_holder.get("get_total_usage")
                     try:
                         usage = (
