@@ -211,13 +211,8 @@ class LangGraphTarget(AgentTarget):
                 "LangGraphTarget: graph returned an empty 'messages' list. "
                 "Ensure every execution path appends at least one AI message."
             )
-        last = messages[-1]
-        # Support both dict and LangChain BaseMessage
-        content = last.get("content", "") if isinstance(last, dict) else getattr(last, "content", "")
-        if not isinstance(content, str):
-            content = str(content)
-
-        # Build output items directly from messages added in this turn.
+        # Build output items directly from messages added in this turn, preserving
+        # interleaving of text and tool calls (ReAct-style: text -> tool_call -> text).
         # LangGraph checkpointer returns the full accumulated thread state, so
         # slicing from _prev_msg_count avoids duplicating tool calls across turns.
         # ToolCallOutputItem is built directly (not via ExecutedToolCall) so that
@@ -225,34 +220,43 @@ class LangGraphTarget(AgentTarget):
         output_items: list[OutputMessage] = []
         for msg in messages[self._prev_msg_count:]:
             if isinstance(msg, dict):
-                if msg.get("role") == "assistant":
-                    for tc in (msg.get("tool_calls") or []):
-                        call_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
-                        name = tc.get("name", "") if isinstance(tc, dict) else getattr(tc, "name", "")
-                        args = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
-                        args_str = json.dumps(args if isinstance(args, dict) else {})
-                        output_items.append(
-                            ToolCallOutputItem(name=str(name), arguments=args_str, id=call_id, call_id=call_id)
-                            if call_id
-                            else ToolCallOutputItem(name=str(name), arguments=args_str)
-                        )
+                if msg.get("role") != "assistant":
+                    continue
+                msg_content = msg.get("content", "")
+                tool_calls_iter = msg.get("tool_calls") or []
             else:
                 if not isinstance(msg, AIMessage):
                     continue
-                # LangChain AIMessage — tool_calls is a list of dicts with 'name', 'args', 'id'
-                for tc in (getattr(msg, "tool_calls", None) or []):
-                    call_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
-                    name = tc.get("name", "") if isinstance(tc, dict) else getattr(tc, "name", "")
-                    args = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
-                    args_str = json.dumps(args if isinstance(args, dict) else {})
-                    output_items.append(
-                        ToolCallOutputItem(name=str(name), arguments=args_str, id=call_id, call_id=call_id)
-                        if call_id
-                        else ToolCallOutputItem(name=str(name), arguments=args_str)
-                    )
+                msg_content = getattr(msg, "content", "")
+                tool_calls_iter = getattr(msg, "tool_calls", None) or []
+
+            if not isinstance(msg_content, str):
+                msg_content = str(msg_content)
+            if msg_content:
+                output_items.append(TextOutputItem(text=msg_content, annotations=[]))
+
+            for tc in tool_calls_iter:
+                call_id = tc.get("id", "") if isinstance(tc, dict) else getattr(tc, "id", "")
+                name = tc.get("name", "") if isinstance(tc, dict) else getattr(tc, "name", "")
+                args = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
+                args_str = json.dumps(args if isinstance(args, dict) else {}, default=str)
+                output_items.append(
+                    ToolCallOutputItem(name=str(name), arguments=args_str, id=call_id, call_id=call_id)
+                    if call_id
+                    else ToolCallOutputItem(name=str(name), arguments=args_str)
+                )
+
         self._prev_msg_count = len(messages)
 
-        output_items.append(TextOutputItem(text=content, annotations=[]))
+        # Fallback: if no AIMessage text was emitted (e.g. duck-typed message objects
+        # that don't subclass AIMessage), use the last message's .content so that
+        # AgentResponse.text remains well-defined.
+        if not any(isinstance(item, TextOutputItem) for item in output_items):
+            last = messages[-1]
+            last_content = last.get("content", "") if isinstance(last, dict) else getattr(last, "content", "")
+            if not isinstance(last_content, str):
+                last_content = str(last_content)
+            output_items.append(TextOutputItem(text=last_content, annotations=[]))
         return AgentResponse(output=output_items)
 
     def reset_conversation(self) -> None:
