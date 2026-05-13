@@ -132,13 +132,7 @@ class FunctionCall(BaseModel):
             try:
                 return json.dumps(v, default=str)
             except (TypeError, ValueError):
-                import logging
-
-                logging.getLogger(__name__).warning(
-                    "FunctionCall.arguments not JSON-serializable; dropping to '{}'. type=%s",
-                    type(v).__name__,
-                )
-                return "{}"
+                return str(v)
 
     @property
     def arguments_dict(self) -> dict[str, Any]:
