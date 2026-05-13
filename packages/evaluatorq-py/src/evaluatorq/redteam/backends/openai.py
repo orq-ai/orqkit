@@ -64,12 +64,15 @@ class OpenAIModelTarget:
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
         self.max_tokens = max_tokens or DEFAULT_TARGET_MAX_TOKENS
         self.timeout_ms = timeout_ms or DEFAULT_TARGET_TIMEOUT_MS
+        self._history: list[ChatCompletionMessageParam] = []
 
     async def send_prompt(self, prompt: str) -> AgentResponse:
         """Send a prompt to the OpenAI model and return its response with usage + any tool calls."""
+        user_msg: ChatCompletionMessageParam = {'role': 'user', 'content': prompt}
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
-            {'role': 'user', 'content': prompt},
+            *self._history,
+            user_msg,
         ]
         async with with_llm_span(
             model=self.model,
@@ -110,6 +113,27 @@ class OpenAIModelTarget:
             choices = getattr(response, 'choices', None) or []
             if choices:
                 finish_reason = getattr(choices[0], 'finish_reason', None)
+
+        # Accumulate history for multi-turn context.
+        assistant_msg: ChatCompletionMessageParam
+        if msg.tool_calls:
+            assistant_msg = {
+                'role': 'assistant',
+                'content': content or None,
+                'tool_calls': [
+                    {
+                        'id': tc.id,
+                        'type': 'function',
+                        'function': {'name': tc.function.name, 'arguments': tc.function.arguments},
+                    }
+                    for tc in msg.tool_calls
+                    if getattr(tc, 'function', None) is not None
+                ],
+            }
+        else:
+            assistant_msg = {'role': 'assistant', 'content': content}
+        self._history.append(user_msg)
+        self._history.append(assistant_msg)
 
         output: list[OutputMessage] = cast('list[OutputMessage]', list(tool_call_items))
         output.append(TextOutputItem(text=content, annotations=[]))
