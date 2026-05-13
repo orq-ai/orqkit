@@ -5,18 +5,11 @@ Uses Pydantic models for maximum compatibility with generators/runner/agents.
 
 from __future__ import annotations
 
-import sys
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # type: ignore[no-redef]
-        """String enum compatible with Python 3.10. Mirrors redteam.contracts."""
+from evaluatorq.contracts import StrEnum
 
 
 DEFAULT_MODEL = "azure/gpt-4o-mini"

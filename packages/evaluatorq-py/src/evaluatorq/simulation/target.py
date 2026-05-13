@@ -151,6 +151,7 @@ class OrqResponsesTarget:
                 prompt_tokens=self._accumulated_usage.prompt_tokens + usage.prompt_tokens,
                 completion_tokens=self._accumulated_usage.completion_tokens + usage.completion_tokens,
                 total_tokens=self._accumulated_usage.total_tokens + usage.total_tokens,
+                calls=self._accumulated_usage.calls + 1,
             )
 
             return AgentResponse(output=output_items)
@@ -183,7 +184,7 @@ class OrqResponsesTarget:
 
     @staticmethod
     def _messages_to_input(messages: list[ChatMessage]) -> list[dict[str, Any]]:
-        return [{"role": m.role, "content": m.content} for m in messages]
+        return [{"role": m.role, "content": m.content or ""} for m in messages]
 
     def get_usage(self) -> TokenUsage:
         """Return cumulative token usage across all _invoke calls on this instance."""

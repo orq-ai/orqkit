@@ -10,17 +10,8 @@ Semantic convention:
 """
 
 import os
-import sys
 from datetime import datetime
 from typing import Any, Literal, TypedDict
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # type: ignore[no-redef]
-        """String enum compatible with Python 3.10."""
 
 from pydantic import (
     BaseModel,
@@ -29,6 +20,8 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from evaluatorq.contracts import StrEnum
 
 # ---------------------------------------------------------------------------
 # Enums

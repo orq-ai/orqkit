@@ -3,10 +3,19 @@
 from __future__ import annotations
 
 import json as _json
+import sys
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # type: ignore[no-redef]
+        """String enum compatible with Python 3.10."""
 
 # ---------------------------------------------------------------------------
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
@@ -276,6 +285,7 @@ __all__ = [
     "Message",
     "OutputMessage",
     "ReasoningOutputItem",
+    "StrEnum",
     "StrategyToolCall",
     "TextOutputItem",
     "TokenUsage",

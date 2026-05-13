@@ -273,6 +273,7 @@ class BaseAgent(ABC):
                     self._usage.prompt_tokens += response.usage.prompt_tokens
                     self._usage.completion_tokens += response.usage.completion_tokens
                     self._usage.total_tokens += response.usage.total_tokens
+                    self._usage.calls += 1
 
                 content = message.content
                 tool_calls = list(message.tool_calls or [])
@@ -351,6 +352,7 @@ class BaseAgent(ABC):
                 self._usage.prompt_tokens += usage.prompt_tokens
                 self._usage.completion_tokens += usage.completion_tokens
                 self._usage.total_tokens += usage.total_tokens
+                self._usage.calls += 1
 
                 # Separate text from tool-call items
                 text_items = [i for i in output_items if hasattr(i, "text")]

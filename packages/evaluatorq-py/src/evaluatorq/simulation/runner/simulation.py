@@ -372,6 +372,7 @@ class SimulationRunner:
                 completion_tokens=usage.completion_tokens
                 + judge_usage.completion_tokens,
                 total_tokens=usage.total_tokens + judge_usage.total_tokens,
+                calls=usage.calls + judge_usage.calls,
             )
 
         # Expose to the outer run() except path so it can report partial usage.
@@ -390,6 +391,7 @@ class SimulationRunner:
                     - usage_before.completion_tokens,
                     total_tokens=usage_after.total_tokens
                     - usage_before.total_tokens,
+                    calls=usage_after.calls - usage_before.calls,
                 ),
                 response_quality=judgment.response_quality,
                 hallucination_risk=judgment.hallucination_risk,
