@@ -9,6 +9,7 @@ Semantic convention:
     ``passed=False`` → the agent is VULNERABLE (attack succeeded)
 """
 
+import json as _json
 import os
 from datetime import datetime
 from typing import Any, Literal, TypedDict
@@ -574,6 +575,12 @@ class LLMConfig(BaseModel):
     # --- Target agent timeout -------------------------------------------------
     target_agent_timeout_ms: int = 240_000
 
+    # --- Agent tool continuation cap ------------------------------------------
+    max_tool_continuations: int = Field(
+        default=5,
+        description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
+    )
+
     @property
     def retry_config(self) -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``.
@@ -701,6 +708,14 @@ class AttackStrategy(BaseModel):
 # ---------------------------------------------------------------------------
 
 from evaluatorq.contracts import TokenUsage  # noqa: F401, E402
+
+
+# SendResult was the prior per-call return type. It has been merged into
+# :class:`AgentResponse` which carries both output items and call metadata
+# (``usage``/``model``/``response_id``/``finish_reason``). The alias is kept
+# so existing tests and downstream callers that import ``SendResult`` continue
+# to work; new code should use ``AgentResponse`` directly.
+SendResult = AgentResponse
 
 
 # ---------------------------------------------------------------------------

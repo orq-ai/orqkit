@@ -146,13 +146,8 @@ class OrqResponsesTarget:
                     f"an API error or unexpected response format."
                 )
 
-            # Accumulate token usage
-            self._accumulated_usage = TokenUsage(
-                prompt_tokens=self._accumulated_usage.prompt_tokens + usage.prompt_tokens,
-                completion_tokens=self._accumulated_usage.completion_tokens + usage.completion_tokens,
-                total_tokens=self._accumulated_usage.total_tokens + usage.total_tokens,
-                calls=self._accumulated_usage.calls + 1,
-            )
+            # Accumulate token usage (extract_responses_output returns calls=0, add 1)
+            self._accumulated_usage = self._accumulated_usage + usage.model_copy(update={"calls": 1})
 
             return AgentResponse(output=output_items)
 
