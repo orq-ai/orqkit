@@ -56,11 +56,11 @@ def _invert_roles_for_simulator(messages: list[Message]) -> list[Message]:
     inverted: list[Message] = []
     for m in messages:
         if m.role == "user":
-            inverted.append(Message(role="assistant", content=m.content))
+            inverted.append(m.model_copy(update={"role": "assistant"}))
         elif m.role == "assistant":
-            inverted.append(Message(role="user", content=m.content))
+            inverted.append(m.model_copy(update={"role": "user"}))
         else:
-            inverted.append(Message(role=m.role, content=m.content))
+            inverted.append(m)
     return inverted
 
 
