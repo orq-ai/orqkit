@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import json
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -14,7 +13,6 @@ from evaluatorq.redteam.contracts import (
     DEFAULT_TARGET_TIMEOUT_MS,
     AgentContext,
     AgentResponse,
-    ExecutedToolCall,
     OutputMessage,
     TargetKind,
     TextOutputItem,
@@ -92,16 +90,19 @@ class OpenAIModelTarget:
 
             # Capture tool calls made by the model.
             # Only ChatCompletionMessageToolCall has a .function attribute; skip custom tool calls.
-            executed_tool_calls: list[ExecutedToolCall] = []
+            tool_call_items: list[ToolCallOutputItem] = []
             for tc in (getattr(msg, 'tool_calls', None) or []):
                 func = getattr(tc, 'function', None)
                 if func is None:
                     continue
-                try:
-                    args = json.loads(func.arguments) if func.arguments else {}
-                except (json.JSONDecodeError, ValueError):
-                    args = {'raw': func.arguments}
-                executed_tool_calls.append(ExecutedToolCall(name=func.name, arguments=args))
+                tc_id = getattr(tc, 'id', None)
+                kwargs: dict[str, Any] = {
+                    'name': func.name,
+                    'arguments': func.arguments or '{}',
+                }
+                if isinstance(tc_id, str) and tc_id:
+                    kwargs['id'] = tc_id
+                tool_call_items.append(ToolCallOutputItem(**kwargs))
 
             usage = TokenUsage.from_completion(response)
             response_id = getattr(response, 'id', None)
@@ -110,10 +111,7 @@ class OpenAIModelTarget:
             if choices:
                 finish_reason = getattr(choices[0], 'finish_reason', None)
 
-        output: list[OutputMessage] = cast(
-            'list[OutputMessage]',
-            [ToolCallOutputItem(name=tc.name, arguments=json.dumps(tc.arguments, default=str)) for tc in executed_tool_calls],
-        )
+        output: list[OutputMessage] = cast('list[OutputMessage]', list(tool_call_items))
         output.append(TextOutputItem(text=content, annotations=[]))
         return AgentResponse(
             output=output,

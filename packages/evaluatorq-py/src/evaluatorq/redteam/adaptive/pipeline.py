@@ -35,7 +35,7 @@ from evaluatorq.redteam.contracts import (
     AttackOutput,
     AttackStrategy,
     EvaluatorConfig,
-    ExecutedToolCall,
+    ToolCallOutputItem,
     LLMCallConfig,
     LLMConfig,
     Message,
@@ -346,7 +346,7 @@ def create_dynamic_redteam_job(
                 error_code = None
                 error_details = None
                 token_usage = None
-                turn_tool_calls: list[ExecutedToolCall] = []
+                turn_tool_calls: list[ToolCallOutputItem] = []
                 target_timeout_s = cfg.target_agent_timeout_ms / 1000.0
                 try:
                     async with with_redteam_span(

@@ -140,6 +140,20 @@ class FunctionCall(BaseModel):
                 )
                 return "{}"
 
+    @property
+    def arguments_dict(self) -> dict[str, Any]:
+        """Parse the JSON ``arguments`` string into a dict.
+
+        Returns an empty dict if the JSON is malformed or not an object —
+        callers should not rely on the parsed shape for adversary-controlled
+        tool calls.
+        """
+        try:
+            parsed = json.loads(self.arguments)
+        except (ValueError, TypeError):
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+
 
 class FunctionCallOutput(BaseModel):
     type: Annotated[

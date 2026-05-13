@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import json as _json
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 
 # ---------------------------------------------------------------------------
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
@@ -76,26 +76,6 @@ OutputMessage = TextOutputItem | ToolCallOutputItem | ReasoningOutputItem
 
 
 # ---------------------------------------------------------------------------
-# ExecutedToolCall
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class ExecutedToolCall:
-    """Backward-compatible view of an executed tool call.
-
-    ``AgentResponse.tool_calls`` derives this from ``ToolCallOutputItem`` and
-    intentionally drops OpenResponses-only metadata such as ``id``. Consumers
-    that need full-fidelity output ordering or IDs should inspect
-    ``AgentResponse.output`` directly.
-    """
-
-    name: str
-    arguments: dict[str, Any]
-    result: str | None = None
-
-
-# ---------------------------------------------------------------------------
 # AgentResponse
 # ---------------------------------------------------------------------------
 
@@ -125,24 +105,38 @@ class AgentResponse:
     the interleaving of tool calls, reasoning steps, and text responses — something
     not possible when text, tool calls, and intermediate steps are stored separately.
 
-    Backward-compatible accessors:
+    Accessors:
         ``.text``       — last ``TextOutputItem`` content, or ``""`` if none
-        ``.tool_calls`` — lossy :class:`ExecutedToolCall` view extracted from
-        tool call items; this intentionally omits ``ToolCallOutputItem.id``
+        ``.tool_calls`` — list of :class:`ToolCallOutputItem` filtered from
+        :attr:`output` in order; use :attr:`ToolCallOutputItem.arguments_dict`
+        for parsed-dict access to ``arguments``
     """
 
     output: list[OutputMessage] = field(default_factory=list)
+    usage: Any | None = None
+    model: str | None = None
+    response_id: str | None = None
+    finish_reason: str | None = None
 
     def __init__(
         self,
         output: list[OutputMessage] | None = None,
         *,
         text: str | None = None,
+        usage: Any | None = None,
+        model: str | None = None,
+        response_id: str | None = None,
+        finish_reason: str | None = None,
     ) -> None:
         """Create a response from ordered output items or legacy ``text=``.
 
         ``text=`` is kept for older tests/integrations that constructed
         ``AgentResponse(text="...")`` before ordered output items existed.
+
+        Per-call LLM metadata (``usage``, ``model``, ``response_id``,
+        ``finish_reason``) lives on the response itself; ``usage`` is loosely
+        typed (``Any``) to avoid a circular import on
+        ``evaluatorq.redteam.contracts.TokenUsage``.
         """
         if output is not None and text is not None:
             raise ValueError("AgentResponse accepts either output= or text=, not both")
@@ -153,6 +147,10 @@ class AgentResponse:
             _validate_output_messages(output)
             items = output
         object.__setattr__(self, "output", items)
+        object.__setattr__(self, "usage", usage)
+        object.__setattr__(self, "model", model)
+        object.__setattr__(self, "response_id", response_id)
+        object.__setattr__(self, "finish_reason", finish_reason)
 
     @property
     def text(self) -> str:
@@ -161,32 +159,14 @@ class AgentResponse:
         return texts[-1] if texts else ""
 
     @property
-    def tool_calls(self) -> list[ExecutedToolCall]:
-        """Return a lossy backward-compatible view of tool call output items.
+    def tool_calls(self) -> list[ToolCallOutputItem]:
+        """Return the tool call items from ``.output`` in order.
 
-        ``ToolCallOutputItem.id`` is not represented on ``ExecutedToolCall``.
-        Use ``.output`` when preserving OpenResponses IDs or item ordering
-        matters.
-
-        ``ToolCallOutputItem.arguments`` is stored as a JSON string (OpenResponses
-        wire format); this property parses it back to a dict for ``ExecutedToolCall``.
+        Use :attr:`ToolCallOutputItem.arguments_dict` for parsed-dict access
+        to arguments; use ``.output`` directly when item ordering across
+        interleaved text/reasoning/tool-call items matters.
         """
-        result: list[ExecutedToolCall] = []
-        for item in self.output:
-            if not isinstance(item, ToolCallOutputItem):
-                continue
-            raw_args = item.arguments
-            if isinstance(raw_args, str):
-                try:
-                    args: dict[str, Any] = _json.loads(raw_args)
-                    if not isinstance(args, dict):
-                        args = {}
-                except (ValueError, TypeError):
-                    args = {}
-            else:
-                args = raw_args if isinstance(raw_args, dict) else {}
-            result.append(ExecutedToolCall(name=item.name, arguments=args, result=item.result))
-        return result
+        return [item for item in self.output if isinstance(item, ToolCallOutputItem)]
 
 
 __all__ = [
@@ -194,7 +174,6 @@ __all__ = [
     "DEFAULT_TARGET_MAX_TOKENS",
     "DEFAULT_TARGET_TIMEOUT_MS",
     "AgentResponse",
-    "ExecutedToolCall",
     "LLMCallConfig",
     "OutputMessage",
     "ReasoningOutputItem",

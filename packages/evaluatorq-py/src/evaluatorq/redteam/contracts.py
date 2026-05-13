@@ -367,7 +367,6 @@ class StrategyToolCall(BaseModel):
 
 from evaluatorq.contracts import (  # noqa: F401
     AgentResponse,
-    ExecutedToolCall,
     OutputMessage,
     ReasoningOutputItem,
     TextOutputItem,
@@ -856,7 +855,7 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(
+    tool_calls_per_turn: list[list[ToolCallOutputItem]] = Field(
         default_factory=list,
         description='Tool calls captured per attack turn (index 0 = turn 1). Empty list per turn if target returned none.',
     )
@@ -1017,7 +1016,7 @@ class JobOutputPayload(BaseModel):
     error_turn: int | None = None
     truncated_turns: list[int] = Field(default_factory=list)
     finish_reason: str | None = None
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(default_factory=list)
+    tool_calls_per_turn: list[list[ToolCallOutputItem]] = Field(default_factory=list)
 
     @property
     def response_text(self) -> str:
@@ -1067,7 +1066,7 @@ class RedTeamResult(BaseModel):
     error_stage: str | None = None
     error_code: str | None = None
     error_details: dict[str, Any] | None = None
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(default_factory=list)
+    tool_calls_per_turn: list[list[ToolCallOutputItem]] = Field(default_factory=list)
 
     @property
     def error_info(self) -> 'ErrorInfo | None':

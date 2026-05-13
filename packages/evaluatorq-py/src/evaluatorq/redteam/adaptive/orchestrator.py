@@ -25,7 +25,7 @@ from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
     AttackStrategy,
-    ExecutedToolCall,
+    ToolCallOutputItem,
     LLMConfig,
     Message,
     OrchestratorResult,
@@ -425,7 +425,7 @@ class MultiTurnOrchestrator:
 
         # Agent conversation (what we'll return)
         conversation: list[Message] = []
-        tool_calls_per_turn: list[list[ExecutedToolCall]] = []
+        tool_calls_per_turn: list[list[ToolCallOutputItem]] = []
 
         objective_achieved = False
         final_response = ''
@@ -455,7 +455,7 @@ class MultiTurnOrchestrator:
 
         try:
             for turn in range(max_turns):
-                _turn_calls: list[ExecutedToolCall] = []
+                _turn_calls: list[ToolCallOutputItem] = []
                 async with with_redteam_span(
                     "orq.redteam.attack_turn",
                     {

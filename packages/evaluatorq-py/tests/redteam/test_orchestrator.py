@@ -110,7 +110,7 @@ class TestORQAgentTarget:
         assert response.text == 'done'
         assert len(response.tool_calls) == 1
         assert response.tool_calls[0].name == 'search_docs'
-        assert response.tool_calls[0].arguments == {'query': 'tool calls'}
+        assert response.tool_calls[0].arguments_dict == {'query': 'tool calls'}
 
     @pytest.mark.asyncio
     async def test_send_prompt_preserves_raw_tool_call_arguments(self):
@@ -138,7 +138,7 @@ class TestORQAgentTarget:
 
         assert len(response.tool_calls) == 1
         assert response.tool_calls[0].name == 'bad_tool'
-        assert response.tool_calls[0].arguments == {'raw': 'not-json'}
+        assert response.tool_calls[0].arguments_dict == {'raw': 'not-json'}
 
     @pytest.mark.asyncio
     async def test_send_prompt_multi_turn(self):

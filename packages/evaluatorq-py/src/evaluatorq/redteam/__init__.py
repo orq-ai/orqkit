@@ -71,7 +71,6 @@ from evaluatorq.redteam.contracts import (
     FrameworkSummary,
     FunctionCall,
     AgentResponse,
-    ExecutedToolCall,
     OutputMessage,
     ReasoningOutputItem,
     TextOutputItem,
@@ -187,7 +186,6 @@ __all__ = [
     "Severity",
     # Result models
     "AgentResponse",
-    "ExecutedToolCall",
     "OutputMessage",
     "ReasoningOutputItem",
     "StrategyToolCall",
