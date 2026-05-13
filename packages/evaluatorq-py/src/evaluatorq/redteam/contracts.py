@@ -9,6 +9,7 @@ Semantic convention:
     ``passed=False`` → the agent is VULNERABLE (attack succeeded)
 """
 
+import json as _json
 import os
 import sys
 from datetime import datetime
@@ -372,6 +373,7 @@ from evaluatorq.contracts import (  # noqa: F401
     TextOutputItem,
     ToolCallOutputItem,
 )
+
 
 
 class Message(BaseModel):
