@@ -9,7 +9,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from evaluatorq.redteam.backends.base import _coerce_to_agent_response
-from evaluatorq.redteam.contracts import AgentResponse, OrchestratorResult, Message, OutputMessage, TextOutputItem, ToolCallOutputItem
+from evaluatorq.redteam.contracts import (
+    AgentResponse,
+    AttackerResponse,
+    Message,
+    OrchestratorResult,
+    OutputMessage,
+    TextOutputItem,
+    ToolCallOutputItem,
+    Turn,
+)
 from evaluatorq.redteam.adaptive.evaluator import _sanitize_placeholders
 
 
@@ -73,12 +82,12 @@ class TestAgentResponseTextSemantics:
         assert result.tool_calls[0].arguments_dict == {"q": "value"}
 
     def test_rejects_non_output_message_items(self) -> None:
-        with pytest.raises(TypeError, match="AgentResponse.output items"):
+        with pytest.raises(ValueError):
             AgentResponse(output=cast(Any, ["not an output item"]))
 
     def test_rejects_wrong_output_container_type(self) -> None:
-        with pytest.raises(TypeError, match="AgentResponse.output must be a list"):
-            AgentResponse(output=cast(Any, (TextOutputItem(text="hi", annotations=[]),)))
+        with pytest.raises(ValueError):
+            AgentResponse(output=cast(Any, "not a list"))
 
     def test_output_items_validate_type_discriminator(self) -> None:
         # Pydantic Literal validation raises ValidationError (subtype of ValueError)
@@ -132,40 +141,45 @@ class TestToolCallOutputItem:
 
 
 # ---------------------------------------------------------------------------
-# OrchestratorResult tool_calls_per_turn
+# OrchestratorResult per-turn tool calls (via turns: list[Turn])
 # ---------------------------------------------------------------------------
 
 class TestOrchestratorResultToolCalls:
-    def test_default_tool_calls_per_turn_is_empty(self) -> None:
-        result = OrchestratorResult(
-            conversation=[],
-            turns=0,
-        )
-        assert result.tool_calls_per_turn == []
+    def test_default_turns_is_empty(self) -> None:
+        result = OrchestratorResult()
+        assert result.turns == []
+        assert result.n_turns == 0
+        assert result.final_response == ''
+        assert result.chat_completions == []
 
-    def test_tool_calls_per_turn_stored(self) -> None:
+    def test_tool_calls_stored_on_turn_target(self) -> None:
         tc = ToolCallOutputItem(name="delete_db", arguments={"db": "prod"})
         result = OrchestratorResult(
-            conversation=[
-                Message(role="user", content="do it"),
-                Message(role="assistant", content="done"),
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="do it"),
+                    target=AgentResponse(output=[
+                        TextOutputItem(text="done", annotations=[]),
+                        tc,
+                    ]),
+                )
             ],
-            turns=1,
-            tool_calls_per_turn=[[tc]],
         )
-        assert len(result.tool_calls_per_turn) == 1
-        assert result.tool_calls_per_turn[0][0].name == "delete_db"
+        assert result.n_turns == 1
+        assert result.turns[0].target.tool_calls[0].name == "delete_db"
+        assert result.final_response == "done"
 
-    def test_tool_calls_per_turn_empty_turn(self) -> None:
+    def test_turn_target_with_no_tool_calls(self) -> None:
         result = OrchestratorResult(
-            conversation=[
-                Message(role="user", content="hi"),
-                Message(role="assistant", content="hello"),
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="hi"),
+                    target=AgentResponse(text="hello"),
+                )
             ],
-            turns=1,
-            tool_calls_per_turn=[[]],
         )
-        assert result.tool_calls_per_turn == [[]]
+        assert result.turns[0].target.tool_calls == []
+        assert [t.target.tool_calls for t in result.turns] == [[]]
 
 
 # ---------------------------------------------------------------------------
@@ -524,7 +538,7 @@ def _make_fake_eval_result() -> MagicMock:
 
 class TestCreateDynamicEvaluatorScorer:
     @pytest.mark.asyncio
-    async def test_scorer_flattens_tool_calls_per_turn_and_passes_to_evaluator(self) -> None:
+    async def test_scorer_flattens_tool_calls_across_turns_and_passes_to_evaluator(self) -> None:
         """Multi-turn tool calls are flattened and forwarded to the evaluator."""
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
         from evaluatorq.redteam.contracts import AttackOutput
@@ -533,10 +547,16 @@ class TestCreateDynamicEvaluatorScorer:
         tc_b = ToolCallOutputItem(name="tool_b", arguments={})
 
         attack_output = AttackOutput(
-            conversation=[Message(role="user", content="hi"), Message(role="assistant", content="done")],
-            turns=1,
-            final_response="done",
-            tool_calls_per_turn=[[tc_a], [tc_b]],
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="hi"),
+                    target=AgentResponse(output=[TextOutputItem(text="ok", annotations=[]), tc_a]),
+                ),
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="again"),
+                    target=AgentResponse(output=[TextOutputItem(text="done", annotations=[]), tc_b]),
+                ),
+            ],
             category="ASI05",
             vulnerability="code_execution",
         )
@@ -560,15 +580,17 @@ class TestCreateDynamicEvaluatorScorer:
 
     @pytest.mark.asyncio
     async def test_scorer_passes_none_when_no_tool_calls(self) -> None:
-        """`tool_calls_per_turn=[[]]` results in `tool_calls=None` passed to the evaluator."""
+        """Turns with no tool calls in target output result in `tool_calls=None` passed to the evaluator."""
         from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
         from evaluatorq.redteam.contracts import AttackOutput
 
         attack_output = AttackOutput(
-            conversation=[Message(role="user", content="hi"), Message(role="assistant", content="nope")],
-            turns=1,
-            final_response="nope",
-            tool_calls_per_turn=[[]],
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="hi"),
+                    target=AgentResponse(text="nope"),
+                ),
+            ],
             category="ASI05",
             vulnerability="",
         )
@@ -603,7 +625,7 @@ class TestCreateDynamicEvaluatorScorer:
             patch("evaluatorq.redteam.adaptive.pipeline.logger.error") as mock_error,
         ):
             scorer = create_dynamic_evaluator()["scorer"]
-            result = await scorer({"data": data, "output": {"conversation": "invalid"}})
+            result = await scorer({"data": data, "output": {"turns": "invalid"}})
 
         assert result.value == "error"
         log_message = mock_error.call_args.args[0]
