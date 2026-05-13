@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
@@ -44,7 +44,7 @@ from evaluatorq.redteam.contracts import (
     TurnType,
     Vulnerability,
 )
-from evaluatorq.redteam.tracing import set_span_attrs, with_redteam_span
+from evaluatorq.redteam.tracing import set_span_attrs, truncate_for_span, with_redteam_span
 from evaluatorq.redteam.vulnerability_registry import (
     get_primary_category,
     resolve_category_safe,
@@ -355,8 +355,8 @@ def create_dynamic_redteam_job(
                             "orq.redteam.category": category,
                             "orq.redteam.strategy_name": strategy.name,
                             "orq.redteam.turn": 1,
-                            "input": prompt,
-                            "orq.redteam.input": prompt,
+                            "input": truncate_for_span(prompt),
+                            "orq.redteam.input": truncate_for_span(prompt),
                         },
                     ) as tgt_span:
                         raw = await asyncio.wait_for(
@@ -366,13 +366,12 @@ def create_dynamic_redteam_job(
                         agent_resp = _coerce_to_agent_response(raw)
                         response = agent_resp.text
                         turn_tool_calls = agent_resp.tool_calls
+                        token_usage: TokenUsage | None = agent_resp.usage
+                        _resp_text = truncate_for_span(response or "")
                         set_span_attrs(tgt_span, {
-                            "output": response or "",
-                            "orq.redteam.output": response or "",
+                            "output": _resp_text,
+                            "orq.redteam.output": _resp_text,
                         })
-                        consume_usage = getattr(target, 'consume_last_token_usage', None)
-                        if callable(consume_usage):
-                            token_usage: TokenUsage | None = cast('TokenUsage | None', consume_usage())
                 except asyncio.TimeoutError:
                     logger.error(f'Single-turn attack timed out for {category}/{strategy.name} after {target_timeout_s:.0f}s')
                     response = f'[ERROR: Target agent timed out after {target_timeout_s:.0f}s]'
@@ -417,7 +416,10 @@ def create_dynamic_redteam_job(
                     vulnerability=vulnerability,
                 )
 
-                set_span_attrs(attack_span, {'input': prompt, 'output': response or ''})
+                set_span_attrs(attack_span, {
+                    'input': truncate_for_span(prompt),
+                    'output': truncate_for_span(response or ''),
+                })
                 _set_attack_span_attrs(attack_span, result_dict)
 
                 # Advance the global progress bar for template single-turn attacks
@@ -505,9 +507,9 @@ def create_dynamic_redteam_job(
             if result_dict.conversation:
                 first_user = next((m.content for m in result_dict.conversation if m.role == 'user'), None)
                 if first_user:
-                    set_span_attrs(attack_span, {'input': first_user})
+                    set_span_attrs(attack_span, {'input': truncate_for_span(first_user)})
             if result_dict.final_response:
-                set_span_attrs(attack_span, {'output': result_dict.final_response})
+                set_span_attrs(attack_span, {'output': truncate_for_span(result_dict.final_response)})
             _set_attack_span_attrs(attack_span, result_dict)
             return {**result_dict.model_dump(mode='json'), 'max_turns': effective_max_turns}
 

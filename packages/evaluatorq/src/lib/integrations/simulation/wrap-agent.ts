@@ -5,7 +5,7 @@
  */
 
 import type { DataPoint, Job, Output } from "../../types.js";
-import { fromOrqDeployment } from "./adapters.js";
+import { fromOrqAgent } from "./adapters.js";
 import { toOpenResponses } from "./convert.js";
 import { simulate } from "./simulation/index.js";
 import type {
@@ -87,7 +87,7 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     // Resolve the target callback
     let resolvedCallback = targetCallback;
     if (!resolvedCallback && agentKey) {
-      resolvedCallback = fromOrqDeployment(agentKey);
+      resolvedCallback = fromOrqAgent(agentKey);
     }
 
     if (!resolvedCallback) {

@@ -53,7 +53,6 @@ from evaluatorq.redteam.contracts import (
     SaveMode,
     TargetConfig,
     TargetKind,
-    TokenUsage,
     Vulnerability,
     normalize_category,
 )
@@ -718,20 +717,15 @@ def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
         prompt = _extract_static_prompt(data)
         target = at.new()
         raw_response = await target.send_prompt(prompt)
-        response = _coerce_to_agent_response(raw_response).text
-
-        usage: TokenUsage | None = None
-        consume = getattr(target, 'consume_last_token_usage', None)
-        if callable(consume):
-            usage = cast('TokenUsage | None', consume())
+        result = _coerce_to_agent_response(raw_response)
 
         _active_progress = _get_active_progress()
         if _active_progress is not None:
             await _active_progress.finish_attack(None)
 
         return {
-            'response': response,
-            'token_usage': usage,
+            'response': result.text,
+            'token_usage': result.usage,
         }
 
     return agent_target_job
@@ -1431,11 +1425,11 @@ async def _run_dynamic_or_hybrid(
                             )
                         target_instance = _factory.create_target(_label)
                         raw = await target_instance.send_prompt(prompt)
-                        response = _coerce_to_agent_response(raw).text
+                        result = _coerce_to_agent_response(raw)
                         active_progress = _get_active_progress()
                         if active_progress is not None:
                             await active_progress.finish_attack(None)
-                        return {'response': response}
+                        return {'response': result.text, 'token_usage': result.usage}
 
                     @job(f'redteam:hybrid:{at_safe}')
                     async def at_target_job(
