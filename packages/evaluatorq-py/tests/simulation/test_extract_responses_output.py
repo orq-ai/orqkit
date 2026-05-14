@@ -66,6 +66,7 @@ class TestExtractResponsesOutput:
         assert items[0].name == "lookup"
         assert items[0].call_id == "call_42"
         assert json.loads(items[0].arguments) == {"q": "x"}
+        assert usage is not None
         assert usage.prompt_tokens == 3
         assert usage.completion_tokens == 2
 
