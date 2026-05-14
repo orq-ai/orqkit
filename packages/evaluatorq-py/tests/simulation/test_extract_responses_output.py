@@ -11,6 +11,7 @@ Covers branches that were previously only exercised indirectly:
 from __future__ import annotations
 
 import json
+from typing import Any
 from unittest.mock import MagicMock
 
 from evaluatorq.contracts import TextOutputItem, ToolCallOutputItem
@@ -27,7 +28,7 @@ def _msg_item(text: str | None) -> MagicMock:
     return item
 
 
-def _fc_item(name: str, args: dict | str, call_id: str = "call_1", id_: str = "fc_1") -> MagicMock:
+def _fc_item(name: str, args: "dict[str, Any] | str", call_id: str = "call_1", id_: str = "fc_1") -> MagicMock:
     item = MagicMock()
     item.type = "function_call"
     item.name = name

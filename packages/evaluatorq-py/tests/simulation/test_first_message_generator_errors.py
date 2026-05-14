@@ -19,6 +19,13 @@ from evaluatorq.simulation.generators.first_message_generator import FirstMessag
 from evaluatorq.simulation.types import CommunicationStyle, Persona, Scenario
 
 
+@pytest.fixture(autouse=True)
+def _mock_retry_sleep():
+    """Strip real sleeps from the retry helper so 5xx tests don't burn 30s."""
+    with patch("evaluatorq.simulation.utils.retry.asyncio.sleep", new=AsyncMock()):
+        yield
+
+
 def _persona() -> Persona:
     return Persona(
         name="Test User",

@@ -6,7 +6,7 @@ Verifies:
 - send_prompt is callable and returns AgentResponse
 - new() returns a different object
 - new() fresh instance has previous_response_id == None
-- __call__ (sim mode) does not corrupt AgentTarget threading state (fork contract)
+- __call__ (sim mode) does not corrupt AgentTarget threading state (partial-stateless contract)
 """
 
 from __future__ import annotations
@@ -194,7 +194,7 @@ class TestCallDoesNotCorruptAgentTargetState:
         client.responses.create = AsyncMock(
             side_effect=[
                 _make_response(text="turn-1 reply"),   # send_prompt
-                _make_response(text="sim reply"),       # __call__ fork
+                _make_response(text="sim reply"),       # __call__ (stateless)
             ]
         )
         config = LLMCallConfig(model="gpt-4o")
@@ -217,5 +217,5 @@ class TestCallDoesNotCorruptAgentTargetState:
 
         assert target._previous_response_id is None
         await target([ChatMessage(role="user", content="sim input")])
-        # Must still be None — the fork ran, not self
+        # Must still be None — __call__ is stateless w.r.t. self
         assert target._previous_response_id is None

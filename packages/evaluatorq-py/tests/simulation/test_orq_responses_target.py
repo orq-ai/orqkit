@@ -1,7 +1,7 @@
 """Tests for OrqResponsesTarget (simulation target backed by Responses API).
 
 Verifies:
-- __call__(messages) returns str text and does NOT mutate instance state (fork semantics)
+- __call__(messages) returns str text and is stateless w.r.t. instance state
 - send_prompt returns AgentResponse and threads via previous_response_id
 - previous_response_id threading across send_prompt calls
 - new() returns a fresh instance
@@ -134,10 +134,10 @@ class TestOrqResponsesTargetCall:
 
     @pytest.mark.asyncio
     async def test_call_does_not_mutate_previous_response_id(self):
-        """__call__ forks internally; self._previous_response_id is never touched.
+        """__call__ is stateless w.r.t. self._previous_response_id.
 
-        This pins the fork-via-new design contract: mixed send_prompt / __call__
-        usage on the same instance must not corrupt the redteam threading state.
+        Pins the partial-stateless contract: mixed send_prompt / __call__ usage
+        on the same instance must not corrupt redteam threading state.
         """
         client = _make_client()
         client.responses.create = AsyncMock(
@@ -158,16 +158,16 @@ class TestOrqResponsesTargetCall:
 
     @pytest.mark.asyncio
     async def test_call_does_not_accumulate_usage_on_instance(self):
-        """__call__ forks internally; self._accumulated_usage is never touched.
+        """__call__ is stateless w.r.t. self._accumulated_usage.
 
-        Sim-mode token counts belong to the discarded fork, not the instance.
-        get_usage() on the original must only reflect send_prompt calls.
+        Sim mode does not contribute to instance-level usage; the sim runner
+        owns its own accounting. get_usage() reflects send_prompt calls only.
         """
         client = _make_client()
         client.responses.create = AsyncMock(
             side_effect=[
-                _make_response(input_tokens=10, output_tokens=5),  # send_prompt call
-                _make_response(input_tokens=99, output_tokens=99),  # __call__ (fork)
+                _make_response(input_tokens=10, output_tokens=5),   # send_prompt
+                _make_response(input_tokens=99, output_tokens=99),  # __call__
             ]
         )
         target = _make_target(client=client)
@@ -544,3 +544,63 @@ class TestOrqResponsesTargetMissingResponseId:
         await target.send_prompt("first")
 
         assert target._previous_response_id is None
+
+
+class TestOrqResponsesTargetSimPathKwargs:
+    @pytest.mark.asyncio
+    async def test_sim_call_does_not_send_previous_response_id_kwarg(self):
+        """Sim path must NEVER include previous_response_id in SDK kwargs."""
+        client = _make_client()
+        client.responses.create = AsyncMock(return_value=_make_response())
+        target = _make_target(client=client)
+
+        # Prime instance state via send_prompt to ensure sim path doesn't leak it
+        await target.send_prompt("first")
+        client.responses.create.reset_mock()
+        await target(_make_messages("sim turn"))
+
+        call_kwargs = client.responses.create.call_args.kwargs
+        assert "previous_response_id" not in call_kwargs
+
+    @pytest.mark.asyncio
+    async def test_interleaved_send_call_send_preserves_redteam_thread(self):
+        """send_prompt -> __call__ -> send_prompt: redteam thread unaffected."""
+        client = _make_client()
+        responses = [
+            _make_response(response_id="resp-1"),  # send #1
+            _make_response(response_id="resp-2"),  # __call__
+            _make_response(response_id="resp-3"),  # send #2 — must use resp-1
+        ]
+        client.responses.create = AsyncMock(side_effect=responses)
+        target = _make_target(client=client)
+
+        await target.send_prompt("a")
+        await target(_make_messages("sim"))
+        await target.send_prompt("b")
+
+        # Third call kwargs must thread from resp-1 (post-send #1), not resp-2
+        third_kwargs = client.responses.create.call_args_list[2].kwargs
+        assert third_kwargs.get("previous_response_id") == "resp-1"
+        # Final state reflects only send_prompt calls
+        assert target._previous_response_id == "resp-3"
+
+
+class TestOrqResponsesTargetStatefulMissingId:
+    @pytest.mark.asyncio
+    async def test_stateful_with_missing_response_id_keeps_prior_thread(self):
+        """send_prompt with malformed response (no id): thread unchanged, usage updated."""
+        client = _make_client()
+        good = _make_response(response_id="resp-good", input_tokens=10, output_tokens=5)
+        bad = _make_response(input_tokens=2, output_tokens=3)
+        bad.id = None
+        client.responses.create = AsyncMock(side_effect=[good, bad])
+        target = _make_target(client=client)
+
+        await target.send_prompt("first")
+        assert target._previous_response_id == "resp-good"
+        await target.send_prompt("second")
+        # Thread id must NOT be overwritten by the bad response
+        assert target._previous_response_id == "resp-good"
+        # Usage still accumulates (asymmetric but documented)
+        assert target.get_usage().prompt_tokens == 12
+        assert target.get_usage().completion_tokens == 8

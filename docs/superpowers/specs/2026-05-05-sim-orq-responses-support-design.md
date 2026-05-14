@@ -23,7 +23,7 @@ Users need to:
 - TypeScript mirror.
 - Generator (datapoint/persona/scenario) backend swap.
 - Migrating redteam attacker/evaluator LLMs to Responses.
-- Widening redteam `AgentTarget.send_prompt_with_usage` signature.
+- Widening redteam `AgentTarget.send_prompt` signature.
 
 ---
 
@@ -82,7 +82,7 @@ class LLMCallConfig(BaseModel):
 │    SIM (simulation/)   │    │   REDTEAM (redteam/)         │
 │                        │    │                              │
 │  BaseAgent (abstract)  │    │  AgentTarget (Protocol)      │
-│    config: LLMCallConfig│   │    send_prompt_with_usage    │
+│    config: LLMCallConfig│   │    send_prompt    │
 │    _call_llm() ──────► ├────►    new()                     │
 │    _call_responses()   │    │    memory_entity_id          │
 │    _call_chat_compl()  │    │                              │
@@ -92,15 +92,21 @@ class LLMCallConfig(BaseModel):
 │                        │    │  LLMConfig                   │
 │  OrqResponsesTarget ◄──┼────►    attacker: LLMCallConfig  │
 │    __call__(messages)  │    │    evaluator: LLMCallConfig  │
-│    send_prompt_with_usage   └──────────────────────────────┘
+│    send_prompt   └──────────────────────────────┘
 │    new()               │
 │    previous_response_id│
 └────────────────────────┘
 ```
 
-### `OrqResponsesTarget` — single class, two interfaces
+### `OrqResponsesTarget` — single class, two interfaces (partial-stateless)
 
-Implements both sim's callable shape AND redteam's `AgentTarget` protocol.
+Implements both sim's callable shape AND redteam's `AgentTarget` protocol with
+different state semantics. **Update (round 5/6):** the sim path is now stateless
+w.r.t. instance state. Earlier drafts of this spec described both paths
+threading `previous_response_id` from a shared field; experience shipping that
+showed it produces silent state corruption when both interfaces are exercised
+on the same instance (round 4 fork-via-new attempt + the bugs it introduced
+documented this). The implementation now separates the two paths:
 
 ```python
 class OrqResponsesTarget:
@@ -108,35 +114,58 @@ class OrqResponsesTarget:
     config: LLMCallConfig
     instructions: str | None
     tools: list[dict] | None
-    _previous_response_id: str | None     # threads multi-turn
-
-    def __init__(self, config: LLMCallConfig, *, instructions=None,
-                 tools=None, memory_entity_id=None): ...
+    _previous_response_id: str | None     # stateful path only
+    _accumulated_usage: TokenUsage         # stateful path only
 
     async def __call__(self, messages: list[ChatMessage]) -> str:
-        """Sim target_callback shape. Threads previous_response_id."""
+        """Sim target_callback shape. STATELESS w.r.t. self.
 
-    async def send_prompt_with_usage(self, prompt: str) -> AgentResponse:
-        """Redteam AgentTarget shape. Same threading."""
+        Does not read or write _previous_response_id / _accumulated_usage.
+        The sim runner owns the conversation transcript (passed via messages)
+        and tracks usage independently. Safe to invoke concurrently.
+        """
+
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Redteam AgentTarget shape. STATEFUL.
+
+        Threads via self._previous_response_id and accumulates token usage on
+        self._accumulated_usage. Single-caller per instance (no internal lock).
+        """
 
     def new(self) -> "OrqResponsesTarget":
-        """Fresh instance, identical config, cleared previous_response_id."""
+        """Fresh instance, cleared state, fresh memory_entity_id."""
 
-    async def _invoke(self, *, input_: str | list) -> AgentResponse:
-        # client.responses.create_async(
-        #   model=self.config.model,
-        #   input_=input_,
-        #   instructions=self.instructions,
-        #   tools=self.tools,
-        #   previous_response_id=self._previous_response_id,
-        # )
-        # self._previous_response_id = response.id
-        # return AgentResponse(text=..., tool_calls=..., usage=...)
+    def get_usage(self) -> TokenUsage:
+        """Cumulative usage from send_prompt only; sim __call__ does not count."""
+
+    # Two private invocation methods derived from a shared pure call helper:
+    #   _invoke_stateless(responses_input)             -> _ResponsesCallResult
+    #   _invoke_stateful(responses_input)              -> AgentResponse
+    #   _call_responses_api(responses_input, previous_response_id)
+    #     — pure call into client.responses.create. No instance mutation.
 ```
 
-**Multi-turn:** `previous_response_id` threads across calls within the same instance. `new()` clears it.
+**Why partial-stateless?** Trying to share `_previous_response_id` between both
+interfaces creates four legal `(previous_response_id, mutate_self)` combinations
+but only two are meaningful. The boolean-flag form encodes a personality split
+inside one class; the two-private-methods form constrains the call sites to the
+two valid pairs by construction. A future ADR may split into two classes
+(`OrqResponsesSimTarget`, `OrqResponsesAgentTarget`) sharing the call helper,
+but that breaks the `simulation.__init__` public export and is deferred.
 
-**Tool calls:** Resolve server-side in the normal case (Orq handles them). If the server emits unresolved pending tool calls (rare, local-tool edge case), they surface in `AgentResponse.tool_calls` for callers using `send_prompt_with_usage` directly. `__call__` returns only text.
+**Multi-turn (redteam):** `previous_response_id` threads across `send_prompt`
+calls within the same instance. `new()` clears it.
+
+**Multi-turn (sim):** The sim runner re-sends the full message list each call
+(`__call__(messages)`). Server-side state continuity for the sim path is NOT
+used in the current implementation — the cost is paid in prompt tokens per turn.
+This is a deliberate trade for predictable test/runner semantics; future work
+may add an opt-in threaded sim mode.
+
+**Tool calls:** Resolve server-side in the normal case (Orq handles them). If
+the server emits unresolved pending tool calls (rare, local-tool edge case),
+they surface in `AgentResponse.output` items for callers using `send_prompt`
+directly. `__call__` returns only text.
 
 ### `BaseAgent` refactor
 
@@ -274,7 +303,7 @@ await red_team(
 - `_call_llm` dispatches to correct branch based on `config.api`.
 - `previous_response_id` threads across calls in responses mode.
 - `OrqResponsesTarget.__call__` returns text only.
-- `OrqResponsesTarget.send_prompt_with_usage` returns `AgentResponse`.
+- `OrqResponsesTarget.send_prompt` returns `AgentResponse`.
 - `OrqResponsesTarget.new()` produces fresh instance with cleared `previous_response_id`.
 - `OrqResponsesTarget` passes `is_agent_target` check.
 - `simulate()` accepts custom `user_simulator`/`judge` instances.
