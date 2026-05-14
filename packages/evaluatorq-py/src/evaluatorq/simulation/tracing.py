@@ -22,6 +22,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from evaluatorq.tracing.setup import get_tracer
 
 if TYPE_CHECKING:
@@ -35,6 +37,9 @@ AttrMap = dict[str, AttrValue | None]
 
 # Max content length per message to avoid oversized spans (matches TS).
 MAX_CONTENT_LEN = 2000
+
+# Module-level flag so the OpenTelemetry import warning fires only once.
+_otel_import_warned = False
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +64,11 @@ async def with_simulation_span(  # noqa: RUF029
 
     try:
         from opentelemetry.trace import SpanKind, Status, StatusCode
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         yield None
         return
 
@@ -114,7 +123,11 @@ async def with_llm_span(  # noqa: RUF029
 
     try:
         from opentelemetry.trace import SpanKind, Status, StatusCode
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         yield None
         return
 
@@ -454,7 +467,11 @@ async def get_trace_context_headers() -> dict[str, str]:  # noqa: RUF029
     """
     try:
         from opentelemetry import context, propagate
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         return {}
 
     headers: dict[str, str] = {}

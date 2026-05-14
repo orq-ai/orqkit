@@ -272,6 +272,10 @@ class LangGraphTarget(AgentTarget):
         # AgentResponse.text remains well-defined.
         if not any(isinstance(item, TextOutputItem) for item in output_items):
             last = messages[-1]
+            logger.warning(
+                "LangGraphTarget: no AIMessage text in turn; falling back to last message content (type=%s)",
+                type(last).__name__,
+            )
             last_content = last.get("content", "") if isinstance(last, dict) else getattr(last, "content", "")
             if not isinstance(last_content, str):
                 last_content = str(last_content)

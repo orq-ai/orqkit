@@ -56,9 +56,12 @@ class OrqResponsesTarget:
 
     async def __call__(self, messages: list[ChatMessage]) -> str:
         """Sim target_callback shape. Sends full message list each turn."""
-        # Reset previous_response_id since simulation always passes full history
-        # Avoids duplication between full message list and response threading
+        # Reset conversation state since simulation always passes full history.
+        # Clears both the response thread ID (avoids duplication between full
+        # message list and response threading) and accumulated usage (prevents
+        # token counts from leaking across reused instances in mixed-mode runs).
         self._previous_response_id = None
+        self._accumulated_usage = TokenUsage()
         result = await self._invoke(input_=self._messages_to_input(messages))
         return result.text
 

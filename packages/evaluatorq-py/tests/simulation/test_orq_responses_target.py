@@ -341,6 +341,74 @@ class TestOrqResponsesTargetTimeout:
             await target.send_prompt("hi")
 
 
+class TestOrqResponsesTargetNewExtended:
+    """Additional new() branch tests from PR review."""
+
+    def test_new_mints_fresh_memory_entity_id_when_set(self):
+        """new() produces a different non-None memory_entity_id when one was set."""
+        import uuid
+
+        client = _make_client()
+        target = OrqResponsesTarget(
+            LLMCallConfig(model="gpt-4o"),
+            memory_entity_id="original-uuid-abc",
+            client=client,
+        )
+
+        fresh = target.new()
+
+        assert fresh.memory_entity_id is not None
+        assert fresh.memory_entity_id != target.memory_entity_id
+        # Must be a valid UUID4
+        parsed = uuid.UUID(fresh.memory_entity_id, version=4)
+        assert parsed.version == 4
+
+    def test_new_preserves_tools_parameter(self):
+        """new() propagates tools= to the returned instance unchanged."""
+        tools = [{"type": "function", "function": {"name": "foo"}}]
+        client = _make_client()
+        target = OrqResponsesTarget(
+            LLMCallConfig(model="gpt-4o"),
+            tools=tools,
+            client=client,
+        )
+
+        fresh = target.new()
+
+        assert fresh.tools == target.tools
+
+    def test_new_propagates_externally_owned_client(self):
+        """new() shares the same client object when it was externally injected."""
+        client = _make_client()
+        target = OrqResponsesTarget(LLMCallConfig(model="gpt-4o"), client=client)
+
+        assert not target._client_owned  # externally injected → not owned
+
+        fresh = target.new()
+
+        assert fresh._client is target._client
+
+    def test_new_does_not_share_self_owned_client(self, monkeypatch):
+        """new() does NOT propagate a self-owned client; each instance owns its own."""
+        monkeypatch.setenv("ORQ_API_KEY", "orq-test-key")
+
+        captured_clients: list = []
+
+        def fake_async_openai(**kwargs):
+            mock = MagicMock()
+            captured_clients.append(mock)
+            return mock
+
+        with patch("openai.AsyncOpenAI", side_effect=fake_async_openai):
+            target = OrqResponsesTarget(LLMCallConfig(model="gpt-4o"))
+            assert target._client_owned
+
+            fresh = target.new()
+
+        # Two distinct client objects must have been created — one per instance
+        assert fresh._client is not target._client
+
+
 class TestOrqResponsesTargetInstructions:
     @pytest.mark.asyncio
     async def test_instructions_passed_to_sdk_when_set(self):

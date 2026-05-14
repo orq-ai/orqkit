@@ -83,11 +83,6 @@ def extract_responses_output(response: object) -> tuple[list[Any], TokenUsage]:
                             logprobs=[],
                         )
                     )
-                elif hasattr(part, "text") and text:
-                    logger.warning(
-                        "extract_responses_output: unexpected content part type %r has text; skipping",
-                        part_type,
-                    )
 
         elif item_type == "function_call":
             name = getattr(item, "name", None) or ""
@@ -108,7 +103,12 @@ def extract_responses_output(response: object) -> tuple[list[Any], TokenUsage]:
                 )
             )
 
+        else:
+            logger.warning("extract_responses_output: skipping unknown item type=%r", item_type)
+
     usage_obj = getattr(response, "usage", None)
+    if usage_obj is None:
+        logger.warning("extract_responses_output: response.usage is None; token counts will be 0")
     input_toks = int(getattr(usage_obj, "input_tokens", 0) or 0)
     output_toks = int(getattr(usage_obj, "output_tokens", 0) or 0)
     usage = TokenUsage(

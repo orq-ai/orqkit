@@ -32,9 +32,9 @@ class LLMCallConfig(BaseModel):
 
     model: str = DEFAULT_PIPELINE_MODEL
     api: Literal["chat_completions", "responses"] = "chat_completions"
-    temperature: float = 1.0
-    max_tokens: int = DEFAULT_TARGET_MAX_TOKENS
-    timeout_ms: int = 90_000
+    temperature: float = Field(default=1.0, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
+    timeout_ms: int = Field(default=90_000, gt=0)
     extra_kwargs: dict[str, Any] = Field(default_factory=dict)
     client: Any = None  # AsyncOpenAI | None — Any avoids import cycle
 
