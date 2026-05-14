@@ -58,14 +58,15 @@ class TestCoerceToAgentResponse:
 
 
 class TestAgentResponseTextSemantics:
-    def test_text_returns_last_text_item(self) -> None:
+    def test_text_concatenates_all_text_items(self) -> None:
+        """Multi-part Responses replies must not drop leading text segments."""
         out: list[OutputMessage] = []
         out.append(TextOutputItem(text="draft", annotations=[]))
         out.append(ToolCallOutputItem(name="lookup", arguments='{"q": "value"}'))
         out.append(TextOutputItem(text="final", annotations=[]))
         result = AgentResponse(output=out)
 
-        assert result.text == "final"
+        assert result.text == "draftfinal"
 
     def test_tool_call_only_response_has_empty_text(self) -> None:
         out2: list[OutputMessage] = []
@@ -333,7 +334,7 @@ class TestLangGraphToolCallExtraction:
         target = LangGraphTarget(graph)
         result = await target.send_prompt("search for something")
 
-        assert result.text == "Here is the result"
+        assert result.text == "I'll search for thatHere is the result"
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "web_search"
         assert result.tool_calls[0].arguments_dict == {"query": "hello"}
