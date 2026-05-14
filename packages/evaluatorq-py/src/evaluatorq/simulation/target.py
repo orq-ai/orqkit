@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import TYPE_CHECKING, Any
+
+from loguru import logger
 
 from evaluatorq.contracts import AgentResponse, LLMCallConfig
 from evaluatorq.simulation._client import build_simulation_client, extract_responses_output
@@ -13,8 +14,6 @@ from evaluatorq.simulation.utils.retry import with_retry
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
-
-logger = logging.getLogger(__name__)
 
 
 class OrqResponsesTarget:
@@ -48,11 +47,8 @@ class OrqResponsesTarget:
             self._client = client
             self._client_owned = False
         else:
-            self._client = self._build_client()
+            self._client, self._client_owned = build_simulation_client(config.client)
 
-    # ---------------------------------------------------------------------------
-    # Public API — sim callable shape
-    # ---------------------------------------------------------------------------
 
     async def __call__(self, messages: list[ChatMessage]) -> str:
         """Sim target_callback shape. Sends full message list each turn."""
@@ -65,9 +61,6 @@ class OrqResponsesTarget:
         result = await self._invoke(input_=self._messages_to_input(messages))
         return result.text
 
-    # ---------------------------------------------------------------------------
-    # Public API — redteam AgentTarget protocol
-    # ---------------------------------------------------------------------------
 
     async def send_prompt(self, prompt: str) -> AgentResponse:
         """Redteam AgentTarget protocol shape."""
@@ -98,9 +91,6 @@ class OrqResponsesTarget:
             client=self._client if not self._client_owned else None,
         )
 
-    # ---------------------------------------------------------------------------
-    # Core invocation
-    # ---------------------------------------------------------------------------
 
     async def _invoke(self, *, input_: str | list[dict[str, Any]]) -> AgentResponse:
         """Core invocation: calls client.responses.create, threads previous_response_id.
@@ -135,7 +125,7 @@ class OrqResponsesTarget:
             else:
                 logger.warning(
                     "OrqResponsesTarget._invoke: response missing 'id'; "
-                    "conversation threading disabled (model=%s)",
+                    "conversation threading disabled (model={})",
                     self.config.model,
                 )
 
@@ -160,29 +150,11 @@ class OrqResponsesTarget:
 
         try:
             return await with_retry(_do_call, label="OrqResponsesTarget._invoke")
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
             raise RuntimeError(
                 f"OrqResponsesTarget._invoke timed out after {timeout_s}s "
                 f"(model={self.config.model})"
-            ) from None
-
-    # ---------------------------------------------------------------------------
-    # Private helpers
-    # ---------------------------------------------------------------------------
-
-    def _build_client(self) -> AsyncOpenAI:
-        """Construct an AsyncOpenAI client from config or environment variables.
-
-        Delegates to :func:`evaluatorq.simulation._client.build_simulation_client`.
-
-        Resolution order:
-        1. ``self.config.client`` — injected client, used as-is (not owned).
-        2. ``ORQ_API_KEY`` env var — routes through the Orq router.
-        3. ``OPENAI_API_KEY`` env var — uses the OpenAI SDK default base URL.
-        """
-        client, owned = build_simulation_client(self.config.client)
-        self._client_owned = owned
-        return client
+            ) from e
 
     @staticmethod
     def _messages_to_input(messages: list[ChatMessage]) -> list[dict[str, Any]]:

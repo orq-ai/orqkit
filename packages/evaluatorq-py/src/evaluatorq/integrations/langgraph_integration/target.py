@@ -232,10 +232,8 @@ class LangGraphTarget(AgentTarget):
         # interleaving of text and tool calls (ReAct-style: text -> tool_call -> text).
         # LangGraph checkpointer returns the full accumulated thread state, so
         # slicing from _prev_msg_count avoids duplicating tool calls across turns.
-        # ToolCallOutputItem is built directly to preserve full output ordering
-        # (interleaved text/tool calls) — the convenience .tool_calls view flattens
-        # — the convenience .tool_calls view filters but ordering only matters
-        # when reading .output directly.
+        # Build ToolCallOutputItem directly (not via the .tool_calls view) so
+        # interleaved text/tool ordering is preserved in .output.
         output_items: list[OutputMessage] = []
         for msg in messages[self._prev_msg_count:]:
             if isinstance(msg, dict):

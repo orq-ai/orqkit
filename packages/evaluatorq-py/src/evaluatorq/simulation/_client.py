@@ -107,7 +107,7 @@ def extract_responses_output(response: object) -> tuple[list[Any], TokenUsage]:
             pass  # reasoning/thinking steps (o1/o3/o4-mini) intentionally excluded from output
 
         else:
-            logger.warning("extract_responses_output: skipping unknown item type=%r", item_type)
+            logger.warning("extract_responses_output: skipping unknown item type={!r}", item_type)
 
     usage_obj = getattr(response, "usage", None)
     if usage_obj is None:
