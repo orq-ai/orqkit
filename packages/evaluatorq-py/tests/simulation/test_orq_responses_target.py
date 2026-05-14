@@ -704,3 +704,72 @@ class TestOrqResponsesTargetRetry:
 
         assert client.responses.create.await_count == 1
         assert sleep_mock.await_count == 0
+
+
+class TestOrqResponsesTargetClose:
+    """Verify HTTP client lifecycle — owned clients must close, injected must not."""
+
+    @pytest.mark.asyncio
+    async def test_close_closes_owned_client(self, monkeypatch):
+        """Self-built client must be closed on close()."""
+        from evaluatorq.simulation import target as target_mod
+
+        owned_client = MagicMock()
+        owned_client.close = AsyncMock()
+        monkeypatch.setattr(
+            target_mod, "build_simulation_client",
+            lambda _client: (owned_client, True),  # pyright: ignore[reportUnknownLambdaType]
+        )
+        config = LLMCallConfig(model="m", api="responses")
+        t = OrqResponsesTarget(config)
+
+        await t.close()
+
+        owned_client.close.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_close_does_not_close_injected_client(self):
+        """Externally-injected client lifecycle is the caller's concern."""
+        injected = _make_client()
+        injected.close = AsyncMock()
+        target = _make_target(client=injected)
+
+        await target.close()
+
+        injected.close.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_close_is_idempotent(self, monkeypatch):
+        """Calling close twice must not double-close the underlying client."""
+        from evaluatorq.simulation import target as target_mod
+
+        owned_client = MagicMock()
+        owned_client.close = AsyncMock()
+        monkeypatch.setattr(
+            target_mod, "build_simulation_client",
+            lambda _client: (owned_client, True),  # pyright: ignore[reportUnknownLambdaType]
+        )
+        config = LLMCallConfig(model="m", api="responses")
+        t = OrqResponsesTarget(config)
+
+        await t.close()
+        await t.close()
+
+        owned_client.close.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_closes_owned_client(self, monkeypatch):
+        from evaluatorq.simulation import target as target_mod
+
+        owned_client = MagicMock()
+        owned_client.close = AsyncMock()
+        monkeypatch.setattr(
+            target_mod, "build_simulation_client",
+            lambda _client: (owned_client, True),  # pyright: ignore[reportUnknownLambdaType]
+        )
+        config = LLMCallConfig(model="m", api="responses")
+
+        async with OrqResponsesTarget(config) as t:
+            assert t._client_owned is True
+
+        owned_client.close.assert_awaited_once()

@@ -122,6 +122,23 @@ class OrqResponsesTarget:
         """
         return self._accumulated_usage.model_copy()
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client if this instance owns it.
+
+        Externally-injected clients (``_client_owned=False``) are left
+        untouched — the caller owns their lifecycle. Safe to call multiple
+        times; subsequent calls are no-ops.
+        """
+        if self._client_owned:
+            await self._client.close()
+            self._client_owned = False
+
+    async def __aenter__(self) -> "OrqResponsesTarget":
+        return self
+
+    async def __aexit__(self, *_exc_info: object) -> None:
+        await self.close()
+
     async def _invoke_stateless(
         self,
         *,

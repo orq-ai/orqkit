@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import os
 from typing import TYPE_CHECKING
 
@@ -238,6 +239,14 @@ async def _simulate_core(
         return results
     finally:
         await runner.close()
+        # Close the target if it owns resources (e.g. OrqResponsesTarget
+        # built its own AsyncOpenAI client). Plain callables / functions
+        # have no close(); duck-type to avoid coupling to the concrete type.
+        target_close = getattr(resolved_callback, "close", None)
+        if callable(target_close):
+            maybe = target_close()
+            if inspect.isawaitable(maybe):
+                await maybe
 
 
 async def _generate_single_datapoint(

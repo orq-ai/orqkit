@@ -13,6 +13,8 @@ Flow:
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import inspect
 import time
 import traceback
 from typing import TYPE_CHECKING, Any
@@ -328,8 +330,20 @@ def create_dynamic_redteam_job(
                 'orq.redteam.turn_type': strategy.turn_type.value,
                 'orq.redteam.max_turns': effective_max_turns,
             },
-        ) as attack_span:
+        ) as attack_span, contextlib.AsyncExitStack() as cleanup_stack:
             target = resolved_factory.create_target(agent_key=agent_key)
+            # Register HTTP-client cleanup for targets that own a client
+            # (e.g. OrqResponsesTarget). Plain callable targets have no
+            # close(); duck-type to avoid coupling.
+            target_close = getattr(target, 'close', None)
+            if callable(target_close):
+
+                async def _close_target() -> None:
+                    maybe = target_close()
+                    if inspect.isawaitable(maybe):
+                        await maybe
+
+                cleanup_stack.push_async_callback(_close_target)
             # Targets own their memory_entity_id — track it for cleanup.
             target_memory_id = getattr(target, 'memory_entity_id', None)
             if target_memory_id is not None and memory_entity_ids is not None:
