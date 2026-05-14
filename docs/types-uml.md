@@ -319,9 +319,10 @@ classDiagram
         +str memory_entity_id
         +str _previous_response_id
         +TokenUsage _accumulated_usage
-        +__call__(messages) str
-        +send_prompt(prompt) AgentResponse
+        +__call__(messages) str «stateless»
+        +send_prompt(prompt) AgentResponse «stateful»
         +new() OrqResponsesTarget
+        +get_usage() TokenUsage
     }
     class Persona {
         +str name
@@ -461,9 +462,11 @@ classDiagram
         +LLMCallConfig config
         +str memory_entity_id
         +str _previous_response_id
-        +__call__(messages) str
-        +send_prompt(prompt) AgentResponse
+        +TokenUsage _accumulated_usage
+        +__call__(messages) str «stateless»
+        +send_prompt(prompt) AgentResponse «stateful»
         +new() OrqResponsesTarget
+        +get_usage() TokenUsage
     }
 
     ORQAgentTarget ..|> AgentTarget : implements
@@ -548,6 +551,7 @@ flowchart LR
 - `AgentResponse`, `LLMCallConfig`, `ReasoningOutputItem` — canonical in `evaluatorq.contracts`. Redteam re-exports.
 - `TextOutputItem` = alias of `OutputTextContent` (`openresponses.convert_models`). `ToolCallOutputItem` = alias of `FunctionCall` — has both `id` (item ID) and `call_id` (tool call correlation ID).
 - `AgentTarget` protocol — `redteam/backends/base.py`. Implemented by: `ORQAgentTarget`, `OpenAIModelTarget` (backends), `LangGraphTarget`, `CallableTarget`, `OpenAIAgentTarget`, `VercelAISdkTarget` (integrations), `OrqResponsesTarget` (sim).
+- `OrqResponsesTarget` — **partial-stateless** dual interface. `__call__(messages)` is stateless w.r.t. self (sim runner owns transcript + usage; safe to call concurrently). `send_prompt(prompt)` is stateful (threads via `_previous_response_id`, accumulates `_accumulated_usage`; single-caller per instance). Internally routed through `_invoke_stateless` / `_invoke_stateful` over a shared pure `_call_responses_api` helper. `get_usage()` reflects `send_prompt` only.
 - `OpenAIModelTarget._history` — accumulates `[user, assistant]` pairs across `send_prompt` calls for multi-turn context. `new()` returns clean history.
 - `OpenAIAgentTarget._history` — client-side history via `Runner.run().to_input_list()`.
 - `BackendBundle` — groups factory + context provider + cleanup + error mapper for dynamic runtime.
