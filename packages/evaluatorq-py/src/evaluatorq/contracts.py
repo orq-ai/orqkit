@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
+    _ClientT: TypeAlias = "AsyncOpenAI | None"
+else:
+    _ClientT = Any
 
 # ---------------------------------------------------------------------------
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
@@ -36,7 +43,7 @@ class LLMCallConfig(BaseModel):
     max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
     timeout_ms: int = Field(default=90_000, gt=0)
     extra_kwargs: dict[str, Any] = Field(default_factory=dict)
-    client: Any = None  # AsyncOpenAI | None — Any avoids import cycle
+    client: _ClientT = None
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +77,10 @@ class ReasoningOutputItem(BaseModel):
     id: str | None = None
 
 
-OutputMessage = TextOutputItem | ToolCallOutputItem | ReasoningOutputItem
+OutputMessage = Annotated[
+    Union[TextOutputItem, ToolCallOutputItem, ReasoningOutputItem],
+    Field(discriminator="type"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +101,11 @@ class AgentResponse(BaseModel):
         ``.tool_calls`` — list of :class:`ToolCallOutputItem` filtered from
         :attr:`output` in order
 
-    ``usage`` is loosely typed (``Any``) to avoid a circular import on
-    :class:`evaluatorq.redteam.contracts.TokenUsage`.
+    ``usage`` holds a :class:`evaluatorq.redteam.contracts.TokenUsage` instance
+    when available. The field is typed ``Any | None`` at runtime to avoid a
+    circular import: ``redteam.contracts`` imports this module, so
+    ``TokenUsage`` cannot be imported here unconditionally. Static type
+    checkers see the correct annotation via the ``TYPE_CHECKING`` stub below.
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
@@ -104,12 +117,14 @@ class AgentResponse(BaseModel):
     finish_reason: str | None = None
 
     if TYPE_CHECKING:
+        from evaluatorq.redteam.contracts import TokenUsage
+
         def __init__(  # pyright: ignore[reportMissingSuperCall]
             self,
             *,
             output: list[OutputMessage] | None = None,
             text: str | None = None,
-            usage: Any = None,
+            usage: "TokenUsage | None" = None,
             model: str | None = None,
             response_id: str | None = None,
             finish_reason: str | None = None,
@@ -153,3 +168,4 @@ __all__ = [
     "TextOutputItem",
     "ToolCallOutputItem",
 ]
+

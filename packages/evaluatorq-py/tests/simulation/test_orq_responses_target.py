@@ -1,11 +1,11 @@
 """Tests for OrqResponsesTarget (simulation target backed by Responses API).
 
 Verifies:
-- __call__(messages) returns str text
-- send_prompt returns AgentResponse
-- previous_response_id threading across calls
+- __call__(messages) returns str text and does NOT mutate instance state (fork semantics)
+- send_prompt returns AgentResponse and threads via previous_response_id
+- previous_response_id threading across send_prompt calls
 - new() returns a fresh instance
-- get_usage() accumulates token counts
+- get_usage() accumulates token counts from send_prompt only
 - Timeout is applied via asyncio.wait_for
 """
 
@@ -131,6 +131,54 @@ class TestOrqResponsesTargetCall:
 
         with pytest.raises(RuntimeError, match="response contained no extractable output items"):
             await target(_make_messages())
+
+    @pytest.mark.asyncio
+    async def test_call_does_not_mutate_previous_response_id(self):
+        """__call__ forks internally; self._previous_response_id is never touched.
+
+        This pins the fork-via-new design contract: mixed send_prompt / __call__
+        usage on the same instance must not corrupt the redteam threading state.
+        """
+        client = _make_client()
+        client.responses.create = AsyncMock(
+            side_effect=[
+                _make_response(response_id="resp-from-send"),
+                _make_response(response_id="resp-from-call"),
+            ]
+        )
+        target = _make_target(client=client)
+
+        # Establish redteam thread state via send_prompt
+        await target.send_prompt("turn 1")
+        assert target._previous_response_id == "resp-from-send"
+
+        # Sim call must not overwrite or clear that state
+        await target(_make_messages("sim turn"))
+        assert target._previous_response_id == "resp-from-send"
+
+    @pytest.mark.asyncio
+    async def test_call_does_not_accumulate_usage_on_instance(self):
+        """__call__ forks internally; self._accumulated_usage is never touched.
+
+        Sim-mode token counts belong to the discarded fork, not the instance.
+        get_usage() on the original must only reflect send_prompt calls.
+        """
+        client = _make_client()
+        client.responses.create = AsyncMock(
+            side_effect=[
+                _make_response(input_tokens=10, output_tokens=5),  # send_prompt call
+                _make_response(input_tokens=99, output_tokens=99),  # __call__ (fork)
+            ]
+        )
+        target = _make_target(client=client)
+
+        await target.send_prompt("redteam turn")
+        await target(_make_messages("sim turn"))
+
+        usage = target.get_usage()
+        assert usage.prompt_tokens == 10
+        assert usage.completion_tokens == 5
+        assert usage.total_tokens == 15
 
 
 class TestOrqResponsesTargetSendPrompt:
@@ -433,3 +481,66 @@ class TestOrqResponsesTargetInstructions:
 
         call_kwargs = client.responses.create.call_args.kwargs
         assert "instructions" not in call_kwargs
+
+
+class TestOrqResponsesTargetTools:
+    @pytest.mark.asyncio
+    async def test_tools_forwarded_to_sdk_when_set(self):
+        client = _make_client()
+        client.responses.create = AsyncMock(return_value=_make_response())
+        config = LLMCallConfig(model="gpt-4o")
+        tool_spec = [{"type": "function", "name": "lookup", "parameters": {}}]
+        target = OrqResponsesTarget(config, tools=tool_spec, client=client)
+
+        await target.send_prompt("prompt")
+
+        call_kwargs = client.responses.create.call_args.kwargs
+        assert call_kwargs.get("tools") == tool_spec
+
+    @pytest.mark.asyncio
+    async def test_tools_omitted_when_none_or_empty(self):
+        client = _make_client()
+        client.responses.create = AsyncMock(return_value=_make_response())
+        config = LLMCallConfig(model="gpt-4o")
+
+        target_none = OrqResponsesTarget(config, tools=None, client=client)
+        await target_none.send_prompt("p")
+        assert "tools" not in client.responses.create.call_args.kwargs
+
+        client.responses.create.reset_mock()
+        target_empty = OrqResponsesTarget(config, tools=[], client=client)
+        await target_empty.send_prompt("p")
+        assert "tools" not in client.responses.create.call_args.kwargs
+
+
+class TestOrqResponsesTargetMissingResponseId:
+    @pytest.mark.asyncio
+    async def test_missing_id_disables_threading_and_warns(self, caplog):
+        client = _make_client()
+        resp = _make_response()
+        resp.id = None
+        client.responses.create = AsyncMock(return_value=resp)
+        target = _make_target(client=client)
+
+        await target.send_prompt("first")
+
+        # _previous_response_id stays None, so the next call must NOT include
+        # previous_response_id in kwargs.
+        assert target._previous_response_id is None
+
+        client.responses.create.reset_mock()
+        await target.send_prompt("second")
+        call_kwargs = client.responses.create.call_args.kwargs
+        assert "previous_response_id" not in call_kwargs
+
+    @pytest.mark.asyncio
+    async def test_empty_string_id_disables_threading(self):
+        client = _make_client()
+        resp = _make_response()
+        resp.id = ""
+        client.responses.create = AsyncMock(return_value=resp)
+        target = _make_target(client=client)
+
+        await target.send_prompt("first")
+
+        assert target._previous_response_id is None

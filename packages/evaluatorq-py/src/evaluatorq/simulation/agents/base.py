@@ -328,10 +328,13 @@ class BaseAgent(ABC):
             max_tokens=max_tokens,
             purpose=llm_purpose,
         ) as span:
-            record_llm_input(
-                span,
-                [{"role": "system", "content": self.system_prompt}, *input_messages],
-            )
+            # Responses API sends system context via `instructions`, not as a
+            # message in `input`. Record what is actually sent so the span
+            # matches the real request shape (mirrors _call_chat_completions
+            # which records full_messages including the system entry).
+            if span is not None:
+                span.set_attribute("gen_ai.request.instructions", self.system_prompt[:2000])
+            record_llm_input(span, input_messages)
             trace_headers = await get_trace_context_headers()
 
             async def _do_call() -> LLMResult:

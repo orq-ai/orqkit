@@ -797,12 +797,7 @@ class TokenUsage(BaseModel):
         return NotImplemented
 
 
-# SendResult was the prior per-call return type. It has been merged into
-# :class:`AgentResponse` which carries both output items and call metadata
-# (``usage``/``model``/``response_id``/``finish_reason``). The alias is kept
-# so existing tests and downstream callers that import ``SendResult`` continue
-# to work; new code should use ``AgentResponse`` directly.
-SendResult = AgentResponse
+SendResult = AgentResponse  # deprecated alias; use AgentResponse directly
 
 
 # ---------------------------------------------------------------------------
@@ -887,6 +882,19 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
+
+    @model_validator(mode="after")
+    def _validate_max_turns(self) -> "OrchestratorResult":
+        """Enforce that max_turns is not less than the number of executed turns.
+
+        max_turns=0 is the unset-sentinel (default) and is always accepted.
+        Only positive values represent a configured budget and are validated.
+        """
+        if self.max_turns > 0 and self.max_turns < len(self.turns):
+            raise ValueError(
+                f"max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})"
+            )
+        return self
 
     @property
     def n_turns(self) -> int:

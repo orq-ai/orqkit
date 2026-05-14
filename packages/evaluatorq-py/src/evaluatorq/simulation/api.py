@@ -65,7 +65,6 @@ async def simulate(
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
-    # Initialize OTel tracing (no-op if already initialized or not configured)
     await init_tracing_if_needed()
 
     try:
@@ -94,7 +93,6 @@ async def simulate(
                 pipeline_span=pipeline_span,
             )
     finally:
-        # Flush pending spans to ensure they're exported before the process exits
         await flush_tracing()
 
 
@@ -284,7 +282,6 @@ async def generate_and_simulate(
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
-    # Initialize OTel tracing early so generation spans are captured
     await init_tracing_if_needed()
 
     # Bridge agentKey to invoke() if no callback is provided

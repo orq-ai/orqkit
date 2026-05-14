@@ -42,11 +42,6 @@ MAX_CONTENT_LEN = 2000
 _otel_import_warned = False
 
 
-# ---------------------------------------------------------------------------
-# Internal span: orq.simulation.*
-# ---------------------------------------------------------------------------
-
-
 @asynccontextmanager
 async def with_simulation_span(  # noqa: RUF029
     name: str,
@@ -93,11 +88,6 @@ async def with_simulation_span(  # noqa: RUF029
             span.record_exception(e)
             span.set_attribute("error.type", type(e).__name__)
             raise
-
-
-# ---------------------------------------------------------------------------
-# LLM span: GenAI semantic conventions (SpanKind.CLIENT)
-# ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
@@ -164,11 +154,6 @@ async def with_llm_span(  # noqa: RUF029
             raise
 
 
-# ---------------------------------------------------------------------------
-# Token usage recording
-# ---------------------------------------------------------------------------
-
-
 def record_token_usage(
     span: Span | None,
     *,
@@ -211,11 +196,6 @@ def record_token_usage(
     span.set_attribute("input_tokens", prompt)
     span.set_attribute("output_tokens", completion)
     span.set_attribute("total_tokens", total)
-
-
-# ---------------------------------------------------------------------------
-# Message recording (gen_ai.input/output.messages)
-# ---------------------------------------------------------------------------
 
 
 def _truncate(text: str) -> str:
@@ -444,11 +424,6 @@ def record_llm_response(span: Span | None, response: Any) -> None:
         span.set_attribute("gen_ai.response.finish_reasons", finish_reasons)
 
 
-# ---------------------------------------------------------------------------
-# Attribute helpers
-# ---------------------------------------------------------------------------
-
-
 def set_span_attrs(span: Span | None, attrs: AttrMap) -> None:
     """Batch set multiple attributes on a span. Skips ``None`` values."""
     if span is None:
@@ -478,10 +453,6 @@ async def get_trace_context_headers() -> dict[str, str]:  # noqa: RUF029
     propagate.inject(headers, context=context.get_current())
     return headers
 
-
-# ---------------------------------------------------------------------------
-# Provider derivation
-# ---------------------------------------------------------------------------
 
 # OTel GenAI semconv ``gen_ai.system`` enum aliases. The router uses prefixes
 # like "azure/" that don't map 1:1 to the spec — translate the known ones.

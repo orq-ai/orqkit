@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from evaluatorq.simulation.agents.judge import JudgeAgent, JudgeAgentConfig
 from evaluatorq.simulation.agents.user_simulator import (
@@ -76,6 +76,31 @@ class TargetAgent(Protocol):
     async def respond(self, messages: list[ChatMessage]) -> str: ...
 
 
+@runtime_checkable
+class SimulationUserSimulator(Protocol):
+    """Protocol for user-simulator agents injected into the runner."""
+
+    def update_context(
+        self,
+        *,
+        persona_context: str | None,
+        scenario_context: str | None,
+    ) -> None: ...
+
+    async def generate_first_message(self) -> str: ...
+
+    async def respond_async(
+        self, messages: list[ChatMessage], *, llm_purpose: str | None = None
+    ) -> str: ...
+
+
+@runtime_checkable
+class SimulationJudge(Protocol):
+    """Protocol for judge agents injected into the runner."""
+
+    async def evaluate(self, messages: list[ChatMessage]) -> Judgment: ...
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -85,7 +110,16 @@ def _error_result(
     reason: str,
     persona: Persona | None = None,
     scenario: Scenario | None = None,
+    *,
+    error_type: str | None = None,
 ) -> SimulationResult:
+    metadata: dict[str, Any] = {
+        "persona": persona.name if persona else "unknown",
+        "scenario": scenario.name if scenario else "unknown",
+        "error": reason,
+    }
+    if error_type is not None:
+        metadata["error_type"] = error_type
     return SimulationResult(
         messages=[],
         terminated_by=TerminatedBy.error,
@@ -96,11 +130,7 @@ def _error_result(
         turn_count=0,
         turn_metrics=[],
         token_usage=ZERO_USAGE.model_copy(),
-        metadata={
-            "persona": persona.name if persona else "unknown",
-            "scenario": scenario.name if scenario else "unknown",
-            "error": reason,
-        },
+        metadata=metadata,
     )
 
 
@@ -178,19 +208,16 @@ class SimulationRunner:
             raise ValueError("model must be a non-empty string")
 
         # Validate injected agents early to fail fast
-        if user_simulator is not None:
-            if not hasattr(user_simulator, "generate_first_message") or \
-               not hasattr(user_simulator, "respond_async"):
-                raise TypeError(
-                    "user_simulator must implement generate_first_message() and respond_async(). "
-                    "Use UserSimulatorAgent or a subclass."
-                )
-        if judge is not None:
-            if not hasattr(judge, "evaluate"):
-                raise TypeError(
-                    "judge must implement evaluate(). "
-                    "Use JudgeAgent or a subclass."
-                )
+        if user_simulator is not None and not isinstance(user_simulator, SimulationUserSimulator):
+            raise TypeError(
+                "user_simulator must implement generate_first_message(), respond_async(), "
+                "and update_context(). Use UserSimulatorAgent or a subclass."
+            )
+        if judge is not None and not isinstance(judge, SimulationJudge):
+            raise TypeError(
+                "judge must implement evaluate(). "
+                "Use JudgeAgent or a subclass."
+            )
 
         self._target_agent = target_agent
         self._target_callback = target_callback
@@ -289,6 +316,7 @@ class SimulationRunner:
         except Exception as e:
             logger.error("SimulationRunner.run() failed: %s", e, exc_info=True)
             error_msg = str(e)
+            error_type = type(e).__name__
             get_total_usage = usage_holder.get("get_total_usage")
             try:
                 usage = get_total_usage() if get_total_usage else ZERO_USAGE.model_copy()
@@ -296,7 +324,7 @@ class SimulationRunner:
                 logger.warning("Failed to collect token usage: %s", usage_err, exc_info=True)
                 usage = ZERO_USAGE.model_copy()
 
-            result = _error_result(error_msg, persona, scenario)
+            result = _error_result(error_msg, persona, scenario, error_type=error_type)
             result.messages = messages
             result.turn_count = sum(1 for m in messages if m.role == "assistant")
             result.turn_metrics = turn_metrics_list
@@ -325,7 +353,7 @@ class SimulationRunner:
             # Without a copy, concurrent run_batch tasks overwrite each other's
             # persona/scenario context on the shared instance (last write wins).
             user_simulator: UserSimulatorAgent = copy.copy(self._injected_user_simulator)  # pyright: ignore[reportAssignmentType]
-            if hasattr(user_simulator, "update_context"):
+            if isinstance(user_simulator, SimulationUserSimulator):
                 try:
                     user_simulator.update_context(
                         persona_context=build_persona_system_prompt(persona)  # type: ignore[arg-type]
@@ -405,7 +433,6 @@ class SimulationRunner:
                 judge_reason=judgment.reason,
             )
 
-        # Generate or use first message
         if first_message:
             first_msg = first_message
         else:
@@ -432,7 +459,6 @@ class SimulationRunner:
                     "orq.simulation.max_turns": effective_max_turns,
                 },
             ) as turn_span:
-                # 1. Target agent responds
                 target_messages = [
                     ChatMessage(role=m.role, content=m.content) for m in messages
                 ]
@@ -447,7 +473,6 @@ class SimulationRunner:
                     record_llm_output(target_span, agent_response)
                 messages.append(Message(role="assistant", content=agent_response))
 
-                # 2. Judge evaluates
                 async with with_simulation_span(
                     "orq.simulation.judge_evaluation", None
                 ):
@@ -469,7 +494,6 @@ class SimulationRunner:
                     },
                 )
 
-                # 3. User simulator continues (if not last turn and not terminated)
                 if not judgment.should_terminate and turn < effective_max_turns - 1:
                     async with with_simulation_span(
                         "orq.simulation.user_simulator_call", None
