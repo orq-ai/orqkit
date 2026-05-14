@@ -102,7 +102,7 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
         for t in turns_val:
             attacker = t.get('attacker') or {}
             target = t.get('target') or {}
-            conversation.append({'role': 'user', 'content': attacker.get('prompt', '')})
+            conversation.append({'role': 'user', 'content': attacker.get('generated_prompt', '')})
             target_text = ''
             for item in target.get('output') or []:
                 if not isinstance(item, dict):

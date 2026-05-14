@@ -948,10 +948,10 @@ class OrchestratorResult(BaseModel):
                         ))
                 # ReasoningOutputItem intentionally dropped.
             _flush_text()
-            # Preserve old behavior: empty target still produces an assistant row
-            # so consumers can rely on len(chat_completions) >= 2 * n_turns.
+            # If the output was entirely empty (no items at all), still emit an
+            # assistant row so consumers can rely on a user/assistant pair per turn.
             if not target.output:
-                out.append(Message(role='assistant', content=target.text))
+                out.append(Message(role='assistant', content=''))
         return out
 
     def attacker_input_at(self, turn_index: int) -> list[Message]:

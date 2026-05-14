@@ -293,7 +293,7 @@ class SimulationRunner:
             try:
                 usage = get_total_usage() if get_total_usage else ZERO_USAGE.model_copy()
             except Exception as usage_err:
-                logger.warning("Failed to collect token usage: %s", usage_err)
+                logger.warning("Failed to collect token usage: %s", usage_err, exc_info=True)
                 usage = ZERO_USAGE.model_copy()
 
             result = _error_result(error_msg, persona, scenario)
