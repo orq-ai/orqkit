@@ -317,7 +317,7 @@ class SimulationRunner:
     ) -> SimulationResult:
         """Inner simulation body (runs inside the orq.simulation.run span)."""
         system_prompt = build_datapoint_system_prompt(persona, scenario)  # pyright: ignore[reportArgumentType]
-        client = self._get_shared_client()
+        client: AsyncOpenAI | None = None
 
         if self._injected_user_simulator is not None:
             user_simulator: UserSimulatorAgent = self._injected_user_simulator  # pyright: ignore[reportAssignmentType]
@@ -341,6 +341,8 @@ class SimulationRunner:
                         "Ensure it accepts persona_context and scenario_context kwargs."
                     ) from ctx_err
         else:
+            if client is None:
+                client = self._get_shared_client()
             user_simulator = UserSimulatorAgent(
                 UserSimulatorAgentConfig(
                     model=self._model,
@@ -352,6 +354,8 @@ class SimulationRunner:
         if self._injected_judge is not None:
             judge: JudgeAgent = self._injected_judge  # pyright: ignore[reportAssignmentType]
         else:
+            if client is None:
+                client = self._get_shared_client()
             judge = JudgeAgent(
                 JudgeAgentConfig(
                     model=self._model,

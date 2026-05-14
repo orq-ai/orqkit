@@ -365,34 +365,23 @@ class TestUpdateContextCalledPerSimulation:
 class TestInvalidUserSimulatorRaisesTypeError:
     """Passing a BaseAgent subclass lacking generate_first_message raises TypeError."""
 
-    @pytest.mark.asyncio
-    async def test_base_agent_lacking_generate_first_message_raises_type_error(
-        self, monkeypatch: pytest.MonkeyPatch
+    def test_base_agent_lacking_generate_first_message_raises_type_error(
+        self,
     ):
-        """A custom BaseAgent without generate_first_message fails with TypeError."""
-        monkeypatch.setenv("ORQ_API_KEY", "test-key")
-
+        """A custom BaseAgent without generate_first_message raises TypeError at construction."""
         # Build a plain MagicMock with respond_async but NO generate_first_message
         bad_sim = MagicMock(spec=[])  # spec=[] means no attributes allowed
-        # Explicitly give it respond_async but not generate_first_message
         bad_sim.respond_async = AsyncMock(return_value="hi")
         bad_sim.get_usage = MagicMock(return_value=TokenUsage())
-        # Do NOT add generate_first_message
 
         judge = _make_mock_judge()
 
-        runner = _make_runner_with_mocks(
-            user_simulator=bad_sim,
-            judge=judge,
-            max_turns=1,
-        )
-
-        dp = _make_datapoint()
-        result = await runner.run(datapoint=dp)
-
-        # run() never throws — TypeError is captured in error result
-        assert result.terminated_by == TerminatedBy.error
-        assert "generate_first_message" in result.reason or "user_simulator" in result.reason
+        with pytest.raises(TypeError, match="generate_first_message"):
+            _make_runner_with_mocks(
+                user_simulator=bad_sim,
+                judge=judge,
+                max_turns=1,
+            )
 
 
 # ---------------------------------------------------------------------------

@@ -6,6 +6,8 @@ import json as _json
 import os
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
@@ -82,14 +84,9 @@ def extract_responses_output(response: object) -> tuple[list[Any], TokenUsage]:
                         )
                     )
                 elif hasattr(part, "text") and text:
-                    # Fallback: any part with a text attribute
-                    items.append(
-                        TextOutputItem(
-                            type="output_text",
-                            text=text,
-                            annotations=[],
-                            logprobs=[],
-                        )
+                    logger.warning(
+                        "extract_responses_output: unexpected content part type %r has text; skipping",
+                        part_type,
                     )
 
         elif item_type == "function_call":
