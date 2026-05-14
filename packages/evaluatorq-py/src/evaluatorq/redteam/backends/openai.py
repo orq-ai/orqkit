@@ -116,7 +116,8 @@ class OpenAIModelTarget:
 
         # Accumulate history for multi-turn context.
         assistant_msg: ChatCompletionMessageParam
-        if msg.tool_calls:
+        raw_tool_calls = getattr(msg, 'tool_calls', None) or []
+        if raw_tool_calls:
             assistant_msg = {
                 'role': 'assistant',
                 'content': content or None,
@@ -126,7 +127,7 @@ class OpenAIModelTarget:
                         'type': 'function',
                         'function': {'name': tc.function.name, 'arguments': tc.function.arguments},
                     }
-                    for tc in msg.tool_calls
+                    for tc in raw_tool_calls
                     if getattr(tc, 'function', None) is not None
                 ],
             }

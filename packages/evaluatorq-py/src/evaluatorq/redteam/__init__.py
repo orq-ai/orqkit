@@ -106,6 +106,11 @@ from evaluatorq.redteam.contracts import (
     normalize_category,
     normalize_framework,
 )
+from evaluatorq.redteam.adaptive.orchestrator import (
+    ADVERSARIAL_ANALYSIS_PROMPT,
+    ADVERSARIAL_INITIAL_USER_PROMPT,
+    ADVERSARIAL_SYSTEM_PROMPT,
+)
 from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
 from evaluatorq.redteam.hooks import (
     ConfirmPayload,
@@ -125,6 +130,9 @@ from evaluatorq.redteam.vulnerability_registry import (
 )
 
 __all__ = [
+    "ADVERSARIAL_ANALYSIS_PROMPT",
+    "ADVERSARIAL_INITIAL_USER_PROMPT",
+    "ADVERSARIAL_SYSTEM_PROMPT",
     'SEVERITY_DEFINITIONS',
     "VULNERABILITY_DEFS",
     "AgentCapability",

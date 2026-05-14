@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
-
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ---------------------------------------------------------------------------
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
@@ -80,20 +78,7 @@ OutputMessage = TextOutputItem | ToolCallOutputItem | ReasoningOutputItem
 # ---------------------------------------------------------------------------
 
 
-def _validate_output_messages(output: list[OutputMessage]) -> None:
-    if not isinstance(output, list):
-        raise TypeError("AgentResponse.output must be a list of output message items")
-    for index, item in enumerate(output):
-        if not isinstance(item, (TextOutputItem, ToolCallOutputItem, ReasoningOutputItem)):
-            raise TypeError(
-                "AgentResponse.output items must be TextOutputItem (OutputTextContent), "
-                f"ToolCallOutputItem (FunctionCall), or ReasoningOutputItem; item {index} "
-                f"was {type(item).__name__}"
-            )
-
-
-@dataclass(frozen=True, init=False)
-class AgentResponse:
+class AgentResponse(BaseModel):
     """Structured response from a target agent as an ordered list of output messages.
 
     Each item in ``output`` is a :class:`TextOutputItem`, :class:`ToolCallOutputItem`,
@@ -101,71 +86,47 @@ class AgentResponse:
     Item ``type`` discriminators align with the OpenResponses intermediate data format
     (``output_text``, ``function_call``, ``reasoning``).
 
-    This unified representation lets evaluators reason about tool call order and
-    the interleaving of tool calls, reasoning steps, and text responses — something
-    not possible when text, tool calls, and intermediate steps are stored separately.
-
     Accessors:
         ``.text``       — last ``TextOutputItem`` content, or ``""`` if none
         ``.tool_calls`` — list of :class:`ToolCallOutputItem` filtered from
-        :attr:`output` in order; use :attr:`ToolCallOutputItem.arguments_dict`
-        for parsed-dict access to ``arguments``
+        :attr:`output` in order
+
+    ``usage`` is loosely typed (``Any``) to avoid a circular import on
+    :class:`evaluatorq.redteam.contracts.TokenUsage`.
     """
 
-    output: list[OutputMessage] = field(default_factory=list)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    output: list[OutputMessage] = Field(default_factory=list)
     usage: Any | None = None
     model: str | None = None
     response_id: str | None = None
     finish_reason: str | None = None
 
-    def __init__(
-        self,
-        output: list[OutputMessage] | None = None,
-        *,
-        text: str | None = None,
-        usage: Any | None = None,
-        model: str | None = None,
-        response_id: str | None = None,
-        finish_reason: str | None = None,
-    ) -> None:
-        """Create a response from ordered output items or legacy ``text=``.
-
-        ``text=`` is kept for older tests/integrations that constructed
-        ``AgentResponse(text="...")`` before ordered output items existed.
-
-        Per-call LLM metadata (``usage``, ``model``, ``response_id``,
-        ``finish_reason``) lives on the response itself; ``usage`` is loosely
-        typed (``Any``) to avoid a circular import on
-        ``evaluatorq.redteam.contracts.TokenUsage``.
-        """
-        if output is not None and text is not None:
-            raise ValueError("AgentResponse accepts either output= or text=, not both")
-        items: list[OutputMessage]
-        if output is None:
-            items = [TextOutputItem(text=text, annotations=[])] if text is not None else []
-        else:
-            _validate_output_messages(output)
-            items = output
-        object.__setattr__(self, "output", items)
-        object.__setattr__(self, "usage", usage)
-        object.__setattr__(self, "model", model)
-        object.__setattr__(self, "response_id", response_id)
-        object.__setattr__(self, "finish_reason", finish_reason)
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_text_shorthand(cls, data: Any) -> Any:
+        # Preserve legacy ``AgentResponse(text="...")`` construction.
+        if isinstance(data, dict) and "text" in data:
+            payload = dict(data)
+            text = payload.pop("text")
+            if payload.get("output") is not None:
+                raise ValueError("AgentResponse accepts either output= or text=, not both")
+            payload["output"] = (
+                [TextOutputItem(text=text, annotations=[])] if text is not None else []
+            )
+            return payload
+        return data
 
     @property
     def text(self) -> str:
-        """Return the last text output item's content (backward-compatible)."""
+        """Return the last text output item's content."""
         texts = [item.text for item in self.output if isinstance(item, TextOutputItem)]
         return texts[-1] if texts else ""
 
     @property
     def tool_calls(self) -> list[ToolCallOutputItem]:
-        """Return the tool call items from ``.output`` in order.
-
-        Use :attr:`ToolCallOutputItem.arguments_dict` for parsed-dict access
-        to arguments; use ``.output`` directly when item ordering across
-        interleaved text/reasoning/tool-call items matters.
-        """
+        """Return the tool call items from ``.output`` in order."""
         return [item for item in self.output if isinstance(item, ToolCallOutputItem)]
 
 
