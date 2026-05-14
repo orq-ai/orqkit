@@ -103,6 +103,9 @@ def extract_responses_output(response: object) -> tuple[list[Any], TokenUsage]:
                 )
             )
 
+        elif item_type == "reasoning":
+            pass  # reasoning/thinking steps (o1/o3/o4-mini) intentionally excluded from output
+
         else:
             logger.warning("extract_responses_output: skipping unknown item type=%r", item_type)
 

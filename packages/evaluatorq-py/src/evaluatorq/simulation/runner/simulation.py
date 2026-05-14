@@ -320,11 +320,11 @@ class SimulationRunner:
         client: AsyncOpenAI | None = None
 
         if self._injected_user_simulator is not None:
-            user_simulator: UserSimulatorAgent = self._injected_user_simulator  # pyright: ignore[reportAssignmentType]
-            # Propagate per-simulation persona/scenario context to the injected
-            # agent so it stays grounded in the current datapoint's goal and
-            # persona traits (mirrors what the default agent receives via its
-            # system_prompt constructor arg).
+            import copy
+            # Shallow-copy so update_context mutations stay scoped to this simulation.
+            # Without a copy, concurrent run_batch tasks overwrite each other's
+            # persona/scenario context on the shared instance (last write wins).
+            user_simulator: UserSimulatorAgent = copy.copy(self._injected_user_simulator)  # pyright: ignore[reportAssignmentType]
             if hasattr(user_simulator, "update_context"):
                 try:
                     user_simulator.update_context(
@@ -369,6 +369,9 @@ class SimulationRunner:
             )
 
         def _get_total_usage() -> TokenUsage:
+            # Note: target token usage is not included here. OrqResponsesTarget and
+            # callable targets do not expose get_usage() via a shared protocol, so
+            # SimulationResult.token_usage reflects only user_simulator + judge cost.
             usage = user_simulator.get_usage()
             judge_usage = judge.get_usage()
             return TokenUsage(

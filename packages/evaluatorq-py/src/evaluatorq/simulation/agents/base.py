@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from evaluatorq.contracts import LLMCallConfig
+from evaluatorq.contracts import LLMCallConfig, TextOutputItem, ToolCallOutputItem
 from evaluatorq.simulation._client import build_simulation_client, extract_responses_output
 from evaluatorq.simulation.tracing import (
     get_trace_context_headers,
@@ -352,9 +352,10 @@ class BaseAgent(ABC):
                 self._usage.completion_tokens += usage.completion_tokens
                 self._usage.total_tokens += usage.total_tokens
 
-                # Separate text from tool-call items
-                text_items = [i for i in output_items if hasattr(i, "text")]
-                tool_call_items = [i for i in output_items if hasattr(i, "call_id")]
+                # Separate text from tool-call items; isinstance guards prevent
+                # ReasoningOutputItem.text leaking into response content.
+                text_items = [i for i in output_items if isinstance(i, TextOutputItem)]
+                tool_call_items = [i for i in output_items if isinstance(i, ToolCallOutputItem)]
 
                 if not text_items and not tool_call_items:
                     # No text, no tool calls — warn but don't raise (redteam callers may handle empty)
