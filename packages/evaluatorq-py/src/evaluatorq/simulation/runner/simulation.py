@@ -294,7 +294,11 @@ class SimulationRunner:
                             else ZERO_USAGE.model_copy()
                         )
                     except Exception as usage_err:
-                        logger.warning("Failed to collect token usage: %s", usage_err)
+                        logger.error(
+                            "Failed to collect token usage during error path: %s",
+                            usage_err,
+                            exc_info=True,
+                        )
                         usage = ZERO_USAGE.model_copy()
                     record_token_usage(
                         run_span,
@@ -321,7 +325,11 @@ class SimulationRunner:
             try:
                 usage = get_total_usage() if get_total_usage else ZERO_USAGE.model_copy()
             except Exception as usage_err:
-                logger.warning("Failed to collect token usage: %s", usage_err, exc_info=True)
+                logger.error(
+                    "Failed to collect token usage during error path: %s",
+                    usage_err,
+                    exc_info=True,
+                )
                 usage = ZERO_USAGE.model_copy()
 
             result = _error_result(error_msg, persona, scenario, error_type=error_type)
@@ -349,10 +357,11 @@ class SimulationRunner:
 
         if self._injected_user_simulator is not None:
             import copy
-            # Shallow-copy so update_context mutations stay scoped to this simulation.
-            # Without a copy, concurrent run_batch tasks overwrite each other's
-            # persona/scenario context on the shared instance (last write wins).
+            # Shallow-copy isolates _custom_system_prompt mutations from concurrent
+            # run_batch tasks. Reset _usage to a fresh TokenUsage — shallow copy
+            # keeps the same reference, which would cross-contaminate per-sim counts.
             user_simulator: UserSimulatorAgent = copy.copy(self._injected_user_simulator)  # pyright: ignore[reportAssignmentType]
+            user_simulator._usage = TokenUsage()  # pyright: ignore[reportPrivateUsage]
             if isinstance(user_simulator, SimulationUserSimulator):
                 try:
                     user_simulator.update_context(
@@ -380,7 +389,10 @@ class SimulationRunner:
             )
 
         if self._injected_judge is not None:
-            judge: JudgeAgent = self._injected_judge  # pyright: ignore[reportAssignmentType]
+            import copy
+            # Isolate per-sim state — see user_simulator comment above.
+            judge: JudgeAgent = copy.copy(self._injected_judge)  # pyright: ignore[reportAssignmentType]
+            judge._usage = TokenUsage()  # pyright: ignore[reportPrivateUsage]
         else:
             if client is None:
                 client = self._get_shared_client()
