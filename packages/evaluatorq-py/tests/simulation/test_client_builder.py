@@ -12,6 +12,7 @@ Covers all resolution branches:
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -92,7 +93,7 @@ class TestExtraApiKey:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ORQ_BASE_URL", raising=False)
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -113,7 +114,7 @@ class TestExtraApiKey:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.setenv("ORQ_BASE_URL", "https://custom.example.com")
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -139,7 +140,7 @@ class TestOrqApiKeyEnv:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("ORQ_BASE_URL", raising=False)
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -167,7 +168,7 @@ class TestOpenAIApiKeyEnv:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key")
         monkeypatch.delenv("ORQ_BASE_URL", raising=False)
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -195,7 +196,7 @@ class TestOrqTakesPrecedenceOverOpenAI:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-loses")
         monkeypatch.delenv("ORQ_BASE_URL", raising=False)
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -251,7 +252,7 @@ class TestCustomOrqBaseUrl:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.setenv("ORQ_BASE_URL", "https://staging.orq.ai")
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)
@@ -270,7 +271,7 @@ class TestCustomOrqBaseUrl:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
         monkeypatch.setenv("ORQ_BASE_URL", "https://staging.orq.ai")
 
-        captured: dict = {}
+        captured: dict[str, Any] = {}
 
         def fake_async_openai(**kwargs):
             captured.update(kwargs)

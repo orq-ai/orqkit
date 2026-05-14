@@ -1,4 +1,6 @@
 # tests/redteam/test_openai_model_target.py
+from typing import Any
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from evaluatorq.redteam.backends.openai import OpenAIModelTarget
@@ -9,7 +11,7 @@ pytest.importorskip("openai")
 
 def _make_completion_response(
     content: str = "reply",
-    tool_calls: list | None = None,
+    tool_calls: list[Any] | None = None,
     model: str = "gpt-4o",
 ) -> MagicMock:
     msg = MagicMock()
@@ -174,9 +176,9 @@ class TestOpenAIModelTargetHistory:
         assistant_msg = target._history[1]
         assert assistant_msg["role"] == "assistant"
         assert "tool_calls" in assistant_msg
-        assert assistant_msg["tool_calls"][0]["id"] == "tc-1"
-        assert assistant_msg["tool_calls"][0]["function"]["name"] == "search"
-        assert assistant_msg["tool_calls"][0]["type"] == "function"
+        assert assistant_msg["tool_calls"][0]["id"] == "tc-1"  # pyright: ignore[reportIndexIssue]
+        assert assistant_msg["tool_calls"][0]["function"]["name"] == "search"  # pyright: ignore[reportIndexIssue]
+        assert assistant_msg["tool_calls"][0]["type"] == "function"  # pyright: ignore[reportIndexIssue]
 
     def test_new_returns_fresh_empty_history(self) -> None:
         client = MagicMock()

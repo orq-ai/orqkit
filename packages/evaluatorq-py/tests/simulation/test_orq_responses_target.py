@@ -392,7 +392,7 @@ class TestOrqResponsesTargetNewExtended:
         """new() does NOT propagate a self-owned client; each instance owns its own."""
         monkeypatch.setenv("ORQ_API_KEY", "orq-test-key")
 
-        captured_clients: list = []
+        captured_clients: list[Any] = []
 
         def fake_async_openai(**kwargs):
             mock = MagicMock()

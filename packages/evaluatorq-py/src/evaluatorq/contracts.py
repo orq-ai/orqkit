@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -102,6 +102,18 @@ class AgentResponse(BaseModel):
     model: str | None = None
     response_id: str | None = None
     finish_reason: str | None = None
+
+    if TYPE_CHECKING:
+        def __init__(  # pyright: ignore[reportMissingSuperCall]
+            self,
+            *,
+            output: list[OutputMessage] | None = None,
+            text: str | None = None,
+            usage: Any = None,
+            model: str | None = None,
+            response_id: str | None = None,
+            finish_reason: str | None = None,
+        ) -> None: ...
 
     @model_validator(mode="before")
     @classmethod

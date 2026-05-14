@@ -281,7 +281,7 @@ class TestAttackOutput:
 class TestChatCompletionsOrdering:
     """`chat_completions` preserves interleaved text/tool_call order from target.output."""
 
-    def _build(self, output_items: list) -> OrchestratorResult:
+    def _build(self, output_items: list[Any]) -> OrchestratorResult:
         return OrchestratorResult(
             turns=[
                 Turn(
