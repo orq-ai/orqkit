@@ -28,7 +28,7 @@ class _ResponsesCallResult:
 
     response: AgentResponse
     response_id: str | None
-    usage: TokenUsage
+    usage: TokenUsage | None
 
 
 class OrqResponsesTarget:
@@ -52,6 +52,7 @@ class OrqResponsesTarget:
     """
 
     memory_entity_id: str | None
+    threading_disabled: bool
 
     def __init__(
         self,
@@ -66,6 +67,7 @@ class OrqResponsesTarget:
         self.instructions = instructions
         self.tools = tools
         self.memory_entity_id = memory_entity_id
+        self.threading_disabled = False
         self._previous_response_id: str | None = None
         self._accumulated_usage = TokenUsage()
         if client is not None:
@@ -148,13 +150,26 @@ class OrqResponsesTarget:
             previous_response_id=self._previous_response_id,
         )
 
-        new_usage = TokenUsage(
-            prompt_tokens=self._accumulated_usage.prompt_tokens + result.usage.prompt_tokens,
-            completion_tokens=self._accumulated_usage.completion_tokens + result.usage.completion_tokens,
-            total_tokens=self._accumulated_usage.total_tokens + result.usage.total_tokens,
-        )
-        if result.response_id is not None:
+        if result.usage is None:
+            new_usage = self._accumulated_usage
+        else:
+            new_usage = TokenUsage(
+                prompt_tokens=self._accumulated_usage.prompt_tokens + result.usage.prompt_tokens,
+                completion_tokens=self._accumulated_usage.completion_tokens + result.usage.completion_tokens,
+                total_tokens=self._accumulated_usage.total_tokens + result.usage.total_tokens,
+            )
+        threading_disabled = result.response_id is None
+        if not threading_disabled:
             self._previous_response_id = result.response_id
+        elif not self.threading_disabled:
+            logger.error(
+                "OrqResponsesTarget: response missing 'id'; server-side "
+                "conversation threading disabled for this instance "
+                "(model={}). Multi-turn continuity lost; subsequent send_prompt "
+                "calls will behave as turn 1.",
+                self.config.model,
+            )
+        self.threading_disabled = self.threading_disabled or threading_disabled
         self._accumulated_usage = new_usage
 
         return result.response

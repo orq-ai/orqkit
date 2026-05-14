@@ -350,10 +350,10 @@ class BaseAgent(ABC):
 
                 record_llm_response(span, response)
 
-                # Accumulate token usage
-                self._usage.prompt_tokens += usage.prompt_tokens
-                self._usage.completion_tokens += usage.completion_tokens
-                self._usage.total_tokens += usage.total_tokens
+                if usage is not None:
+                    self._usage.prompt_tokens += usage.prompt_tokens
+                    self._usage.completion_tokens += usage.completion_tokens
+                    self._usage.total_tokens += usage.total_tokens
 
                 # Separate text from tool-call items; isinstance guards prevent
                 # ReasoningOutputItem.text leaking into response content.

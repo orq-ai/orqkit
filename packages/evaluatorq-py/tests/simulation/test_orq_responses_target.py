@@ -598,9 +598,109 @@ class TestOrqResponsesTargetStatefulMissingId:
 
         await target.send_prompt("first")
         assert target._previous_response_id == "resp-good"
+        assert target.threading_disabled is False
         await target.send_prompt("second")
         # Thread id must NOT be overwritten by the bad response
         assert target._previous_response_id == "resp-good"
+        # Threading-loss flag must be set so callers can detect degradation
+        assert target.threading_disabled is True
         # Usage still accumulates (asymmetric but documented)
         assert target.get_usage().prompt_tokens == 12
         assert target.get_usage().completion_tokens == 8
+
+    @pytest.mark.asyncio
+    async def test_threading_disabled_logged_at_error_level(self, caplog):
+        """Missing response.id must escalate to logger.error so silent degradation is visible."""
+        import logging
+
+        client = _make_client()
+        bad = _make_response()
+        bad.id = None
+        client.responses.create = AsyncMock(return_value=bad)
+        target = _make_target(client=client)
+
+        with caplog.at_level(logging.ERROR, logger="evaluatorq.simulation.target"):
+            await target.send_prompt("hi")
+
+        assert target.threading_disabled is True
+        assert any(
+            r.levelno >= logging.ERROR and "threading disabled" in r.getMessage()
+            for r in caplog.records
+        ), f"expected ERROR log mentioning 'threading disabled'; got {[(r.levelname, r.getMessage()) for r in caplog.records]}"
+
+    @pytest.mark.asyncio
+    async def test_threading_disabled_error_logged_once(self, caplog):
+        """Repeated missing-id calls must not spam the error log."""
+        import logging
+
+        client = _make_client()
+        bad1, bad2 = _make_response(), _make_response()
+        bad1.id = None
+        bad2.id = None
+        client.responses.create = AsyncMock(side_effect=[bad1, bad2])
+        target = _make_target(client=client)
+
+        with caplog.at_level(logging.ERROR, logger="evaluatorq.simulation.target"):
+            await target.send_prompt("a")
+            await target.send_prompt("b")
+
+        error_records = [
+            r for r in caplog.records
+            if r.levelno >= logging.ERROR and "threading disabled" in r.getMessage()
+        ]
+        assert len(error_records) == 1, f"expected exactly one ERROR log; got {len(error_records)}"
+
+
+class TestOrqResponsesTargetRetry:
+    """Verify retry wrapping of the Responses API call (rate-limit / 5xx / network)."""
+
+    @pytest.mark.asyncio
+    async def test_retries_on_rate_limit_then_succeeds(self, monkeypatch):
+        """A 429 followed by a success must be retried transparently."""
+        from openai import APIStatusError
+
+        monkeypatch.setattr(
+            "evaluatorq.simulation.utils.retry.asyncio.sleep",
+            AsyncMock(return_value=None),
+        )
+
+        client = _make_client()
+        rate_limit = APIStatusError(
+            "rate limited",
+            response=MagicMock(status_code=429, headers={}),
+            body=None,
+        )
+        good = _make_response(response_id="resp-after-retry")
+        client.responses.create = AsyncMock(side_effect=[rate_limit, good])
+        target = _make_target(client=client)
+
+        result = await target.send_prompt("hi")
+
+        assert client.responses.create.await_count == 2
+        assert target._previous_response_id == "resp-after-retry"
+        assert isinstance(result, AgentResponse)
+
+    @pytest.mark.asyncio
+    async def test_does_not_retry_on_non_retryable_error(self, monkeypatch):
+        """A 400 (client error) must surface immediately without retry."""
+        from openai import APIStatusError
+
+        sleep_mock = AsyncMock(return_value=None)
+        monkeypatch.setattr(
+            "evaluatorq.simulation.utils.retry.asyncio.sleep", sleep_mock
+        )
+
+        client = _make_client()
+        bad_request = APIStatusError(
+            "bad request",
+            response=MagicMock(status_code=400, headers={}),
+            body=None,
+        )
+        client.responses.create = AsyncMock(side_effect=bad_request)
+        target = _make_target(client=client)
+
+        with pytest.raises(APIStatusError):
+            await target.send_prompt("hi")
+
+        assert client.responses.create.await_count == 1
+        assert sleep_mock.await_count == 0

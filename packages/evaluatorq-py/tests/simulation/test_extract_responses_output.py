@@ -106,12 +106,11 @@ class TestExtractResponsesOutput:
         items, _ = extract_responses_output(response)
         assert items == []
 
-    def test_missing_usage_returns_zero_token_counts(self):
+    def test_missing_usage_returns_none(self):
+        """Missing usage must propagate None so cost reports do not log fake-zero usage for billed calls."""
         response = _make_response([_msg_item("hi")], usage=None)
         _, usage = extract_responses_output(response)
-        assert usage.prompt_tokens == 0
-        assert usage.completion_tokens == 0
-        assert usage.total_tokens == 0
+        assert usage is None
 
     def test_interleaved_text_and_tool_call_order_preserved(self):
         items_in = [
