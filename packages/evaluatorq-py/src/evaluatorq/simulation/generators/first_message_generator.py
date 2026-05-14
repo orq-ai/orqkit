@@ -141,7 +141,7 @@ Keep it natural - this is how they would actually open a conversation."""
                     {"extra_headers": trace_headers} if trace_headers else {}
                 )
                 response = await with_retry(
-                    lambda: self._client.chat.completions.create(
+                    lambda: self._client.chat.completions.create(  # pyright: ignore[reportUnknownLambdaType]
                         model=self._model,
                         messages=messages,
                         temperature=_TEMPERATURE_FIRST_MESSAGE,

@@ -104,7 +104,7 @@ async def generate_structured(
 
         # 2. Fallback: json_object mode
         fallback_response = await with_retry(
-            lambda: client.chat.completions.create(
+            lambda: client.chat.completions.create(  # pyright: ignore[reportUnknownLambdaType]
                 model=model,
                 messages=typed_messages,
                 temperature=temperature,

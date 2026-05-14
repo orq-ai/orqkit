@@ -110,7 +110,7 @@ def _make_runner_with_mocks(
     max_turns: int = 1,
 ) -> SimulationRunner:
     """Build a SimulationRunner; target_callback or target must be provided."""
-    cb = target_callback or target or (lambda msgs: "agent reply")
+    cb = target_callback or target or (lambda msgs: "agent reply")  # pyright: ignore[reportUnknownLambdaType]
     return SimulationRunner(
         target_callback=cb,
         model=model,
@@ -391,4 +391,4 @@ class TestInvalidUserSimulatorRaisesTypeError:
 
 def _make_runner_that_captures(kw: dict[str, Any]) -> SimulationRunner:
     """Placeholder — not actually used in the test above."""
-    return SimulationRunner(target_callback=kw.get("target_callback", lambda m: "ok"))
+    return SimulationRunner(target_callback=kw.get("target_callback", lambda m: "ok"))  # pyright: ignore[reportUnknownLambdaType]

@@ -50,7 +50,12 @@ def _unknown_item(t: str = "mystery") -> MagicMock:
     return item
 
 
-def _make_response(items, *, usage: MagicMock | None = MagicMock(input_tokens=3, output_tokens=2)) -> MagicMock:
+_SENTINEL = object()
+
+
+def _make_response(items, *, usage: MagicMock | None | object = _SENTINEL) -> MagicMock:
+    if usage is _SENTINEL:
+        usage = MagicMock(input_tokens=3, output_tokens=2)
     r = MagicMock()
     r.output = items
     r.usage = usage
