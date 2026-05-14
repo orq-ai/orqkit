@@ -361,7 +361,7 @@ class SimulationRunner:
             # run_batch tasks. Reset _usage to a fresh TokenUsage — shallow copy
             # keeps the same reference, which would cross-contaminate per-sim counts.
             user_simulator: UserSimulatorAgent = copy.copy(self._injected_user_simulator)  # pyright: ignore[reportAssignmentType]
-            user_simulator._usage = TokenUsage()  # pyright: ignore[reportPrivateUsage]
+            user_simulator.reset_usage()
             if isinstance(user_simulator, SimulationUserSimulator):
                 try:
                     user_simulator.update_context(
@@ -392,7 +392,7 @@ class SimulationRunner:
             import copy
             # Isolate per-sim state — see user_simulator comment above.
             judge: JudgeAgent = copy.copy(self._injected_judge)  # pyright: ignore[reportAssignmentType]
-            judge._usage = TokenUsage()  # pyright: ignore[reportPrivateUsage]
+            judge.reset_usage()
         else:
             if client is None:
                 client = self._get_shared_client()

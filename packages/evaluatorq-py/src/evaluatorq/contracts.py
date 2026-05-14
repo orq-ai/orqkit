@@ -147,9 +147,8 @@ class AgentResponse(BaseModel):
 
     @property
     def text(self) -> str:
-        """Return the last text output item's content."""
-        texts = [item.text for item in self.output if isinstance(item, TextOutputItem)]
-        return texts[-1] if texts else ""
+        """Concatenate all text output items into a single string."""
+        return "".join(item.text for item in self.output if isinstance(item, TextOutputItem))
 
     @property
     def tool_calls(self) -> list[ToolCallOutputItem]:
