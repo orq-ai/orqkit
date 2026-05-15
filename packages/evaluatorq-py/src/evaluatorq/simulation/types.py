@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from evaluatorq.contracts import StrEnum
+from evaluatorq.contracts import Message, StrEnum, TokenUsage
 
 
 DEFAULT_MODEL = "azure/gpt-4o-mini"
@@ -216,14 +216,7 @@ INPUT_FORMAT_INSTRUCTIONS: dict[InputFormat, str] = {
 # ---------------------------------------------------------------------------
 
 
-# ---------------------------------------------------------------------------
-# Shared types — re-exported from evaluatorq.contracts (RES-596 consolidation).
-# ``ChatMessage`` is kept as a deprecated alias for ``Message`` since they had
-# identical schemas before consolidation.
-# ---------------------------------------------------------------------------
-
-from evaluatorq.contracts import Message, TokenUsage  # noqa: E402
-
+# ChatMessage is kept as a deprecated alias for Message (RES-596 consolidation).
 ChatMessage = Message
 
 

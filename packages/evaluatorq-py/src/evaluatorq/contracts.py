@@ -270,7 +270,6 @@ __all__ = [
     "Message",
     "OutputMessage",
     "ReasoningOutputItem",
-    "StrEnum",
     "StrategyToolCall",
     "TextOutputItem",
     "TokenUsage",

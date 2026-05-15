@@ -244,7 +244,17 @@ class OrqResponsesTarget:
 
     @staticmethod
     def _messages_to_input(messages: list[ChatMessage]) -> list[dict[str, Any]]:
-        return [{"role": m.role, "content": m.content or ""} for m in messages]
+        result: list[dict[str, Any]] = []
+        for m in messages:
+            d: dict[str, Any] = {"role": m.role, "content": m.content or ""}
+            if m.tool_calls is not None:
+                d["tool_calls"] = [tc.model_dump() for tc in m.tool_calls]
+            if m.tool_call_id is not None:
+                d["tool_call_id"] = m.tool_call_id
+            if m.name is not None:
+                d["name"] = m.name
+            result.append(d)
+        return result
 
 
 def _validate_response_id(response: Any, model: str) -> str | None:
