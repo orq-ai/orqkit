@@ -1,8 +1,9 @@
 """Tests for wrap_simulation_agent."""
 
+from unittest.mock import AsyncMock
+
 import pytest
 
-import evaluatorq.simulation as simulation_module
 from evaluatorq.simulation.types import DEFAULT_MODEL, Message, SimulationResult, TerminatedBy, TokenUsage
 from evaluatorq.simulation.wrap_agent import _validate_shape, wrap_simulation_agent
 from evaluatorq.types import DataPoint
@@ -64,11 +65,15 @@ _FULL_SCENARIO = {
 
 class TestWrapSimulationAgent:
     @pytest.mark.asyncio
-    async def test_returns_first_output_when_multiple_results(self, monkeypatch):
-        async def fake_simulate(**_kwargs):
-            return [_make_result("First"), _make_result("Second")]
+    async def test_returns_output_for_single_result(self, monkeypatch):
+        async def fake_run(**_kwargs):
+            return _make_result("First")
 
-        monkeypatch.setattr(simulation_module, "simulate", fake_simulate)
+        from evaluatorq.simulation.runner import simulation as sim_runner_mod
+
+        monkeypatch.setattr(
+            sim_runner_mod.SimulationRunner, "run", AsyncMock(side_effect=fake_run)
+        )
 
         job = wrap_simulation_agent(
             target_callback=lambda _messages: "unused",
@@ -88,10 +93,14 @@ class TestWrapSimulationAgent:
 
     @pytest.mark.asyncio
     async def test_uses_simulation_model_by_default(self, monkeypatch):
-        async def fake_simulate(**_kwargs):
-            return [_make_result("Only result")]
+        async def fake_run(**_kwargs):
+            return _make_result("Only result")
 
-        monkeypatch.setattr(simulation_module, "simulate", fake_simulate)
+        from evaluatorq.simulation.runner import simulation as sim_runner_mod
+
+        monkeypatch.setattr(
+            sim_runner_mod.SimulationRunner, "run", AsyncMock(side_effect=fake_run)
+        )
 
         job = wrap_simulation_agent(
             target_callback=lambda _messages: "unused",
