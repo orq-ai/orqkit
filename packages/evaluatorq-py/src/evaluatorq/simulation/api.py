@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import os
 from typing import TYPE_CHECKING
 
@@ -65,7 +66,6 @@ async def simulate(
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
-    # Initialize OTel tracing (no-op if already initialized or not configured)
     await init_tracing_if_needed()
 
     try:
@@ -94,7 +94,6 @@ async def simulate(
                 pipeline_span=pipeline_span,
             )
     finally:
-        # Flush pending spans to ensure they're exported before the process exits
         await flush_tracing()
 
 
@@ -240,6 +239,14 @@ async def _simulate_core(
         return results
     finally:
         await runner.close()
+        # Close the target if it owns resources (e.g. OrqResponsesTarget
+        # built its own AsyncOpenAI client). Plain callables / functions
+        # have no close(); duck-type to avoid coupling to the concrete type.
+        target_close = getattr(resolved_callback, "close", None)
+        if callable(target_close):
+            maybe = target_close()
+            if inspect.isawaitable(maybe):
+                await maybe
 
 
 async def _generate_single_datapoint(
@@ -284,7 +291,6 @@ async def generate_and_simulate(
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
-    # Initialize OTel tracing early so generation spans are captured
     await init_tracing_if_needed()
 
     # Bridge agentKey to invoke() if no callback is provided

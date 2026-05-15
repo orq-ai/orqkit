@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 import os
 import re
+from typing import Any, cast
 
 from openai import APIStatusError, AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from evaluatorq.simulation.tracing import (
     get_trace_context_headers,
@@ -111,10 +113,13 @@ Generate the FIRST message this user would send to start the conversation.
 The message should immediately convey their goal and emotional state.
 Keep it natural - this is how they would actually open a conversation."""
 
-        messages = [
-            {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ]
+        messages: list[ChatCompletionMessageParam] = cast(
+            list[ChatCompletionMessageParam],
+            [
+                {"role": "system", "content": _FIRST_MESSAGE_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
 
         try:
             async with with_llm_span(
@@ -127,16 +132,16 @@ Keep it natural - this is how they would actually open a conversation."""
                 record_llm_input(
                     span,
                     [
-                        {"role": str(m["role"]), "content": str(m["content"])}
+                        {"role": str(m["role"]), "content": str(m.get("content", ""))}  # pyright: ignore[reportAttributeAccessIssue]
                         for m in messages
                     ],
                 )
                 trace_headers = await get_trace_context_headers()
-                extra: dict[str, object] = (
+                extra: dict[str, Any] = (
                     {"extra_headers": trace_headers} if trace_headers else {}
                 )
                 response = await with_retry(
-                    lambda: self._client.chat.completions.create(
+                    lambda: self._client.chat.completions.create(  # pyright: ignore[reportUnknownLambdaType]
                         model=self._model,
                         messages=messages,
                         temperature=_TEMPERATURE_FIRST_MESSAGE,

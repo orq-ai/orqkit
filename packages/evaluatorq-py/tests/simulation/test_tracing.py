@@ -473,13 +473,13 @@ async def test_nested_spans_share_trace(span_collector: _CollectingExporter):
     llm = _find(span_collector, "chat openai/gpt-4o")
 
     # All four spans share the same trace_id
-    trace_ids = {pipeline.context.trace_id, run.context.trace_id, turn.context.trace_id, llm.context.trace_id}
+    trace_ids = {pipeline.context.trace_id, run.context.trace_id, turn.context.trace_id, llm.context.trace_id}  # pyright: ignore[reportOptionalMemberAccess]
     assert len(trace_ids) == 1
 
     # Parent chain: llm → turn → run → pipeline → root
-    assert llm.parent.span_id == turn.context.span_id
-    assert turn.parent.span_id == run.context.span_id
-    assert run.parent.span_id == pipeline.context.span_id
+    assert llm.parent.span_id == turn.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
+    assert turn.parent.span_id == run.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
+    assert run.parent.span_id == pipeline.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
     assert pipeline.parent is None
 
 
@@ -595,15 +595,15 @@ async def test_end_to_end_simulation_produces_full_span_tree(
     # Hierarchy: each turn span is a child of run, which is a child of pipeline
     pipeline = _find(span_collector, "orq.simulation.pipeline")
     run = _find(span_collector, "orq.simulation.run")
-    assert run.parent.span_id == pipeline.context.span_id
+    assert run.parent.span_id == pipeline.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
 
     turn_spans = [s for s in span_collector.spans if s.name == "orq.simulation.turn"]
     for t in turn_spans:
-        assert t.parent.span_id == run.context.span_id
+        assert t.parent.span_id == run.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
 
     # target_call spans are children of their turn
     for tc in [s for s in span_collector.spans if s.name == "orq.simulation.target_call"]:
-        assert any(tc.parent.span_id == t.context.span_id for t in turn_spans)
+        assert any(tc.parent.span_id == t.context.span_id for t in turn_spans)  # pyright: ignore[reportOptionalMemberAccess]
 
     # Run span carries termination + token usage attrs
     run_attrs = _attrs(run)
@@ -613,7 +613,7 @@ async def test_end_to_end_simulation_produces_full_span_tree(
 
     # Pretty-print the span tree for visual inspection
     print("\n=== Captured span tree (smoke test) ===")
-    by_id = {s.context.span_id: s for s in span_collector.spans}
+    by_id = {s.context.span_id: s for s in span_collector.spans}  # pyright: ignore[reportOptionalMemberAccess]
     children: dict[int | None, list[ReadableSpan]] = {}
     for s in span_collector.spans:
         parent_id = s.parent.span_id if s.parent else None
@@ -633,7 +633,7 @@ async def test_end_to_end_simulation_produces_full_span_tree(
             f"{k.split('.')[-1]}={attrs[k]}" for k in hint_keys if k in attrs
         )
         print(f"{'  ' * depth}- {node.name}" + (f"  [{hints}]" if hints else ""))
-        for child in children.get(node.context.span_id, []):
+        for child in children.get(node.context.span_id, []):  # pyright: ignore[reportOptionalMemberAccess]
             _print(child, depth + 1)
 
     for root in children.get(None, []):
@@ -778,7 +778,7 @@ async def test_traceparent_injected_into_first_message_generation_call(
     assert "traceparent" in headers, f"expected traceparent in {headers}"
     llm = _find(span_collector, "chat test")
     parent = _find(span_collector, "orq.simulation.first_message_generation")
-    assert llm.parent.span_id == parent.context.span_id
+    assert llm.parent.span_id == parent.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
 
 
 @pytest.mark.asyncio
@@ -844,8 +844,8 @@ async def test_generated_datapoint_first_message_has_simulation_span(
     pipeline = _find(span_collector, "orq.simulation.pipeline")
     first_msg = _find(span_collector, "orq.simulation.first_message_generation")
     llm = _find(span_collector, "chat test")
-    assert first_msg.parent.span_id == pipeline.context.span_id
-    assert llm.parent.span_id == first_msg.context.span_id
+    assert first_msg.parent.span_id == pipeline.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
+    assert llm.parent.span_id == first_msg.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
 
 
 @pytest.mark.asyncio
@@ -1023,7 +1023,7 @@ async def test_concurrent_runs_share_pipeline_parent(
     runs = [s for s in span_collector.spans if s.name == "orq.simulation.run"]
     assert len(runs) == 2
     for r in runs:
-        assert r.parent.span_id == pipeline.context.span_id
+        assert r.parent.span_id == pipeline.context.span_id  # pyright: ignore[reportOptionalMemberAccess]
 
 
 @pytest.mark.asyncio

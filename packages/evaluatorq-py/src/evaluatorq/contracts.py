@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json as _json
 import sys
-from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -16,6 +14,13 @@ else:
 
     class StrEnum(str, Enum):  # type: ignore[no-redef]
         """String enum compatible with Python 3.10."""
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
+
+    _ClientT: TypeAlias = "AsyncOpenAI | None"
+else:
+    _ClientT = Any
 
 # ---------------------------------------------------------------------------
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
@@ -43,11 +48,11 @@ class LLMCallConfig(BaseModel):
 
     model: str = DEFAULT_PIPELINE_MODEL
     api: Literal["chat_completions", "responses"] = "chat_completions"
-    temperature: float = 1.0
-    max_tokens: int = DEFAULT_TARGET_MAX_TOKENS
-    timeout_ms: int = 90_000
+    temperature: float = Field(default=1.0, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
+    timeout_ms: int = Field(default=90_000, gt=0)
     extra_kwargs: dict[str, Any] = Field(default_factory=dict)
-    client: Any = None  # AsyncOpenAI | None — Any avoids import cycle
+    client: _ClientT = None
 
 
 # ---------------------------------------------------------------------------
@@ -81,121 +86,10 @@ class ReasoningOutputItem(BaseModel):
     id: str | None = None
 
 
-OutputMessage = TextOutputItem | ToolCallOutputItem | ReasoningOutputItem
-
-
-# ---------------------------------------------------------------------------
-# ExecutedToolCall
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class ExecutedToolCall:
-    """Backward-compatible view of an executed tool call.
-
-    ``AgentResponse.tool_calls`` derives this from ``ToolCallOutputItem`` and
-    intentionally drops OpenResponses-only metadata such as ``id``. Consumers
-    that need full-fidelity output ordering or IDs should inspect
-    ``AgentResponse.output`` directly.
-    """
-
-    name: str
-    arguments: dict[str, Any]
-    result: str | None = None
-
-
-# ---------------------------------------------------------------------------
-# AgentResponse
-# ---------------------------------------------------------------------------
-
-
-def _validate_output_messages(output: list[OutputMessage]) -> None:
-    if not isinstance(output, list):
-        raise TypeError("AgentResponse.output must be a list of output message items")
-    for index, item in enumerate(output):
-        if not isinstance(item, (TextOutputItem, ToolCallOutputItem, ReasoningOutputItem)):
-            raise TypeError(
-                "AgentResponse.output items must be TextOutputItem (OutputTextContent), "
-                f"ToolCallOutputItem (FunctionCall), or ReasoningOutputItem; item {index} "
-                f"was {type(item).__name__}"
-            )
-
-
-@dataclass(frozen=True, init=False)
-class AgentResponse:
-    """Structured response from a target agent as an ordered list of output messages.
-
-    Each item in ``output`` is a :class:`TextOutputItem`, :class:`ToolCallOutputItem`,
-    or :class:`ReasoningOutputItem`, preserving the order in which they were produced.
-    Item ``type`` discriminators align with the OpenResponses intermediate data format
-    (``output_text``, ``function_call``, ``reasoning``).
-
-    This unified representation lets evaluators reason about tool call order and
-    the interleaving of tool calls, reasoning steps, and text responses — something
-    not possible when text, tool calls, and intermediate steps are stored separately.
-
-    Backward-compatible accessors:
-        ``.text``       — last ``TextOutputItem`` content, or ``""`` if none
-        ``.tool_calls`` — lossy :class:`ExecutedToolCall` view extracted from
-        tool call items; this intentionally omits ``ToolCallOutputItem.id``
-    """
-
-    output: list[OutputMessage] = field(default_factory=list)
-
-    def __init__(
-        self,
-        output: list[OutputMessage] | None = None,
-        *,
-        text: str | None = None,
-    ) -> None:
-        """Create a response from ordered output items or legacy ``text=``.
-
-        ``text=`` is kept for older tests/integrations that constructed
-        ``AgentResponse(text="...")`` before ordered output items existed.
-        """
-        if output is not None and text is not None:
-            raise ValueError("AgentResponse accepts either output= or text=, not both")
-        items: list[OutputMessage]
-        if output is None:
-            items = [TextOutputItem(text=text, annotations=[])] if text is not None else []
-        else:
-            _validate_output_messages(output)
-            items = output
-        object.__setattr__(self, "output", items)
-
-    @property
-    def text(self) -> str:
-        """Return the last text output item's content (backward-compatible)."""
-        texts = [item.text for item in self.output if isinstance(item, TextOutputItem)]
-        return texts[-1] if texts else ""
-
-    @property
-    def tool_calls(self) -> list[ExecutedToolCall]:
-        """Return a lossy backward-compatible view of tool call output items.
-
-        ``ToolCallOutputItem.id`` is not represented on ``ExecutedToolCall``.
-        Use ``.output`` when preserving OpenResponses IDs or item ordering
-        matters.
-
-        ``ToolCallOutputItem.arguments`` is stored as a JSON string (OpenResponses
-        wire format); this property parses it back to a dict for ``ExecutedToolCall``.
-        """
-        result: list[ExecutedToolCall] = []
-        for item in self.output:
-            if not isinstance(item, ToolCallOutputItem):
-                continue
-            raw_args = item.arguments
-            if isinstance(raw_args, str):
-                try:
-                    args: dict[str, Any] = _json.loads(raw_args)
-                    if not isinstance(args, dict):
-                        args = {}
-                except (ValueError, TypeError):
-                    args = {}
-            else:
-                args = raw_args if isinstance(raw_args, dict) else {}
-            result.append(ExecutedToolCall(name=item.name, arguments=args, result=item.result))
-        return result
+OutputMessage = Annotated[
+    Union[TextOutputItem, ToolCallOutputItem, ReasoningOutputItem],
+    Field(discriminator="type"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -300,12 +194,77 @@ class TokenUsage(BaseModel):
         return NotImplemented
 
 
+# ---------------------------------------------------------------------------
+# AgentResponse
+# ---------------------------------------------------------------------------
+
+
+class AgentResponse(BaseModel):
+    """Structured response from a target agent as an ordered list of output messages.
+
+    Each item in ``output`` is a :class:`TextOutputItem`, :class:`ToolCallOutputItem`,
+    or :class:`ReasoningOutputItem`, preserving the order in which they were produced.
+    Item ``type`` discriminators align with the OpenResponses intermediate data format
+    (``output_text``, ``function_call``, ``reasoning``).
+
+    Accessors:
+        ``.text``       — last ``TextOutputItem`` content, or ``""`` if none
+        ``.tool_calls`` — list of :class:`ToolCallOutputItem` filtered from
+        :attr:`output` in order
+    """
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    output: list[OutputMessage] = Field(default_factory=list)
+    usage: TokenUsage | None = None
+    model: str | None = None
+    response_id: str | None = None
+    finish_reason: str | None = None
+
+    if TYPE_CHECKING:
+
+        def __init__(  # pyright: ignore[reportMissingSuperCall]
+            self,
+            *,
+            output: list[OutputMessage] | None = None,
+            text: str | None = None,
+            usage: "TokenUsage | None" = None,
+            model: str | None = None,
+            response_id: str | None = None,
+            finish_reason: str | None = None,
+        ) -> None: ...
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_text_shorthand(cls, data: Any) -> Any:
+        # Preserve legacy ``AgentResponse(text="...")`` construction.
+        if isinstance(data, dict) and "text" in data:
+            payload = dict(data)
+            text = payload.pop("text")
+            if payload.get("output") is not None:
+                raise ValueError("AgentResponse accepts either output= or text=, not both")
+            payload["output"] = (
+                [TextOutputItem(text=text, annotations=[])] if text is not None else []
+            )
+            return payload
+        return data
+
+    @property
+    def text(self) -> str:
+        """Concatenate all text output items into a single string."""
+        return "".join(item.text for item in self.output if isinstance(item, TextOutputItem))
+
+    @property
+    def tool_calls(self) -> list[ToolCallOutputItem]:
+        """Return the tool call items from ``.output`` in order."""
+        return [item for item in self.output if isinstance(item, ToolCallOutputItem)]
+
+
 __all__ = [
     "DEFAULT_PIPELINE_MODEL",
     "DEFAULT_TARGET_MAX_TOKENS",
     "DEFAULT_TARGET_TIMEOUT_MS",
     "AgentResponse",
-    "ExecutedToolCall",
     "FunctionCall",
     "LLMCallConfig",
     "Message",

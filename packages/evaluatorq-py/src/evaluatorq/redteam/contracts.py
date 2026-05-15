@@ -9,7 +9,6 @@ Semantic convention:
     ``passed=False`` → the agent is VULNERABLE (attack succeeded)
 """
 
-import json as _json
 import os
 from datetime import datetime
 from typing import Any, Literal, TypedDict
@@ -345,7 +344,6 @@ def infer_framework(category: str) -> str:
 
 from evaluatorq.contracts import (  # noqa: F401, E402
     AgentResponse,
-    ExecutedToolCall,
     FunctionCall,
     Message,
     OutputMessage,
@@ -710,12 +708,7 @@ class AttackStrategy(BaseModel):
 from evaluatorq.contracts import TokenUsage  # noqa: F401, E402
 
 
-# SendResult was the prior per-call return type. It has been merged into
-# :class:`AgentResponse` which carries both output items and call metadata
-# (``usage``/``model``/``response_id``/``finish_reason``). The alias is kept
-# so existing tests and downstream callers that import ``SendResult`` continue
-# to work; new code should use ``AgentResponse`` directly.
-SendResult = AgentResponse
+SendResult = AgentResponse  # deprecated alias; use AgentResponse directly
 
 
 # ---------------------------------------------------------------------------
@@ -739,15 +732,48 @@ class ErrorInfo(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class OrchestratorResult(BaseModel):
-    """Result from multi-turn attack orchestration."""
+class AttackerResponse(BaseModel):
+    """Adversarial LLM output for a single attack turn.
 
-    conversation: list[Message] = Field(description='Full conversation history (OpenAI message format)')
-    turns: int = Field(description='Number of turns executed')
+    ``generated_prompt`` is the text the attacker LLM produced this turn, which
+    is then sent to the target as the next user message.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    generated_prompt: str = Field(description='Attack prompt produced by the adversarial LLM (sent to the target)')
+    usage: TokenUsage | None = Field(default=None, description='Token usage for this adversarial generation')
+    truncated: bool = Field(default=False, description='Adversarial LLM hit max_tokens on this turn')
+    finish_reason: str | None = Field(default=None, description='Adversarial LLM finish reason')
+
+
+class Turn(BaseModel):
+    """One attacker→target exchange in a multi-turn attack."""
+
+    model_config = ConfigDict(frozen=True)
+
+    attacker: AttackerResponse
+    target: AgentResponse
+
+
+class OrchestratorResult(BaseModel):
+    """Result from multi-turn attack orchestration.
+
+    The canonical record is :attr:`turns` — a list of :class:`Turn` pairing the
+    attacker prompt with the full target :class:`AgentResponse`. Convenience
+    views (:attr:`conversation`, :attr:`final_response`, :attr:`n_turns`) are
+    derived properties so they cannot drift from the canonical record.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    turns: list[Turn] = Field(
+        default_factory=list,
+        description='Per-turn attacker/target exchanges (canonical record)',
+    )
     objective_achieved: bool = Field(
         default=False, description='Whether adversarial LLM self-reported objective achieved'
     )
-    final_response: str = Field(default='', description="Target agent's last response")
     duration_seconds: float = Field(default=0.0, description='Elapsed time in seconds')
     token_usage: TokenUsage | None = Field(default=None, description='Aggregated token usage across attack execution')
     token_usage_adversarial: TokenUsage | None = Field(
@@ -755,6 +781,7 @@ class OrchestratorResult(BaseModel):
     )
     token_usage_target: TokenUsage | None = Field(default=None, description='Token usage for target agent calls only')
     system_prompt: str | None = Field(default=None, description='Rendered adversarial system prompt')
+    max_turns: int = Field(default=0, description='Turn budget configured for this attack (>= n_turns)')
     error: str | None = Field(default=None, description='Error message if attack was aborted')
     error_type: str | None = Field(
         default=None, description='Error classification (e.g. content_filter, llm_error, target_error)'
@@ -766,10 +793,116 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(
-        default_factory=list,
-        description='Tool calls captured per attack turn (index 0 = turn 1). Empty list per turn if target returned none.',
-    )
+
+    @model_validator(mode="after")
+    def _validate_max_turns(self) -> "OrchestratorResult":
+        """Enforce that max_turns is not less than the number of executed turns.
+
+        max_turns=0 is the unset-sentinel (default) and is always accepted.
+        Only positive values represent a configured budget and are validated.
+        """
+        if self.max_turns > 0 and self.max_turns < len(self.turns):
+            raise ValueError(
+                f"max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})"
+            )
+        return self
+
+    @property
+    def n_turns(self) -> int:
+        """Number of executed turns."""
+        return len(self.turns)
+
+    @property
+    def final_response(self) -> str:
+        """Target agent's last response text."""
+        return self.turns[-1].target.text if self.turns else ''
+
+    @property
+    def chat_completions(self) -> list[Message]:
+        """Conversation in OpenAI chat-completions format (role/content rows).
+
+        Walks each turn's ``target.output`` items in order, converting from the
+        OpenResponses intermediate format to chat-completions wire shape:
+
+        - Attacker prompt -> ``user`` message.
+        - Consecutive :class:`TextOutputItem` runs -> single ``assistant`` message
+          with joined ``content``.
+        - Each :class:`ToolCallOutputItem` -> ``assistant`` message with one
+          ``tool_calls`` entry; if ``result`` is set, also a following ``tool``
+          role message with ``tool_call_id`` + ``content``.
+        - :class:`ReasoningOutputItem` is dropped — chat-completions has no
+          standard role for reasoning. Callers needing it should read
+          ``turn.target.output`` directly.
+        """
+        out: list[Message] = []
+        for turn in self.turns:
+            out.append(Message(role='user', content=turn.attacker.generated_prompt))
+            text_buffer: list[str] = []
+            target = turn.target
+
+            def _flush_text() -> None:
+                if text_buffer:
+                    out.append(Message(role='assistant', content=''.join(text_buffer)))
+                    text_buffer.clear()
+
+            for item in target.output:
+                if isinstance(item, TextOutputItem):
+                    text_buffer.append(item.text)
+                elif isinstance(item, ToolCallOutputItem):
+                    _flush_text()
+                    out.append(Message(
+                        role='assistant',
+                        content=None,
+                        tool_calls=[StrategyToolCall(
+                            id=item.call_id,
+                            function=FunctionCall(name=item.name, arguments=item.arguments),
+                        )],
+                    ))
+                    if item.result is not None:
+                        out.append(Message(
+                            role='tool',
+                            tool_call_id=item.call_id,
+                            name=item.name,
+                            content=item.result,
+                        ))
+                # ReasoningOutputItem intentionally dropped.
+            _flush_text()
+            # If the output was entirely empty (no items at all), still emit an
+            # assistant row so consumers can rely on a user/assistant pair per turn.
+            if not target.output:
+                out.append(Message(role='assistant', content=''))
+        return out
+
+    def attacker_input_at(self, turn_index: int) -> list[Message]:
+        """Reconstruct the chat messages sent to the adversarial LLM at turn ``turn_index``.
+
+        Pure function of :attr:`system_prompt`, :attr:`max_turns`, and prior
+        :attr:`turns`. Useful for replaying or auditing what the attacker LLM
+        saw at any point in the conversation.
+
+        Raises:
+            IndexError: if ``turn_index`` is out of bounds for :attr:`turns`.
+        """
+        if turn_index < 0 or turn_index > len(self.turns):
+            raise IndexError(f'turn_index {turn_index} out of range for {len(self.turns)} turns')
+        # Lazy import to avoid a circular dep — the templates live in the orchestrator.
+        from evaluatorq.common.sanitize import xml_escape
+        from evaluatorq.redteam.adaptive.orchestrator import (
+            ADVERSARIAL_ANALYSIS_PROMPT,
+            ADVERSARIAL_INITIAL_USER_PROMPT,
+        )
+        msgs: list[Message] = [
+            Message(role='system', content=self.system_prompt or ''),
+            Message(role='user', content=ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=self.max_turns)),
+        ]
+        for prior in self.turns[:turn_index]:
+            msgs.append(Message(role='assistant', content=prior.attacker.generated_prompt))
+            wrapped = ADVERSARIAL_ANALYSIS_PROMPT.replace(
+                '{response}',
+                f'<target_response>\n{xml_escape(prior.target.text)}\n</target_response>',
+            )
+            msgs.append(Message(role='user', content=wrapped))
+        return msgs
 
     @property
     def error_info(self) -> 'ErrorInfo | None':
@@ -927,7 +1060,6 @@ class JobOutputPayload(BaseModel):
     error_turn: int | None = None
     truncated_turns: list[int] = Field(default_factory=list)
     finish_reason: str | None = None
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(default_factory=list)
 
     @property
     def response_text(self) -> str:
@@ -977,7 +1109,6 @@ class RedTeamResult(BaseModel):
     error_stage: str | None = None
     error_code: str | None = None
     error_details: dict[str, Any] | None = None
-    tool_calls_per_turn: list[list[ExecutedToolCall]] = Field(default_factory=list)
 
     @property
     def error_info(self) -> 'ErrorInfo | None':

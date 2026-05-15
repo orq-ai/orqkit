@@ -22,6 +22,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from evaluatorq.tracing.setup import get_tracer
 
 if TYPE_CHECKING:
@@ -36,10 +38,8 @@ AttrMap = dict[str, AttrValue | None]
 # Max content length per message to avoid oversized spans (matches TS).
 MAX_CONTENT_LEN = 2000
 
-
-# ---------------------------------------------------------------------------
-# Internal span: orq.simulation.*
-# ---------------------------------------------------------------------------
+# Module-level flag so the OpenTelemetry import warning fires only once.
+_otel_import_warned = False
 
 
 @asynccontextmanager
@@ -59,7 +59,11 @@ async def with_simulation_span(  # noqa: RUF029
 
     try:
         from opentelemetry.trace import SpanKind, Status, StatusCode
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         yield None
         return
 
@@ -86,11 +90,6 @@ async def with_simulation_span(  # noqa: RUF029
             raise
 
 
-# ---------------------------------------------------------------------------
-# LLM span: GenAI semantic conventions (SpanKind.CLIENT)
-# ---------------------------------------------------------------------------
-
-
 @asynccontextmanager
 async def with_llm_span(  # noqa: RUF029
     *,
@@ -114,7 +113,11 @@ async def with_llm_span(  # noqa: RUF029
 
     try:
         from opentelemetry.trace import SpanKind, Status, StatusCode
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         yield None
         return
 
@@ -149,11 +152,6 @@ async def with_llm_span(  # noqa: RUF029
             span.record_exception(e)
             span.set_attribute("error.type", type(e).__name__)
             raise
-
-
-# ---------------------------------------------------------------------------
-# Token usage recording
-# ---------------------------------------------------------------------------
 
 
 def record_token_usage(
@@ -198,11 +196,6 @@ def record_token_usage(
     span.set_attribute("input_tokens", prompt)
     span.set_attribute("output_tokens", completion)
     span.set_attribute("total_tokens", total)
-
-
-# ---------------------------------------------------------------------------
-# Message recording (gen_ai.input/output.messages)
-# ---------------------------------------------------------------------------
 
 
 def _truncate(text: str) -> str:
@@ -431,11 +424,6 @@ def record_llm_response(span: Span | None, response: Any) -> None:
         span.set_attribute("gen_ai.response.finish_reasons", finish_reasons)
 
 
-# ---------------------------------------------------------------------------
-# Attribute helpers
-# ---------------------------------------------------------------------------
-
-
 def set_span_attrs(span: Span | None, attrs: AttrMap) -> None:
     """Batch set multiple attributes on a span. Skips ``None`` values."""
     if span is None:
@@ -454,17 +442,17 @@ async def get_trace_context_headers() -> dict[str, str]:  # noqa: RUF029
     """
     try:
         from opentelemetry import context, propagate
-    except ImportError:
+    except ImportError as exc:
+        global _otel_import_warned
+        if not _otel_import_warned:
+            logger.warning("OpenTelemetry import failed; tracing disabled: %s", exc)
+            _otel_import_warned = True
         return {}
 
     headers: dict[str, str] = {}
     propagate.inject(headers, context=context.get_current())
     return headers
 
-
-# ---------------------------------------------------------------------------
-# Provider derivation
-# ---------------------------------------------------------------------------
 
 # OTel GenAI semconv ``gen_ai.system`` enum aliases. The router uses prefixes
 # like "azure/" that don't map 1:1 to the spec — translate the known ones.
