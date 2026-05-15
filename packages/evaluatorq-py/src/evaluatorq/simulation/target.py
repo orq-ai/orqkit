@@ -246,7 +246,14 @@ class OrqResponsesTarget:
     def _messages_to_input(messages: list[ChatMessage]) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
         for m in messages:
-            d: dict[str, Any] = {"role": m.role, "content": m.content or ""}
+            # Assistant messages with tool_calls require content: null per
+            # OpenAI's spec; collapsing None to "" produces an invalid payload.
+            # For other roles, the API expects a string, so coerce None -> "".
+            if m.role == "assistant":
+                content: Any = m.content
+            else:
+                content = m.content or ""
+            d: dict[str, Any] = {"role": m.role, "content": content}
             if m.tool_calls is not None:
                 d["tool_calls"] = [tc.model_dump() for tc in m.tool_calls]
             if m.tool_call_id is not None:
