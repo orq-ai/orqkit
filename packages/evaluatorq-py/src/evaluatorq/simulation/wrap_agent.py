@@ -173,5 +173,5 @@ def wrap_simulation_agent(
     # Expose the runner so callers (e.g. simulate()) can close it after the
     # evaluatorq run completes. Public users of wrap_simulation_agent() can
     # also call this if they care about HTTP-client cleanup.
-    job_fn.__closure_runner__ = runner  # type: ignore[attr-defined]
+    setattr(job_fn, "__closure_runner__", runner)  # noqa: B010
     return job_fn
