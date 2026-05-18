@@ -165,3 +165,71 @@ async def test_evaluator_extra_kwargs_merged(
 
     assert captured['temperature'] == 1.0
     assert captured.get('seed') == 42
+
+
+@pytest.mark.asyncio
+async def test_extra_body_is_retry_config(
+    mock_client_and_capture: tuple[Any, dict[str, Any]],
+) -> None:
+    """``extra_body`` is sourced from ``cfg.retry_config`` (router-specific retry hints)."""
+    client, captured = mock_client_and_capture
+    cfg = LLMConfig()
+
+    await generate_focus_area_recommendations(
+        _empty_report(), client, model='openai/gpt-5-mini', cfg=cfg
+    )
+
+    assert captured['extra_body'] == cfg.retry_config
+
+
+@pytest.mark.asyncio
+async def test_llm_kwargs_override_evaluator_extra_kwargs(
+    mock_client_and_capture: tuple[Any, dict[str, Any]],
+) -> None:
+    """Caller-supplied ``llm_kwargs`` win over ``cfg.evaluator.extra_kwargs``.
+
+    The merge order in the call site is ``**cfg.evaluator.extra_kwargs,
+    **(llm_kwargs or {})`` — Python last-wins unpacking means llm_kwargs
+    takes precedence. This is the caller escape hatch.
+    """
+    client, captured = mock_client_and_capture
+    cfg = LLMConfig(
+        evaluator=LLMCallConfig(extra_kwargs={'seed': 1}),
+    )
+
+    await generate_focus_area_recommendations(
+        _empty_report(),
+        client,
+        model='openai/gpt-5-mini',
+        cfg=cfg,
+        llm_kwargs={'seed': 99},
+    )
+
+    assert captured['seed'] == 99
+
+
+@pytest.mark.asyncio
+async def test_chat_completion_failure_returns_empty_without_raising(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed LLM call (e.g. HTTP 400 on a misconfigured reasoning model)
+    must be swallowed: the function logs a warning and returns the
+    successful subset, never propagating the exception. This is the
+    behavior RES-817 originally relied on to avoid crashing the whole run.
+    """
+    def _fake_compute(_r: RedTeamReport, _n: int) -> list[dict[str, Any]]:
+        return [_fake_area()]
+
+    monkeypatch.setattr(rec_mod, '_compute_top_risk_areas', _fake_compute)
+
+    async def fake_create(**_kwargs: Any) -> Any:
+        raise RuntimeError('400 Bad Request: temperature must be 1.0 for this model')
+
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(side_effect=fake_create)
+
+    recs = await generate_focus_area_recommendations(
+        _empty_report(), client, model='openai/gpt-5-mini'
+    )
+
+    assert recs == []

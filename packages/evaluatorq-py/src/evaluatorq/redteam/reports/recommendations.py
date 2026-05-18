@@ -186,6 +186,11 @@ async def generate_focus_area_recommendations(
         )
 
         try:
+            # Merge into a single dict first so caller-supplied ``llm_kwargs``
+            # can override entries in ``cfg.evaluator.extra_kwargs``. Two
+            # ``**`` arguments to a function call raise TypeError on duplicate
+            # keys; dict-literal merging applies last-wins precedence instead.
+            merged_kwargs = {**cfg.evaluator.extra_kwargs, **(llm_kwargs or {})}
             response = await llm_client.chat.completions.create(
                 model=model,
                 messages=[
@@ -196,8 +201,7 @@ async def generate_focus_area_recommendations(
                 max_completion_tokens=1500,
                 response_format={'type': 'json_object'},
                 extra_body=cfg.retry_config,
-                **cfg.evaluator.extra_kwargs,
-                **(llm_kwargs or {}),
+                **merged_kwargs,
             )
 
             content = response.choices[0].message.content or '{}'
