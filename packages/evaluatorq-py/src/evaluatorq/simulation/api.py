@@ -149,8 +149,8 @@ async def generate_and_simulate(
     ``ORQ_API_KEY`` is required because persona/scenario/first-message
     generation calls the Orq router. ``upload_results`` defaults to ``True``;
     set it to ``False`` to skip uploading the final experiment.
-    ``exit_on_failure`` defaults to ``False``; see ``simulate()`` for the
-    full semantics of the CI-gate behaviour when set to ``True``.
+    ``exit_on_failure`` defaults to ``True``; see ``simulate()`` for the
+    full semantics of the CI-gate behaviour and how to opt out.
     """
     from openai import AsyncOpenAI
 
