@@ -1738,10 +1738,9 @@ async def _run_dynamic_or_hybrid(
             "elapsed_s": pipeline_duration,
         })
 
-        _save_report(output_dir, "03_summary_report.json", merged)
-
         # Upload cleaned results to Orq platform — strip skipped job results
         # (jobs return None for datapoints belonging to a different target).
+        # Send before saving so report.experiment_url is included in the persisted JSON.
         await _send_cleaned_results(
             results=results,
             name=resolved_name,
@@ -1749,6 +1748,8 @@ async def _run_dynamic_or_hybrid(
             start_time=pipeline_start,
             report=merged,
         )
+
+        _save_report(output_dir, "03_summary_report.json", merged)
 
         set_span_attrs(pipeline_span, {
             "orq.redteam.num_datapoints": len(all_datapoints),
@@ -2003,10 +2004,9 @@ async def _run_static(
         "elapsed_s": pipeline_duration,
     })
 
-    _save_report(output_dir, "03_summary_report.json", merged)
-
     # Upload results to Orq platform — in static mode all jobs produce real
     # output for every datapoint, so we send results as-is (no stripping).
+    # Send before saving so report.experiment_url is included in the persisted JSON.
     await _send_cleaned_results(
         results=results,
         name=resolved_name,
@@ -2014,5 +2014,7 @@ async def _run_static(
         start_time=pipeline_start,
         report=merged,
     )
+
+    _save_report(output_dir, "03_summary_report.json", merged)
 
     return merged
