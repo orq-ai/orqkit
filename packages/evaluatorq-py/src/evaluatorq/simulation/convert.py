@@ -45,6 +45,8 @@ def to_open_responses(
                 }
             )
         elif msg.role == "assistant":
+            # tool_calls on assistant messages and role="tool" messages are not
+            # mapped here; the simulation runner currently never produces them.
             output_items.append(
                 {
                     "type": "message",
