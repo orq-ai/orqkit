@@ -198,12 +198,8 @@ class DefaultHooks:
             dp_detail = f"{num_dp} datapoints"
         logger.info(
             f"[redteam] \U0001f4ca Run plan: {dp_detail} | "
-            f"{len(categories)} {cat_word} | mode={mode!r} | target={target!r}"
-        )
-        logger.info(
-            f"[redteam] Run plan: target={target!r} mode={mode!r} "
-            f"datapoints={num_dp} categories={len(categories)} "
-            f"attack_model={attack_model!r} evaluator_model={evaluator_model!r}"
+            f"{len(categories)} {cat_word} | mode={mode!r} | target={target!r} | "
+            f"attack_model={attack_model!r} | evaluator_model={evaluator_model!r}"
         )
         return True
 
