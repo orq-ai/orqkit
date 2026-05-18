@@ -58,6 +58,10 @@ async def send_results_to_orq(
         end_time: When the evaluation ended
         path: Optional path (e.g. "MyProject/MyFolder") to place the experiment
               in a specific project and folder on the Orq platform.
+
+    Returns:
+        The experiment URL from the Orq platform on success, or ``None`` if the
+        upload failed or the platform did not return a URL.
     """
     try:
         # Calculate duration in milliseconds
