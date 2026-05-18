@@ -46,7 +46,7 @@ red_team(
 - `simulate()` and `generate_and_simulate()` accept new `evaluation_description=` and `path=` parameters, forwarded straight to `evaluatorq()` (RES-598).
 - `simulate()` and `generate_and_simulate()` now run on top of `evaluatorq()`: persona × scenario datapoints are materialised, executed via a single evaluatorq job, and scored via adapted evaluators. This brings auto-upload, OTel tracing, the results table, CI gating, and dataset-id support to the simulation entry points "for free". The bespoke parallelism loop was removed; `simulation/upload.py` is kept as a standalone helper for direct callers but is no longer invoked from `simulate()` (RES-594).
 - `simulate()` accepts a new `dataset_id=` parameter — when set, simulation datapoints are streamed from the named Orq dataset (each row's `inputs` must already match a simulation input shape) instead of being passed inline. Mutually exclusive with `datapoints` and `personas`/`scenarios` (RES-594).
-- `simulate()` and `generate_and_simulate()` accept a new `exit_on_failure=` parameter (default `False`). Set to `True` to wire the CI-gating behaviour of `evaluatorq()` into a simulation run — the process exits non-zero when any datapoint or evaluator fails (RES-594).
+- `simulate()` and `generate_and_simulate()` accept a new `exit_on_failure=` parameter, **default `True`**, matching `evaluatorq()`'s framework default. Score-based failures exit via `sys.exit(1)`; dropped jobs raise `RuntimeError`. Pass `exit_on_failure=False` for interactive / exploratory runs where you want failures surfaced as warnings + error metadata instead of a non-zero exit (RES-594).
 
 ### Bug Fixes
 

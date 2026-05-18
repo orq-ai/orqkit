@@ -333,6 +333,7 @@ async def test_simulate_calls_evaluatorq_with_send_results_true_by_default():
             target_callback=target_cb,
             datapoints=[_make_datapoint()],
             max_turns=1,
+            exit_on_failure=False,  # stub evaluatorq doesn't populate result_cache
         )
 
     eq_mock.assert_awaited_once()
@@ -357,6 +358,7 @@ async def test_simulate_forwards_upload_results_false():
             datapoints=[_make_datapoint()],
             max_turns=1,
             upload_results=False,
+            exit_on_failure=False,
         )
 
     assert eq_mock.await_args is not None
@@ -377,6 +379,7 @@ async def test_simulate_synthesises_run_name_when_empty():
             target_callback=target_cb,
             datapoints=[_make_datapoint()],
             max_turns=1,
+            exit_on_failure=False,
         )
 
     assert eq_mock.await_args is not None
@@ -402,6 +405,7 @@ async def test_simulate_passes_description_and_path():
             max_turns=1,
             evaluation_description="my run",
             path="Proj/Folder",
+            exit_on_failure=False,
         )
 
     assert eq_mock.await_args is not None
@@ -497,6 +501,7 @@ async def test_simulate_warns_when_jobs_drop_results(
                 datapoints=dps,
                 max_turns=1,
                 upload_results=False,
+                exit_on_failure=False,
             )
 
     assert len(results) == 1

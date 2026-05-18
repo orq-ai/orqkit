@@ -57,7 +57,7 @@ async def simulate(
     upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
-    exit_on_failure: bool = False,
+    exit_on_failure: bool = True,
 ) -> list[SimulationResult]:
     """Run agent simulations through the evaluatorq() framework.
 
@@ -86,14 +86,15 @@ async def simulate(
         evaluation_description: Optional description attached to the
             experiment. Mirrors ``evaluatorq()``.
         path: Optional Orq folder path (e.g. ``"MyProject/MyFolder"``).
-        exit_on_failure: When ``True``, exit non-zero if any datapoint or
-            evaluator produced a failure — useful for CI gating. Two paths:
-            score-based failures (``pass_=False`` on a scorer result) call
-            ``sys.exit(1)`` via evaluatorq's own gate; dropped jobs (job
-            raised, no result cached) raise ``RuntimeError`` from
-            ``simulate()`` itself. Both exit non-zero when uncaught.
-            Defaults to ``False`` so simulation failures stay surfaced as
-            warnings / error metadata instead of crashing the caller.
+        exit_on_failure: When ``True`` (the default), exit non-zero if any
+            datapoint or evaluator produced a failure — this is the "CI
+            gating for free" benefit of routing through ``evaluatorq()``.
+            Two paths: score-based failures (``pass_=False`` on a scorer
+            result) call ``sys.exit(1)`` via evaluatorq's own gate; dropped
+            jobs (job raised, no result cached) raise ``RuntimeError`` from
+            ``simulate()`` itself. Both exit non-zero when uncaught. Pass
+            ``False`` for interactive / exploratory runs where failures
+            should surface as warnings + error metadata instead.
     """
     resolved_callback = _resolve_callback(target, target_callback, agent_key)
 
@@ -141,7 +142,7 @@ async def generate_and_simulate(
     upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
-    exit_on_failure: bool = False,
+    exit_on_failure: bool = True,
 ) -> list[SimulationResult]:
     """Generate personas/scenarios, then run simulations via evaluatorq().
 
