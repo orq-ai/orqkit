@@ -41,6 +41,17 @@ def wrap_simulation_agent(
     - ``persona`` and ``scenario``, or
     - ``datapoint`` (full Datapoint object), or
     - ``datapoints`` / ``personas`` + ``scenarios`` each of length one
+
+    The returned callable owns a long-lived ``SimulationRunner`` (and its
+    underlying HTTP client). Call ``await job_fn.aclose()`` after your
+    ``evaluatorq()`` run finishes to release the connection pool — otherwise
+    it leaks until process exit. Example::
+
+        job = wrap_simulation_agent(target_callback=cb)
+        try:
+            await evaluatorq("run", data=[...], jobs=[job], evaluators=[...])
+        finally:
+            await job.aclose()
     """
     from evaluatorq.simulation.runner.simulation import SimulationRunner
 
@@ -70,7 +81,8 @@ def wrap_simulation_agent(
             "output": to_open_responses(result, effective_model),
         }
 
-    # Expose the runner so callers can close it after the evaluatorq run
-    # completes (HTTP-client cleanup).
-    setattr(job_fn, "__closure_runner__", runner)  # noqa: B010
+    async def aclose() -> None:
+        await runner.close()
+
+    setattr(job_fn, "aclose", aclose)  # noqa: B010
     return job_fn

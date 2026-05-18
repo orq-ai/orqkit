@@ -407,3 +407,145 @@ async def test_simulate_passes_description_and_path():
     kwargs = eq_mock.await_args.kwargs
     assert kwargs["description"] == "my run"
     assert kwargs["path"] == "Proj/Folder"
+
+
+# ---------------------------------------------------------------------------
+# RES-594: _sim_idx wiring — verifies the stable-key cache path end-to-end
+# by driving a fake evaluatorq that mimics the real "call job, then scorer
+# with the same DataPoint" contract.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_simulate_sim_idx_roundtrip_through_evaluatorq(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """simulate() seeds each DataPoint.inputs with _sim_idx; the job stashes
+    SimulationResults under that idx; the scorer adapter and the final
+    result list both recover by idx. Verifies the contract holds across the
+    full lifecycle, not just the call to evaluatorq()."""
+    from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+
+    canned = [
+        _make_result(persona=f"P{i}", scenario=f"S{i}") for i in range(3)
+    ]
+    dps = [_make_datapoint() for _ in range(3)]
+
+    # Drive simulate()'s real wiring with a stub evaluatorq that calls the
+    # job for each datapoint then the scorer, mirroring processings.py.
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
+        for dp in data:
+            await jobs[0](dp, 0)
+            for ev in evaluators:
+                await ev["scorer"]({"data": dp, "output": {}})
+
+    runner_run = AsyncMock(side_effect=canned)
+    monkeypatch.setattr(SimulationRunner, "run", runner_run)
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
+        results = await simulate(
+            evaluation_name="t",
+            target_callback=lambda _msgs: "ok",
+            datapoints=dps,
+            max_turns=1,
+            evaluator_names=["goal_achieved"],
+            upload_results=False,
+        )
+
+    # Returned in input order via _sim_idx lookup
+    assert len(results) == 3
+    assert [r.metadata["persona"] for r in results] == ["P0", "P1", "P2"]
+    # Scorer adapter mirrored the score into each result's metadata
+    for r in results:
+        assert "evaluator_scores" in r.metadata
+        assert "goal_achieved" in r.metadata["evaluator_scores"]
+
+
+@pytest.mark.asyncio
+async def test_simulate_warns_when_jobs_drop_results(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    """If a job throws, evaluatorq swallows it and result_cache stays short.
+    simulate() must log a warning naming the caller so the missing rows are
+    not silently dropped from the returned list."""
+    from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+
+    # Two datapoints; only the first job succeeds.
+    dps = [_make_datapoint(), _make_datapoint()]
+    runner_run = AsyncMock(
+        side_effect=[_make_result(), RuntimeError("agent blew up")]
+    )
+    monkeypatch.setattr(SimulationRunner, "run", runner_run)
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
+        for dp in data:
+            try:
+                await jobs[0](dp, 0)
+            except Exception:  # noqa: BLE001 — mimic evaluatorq swallowing job errors
+                pass
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
+        with caplog.at_level("WARNING", logger="evaluatorq.simulation.api"):
+            results = await simulate(
+                target_callback=lambda _msgs: "ok",
+                datapoints=dps,
+                max_turns=1,
+                upload_results=False,
+            )
+
+    assert len(results) == 1
+    assert any(
+        "simulate() returning 1 of 2 datapoints" in rec.message
+        for rec in caplog.records
+    )
+
+
+@pytest.mark.asyncio
+async def test_simulate_scorer_error_falls_back_to_zero(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """A failing scorer must not crash the run; the adapter returns
+    value=0.0 with an explanation."""
+    from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+
+    dps = [_make_datapoint()]
+    monkeypatch.setattr(
+        SimulationRunner, "run", AsyncMock(return_value=_make_result())
+    )
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    captured_results = []
+
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
+        for dp in data:
+            await jobs[0](dp, 0)
+            for ev in evaluators:
+                captured_results.append(
+                    await ev["scorer"]({"data": dp, "output": {}})
+                )
+
+    def boom(_result):
+        raise ValueError("scorer broke")
+
+    from evaluatorq.simulation.evaluators.scorers import SIMULATION_EVALUATORS
+
+    monkeypatch.setitem(SIMULATION_EVALUATORS, "broken_scorer", boom)
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
+        await simulate(
+            target_callback=lambda _msgs: "ok",
+            datapoints=dps,
+            max_turns=1,
+            evaluator_names=["broken_scorer"],
+            upload_results=False,
+        )
+
+    assert len(captured_results) == 1
+    assert captured_results[0].value == 0.0
+    assert "scorer error" in (captured_results[0].explanation or "")

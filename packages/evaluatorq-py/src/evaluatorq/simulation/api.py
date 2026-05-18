@@ -91,6 +91,7 @@ async def simulate(
     )
 
     return await _simulate_via_evaluatorq(
+        caller="simulate",
         evaluation_name=evaluation_name,
         target_callback=resolved_callback,
         sim_datapoints=sim_datapoints,
@@ -164,6 +165,7 @@ async def generate_and_simulate(
     )
 
     return await _simulate_via_evaluatorq(
+        caller="generate_and_simulate",
         evaluation_name=evaluation_name,
         target_callback=resolved_callback,
         sim_datapoints=sim_datapoints,
@@ -372,6 +374,7 @@ def _adapt_simulation_scorer(
 
 async def _simulate_via_evaluatorq(
     *,
+    caller: str,
     evaluation_name: str,
     target_callback: Callable[[list[ChatMessage]], str | Awaitable[str]],
     sim_datapoints: list[Datapoint],
@@ -431,7 +434,6 @@ async def _simulate_via_evaluatorq(
             jobs=[job_fn],
             evaluators=evaluators,
             parallelism=parallelism,
-            print_results=False,
             description=evaluation_description,
             path=path,
             _send_results=upload_results,
@@ -444,7 +446,8 @@ async def _simulate_via_evaluatorq(
     delivered = len(result_cache)
     if delivered < expected:
         logger.warning(
-            "simulate() returning %d of %d datapoints — %d job(s) failed and were dropped",
+            "%s() returning %d of %d datapoints — %d job(s) failed and were dropped",
+            caller,
             delivered,
             expected,
             expected - delivered,
