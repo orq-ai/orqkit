@@ -170,14 +170,16 @@ class DefaultHooks:
             num_dp = meta.get("num_datapoints")
             num_dyn = meta.get("num_dynamic")
             num_sta = meta.get("num_static")
-            if num_dp is not None:
-                logger.info(f"[redteam] \U0001f4ca Generated {num_dp} datapoints")
-            elif num_dyn is not None or num_sta is not None:
+            # Prefer the dynamic/static breakdown when both are present (hybrid
+            # mode emits all three keys); fall back to the total otherwise.
+            if num_dyn is not None and num_sta is not None:
                 total = (num_dyn or 0) + (num_sta or 0)
                 logger.info(
                     f"[redteam] \U0001f4ca Generated {total} datapoints "
                     f"({num_dyn or 0} dynamic + {num_sta or 0} static)"
                 )
+            elif num_dp is not None:
+                logger.info(f"[redteam] \U0001f4ca Generated {num_dp} datapoints")
         label = _STAGE_LABELS.get(stage, str(stage))
         logger.info(f"[redteam] Stage complete: {stage} — {label} | meta={meta}")
 
