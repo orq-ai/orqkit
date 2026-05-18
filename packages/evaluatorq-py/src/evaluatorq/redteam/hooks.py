@@ -17,13 +17,27 @@ from typing import TYPE_CHECKING, Any, Protocol, TypedDict, runtime_checkable
 
 from loguru import logger
 
-from evaluatorq.redteam.contracts import PipelineStage
+from evaluatorq.redteam.contracts import AgentCapability, PipelineStage
 from evaluatorq.redteam.reports.display import print_report_summary
 
 if TYPE_CHECKING:
     from rich.console import Console as RichConsole
 
     from evaluatorq.redteam.contracts import RedTeamReport
+
+
+# Capabilities that meaningfully expand an agent's blast radius. Surfaced
+# in bold red in the detected-capabilities table so operators notice them
+# before approving an expensive red-team run.
+_HIGH_RISK_CAPS: frozenset[AgentCapability] = frozenset({
+    AgentCapability.CODE_EXECUTION,
+    AgentCapability.SHELL_ACCESS,
+    AgentCapability.FILE_SYSTEM,
+    AgentCapability.DATABASE,
+    AgentCapability.PAYMENT,
+    AgentCapability.EMAIL,
+    AgentCapability.MESSAGING,
+})
 
 # ---------------------------------------------------------------------------
 # Stage label mapping
@@ -258,6 +272,25 @@ class RichHooks:
     def on_stage_end(self, stage: PipelineStage | str, meta: dict[str, Any]) -> None:
         if stage == PipelineStage.CONTEXT_RETRIEVAL:
             self._render_context_summary(meta)
+            # Per RES-716: surface the classifier output for this target
+            # immediately after context retrieval. The runner places the
+            # classified caps (and any classifier error) on the meta dict.
+            agent_context = meta.get("agent_context")
+            agent_capabilities = meta.get("agent_capabilities")
+            if agent_context is not None:
+                target_label = meta.get("target", "")
+                title = (
+                    f"Detected Capabilities — {target_label}"
+                    if target_label
+                    else "Detected Capabilities"
+                )
+                self._render_agent_capabilities(
+                    agent_context,
+                    classified=agent_capabilities,
+                    title=title,
+                    classification_error=meta.get("classification_error"),
+                    classification_available=meta.get("classification_available", True),
+                )
 
         elapsed = meta.get("elapsed_s")
         if elapsed is not None:
@@ -332,18 +365,9 @@ class RichHooks:
 
         self._console.print(table)
 
-        # ── Agent capabilities panel(s) ────────────────────────────────
-        agent_contexts = payload.get("agent_contexts")
-        if agent_contexts and len(agent_contexts) > 1:
-            for target_str, ctx in agent_contexts.items():
-                self._render_agent_capabilities(ctx, title=f"Agent Capabilities — {target_str}")
-        elif agent_contexts:
-            ctx = next(iter(agent_contexts.values()))
-            self._render_agent_capabilities(ctx)
-        else:
-            agent_context = payload.get("agent_context")
-            if agent_context is not None:
-                self._render_agent_capabilities(agent_context)
+        # Detected capabilities tables are rendered earlier, in
+        # on_stage_end(CONTEXT_RETRIEVAL), so the operator sees per-resource
+        # classification before reaching this confirmation step.
 
         # ── Filtering metadata ──────────────────────────────────────────
         filtering_metadata = payload.get("filtering_metadata")
@@ -363,44 +387,127 @@ class RichHooks:
 
         return typer.confirm("Proceed with this run?", default=True)
 
-    def _render_agent_capabilities(self, agent_context: dict[str, Any], title: str = "Agent Capabilities") -> None:
-        """Render an agent capabilities panel."""
+    def _render_agent_capabilities(
+        self,
+        agent_context: dict[str, Any],
+        *,
+        classified: dict[str, Any] | None = None,
+        title: str = "Detected Capabilities",
+        classification_error: str | None = None,
+        classification_available: bool = True,
+    ) -> None:
+        """Render a per-target table of detected agent capabilities.
+
+        Rows show each tool / memory store / knowledge base alongside the
+        capability tags produced by the LLM classifier
+        (``classify_agent_capabilities``). When the classifier output is not
+        available (no llm_client, static mode, classification failed), the
+        table still renders the resources with an empty capabilities cell
+        plus a hint explaining why.
+
+        Args:
+            agent_context: Serialized AgentContext (model_dump).
+            classified: Serialized AgentCapabilities (model_dump) for this
+                target, or None when classification was skipped.
+            title: Table title (caller appends " — <target>" for multi-target).
+            classification_error: Concrete error string captured when the
+                classifier raised; shown verbatim under the table so the
+                operator can tell auth / network / model errors apart from
+                an empty result.
+            classification_available: ``False`` when no LLM client could be
+                resolved, so the "disabled" hint should be shown instead of
+                the failure hint.
+        """
+        from rich import box
+        from rich.table import Table
+
         tools = agent_context.get("tools") or []
         memory_stores = agent_context.get("memory_stores") or []
         knowledge_bases = agent_context.get("knowledge_bases") or []
 
-        lines: list[str] = []
+        # Build (resource_key, resource_type, display_name) triples in a stable
+        # order so the table layout is deterministic across runs.
+        resources: list[tuple[str, str, str]] = []
+        for t in tools:
+            name = t.get("name") if isinstance(t, dict) else str(t)
+            display = name or "unknown"
+            resources.append((display, "tool", display))
+        for m in memory_stores:
+            ident = (m.get("key") or m.get("id") or "unknown") if isinstance(m, dict) else str(m)
+            resources.append((f"memory:{ident}", "memory", str(ident)))
+        for kb in knowledge_bases:
+            ident = (kb.get("key") or kb.get("name") or kb.get("id") or "unknown") if isinstance(kb, dict) else str(kb)
+            resources.append((f"knowledge:{ident}", "knowledge", str(ident)))
 
-        if tools:
-            tool_names = ", ".join(
-                t.get("name", str(t)) if isinstance(t, dict) else str(t) for t in tools[:10]
-            )
-            suffix = f" (+{len(tools) - 10} more)" if len(tools) > 10 else ""
-            lines.append(f"Tools ({len(tools)}): {tool_names}{suffix}")
-        else:
-            lines.append("Tools: none")
+        # Empty agent: render a single placeholder row instead of three empty sections.
+        if not resources:
+            table = Table(title=title, show_header=True, header_style="bold", box=box.ROUNDED)
+            table.add_column("Resource", style="dim italic")
+            table.add_row("No tools, memory stores, or knowledge bases configured")
+            self._console.print(table)
+            return
 
-        if memory_stores:
-            store_ids = ", ".join(
-                m.get("key") or m.get("id", str(m)) if isinstance(m, dict) else str(m)
-                for m in memory_stores[:5]
-            )
-            lines.append(f"Memory Stores ({len(memory_stores)}): {store_ids}")
-        else:
-            lines.append("Memory: none")
+        caps_map: dict[str, list[str]] = {}
+        classification_failed = False
+        if classified is not None:
+            caps_map = classified.get("capabilities") or {}
+            classification_failed = bool(classified.get("classification_failed"))
 
-        if knowledge_bases:
-            kb_ids = ", ".join(
-                kb.get("name") or kb.get("key") or kb.get("id", str(kb)) if isinstance(kb, dict) else str(kb)
-                for kb in knowledge_bases[:5]
-            )
-            lines.append(f"Knowledge Bases ({len(knowledge_bases)}): {kb_ids}")
-        else:
-            lines.append("Knowledge Bases: none")
-
-        self._console.print(
-            self._make_panel("\n".join(lines), title=title)
+        # "Disabled" means no client could be resolved at all (true no-op),
+        # whereas "failed" means a client was used but the call raised. The
+        # runner sets classification_available=False for the disabled case.
+        classification_disabled = (
+            not classification_available
+            or (classified is None and not classification_failed)
         )
+
+        table = Table(title=title, show_header=True, header_style="bold", box=box.ROUNDED)
+        table.add_column("Resource", style="white", overflow="fold")
+        table.add_column("Type", style="dim")
+        table.add_column("Detected Capabilities", overflow="fold")
+
+        high_risk_values = {c.value for c in _HIGH_RISK_CAPS}
+        unique_caps: set[str] = set()
+        for key, rtype, display in resources:
+            tags = caps_map.get(key) or []
+            unique_caps.update(tags)
+            cell_parts: list[str] = []
+            for tag in tags:
+                style = "bold red" if tag in high_risk_values else "cyan"
+                cell_parts.append(f"[{style}]{tag}[/{style}]")
+            if not cell_parts:
+                cell_parts.append("[dim]—[/dim]")
+            table.add_row(display, rtype, ", ".join(cell_parts))
+
+        # Footer: totals across this target. Counts the number of *distinct*
+        # high-risk capability kinds the agent has (not tag occurrences), since
+        # that is the threat-model-relevant number.
+        n_high_risk_kinds = len(unique_caps & high_risk_values)
+        table.add_section()
+        footer_bits = [
+            f"{len(resources)} resource{'s' if len(resources) != 1 else ''}",
+            f"{len(unique_caps)} unique capabilit{'ies' if len(unique_caps) != 1 else 'y'}",
+        ]
+        if n_high_risk_kinds:
+            footer_bits.append(
+                f"[bold red]{n_high_risk_kinds} high-risk capabilit"
+                f"{'ies' if n_high_risk_kinds != 1 else 'y'}[/bold red]"
+            )
+        table.add_row(f"[bold]{' · '.join(footer_bits)}[/bold]", "", "")
+
+        self._console.print(table)
+
+        if classification_failed:
+            self._console.print(
+                "[yellow]Classification incomplete — strategies will be included optimistically.[/yellow]"
+            )
+            if classification_error:
+                self._console.print(f"[yellow]  reason: {classification_error}[/yellow]")
+        elif classification_disabled:
+            self._console.print(
+                "[dim]Capability classification disabled (no llm_client configured); "
+                "showing configured resources only.[/dim]"
+            )
 
     def _render_filtering_metadata(self, filtering_metadata: dict[str, Any]) -> None:
         """Render strategy filtering summary per category."""

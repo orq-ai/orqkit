@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, cast
 from loguru import logger
 
 from evaluatorq import DataPoint, EvaluationResult, job
+from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities, classify_agent_capabilities
 from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay, _get_active_progress
 from evaluatorq.redteam.adaptive.pipeline import (
     cleanup_memory_entities,
@@ -45,9 +46,9 @@ from evaluatorq.redteam.backends.base import (
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.contracts import (
+    PIPELINE_CONFIG,
     AgentContext,
     LLMConfig,
-    PIPELINE_CONFIG,
     Pipeline,
     PipelineStage,
     RedTeamReport,
@@ -798,6 +799,7 @@ async def _prepare_target(
     shared_datapoints: list[Any] | None = None,
     attacker_instructions: str | None = None,
     prefetched_agent_context: AgentContext | None = None,
+    prefetched_agent_capabilities: AgentCapabilities | None = None,
     prefetched_static_data: list[Any] | None = None,
     verbosity: int = 0,
     pipeline_config: LLMConfig | None = None,
@@ -877,6 +879,7 @@ async def _prepare_target(
                 parallelism=parallelism,
                 attacker_instructions=attacker_instructions,
                 pipeline_config=pipeline_config,
+                agent_capabilities=prefetched_agent_capabilities,
             )
         else:
             # Fallback: categories that could not be resolved to vulnerabilities
@@ -892,6 +895,7 @@ async def _prepare_target(
                 parallelism=parallelism,
                 attacker_instructions=attacker_instructions,
                 pipeline_config=pipeline_config,
+                agent_capabilities=prefetched_agent_capabilities,
             )
 
         if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(dynamic_datapoints) > max_dynamic_datapoints:
@@ -1099,8 +1103,10 @@ async def _run_dynamic_or_hybrid(
         parent_context=parent_context,
     ) as pipeline_span:
 
-        # Step 1: Retrieve agent context for all targets (cheap) so we
-        # can show capabilities in the confirmation prompt before expensive generation.
+        # Step 1: Retrieve agent context for all targets (cheap), then classify
+        # capabilities per target so the on_stage_end(CONTEXT_RETRIEVAL) signal
+        # for each target carries the classifier output. Hook implementations
+        # render the per-target capability table from that meta payload.
         bundle = resolve_backend('orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config)
         all_agent_contexts: dict[str, AgentContext] = {}
         resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": all_target_labels})
@@ -1108,12 +1114,6 @@ async def _run_dynamic_or_hybrid(
             _kind, value = _parse_target(target_str)
             ctx = await bundle.context_provider.get_agent_context(value)
             all_agent_contexts[target_str] = ctx
-            resolved_hooks.on_stage_end(PipelineStage.CONTEXT_RETRIEVAL, {
-                "target": value,
-                "num_tools": len(ctx.tools) if ctx.tools else 0,
-                "num_memory_stores": len(ctx.memory_stores) if ctx.memory_stores else 0,
-                "num_knowledge_bases": len(ctx.knowledge_bases) if ctx.knowledge_bases else 0,
-            })
         # Pre-fetch contexts for AgentTarget objects (they may provide their own context)
         at_contexts: dict[int, AgentContext] = {}
         for at in resolved_agent_targets:
@@ -1144,6 +1144,111 @@ async def _run_dynamic_or_hybrid(
         else:
             msg = 'red_team() requires at least one target'
             raise ValueError(msg)
+
+        # Step 1b: Classify agent capabilities per target (one LLM call each).
+        # The result is threaded into the on_stage_end(CONTEXT_RETRIEVAL) meta
+        # so hooks can render a per-target capability table, AND into
+        # _prepare_target / direct-target paths so the planner skips its own
+        # classifier call (no duplicate round-trip).
+        #
+        # Client resolution is independent of `generate_strategies`: even if
+        # strategy generation is disabled, we still want capability data for
+        # operator visibility. `create_async_llm_client()` raises BackendError
+        # when no credentials are available, which we treat as "classification
+        # disabled" rather than a hard error.
+        cap_llm_client = llm_client
+        if cap_llm_client is None and pipeline_config is not None and pipeline_config.attacker.client is not None:
+            cap_llm_client = pipeline_config.attacker.client
+        if cap_llm_client is None:
+            try:
+                cap_llm_client = create_async_llm_client()
+            except Exception as exc:
+                logger.debug(f'No LLM client available for capability classification: {exc}')
+                cap_llm_client = None
+
+        all_agent_caps: dict[str, AgentCapabilities] = {}
+        at_caps: dict[int, AgentCapabilities] = {}
+        # target_label -> human-readable error string, for surfacing in the table
+        classification_errors: dict[str, str] = {}
+
+        if cap_llm_client is not None:
+            async def _classify_one(ctx: AgentContext, label: str) -> AgentCapabilities:
+                async with with_redteam_span("orq.redteam.capability_classification", {
+                    "orq.redteam.target": ctx.key,
+                    "orq.redteam.num_tools": len(ctx.tools) if ctx.tools else 0,
+                    "orq.redteam.model": attack_model,
+                }) as cap_span:
+                    try:
+                        caps = await classify_agent_capabilities(
+                            agent_context=ctx,
+                            llm_client=cap_llm_client,
+                            model=attack_model,
+                            pipeline_config=pipeline_config,
+                        )
+                    except Exception as exc:
+                        # Capture the error message so the renderer can show *why*
+                        # classification failed (auth, network, model error, etc.)
+                        # instead of a generic "incomplete" hint.
+                        err_str = f'{type(exc).__name__}: {exc}'
+                        classification_errors[label] = err_str
+                        logger.warning(
+                            f'Capability classification failed for {ctx.key!r}: {err_str}. '
+                            f'Strategies will be included optimistically.'
+                        )
+                        return AgentCapabilities(classification_failed=True)
+                    set_span_attrs(cap_span, {
+                        "orq.redteam.num_capabilities": len(caps.all_capabilities()),
+                        "orq.redteam.classification_failed": caps.classification_failed,
+                    })
+                    return caps
+
+            string_target_items = list(all_agent_contexts.items())
+            at_items = [
+                (agent_target_labels[id(at)], at_contexts[id(at)])
+                for at in resolved_agent_targets
+            ]
+            all_results = await asyncio.gather(
+                *[_classify_one(ctx, t) for t, ctx in string_target_items],
+                *[_classify_one(ctx, label) for label, ctx in at_items],
+            )
+            n_strings = len(string_target_items)
+            for (t, _), caps in zip(string_target_items, all_results[:n_strings], strict=True):
+                all_agent_caps[t] = caps
+            for at, caps in zip(resolved_agent_targets, all_results[n_strings:], strict=True):
+                at_caps[id(at)] = caps
+        else:
+            for t in all_agent_contexts:
+                all_agent_caps[t] = AgentCapabilities()
+            for at_id in at_contexts:
+                at_caps[at_id] = AgentCapabilities()
+
+        # Step 1c: Emit on_stage_end(CONTEXT_RETRIEVAL) per target with both
+        # the resource summary and the classifier output, so hook
+        # implementations can render the capability table inline.
+        def _ctx_end_meta(target_label: str, ctx: AgentContext, caps: AgentCapabilities) -> dict[str, Any]:
+            err = classification_errors.get(target_label)
+            return {
+                "target": target_label,
+                "num_tools": len(ctx.tools) if ctx.tools else 0,
+                "num_memory_stores": len(ctx.memory_stores) if ctx.memory_stores else 0,
+                "num_knowledge_bases": len(ctx.knowledge_bases) if ctx.knowledge_bases else 0,
+                "agent_context": ctx.model_dump(mode='json'),
+                "agent_capabilities": caps.model_dump(mode='json'),
+                "classification_error": err,
+                "classification_available": cap_llm_client is not None,
+            }
+
+        for target_str, ctx in all_agent_contexts.items():
+            resolved_hooks.on_stage_end(
+                PipelineStage.CONTEXT_RETRIEVAL,
+                _ctx_end_meta(target_str, ctx, all_agent_caps[target_str]),
+            )
+        for at in resolved_agent_targets:
+            label = agent_target_labels[id(at)]
+            resolved_hooks.on_stage_end(
+                PipelineStage.CONTEXT_RETRIEVAL,
+                _ctx_end_meta(label, at_contexts[id(at)], at_caps[id(at)]),
+            )
 
         # Step 2: Estimate datapoint counts (cheap registry lookups, no LLM).
         est_dynamic = 0
@@ -1280,6 +1385,7 @@ async def _run_dynamic_or_hybrid(
             first_target = await _prepare_target(
                 target=targets[0],
                 prefetched_agent_context=first_agent_context,
+                prefetched_agent_capabilities=all_agent_caps.get(targets[0]),
                 prefetched_static_data=static_data,
                 **common_prepare_kwargs,
             )
@@ -1292,6 +1398,7 @@ async def _run_dynamic_or_hybrid(
                             target=t,
                             shared_datapoints=first_target.all_datapoints,
                             prefetched_agent_context=all_agent_contexts.get(t),
+                            prefetched_agent_capabilities=all_agent_caps.get(t),
                             **common_prepare_kwargs,
                         )
                         for t in targets[1:]
@@ -1364,6 +1471,7 @@ async def _run_dynamic_or_hybrid(
                         "num_categories": len(resolved_categories),
                         "target": at_label,
                     })
+                    at_pref_caps = at_caps.get(id(at))
                     if resolved_vulns is not None:
                         at_dps, at_filter_meta = await generate_dynamic_datapoints_for_vulnerabilities(
                             agent_context=at_ctx,
@@ -1377,6 +1485,7 @@ async def _run_dynamic_or_hybrid(
                             parallelism=parallelism,
                             attacker_instructions=attacker_instructions,
                             pipeline_config=pipeline_config,
+                            agent_capabilities=at_pref_caps,
                         )
                     else:
                         at_dps, at_filter_meta = await generate_dynamic_datapoints(
@@ -1391,6 +1500,7 @@ async def _run_dynamic_or_hybrid(
                             parallelism=parallelism,
                             attacker_instructions=attacker_instructions,
                             pipeline_config=pipeline_config,
+                            agent_capabilities=at_pref_caps,
                         )
                     if max_dynamic_datapoints is not None and max_dynamic_datapoints > 0 and len(at_dps) > max_dynamic_datapoints:
                         at_dps = _cap_datapoints_balanced(at_dps, max_dynamic_datapoints)
