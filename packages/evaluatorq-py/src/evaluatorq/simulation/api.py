@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import os
 from typing import TYPE_CHECKING
 
@@ -40,6 +39,9 @@ async def simulate(
     parallelism: int = 5,
     user_simulator: BaseAgent | None = None,
     judge: BaseAgent | None = None,
+    upload_results: bool = False,
+    evaluation_description: str | None = None,
+    path: str | None = None,
 ) -> list[SimulationResult]:
     """High-level function to run agent simulations.
 
@@ -48,6 +50,8 @@ async def simulate(
     - Generating first messages for each combination
     - Running simulations in parallel
     - Applying evaluators to results
+    - Optional upload of results to the Orq platform — pass
+      ``upload_results=True`` and set ``ORQ_API_KEY`` to enable.
 
     Args:
         target_callback: Callable that receives the conversation history and
@@ -62,11 +66,29 @@ async def simulate(
             in the current datapoint's persona and scenario.
         judge: Pre-constructed ``BaseAgent`` used to evaluate each turn.
             When omitted a default ``JudgeAgent`` is built from ``model``.
+        upload_results: When ``True``, results are uploaded to the Orq
+            platform if ``ORQ_API_KEY`` is set in the environment. Upload
+            errors are logged but do not fail the call. Defaults to
+            ``False`` (opt-in) so simulate() does not perform network
+            uploads silently — callers must opt in explicitly to surface
+            results in the platform.
+        evaluation_description: Optional human-readable description attached
+            to the experiment uploaded to Orq. Mirrors ``evaluatorq()``.
+        path: Optional Orq folder path (e.g. ``"MyProject/MyFolder"``) under
+            which the experiment is created. Mirrors ``evaluatorq()``.
     """
+    from datetime import datetime, timezone
+
     from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.upload import upload_simulation_results
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
+    # Initialize OTel tracing (no-op if already initialized or not configured)
     await init_tracing_if_needed()
+
+    # Capture start_time AFTER tracing init so the duration we report to the
+    # platform reflects only simulation work, not first-time OTel setup.
+    start_time = datetime.now(tz=timezone.utc)
 
     try:
         async with with_simulation_span(
@@ -77,7 +99,7 @@ async def simulate(
                 "orq.simulation.parallelism": parallelism,
             },
         ) as pipeline_span:
-            return await _simulate_core(
+            results = await _simulate_core(
                 evaluation_name=evaluation_name,
                 agent_key=agent_key,
                 target_callback=target_callback,
@@ -93,7 +115,26 @@ async def simulate(
                 judge=judge,
                 pipeline_span=pipeline_span,
             )
+
+        # Upload runs OUTSIDE the pipeline span — matches evaluatorq core's
+        # pattern (evaluatorq.py) where upload happens after the eval span
+        # closes. Keeps the trace timing focused on simulation work.
+        api_key = os.environ.get("ORQ_API_KEY")
+        if upload_results and api_key:
+            await upload_simulation_results(
+                api_key=api_key,
+                evaluation_name=evaluation_name or "simulation",
+                evaluation_description=evaluation_description,
+                results=results,
+                start_time=start_time,
+                end_time=datetime.now(tz=timezone.utc),
+                model=model,
+                path=path,
+            )
+
+        return results
     finally:
+        # Flush pending spans to ensure they're exported before the process exits
         await flush_tracing()
 
 
@@ -239,14 +280,6 @@ async def _simulate_core(
         return results
     finally:
         await runner.close()
-        # Close the target if it owns resources (e.g. OrqResponsesTarget
-        # built its own AsyncOpenAI client). Plain callables / functions
-        # have no close(); duck-type to avoid coupling to the concrete type.
-        target_close = getattr(resolved_callback, "close", None)
-        if callable(target_close):
-            maybe = target_close()
-            if inspect.isawaitable(maybe):
-                await maybe
 
 
 async def _generate_single_datapoint(
@@ -279,19 +312,36 @@ async def generate_and_simulate(
     model: str = DEFAULT_MODEL,
     evaluator_names: list[str] | None = None,
     parallelism: int = 5,
+    upload_results: bool = False,
+    evaluation_description: str | None = None,
+    path: str | None = None,
 ) -> list[SimulationResult]:
     """Generate personas/scenarios and run simulations.
 
-    Convenience function that combines generation and simulation.
+    Convenience function that combines generation and simulation. Pass
+    ``upload_results=True`` to upload results to the Orq platform after
+    the run; defaults to ``False`` so the call performs no network
+    upload unless explicitly requested.
+
+    ``ORQ_API_KEY`` is required for this function to work at all (persona
+    and scenario generation calls the Orq router). The ``upload_results``
+    flag only controls the final results upload, not the generation calls.
     """
+    from datetime import datetime, timezone
+
     from openai import AsyncOpenAI
 
     from evaluatorq.simulation.adapters import from_orq_deployment
     from evaluatorq.simulation.generators import PersonaGenerator, ScenarioGenerator
     from evaluatorq.simulation.tracing import with_simulation_span
+    from evaluatorq.simulation.upload import upload_simulation_results
     from evaluatorq.tracing.setup import flush_tracing, init_tracing_if_needed
 
+    # Initialize OTel tracing early so generation spans are captured
     await init_tracing_if_needed()
+
+    # Capture after init so duration excludes first-time OTel setup.
+    start_time = datetime.now(tz=timezone.utc)
 
     # Bridge agentKey to invoke() if no callback is provided
     resolved_callback = target_callback
@@ -344,7 +394,7 @@ async def generate_and_simulate(
                 await shared_client.close()
 
             # Delegate to core (no duplicate pipeline span)
-            return await _simulate_core(
+            results = await _simulate_core(
                 evaluation_name=evaluation_name,
                 agent_key=None,
                 target_callback=resolved_callback,
@@ -360,5 +410,22 @@ async def generate_and_simulate(
                 judge=None,
                 pipeline_span=pipeline_span,
             )
+
+        # Upload runs outside the pipeline span (see simulate() for rationale).
+        # api_key is guaranteed non-empty here (validated above), so the
+        # symmetric `and api_key` guard is omitted.
+        if upload_results:
+            await upload_simulation_results(
+                api_key=api_key,
+                evaluation_name=evaluation_name or "simulation",
+                evaluation_description=evaluation_description,
+                results=results,
+                start_time=start_time,
+                end_time=datetime.now(tz=timezone.utc),
+                model=model,
+                path=path,
+            )
+
+        return results
     finally:
         await flush_tracing()
