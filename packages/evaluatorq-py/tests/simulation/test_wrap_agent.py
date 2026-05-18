@@ -165,3 +165,15 @@ class TestWrapSimulationAgent:
                 ),
                 0,
             )
+
+
+@pytest.mark.asyncio
+async def test_wrap_simulation_agent_rejects_removed_evaluators_kwarg():
+    """RES-594 removed wrap_simulation_agent(evaluators=...). Callers
+    relying on the old kwarg must see a loud TypeError instead of
+    silently losing their scoring."""
+    with pytest.raises(TypeError, match="evaluators"):
+        wrap_simulation_agent(
+            target_callback=lambda _msgs: "ok",
+            evaluators=["goal_achieved"],  # type: ignore[call-arg]
+        )

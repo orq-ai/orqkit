@@ -289,9 +289,23 @@ async def _resolve_or_generate_datapoints(
         for i in range(0, len(pairs), batch_size):
             batch = pairs[i : i + batch_size]
             batch_results = await asyncio.gather(
-                *[_generate_single_datapoint(first_msg_gen, p, s) for p, s in batch]
+                *[_generate_single_datapoint(first_msg_gen, p, s) for p, s in batch],
+                return_exceptions=True,
             )
-            generated.extend(batch_results)
+            for (p, s), outcome in zip(batch, batch_results, strict=True):
+                if isinstance(outcome, BaseException):
+                    logger.warning(
+                        "first-message generation failed for persona=%r scenario=%r: %r — skipping",
+                        p.name,
+                        s.name,
+                        outcome,
+                    )
+                    continue
+                generated.append(outcome)
+        if not generated:
+            raise RuntimeError(
+                "first-message generation produced no datapoints — every persona×scenario pair failed"
+            )
         return generated
     finally:
         await shared_client.close()
@@ -309,9 +323,16 @@ async def _fetch_simulation_datapoints_from_orq(
 
     orq_client = setup_orq_client(api_key)
     out: list[Datapoint] = []
+    row = 0
     async for batch in fetch_dataset_batches(orq_client, dataset_id):
         for eq_dp in batch.datapoints:
-            out.append(_extract_single_datapoint(eq_dp))
+            try:
+                out.append(_extract_single_datapoint(eq_dp))
+            except ValueError as e:
+                raise ValueError(
+                    f"dataset {dataset_id!r} row {row}: {e}"
+                ) from e
+            row += 1
     if not out:
         raise ValueError(
             f"Dataset {dataset_id!r} returned zero simulation-compatible datapoints"
@@ -372,23 +393,18 @@ def _build_simulation_job_and_cache(
     result_cache: dict[int, SimulationResult] = {}
 
     async def job_fn(data: DataPoint, _row: int) -> dict[str, Any]:
-        idx = _read_sim_idx(data)
+        idx = data.inputs.get(_SIM_IDX_KEY)
+        if not isinstance(idx, int):
+            raise RuntimeError(
+                f"DataPoint.inputs is missing integer {_SIM_IDX_KEY!r} — "
+                "simulate()'s scorer/result wiring requires it"
+            )
         sim_dp = _extract_single_datapoint(data)
         result = await runner.run(datapoint=sim_dp, max_turns=max_turns)
         result_cache[idx] = result
         return {"name": job_name, "output": to_open_responses(result, model)}
 
     return job_fn, result_cache, runner
-
-
-def _read_sim_idx(data: DataPoint) -> int:
-    idx = data.inputs.get(_SIM_IDX_KEY)
-    if not isinstance(idx, int):
-        raise RuntimeError(
-            f"DataPoint.inputs is missing integer '{_SIM_IDX_KEY}' — "
-            "simulate()'s scorer/result wiring requires it"
-        )
-    return idx
 
 
 def _adapt_simulation_scorer(
@@ -405,17 +421,29 @@ def _adapt_simulation_scorer(
     from evaluatorq.types import EvaluationResult, ScorerParameter
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
+        # Both failure paths raise rather than returning a sentinel `0.0` —
+        # evaluatorq's process_evaluator catches and records the error on
+        # the EvaluatorScore, so callers (and exit_on_failure) see a real
+        # failure instead of mistaking a degenerate score for a low result.
         data = params["data"]
         idx = data.inputs.get(_SIM_IDX_KEY)
         sim_result = result_cache.get(idx) if isinstance(idx, int) else None
         if sim_result is None:
-            return EvaluationResult(
-                value=0.0, explanation="simulation result missing from cache"
+            logger.error(
+                "scorer %r: no SimulationResult cached for _sim_idx=%r — "
+                "upstream simulation job failed or did not run",
+                name,
+                idx,
+            )
+            raise RuntimeError(
+                f"missing simulation result for _sim_idx={idx} (scorer={name!r})"
             )
         try:
             value = sim_scorer(sim_result)
-        except Exception as e:  # noqa: BLE001 — scorer errors must not crash the run
-            return EvaluationResult(value=0.0, explanation=f"scorer error: {e}")
+        except Exception as e:
+            logger.exception("scorer %r raised on _sim_idx=%s", name, idx)
+            sim_result.metadata.setdefault("scorer_errors", {})[name] = repr(e)
+            raise
         # Mirror old simulate() behavior so callers inspecting
         # SimulationResult.metadata still find evaluator_scores.
         scores_dict = sim_result.metadata.setdefault("evaluator_scores", {})
@@ -495,17 +523,22 @@ async def _simulate_via_evaluatorq(
             _exit_on_failure=exit_on_failure,
         )
     finally:
-        await runner.close()
+        try:
+            await runner.close()
+        except Exception:
+            # Don't let runner-cleanup errors mask the primary exception
+            # from evaluatorq() if there was one.
+            logger.exception("SimulationRunner.close() raised during cleanup")
 
     expected = len(eq_datapoints)
-    delivered = len(result_cache)
-    if delivered < expected:
-        logger.warning(
-            "%s() returning %d of %d datapoints — %d job(s) failed and were dropped",
-            caller,
-            delivered,
-            expected,
-            expected - delivered,
+    missing_idx = [idx for idx in range(expected) if idx not in result_cache]
+    if missing_idx:
+        msg = (
+            f"{caller}(): {len(missing_idx)} of {expected} simulation job(s) failed "
+            f"and produced no result (missing _sim_idx: {missing_idx})"
         )
+        if exit_on_failure:
+            raise RuntimeError(msg)
+        logger.warning(msg)
 
     return [result_cache[idx] for idx in range(expected) if idx in result_cache]

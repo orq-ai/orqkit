@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -500,19 +501,67 @@ async def test_simulate_warns_when_jobs_drop_results(
 
     assert len(results) == 1
     assert any(
-        "simulate() returning 1 of 2 datapoints" in rec.message
+        "simulate(): 1 of 2 simulation job" in rec.message
         for rec in caplog.records
     )
 
 
 @pytest.mark.asyncio
-async def test_simulate_forwards_exit_on_failure():
+async def test_simulate_raises_on_dropped_results_when_exit_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """With exit_on_failure=True, simulate() must hard-raise when jobs
+    failed and reduced the result count — otherwise CI silently looks
+    green on broken runs."""
+    from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+
+    dps = [_make_datapoint(), _make_datapoint()]
+    monkeypatch.setattr(
+        SimulationRunner,
+        "run",
+        AsyncMock(side_effect=[_make_result(), RuntimeError("blew up")]),
+    )
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
+        for dp in data:
+            try:
+                await jobs[0](dp, 0)
+            except Exception:  # noqa: BLE001
+                pass
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
+        with pytest.raises(RuntimeError, match="1 of 2 simulation job"):
+            await simulate(
+                target_callback=lambda _msgs: "ok",
+                datapoints=dps,
+                max_turns=1,
+                upload_results=False,
+                exit_on_failure=True,
+            )
+
+
+@pytest.mark.asyncio
+async def test_simulate_forwards_exit_on_failure(monkeypatch: pytest.MonkeyPatch):
     """exit_on_failure=True propagates to evaluatorq's _exit_on_failure so
     callers wiring simulate() into CI can opt into hard-failing on errors."""
     from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
 
-    eq_mock = AsyncMock(return_value=[])
-    with patch.object(_evq_module, "evaluatorq", new=eq_mock):
+    monkeypatch.setattr(
+        SimulationRunner, "run", AsyncMock(return_value=_make_result())
+    )
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    captured: dict[str, Any] = {}
+
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **kwargs):
+        captured.update(kwargs)
+        for dp in data:
+            await jobs[0](dp, 0)
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
         await simulate(
             target_callback=lambda _msgs: "ok",
             datapoints=[_make_datapoint()],
@@ -520,8 +569,7 @@ async def test_simulate_forwards_exit_on_failure():
             upload_results=False,
             exit_on_failure=True,
         )
-    assert eq_mock.await_args is not None
-    assert eq_mock.await_args.kwargs["_exit_on_failure"] is True
+    assert captured["_exit_on_failure"] is True
 
 
 @pytest.mark.asyncio
@@ -590,11 +638,13 @@ async def test_simulate_rejects_dataset_id_with_inline_datapoints():
 
 
 @pytest.mark.asyncio
-async def test_simulate_scorer_error_falls_back_to_zero(
+async def test_simulate_scorer_error_raises_so_evaluatorq_records_it(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """A failing scorer must not crash the run; the adapter returns
-    value=0.0 with an explanation."""
+    """A failing scorer must raise so evaluatorq's process_evaluator catches
+    the exception and records a structured error on EvaluatorScore. Silently
+    returning value=0.0 looked like a legitimate low score and defeated
+    exit_on_failure."""
     from evaluatorq.simulation import simulate
     from evaluatorq.simulation.runner.simulation import SimulationRunner
 
@@ -604,15 +654,16 @@ async def test_simulate_scorer_error_falls_back_to_zero(
     )
     monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
 
-    captured_results = []
+    raised: list[BaseException] = []
 
     async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
         for dp in data:
             await jobs[0](dp, 0)
             for ev in evaluators:
-                captured_results.append(
+                try:
                     await ev["scorer"]({"data": dp, "output": {}})
-                )
+                except Exception as e:  # noqa: BLE001
+                    raised.append(e)
 
     def boom(_result):
         raise ValueError("scorer broke")
@@ -630,6 +681,6 @@ async def test_simulate_scorer_error_falls_back_to_zero(
             upload_results=False,
         )
 
-    assert len(captured_results) == 1
-    assert captured_results[0].value == 0.0
-    assert "scorer error" in (captured_results[0].explanation or "")
+    assert len(raised) == 1
+    assert isinstance(raised[0], ValueError)
+    assert "scorer broke" in str(raised[0])

@@ -34,6 +34,7 @@ def wrap_simulation_agent(
     model: str | None = None,
     user_simulator: BaseAgent | None = None,
     judge: BaseAgent | None = None,
+    **deprecated_kwargs: Any,
 ) -> Callable[[DataPoint, int], Awaitable[dict[str, Any]]]:
     """Create an evaluatorq Job that runs agent simulations.
 
@@ -54,6 +55,20 @@ def wrap_simulation_agent(
             await job.aclose()
     """
     from evaluatorq.simulation.runner.simulation import SimulationRunner
+
+    if "evaluators" in deprecated_kwargs:
+        # Removed in RES-594: scoring belongs on the evaluatorq() call, not
+        # the job that produces the output. Raise loud — silently dropping
+        # scoring would be worse than a TypeError.
+        raise TypeError(
+            "wrap_simulation_agent() no longer accepts 'evaluators='. Pass your "
+            "evaluator list to evaluatorq(..., evaluators=...) instead. See CHANGELOG."
+        )
+    if deprecated_kwargs:
+        raise TypeError(
+            f"wrap_simulation_agent() got unexpected keyword arguments: "
+            f"{sorted(deprecated_kwargs)}"
+        )
 
     resolved_callback = target_callback
     if not resolved_callback and agent_key:
