@@ -2,13 +2,13 @@
 
 `simulate()` and `generate_and_simulate()` route execution through the
 `evaluatorq()` framework so they inherit auto-upload, OTel tracing, results
-display, CI gating, and dataset-id support (RES-594). The standalone
-parallelism loop and bespoke upload call from earlier revisions are gone.
+display, CI gating, and dataset-id support (RES-594).
 """
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -30,6 +30,13 @@ if TYPE_CHECKING:
     )
     from evaluatorq.types import DataPoint, Evaluator
 
+logger = logging.getLogger(__name__)
+
+# Key embedded in each evaluatorq DataPoint.inputs so the scorer adapter and
+# the final result-list reconstruction can recover their SimulationResult
+# without depending on object identity (id()) of the DataPoint instance.
+_SIM_IDX_KEY = "_sim_idx"
+
 
 async def simulate(
     *,
@@ -46,7 +53,7 @@ async def simulate(
     parallelism: int = 5,
     user_simulator: BaseAgent | None = None,
     judge: BaseAgent | None = None,
-    upload_results: bool = False,
+    upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
 ) -> list[SimulationResult]:
@@ -54,7 +61,7 @@ async def simulate(
 
     Builds simulation Datapoints (cartesian persona × scenario when needed),
     wraps them as evaluatorq ``DataPoint``s, and delegates execution,
-    parallelism, tracing, results display, and optional upload to
+    parallelism, tracing, results display, and (by default) upload to
     ``evaluatorq()``. Returns the raw ``SimulationResult`` list so existing
     callers continue to work.
 
@@ -66,9 +73,9 @@ async def simulate(
         user_simulator: Pre-constructed ``BaseAgent`` to drive the user side.
             When omitted a default ``UserSimulatorAgent`` is built from ``model``.
         judge: Pre-constructed ``BaseAgent`` used to evaluate each turn.
-        upload_results: When ``True``, results are uploaded to the Orq
-            platform if ``ORQ_API_KEY`` is set. Defaults to ``False`` so no
-            network I/O happens unless the caller opts in.
+        upload_results: When ``True`` (the default) and ``ORQ_API_KEY`` is set,
+            results are uploaded to the Orq platform as an experiment. Pass
+            ``False`` to suppress the upload (e.g. for local-only runs).
         evaluation_description: Optional description attached to the
             experiment. Mirrors ``evaluatorq()``.
         path: Optional Orq folder path (e.g. ``"MyProject/MyFolder"``).
@@ -76,6 +83,7 @@ async def simulate(
     resolved_callback = _resolve_callback(target, target_callback, agent_key)
 
     sim_datapoints = await _resolve_or_generate_datapoints(
+        caller="simulate",
         datapoints=datapoints,
         personas=personas,
         scenarios=scenarios,
@@ -112,15 +120,15 @@ async def generate_and_simulate(
     parallelism: int = 5,
     user_simulator: BaseAgent | None = None,
     judge: BaseAgent | None = None,
-    upload_results: bool = False,
+    upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
 ) -> list[SimulationResult]:
     """Generate personas/scenarios, then run simulations via evaluatorq().
 
     ``ORQ_API_KEY`` is required because persona/scenario/first-message
-    generation calls the Orq router. ``upload_results`` only controls the
-    final results upload, not the generation calls.
+    generation calls the Orq router. ``upload_results`` defaults to ``True``;
+    set it to ``False`` to skip uploading the final experiment.
     """
     from openai import AsyncOpenAI
 
@@ -148,6 +156,7 @@ async def generate_and_simulate(
         await shared_client.close()
 
     sim_datapoints = await _resolve_or_generate_datapoints(
+        caller="generate_and_simulate",
         datapoints=None,
         personas=gen_personas,
         scenarios=gen_scenarios,
@@ -192,17 +201,18 @@ def _resolve_callback(
     return resolved
 
 
-def _require_orq_api_key(context: str) -> str:
+def _require_orq_api_key(caller: str) -> str:
     api_key = os.environ.get("ORQ_API_KEY")
     if not api_key:
         raise ValueError(
-            f"ORQ_API_KEY environment variable is not set. Set it before calling {context}()."
+            f"ORQ_API_KEY environment variable is not set. Set it before calling {caller}()."
         )
     return api_key
 
 
 async def _resolve_or_generate_datapoints(
     *,
+    caller: str,
     datapoints: list[Datapoint] | None,
     personas: list[Persona] | None,
     scenarios: list[Scenario] | None,
@@ -212,7 +222,8 @@ async def _resolve_or_generate_datapoints(
 
     If ``datapoints`` is provided, returns it directly. Otherwise expands
     the persona × scenario cartesian product and generates first messages
-    through the Orq router.
+    through the Orq router. ``caller`` names the public entry point so any
+    API-key error message points the user at the right function.
     """
     if datapoints is not None:
         if not datapoints:
@@ -230,7 +241,7 @@ async def _resolve_or_generate_datapoints(
 
     from evaluatorq.simulation.generators import FirstMessageGenerator
 
-    api_key = _require_orq_api_key("simulate")
+    api_key = _require_orq_api_key(caller)
     shared_client = AsyncOpenAI(
         api_key=api_key,
         base_url=f"{os.environ.get('ORQ_BASE_URL', 'https://api.orq.ai')}/v2/router",
@@ -285,13 +296,15 @@ def _build_simulation_job_and_cache(
 ]:
     """Build the simulation job_fn, its result cache, and the shared runner.
 
-    The cache is keyed by ``id(DataPoint)`` — evaluatorq.process_data_point
-    passes the same DataPoint instance to the job and the evaluators, so the
-    scorer adapter can recover the raw SimulationResult by id lookup.
+    The cache is keyed by the integer ``_sim_idx`` embedded in each
+    DataPoint's ``inputs`` — stable across any internal copying evaluatorq
+    might do, so the scorer adapter can always recover the raw
+    ``SimulationResult``.
     """
     from evaluatorq.simulation.convert import to_open_responses
     from evaluatorq.simulation.runner.simulation import SimulationRunner
-    from evaluatorq.simulation.wrap_agent import _extract_single_datapoint
+
+    from evaluatorq.simulation._datapoint_io import _extract_single_datapoint
 
     runner = SimulationRunner(
         target_callback=target_callback,
@@ -303,12 +316,23 @@ def _build_simulation_job_and_cache(
     result_cache: dict[int, SimulationResult] = {}
 
     async def job_fn(data: DataPoint, _row: int) -> dict[str, Any]:
+        idx = _read_sim_idx(data)
         sim_dp = _extract_single_datapoint(data)
         result = await runner.run(datapoint=sim_dp, max_turns=max_turns)
-        result_cache[id(data)] = result
+        result_cache[idx] = result
         return {"name": job_name, "output": to_open_responses(result, model)}
 
     return job_fn, result_cache, runner
+
+
+def _read_sim_idx(data: DataPoint) -> int:
+    idx = data.inputs.get(_SIM_IDX_KEY)
+    if not isinstance(idx, int):
+        raise RuntimeError(
+            f"DataPoint.inputs is missing integer '{_SIM_IDX_KEY}' — "
+            "simulate()'s scorer/result wiring requires it"
+        )
+    return idx
 
 
 def _adapt_simulation_scorer(
@@ -320,24 +344,24 @@ def _adapt_simulation_scorer(
 
     The evaluatorq scorer receives ``{data: DataPoint, output: Output}``;
     it recovers the raw ``SimulationResult`` from ``result_cache`` keyed by
-    ``id(data)`` and runs the simulation-side scorer.
+    the ``_sim_idx`` stored in ``data.inputs``.
     """
     from evaluatorq.types import EvaluationResult, ScorerParameter
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params["data"]
-        sim_result = result_cache.get(id(data))
+        idx = data.inputs.get(_SIM_IDX_KEY)
+        sim_result = result_cache.get(idx) if isinstance(idx, int) else None
         if sim_result is None:
             return EvaluationResult(
                 value=0.0, explanation="simulation result missing from cache"
             )
         try:
             value = sim_scorer(sim_result)
-        except Exception as e:  # noqa: BLE001 — evaluator errors must not crash the run
+        except Exception as e:  # noqa: BLE001 — scorer errors must not crash the run
             return EvaluationResult(value=0.0, explanation=f"scorer error: {e}")
-        # Mirror the old simulate() behavior: stash the score in
-        # result.metadata so callers that inspect SimulationResult.metadata
-        # directly still see evaluator_scores after simulate() returns.
+        # Mirror old simulate() behavior so callers inspecting
+        # SimulationResult.metadata still find evaluator_scores.
         scores_dict = sim_result.metadata.setdefault("evaluator_scores", {})
         if isinstance(scores_dict, dict):
             scores_dict[name] = value
@@ -372,8 +396,13 @@ async def _simulate_via_evaluatorq(
     scorers = [(name, get_evaluator(name)) for name in resolved_evaluator_names]
 
     eq_datapoints = [
-        DataPoint(inputs={"datapoint": dp.model_dump(mode="json")})
-        for dp in sim_datapoints
+        DataPoint(
+            inputs={
+                "datapoint": dp.model_dump(mode="json"),
+                _SIM_IDX_KEY: idx,
+            }
+        )
+        for idx, dp in enumerate(sim_datapoints)
     ]
 
     job_fn, result_cache, runner = _build_simulation_job_and_cache(
@@ -411,4 +440,14 @@ async def _simulate_via_evaluatorq(
     finally:
         await runner.close()
 
-    return [result_cache[id(dp)] for dp in eq_datapoints if id(dp) in result_cache]
+    expected = len(eq_datapoints)
+    delivered = len(result_cache)
+    if delivered < expected:
+        logger.warning(
+            "simulate() returning %d of %d datapoints — %d job(s) failed and were dropped",
+            delivered,
+            expected,
+            expected - delivered,
+        )
+
+    return [result_cache[idx] for idx in range(expected) if idx in result_cache]

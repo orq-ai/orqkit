@@ -317,7 +317,9 @@ _evq_module = sys.modules["evaluatorq.evaluatorq"]
 
 
 @pytest.mark.asyncio
-async def test_simulate_calls_evaluatorq_with_send_results_true():
+async def test_simulate_calls_evaluatorq_with_send_results_true_by_default():
+    """RES-594: native integration means evaluatorq()'s upload is the canonical
+    persistence path, so simulate() defaults to letting it fire."""
     from evaluatorq.simulation import simulate
 
     async def target_cb(_msgs):
@@ -330,7 +332,6 @@ async def test_simulate_calls_evaluatorq_with_send_results_true():
             target_callback=target_cb,
             datapoints=[_make_datapoint()],
             max_turns=1,
-            upload_results=True,
         )
 
     eq_mock.assert_awaited_once()
@@ -341,7 +342,7 @@ async def test_simulate_calls_evaluatorq_with_send_results_true():
 
 
 @pytest.mark.asyncio
-async def test_simulate_calls_evaluatorq_with_send_results_false_by_default():
+async def test_simulate_forwards_upload_results_false():
     from evaluatorq.simulation import simulate
 
     async def target_cb(_msgs):
@@ -354,6 +355,7 @@ async def test_simulate_calls_evaluatorq_with_send_results_false_by_default():
             target_callback=target_cb,
             datapoints=[_make_datapoint()],
             max_turns=1,
+            upload_results=False,
         )
 
     assert eq_mock.await_args is not None
