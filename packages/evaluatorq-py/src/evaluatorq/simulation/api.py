@@ -86,10 +86,14 @@ async def simulate(
         evaluation_description: Optional description attached to the
             experiment. Mirrors ``evaluatorq()``.
         path: Optional Orq folder path (e.g. ``"MyProject/MyFolder"``).
-        exit_on_failure: When ``True``, call ``sys.exit(1)`` if any datapoint
-            or evaluator produced a failure — useful for CI gating. Defaults
-            to ``False`` so simulation failures stay surfaced as warnings /
-            error metadata instead of crashing the caller.
+        exit_on_failure: When ``True``, exit non-zero if any datapoint or
+            evaluator produced a failure — useful for CI gating. Two paths:
+            score-based failures (``pass_=False`` on a scorer result) call
+            ``sys.exit(1)`` via evaluatorq's own gate; dropped jobs (job
+            raised, no result cached) raise ``RuntimeError`` from
+            ``simulate()`` itself. Both exit non-zero when uncaught.
+            Defaults to ``False`` so simulation failures stay surfaced as
+            warnings / error metadata instead of crashing the caller.
     """
     resolved_callback = _resolve_callback(target, target_callback, agent_key)
 
@@ -144,6 +148,8 @@ async def generate_and_simulate(
     ``ORQ_API_KEY`` is required because persona/scenario/first-message
     generation calls the Orq router. ``upload_results`` defaults to ``True``;
     set it to ``False`` to skip uploading the final experiment.
+    ``exit_on_failure`` defaults to ``False``; see ``simulate()`` for the
+    full semantics of the CI-gate behaviour when set to ``True``.
     """
     from openai import AsyncOpenAI
 
