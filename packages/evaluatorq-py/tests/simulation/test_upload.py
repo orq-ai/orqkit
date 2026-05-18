@@ -506,6 +506,90 @@ async def test_simulate_warns_when_jobs_drop_results(
 
 
 @pytest.mark.asyncio
+async def test_simulate_forwards_exit_on_failure():
+    """exit_on_failure=True propagates to evaluatorq's _exit_on_failure so
+    callers wiring simulate() into CI can opt into hard-failing on errors."""
+    from evaluatorq.simulation import simulate
+
+    eq_mock = AsyncMock(return_value=[])
+    with patch.object(_evq_module, "evaluatorq", new=eq_mock):
+        await simulate(
+            target_callback=lambda _msgs: "ok",
+            datapoints=[_make_datapoint()],
+            max_turns=1,
+            upload_results=False,
+            exit_on_failure=True,
+        )
+    assert eq_mock.await_args is not None
+    assert eq_mock.await_args.kwargs["_exit_on_failure"] is True
+
+
+@pytest.mark.asyncio
+async def test_simulate_dataset_id_fetches_and_runs(monkeypatch: pytest.MonkeyPatch):
+    """When given dataset_id, simulate() must fetch the dataset via the Orq
+    client, parse each row through the same shape-tolerant extractor used
+    inline, and run the standard pipeline. No inline datapoints supplied."""
+    from evaluatorq.simulation import simulate
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
+    from evaluatorq.types import DataPoint
+
+    monkeypatch.setenv("ORQ_API_KEY", "test-key")
+
+    sim_dp = _make_datapoint()
+    eq_rows = [DataPoint(inputs={"datapoint": sim_dp.model_dump(mode="json")})]
+
+    class _FakeBatch:
+        def __init__(self, dps):
+            self.datapoints = dps
+
+    async def fake_fetch(_client, _dataset_id, **_kwargs):
+        yield _FakeBatch(eq_rows)
+        return
+
+    monkeypatch.setattr(
+        "evaluatorq.fetch_data.fetch_dataset_batches", fake_fetch
+    )
+    monkeypatch.setattr(
+        "evaluatorq.fetch_data.setup_orq_client", lambda _k: object()
+    )
+
+    runner_run = AsyncMock(return_value=_make_result())
+    monkeypatch.setattr(SimulationRunner, "run", runner_run)
+    monkeypatch.setattr(SimulationRunner, "close", AsyncMock())
+
+    async def fake_evaluatorq(name, *, data, jobs, evaluators, **_kwargs):
+        for dp in data:
+            await jobs[0](dp, 0)
+
+    with patch.object(_evq_module, "evaluatorq", new=fake_evaluatorq):
+        results = await simulate(
+            target_callback=lambda _msgs: "ok",
+            dataset_id="ds-123",
+            max_turns=1,
+            upload_results=False,
+        )
+
+    assert len(results) == 1
+    runner_run.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_simulate_rejects_dataset_id_with_inline_datapoints():
+    """dataset_id, datapoints, and personas/scenarios are mutually exclusive
+    sources — passing two raises before any work starts."""
+    from evaluatorq.simulation import simulate
+
+    with pytest.raises(ValueError, match="exactly one of"):
+        await simulate(
+            target_callback=lambda _msgs: "ok",
+            dataset_id="ds-123",
+            datapoints=[_make_datapoint()],
+            max_turns=1,
+            upload_results=False,
+        )
+
+
+@pytest.mark.asyncio
 async def test_simulate_scorer_error_falls_back_to_zero(
     monkeypatch: pytest.MonkeyPatch,
 ):

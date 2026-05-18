@@ -47,6 +47,7 @@ async def simulate(
     personas: list[Persona] | None = None,
     scenarios: list[Scenario] | None = None,
     datapoints: list[Datapoint] | None = None,
+    dataset_id: str | None = None,
     max_turns: int = 10,
     model: str = DEFAULT_MODEL,
     evaluator_names: list[str] | None = None,
@@ -56,6 +57,7 @@ async def simulate(
     upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
+    exit_on_failure: bool = False,
 ) -> list[SimulationResult]:
     """Run agent simulations through the evaluatorq() framework.
 
@@ -73,12 +75,21 @@ async def simulate(
         user_simulator: Pre-constructed ``BaseAgent`` to drive the user side.
             When omitted a default ``UserSimulatorAgent`` is built from ``model``.
         judge: Pre-constructed ``BaseAgent`` used to evaluate each turn.
+        dataset_id: When set, fetch simulation datapoints from the named Orq
+            dataset instead of taking them inline. Mutually exclusive with
+            ``datapoints``, ``personas``, ``scenarios``. Each dataset row's
+            ``inputs`` must already match one of the simulation input shapes
+            (``datapoint`` / ``persona`` + ``scenario`` / etc.).
         upload_results: When ``True`` (the default) and ``ORQ_API_KEY`` is set,
             results are uploaded to the Orq platform as an experiment. Pass
             ``False`` to suppress the upload (e.g. for local-only runs).
         evaluation_description: Optional description attached to the
             experiment. Mirrors ``evaluatorq()``.
         path: Optional Orq folder path (e.g. ``"MyProject/MyFolder"``).
+        exit_on_failure: When ``True``, call ``sys.exit(1)`` if any datapoint
+            or evaluator produced a failure — useful for CI gating. Defaults
+            to ``False`` so simulation failures stay surfaced as warnings /
+            error metadata instead of crashing the caller.
     """
     resolved_callback = _resolve_callback(target, target_callback, agent_key)
 
@@ -87,6 +98,7 @@ async def simulate(
         datapoints=datapoints,
         personas=personas,
         scenarios=scenarios,
+        dataset_id=dataset_id,
         model=model,
     )
 
@@ -104,6 +116,7 @@ async def simulate(
         upload_results=upload_results,
         evaluation_description=evaluation_description,
         path=path,
+        exit_on_failure=exit_on_failure,
     )
 
 
@@ -124,6 +137,7 @@ async def generate_and_simulate(
     upload_results: bool = True,
     evaluation_description: str | None = None,
     path: str | None = None,
+    exit_on_failure: bool = False,
 ) -> list[SimulationResult]:
     """Generate personas/scenarios, then run simulations via evaluatorq().
 
@@ -161,6 +175,7 @@ async def generate_and_simulate(
         datapoints=None,
         personas=gen_personas,
         scenarios=gen_scenarios,
+        dataset_id=None,
         model=model,
     )
 
@@ -178,6 +193,7 @@ async def generate_and_simulate(
         upload_results=upload_results,
         evaluation_description=evaluation_description,
         path=path,
+        exit_on_failure=exit_on_failure,
     )
 
 
@@ -218,15 +234,31 @@ async def _resolve_or_generate_datapoints(
     datapoints: list[Datapoint] | None,
     personas: list[Persona] | None,
     scenarios: list[Scenario] | None,
+    dataset_id: str | None,
     model: str,
 ) -> list[Datapoint]:
     """Return ready-to-run Datapoints.
 
-    If ``datapoints`` is provided, returns it directly. Otherwise expands
-    the persona × scenario cartesian product and generates first messages
-    through the Orq router. ``caller`` names the public entry point so any
+    Resolution precedence: ``dataset_id`` → ``datapoints`` → persona × scenario
+    cartesian product (with first-message generation). The three sources are
+    mutually exclusive. ``caller`` names the public entry point so any
     API-key error message points the user at the right function.
     """
+    sources = [
+        ("dataset_id", dataset_id is not None),
+        ("datapoints", datapoints is not None),
+        ("personas/scenarios", personas is not None or scenarios is not None),
+    ]
+    chosen = [name for name, present in sources if present]
+    if len(chosen) > 1:
+        raise ValueError(
+            f"Pass exactly one of dataset_id, datapoints, or personas+scenarios; got: {', '.join(chosen)}"
+        )
+
+    if dataset_id is not None:
+        api_key = _require_orq_api_key(caller)
+        return await _fetch_simulation_datapoints_from_orq(api_key, dataset_id)
+
     if datapoints is not None:
         if not datapoints:
             raise ValueError("'datapoints' must be non-empty")
@@ -234,7 +266,7 @@ async def _resolve_or_generate_datapoints(
 
     if personas is None or scenarios is None:
         raise ValueError(
-            "Either provide 'datapoints' or both 'personas' and 'scenarios'"
+            "Either provide 'dataset_id', 'datapoints', or both 'personas' and 'scenarios'"
         )
     if not personas or not scenarios:
         raise ValueError("'personas' and 'scenarios' arrays must both be non-empty")
@@ -263,6 +295,28 @@ async def _resolve_or_generate_datapoints(
         return generated
     finally:
         await shared_client.close()
+
+
+async def _fetch_simulation_datapoints_from_orq(
+    api_key: str, dataset_id: str
+) -> list[Datapoint]:
+    """Stream the named Orq dataset and parse each row into a simulation
+    Datapoint via the same shape-tolerant extractor used by the inline path.
+    """
+    from evaluatorq.fetch_data import fetch_dataset_batches, setup_orq_client
+
+    from evaluatorq.simulation._datapoint_io import _extract_single_datapoint
+
+    orq_client = setup_orq_client(api_key)
+    out: list[Datapoint] = []
+    async for batch in fetch_dataset_batches(orq_client, dataset_id):
+        for eq_dp in batch.datapoints:
+            out.append(_extract_single_datapoint(eq_dp))
+    if not out:
+        raise ValueError(
+            f"Dataset {dataset_id!r} returned zero simulation-compatible datapoints"
+        )
+    return out
 
 
 async def _generate_single_datapoint(
@@ -387,6 +441,7 @@ async def _simulate_via_evaluatorq(
     upload_results: bool,
     evaluation_description: str | None,
     path: str | None,
+    exit_on_failure: bool,
 ) -> list[SimulationResult]:
     """Wrap simulation Datapoints as evaluatorq DataPoints and run."""
     from datetime import datetime, timezone
@@ -437,7 +492,7 @@ async def _simulate_via_evaluatorq(
             description=evaluation_description,
             path=path,
             _send_results=upload_results,
-            _exit_on_failure=False,
+            _exit_on_failure=exit_on_failure,
         )
     finally:
         await runner.close()
