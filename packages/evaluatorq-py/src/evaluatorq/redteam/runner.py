@@ -136,6 +136,7 @@ async def _send_cleaned_results(
     name: str,
     description: str,
     start_time: datetime,
+    report: RedTeamReport | None = None,
 ) -> None:
     """Strip skipped job results and upload to the Orq platform.
 
@@ -144,6 +145,9 @@ async def _send_cleaned_results(
     output — the rest return ``None``.  Before uploading we remove those
     empty job results so the experiment shows one clean row per datapoint
     without duplication.
+
+    If *report* is provided, ``report.experiment_url`` is set to the URL
+    returned by the platform on a successful upload.
     """
     api_key = os.environ.get("ORQ_API_KEY")
     if not api_key:
@@ -169,7 +173,7 @@ async def _send_cleaned_results(
 
     logger.debug(f"Sending {len(cleaned)} cleaned results to Orq platform (stripped from {len(results)} raw)")
     try:
-        await send_results_to_orq(
+        experiment_url = await send_results_to_orq(
             api_key=api_key,
             evaluation_name=name,
             evaluation_description=description,
@@ -178,6 +182,8 @@ async def _send_cleaned_results(
             start_time=start_time,
             end_time=datetime.now(tz=timezone.utc),
         )
+        if report is not None and experiment_url:
+            report.experiment_url = experiment_url
     except Exception as e:
         logger.error(
             f'Failed to upload {len(cleaned)} results to Orq platform: {e}. '
@@ -1741,6 +1747,7 @@ async def _run_dynamic_or_hybrid(
             name=resolved_name,
             description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
             start_time=pipeline_start,
+            report=merged,
         )
 
         set_span_attrs(pipeline_span, {
@@ -2005,6 +2012,7 @@ async def _run_static(
         name=resolved_name,
         description=description or f'Static red teaming ({len(all_target_labels)} targets)',
         start_time=pipeline_start,
+        report=merged,
     )
 
     return merged
