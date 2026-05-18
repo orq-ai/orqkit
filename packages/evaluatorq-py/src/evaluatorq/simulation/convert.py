@@ -41,7 +41,7 @@ def to_open_responses(
                     "id": _generate_item_id("msg"),
                     "role": msg.role,
                     "status": "completed",
-                    "content": [{"type": "input_text", "text": msg.content}],
+                    "content": [{"type": "input_text", "text": msg.content or ""}],
                 }
             )
         elif msg.role == "assistant":
@@ -54,7 +54,7 @@ def to_open_responses(
                     "content": [
                         {
                             "type": "output_text",
-                            "text": msg.content,
+                            "text": msg.content or "",
                             "annotations": [],
                             "logprobs": [],
                         }
