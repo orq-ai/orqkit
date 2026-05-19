@@ -163,7 +163,11 @@ def _ensure_kb(client: Orq) -> str:
 
 
 def _find_kb_id(client: Orq, key: str) -> str | None:
-    """Page through knowledge.list to find the KB with the given key."""
+    """Page through knowledge.list to find the KB with the given key.
+
+    Demo assumption: target workspace has <50 KBs. Add pagination if
+    running against a workspace large enough to spill past one page.
+    """
     resp = client.knowledge.list(limit=50)
     for kb in resp.data or []:
         if getattr(kb, 'key', None) == key:

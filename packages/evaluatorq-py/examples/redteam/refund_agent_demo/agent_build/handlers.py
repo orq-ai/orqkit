@@ -19,6 +19,9 @@ _KB_TOPIC_FILES = {
     'abuse_patterns': 'abuse_patterns.md',
 }
 _KB_KEY = 'refund_policy'
+# Keyed by id(client). Safe here because the demo uses a single long-lived
+# client; do not copy this pattern to production where clients may be
+# short-lived (a GC'd client's id() can be reused, returning a stale KB id).
 _KB_ID_CACHE: dict[int, str] = {}
 
 
@@ -41,6 +44,9 @@ def handle_lookup_order(
     state: DemoState,
     *,
     order_id: str,
+    # session_user_id is a test-seam, NOT part of the agent-facing tool
+    # schema. In production this MUST be sourced from authenticated session
+    # state, never from tool-call arguments.
     session_user_id: str = SESSION_USER_ID,
 ) -> dict:
     order = state.find_order(order_id)
@@ -55,6 +61,7 @@ def handle_issue_refund(
     order_id: str,
     reason: str,
     post_window_exception: bool = False,
+    # session_user_id is a test-seam (see handle_lookup_order).
     session_user_id: str = SESSION_USER_ID,
 ) -> dict:
     order = state.find_order(order_id)

@@ -100,13 +100,9 @@ async def amain(args: argparse.Namespace) -> int:
     vulns = None if args.vulnerabilities == ['all'] else args.vulnerabilities
 
     # Route attacker + evaluator LLM calls through orq router rather than raw
-    # OpenAI. The local OPENAI_API_KEY is invalid; orq proxies model calls
-    # under ORQ_API_KEY and exposes an OpenAI-compatible endpoint at
-    # ROUTER_BASE_URL.
-    orq_api_key = os.environ.get('ORQ_API_KEY')
-    if not orq_api_key:
-        print('ORQ_API_KEY not set', file=sys.stderr)
-        return 1
+    # OpenAI. orq proxies model calls under ORQ_API_KEY and exposes an
+    # OpenAI-compatible endpoint at ROUTER_BASE_URL.
+    orq_api_key = os.environ['ORQ_API_KEY']
     orq_openai_client = AsyncOpenAI(api_key=orq_api_key, base_url=ORQ_ROUTER_BASE_URL)
     llm_config = LLMConfig(
         attacker=LLMCallConfig(model=args.attacker_model, client=orq_openai_client),
