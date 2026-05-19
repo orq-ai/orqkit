@@ -188,7 +188,11 @@ async def generate_focus_area_recommendations(
         try:
             # Two ``**`` splats in a function call raise TypeError on
             # duplicate keys; merge into a dict first for last-wins precedence.
-            merged_kwargs = {**cfg.evaluator.extra_kwargs, **(llm_kwargs or {})}
+            merged_kwargs = {
+                'extra_body': cfg.retry_config,
+                **cfg.evaluator.extra_kwargs,
+                **(llm_kwargs or {}),
+            }
             response = await llm_client.chat.completions.create(
                 model=model,
                 messages=[
@@ -198,7 +202,6 @@ async def generate_focus_area_recommendations(
                 temperature=cfg.evaluator.temperature,
                 max_completion_tokens=1500,
                 response_format={'type': 'json_object'},
-                extra_body=cfg.retry_config,
                 **merged_kwargs,
             )
 
