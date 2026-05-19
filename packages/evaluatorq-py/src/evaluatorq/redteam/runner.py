@@ -1741,15 +1741,18 @@ async def _run_dynamic_or_hybrid(
         # Upload cleaned results to Orq platform — strip skipped job results
         # (jobs return None for datapoints belonging to a different target).
         # Send before saving so report.experiment_url is included in the persisted JSON.
-        await _send_cleaned_results(
-            results=results,
-            name=resolved_name,
-            description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
-            start_time=pipeline_start,
-            report=merged,
-        )
-
-        _save_report(output_dir, "03_summary_report.json", merged)
+        # try/finally guarantees the report is written even if upload is cancelled
+        # (CancelledError bypasses the except Exception inside _send_cleaned_results).
+        try:
+            await _send_cleaned_results(
+                results=results,
+                name=resolved_name,
+                description=description or f'{mode.capitalize()} red teaming ({len(all_target_labels)} targets)',
+                start_time=pipeline_start,
+                report=merged,
+            )
+        finally:
+            _save_report(output_dir, "03_summary_report.json", merged)
 
         set_span_attrs(pipeline_span, {
             "orq.redteam.num_datapoints": len(all_datapoints),
@@ -2007,14 +2010,17 @@ async def _run_static(
     # Upload results to Orq platform — in static mode all jobs produce real
     # output for every datapoint, so we send results as-is (no stripping).
     # Send before saving so report.experiment_url is included in the persisted JSON.
-    await _send_cleaned_results(
-        results=results,
-        name=resolved_name,
-        description=description or f'Static red teaming ({len(all_target_labels)} targets)',
-        start_time=pipeline_start,
-        report=merged,
-    )
-
-    _save_report(output_dir, "03_summary_report.json", merged)
+    # try/finally guarantees the report is written even if upload is cancelled
+    # (CancelledError bypasses the except Exception inside _send_cleaned_results).
+    try:
+        await _send_cleaned_results(
+            results=results,
+            name=resolved_name,
+            description=description or f'Static red teaming ({len(all_target_labels)} targets)',
+            start_time=pipeline_start,
+            report=merged,
+        )
+    finally:
+        _save_report(output_dir, "03_summary_report.json", merged)
 
     return merged
