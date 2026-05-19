@@ -94,23 +94,20 @@ class RefundAgentTarget:
         text = self._extract_text(response)
         usage = self._extract_usage(response)
         pending = self._pending_calls(response)
-        try:
-            for _step in range(1, MAX_TOOL_CONTINUATIONS + 1):
-                if not pending:
-                    break
-                parts = [self._dispatch(c) for c in pending]
-                pending_ids_before_invoke = [p.get('tool_call_id') for p in parts if p.get('tool_call_id')]
-                self._unanswered_tool_call_ids = pending_ids_before_invoke
-                response = await self._invoke(message={'role': 'tool', 'parts': parts})
-                self._unanswered_tool_call_ids = []
-                step_usage = self._extract_usage(response)
-                usage = usage + step_usage if usage is not None else step_usage
-                new_text = self._extract_text(response)
-                if new_text:
-                    text = new_text
-                pending = self._pending_calls(response)
-        except Exception:  # noqa: TRY203 - explicit re-raise after stashing pending IDs
-            raise
+        for _step in range(1, MAX_TOOL_CONTINUATIONS + 1):
+            if not pending:
+                break
+            parts = [self._dispatch(c) for c in pending]
+            pending_ids_before_invoke = [p.get('tool_call_id') for p in parts if p.get('tool_call_id')]
+            self._unanswered_tool_call_ids = pending_ids_before_invoke
+            response = await self._invoke(message={'role': 'tool', 'parts': parts})
+            self._unanswered_tool_call_ids = []
+            step_usage = self._extract_usage(response)
+            usage = usage + step_usage if usage is not None else step_usage
+            new_text = self._extract_text(response)
+            if new_text:
+                text = new_text
+            pending = self._pending_calls(response)
         if pending:
             self._unanswered_tool_call_ids = [
                 getattr(c, 'id', None) or (c.get('id') if isinstance(c, dict) else None) for c in pending

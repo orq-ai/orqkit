@@ -22,7 +22,10 @@
       "!**/report.css",
       "!**/crypto_stealing_demo/orq-theme.css",
       "!**/crypto_stealing_demo/styles.scss",
-      "!**/crypto_stealing_demo/presentation.qmd"
+      "!**/crypto_stealing_demo/presentation.qmd",
+      "!**/refund_agent_demo/assets/**",
+      "!**/refund_agent_demo/imgs/**",
+      "!**/refund_agent_demo/presentation.html"
     ]
   },
   "formatter": {
