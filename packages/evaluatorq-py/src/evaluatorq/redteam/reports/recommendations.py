@@ -177,7 +177,7 @@ async def generate_focus_area_recommendations(
         )
 
         try:
-            response = await llm_client.chat.completions.create(
+            response = await llm_client.chat.completions.create(  # pyright: ignore[reportCallIssue, reportArgumentType]
                 model=model,
                 messages=[
                     {'role': 'system', 'content': _SYSTEM_PROMPT},
