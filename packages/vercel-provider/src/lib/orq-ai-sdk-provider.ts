@@ -2,7 +2,6 @@ import {
   OpenAICompatibleChatLanguageModel,
   OpenAICompatibleCompletionLanguageModel,
   OpenAICompatibleEmbeddingModel,
-  OpenAICompatibleImageModel,
 } from "@ai-sdk/openai-compatible";
 import type {
   EmbeddingModelV3,
@@ -14,6 +13,8 @@ import {
   type FetchFunction,
   withoutTrailingSlash,
 } from "@ai-sdk/provider-utils";
+
+import { OrqAiImageModel } from "./orq-ai-image-model.js";
 
 const DEFAULT_BASE_URL = "https://api.orq.ai/v2/proxy";
 
@@ -37,6 +38,9 @@ export interface OrqAiProvider extends ProviderV3 {
 export function createOrqAiProvider(
   options: OrqAiProviderSettings,
 ): OrqAiProvider {
+  if (!options.apiKey) {
+    throw new Error("createOrqAiProvider: `apiKey` is required.");
+  }
   const baseURL = withoutTrailingSlash(options.baseURL ?? DEFAULT_BASE_URL);
   const getHeaders = () => ({
     ...options.headers,
@@ -52,10 +56,7 @@ export function createOrqAiProvider(
 
   const getCommonModelConfig = (modelType: string): CommonModelConfig => ({
     provider: `orq.ai.${modelType}`,
-    url: ({ path }) => {
-      const url = new URL(`${baseURL}${path}`);
-      return url.toString();
-    },
+    url: ({ path }) => `${baseURL}${path}`,
     headers: getHeaders,
   });
 
@@ -79,7 +80,7 @@ export function createOrqAiProvider(
     );
 
   const createImageModel = (modelId: string) =>
-    new OpenAICompatibleImageModel(modelId, getCommonModelConfig("image"));
+    new OrqAiImageModel(modelId, getCommonModelConfig("image"));
 
   const provider = function (modelId: string) {
     if (new.target) {
