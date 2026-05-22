@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -12,9 +12,12 @@ from evaluatorq.redteam.contracts import (
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
     AgentContext,
-    SendResult,
+    AgentResponse,
+    OutputMessage,
     TargetKind,
+    TextOutputItem,
     TokenUsage,
+    ToolCallOutputItem,
 )
 from evaluatorq.redteam.tracing import record_llm_response, with_llm_span
 
@@ -61,12 +64,15 @@ class OpenAIModelTarget:
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
         self.max_tokens = max_tokens or DEFAULT_TARGET_MAX_TOKENS
         self.timeout_ms = timeout_ms or DEFAULT_TARGET_TIMEOUT_MS
+        self._history: list[ChatCompletionMessageParam] = []
 
-    async def send_prompt_with_usage(self, prompt: str) -> SendResult:
-        """Send a prompt and return text + token usage together."""
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Send a prompt to the OpenAI model and return its response with usage + any tool calls."""
+        user_msg: ChatCompletionMessageParam = {'role': 'user', 'content': prompt}
         messages: list[ChatCompletionMessageParam] = [
             {'role': 'system', 'content': self.system_prompt},
-            {'role': 'user', 'content': prompt},
+            *self._history,
+            user_msg,
         ]
         async with with_llm_span(
             model=self.model,
@@ -81,21 +87,64 @@ class OpenAIModelTarget:
                 ),
                 timeout=self.timeout_ms / 1000.0,
             )
-            content = response.choices[0].message.content or ''
+            msg = response.choices[0].message
+            content = msg.content or ''
             record_llm_response(span, response, output_content=content)
+
+            # Capture tool calls made by the model.
+            # Only ChatCompletionMessageToolCall has a .function attribute; skip custom tool calls.
+            tool_call_items: list[ToolCallOutputItem] = []
+            for tc in (getattr(msg, 'tool_calls', None) or []):
+                func = getattr(tc, 'function', None)
+                if func is None:
+                    continue
+                tc_id = getattr(tc, 'id', None)
+                kwargs: dict[str, Any] = {
+                    'name': func.name,
+                    'arguments': func.arguments or '{}',
+                }
+                if isinstance(tc_id, str) and tc_id:
+                    kwargs['id'] = tc_id
+                tool_call_items.append(ToolCallOutputItem(**kwargs))
+
             usage = TokenUsage.from_completion(response)
             response_id = getattr(response, 'id', None)
             finish_reason = None
             choices = getattr(response, 'choices', None) or []
             if choices:
                 finish_reason = getattr(choices[0], 'finish_reason', None)
-            return SendResult(
-                text=content,
-                usage=usage,
-                model=getattr(response, 'model', None),
-                response_id=response_id,
-                finish_reason=finish_reason,
-            )
+
+        # Accumulate history for multi-turn context.
+        assistant_msg: ChatCompletionMessageParam
+        raw_tool_calls = getattr(msg, 'tool_calls', None) or []
+        if raw_tool_calls:
+            assistant_msg = {
+                'role': 'assistant',
+                'content': content or None,
+                'tool_calls': [
+                    {
+                        'id': tc.id,
+                        'type': 'function',
+                        'function': {'name': tc.function.name, 'arguments': tc.function.arguments},
+                    }
+                    for tc in raw_tool_calls
+                    if getattr(tc, 'function', None) is not None
+                ],
+            }
+        else:
+            assistant_msg = {'role': 'assistant', 'content': content}
+        self._history.append(user_msg)
+        self._history.append(assistant_msg)
+
+        output: list[OutputMessage] = cast('list[OutputMessage]', list(tool_call_items))
+        output.append(TextOutputItem(text=content, annotations=[]))
+        return AgentResponse(
+            output=output,
+            usage=usage,
+            model=getattr(response, 'model', None),
+            response_id=response_id,
+            finish_reason=finish_reason,
+        )
 
     def new(self) -> OpenAIModelTarget:
         """Return a fresh target instance for parallel job safety (satisfies ``AgentTarget`` protocol)."""

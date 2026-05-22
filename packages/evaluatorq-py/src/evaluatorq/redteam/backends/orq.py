@@ -12,7 +12,7 @@ import asyncio
 import json
 import os
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -47,10 +47,13 @@ from evaluatorq.redteam.backends.base import extract_provider_error_code, extrac
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
+    AgentResponse,
     KnowledgeBaseInfo,
     MemoryStoreInfo,
-    SendResult,
+    OutputMessage,
+    TextOutputItem,
     TokenUsage,
+    ToolCallOutputItem,
     ToolInfo,
 )
 from evaluatorq.redteam.tracing import record_token_usage, set_span_attrs, truncate_for_span, with_redteam_span
@@ -90,10 +93,10 @@ class ORQAgentTarget:
         self._timeout_ms = timeout_ms
         self._task_id: str | None = None
 
-    async def send_prompt_with_usage(self, prompt: str) -> SendResult:
-        """Send a prompt to the ORQ agent and return text + accumulated usage.
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Send a prompt to the ORQ agent and return the response with usage + any tool calls.
 
-        Accumulates usage across pending-tool-call continuations.
+        Token usage is accumulated across pending-tool-call continuations.
         """
         total_prompt_tokens = 0
         total_completion_tokens = 0
@@ -142,6 +145,35 @@ class ORQAgentTarget:
                     ids.append(call_id)
             return ids
 
+        def _extract_tool_call_items(resp: object) -> list[ToolCallOutputItem]:
+            """Extract tool calls from a response as ToolCallOutputItem instances."""
+            pending = getattr(resp, 'pending_tool_calls', None) or []
+            items: list[ToolCallOutputItem] = []
+            for call in pending:
+                name = getattr(call, 'name', None) or (call.get('name') if isinstance(call, dict) else None) or ''
+                args_raw = getattr(call, 'arguments', None) or (call.get('arguments') if isinstance(call, dict) else None) or {}
+                if isinstance(args_raw, str):
+                    try:
+                        json.loads(args_raw)
+                        args_str = args_raw
+                    except (json.JSONDecodeError, ValueError):
+                        logger.warning(
+                            f"Failed to parse tool call arguments as JSON for tool '{name}'; "
+                            f"wrapping raw string under 'raw' key. Raw: {args_raw!r:.200}"
+                        )
+                        args_str = json.dumps({'raw': args_raw})
+                else:
+                    try:
+                        args_str = json.dumps(args_raw if isinstance(args_raw, dict) else {})
+                    except (TypeError, ValueError):
+                        args_str = json.dumps(args_raw, default=str)
+                call_id = getattr(call, 'id', None) or (call.get('id') if isinstance(call, dict) else None)
+                kwargs: dict[str, Any] = {'name': str(name), 'arguments': args_str}
+                if isinstance(call_id, str) and call_id:
+                    kwargs['id'] = call_id
+                items.append(ToolCallOutputItem(**kwargs))
+            return items
+
         async with with_redteam_span(
             f'agent {self.agent_key}',
             {
@@ -172,6 +204,7 @@ class ORQAgentTarget:
 
                 _accumulate_usage(response)
                 text_response = _extract_text(response)
+                all_tool_calls: list[ToolCallOutputItem] = _extract_tool_call_items(response)
 
                 # Some agent tool flows require client-provided tool_result parts.
                 # Continue the same task with synthetic tool results so the thread can progress.
@@ -209,6 +242,7 @@ class ORQAgentTarget:
                     extracted = _extract_text(response)
                     if extracted:
                         text_response = extracted
+                    all_tool_calls.extend(_extract_tool_call_items(response))
                     pending_ids = _pending_tool_call_ids(response)
 
                 if pending_ids:
@@ -242,12 +276,14 @@ class ORQAgentTarget:
                     if total_calls > 0
                     else None
                 )
-                return SendResult(
-                    text=result_text,
+                output: list[OutputMessage] = cast('list[OutputMessage]', list(all_tool_calls))
+                output.append(TextOutputItem(text=result_text, annotations=[]))
+                return AgentResponse(
+                    output=output,
                     usage=usage,
                     model=str(response_model) if response_model else None,
                     response_id=getattr(response, 'task_id', None),
-                    finish_reason=None,  # ORQ agent responses do not expose a standard finish_reason
+                    finish_reason=None,
                 )
 
             except Exception as e:

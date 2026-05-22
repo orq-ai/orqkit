@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import inspect
 import json
 import os
 import re
@@ -39,6 +40,7 @@ from evaluatorq.redteam.backends.base import (
     ErrorMapper,
     MemoryCleanup,
     NoopMemoryCleanup,
+    _coerce_to_agent_response,
     is_agent_target,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
@@ -549,6 +551,7 @@ async def red_team(
                 report=report,
                 llm_client=rec_client,
                 model=config.evaluator.model,
+                cfg=config,
             )
         except (TypeError, AttributeError, ImportError, NameError, KeyError):
             raise
@@ -721,16 +724,24 @@ def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
     async def agent_target_job(data: DataPoint, _row: int) -> dict[str, Any]:
         prompt = _extract_static_prompt(data)
         target = at.new()
-        result = await target.send_prompt_with_usage(prompt)
+        try:
+            raw_response = await target.send_prompt(prompt)
+            result = _coerce_to_agent_response(raw_response)
 
-        _active_progress = _get_active_progress()
-        if _active_progress is not None:
-            await _active_progress.finish_attack(None)
+            _active_progress = _get_active_progress()
+            if _active_progress is not None:
+                await _active_progress.finish_attack(None)
 
-        return {
-            'response': result.text,
-            'token_usage': result.usage,
-        }
+            return {
+                'response': result.text,
+                'token_usage': result.usage,
+            }
+        finally:
+            target_close = getattr(target, 'close', None)
+            if callable(target_close):
+                maybe = target_close()
+                if inspect.isawaitable(maybe):
+                    await maybe
 
     return agent_target_job
 
@@ -1431,7 +1442,7 @@ async def _run_dynamic_or_hybrid(
                         _factory: Any = at_factory,
                         _label: str = at_label,
                     ) -> Any:
-                        """Send a static datapoint to the AgentTarget via send_prompt_with_usage."""
+                        """Send a static datapoint to the AgentTarget via send_prompt."""
                         messages = _build_messages(data)
                         prompt = '\n'.join(
                             content for m in messages
@@ -1444,7 +1455,8 @@ async def _run_dynamic_or_hybrid(
                                 f'produced an empty prompt ({len(messages)} messages, none with user content).'
                             )
                         target_instance = _factory.create_target(_label)
-                        result = await target_instance.send_prompt_with_usage(prompt)
+                        raw = await target_instance.send_prompt(prompt)
+                        result = _coerce_to_agent_response(raw)
                         active_progress = _get_active_progress()
                         if active_progress is not None:
                             await active_progress.finish_attack(None)

@@ -1,7 +1,8 @@
 """Frozen contract schemas for the evaluatorq.redteam package.
 
-This module is self-contained (stdlib + pydantic only) and defines all
-shared data models for both the research repo and evaluatorq consumers.
+This module defines all shared data models for both the research repo and
+evaluatorq consumers. It imports lightweight output item types from
+``evaluatorq.openresponses.convert_models`` at runtime.
 
 Semantic convention:
     ``passed=True``  → the agent is RESISTANT (attack failed)
@@ -9,20 +10,18 @@ Semantic convention:
 """
 
 import os
-import sys
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, TypedDict
 
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
-    class StrEnum(str, Enum):  # type: ignore[no-redef]
-        """String enum compatible with Python 3.10."""
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from evaluatorq.contracts import StrEnum
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -284,7 +283,6 @@ class AttackSource(StrEnum):
     GENERATED_DYNAMIC = 'generated_dynamic'
 
 
-
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -337,40 +335,23 @@ def infer_framework(category: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-class FunctionCall(BaseModel):
-    """Function call details in OpenAI tool call format."""
+# ---------------------------------------------------------------------------
+# Re-exports from evaluatorq.contracts (shared types)
+# ---------------------------------------------------------------------------
+# These types are defined in evaluatorq.contracts and re-exported here so that
+# existing ``from evaluatorq.redteam.contracts import ...`` call sites continue
+# to work unchanged. (RES-596 consolidated the duplicated definitions.)
 
-    name: str = Field(description='Function name to call')
-    arguments: str = Field(description='JSON string of function arguments')
-
-
-class ToolCall(BaseModel):
-    """Tool call in assistant message (OpenAI format)."""
-
-    id: str = Field(description='Unique tool call ID (e.g., call_abc123)')
-    type: Literal['function'] = Field(default='function', description='Tool type')
-    function: FunctionCall = Field(description='Function call details')
-
-
-class Message(BaseModel):
-    """Single message in conversation history (OpenAI format with tool support).
-
-    Supports both simple messages and tool calls:
-    - Simple: {"role": "user", "content": "Hello"}
-    - Tool call: {"role": "assistant", "tool_calls": [...]}
-    - Tool response: {"role": "tool", "tool_call_id": "...", "name": "...", "content": "..."}
-    """
-
-    role: Literal['user', 'assistant', 'tool', 'system']
-    content: str | None = Field(
-        default=None,
-        description='Message content (required for user/system, optional for assistant with tool_calls)',
-    )
-
-    # Tool call fields (OpenAI format)
-    tool_calls: list[ToolCall] | None = Field(default=None, description='Tool calls made by assistant')
-    tool_call_id: str | None = Field(default=None, description='ID linking tool response to call (for role=tool)')
-    name: str | None = Field(default=None, description='Function name (for role=tool)')
+from evaluatorq.contracts import (  # noqa: F401, E402
+    AgentResponse,
+    FunctionCall,
+    Message,
+    OutputMessage,
+    ReasoningOutputItem,
+    StrategyToolCall,
+    TextOutputItem,
+    ToolCallOutputItem,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -555,30 +536,13 @@ class AgentContext(BaseModel):
 # Pipeline configuration model
 # ---------------------------------------------------------------------------
 
-# Default model used across the red teaming pipeline for adversarial generation
-# and evaluation. Uses the OpenAI model name directly (works with both the
-# openai and orq backends — the orq backend accepts this format as-is).
-DEFAULT_PIPELINE_MODEL: str = 'gpt-5-mini'
-DEFAULT_TARGET_MAX_TOKENS: int = 5000
-DEFAULT_TARGET_TIMEOUT_MS: int = 240_000
-
-
-class LLMCallConfig(BaseModel):
-    """Per-role LLM call configuration.
-
-    One instance per pipeline role (attacker, evaluator). Controls model
-    selection, temperature, token limits, timeout, extra kwargs, and
-    optionally an explicit pre-configured client.
-    """
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    model: str = DEFAULT_PIPELINE_MODEL
-    temperature: float = 1.0
-    max_tokens: int = DEFAULT_TARGET_MAX_TOKENS
-    timeout_ms: int = 90_000
-    extra_kwargs: dict[str, Any] = Field(default_factory=dict)
-    client: Any = None  # AsyncOpenAI | None — Any avoids import cycle
+# Re-export from evaluatorq.contracts so existing imports continue to work.
+from evaluatorq.contracts import (  # noqa: F401
+    DEFAULT_PIPELINE_MODEL,
+    DEFAULT_TARGET_MAX_TOKENS,
+    DEFAULT_TARGET_TIMEOUT_MS,
+    LLMCallConfig,
+)
 
 
 class LLMConfig(BaseModel):
@@ -738,78 +702,13 @@ class AttackStrategy(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Token usage
+# Token usage — re-exported from evaluatorq.contracts (RES-596)
 # ---------------------------------------------------------------------------
 
-
-class TokenUsage(BaseModel):
-    """Token usage and cost for an LLM call or aggregation of calls.
-
-    ``total_tokens`` is stored as provided by the upstream provider and is
-    never overridden. This preserves provider-specific token breakdowns
-    (cached_tokens, reasoning_tokens, audio tokens, etc.) that would be
-    silently corrupted by a normalisation step.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    total_tokens: int = Field(default=0, ge=0, description='Total tokens used as reported by the provider')
-    prompt_tokens: int = Field(default=0, ge=0, description='Prompt/input tokens')
-    completion_tokens: int = Field(default=0, ge=0, description='Completion/output tokens')
-    calls: int = Field(default=0, ge=0, description='Number of LLM API calls')
-
-    @classmethod
-    def from_completion(cls, response: Any) -> 'TokenUsage | None':
-        """Extract token usage from an OpenAI-compatible completion response."""
-        usage = getattr(response, 'usage', None)
-        if usage is None:
-            return None
-        prompt = int(getattr(usage, 'prompt_tokens', 0) or 0)
-        completion = int(getattr(usage, 'completion_tokens', 0) or 0)
-        # Mirror the > 0 guard used by other integrations: a provider-reported
-        # total of 0 (or absent) falls back to prompt+completion rather than
-        # propagating the zero, which would silently under-count totals on
-        # responses where prompt+completion are non-zero.
-        raw_total = getattr(usage, 'total_tokens', None)
-        total = int(raw_total) if raw_total is not None and int(raw_total) > 0 else prompt + completion
-        return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
-
-    def __add__(self, other: 'TokenUsage | None') -> 'TokenUsage':
-        if other is None:
-            return self.model_copy()
-        return TokenUsage(
-            prompt_tokens=self.prompt_tokens + other.prompt_tokens,
-            completion_tokens=self.completion_tokens + other.completion_tokens,
-            total_tokens=self.total_tokens + other.total_tokens,
-            calls=self.calls + other.calls,
-        )
-
-    def __radd__(self, other: object) -> 'TokenUsage':
-        """Support sum() which starts with integer 0, and reflected addition."""
-        if isinstance(other, int) and other == 0:
-            return self.model_copy()  # safe copy, no shared reference
-        if isinstance(other, TokenUsage):
-            return other.__add__(self)
-        return NotImplemented
+from evaluatorq.contracts import TokenUsage  # noqa: F401, E402
 
 
-# Intentionally a dataclass (not Pydantic BaseModel) for hot-path performance —
-# SendResult is an internal value object produced on every target call and is
-# never serialized outside this module. Pydantic validation overhead per call is
-# unnecessary here.
-@dataclass(slots=True, frozen=True, kw_only=True)
-class SendResult:
-    """Result of an ``AgentTarget.send_prompt_with_usage()`` call.
-
-    Returns text and token usage together. On exception the caller does not
-    observe partial usage via the return value.
-    """
-
-    text: str
-    usage: 'TokenUsage | None' = None
-    model: 'str | None' = None
-    response_id: 'str | None' = None
-    finish_reason: 'str | None' = None
+SendResult = AgentResponse  # deprecated alias; use AgentResponse directly
 
 
 # ---------------------------------------------------------------------------
@@ -833,15 +732,48 @@ class ErrorInfo(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class OrchestratorResult(BaseModel):
-    """Result from multi-turn attack orchestration."""
+class AttackerResponse(BaseModel):
+    """Adversarial LLM output for a single attack turn.
 
-    conversation: list[Message] = Field(description='Full conversation history (OpenAI message format)')
-    turns: int = Field(description='Number of turns executed')
+    ``generated_prompt`` is the text the attacker LLM produced this turn, which
+    is then sent to the target as the next user message.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    generated_prompt: str = Field(description='Attack prompt produced by the adversarial LLM (sent to the target)')
+    usage: TokenUsage | None = Field(default=None, description='Token usage for this adversarial generation')
+    truncated: bool = Field(default=False, description='Adversarial LLM hit max_tokens on this turn')
+    finish_reason: str | None = Field(default=None, description='Adversarial LLM finish reason')
+
+
+class Turn(BaseModel):
+    """One attacker→target exchange in a multi-turn attack."""
+
+    model_config = ConfigDict(frozen=True)
+
+    attacker: AttackerResponse
+    target: AgentResponse
+
+
+class OrchestratorResult(BaseModel):
+    """Result from multi-turn attack orchestration.
+
+    The canonical record is :attr:`turns` — a list of :class:`Turn` pairing the
+    attacker prompt with the full target :class:`AgentResponse`. Convenience
+    views (:attr:`conversation`, :attr:`final_response`, :attr:`n_turns`) are
+    derived properties so they cannot drift from the canonical record.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    turns: list[Turn] = Field(
+        default_factory=list,
+        description='Per-turn attacker/target exchanges (canonical record)',
+    )
     objective_achieved: bool = Field(
         default=False, description='Whether adversarial LLM self-reported objective achieved'
     )
-    final_response: str = Field(default='', description="Target agent's last response")
     duration_seconds: float = Field(default=0.0, description='Elapsed time in seconds')
     token_usage: TokenUsage | None = Field(default=None, description='Aggregated token usage across attack execution')
     token_usage_adversarial: TokenUsage | None = Field(
@@ -849,6 +781,7 @@ class OrchestratorResult(BaseModel):
     )
     token_usage_target: TokenUsage | None = Field(default=None, description='Token usage for target agent calls only')
     system_prompt: str | None = Field(default=None, description='Rendered adversarial system prompt')
+    max_turns: int = Field(default=0, description='Turn budget configured for this attack (>= n_turns)')
     error: str | None = Field(default=None, description='Error message if attack was aborted')
     error_type: str | None = Field(
         default=None, description='Error classification (e.g. content_filter, llm_error, target_error)'
@@ -860,6 +793,116 @@ class OrchestratorResult(BaseModel):
     truncated_turns: list[int] = Field(
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
+
+    @model_validator(mode="after")
+    def _validate_max_turns(self) -> "OrchestratorResult":
+        """Enforce that max_turns is not less than the number of executed turns.
+
+        max_turns=0 is the unset-sentinel (default) and is always accepted.
+        Only positive values represent a configured budget and are validated.
+        """
+        if self.max_turns > 0 and self.max_turns < len(self.turns):
+            raise ValueError(
+                f"max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})"
+            )
+        return self
+
+    @property
+    def n_turns(self) -> int:
+        """Number of executed turns."""
+        return len(self.turns)
+
+    @property
+    def final_response(self) -> str:
+        """Target agent's last response text."""
+        return self.turns[-1].target.text if self.turns else ''
+
+    @property
+    def chat_completions(self) -> list[Message]:
+        """Conversation in OpenAI chat-completions format (role/content rows).
+
+        Walks each turn's ``target.output`` items in order, converting from the
+        OpenResponses intermediate format to chat-completions wire shape:
+
+        - Attacker prompt -> ``user`` message.
+        - Consecutive :class:`TextOutputItem` runs -> single ``assistant`` message
+          with joined ``content``.
+        - Each :class:`ToolCallOutputItem` -> ``assistant`` message with one
+          ``tool_calls`` entry; if ``result`` is set, also a following ``tool``
+          role message with ``tool_call_id`` + ``content``.
+        - :class:`ReasoningOutputItem` is dropped — chat-completions has no
+          standard role for reasoning. Callers needing it should read
+          ``turn.target.output`` directly.
+        """
+        out: list[Message] = []
+        for turn in self.turns:
+            out.append(Message(role='user', content=turn.attacker.generated_prompt))
+            text_buffer: list[str] = []
+            target = turn.target
+
+            def _flush_text() -> None:
+                if text_buffer:
+                    out.append(Message(role='assistant', content=''.join(text_buffer)))
+                    text_buffer.clear()
+
+            for item in target.output:
+                if isinstance(item, TextOutputItem):
+                    text_buffer.append(item.text)
+                elif isinstance(item, ToolCallOutputItem):
+                    _flush_text()
+                    out.append(Message(
+                        role='assistant',
+                        content=None,
+                        tool_calls=[StrategyToolCall(
+                            id=item.call_id,
+                            function=FunctionCall(name=item.name, arguments=item.arguments),
+                        )],
+                    ))
+                    if item.result is not None:
+                        out.append(Message(
+                            role='tool',
+                            tool_call_id=item.call_id,
+                            name=item.name,
+                            content=item.result,
+                        ))
+                # ReasoningOutputItem intentionally dropped.
+            _flush_text()
+            # If the output was entirely empty (no items at all), still emit an
+            # assistant row so consumers can rely on a user/assistant pair per turn.
+            if not target.output:
+                out.append(Message(role='assistant', content=''))
+        return out
+
+    def attacker_input_at(self, turn_index: int) -> list[Message]:
+        """Reconstruct the chat messages sent to the adversarial LLM at turn ``turn_index``.
+
+        Pure function of :attr:`system_prompt`, :attr:`max_turns`, and prior
+        :attr:`turns`. Useful for replaying or auditing what the attacker LLM
+        saw at any point in the conversation.
+
+        Raises:
+            IndexError: if ``turn_index`` is out of bounds for :attr:`turns`.
+        """
+        if turn_index < 0 or turn_index > len(self.turns):
+            raise IndexError(f'turn_index {turn_index} out of range for {len(self.turns)} turns')
+        # Lazy import to avoid a circular dep — the templates live in the orchestrator.
+        from evaluatorq.common.sanitize import xml_escape
+        from evaluatorq.redteam.adaptive.orchestrator import (
+            ADVERSARIAL_ANALYSIS_PROMPT,
+            ADVERSARIAL_INITIAL_USER_PROMPT,
+        )
+        msgs: list[Message] = [
+            Message(role='system', content=self.system_prompt or ''),
+            Message(role='user', content=ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=self.max_turns)),
+        ]
+        for prior in self.turns[:turn_index]:
+            msgs.append(Message(role='assistant', content=prior.attacker.generated_prompt))
+            wrapped = ADVERSARIAL_ANALYSIS_PROMPT.replace(
+                '{response}',
+                f'<target_response>\n{xml_escape(prior.target.text)}\n</target_response>',
+            )
+            msgs.append(Message(role='user', content=wrapped))
+        return msgs
 
     @property
     def error_info(self) -> 'ErrorInfo | None':

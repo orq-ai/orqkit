@@ -70,6 +70,11 @@ from evaluatorq.redteam.contracts import (
     Framework,
     FrameworkSummary,
     FunctionCall,
+    AgentResponse,
+    OutputMessage,
+    ReasoningOutputItem,
+    TextOutputItem,
+    ToolCallOutputItem,
     JobOutputPayload,
     KnowledgeBaseInfo,
     LLMCallConfig,
@@ -89,7 +94,7 @@ from evaluatorq.redteam.contracts import (
     TargetConfig,
     TechniqueSummary,
     TokenUsage,
-    ToolCall,
+    StrategyToolCall,
     ToolInfo,
     TurnType,
     TurnTypeSummary,
@@ -100,6 +105,11 @@ from evaluatorq.redteam.contracts import (
     VulnerabilitySummary,
     normalize_category,
     normalize_framework,
+)
+from evaluatorq.redteam.adaptive.orchestrator import (
+    ADVERSARIAL_ANALYSIS_PROMPT,
+    ADVERSARIAL_INITIAL_USER_PROMPT,
+    ADVERSARIAL_SYSTEM_PROMPT,
 )
 from evaluatorq.redteam.exceptions import BackendError, CancelledError, CredentialError, RedTeamError
 from evaluatorq.redteam.hooks import (
@@ -120,6 +130,9 @@ from evaluatorq.redteam.vulnerability_registry import (
 )
 
 __all__ = [
+    "ADVERSARIAL_ANALYSIS_PROMPT",
+    "ADVERSARIAL_INITIAL_USER_PROMPT",
+    "ADVERSARIAL_SYSTEM_PROMPT",
     'SEVERITY_DEFINITIONS',
     "VULNERABILITY_DEFS",
     "AgentCapability",
@@ -179,6 +192,13 @@ __all__ = [
     "ReportSummary",
     "RichHooks",
     "Severity",
+    # Result models
+    "AgentResponse",
+    "OutputMessage",
+    "ReasoningOutputItem",
+    "StrategyToolCall",
+    "TextOutputItem",
+    "ToolCallOutputItem",
     "SeveritySummary",
     "SupportsAgentContext",
     "SupportsErrorMapping",
@@ -187,7 +207,6 @@ __all__ = [
     "TargetConfig",
     "TechniqueSummary",
     "TokenUsage",
-    "ToolCall",
     # Agent context models
     "ToolInfo",
     # Enums
