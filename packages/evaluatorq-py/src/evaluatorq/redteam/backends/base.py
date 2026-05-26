@@ -8,6 +8,7 @@ LangChain, custom callables) can implement these protocols independently.
 from __future__ import annotations
 
 import re
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -290,3 +291,29 @@ def extract_provider_error_code(exc: Exception) -> str | None:
         if match:
             return match.group(1).strip().lower()
     return None
+
+
+class Backend(ABC):
+    """Backend ABC. Owns target construction, memory cleanup, and error mapping.
+
+    Subclasses must implement ``create_target`` and ``cleanup_memory``.
+    ``map_error`` has a sensible default; override for provider-specific
+    HTTP/status-code mapping.
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    @abstractmethod
+    def create_target(self, agent_key: str) -> AgentTarget:
+        """Create a new AgentTarget for the given agent key."""
+        ...
+
+    @abstractmethod
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        """Delete memory entities created during a red teaming run."""
+        ...
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Return normalized ``(error_code, error_message)``."""
+        return "target_error", f"{type(exc).__name__}: {exc}"
