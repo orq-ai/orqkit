@@ -256,3 +256,14 @@ class Backend(ABC):
     def map_error(self, exc: Exception) -> tuple[str, str]:
         """Return normalized ``(error_code, error_message)``."""
         return "target_error", f"{type(exc).__name__}: {exc}"
+
+    async def get_agent_context(self, agent_key: str) -> AgentContext:
+        """Default: probe a target once and cache. Subclasses may override."""
+        cached = getattr(self, "_ctx_cache", None) or {}
+        if agent_key in cached:
+            return cached[agent_key]
+        probe = self.create_target(agent_key)
+        ctx = await probe.get_agent_context()
+        cached[agent_key] = ctx
+        self._ctx_cache = cached  # type: ignore[attr-defined]
+        return ctx
