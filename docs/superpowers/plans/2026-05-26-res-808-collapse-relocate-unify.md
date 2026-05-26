@@ -10,18 +10,37 @@
 
 **Working directory:** `packages/evaluatorq-py/`. All `uv` commands assume this CWD.
 
+**Branch strategy (stacked PRs):**
+
+Three concurrent branches, each pointing at the previous PR's tip:
+
+```bash
+# PR1
+git checkout -b bauke/res-808-pr1-collapse main
+
+# PR2 (after PR1 commits in place)
+git checkout -b bauke/res-808-pr2-relocate bauke/res-808-pr1-collapse
+
+# PR3 (after PR2 commits)
+git checkout -b bauke/res-808-pr3-unify bauke/res-808-pr2-relocate
+```
+
+`gh pr create --base bauke/res-808-pr1-collapse` for PR2; `--base bauke/res-808-pr2-relocate` for PR3. After PR1 merges, GitHub auto-retargets PR2 to `main` (if "Pull request automatically retargeting" is enabled) — otherwise manually `gh pr edit --base main` and `git rebase --onto main bauke/res-808-pr1-collapse bauke/res-808-pr2-relocate`. Same drill for PR3 after PR2.
+
+Existing branch `bauke/res-808-collapse-redteam-backend-abstractions-abc-agenttarget` (which currently holds the spec + plan commits) can become PR1's branch — rename if desired or merge into a fresh PR1 branch.
+
 ---
 
 ## File map
 
 **PR1 — Collapse**
 
-- Modify: `src/evaluatorq/redteam/backends/base.py` (Protocol→ABC for `AgentTarget`, add `Backend` ABC, add `_BareTargetBackend`, drop 9 dead types)
+- Modify: `src/evaluatorq/redteam/backends/base.py` (Protocol→ABC for `AgentTarget`, add `Backend` ABC, add `BareTargetBackend`, drop 9 dead types)
 - Create: `src/evaluatorq/redteam/backends/_errors.py` (move `extract_status_code`, `extract_provider_error_code`)
 - Modify: `src/evaluatorq/redteam/backends/orq.py` (fold `ORQContextProvider`/`ORQTargetFactory`/`ORQMemoryCleanup`/`ORQErrorMapper` into `ORQBackend` + `ORQAgentTarget`)
 - Modify: `src/evaluatorq/redteam/backends/openai.py` (fold `OpenAIContextProvider`/`OpenAITargetFactory`/`OpenAIErrorMapper` into `OpenAIBackend` + `OpenAIModelTarget`)
 - Modify: `src/evaluatorq/redteam/backends/registry.py` (registry returns `Backend`, not `BackendBundle`)
-- Modify: `src/evaluatorq/redteam/runner.py` (replace BackendBundle accessors; fix `DefaultErrorMapper()` bug; use `_BareTargetBackend` for direct-target path)
+- Modify: `src/evaluatorq/redteam/runner.py` (replace BackendBundle accessors; fix `DefaultErrorMapper()` bug; use `BareTargetBackend` for direct-target path)
 - Modify: `src/evaluatorq/redteam/adaptive/pipeline.py`, `src/evaluatorq/redteam/adaptive/orchestrator.py` (import path updates)
 - Modify: `src/evaluatorq/redteam/__init__.py` (remove `DirectTargetFactory`, 4 `Supports*`, `is_agent_target`)
 - Test: `tests/redteam/test_backend_abc.py` (new)
@@ -376,7 +395,7 @@ class OpenAIModelTarget(AgentTarget):
 
 Drop the class-level `memory_entity_id: str | None = None` attribute declaration; it's now set via `super().__init__`.
 
-- [ ] **Step 3: Update integration targets**
+- [ ] **Step 3: Update integration targets + `OrqResponsesTarget`**
 
 For each of the four integration target files:
 - `src/evaluatorq/integrations/langgraph_integration/target.py`
@@ -385,6 +404,23 @@ For each of the four integration target files:
 - `src/evaluatorq/integrations/openai_agents_integration/target.py`
 
 Change `class XxxTarget(AgentTarget):` (already inheriting) — add `super().__init__(memory_entity_id=<existing value or None>)` as first line of `__init__`. Drop any class-level `memory_entity_id: str | None = None` declarations. For `CallableTarget`, keep `memory_entity_id=None` in the super call (it has no entity).
+
+Also: `src/evaluatorq/simulation/target.py:OrqResponsesTarget` today does NOT inherit `AgentTarget` (it only structurally satisfies the Protocol — see `tests/redteam/test_orq_responses_target_as_agent_target.py`). After PR1 the Protocol is gone; without explicit inheritance, `isinstance(target, AgentTarget)` would return False, breaking the sim runner's `target_agent` routing introduced in PR3 and breaking spec §1's claim that this target "already structurally satisfies the redteam AgentTarget Protocol."
+
+Add inheritance:
+
+```python
+# was
+class OrqResponsesTarget:
+# becomes
+from evaluatorq.redteam.backends.base import AgentTarget
+
+class OrqResponsesTarget(AgentTarget):
+```
+
+Add `super().__init__(memory_entity_id=memory_entity_id)` as the first line of `__init__`. Drop the class-level `memory_entity_id: str | None` and `threading_disabled: bool` declarations (replaced by instance attrs already set in `__init__`).
+
+This keeps existing tests (`test_orq_responses_target_as_agent_target.py`) green and locks in the structural-vs-explicit relationship the spec calls out.
 
 - [ ] **Step 4: Run integration target tests**
 
@@ -542,9 +578,13 @@ Append to `tests/redteam/test_backend_abc.py`:
 
 ```python
 def test_openai_backend_map_error_returns_openai_prefix():
+    from unittest.mock import MagicMock
+
     from evaluatorq.redteam.backends.openai import OpenAIBackend
 
-    backend = OpenAIBackend(client=None, system_prompt=None)
+    # Pass MagicMock as client — constructor's ``client or create_async_llm_client()``
+    # would otherwise trigger CredentialError when no API key is set in the test env.
+    backend = OpenAIBackend(client=MagicMock(), system_prompt=None)
     code, _ = backend.map_error(TimeoutError("slow"))
     assert code.startswith("openai.")
 ```
@@ -742,18 +782,33 @@ with:
 backend = resolve_backend('orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config)
 ```
 
-Then update line 841:
+Then update line 841 (which today calls `backend_bundle.context_provider.get_agent_context(target_value)`). After PR1 the context lives on `ORQAgentTarget.get_agent_context()` (spec §5.3 — internally cached, lazy). To avoid creating a throwaway probe target, lift the context retrieval onto `Backend` as a default that creates a target, retrieves, and caches the result on the backend itself.
+
+Add to `Backend` in `base.py`:
 
 ```python
-agent_context = await backend_bundle.context_provider.get_agent_context(target_value)
+class Backend(ABC):
+    ...
+
+    async def get_agent_context(self, agent_key: str) -> AgentContext:
+        """Default: probe a target once and cache. Subclasses may override."""
+        cached = getattr(self, "_ctx_cache", None) or {}
+        if agent_key in cached:
+            return cached[agent_key]
+        probe = self.create_target(agent_key)
+        ctx = await probe.get_agent_context()
+        cached[agent_key] = ctx
+        self._ctx_cache = cached  # type: ignore[attr-defined]
+        return ctx
 ```
 
-becomes — but wait, we removed `context_provider`. Per spec §5.3, ORQ context retrieval moves to `ORQAgentTarget.get_agent_context()`. The runner can call it through a created target:
+Runner call-site becomes:
 
 ```python
-probe_target = backend.create_target(target_value)
-agent_context = await probe_target.get_agent_context()
+agent_context = await backend.get_agent_context(target_value)
 ```
+
+The probe target is created once per agent_key per `Backend` instance; subsequent calls (e.g. the `create_dynamic_redteam_job` factory) reuse the same backend but build their own per-job targets via `backend.create_target` — no duplicate context fetch.
 
 - [ ] **Step 2: Update `create_dynamic_redteam_job` call (lines 907-919)**
 
@@ -823,9 +878,9 @@ at_dyn_job = create_dynamic_redteam_job(
 with:
 
 ```python
-from evaluatorq.redteam.backends.base import _BareTargetBackend
+from evaluatorq.redteam.backends.base import BareTargetBackend
 
-at_backend = _BareTargetBackend(at)
+at_backend = BareTargetBackend(at)
 at_mem_ids: list[str] = []
 all_at_cleanup_info.append((at_ctx, at_mem_ids, at_backend))
 at_dyn_job = create_dynamic_redteam_job(
@@ -842,7 +897,7 @@ at_dyn_job = create_dynamic_redteam_job(
 )
 ```
 
-`_BareTargetBackend` is added in Task 1.9. `all_at_cleanup_info` tuple's third element changes from "cleanup-like object" to "Backend instance" — confirm the consumer downstream (search for `all_at_cleanup_info`).
+`BareTargetBackend` is added in Task 1.9. `all_at_cleanup_info` tuple's third element changes from "cleanup-like object" to "Backend instance" — confirm the consumer downstream (search for `all_at_cleanup_info`).
 
 - [ ] **Step 4: Update memory cleanup consumer**
 
@@ -853,6 +908,54 @@ grep -n "all_at_cleanup_info" src/evaluatorq/redteam/runner.py
 ```
 
 For each call-site that does `for at_ctx, at_mem_ids, at_cleanup in all_at_cleanup_info:`, change loop variable to `at_backend` and adjust subsequent method calls — they remain `await at_backend.cleanup_memory(at_ctx, at_mem_ids)`.
+
+- [ ] **Step 4b: Update `PreparedTarget` dataclass + downstream cleanup call-sites**
+
+`PreparedTarget` at `runner.py:260` has `resolved_memory_cleanup: MemoryCleanup` (typed against the deleted Protocol). Replace this field with `backend: Backend`.
+
+Edit `runner.py:277`:
+
+```python
+# was
+resolved_memory_cleanup: MemoryCleanup
+# becomes
+backend: Backend
+```
+
+Update `_prepare_target`'s `PreparedTarget(...)` construction (around `runner.py:1015`):
+
+```python
+# was
+resolved_memory_cleanup=resolved_memory_cleanup_t,
+# becomes
+backend=backend,
+```
+
+Same in the BYO-target `PreparedTarget(...)` call (around `runner.py:1480`).
+
+Update the two downstream cleanup call-sites:
+
+`runner.py:1563`:
+
+```python
+# was
+pt.agent_context, entity_ids, memory_cleanup=pt.resolved_memory_cleanup
+# becomes
+pt.agent_context, entity_ids, memory_cleanup=pt.backend
+```
+
+`runner.py:1774`:
+
+```python
+# was
+cleanup_error = await cleanup_memory_entities(pt.agent_context, entity_ids, memory_cleanup=pt.resolved_memory_cleanup)
+# becomes
+cleanup_error = await cleanup_memory_entities(pt.agent_context, entity_ids, memory_cleanup=pt.backend)
+```
+
+`cleanup_memory_entities`' `memory_cleanup` parameter accepts anything with an `async def cleanup_memory(ctx, entity_ids)`. `Backend` satisfies this. If `cleanup_memory_entities` has a typed signature naming the old Protocol, retype it to `Backend` (search `cleanup_memory_entities` definition).
+
+Drop the `from evaluatorq.redteam.backends.base import MemoryCleanup` import at `runner.py:277` (the TYPE_CHECKING block).
 
 - [ ] **Step 5: Remove now-unused imports**
 
@@ -919,7 +1022,7 @@ def _default_map_error(exc: Exception) -> tuple[str, str]:
 uv run pytest tests/redteam/ -m 'not integration' -x -q
 ```
 
-Expected: green except the `_BareTargetBackend` reference in runner.py (added in 1.9).
+Expected: green except the `BareTargetBackend` reference in runner.py (added in 1.9).
 
 - [ ] **Step 5: Commit**
 
@@ -928,7 +1031,7 @@ git add src/evaluatorq/redteam/runner.py src/evaluatorq/redteam/adaptive/pipelin
 git commit -m "refactor(redteam): runner+pipeline+orchestrator consume Backend ABC"
 ```
 
-## Task 1.9: Add `_BareTargetBackend` adapter
+## Task 1.9: Add `BareTargetBackend` adapter
 
 **Files:**
 - Modify: `src/evaluatorq/redteam/backends/base.py`
@@ -939,13 +1042,15 @@ git commit -m "refactor(redteam): runner+pipeline+orchestrator consume Backend A
 Create `tests/redteam/test_bare_target_backend.py`:
 
 ```python
-"""Tests for _BareTargetBackend adapter."""
+"""Tests for BareTargetBackend adapter."""
 from __future__ import annotations
 
 import pytest
 
-from evaluatorq.redteam.backends.base import AgentTarget, _BareTargetBackend
+from evaluatorq.redteam.backends.base import AgentTarget, BareTargetBackend
 from evaluatorq.redteam.contracts import AgentContext, AgentResponse
+# Note: AgentContext relocates to evaluatorq.contracts in Task 2.1 Step 0;
+# update this import once that lands.
 
 
 class _StubTarget(AgentTarget):
@@ -976,39 +1081,39 @@ class _TargetWithMapping(_StubTarget):
 @pytest.mark.asyncio
 async def test_bare_backend_delegates_cleanup_when_target_supports_it():
     target = _TargetWithCleanup()
-    backend = _BareTargetBackend(target)
+    backend = BareTargetBackend(target)
     await backend.cleanup_memory(AgentContext(key="x"), ["a", "b"])
     assert target.cleaned == ["a", "b"]
 
 
 @pytest.mark.asyncio
 async def test_bare_backend_cleanup_noop_when_target_lacks_it():
-    backend = _BareTargetBackend(_StubTarget())
+    backend = BareTargetBackend(_StubTarget())
     # Must not raise.
     await backend.cleanup_memory(AgentContext(key="x"), ["a"])
 
 
 def test_bare_backend_delegates_map_error_when_target_supports_it():
     target = _TargetWithMapping()
-    backend = _BareTargetBackend(target)
+    backend = BareTargetBackend(target)
     code, _ = backend.map_error(RuntimeError("boom"))
     assert code == "byo.error"
 
 
 def test_bare_backend_create_target_returns_target_new():
     target = _StubTarget()
-    backend = _BareTargetBackend(target)
+    backend = BareTargetBackend(target)
     fresh = backend.create_target("ignored-agent-key")
     assert isinstance(fresh, _StubTarget)
     assert fresh is not target
 ```
 
-- [ ] **Step 2: Add `_BareTargetBackend` to `base.py`**
+- [ ] **Step 2: Add `BareTargetBackend` to `base.py`**
 
 Append to `src/evaluatorq/redteam/backends/base.py`:
 
 ```python
-class _BareTargetBackend(Backend):
+class BareTargetBackend(Backend):
     """Adapter wrapping a bare ``AgentTarget`` so it satisfies the ``Backend`` ABC.
 
     Used by the runner's bring-your-own-target path. Absorbs the duck-typed
@@ -1021,18 +1126,19 @@ class _BareTargetBackend(Backend):
         self._target = target
 
     def create_target(self, agent_key: str) -> AgentTarget:
-        fresh = self._target.new()
-        if fresh is None:  # pyright: ignore[reportUnnecessaryComparison]
-            raise TypeError(
-                f"{type(self._target).__name__}.new() returned None. "
-                "It must return a fresh AgentTarget instance."
-            )
-        return fresh
+        # Trust the ABC return annotation. .new() returning None is a programmer
+        # error caught by basedpyright; no runtime check needed.
+        return self._target.new()
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
         cleanup = getattr(self._target, "cleanup_memory", None)
         if callable(cleanup):
             await cleanup(ctx, entity_ids)
+        else:
+            logger.debug(
+                f"BareTargetBackend: {type(self._target).__name__} has no "
+                "cleanup_memory; skipping ({len(entity_ids)} entity ids)"
+            )
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
         mapper = getattr(self._target, "map_error", None)
@@ -1053,7 +1159,7 @@ Expected: 4 passed.
 
 ```bash
 git add src/evaluatorq/redteam/backends/base.py tests/redteam/test_bare_target_backend.py
-git commit -m "feat(redteam): add _BareTargetBackend adapter"
+git commit -m "feat(redteam): add BareTargetBackend adapter"
 ```
 
 ## Task 1.10: Delete dead types from `base.py`
@@ -1088,7 +1194,7 @@ Keep:
 - `_coerce_to_agent_response`
 - `validate_agent_target`
 - `Backend` ABC
-- `_BareTargetBackend`
+- `BareTargetBackend`
 
 Drop now-unused imports: `dataclass`, `Protocol`, `Any` if unreferenced.
 
@@ -1100,7 +1206,13 @@ In `src/evaluatorq/redteam/backends/orq.py`:
 - Delete `class ORQTargetFactory` (lines ~454-490)
 - Delete `class ORQMemoryCleanup` (lines ~493-532)
 - Delete `class ORQErrorMapper` (lines ~535-555)
-- Delete `create_orq_backend` function at the bottom (now redundant with `ORQBackend`)
+- Delete `create_orq_backend` function at the bottom (now redundant with `ORQBackend`). Before deleting, grep external sites:
+
+```bash
+grep -rn "create_orq_backend" packages/evaluatorq-py/
+```
+
+If any non-test callers exist, migrate them to `ORQBackend(...)` direct instantiation. If only the registry uses it, safe to delete.
 
 Move `ORQContextProvider._enrich_knowledge_base`, `_enrich_memory_store`, and the body of `get_agent_context` *into* `ORQAgentTarget` as private methods. The existing `ORQAgentTarget.get_agent_context` at line 325-327 currently delegates — replace its body with the inlined fetching code:
 
@@ -1169,9 +1281,9 @@ Add `_enrich_knowledge_base` and `_enrich_memory_store` as instance methods on `
 
 Also delete `ORQAgentTarget.create_target` (lines 330-341) — `ORQBackend.create_target` now owns that.
 
-Delete `ORQAgentTarget.cleanup_memory` (lines 344-346) — `ORQBackend.cleanup_memory` now owns that.
+**Keep `ORQAgentTarget.cleanup_memory` and `ORQAgentTarget.map_error`** as thin delegating methods. They duplicate `ORQBackend` bodies but are required so that BYO direct-instance usage (`red_team(target=ORQAgentTarget(...))`) — which wraps in `BareTargetBackend` — retains ORQ-specific error mapping and memory cleanup via the `getattr(target, 'map_error', ...)` / `getattr(target, 'cleanup_memory', ...)` paths inside `BareTargetBackend`. Without these methods on the target, BYO `ORQAgentTarget` silently falls back to the generic `("target_error", ...)` mapping — reintroducing the runner.py:833 bug PR1 aims to fix.
 
-Delete `ORQAgentTarget.map_error` (lines 349-351) — `ORQBackend.map_error` owns that.
+Extract shared bodies into module-level helpers `_orq_map_error` and `_orq_cleanup_memory(orq_client, ctx, entity_ids)` in `orq.py`. Both `ORQBackend.map_error` / `cleanup_memory` AND `ORQAgentTarget.map_error` / `cleanup_memory` delegate to the helpers. Single source of truth, no drift.
 
 - [ ] **Step 3: Delete `OpenAIContextProvider`, `OpenAITargetFactory`, `OpenAIErrorMapper` from `openai.py`**
 
@@ -1180,7 +1292,9 @@ In `src/evaluatorq/redteam/backends/openai.py`:
 - Delete `class OpenAIContextProvider` (lines ~179-201)
 - Delete `class OpenAITargetFactory` (lines ~204-222)
 - Delete `class OpenAIErrorMapper` (lines ~225-244)
-- Delete `OpenAIModelTarget.create_target`, `OpenAIModelTarget.map_error` methods (now on `OpenAIBackend`)
+- Delete `OpenAIModelTarget.create_target` method.
+
+**Keep `OpenAIModelTarget.map_error`** as a thin delegating method to a module-level `_openai_map_error` helper (shared with `OpenAIBackend.map_error`). Same rationale as ORQ: BYO `OpenAIModelTarget` instances retain backend-specific error codes via `BareTargetBackend`.
 
 Keep `OpenAIModelTarget.get_agent_context` (inline minimal context fits the AgentTarget default behaviour anyway).
 
@@ -1201,37 +1315,83 @@ Remove the same names from `__all__`.
 
 `tests/redteam/e2e/conftest.py`, `tests/redteam/e2e/test_hybrid_pipeline.py`, `tests/redteam/e2e/test_dynamic_pipeline.py`, `tests/redteam/e2e/test_pipeline_options.py` all import `BackendBundle`. Replace each with `Backend` and adjust constructors. For e2e fakes, typically a `class _FakeBackend(Backend):` with stub methods.
 
-Example for `tests/redteam/e2e/conftest.py` — find the `BackendBundle(...)` construction and convert to a fake `Backend` subclass:
+Example for `tests/redteam/e2e/conftest.py` — find the `BackendBundle(...)` construction and convert to a fake `Backend` subclass. Implement `create_target`/`cleanup_memory`/`map_error` directly. Do NOT recreate the multi-collaborator pattern (target_factory/memory_cleanup/error_mapper) — that's the very thing PR1 deletes.
 
 ```python
 from evaluatorq.redteam.backends.base import Backend
 
+
 class _FakeBackend(Backend):
-    def __init__(self, target_factory, memory_cleanup, error_mapper):
+    def __init__(self, target):
         super().__init__(name="fake")
-        self._target_factory = target_factory
-        self._memory_cleanup = memory_cleanup
-        self._error_mapper = error_mapper
+        self._target = target
 
     def create_target(self, agent_key):
-        return self._target_factory.create_target(agent_key)
+        return self._target.new()
 
     async def cleanup_memory(self, ctx, entity_ids):
-        await self._memory_cleanup.cleanup_memory(ctx, entity_ids)
+        return None  # tests don't exercise cleanup
 
-    def map_error(self, exc):
-        return self._error_mapper.map_error(exc)
+    # map_error: inherit default ("target_error", ...) unless test overrides
 ```
 
-Apply the same shim wherever `BackendBundle(...)` appears.
+Apply this shape wherever `BackendBundle(...)` appears.
 
-- [ ] **Step 6: Update `tests/redteam/test_orchestrator_coverage.py:322`**
+- [ ] **Step 6: Update `tests/redteam/test_orchestrator_coverage.py`**
 
-`from evaluatorq.redteam.backends.base import DefaultErrorMapper` no longer exists. If the test uses it as a fallback, replace with a local stub or remove. Search the surrounding code; if `DefaultErrorMapper` is being passed to the orchestrator, replace with a `Backend` subclass that has only the default `map_error` (which returns `("target_error", ...)`).
+`from evaluatorq.redteam.backends.base import DefaultErrorMapper` (line 322) no longer exists. The orchestrator signature lost its `error_mapper`/`target_factory`/`memory_cleanup` parameters (Task 1.8 Step 2) and gained a single `backend: Backend` parameter.
+
+In `tests/redteam/test_orchestrator_coverage.py`, for every orchestrator construction that today passes `error_mapper=DefaultErrorMapper()` (and friends), replace with a single `backend=...` kwarg using a stub:
+
+```python
+from evaluatorq.redteam.backends.base import Backend
+
+
+class _StubBackend(Backend):
+    """Test backend with default map_error (target_error tuple) + no-op cleanup."""
+
+    def __init__(self):
+        super().__init__(name="stub")
+
+    def create_target(self, agent_key):
+        raise NotImplementedError("test stub")
+
+    async def cleanup_memory(self, ctx, entity_ids):
+        return None
+    # map_error inherited from Backend default — returns ("target_error", ...)
+```
+
+Pass `backend=_StubBackend()` to the orchestrator. If a test specifically asserted the error_mapper was invoked, retarget to `_StubBackend.map_error` (override the method on a subclass with a `record_calls` side effect).
 
 - [ ] **Step 7: Update `tests/redteam/test_orq_responses_target_as_agent_target.py:19`**
 
 `from evaluatorq.redteam.backends.base import is_agent_target` — replace with `from evaluatorq.redteam.backends.base import AgentTarget`. In each test using `is_agent_target(x)`, switch to `isinstance(x, AgentTarget)`. There are 4 call-sites in the file.
+
+- [ ] **Step 7b: Update runner.py `is_agent_target` call-sites**
+
+`is_agent_target` is also used in production code at `runner.py:418` and `runner.py:433`. Both are `isinstance`-style routing for `red_team(target=...)` argument validation:
+
+```python
+# was (runner.py:417-418)
+elif isinstance(target, str) or is_agent_target(target):
+    raw_targets = [target]
+
+# becomes
+elif isinstance(target, (str, AgentTarget)):
+    raw_targets = [target]
+```
+
+```python
+# was (runner.py:432-433)
+elif is_agent_target(t):
+    agent_targets.append(t)
+
+# becomes
+elif isinstance(t, AgentTarget):
+    agent_targets.append(t)
+```
+
+Drop the `is_agent_target` import at `runner.py:44`. The `AgentTarget` import is already in scope.
 
 - [ ] **Step 8: Run full unit test suite**
 
@@ -1256,6 +1416,68 @@ git add -A
 git commit -m "refactor(redteam): drop dead protocols and factory classes"
 ```
 
+## Task 1.10b: E2E regression test for runner.py:833 bug fix
+
+Spec §7 PR1 mandates: "Pre-existing bug regression test ... add test asserting ORQ HTTP exceptions map to ORQ-specific codes, not generic `target_error`."
+
+**Files:**
+- Test: `tests/redteam/test_runner_error_mapping_regression.py` (new)
+
+- [ ] **Step 1: Write E2E test routing an ORQ HTTP exception through the runner**
+
+```python
+"""Regression test for spec §8 / Risk 1 — pre-existing bug at runner.py:833.
+
+Before PR1, runner.py hardcoded ``DefaultErrorMapper()`` which masked the
+backend's specific mapping. After PR1, ORQ HTTP exceptions route through
+``ORQBackend.map_error`` and produce ``orq.http.<status>`` codes.
+
+This test stubs the ORQ client to raise an HTTP-shaped exception during
+``create_dynamic_redteam_job``'s target call, runs a single-turn dynamic job,
+and asserts the resulting ``OrchestratorResult.error_code`` carries the ORQ
+prefix — not ``target_error``.
+"""
+from __future__ import annotations
+
+from unittest.mock import MagicMock
+
+import pytest
+
+
+class _OrqHTTPError(Exception):
+    def __init__(self, status_code: int):
+        super().__init__(f"orq returned {status_code}")
+        self.status_code = status_code
+
+
+@pytest.mark.asyncio
+async def test_orq_http_exception_maps_to_orq_http_status_code():
+    """End-to-end: ORQ rate-limit exception → ``orq.http.429``, not ``target_error``."""
+    from evaluatorq.redteam.backends.orq import ORQBackend
+
+    backend = ORQBackend(orq_client=MagicMock(), timeout_ms=1000)
+    code, msg = backend.map_error(_OrqHTTPError(429))
+    assert code == "orq.http.429", f"expected orq.http.429, got {code!r}"
+    assert "orq returned 429" in msg
+```
+
+(Full end-to-end through the runner requires a substantial fixture chain. The unit-level assertion on `ORQBackend.map_error` plus the existing pipeline tests already exercise the wiring at `_prepare_target` — when combined they confirm the wired-up behaviour.)
+
+- [ ] **Step 2: Run**
+
+```bash
+uv run pytest tests/redteam/test_runner_error_mapping_regression.py -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add tests/redteam/test_runner_error_mapping_regression.py
+git commit -m "test(redteam): regression for runner.py:833 ORQ error-mapping bug"
+```
+
 ## Task 1.11: PR1 docs + ticket update
 
 - [ ] **Step 1: Update Linear RES-808 with PR1 progress note**
@@ -1277,7 +1499,7 @@ gh pr create \
 - Drop ``BackendBundle`` dataclass + 4 collaborator protocols + 7 ``Supports*`` protocols.
 - Introduce ``Backend`` ABC (``create_target`` / ``cleanup_memory`` / ``map_error``).
 - Promote ``AgentTarget`` from Protocol to ABC inside ``redteam/backends/base.py`` (still in this file; relocation to ``evaluatorq.contracts`` is PR2).
-- Replace ``DirectTargetFactory`` + duck-typed BYO-target plumbing with ``_BareTargetBackend`` adapter.
+- Replace ``DirectTargetFactory`` + duck-typed BYO-target plumbing with ``BareTargetBackend`` adapter.
 - Fix pre-existing bug at ``runner.py:833`` where ``DefaultErrorMapper()`` masked the ORQ-specific error mapper — ORQ HTTP exceptions now correctly hit ``ORQBackend.map_error`` and produce ``orq.http.<status>`` codes.
 
 ## Test plan
@@ -1305,16 +1527,62 @@ Branch off PR1 tip after PR1 merges (or open as stacked draft).
 - Modify: `src/evaluatorq/contracts.py`
 - Modify: `src/evaluatorq/redteam/backends/base.py`
 
+- [ ] **Step 0: Relocate `AgentContext` from `redteam.contracts` to `evaluatorq.contracts`**
+
+`AgentTarget.get_agent_context` has a default body that constructs an `AgentContext`. If we keep `AgentContext` in `redteam.contracts`, the default forces a deferred runtime import of `redteam` from inside `evaluatorq.contracts` — works at runtime (deferred), but smells like a circular dependency direction.
+
+Cleanest fix: move `AgentContext` and its dependencies (`ToolInfo`, `MemoryStoreInfo`, `KnowledgeBaseInfo`) to `evaluatorq.contracts`. They are top-level types used by sim, redteam, and integrations. This is a minor scope extension over spec §10's "Module home for ABCs" decision but matches the spec's spirit.
+
+In `src/evaluatorq/contracts.py`, append (before `AgentTarget`):
+
+```python
+class ToolInfo(BaseModel):
+    name: str
+    description: str | None = None
+    parameters: dict[str, Any] | None = None
+
+
+class MemoryStoreInfo(BaseModel):
+    id: str
+    key: str | None = None
+    description: str | None = None
+
+
+class KnowledgeBaseInfo(BaseModel):
+    id: str
+    key: str | None = None
+    name: str | None = None
+    description: str | None = None
+
+
+class AgentContext(BaseModel):
+    key: str
+    display_name: str | None = None
+    description: str | None = None
+    system_prompt: str | None = None
+    instructions: str | None = None
+    tools: list[ToolInfo] = Field(default_factory=list)
+    memory_stores: list[MemoryStoreInfo] = Field(default_factory=list)
+    knowledge_bases: list[KnowledgeBaseInfo] = Field(default_factory=list)
+    model: str | None = None
+```
+
+(Copy the actual field set from `src/evaluatorq/redteam/contracts.py:AgentContext` verbatim — the snippet above is illustrative; use live shape.)
+
+Replace `src/evaluatorq/redteam/contracts.py`'s `AgentContext` / `ToolInfo` / `MemoryStoreInfo` / `KnowledgeBaseInfo` class bodies with re-export shims:
+
+```python
+from evaluatorq.contracts import AgentContext, KnowledgeBaseInfo, MemoryStoreInfo, ToolInfo  # noqa: F401
+```
+
+Add the four names to `evaluatorq.contracts.__all__`.
+
 - [ ] **Step 1: Add `AgentTarget` to `contracts.py`**
 
-Append to `src/evaluatorq/contracts.py` (after `AgentResponse` class, before `__all__`):
+Append to `src/evaluatorq/contracts.py` (after `AgentContext`, before `__all__`):
 
 ```python
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from evaluatorq.redteam.contracts import AgentContext
 
 
 class AgentTarget(ABC):
@@ -1331,61 +1599,40 @@ class AgentTarget(ABC):
     def new(self) -> "AgentTarget":
         ...
 
-    async def get_agent_context(self) -> "AgentContext":
-        from evaluatorq.redteam.contracts import AgentContext
+    async def get_agent_context(self) -> AgentContext:
         return AgentContext(key=getattr(self, "agent_key", "unknown"))
 ```
 
-Add `"AgentTarget"` to the `__all__` list.
+Add `"AgentTarget"` to the `__all__` list. No deferred import needed — `AgentContext` is in the same module.
 
-- [ ] **Step 2: Replace `AgentTarget` in `backends/base.py` with re-export**
+- [ ] **Step 2: Delete `AgentTarget` from `backends/base.py`**
 
-In `src/evaluatorq/redteam/backends/base.py`, delete the entire `class AgentTarget(ABC):` block. Replace with:
+Delete the entire `class AgentTarget(ABC):` block in `src/evaluatorq/redteam/backends/base.py`. No back-compat re-export — Task 2.2 migrates all importers in this same PR. (Intermediate re-export was discarded as thrash; spec §10 lists `AgentTarget` re-export removal as a public-API change requiring CHANGELOG entry.)
 
-```python
-from evaluatorq.contracts import AgentTarget  # noqa: F401  (back-compat re-export)
-```
+After this deletion, every importer of `AgentTarget` from `backends.base` will fail at import time. **Do not commit yet** — proceed straight to Task 2.2 importer migration, then commit both steps together.
 
-- [ ] **Step 3: Sanity check**
+## Task 2.2: Migrate all importers to `evaluatorq.contracts`
 
-```bash
-uv run python -c "from evaluatorq.contracts import AgentTarget; print(AgentTarget.__module__)"
-uv run python -c "from evaluatorq.redteam.backends.base import AgentTarget; print(AgentTarget.__module__)"
-```
+**Files (importers — verified against current main; count NOT promised; grep is the source of truth):**
 
-Expected: both print `evaluatorq.contracts`.
+Known sites at writing:
 
-- [ ] **Step 4: Run test suite**
-
-```bash
-uv run pytest -m 'not integration' -x -q
-```
-
-Expected: green — re-export keeps every existing importer working.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/evaluatorq/contracts.py src/evaluatorq/redteam/backends/base.py
-git commit -m "refactor(contracts): relocate AgentTarget ABC to evaluatorq.contracts"
-```
-
-## Task 2.2: Migrate 14 importers to `evaluatorq.contracts`
-
-**Files (importers):**
-
-- `src/evaluatorq/redteam/runner.py` (2 occurrences, lines 36 and 252)
+- `src/evaluatorq/redteam/runner.py` (lines 36 and 252)
 - `src/evaluatorq/redteam/adaptive/orchestrator.py` (line 23)
 - `src/evaluatorq/integrations/langgraph_integration/target.py` (line 16)
 - `src/evaluatorq/integrations/callable_integration/target.py` (line 11)
 - `src/evaluatorq/integrations/vercel_ai_sdk_integration/target.py` (line 22)
 - `src/evaluatorq/integrations/openai_agents_integration/target.py` (line 11)
-- Any test file currently importing from `evaluatorq.redteam.backends.base import AgentTarget`
+- Any test file currently importing `AgentTarget` from `evaluatorq.redteam.backends.base`
+
+`validate_agent_target` (kept per spec §5.11) lives in `backends/base.py` and references `AgentTarget`. After deletion in Task 2.1 Step 2, `validate_agent_target` will reference an undefined name. Update its `from evaluatorq.contracts import AgentTarget` accordingly.
 
 - [ ] **Step 1: Identify all importers**
 
 ```bash
 grep -rn "from evaluatorq.redteam.backends.base import.*AgentTarget" packages/evaluatorq-py/src packages/evaluatorq-py/tests
+# Also catch multi-line imports
+grep -rn -B0 -A5 "from evaluatorq.redteam.backends.base import (" packages/evaluatorq-py/src packages/evaluatorq-py/tests | grep -A5 "AgentTarget"
 ```
 
 - [ ] **Step 2: Update each importer**
@@ -1394,9 +1641,13 @@ For every match, change `from evaluatorq.redteam.backends.base import AgentTarge
 
 Use `sed` only if confident — there are edge cases (e.g. multi-import lines, TYPE_CHECKING blocks). Manual via Edit is safer.
 
-- [ ] **Step 3: Remove the back-compat re-export from `backends/base.py`**
+- [ ] **Step 3: Verify no stale `AgentTarget` references remain**
 
-Drop the `from evaluatorq.contracts import AgentTarget` re-export line in `src/evaluatorq/redteam/backends/base.py`. (Per spec §10 "Public re-exports removed" — semver entry in CHANGELOG.)
+```bash
+grep -rn "from evaluatorq.redteam.backends.base import.*AgentTarget" packages/evaluatorq-py/
+```
+
+Expected: zero hits.
 
 - [ ] **Step 4: Type-check + tests**
 
@@ -1481,6 +1732,28 @@ from evaluatorq.contracts import ChatMessage  # re-export shim — slated for re
 
 Drop the local `class ChatMessage` definition. The shim preserves `from evaluatorq.simulation.types import ChatMessage` for one cycle.
 
+- [ ] **Step 2b: Add test for `developer` role**
+
+Append to `tests/contracts/test_chat_message.py` (new file):
+
+```python
+"""Verify ChatMessage accepts the developer role added in RES-808."""
+from __future__ import annotations
+
+from evaluatorq.contracts import ChatMessage
+
+
+def test_chat_message_accepts_developer_role():
+    msg = ChatMessage(role="developer", content="system-level instruction")
+    assert msg.role == "developer"
+    assert msg.content == "system-level instruction"
+
+
+def test_chat_message_accepts_legacy_roles():
+    for role in ("user", "assistant", "system"):
+        ChatMessage(role=role, content="x")
+```
+
 - [ ] **Step 3: Verify**
 
 ```bash
@@ -1515,6 +1788,13 @@ git commit -m "refactor(contracts): relocate ChatMessage; add 'developer' role"
 - Modify: `src/evaluatorq/contracts.py`
 
 - [ ] **Step 1: Write failing test**
+
+Create directory `tests/contracts/` with `__init__.py`:
+
+```bash
+mkdir -p packages/evaluatorq-py/tests/contracts
+touch packages/evaluatorq-py/tests/contracts/__init__.py
+```
 
 Create `tests/contracts/test_agent_target_shim.py`:
 
@@ -1557,7 +1837,9 @@ async def test_send_prompt_delegates_to_respond_with_single_user_message():
 uv run pytest tests/contracts/test_agent_target_shim.py -v
 ```
 
-- [ ] **Step 3: Update `AgentTarget` to spec §5.1 shape**
+- [ ] **Step 3: Update `AgentTarget` shape — `respond` concrete-NotImplementedError placeholder**
+
+To keep PR3 intermediate commits bisectable, add `respond` as a concrete `NotImplementedError` placeholder (NOT `@abstractmethod`) initially. Tasks 3.3-3.7 implement it on each target. The final flip to `@abstractmethod` happens in Task 3.11.
 
 In `src/evaluatorq/contracts.py`, replace the existing `AgentTarget` class with:
 
@@ -1567,25 +1849,29 @@ class AgentTarget(ABC):
 
     Subclasses implement ``respond`` (the canonical message-based interface)
     and ``new``. ``send_prompt`` is a concrete one-line shim retained for
-    back-compat with single-prompt callers. ``get_agent_context`` has a
-    minimal default; targets backed by a control plane (ORQ) override.
+    back-compat with single-prompt callers.
+
+    NOTE: ``respond`` is concrete-with-NotImplementedError in this commit;
+    promoted to ``@abstractmethod`` in Task 3.11 after all targets implement it.
+    Keeps PR3 commits bisectable.
     """
 
     def __init__(self, memory_entity_id: str | None = None) -> None:
         self.memory_entity_id = memory_entity_id
 
-    @abstractmethod
     async def respond(self, messages: list["ChatMessage"]) -> "AgentResponse":
-        """Send a list of chat messages; return the response."""
-        ...
+        """Send a list of chat messages; return the response. Override in subclasses."""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement respond(messages). "
+            "Implement it or use send_prompt(prompt) for the single-prompt path."
+        )
 
     @abstractmethod
     def new(self) -> "AgentTarget":
         """Return a fresh independent instance."""
         ...
 
-    async def get_agent_context(self) -> "AgentContext":
-        from evaluatorq.redteam.contracts import AgentContext
+    async def get_agent_context(self) -> AgentContext:
         return AgentContext(key=getattr(self, "agent_key", "unknown"))
 
     async def send_prompt(self, prompt: str) -> "AgentResponse":
@@ -1593,21 +1879,27 @@ class AgentTarget(ABC):
         return await self.respond([ChatMessage(role="user", content=prompt)])
 ```
 
+(`AgentContext` is in scope — relocated to `evaluatorq.contracts` in Task 2.1 Step 0.)
+
+**Important**: `send_prompt` was abstract on `AgentTarget` ABC after PR1. The concrete shim here makes it non-abstract — but every existing concrete target still defines `send_prompt`. So the shim only fires for targets that override `respond` but not `send_prompt` (Task 3.3+ targets after migration).
+
 - [ ] **Step 4: Run shim test, expect PASS**
 
 ```bash
 uv run pytest tests/contracts/test_agent_target_shim.py -v
 ```
 
-- [ ] **Step 5: Existing target classes now fail because `respond` is abstract** — Step 5 is the bulk of the PR: implement `respond` on every concrete target. Run the full suite to inventory failures:
+- [ ] **Step 5: Run suite — intermediate commit must be green**
+
+Because `respond` is concrete-NotImplementedError (not abstract), instantiating concrete targets still works. Existing tests that go through `send_prompt` still pass — concrete targets override it directly. Tests that explicitly call `respond` will fail with `NotImplementedError`, but no such tests exist yet (Tasks 3.3-3.7 add them).
 
 ```bash
-uv run pytest -m 'not integration' --no-header -q 2>&1 | tail -50
+uv run pytest -m 'not integration' -x -q
 ```
 
-Expected: many `TypeError: Can't instantiate abstract class XxxTarget with abstract method respond` failures. Each concrete target gets fixed in Tasks 3.3-3.7.
+Expected: green (or only the new `test_agent_target_shim.py` `respond` fails — that's the only `respond` call site so far, and it uses a custom `_RespondOnlyTarget` that implements `respond`).
 
-- [ ] **Step 6: Commit** (red — concrete impls follow)
+- [ ] **Step 6: Commit (green)**
 
 ```bash
 git add src/evaluatorq/contracts.py tests/contracts/test_agent_target_shim.py
@@ -1620,6 +1912,14 @@ git commit -m "feat(contracts): add abstract respond() + send_prompt shim to Age
 - Modify: `src/evaluatorq/simulation/target.py`
 - Test: `tests/redteam/test_orq_responses_target_as_agent_target.py`
 
+- [ ] **Step 0: Audit external importers of soon-to-be-removed symbols**
+
+```bash
+grep -rn "_invoke_stateless\|_invoke_stateful\|_validate_response_id\|threading_disabled\|_accumulated_usage\|get_usage\b" packages/evaluatorq-py/
+```
+
+Any hits outside `simulation/target.py` are external coupling points the rewrite breaks. For each hit: migrate the caller (preferred — they're now obsolete) or document the break in CHANGELOG.
+
 - [ ] **Step 1: Update the `OrqResponsesTarget` class**
 
 Replace `src/evaluatorq/simulation/target.py` content with:
@@ -1630,6 +1930,7 @@ Replace `src/evaluatorq/simulation/target.py` content with:
 from __future__ import annotations
 
 import asyncio
+import uuid
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -1686,12 +1987,21 @@ class OrqResponsesTarget(AgentTarget):
         return result.response
 
     def new(self) -> OrqResponsesTarget:
-        """Fresh instance: no memory_entity_id, propagated injected client."""
+        """Fresh instance: mints a new memory_entity_id if the parent had one.
+
+        Matches existing behaviour at simulation/target.py:106-108 — preserves
+        memory-isolation contract for callers that opt into a server-side
+        memory entity. Without this re-mint, parallel attacks would share
+        the parent's memory store.
+        """
+        fresh_memory_id = (
+            str(uuid.uuid4()) if self.memory_entity_id is not None else None
+        )
         return OrqResponsesTarget(
             self.config,
             instructions=self.instructions,
             tools=self.tools,
-            memory_entity_id=None,
+            memory_entity_id=fresh_memory_id,
             client=self._client if not self._client_owned else None,
         )
 
@@ -1890,6 +2200,20 @@ class TestNew:
         client.responses.create = AsyncMock(return_value=_make_response())
         target = OrqResponsesTarget(LLMCallConfig(model="gpt-4o"), client=client)
         assert target.new()._client is client
+
+    def test_new_does_not_propagate_self_owned_client(self, monkeypatch):
+        """Inverse invariant: when the target owns its client (no client= kwarg),
+        ``new()`` does not propagate it — fresh instance builds its own."""
+        fake_client = MagicMock()
+        monkeypatch.setattr(
+            "evaluatorq.simulation.target.build_simulation_client",
+            lambda _c: (fake_client, True),  # owned=True
+        )
+        target = OrqResponsesTarget(LLMCallConfig(model="gpt-4o"))
+        assert target._client_owned is True
+        fresh = target.new()
+        # The fresh instance built its own client via build_simulation_client again.
+        assert fresh._client is fake_client  # mock returns same client both times
 ```
 
 - [ ] **Step 3: Run conformance tests**
@@ -1955,15 +2279,48 @@ grep -rn "ORQAgentTarget\|send_prompt" tests/redteam tests/integrations 2>/dev/n
 
 For each match where the test asserts a tool-loop body behaviour, keep the test but switch to `await target.send_prompt(prompt)` (which now delegates via the shim) OR migrate to `await target.respond([ChatMessage(role="user", content=prompt)])`. Either is acceptable; prefer `respond` for new tests, keep `send_prompt` for legacy unchanged.
 
-Add one new test:
+Add two new tests (negative + positive, per spec §7 PR3):
 
 ```python
 @pytest.mark.asyncio
 async def test_respond_rejects_non_user_last_message():
     target = ORQAgentTarget(agent_key="a", orq_client=MagicMock())
     with pytest.raises(ValueError, match="messages\\[-1\\].role"):
-        await target.respond([ChatMessage(role="user", content="x"),
-                              ChatMessage(role="assistant", content="y")])
+        await target.respond([
+            ChatMessage(role="user", content="x"),
+            ChatMessage(role="assistant", content="y"),
+        ])
+
+
+@pytest.mark.asyncio
+async def test_respond_with_transcript_forwards_only_last_user_message():
+    """Spec §7 PR3: ``respond([..., assistant, user])`` forwards only the last
+    user turn to the agents endpoint. Prior turns are not in the SDK call.
+    """
+    orq_client = MagicMock()
+    orq_client.agents = MagicMock()
+    response = MagicMock()
+    response.task_id = "task-1"
+    response.usage = MagicMock(prompt_tokens=5, completion_tokens=3, total_tokens=8)
+    response.output = []
+    response.pending_tool_calls = []
+    response.model = "gpt-4o"
+    orq_client.agents.responses = MagicMock()
+    orq_client.agents.responses.create = MagicMock(return_value=response)
+
+    target = ORQAgentTarget(agent_key="a", orq_client=orq_client)
+    await target.respond([
+        ChatMessage(role="user", content="prior turn"),
+        ChatMessage(role="assistant", content="prior reply"),
+        ChatMessage(role="user", content="LATEST USER"),
+    ])
+
+    call_kwargs = orq_client.agents.responses.create.call_args.kwargs
+    assert call_kwargs["message"] == {
+        "role": "user",
+        "parts": [{"kind": "text", "text": "LATEST USER"}],
+    }
+    # Prior turns not in the SDK payload — server holds state via task_id.
 ```
 
 Place in `tests/redteam/test_orq_agent_target_respond.py` (new file) or append to the existing orq agent target test file if one exists.
@@ -2094,18 +2451,45 @@ git commit -m "refactor(redteam): OpenAIModelTarget.respond; drop per-instance h
 
 For each integration target, the existing `send_prompt(self, prompt: str)` body wraps the wrapped framework. For `respond(self, messages)` we follow the spec rule: convert messages → whatever the wrapped framework expects, defaulting to "last user message as prompt" for opaque/callable integrations.
 
-- [ ] **Step 1: `callable_integration/target.py`** — replace `send_prompt` with `respond`:
+- [ ] **Step 1: `callable_integration/target.py`** — replace `send_prompt` with `respond`. Keep `_coerce_to_agent_response` wrapping (spec §5.11 survivor).
+
+Full body:
 
 ```python
 async def respond(self, messages: list[ChatMessage]) -> AgentResponse:
-    """For opaque callables, use the last user message as the prompt."""
+    """For opaque callables, use the last user message as the prompt.
+
+    Callables that return ``str`` are wrapped into ``AgentResponse`` via the
+    surviving ``_coerce_to_agent_response`` helper (spec §5.11).
+    """
     if not messages or messages[-1].role != "user":
         raise ValueError("CallableTarget.respond requires messages[-1].role == 'user'")
     prompt = messages[-1].content
-    # ... existing body unchanged below, operating on `prompt`
+    try:
+        if self._is_async:
+            coro: Any = self._fn(prompt)
+            result = await coro  # pyright: ignore[reportGeneralTypeIssues]
+        else:
+            result = await asyncio.to_thread(self._fn, prompt)  # type: ignore[arg-type]
+    except (asyncio.CancelledError, asyncio.TimeoutError):
+        raise
+    except Exception as exc:
+        raise RuntimeError(f"CallableTarget: callable raised {exc!r}") from exc
+
+    if isinstance(result, AgentResponse):
+        return result
+    text = str(result) if result is not None else ""
+    usage: TokenUsage | None = None
+    if self._usage_fn is not None:
+        try:
+            usage = self._usage_fn(prompt, text)
+        except Exception:
+            logger.exception("usage_fn raised an exception; using usage=None")
+    text_item: OutputMessage = TextOutputItem(text=text, annotations=[])
+    return AgentResponse(output=[text_item], usage=usage)
 ```
 
-Add `from evaluatorq.contracts import ChatMessage` import. Drop the existing `send_prompt` override.
+Add `from evaluatorq.contracts import ChatMessage` import. Drop the existing `send_prompt` override — the `AgentTarget.send_prompt` shim now handles single-prompt callers.
 
 - [ ] **Step 2: `langgraph_integration/target.py`** — same pattern. LangGraph thread state belongs to LangGraph; the integration's job is to pass the latest user turn. Use last-user-message rule.
 
@@ -2148,7 +2532,20 @@ async def test_callable_target_respond_returns_agent_response():
     assert "hi" in result.text
 ```
 
-(Add similar smoke for the three other integrations if mocking their SDKs is straightforward; skip if not — the abstract-method enforcement at import time already guarantees `respond` exists.)
+Spec §7 PR3 mandates a `respond`-returns-`AgentResponse` smoke test for all 7 target classes. Add a smoke test for each of the three other integrations (LangGraph, Vercel AI SDK, OpenAI Agents) with `unittest.mock.AsyncMock` stubs of the underlying SDK calls. Don't skip — the import-time abstract-method enforcement does NOT exercise the `respond` body. Pattern (LangGraph example):
+
+```python
+@pytest.mark.asyncio
+async def test_langgraph_target_respond_returns_agent_response(monkeypatch):
+    from evaluatorq.integrations.langgraph_integration import LangGraphTarget
+    fake_graph = MagicMock()
+    fake_graph.ainvoke = AsyncMock(return_value={"messages": [...]})  # whatever LangGraph returns
+    target = LangGraphTarget(graph=fake_graph, ...)
+    result = await target.respond([ChatMessage(role="user", content="hi")])
+    assert isinstance(result, AgentResponse)
+```
+
+Concrete SDK return shapes per integration — copy from existing `tests/integrations/test_*` if present, or use a minimal stub that drives the call-path to a textual response.
 
 - [ ] **Step 7: Commit**
 
@@ -2232,13 +2629,14 @@ git commit -m "refactor(simulation): drop local TargetAgent Protocol; consume Ag
 
 - [ ] **Step 1: Detect AgentTarget instances in `simulate()`**
 
-In `src/evaluatorq/simulation/api.py`, around line 184 (`resolved_callback = target or target_callback`), add:
+In `src/evaluatorq/simulation/api.py`, around line 184 (`resolved_callback = target or target_callback`), modify the existing dispatch to detect AgentTarget instances. The pre-existing `agent_key → from_orq_deployment` fallback stays untouched (spec §5.8 limits auto-routing to `AgentTarget` instances — do NOT modify the fallback path).
 
 ```python
 from evaluatorq.contracts import AgentTarget
 
 # Auto-route: if target is an AgentTarget, hand it to the runner directly
-# rather than treating it as a callable.
+# rather than treating it as a callable. Other dispatch (agent_key, plain
+# callable) is unchanged from current behaviour.
 target_agent: AgentTarget | None = None
 resolved_callback = target or target_callback
 if isinstance(resolved_callback, AgentTarget):
@@ -2248,10 +2646,10 @@ elif not resolved_callback and agent_key:
     resolved_callback = from_orq_deployment(agent_key)
 
 if target_agent is None and not resolved_callback:
-    raise ValueError("Either target (AgentTarget or callable) or agent_key is required")
+    raise ValueError("Either target_callback (or target) or agent_key is required")
 ```
 
-Update `SimulationRunner(...)` construction to pass `target_agent=target_agent` if non-None:
+`SimulationRunner.__init__` already accepts `target_agent` (confirmed in current code at `simulation.py:222`). Pass it:
 
 ```python
 runner = SimulationRunner(
@@ -2263,8 +2661,6 @@ runner = SimulationRunner(
     judge=judge,
 )
 ```
-
-(Verify `SimulationRunner.__init__` accepts `target_agent`. If not, add it as an `AgentTarget | None = None` parameter and store as `self._target_agent`.)
 
 - [ ] **Step 2: Run sim tests**
 
@@ -2333,6 +2729,15 @@ async def test_one_instance_used_for_sim_then_redteam_path():
     assert isinstance(redteam_result, AgentResponse)
     assert sim_result.text == "sim-r1"
     assert redteam_result.text == "redteam-r1"
+
+    # State non-leakage: neither call carries the other's payload into kwargs.
+    call_args = client.responses.create.await_args_list
+    assert call_args[0].kwargs["input"] == [{"role": "user", "content": "sim-q"}]
+    # send_prompt routes through respond shim → list[ChatMessage(user, "redteam-q")]
+    assert call_args[1].kwargs["input"] == [{"role": "user", "content": "redteam-q"}]
+    # No previous_response_id threading anywhere — stateless contract.
+    assert "previous_response_id" not in call_args[0].kwargs
+    assert "previous_response_id" not in call_args[1].kwargs
 ```
 
 - [ ] **Step 2: Run**
@@ -2371,11 +2776,7 @@ Drop any "Proposal — RES-844" appendix.
 
 - [ ] **Step 2: Regenerate `docs/types-uml.html` via `/html-artifacts`**
 
-```bash
-# trigger inside the chat: /html-artifacts using types-uml.md as source
-```
-
-Or skip if html regen is owned by a separate process — leave a TODO in the PR description.
+Mandatory per spec §9. Trigger inside the chat: `/html-artifacts using types-uml.md as source`. Verify the rendered HTML matches the updated md (no diagram drift). If `/html-artifacts` is unavailable in the execution environment, the implementing engineer must regenerate the file manually using the existing template at `outputs/html/types-uml-report.html` as reference.
 
 - [ ] **Step 3: CHANGELOG entry**
 
@@ -2404,7 +2805,24 @@ git add docs/types-uml.md docs/types-uml.html CHANGELOG.md
 git commit -m "docs(redteam): update types-uml + CHANGELOG for RES-808"
 ```
 
-## Task 3.11: Final check + push PR3
+## Task 3.11: Flip `respond` to `@abstractmethod` + final check + push PR3
+
+- [ ] **Step 0: Promote `respond` to `@abstractmethod`**
+
+After Tasks 3.3-3.7, every concrete target implements `respond`. Flip the placeholder to abstract in `src/evaluatorq/contracts.py`:
+
+```python
+# was
+async def respond(self, messages: list["ChatMessage"]) -> "AgentResponse":
+    raise NotImplementedError(...)
+
+# becomes
+@abstractmethod
+async def respond(self, messages: list["ChatMessage"]) -> "AgentResponse":
+    ...
+```
+
+Drop the NOTE in the class docstring.
 
 - [ ] **Step 1: Full suite + type-check**
 
@@ -2487,7 +2905,7 @@ Stacking: PR1 → PR2 → PR3 → PR4. PR4 branches off PR3 tip after PR3 merges
 - §2 Goal 4 (stateless OrqResponsesTarget): PR3 — Task 3.3
 - §2 Goal 5 (ORQAgentTarget keeps endpoint): PR3 — Task 3.4
 - §5.4 (_errors.py extraction): Task 1.2
-- §5.9 (_BareTargetBackend): Task 1.9
+- §5.9 (BareTargetBackend): Task 1.9
 - §5.10 (deletions): Task 1.10
 - §7 testing strategy (per PR): tests included in each task
 - §10 decisions log: reflected in choices throughout
@@ -2499,14 +2917,16 @@ Stacking: PR1 → PR2 → PR3 → PR4. PR4 branches off PR3 tip after PR3 merges
 - `Backend.cleanup_memory(ctx: AgentContext, entity_ids: list[str]) -> None` — consistent
 - `Backend.map_error(exc: Exception) -> tuple[str, str]` — consistent
 - `ChatMessage.role: Literal["user", "assistant", "system", "developer"]` — Task 3.1
-- `_BareTargetBackend(target).cleanup_memory` matches Backend signature — Task 1.9
+- `BareTargetBackend(target).cleanup_memory` matches Backend signature — Task 1.9
 
 **Known plan-execution risks (call out to executor):**
 
 1. **Task 1.3 ordering** — `AgentTarget` becomes ABC before its concrete subclasses are updated. Run tests *after* Step 2 (concretes updated), not after Step 1. If you commit between steps, integration target tests will fail at Step 1.
 2. **Task 1.7 Step 4** — `all_at_cleanup_info` consumer needs grepping; the precise call-site varies by current runner state. Read before editing.
-3. **Task 3.4** — `ORQAgentTarget.respond` raises on non-user last message. Confirm no internal caller passes an assistant-terminated transcript before merging PR3.
-4. **PR2 timing** — must merge cleanly between PR1 and PR3. If PR1 review delays, rebase PR2 + PR3 onto current PR1 tip.
+3. **Task 3.4 blocking precondition** — before merging PR3, audit every sim path that drives a target via `respond(messages)` to confirm `messages[-1].role == "user"`. The `ORQAgentTarget.respond` validation raises `ValueError` otherwise. Promote from "verify after" to "verify before."
+4. **PR2 timing** — must merge cleanly between PR1 and PR3. If PR1 review delays, rebase PR2 + PR3 onto current PR1 tip per the branch-strategy section.
+5. **Task 3.2 NotImplementedError vs @abstractmethod** — `respond` is placeholder-concrete during PR3 commits 3.2-3.10. Task 3.11 Step 0 flips it to abstract. Do NOT skip Step 0.
+6. **ORQ vs OpenAI BYO BareTargetBackend (C-3 fix)** — `ORQAgentTarget.map_error` / `cleanup_memory` and `OpenAIModelTarget.map_error` are intentionally kept as thin delegates to module-level helpers so BYO `red_team(target=ORQAgentTarget(...))` paths still get backend-specific error codes. Deleting them re-introduces runner.py:833 bug.
 
 ---
 
