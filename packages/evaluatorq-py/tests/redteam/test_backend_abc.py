@@ -43,3 +43,15 @@ def test_orq_backend_map_error_includes_status_code():
     backend = ORQBackend(orq_client=object(), timeout_ms=1000)
     code, _ = backend.map_error(_HTTPError())
     assert code == "orq.http.429"
+
+
+def test_openai_backend_map_error_returns_openai_prefix():
+    from unittest.mock import MagicMock
+
+    from evaluatorq.redteam.backends.openai import OpenAIBackend
+
+    # Pass MagicMock as client — constructor's ``client or create_async_llm_client()``
+    # would otherwise trigger CredentialError when no API key is set in the test env.
+    backend = OpenAIBackend(client=MagicMock(), system_prompt=None)
+    code, _ = backend.map_error(TimeoutError("slow"))
+    assert code.startswith("openai.")

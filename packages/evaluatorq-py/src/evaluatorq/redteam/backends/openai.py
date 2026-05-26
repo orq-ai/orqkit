@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 from loguru import logger
 
 from evaluatorq.redteam.backends._errors import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.backends.base import AgentTarget
+from evaluatorq.redteam.backends.base import AgentTarget, Backend
 from evaluatorq.redteam.contracts import (
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
@@ -227,6 +227,57 @@ class OpenAIErrorMapper:
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
         """Map an OpenAI exception to a normalized error code and message tuple."""
+        name = type(exc).__name__.lower()
+        status_code = extract_status_code(exc)
+        provider_code = extract_provider_error_code(exc)
+
+        if status_code is not None:
+            return f'openai.http.{status_code}', f'{type(exc).__name__}: {exc}'
+        if provider_code:
+            return f'openai.code.{provider_code}', f'{type(exc).__name__}: {exc}'
+        if 'ratelimit' in name:
+            return 'openai.rate_limit', f'{type(exc).__name__}: {exc}'
+        if 'authentication' in name:
+            return 'openai.auth', f'{type(exc).__name__}: {exc}'
+        if 'timeout' in name:
+            return 'openai.timeout', f'{type(exc).__name__}: {exc}'
+        return 'openai.unknown', f'{type(exc).__name__}: {exc}'
+
+
+class OpenAIBackend(Backend):
+    """Backend for direct OpenAI model targets.
+
+    Targets are stateless. ``cleanup_memory`` is a no-op (OpenAI models do not
+    own server-side memory).
+    """
+
+    def __init__(
+        self,
+        *,
+        client: AsyncOpenAI | None = None,
+        system_prompt: str | None = None,
+        max_tokens: int | None = None,
+        timeout_ms: int | None = None,
+    ) -> None:
+        super().__init__(name="openai")
+        self._client = client or create_async_llm_client()
+        self._system_prompt = system_prompt
+        self._max_tokens = max_tokens
+        self._timeout_ms = timeout_ms
+
+    def create_target(self, agent_key: str) -> OpenAIModelTarget:
+        return OpenAIModelTarget(
+            model=agent_key,
+            system_prompt=self._system_prompt,
+            client=self._client,
+            max_tokens=self._max_tokens,
+            timeout_ms=self._timeout_ms,
+        )
+
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        logger.debug('OpenAI backend has no memory store; cleanup is a no-op')
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
         name = type(exc).__name__.lower()
         status_code = extract_status_code(exc)
         provider_code = extract_provider_error_code(exc)
