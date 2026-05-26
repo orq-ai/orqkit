@@ -12,7 +12,7 @@ import asyncio
 import json
 import os
 import uuid
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from loguru import logger
 
@@ -44,6 +44,7 @@ def _get_orq_server_url() -> str:
 
 
 from evaluatorq.redteam.backends._errors import extract_provider_error_code, extract_status_code
+from evaluatorq.redteam.backends.base import AgentTarget
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
@@ -58,11 +59,8 @@ from evaluatorq.redteam.contracts import (
 )
 from evaluatorq.redteam.tracing import record_token_usage, set_span_attrs, truncate_for_span, with_redteam_span
 
-if TYPE_CHECKING:
-    from evaluatorq.redteam.backends.base import AgentTarget
 
-
-class ORQAgentTarget:
+class ORQAgentTarget(AgentTarget):
     """Target adapter for ORQ agents.
 
     Wraps the ORQ SDK to provide the AgentTarget protocol.
@@ -83,12 +81,12 @@ class ORQAgentTarget:
         if not provided, one is generated. The pipeline reads this attribute
         after construction to track entities for cleanup.
         """
+        if memory_entity_id is None:
+            memory_entity_id = f'red-team-{uuid.uuid4().hex[:12]}'
+        super().__init__(memory_entity_id=memory_entity_id)
         timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
         self.agent_key = agent_key
         self.orq_client = orq_client
-        self.memory_entity_id: str | None = (
-            memory_entity_id if memory_entity_id is not None else f'red-team-{uuid.uuid4().hex[:12]}'
-        )
         self.model = model
         self._timeout_ms = timeout_ms
         self._task_id: str | None = None

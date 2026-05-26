@@ -19,34 +19,33 @@ if TYPE_CHECKING:
     from evaluatorq.redteam.contracts import AgentContext, TokenUsage
 
 
-class AgentTarget(Protocol):
-    """Protocol for agent targets that can receive prompts.
+class AgentTarget(ABC):
+    """Abstract base class for agent targets that can receive prompts.
 
-    Targets that maintain persistent memory (server-side entities, LangGraph
-    checkpointer threads, etc.) expose the isolation key as ``memory_entity_id``.
-    Targets without persistent memory set it to ``None``. The red teaming
-    pipeline reads this attribute after target creation to track entities for
-    cleanup — it does not inject the value into the target.
-
-    Backends must implement ``send_prompt`` returning :class:`AgentResponse`.
-    ``AgentResponse`` carries both the ordered output items (text + tool calls)
-    and the per-call LLM metadata (``usage``, ``model``, ``response_id``,
-    ``finish_reason``) that previously lived on the now-removed ``SendResult``.
+    Subclasses must implement ``send_prompt`` and ``new``. Targets that back a
+    server-side memory store override ``get_agent_context``; otherwise the
+    default minimal context is returned. ``memory_entity_id`` is an instance
+    attribute (set in ``__init__``) so subclasses can mutate it without
+    shadowing a class default.
     """
 
-    memory_entity_id: str | None
+    def __init__(self, memory_entity_id: str | None = None) -> None:
+        self.memory_entity_id = memory_entity_id
 
-    async def send_prompt(self, prompt: str) -> 'AgentResponse':
-        """Send a prompt and return the response (output items + token usage)."""
+    @abstractmethod
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Send a prompt; return the response."""
         ...
 
+    @abstractmethod
     def new(self) -> AgentTarget:
-        """Return a fresh target instance with isolated state for a new attack.
-
-        Each call must produce an independent instance — own ``memory_entity_id``
-        for memory-backed targets, ``None`` otherwise.
-        """
+        """Return a fresh independent instance for a new attack."""
         ...
+
+    async def get_agent_context(self) -> AgentContext:
+        """Default: minimal context. Override for platform-backed targets."""
+        from evaluatorq.redteam.contracts import AgentContext
+        return AgentContext(key=getattr(self, "agent_key", "unknown"))
 
 
 def _coerce_to_agent_response(raw: Any) -> AgentResponse:

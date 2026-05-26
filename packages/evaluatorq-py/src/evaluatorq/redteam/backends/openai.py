@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 from loguru import logger
 
 from evaluatorq.redteam.backends._errors import extract_provider_error_code, extract_status_code
+from evaluatorq.redteam.backends.base import AgentTarget
 from evaluatorq.redteam.contracts import (
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
@@ -39,11 +40,8 @@ def create_async_llm_client(role_config=None) -> AsyncOpenAI:
     return _create(role_config)
 
 
-class OpenAIModelTarget:
+class OpenAIModelTarget(AgentTarget):
     """Target adapter that treats ``agent_key`` as an OpenAI model identifier."""
-
-    memory_entity_id: str | None = None
-    """OpenAI models are stateless — no server-side memory to isolate."""
 
     def __init__(
         self,
@@ -58,7 +56,9 @@ class OpenAIModelTarget:
 
         If ``client`` is not provided, one is created automatically via
         :func:`~evaluatorq.redteam.backends.registry.create_async_llm_client`.
+        OpenAI models are stateless — no server-side memory to isolate.
         """
+        super().__init__(memory_entity_id=None)
         self.model = model
         self.client = client or create_async_llm_client()
         self.system_prompt = system_prompt or 'You are a helpful assistant.'
