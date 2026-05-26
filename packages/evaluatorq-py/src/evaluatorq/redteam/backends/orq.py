@@ -44,7 +44,7 @@ def _get_orq_server_url() -> str:
 
 
 from evaluatorq.redteam.backends._errors import extract_provider_error_code, extract_status_code
-from evaluatorq.redteam.backends.base import AgentTarget
+from evaluatorq.redteam.backends.base import AgentTarget, Backend
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
@@ -535,6 +535,76 @@ class ORQErrorMapper:
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
         """Map an exception to a (error_code, error_message) tuple."""
+        name = type(exc).__name__.lower()
+        text = str(exc).lower()
+        status_code = extract_status_code(exc)
+        provider_code = extract_provider_error_code(exc)
+
+        if status_code is not None:
+            return f'orq.http.{status_code}', f'{type(exc).__name__}: {exc}'
+        if provider_code:
+            return f'orq.code.{provider_code}', f'{type(exc).__name__}: {exc}'
+        if 'timeout' in name or 'timed out' in text:
+            return 'orq.timeout', f'{type(exc).__name__}: {exc}'
+        if 'auth' in name or 'unauthorized' in text or 'forbidden' in text:
+            return 'orq.auth', f'{type(exc).__name__}: {exc}'
+        if 'ratelimit' in name or '429' in text:
+            return 'orq.rate_limit', f'{type(exc).__name__}: {exc}'
+        return 'orq.unknown', f'{type(exc).__name__}: {exc}'
+
+
+class ORQBackend(Backend):
+    """Backend for ORQ-hosted agents.
+
+    Owns the ORQ SDK client. Creates ``ORQAgentTarget`` instances per job.
+    Performs memory cleanup via the SDK. Maps ORQ exceptions to a normalized
+    error taxonomy.
+    """
+
+    def __init__(self, *, orq_client: Any = None, timeout_ms: int | None = None) -> None:
+        super().__init__(name="orq")
+        timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
+        self._timeout_ms = timeout_ms
+        if orq_client is not None:
+            self._orq_client = orq_client
+        else:
+            if _orq_cls is None:
+                raise ImportError(
+                    "ORQ backend requires the orq-ai-sdk package. "
+                    "Install with: pip install evaluatorq[orq]"
+                )
+            self._orq_client = _orq_cls(
+                api_key=_get_orq_api_key(),
+                server_url=_get_orq_server_url(),
+                timeout_ms=self._timeout_ms,
+            )
+
+    def create_target(self, agent_key: str) -> ORQAgentTarget:
+        return ORQAgentTarget(
+            agent_key=agent_key,
+            orq_client=self._orq_client,
+            timeout_ms=self._timeout_ms,
+        )
+
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        for ms in ctx.memory_stores:
+            if not ms.key:
+                logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
+                continue
+            for entity_id in entity_ids:
+                try:
+                    await asyncio.to_thread(
+                        self._orq_client.memory_stores.delete_memory,
+                        memory_store_key=ms.key,
+                        memory_entity_id=entity_id,
+                    )
+                    logger.debug(f'Deleted memory entity {entity_id} from store {ms.key}')
+                except Exception as e:  # noqa: PERF203
+                    if extract_status_code(e) == 404:
+                        continue
+                    logger.warning(f'Failed to cleanup memory entity {entity_id} from {ms.key}: {e}')
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
         name = type(exc).__name__.lower()
         text = str(exc).lower()
         status_code = extract_status_code(exc)

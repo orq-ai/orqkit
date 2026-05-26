@@ -30,3 +30,16 @@ def test_default_map_error_returns_target_error_tuple():
     assert code == "target_error"
     assert "RuntimeError" in msg
     assert "boom" in msg
+
+
+def test_orq_backend_map_error_includes_status_code():
+    from evaluatorq.redteam.backends.orq import ORQBackend
+
+    class _HTTPError(Exception):
+        def __init__(self):
+            super().__init__("boom")
+            self.status_code = 429
+
+    backend = ORQBackend(orq_client=object(), timeout_ms=1000)
+    code, _ = backend.map_error(_HTTPError())
+    assert code == "orq.http.429"
