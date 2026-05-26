@@ -54,55 +54,55 @@ class TestExtractStatusCode:
     """Tests for extract_status_code()."""
 
     def test_from_response_status_code_attribute(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(response_status_code=429)
         assert extract_status_code(exc) == 429
 
     def test_from_exc_status_code_direct(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(status_code=500)
         assert extract_status_code(exc) == 500
 
     def test_from_exc_status_direct(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(status=403)
         assert extract_status_code(exc) == 403
 
     def test_from_regex_http_prefix(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = Exception("Request failed: HTTP 429 Too Many Requests")
         assert extract_status_code(exc) == 429
 
     def test_from_regex_status_code_equals(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = Exception("status_code=500 Internal Server Error")
         assert extract_status_code(exc) == 500
 
     def test_from_regex_code_equals(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = Exception("code=403 Forbidden")
         assert extract_status_code(exc) == 403
 
     def test_returns_none_when_no_code(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = Exception("some generic error with no status")
         assert extract_status_code(exc) is None
 
     def test_returns_none_for_out_of_range_code(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = Exception("code=999 not a valid HTTP status")
         assert extract_status_code(exc) is None
 
     def test_response_status_code_out_of_range_falls_through(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         # response.status_code is out of 100-599 range; should fall through
         exc = _make_exc(message="error")
@@ -113,20 +113,20 @@ class TestExtractStatusCode:
         assert extract_status_code(exc) is None
 
     def test_response_status_code_lower_boundary(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(response_status_code=100)
         assert extract_status_code(exc) == 100
 
     def test_response_status_code_upper_boundary(self):
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(response_status_code=599)
         assert extract_status_code(exc) == 599
 
     def test_prefers_response_status_code_over_direct(self):
         """response.status_code is checked first and wins over exc.status_code."""
-        from evaluatorq.redteam.backends.base import extract_status_code
+        from evaluatorq.redteam.backends._errors import extract_status_code
 
         exc = _make_exc(response_status_code=503, status_code=429)
         assert extract_status_code(exc) == 503
@@ -141,68 +141,68 @@ class TestExtractProviderErrorCode:
     """Tests for extract_provider_error_code()."""
 
     def test_from_exc_code_attribute(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(code="rate_limit_exceeded")
         assert extract_provider_error_code(exc) == "rate_limit_exceeded"
 
     def test_from_exc_error_code_attribute(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(error_code="invalid_api_key")
         assert extract_provider_error_code(exc) == "invalid_api_key"
 
     def test_from_exc_type_attribute(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(type_attr="authentication_error")
         assert extract_provider_error_code(exc) == "authentication_error"
 
     def test_from_body_error_code(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(body={"error": {"code": "content_filter", "message": "blocked"}})
         assert extract_provider_error_code(exc) == "content_filter"
 
     def test_from_body_direct_code(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(body={"code": "model_not_found"})
         assert extract_provider_error_code(exc) == "model_not_found"
 
     def test_from_body_error_type(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(body={"error": {"type": "invalid_request_error"}})
         assert extract_provider_error_code(exc) == "invalid_request_error"
 
     def test_from_regex_in_error_text(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = Exception("Request failed: error_code=rate_limit_exceeded")
         result = extract_provider_error_code(exc)
         assert result == "rate_limit_exceeded"
 
     def test_returns_none_when_no_code(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = Exception("Something went wrong")
         assert extract_provider_error_code(exc) is None
 
     def test_strips_whitespace_from_code(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(code="  rate_limit  ")
         assert extract_provider_error_code(exc) == "rate_limit"
 
     def test_lowercases_code(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(code="RateLimitExceeded")
         assert extract_provider_error_code(exc) == "ratelimitexceeded"
 
     def test_empty_string_code_ignored(self):
-        from evaluatorq.redteam.backends.base import extract_provider_error_code
+        from evaluatorq.redteam.backends._errors import extract_provider_error_code
 
         exc = _make_exc(code="   ")
         # Whitespace-only code should be treated as missing

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
-from evaluatorq.redteam.backends.base import extract_provider_error_code, extract_status_code
+from evaluatorq.redteam.backends._errors import extract_provider_error_code, extract_status_code
 from evaluatorq.redteam.contracts import (
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
