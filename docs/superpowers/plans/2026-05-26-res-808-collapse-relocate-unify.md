@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Collapse 12 abstract types in `redteam/backends/base.py` to 2 ABCs (`AgentTarget`, `Backend`), relocate `AgentTarget` to `evaluatorq/contracts.py`, and unify `AgentTarget` + sim `TargetAgent` on a single `respond(messages) -> AgentResponse` method. Delivered as 3 stacked PRs.
+**Goal:** Collapse 12 abstract types in `redteam/backends/base.py` to 2 ABCs (`AgentTarget`, `Backend`), relocate `AgentTarget` to `evaluatorq/contracts.py`, and unify `AgentTarget` + sim `TargetAgent` on a single `respond(messages) -> AgentResponse` method. Delivered as 4 stacked PRs (PR4 tracked under RES-877).
 
 **Architecture:** Backend ABC owns target factory + memory cleanup + error mapping. `AgentTarget` ABC owns `respond` + `new` + optional `get_agent_context`. `OrqResponsesTarget` becomes stateless. `ORQAgentTarget` keeps its existing `orq_client.agents.responses.create` endpoint and `task_id` threading — only signature conforms. `ChatMessage` moves to `evaluatorq/contracts.py` and gains `developer` role.
 
@@ -1983,29 +1983,34 @@ git add src/evaluatorq/redteam/backends/orq.py tests/redteam/
 git commit -m "refactor(redteam): ORQAgentTarget.respond(messages); last-user contract"
 ```
 
-## Task 3.5: `OpenAIModelTarget.respond`
+## Task 3.5: `OpenAIModelTarget.respond` (stateless) + keep `send_prompt` override
 
 **Files:**
 - Modify: `src/evaluatorq/redteam/backends/openai.py`
 
-- [ ] **Step 1: Rename `send_prompt` to `respond(messages)`**
+**Why this is not just "rename send_prompt to respond":** The redteam orchestrator (`adaptive/orchestrator.py:652`) and runner (`runner.py:722, 1436`) call `target.send_prompt(attack_prompt: str)` once per turn with a single fresh prompt — they do NOT pass prior turns. `OpenAIModelTarget._history` accumulates conversation state across calls so the model sees prior turns. If we drop `_history` and route through the inherited shim, every turn sees only `[system, current_user]` → multi-turn redteam attacks against OpenAI degrade to single-turn against goldfish.
 
-`OpenAIModelTarget` already keeps `_history`. With `respond`, we have two options: ignore history (caller owns conversation) or accept the full messages list and bypass history. Per spec §5.8 sim auto-routes a full message list — accept the caller's history and drop the per-instance `_history`.
+Resolution for PR3: keep `_history`, override `send_prompt` on `OpenAIModelTarget` (preserves current stateful behaviour), AND add a stateless `respond(messages)` for sim and any caller that owns its own transcript. Two methods with divergent state semantics is intentional in PR3 — PR4 (RES-877) eliminates this by moving conversation tracking into the orchestrator.
 
-In `src/evaluatorq/redteam/backends/openai.py`, replace `send_prompt` with:
+- [ ] **Step 1: Add stateless `respond(messages)` to `OpenAIModelTarget`**
+
+In `src/evaluatorq/redteam/backends/openai.py`, add a new `respond` method alongside the existing `send_prompt`:
 
 ```python
 async def respond(self, messages: list[ChatMessage]) -> AgentResponse:
-    """Send chat completion with the provided message list + system prompt.
+    """Stateless: send the provided message list + system prompt. Does not
+    read or write ``self._history``. For redteam single-prompt callers, use
+    ``send_prompt`` which preserves conversation state on the instance.
 
-    Caller owns conversation history. ``_history`` is no longer accumulated
-    on the target.
+    Strips any leading ``system`` messages from ``messages`` to avoid double
+    system-prompts — ``self.system_prompt`` is always prepended.
     """
+    user_visible = [m for m in messages if m.role != "system"]
     completion_messages: list[ChatCompletionMessageParam] = [
         {"role": "system", "content": self.system_prompt},
         *[
             {"role": m.role, "content": m.content}  # type: ignore[misc]
-            for m in messages
+            for m in user_visible
         ],
     ]
     async with with_llm_span(
@@ -2057,9 +2062,14 @@ async def respond(self, messages: list[ChatMessage]) -> AgentResponse:
     )
 ```
 
-Delete `self._history` initialization in `__init__`. Delete the history-append block at the end of the old `send_prompt`.
+**Keep** `self._history` initialization in `__init__`. **Keep** the existing `send_prompt(self, prompt: str) -> AgentResponse` method body unchanged — it overrides the `AgentTarget.send_prompt` shim, preserving today's stateful behaviour for redteam orchestrator/runner callers.
 
 Add `from evaluatorq.contracts import ChatMessage` import.
+
+Final shape:
+- `OpenAIModelTarget.send_prompt(prompt)` — stateful, accumulates `_history`, used by redteam orchestrator/runner today. Overrides ABC shim.
+- `OpenAIModelTarget.respond(messages)` — stateless, ignores `_history`, used by sim (which owns the transcript) and any future caller passing full transcripts.
+- Tracked for elimination in PR4 (RES-877) by moving conversation accumulation into orchestrator.
 
 - [ ] **Step 2: Run tests**
 
@@ -2446,6 +2456,24 @@ gh pr create \
 EOF
 )"
 ```
+
+---
+
+# PR4 — Move conversation tracking into orchestrator (RES-877)
+
+Tracked under RES-877. After RES-808 PR3 merges, two interfaces (`send_prompt` stateful, `respond` stateless) coexist on `OpenAIModelTarget` and the `send_prompt` shim still exists on every `AgentTarget`. PR4 finishes the unification.
+
+End state:
+- Orchestrator (`adaptive/orchestrator.py:639-654`) and runner (`runner.py:722, 1436`) accumulate `list[ChatMessage]` across turns and call `target.respond(transcript)`.
+- `OpenAIModelTarget._history` removed; target becomes stateless.
+- `ORQAgentTarget._task_id` decision (decided at PR4 design step): either drop and replay full transcript, or keep as ORQ-specific server thread and document the divergence explicitly.
+- `AgentTarget.send_prompt` shim removed; only `respond` remains. Breaking change — CHANGELOG entry.
+- All integration target `send_prompt` overrides removed.
+- All tests on `target.send_prompt(str)` migrate to `target.respond([...])` or to orchestrator-level fixtures.
+
+PR4 has its own design step before task breakdown — the `_task_id` decision needs spec-level discussion. Plan stub here; full task list lives in RES-877.
+
+Stacking: PR1 → PR2 → PR3 → PR4. PR4 branches off PR3 tip after PR3 merges.
 
 ---
 
