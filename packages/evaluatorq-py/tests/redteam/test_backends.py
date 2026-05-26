@@ -242,76 +242,66 @@ class TestOpenAIModelTarget:
 
 
 class TestOpenAIErrorMapper:
-    """Tests for OpenAIErrorMapper.map_error()."""
+    """Tests for _openai_map_error()."""
 
     def test_maps_http_status_code(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
-        mapper = OpenAIErrorMapper()
         exc = _make_exc(status_code=429)
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.http.429"
         assert "Exception" in msg
 
     def test_maps_provider_error_code(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
-        mapper = OpenAIErrorMapper()
         exc = _make_exc(code="content_filter")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.code.content_filter"
 
     def test_maps_rate_limit_by_exception_name(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
-
-        mapper = OpenAIErrorMapper()
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
         class RateLimitError(Exception):
             pass
 
         exc = RateLimitError("rate limit hit")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.rate_limit"
 
     def test_maps_authentication_error_by_exception_name(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
-
-        mapper = OpenAIErrorMapper()
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
         class AuthenticationError(Exception):
             pass
 
         exc = AuthenticationError("bad key")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.auth"
 
     def test_maps_timeout_by_exception_name(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
-
-        mapper = OpenAIErrorMapper()
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
         class TimeoutError(Exception):
             pass
 
         exc = TimeoutError("timed out")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.timeout"
 
     def test_maps_unknown_fallback(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
-        mapper = OpenAIErrorMapper()
         exc = Exception("something unexpected")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert code == "openai.unknown"
         assert "Exception" in msg
 
     def test_message_includes_exception_type_and_text(self):
-        from evaluatorq.redteam.backends.openai import OpenAIErrorMapper
+        from evaluatorq.redteam.backends.openai import _openai_map_error
 
-        mapper = OpenAIErrorMapper()
         exc = ValueError("bad value encountered")
-        code, msg = mapper.map_error(exc)
+        code, msg = _openai_map_error(exc)
         assert "ValueError" in msg
         assert "bad value encountered" in msg
 
@@ -322,108 +312,94 @@ class TestOpenAIErrorMapper:
 
 
 class TestORQErrorMapper:
-    """Tests for ORQErrorMapper.map_error()."""
+    """Tests for _orq_map_error()."""
 
     def test_maps_http_status_code(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = _make_exc(status_code=503)
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.http.503"
 
     def test_maps_provider_error_code(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = _make_exc(code="model_unavailable")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.code.model_unavailable"
 
     def test_maps_timeout_by_exception_name(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
-
-        mapper = ORQErrorMapper()
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
         class TimeoutError(Exception):
             pass
 
         exc = TimeoutError("request timed out")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.timeout"
 
     def test_maps_timeout_by_text(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = Exception("connection timed out after 30s")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.timeout"
 
     def test_maps_auth_by_exception_name(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
-
-        mapper = ORQErrorMapper()
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
         class AuthError(Exception):
             pass
 
         exc = AuthError("invalid credentials")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.auth"
 
     def test_maps_auth_by_unauthorized_text(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = Exception("unauthorized access to resource")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.auth"
 
     def test_maps_auth_by_forbidden_text(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = Exception("forbidden - insufficient permissions")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.auth"
 
     def test_maps_rate_limit_by_exception_name(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
-
-        mapper = ORQErrorMapper()
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
         class RateLimitError(Exception):
             pass
 
         exc = RateLimitError("too many requests")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.rate_limit"
 
     def test_maps_rate_limit_by_429_in_text(self):
         """When '429' appears in error text without a structured status pattern,
         the ratelimit keyword check catches it as orq.rate_limit."""
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = Exception("received 429 from server")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.rate_limit"
 
     def test_maps_unknown_fallback(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = Exception("something else entirely")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert code == "orq.unknown"
 
     def test_message_contains_exception_type_and_text(self):
-        from evaluatorq.redteam.backends.orq import ORQErrorMapper
+        from evaluatorq.redteam.backends.orq import _orq_map_error
 
-        mapper = ORQErrorMapper()
         exc = RuntimeError("runtime failure")
-        code, msg = mapper.map_error(exc)
+        code, msg = _orq_map_error(exc)
         assert "RuntimeError" in msg
         assert "runtime failure" in msg
 

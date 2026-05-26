@@ -58,7 +58,6 @@ from evaluatorq.redteam.vulnerability_registry import (
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
-    from evaluatorq.redteam.backends.base import MemoryCleanup
     from evaluatorq.redteam.contracts import AgentContext
     from evaluatorq.types import ScorerParameter
 
@@ -633,7 +632,7 @@ def create_dynamic_evaluator(
 async def cleanup_memory_entities(
     agent_context: AgentContext,
     entity_ids: list[str],
-    memory_cleanup: MemoryCleanup | None = None,
+    memory_cleanup: Backend | None = None,
     pipeline_config: LLMConfig | None = None,
 ) -> str | None:
     """Delete memory entities created during a red teaming run.
@@ -654,7 +653,7 @@ async def cleanup_memory_entities(
             return None
         # Default fallback keeps existing ORQ behavior.
         await asyncio.wait_for(
-            resolve_backend('orq').memory_cleanup.cleanup_memory(agent_context, entity_ids),
+            resolve_backend('orq').cleanup_memory(agent_context, entity_ids),
             timeout=cleanup_timeout_s,
         )
     except asyncio.TimeoutError:

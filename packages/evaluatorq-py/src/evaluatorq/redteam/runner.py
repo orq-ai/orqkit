@@ -34,9 +34,9 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
     select_applicable_strategies_for_vulnerability,
 )
 from evaluatorq.redteam.backends.base import (
+    AgentTarget,
     Backend,
     _coerce_to_agent_response,
-    is_agent_target,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.contracts import (
@@ -244,7 +244,6 @@ if TYPE_CHECKING:
 
     from openai import AsyncOpenAI
 
-    from evaluatorq.redteam.backends.base import AgentTarget
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +409,7 @@ async def red_team(
 
     if isinstance(target, list):
         raw_targets: list[str | AgentTarget] = list(target)
-    elif isinstance(target, str) or is_agent_target(target):
+    elif isinstance(target, (str, AgentTarget)):
         raw_targets = [target]
     else:
         raise TypeError(f'Invalid target type: {type(target).__name__}. Expected str or AgentTarget.')
@@ -425,7 +424,7 @@ async def red_team(
     for t in raw_targets:
         if isinstance(t, str):
             string_targets.append(t)
-        elif is_agent_target(t):
+        elif isinstance(t, AgentTarget):
             agent_targets.append(t)
         else:
             raise TypeError(f'Invalid target type: {type(t).__name__}. Expected str or AgentTarget.')

@@ -40,6 +40,24 @@ def create_async_llm_client(role_config=None) -> AsyncOpenAI:
     return _create(role_config)
 
 
+def _openai_map_error(exc: Exception) -> tuple[str, str]:
+    """Map an OpenAI exception to a normalized (error_code, error_message) tuple."""
+    name = type(exc).__name__.lower()
+    status_code = extract_status_code(exc)
+    provider_code = extract_provider_error_code(exc)
+    if status_code is not None:
+        return f'openai.http.{status_code}', f'{type(exc).__name__}: {exc}'
+    if provider_code:
+        return f'openai.code.{provider_code}', f'{type(exc).__name__}: {exc}'
+    if 'ratelimit' in name:
+        return 'openai.rate_limit', f'{type(exc).__name__}: {exc}'
+    if 'authentication' in name:
+        return 'openai.auth', f'{type(exc).__name__}: {exc}'
+    if 'timeout' in name:
+        return 'openai.timeout', f'{type(exc).__name__}: {exc}'
+    return 'openai.unknown', f'{type(exc).__name__}: {exc}'
+
+
 class OpenAIModelTarget(AgentTarget):
     """Target adapter that treats ``agent_key`` as an OpenAI model identifier."""
 
@@ -167,81 +185,9 @@ class OpenAIModelTarget(AgentTarget):
             model=self.model,
         )
 
-    def create_target(self, agent_key: str) -> OpenAIModelTarget:
-        """Create a new OpenAI model target for the given model name."""
-        return OpenAIModelTarget(model=agent_key, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
-
     def map_error(self, exc: Exception) -> tuple[str, str]:
         """Map an OpenAI exception to a normalized error code and message tuple."""
-        return OpenAIErrorMapper().map_error(exc)
-
-
-class OpenAIContextProvider:
-    """Context provider for plain model targets.
-
-    There is no tool/memory/KB metadata in raw model mode.
-    """
-
-    def __init__(self, system_prompt: str | None = None):
-        """Initialize the context provider with an optional system prompt override."""
-        self._system_prompt = system_prompt
-
-    async def get_agent_context(self, agent_key: str) -> AgentContext:
-        """Return agent context for the specified OpenAI model."""
-        logger.debug(f'Using OpenAI model target context for model={agent_key}')
-        return AgentContext(
-            key=agent_key,
-            display_name=agent_key,
-            description='OpenAI model target',
-            system_prompt=self._system_prompt,
-            tools=[],
-            memory_stores=[],
-            knowledge_bases=[],
-            model=agent_key,
-        )
-
-
-class OpenAITargetFactory:
-    """Factory creating OpenAI model targets."""
-
-    def __init__(self, client: AsyncOpenAI, system_prompt: str | None = None, max_tokens: int | None = None, timeout_ms: int | None = None):
-        """Initialize the factory with a shared async OpenAI client and optional system prompt."""
-        self._client = client
-        self._system_prompt = system_prompt
-        self._max_tokens = max_tokens
-        self._timeout_ms = timeout_ms
-
-    def create_target(self, agent_key: str) -> OpenAIModelTarget:
-        """Create a new OpenAI model target instance."""
-        return OpenAIModelTarget(
-            model=agent_key,
-            system_prompt=self._system_prompt,
-            client=self._client,
-            max_tokens=self._max_tokens,
-            timeout_ms=self._timeout_ms,
-        )
-
-
-class OpenAIErrorMapper:
-    """Normalize OpenAI exceptions into runtime error taxonomy."""
-
-    def map_error(self, exc: Exception) -> tuple[str, str]:
-        """Map an OpenAI exception to a normalized error code and message tuple."""
-        name = type(exc).__name__.lower()
-        status_code = extract_status_code(exc)
-        provider_code = extract_provider_error_code(exc)
-
-        if status_code is not None:
-            return f'openai.http.{status_code}', f'{type(exc).__name__}: {exc}'
-        if provider_code:
-            return f'openai.code.{provider_code}', f'{type(exc).__name__}: {exc}'
-        if 'ratelimit' in name:
-            return 'openai.rate_limit', f'{type(exc).__name__}: {exc}'
-        if 'authentication' in name:
-            return 'openai.auth', f'{type(exc).__name__}: {exc}'
-        if 'timeout' in name:
-            return 'openai.timeout', f'{type(exc).__name__}: {exc}'
-        return 'openai.unknown', f'{type(exc).__name__}: {exc}'
+        return _openai_map_error(exc)
 
 
 class OpenAIBackend(Backend):
@@ -278,18 +224,4 @@ class OpenAIBackend(Backend):
         logger.debug('OpenAI backend has no memory store; cleanup is a no-op')
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
-        name = type(exc).__name__.lower()
-        status_code = extract_status_code(exc)
-        provider_code = extract_provider_error_code(exc)
-
-        if status_code is not None:
-            return f'openai.http.{status_code}', f'{type(exc).__name__}: {exc}'
-        if provider_code:
-            return f'openai.code.{provider_code}', f'{type(exc).__name__}: {exc}'
-        if 'ratelimit' in name:
-            return 'openai.rate_limit', f'{type(exc).__name__}: {exc}'
-        if 'authentication' in name:
-            return 'openai.auth', f'{type(exc).__name__}: {exc}'
-        if 'timeout' in name:
-            return 'openai.timeout', f'{type(exc).__name__}: {exc}'
-        return 'openai.unknown', f'{type(exc).__name__}: {exc}'
+        return _openai_map_error(exc)
