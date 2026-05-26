@@ -15,8 +15,10 @@ Cumulative effects:
 
 - Redteam runner duck-types `getattr(target, "map_error", None)` to detect optional capabilities (`runner.py:1341-1342`).
 - `BackendBundle` dataclass + 4 collaborator protocols force factory boilerplate that two backends will never diverge on.
-- Two endpoint families with overlapping semantics: `client.responses.create` (OpenAI-compatible `/v3/router/responses`) and `orq_client.agents.responses.create` (Orq agents endpoint). Two server-side state channels: `previous_response_id` and `task_id`.
 - `OrqResponsesTarget` carries a "fork contract" warning (`target.py:48-50`) about `__call__` vs `send_prompt` having different state semantics.
+- Sim `TargetAgent` Protocol and redteam `AgentTarget` Protocol drifted independently — one structural match (`OrqResponsesTarget`) requires a dedicated 17-test conformance file to keep them aligned.
+
+Out of scope here: dual endpoint families (`client.responses.create` vs `orq_client.agents.responses.create`) and their state channels (`previous_response_id`, `task_id`) coexist intentionally. `ORQAgentTarget` stays on its endpoint.
 
 ## 2. Goals
 
@@ -24,7 +26,7 @@ Cumulative effects:
 2. Move `AgentTarget` to `evaluatorq/contracts.py` so simulation can reuse without crossing module boundaries.
 3. Unify `AgentTarget` and sim's `TargetAgent` Protocol on a single canonical method: `async def respond(messages: list[ChatMessage]) -> AgentResponse`.
 4. Make `OrqResponsesTarget` stateless. Drop `_previous_response_id`.
-5. Migrate `ORQAgentTarget` to `/v3/router/responses` with `model="agent/<key>"`, dropping the parallel `task_id`-based agents endpoint.
+5. Keep `ORQAgentTarget` on its current `orq_client.agents.responses.create` endpoint. Prefer `OrqResponsesTarget` for new call-sites where applicable; do not rewrite ORQAgentTarget.
 
 ## 3. Non-goals
 
@@ -51,7 +53,7 @@ Side finding: both `/v2/router/responses` and `/v3/router/responses` reach the s
 Conclusions:
 
 - `previous_response_id` truly redundant for `/v3/router/responses` — full stateless tool-loop works by accumulating `function_call` + `function_call_output` in the input array.
-- `model="agent/<key>"` invokes Orq agents through the OpenAI-compatible route. `ORQAgentTarget` migration to this route is feasible.
+- `model="agent/<key>"` invokes Orq agents through the OpenAI-compatible route. Feasible as a future option, but out of scope here — `ORQAgentTarget` stays on its existing endpoint.
 - Multi-modal validated as a future capability (RES-876).
 
 ## 5. Design
@@ -170,6 +172,8 @@ class OrqResponsesTarget(AgentTarget):
         ...
 
     def new(self) -> Self:
+        # Fresh instance: no client state, no memory_entity_id. Matches existing
+        # test invariant test_new_fresh_memory_entity_id_is_none.
         return type(self)(self.config, client=self._client, instructions=self._instructions)
 
     async def get_agent_context(self) -> AgentContext:
@@ -178,22 +182,25 @@ class OrqResponsesTarget(AgentTarget):
 
 Deleted: `_previous_response_id` attr, `__call__` method, "fork contract" docstring, all logic at `target.py:178-185` that reads/writes thread state. `TestCallDoesNotCorruptAgentTargetState` deleted (invariant no longer exists).
 
-### 5.7 `ORQAgentTarget` migrates to `/v3/router/responses`
+### 5.7 `ORQAgentTarget` keeps current endpoint, conforms to ABC
 
 ```python
 class ORQAgentTarget(AgentTarget):
-    def __init__(self, *, client: AsyncOpenAI, agent_key: str, timeout_ms=None, memory_entity_id=None) -> None:
+    def __init__(self, *, orq_client, agent_key: str, timeout_ms=None, memory_entity_id=None) -> None:
         super().__init__(memory_entity_id=memory_entity_id)
-        self._client = client
+        self._orq_client = orq_client
         self.agent_key = agent_key
         self._timeout_ms = timeout_ms
         self._cached_context: AgentContext | None = None
 
     async def respond(self, messages: list[ChatMessage]) -> AgentResponse:
-        # /v3/router/responses with model=f"agent/{self.agent_key}"
-        # Tool-loop: extract function_call items from response, echo them back
-        # along with function_call_output (synthetic "tool unavailable" results)
-        # in next request's input. Stateless via accumulated input array.
+        # Existing impl preserved: orq_client.agents.responses.create + task_id threading.
+        # Server holds conversation state via task_id, so respond() forwards only the
+        # last user message to the agents endpoint. Prior turns in `messages` are
+        # asserted-consistent with task_id's server-side history (raise if last message
+        # is not role=user). First call (task_id=None) sends the last user message
+        # and seeds task_id from the response. Tool-loop body inside the call lifts
+        # verbatim from current orq.py:200-260.
         ...
 
     async def get_agent_context(self) -> AgentContext:
@@ -202,9 +209,11 @@ class ORQAgentTarget(AgentTarget):
         return self._cached_context
 ```
 
-- Endpoint switch: `orq_client.agents.responses.create` → `client.responses.create(model="agent/<key>", ...)`.
-- `task_id`-based threading removed.
-- Tool-loop semantics preserved: synthetic `function_call_output` items replace the current `{'role': 'tool', 'parts': [...]}` shape (`orq.py:221-238`). Each iteration appends to the input array, sent stateless to the server.
+- Endpoint unchanged: `orq_client.agents.responses.create` stays.
+- `task_id` threading stays.
+- Only change: shape conforms to `AgentTarget` ABC (`respond(messages) -> AgentResponse`). Tool-loop body lifts mostly verbatim from current `orq.py`.
+- Caller contract: `messages[-1].role == "user"`. Mismatch with server-side history (`task_id`) is caller bug. Documented in `ORQAgentTarget.respond` docstring.
+- `OrqResponsesTarget` (OpenAI-compatible route, stateless) remains the preferred target for new call-sites. Co-existence of two ORQ-backed targets is intentional.
 
 ### 5.8 Sim runner — `TargetAgent` Protocol deleted
 
@@ -285,7 +294,7 @@ From `redteam/__init__.py:40-48`:
 |---|---|---|---|
 | PR1: Collapse in place | Backend ABC + ORQBackend + OpenAIBackend in `redteam/backends/base.py`. Drop BackendBundle + Supports* + collaborator protocols. `_errors.py` extraction. `_BareTargetBackend` adapter. Runner + adaptive call-site migration. `AgentTarget` stays Protocol→ABC inside `base.py`. | `main` | M |
 | PR2: Relocate `AgentTarget` | Move `AgentTarget` ABC to `evaluatorq/contracts.py`. Update 14 importers. `redteam/backends/base.py` keeps `Backend` only. | PR1 | S |
-| PR3: Unify on `respond` + ORQAgentTarget endpoint migration | Add `respond(messages)` abstract + `send_prompt` shim. `OrqResponsesTarget` stateless refactor + drop `__call__`. `ORQAgentTarget` migrates to `/v3/router/responses` with `model="agent/<key>"`. Sim's `TargetAgent` Protocol deleted. `ChatMessage` relocates to contracts. 4 integration targets refactored to `respond`. Auto-routing in `api.py`. Smoke test for sim+redteam target interchange. | PR2 | L |
+| PR3: Unify on `respond` | Add `respond(messages)` abstract + `send_prompt` shim. `OrqResponsesTarget` stateless refactor + drop `__call__`. `ORQAgentTarget` repackaged to `respond(messages)` — endpoint unchanged. Sim's `TargetAgent` Protocol deleted. `ChatMessage` relocates to contracts. 4 integration targets refactored to `respond`. Auto-routing in `api.py`. Smoke test for sim+redteam target interchange. | PR2 | L |
 
 Merge order: PR1 → PR2 → PR3. Each squash-merged. PR2 + PR3 rebase if PR1 reviews land changes.
 
@@ -309,7 +318,7 @@ Merge order: PR1 → PR2 → PR3. Each squash-merged. PR2 + PR3 rebase if PR1 re
 - `tests/redteam/test_orq_responses_target_as_agent_target.py:206,219` updated to `target.respond(...)`.
 - `TestCallDoesNotCorruptAgentTargetState` deleted (invariant no longer exists). Replaced by `TestRespondIsStateless` (verify `respond` doesn't accumulate state across calls).
 - New: `tests/integration/test_sim_redteam_target_roundtrip.py` — one OrqResponsesTarget instance passes RES-844 acceptance: works as redteam target AND sim `target_agent`.
-- New: `tests/redteam/test_orq_agent_target_via_responses_endpoint.py` — verify ORQAgentTarget tool-loop with `model="agent/<key>"` using mocked `client.responses.create`.
+- ORQAgentTarget tests updated: callers switch from `send_prompt(str)` to `respond([ChatMessage(role="user", content=str)])`. Tool-loop body assertions (function-call extraction, task_id threading, memory cleanup) unchanged. New test: `respond([..., assistant, user])` forwards only the last user turn to the agents endpoint.
 - All 7 target classes (ORQAgentTarget, OpenAIModelTarget, OrqResponsesTarget, LangGraphTarget, CallableTarget, VercelAISdkTarget, OpenAIAgentTarget) — each gets a `respond`-returns-`AgentResponse` smoke test.
 - Sim test suite (`tests/simulation/`) green.
 
@@ -317,15 +326,13 @@ Merge order: PR1 → PR2 → PR3. Each squash-merged. PR2 + PR3 rebase if PR1 re
 
 1. **Pre-existing `DefaultErrorMapper()` masking ORQ mapping** at `runner.py:833`. PR1 behavior change is intentional — document in PR description, verify retry/abort behavior unchanged via existing integration tests.
 
-2. **ORQAgentTarget endpoint migration** (PR3). Behavior changes from `task_id`-keyed agents endpoint to stateless `model="agent/<key>"` route. Server-side tool/memory/context retrieval must produce equivalent results. Probe T4 confirmed routing; full feature parity (tool definitions, server-side memory store interaction) requires integration test against a real ORQ agent. Block PR3 merge on this test passing.
+2. **`__call__` removal on OrqResponsesTarget**. External callers passing `target_callback=OrqResponsesTarget(...)` break. Migration: `target=ort` (auto-routes via `api.py`) or `target_agent=ort`. CHANGELOG entry. Internal grep shows no production sites using this pattern.
 
-3. **`__call__` removal on OrqResponsesTarget**. External callers passing `target_callback=OrqResponsesTarget(...)` break. Migration: `target=ort` (auto-routes via `api.py`) or `target_agent=ort`. CHANGELOG entry. Internal grep shows no production sites using this pattern.
+3. **`ChatMessage` move** from `simulation/types` to `contracts`. Re-export shim in `simulation/types.py` for one cycle. CHANGELOG entry: "ChatMessage moved to `evaluatorq.contracts`; old import path deprecated, removal in 1.5."
 
-4. **`ChatMessage` move** from `simulation/types` to `contracts`. Re-export shim in `simulation/types.py` for one cycle. CHANGELOG entry: "ChatMessage moved to `evaluatorq.contracts`; old import path deprecated, removal in 1.5."
+4. **7 target classes refactored to `respond`**. Risk of behavior drift between `send_prompt` shim and `respond` impl per class. Mitigation: shim is single-line delegation, no body to drift. CI runs full test suite across all integrations.
 
-5. **7 target classes refactored to `respond`**. Risk of behavior drift between `send_prompt` shim and `respond` impl per class. Mitigation: shim is single-line delegation, no body to drift. CI runs full test suite across all integrations.
-
-6. **Public re-exports removed** (`DirectTargetFactory`, 4 `Supports*`, `is_agent_target` from `redteam/__init__.py`). Semver-relevant. CHANGELOG entry: "Removed in 1.4: replaced by `Backend` ABC + `isinstance(x, AgentTarget)`." Package is past 1.0 per `base.py:154` reference to "evaluatorq 1.3".
+5. **Public re-exports removed** (`DirectTargetFactory`, 4 `Supports*`, `is_agent_target` from `redteam/__init__.py`). Semver-relevant. CHANGELOG entry: "Removed in 1.4: replaced by `Backend` ABC + `isinstance(x, AgentTarget)`." Package is past 1.0 per `base.py:154` reference to "evaluatorq 1.3".
 
 ## 9. Doc updates (post-PR3)
 
@@ -342,6 +349,6 @@ Merge order: PR1 → PR2 → PR3. Each squash-merged. PR2 + PR3 rebase if PR1 re
 - **`respond` shape**: Abstract `respond(messages) -> AgentResponse`. `send_prompt(str) -> AgentResponse` becomes concrete shim. Pedant's "load-bearing lie" concern resolved by making `respond` abstract instead of concrete-with-lossy-default.
 - **`__call__` on OrqResponsesTarget**: Removed entirely. Pedant's "two parallel APIs" concern resolved by deletion, not by 1-line shim.
 - **Stateless `OrqResponsesTarget`**: Drop `_previous_response_id`. User confirmed bandwidth not a concern.
-- **`ORQAgentTarget` endpoint**: Migrate to `/v3/router/responses` with `model="agent/<key>"`. Live probe T4 confirmed routing.
+- **`ORQAgentTarget` endpoint**: Keep on `orq_client.agents.responses.create`. Only repackage to `respond(messages)`. Adopt `OrqResponsesTarget` for new call-sites instead of rewriting ORQAgentTarget. Probe T4 confirmed `model="agent/<key>"` routing is viable as a future option but not in scope here.
 - **`ChatMessage` content shape**: Stays `str` in this cycle. Multi-modal deferred to RES-876.
 - **Survivors**: `_coerce_to_agent_response`, `validate_agent_target`, `simulation.target_callback` parameter, `simulation/types.py:ChatMessage` re-export shim.
