@@ -267,3 +267,35 @@ class Backend(ABC):
         cached[agent_key] = ctx
         self._ctx_cache = cached  # type: ignore[attr-defined]
         return ctx
+
+
+class BareTargetBackend(Backend):
+    """Adapter wrapping a bare ``AgentTarget`` so it satisfies the ``Backend`` ABC.
+
+    Used by the runner's bring-your-own-target path. Absorbs the duck-typed
+    capability checks (``cleanup_memory``, ``map_error``) that used to scatter
+    across ``runner.py``.
+    """
+
+    def __init__(self, target: AgentTarget) -> None:
+        super().__init__(name=type(target).__name__)
+        self._target = target
+
+    def create_target(self, agent_key: str) -> AgentTarget:
+        return self._target.new()
+
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        cleanup = getattr(self._target, "cleanup_memory", None)
+        if callable(cleanup):
+            await cleanup(ctx, entity_ids)
+        else:
+            logger.debug(
+                f"BareTargetBackend: {type(self._target).__name__} has no "
+                f"cleanup_memory; skipping ({len(entity_ids)} entity ids)"
+            )
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        mapper = getattr(self._target, "map_error", None)
+        if callable(mapper):
+            return mapper(exc)
+        return super().map_error(exc)
