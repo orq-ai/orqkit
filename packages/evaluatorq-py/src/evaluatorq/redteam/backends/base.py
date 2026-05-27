@@ -108,6 +108,8 @@ class BareTargetBackend(Backend):
         return self._target.new()
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        # Local import: module-level would re-expose AgentTarget as backends.base.AgentTarget,
+        # violating the clean-break invariant pinned by test_agent_target_not_re_exported_from_base.
         from evaluatorq.contracts import AgentTarget
 
         if entity_ids and type(self._target).cleanup_memory is AgentTarget.cleanup_memory:
