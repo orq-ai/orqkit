@@ -350,7 +350,17 @@ class AgentTarget(ABC):
 
     @abstractmethod
     async def respond(self, messages: list[Message]) -> AgentResponse:
-        """Send a list of messages; return the response."""
+        """Send a list of messages; return the response.
+
+        Contract notes for implementers and callers:
+        - ``Message`` carries the full chat shape (tool calls, tool results),
+          but most targets consume only ``role`` + ``content`` and treat the
+          tool-call fields as advisory. Do not rely on a target round-tripping
+          ``tool_calls`` / ``tool_call_id`` / ``name`` unless its docstring says so.
+        - Some targets that hold server-side conversation state (e.g.
+          ``ORQAgentTarget``) require ``messages[-1].role == "user"`` and forward
+          only that last turn; they raise ``ValueError`` otherwise.
+        """
         ...
 
     @abstractmethod

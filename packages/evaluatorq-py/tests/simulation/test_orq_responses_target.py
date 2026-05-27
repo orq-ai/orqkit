@@ -111,6 +111,43 @@ class TestOrqResponsesTargetRespond:
         ]
 
     @pytest.mark.asyncio
+    async def test_respond_serializes_tool_calls_and_assistant_null_content(self):
+        """_messages_to_input must preserve tool-call structure and assistant content=None.
+
+        Assistant messages with tool_calls require content: null per OpenAI's
+        spec; tool messages carry tool_call_id + name. respond passes the whole
+        transcript, so these must survive into the SDK `input` payload.
+        """
+        from evaluatorq.contracts import FunctionCall, StrategyToolCall
+
+        client = _make_client()
+        client.responses.create = AsyncMock(return_value=_make_response())
+        target = _make_target(client=client)
+
+        tool_call = StrategyToolCall(id="c1", function=FunctionCall(name="f", arguments="{}"))
+        await target.respond(
+            [
+                Message(role="user", content="hi"),
+                Message(role="assistant", content=None, tool_calls=[tool_call]),
+                Message(role="tool", content="result", tool_call_id="c1", name="f"),
+            ]
+        )
+
+        sent = client.responses.create.call_args.kwargs["input"]
+        assert sent[0] == {"role": "user", "content": "hi"}
+        # Assistant with tool_calls keeps content=None (not coerced to "").
+        assert sent[1]["role"] == "assistant"
+        assert sent[1]["content"] is None
+        assert sent[1]["tool_calls"][0]["function"] == {"name": "f", "arguments": "{}"}
+        # Tool message carries tool_call_id + name.
+        assert sent[2] == {
+            "role": "tool",
+            "content": "result",
+            "tool_call_id": "c1",
+            "name": "f",
+        }
+
+    @pytest.mark.asyncio
     async def test_respond_is_stateless_no_previous_response_id(self):
         """Consecutive respond calls never thread previous_response_id."""
         client = _make_client()

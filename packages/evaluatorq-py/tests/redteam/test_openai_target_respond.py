@@ -80,6 +80,57 @@ async def test_respond_prepends_single_system_prompt_and_strips_input_system():
 
 
 @pytest.mark.asyncio
+async def test_respond_extracts_tool_calls_into_output():
+    """respond must surface tool calls from the completion as ToolCallOutputItems."""
+    client = MagicMock()
+    tc = MagicMock()
+    tc.id = "call_abc"
+    tc.function = MagicMock()
+    tc.function.name = "lookup"
+    tc.function.arguments = '{"q": "x"}'
+    response = _make_openai_response(content="")
+    response.choices[0].message.tool_calls = [tc]
+    client.chat.completions.create = AsyncMock(return_value=response)
+    target = _make_target(client)
+
+    with patch("evaluatorq.redteam.tracing.get_tracer", return_value=None):
+        result = await target.respond([Message(role="user", content="go")])
+
+    assert len(result.tool_calls) == 1
+    call = result.tool_calls[0]
+    assert call.name == "lookup"
+    assert call.arguments == '{"q": "x"}'
+    assert call.id == "call_abc"
+
+
+@pytest.mark.asyncio
+async def test_send_prompt_remains_stateful_accumulates_history():
+    """The stateful send_prompt path must still thread _history across turns.
+
+    Guards the intentional respond(stateless)/send_prompt(stateful) divergence —
+    a refactor collapsing both onto the stateless path would break multi-turn
+    redteam and must be caught here (until PR4/RES-877 removes the split).
+    """
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(
+        side_effect=[_make_openai_response("a1"), _make_openai_response("a2")]
+    )
+    target = _make_target(client)
+
+    with patch("evaluatorq.redteam.tracing.get_tracer", return_value=None):
+        await target.send_prompt("q1")
+        await target.send_prompt("q2")
+
+    # _history accumulated both turns (unlike respond, which leaves it empty).
+    assert target._history != []
+    # The second call saw the first turn (system + q1 + a1 + q2), not just q2.
+    second_sent = client.chat.completions.create.call_args_list[1].kwargs["messages"]
+    contents = [m["content"] for m in second_sent]
+    assert "q1" in contents
+    assert "q2" in contents
+
+
+@pytest.mark.asyncio
 async def test_respond_is_stateless_does_not_touch_history():
     client = MagicMock()
     client.chat.completions.create = AsyncMock(return_value=_make_openai_response())

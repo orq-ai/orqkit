@@ -127,6 +127,10 @@ class OrqResponsesTarget(AgentTarget):
                     f"an API error or unexpected response format."
                 )
 
+            # extract_responses_output returns calls=0; this was one API call.
+            # Bump it so usage aggregation stays consistent with the other targets.
+            if usage is not None:
+                usage = usage.model_copy(update={"calls": 1})
             return AgentResponse(output=output_items, usage=usage)
 
         try:

@@ -148,12 +148,12 @@ class LangGraphTarget(AgentTarget):
         self._extra_config = config or {}
         self._agent_context = agent_context
         # Tracks how many messages were in the LangGraph thread before this turn.
-        # Not safe for concurrent send_prompt calls on the same instance —
+        # Not safe for concurrent respond() calls on the same instance —
         # use .new() to get independent instances for parallel use.
         self._prev_msg_count: int = 0
         graph_name: str = getattr(graph, "name", None) or "langgraph_target"
         self._key = f"{graph_name}_{uuid4().hex[:8]}"
-        # Guard against spamming the log on every send_prompt call when
+        # Guard against spamming the log on every respond() call when
         # an unknown callbacks type is encountered (hot path).
         self._warned_unknown_callbacks: bool = False
 
@@ -190,7 +190,7 @@ class LangGraphTarget(AgentTarget):
             new_callbacks = [*existing, collector]
         elif isinstance(existing, BaseCallbackManager) and hasattr(existing, "copy"):
             # Copy before mutating — avoid accumulating stale collectors on the
-            # original manager across repeated send_prompt calls and .new() clones.
+            # original manager across repeated respond() calls and .new() clones.
             manager_copy = existing.copy()
             manager_copy.add_handler(collector, inherit=True)
             new_callbacks = manager_copy
