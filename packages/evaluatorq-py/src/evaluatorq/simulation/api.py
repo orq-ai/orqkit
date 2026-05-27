@@ -283,6 +283,7 @@ async def generate_and_simulate(
     agent_description: str,
     agent_key: str | None = None,
     target_callback: Callable[[list[Message]], str | Awaitable[str]] | None = None,
+    target: Callable[[list[Message]], str | Awaitable[str]] | AgentTarget | None = None,
     num_personas: int = 5,
     num_scenarios: int = 5,
     max_turns: int = 10,
@@ -292,7 +293,9 @@ async def generate_and_simulate(
 ) -> list[SimulationResult]:
     """Generate personas/scenarios and run simulations.
 
-    Convenience function that combines generation and simulation.
+    Convenience function that combines generation and simulation. Accepts the
+    same ``target`` shapes as :func:`simulate` — a plain callable, an
+    ``AgentTarget`` instance, or an ``agent_key`` for the Orq deployment bridge.
     """
     from openai import AsyncOpenAI
 
@@ -303,14 +306,17 @@ async def generate_and_simulate(
 
     await init_tracing_if_needed()
 
-    # Bridge agentKey to invoke() if no callback is provided
-    resolved_callback = target_callback
-    if not resolved_callback and agent_key:
-        resolved_callback = from_orq_deployment(agent_key)
+    # Resolve target. ``target`` takes precedence over ``target_callback``;
+    # AgentTarget instances are passed through and routed by ``_simulate_core``.
+    resolved_target: (
+        Callable[[list[Message]], str | Awaitable[str]] | AgentTarget | None
+    ) = target or target_callback
+    if not resolved_target and agent_key:
+        resolved_target = from_orq_deployment(agent_key)
 
-    if not resolved_callback:
+    if not resolved_target:
         raise ValueError(
-            "Either target_callback or agent_key is required for generate_and_simulate"
+            "Either target (or target_callback) or agent_key is required for generate_and_simulate"
         )
 
     api_key = os.environ.get("ORQ_API_KEY")
@@ -353,12 +359,13 @@ async def generate_and_simulate(
             finally:
                 await shared_client.close()
 
-            # Delegate to core (no duplicate pipeline span)
+            # Delegate to core (no duplicate pipeline span).
+            # ``target`` carries either the callable or AgentTarget; core routes.
             return await _simulate_core(
                 evaluation_name=evaluation_name,
                 agent_key=None,
-                target_callback=resolved_callback,
-                target=None,
+                target_callback=None,
+                target=resolved_target,
                 personas=personas,
                 scenarios=scenarios,
                 datapoints=None,
