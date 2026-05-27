@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from openai import AsyncOpenAI
     from opentelemetry.trace import Span
 
+    from evaluatorq.contracts import AgentTarget
     from evaluatorq.simulation.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -66,13 +67,6 @@ def _invert_roles_for_simulator(messages: list[Message]) -> list[Message]:
 # ---------------------------------------------------------------------------
 # Protocols
 # ---------------------------------------------------------------------------
-
-
-@runtime_checkable
-class TargetAgent(Protocol):
-    """Protocol for target agents being tested."""
-
-    async def respond(self, messages: list[Message]) -> str: ...
 
 
 @runtime_checkable
@@ -191,7 +185,7 @@ class SimulationRunner:
     def __init__(
         self,
         *,
-        target_agent: TargetAgent | None = None,
+        target_agent: AgentTarget | None = None,
         target_callback: Callable[[list[Message]], str | Awaitable[str]]
         | None = None,
         model: str = DEFAULT_MODEL,
@@ -629,7 +623,9 @@ class SimulationRunner:
 
     async def _get_target_response(self, messages: list[Message]) -> str:
         if self._target_agent:
-            return await self._target_agent.respond(messages)
+            # AgentTarget.respond returns AgentResponse; the sim runner works in
+            # plain text, so extract the response text.
+            return (await self._target_agent.respond(messages)).text
         if self._target_callback:
             result = self._target_callback(messages)
             if inspect.isawaitable(result):

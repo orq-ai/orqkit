@@ -21,7 +21,7 @@ from evaluatorq.simulation.types import DEFAULT_MODEL
 logger = logging.getLogger(__name__)  # noqa: RUF067
 
 if TYPE_CHECKING:
-    from evaluatorq.contracts import LLMCallConfig
+    from evaluatorq.contracts import AgentTarget, LLMCallConfig
     from evaluatorq.simulation.adapters import (
         from_chat_completions,
         from_orq_deployment,
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
         apply_perturbations_batch,
         apply_random_perturbation,
     )
-    from evaluatorq.simulation.runner.simulation import SimulationRunner, TargetAgent
+    from evaluatorq.simulation.runner.simulation import SimulationRunner
     from evaluatorq.simulation.target import OrqResponsesTarget
     from evaluatorq.simulation.types import (
         CommunicationStyle,
@@ -134,7 +134,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {  # noqa: RUF067
         "evaluatorq.simulation.runner.simulation",
         "SimulationRunner",
     ),
-    "TargetAgent": ("evaluatorq.simulation.runner.simulation", "TargetAgent"),
+    "AgentTarget": ("evaluatorq.contracts", "AgentTarget"),
     "DEFAULT_MODEL": ("evaluatorq.simulation.types", "DEFAULT_MODEL"),
     "CommunicationStyle": ("evaluatorq.simulation.types", "CommunicationStyle"),
     "ConversationStrategy": (
@@ -212,6 +212,7 @@ __all__ = [
     "SIMULATION_EVALUATORS",
     # Agents
     "AgentConfig",
+    "AgentTarget",
     "BaseAgent",
     "CommunicationStyle",
     "ConversationStrategy",
@@ -241,7 +242,6 @@ __all__ = [
     "SimulationRunner",
     "SimulationScorer",
     "StartingEmotion",
-    "TargetAgent",
     "TerminatedBy",
     "TokenUsage",
     "TurnMetrics",
