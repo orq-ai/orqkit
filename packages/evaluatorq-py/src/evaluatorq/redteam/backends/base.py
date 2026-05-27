@@ -144,6 +144,7 @@ class BareTargetBackend(Backend):
         self._target = target
 
     def create_target(self, agent_key: str) -> AgentTarget:
+        """Ignore ``agent_key`` — target was pre-configured at construction time."""
         return self._target.new()
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:

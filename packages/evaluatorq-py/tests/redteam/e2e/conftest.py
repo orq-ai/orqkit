@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from evaluatorq.redteam.backends.base import Backend
+from evaluatorq.redteam.backends.base import AgentTarget, Backend
 from evaluatorq.redteam.contracts import (
     AgentContext,
     AgentResponse,
@@ -128,12 +128,12 @@ class DeterministicAsyncOpenAI:
 # ---------------------------------------------------------------------------
 
 
-class MockAgentTarget:
+class MockAgentTarget(AgentTarget):
     """Deterministic agent target with leak/refuse/safe logic."""
 
     def __init__(self, agent_key: str) -> None:
+        super().__init__(memory_entity_id=f"red-team-{uuid.uuid4().hex[:12]}")
         self.agent_key = agent_key
-        self.memory_entity_id: str | None = f"red-team-{uuid.uuid4().hex[:12]}"
         self._conversation: list[dict[str, str]] = []
 
     async def send_prompt(self, prompt: str) -> AgentResponse:

@@ -16,7 +16,7 @@ class _MinimalBackend(Backend):
 
 def test_backend_is_abstract():
     with pytest.raises(TypeError):
-        Backend("x")  # type: ignore[abstract]
+        Backend("x")  # pyright: ignore[reportAbstractUsage]
 
 
 def test_backend_subclass_sets_name():

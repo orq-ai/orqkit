@@ -51,6 +51,10 @@ def extract_provider_error_code(exc: Exception) -> str | None:
             if isinstance(value, str) and value.strip():
                 return value.strip().lower()
 
+    # Text-based fallback only — patterns may match Python type annotations or
+    # generic words in non-provider exceptions (e.g. "TypeError: type=<class 'str'>"),
+    # yielding misleading `orq.code.<name>` codes. Structured attribute checks above
+    # cover all production SDK errors; this is a best-effort last resort.
     text = str(exc)
     patterns = [
         r'\b(?:error_)?code\s*[=:]\s*["\']?([a-z0-9_.-]+)["\']?',

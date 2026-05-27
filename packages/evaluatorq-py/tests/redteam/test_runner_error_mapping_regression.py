@@ -76,13 +76,34 @@ def _make_strategy():
 
 
 def test_orq_http_exception_maps_to_orq_http_status_code():
-    """Unit: ORQ rate-limit exception → ``orq.http.429``, not ``target_error``."""
+    """Unit: ORQ rate-limit exception → ``orq.http.429``, not ``target_error``.
+
+    ``_OrqHTTPError`` has a ``status_code`` attribute, so ``extract_status_code``
+    picks it up structurally → ``orq.http.429``.
+    """
     from evaluatorq.redteam.backends.orq import ORQBackend
 
     backend = ORQBackend(orq_client=MagicMock(), timeout_ms=1000)
     code, msg = backend.map_error(_OrqHTTPError(429))
     assert code == "orq.http.429", f"expected orq.http.429, got {code!r}"
     assert "orq returned 429" in msg
+
+
+def test_orq_text_only_rate_limit_maps_to_orq_rate_limit():
+    """Unit: rate-limit indicated only in text (no ``status_code`` attr) → ``orq.rate_limit``.
+
+    Documents the distinction vs. the structured-attribute path above: without a
+    ``status_code`` attribute, the mapper falls through to text heuristics and
+    emits the generic ``orq.rate_limit`` code.
+    """
+    from evaluatorq.redteam.backends.orq import ORQBackend
+
+    class _RateLimitedError(Exception):
+        pass
+
+    backend = ORQBackend(orq_client=MagicMock(), timeout_ms=1000)
+    code, _msg = backend.map_error(_RateLimitedError("upstream returned 429"))
+    assert code == "orq.rate_limit", f"expected orq.rate_limit, got {code!r}"
 
 
 @pytest.mark.asyncio
