@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from opentelemetry.trace import Span
 
+    from evaluatorq.contracts import AgentTarget
     from evaluatorq.simulation.agents.base import BaseAgent
     from evaluatorq.simulation.generators import FirstMessageGenerator
     from evaluatorq.simulation.types import (
@@ -30,7 +31,7 @@ async def simulate(
     evaluation_name: str = "",
     agent_key: str | None = None,
     target_callback: Callable[[list[Message]], str | Awaitable[str]] | None = None,
-    target: Callable[[list[Message]], str | Awaitable[str]] | None = None,
+    target: Callable[[list[Message]], str | Awaitable[str]] | AgentTarget | None = None,
     personas: list[Persona] | None = None,
     scenarios: list[Scenario] | None = None,
     datapoints: list[Datapoint] | None = None,
@@ -102,7 +103,7 @@ async def _simulate_core(
     evaluation_name: str,
     agent_key: str | None,
     target_callback: Callable[[list[Message]], str | Awaitable[str]] | None,
-    target: Callable[[list[Message]], str | Awaitable[str]] | None,
+    target: Callable[[list[Message]], str | Awaitable[str]] | AgentTarget | None,
     personas: list[Persona] | None,
     scenarios: list[Scenario] | None,
     datapoints: list[Datapoint] | None,
@@ -179,18 +180,27 @@ async def _simulate_core(
         {"orq.simulation.datapoints_count": len(datapoints)},
     )
 
-    # Bridge agentKey to invoke() if no callback is provided.
-    # ``target`` takes precedence over ``target_callback`` when both are given.
+    # Resolve the target. ``target`` takes precedence over ``target_callback``
+    # when both are given. An AgentTarget instance is routed to the runner's
+    # target_agent path (it speaks respond(messages), not the callable shape);
+    # plain callables and the agent_key bridge are unchanged.
+    from evaluatorq.contracts import AgentTarget
+
+    target_agent: AgentTarget | None = None
     resolved_callback = target or target_callback
-    if not resolved_callback and agent_key:
+    if isinstance(resolved_callback, AgentTarget):
+        target_agent = resolved_callback
+        resolved_callback = None
+    elif not resolved_callback and agent_key:
         resolved_callback = from_orq_deployment(agent_key)
 
-    if not resolved_callback:
+    if target_agent is None and not resolved_callback:
         raise ValueError("Either target_callback (or target) or agent_key is required")
 
     # Create simulation runner
     runner = SimulationRunner(
         target_callback=resolved_callback,
+        target_agent=target_agent,
         model=model,
         max_turns=max_turns,
         user_simulator=user_simulator,
@@ -242,7 +252,7 @@ async def _simulate_core(
         # Close the target if it owns resources (e.g. OrqResponsesTarget
         # built its own AsyncOpenAI client). Plain callables / functions
         # have no close(); duck-type to avoid coupling to the concrete type.
-        target_close = getattr(resolved_callback, "close", None)
+        target_close = getattr(target_agent or resolved_callback, "close", None)
         if callable(target_close):
             maybe = target_close()
             if inspect.isawaitable(maybe):
