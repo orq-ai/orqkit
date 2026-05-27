@@ -333,28 +333,40 @@ class AgentContext(BaseModel):
 
 
 class AgentTarget(ABC):
-    """Abstract base class for agent targets that can receive prompts.
+    """Abstract base class for agent targets that can receive messages.
 
-    Subclasses must implement ``send_prompt`` and ``new``. Targets that back a
-    server-side memory store override ``get_agent_context`` (self-describing),
-    ``cleanup_memory`` (release created entities), and ``map_error``
-    (provider-specific error codes); stateless targets inherit the safe
-    defaults. ``memory_entity_id`` is an instance attribute (set in
+    Subclasses implement ``respond`` (the canonical message-based interface)
+    and ``new``. ``send_prompt`` is a concrete shim retained for single-prompt
+    callers — it wraps the prompt in one user message and calls ``respond``.
+    Targets that back a server-side memory store override ``get_agent_context``
+    (self-describing), ``cleanup_memory`` (release created entities), and
+    ``map_error`` (provider-specific error codes); stateless targets inherit
+    the safe defaults. ``memory_entity_id`` is an instance attribute (set in
     ``__init__``) so subclasses can mutate it without shadowing a class default.
+
+    NOTE: ``respond`` is concrete-with-``NotImplementedError`` in this commit;
+    it is promoted to ``@abstractmethod`` once every target implements it
+    (RES-808 PR3, final step). This keeps intermediate PR3 commits bisectable.
     """
 
     def __init__(self, memory_entity_id: str | None = None) -> None:
         self.memory_entity_id = memory_entity_id
 
-    @abstractmethod
-    async def send_prompt(self, prompt: str) -> AgentResponse:
-        """Send a prompt; return the response."""
-        ...
+    async def respond(self, messages: list[Message]) -> AgentResponse:
+        """Send a list of messages; return the response. Override in subclasses."""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement respond(messages). "
+            "Implement it, or use send_prompt(prompt) for the single-prompt path."
+        )
 
     @abstractmethod
     def new(self) -> AgentTarget:
         """Return a fresh independent instance for a new attack."""
         ...
+
+    async def send_prompt(self, prompt: str) -> AgentResponse:
+        """Back-compat shim: wrap a single prompt in one user message and call ``respond``."""
+        return await self.respond([Message(role="user", content=prompt)])
 
     async def get_agent_context(self) -> AgentContext:
         """Default: minimal context. Override for platform-backed targets."""
