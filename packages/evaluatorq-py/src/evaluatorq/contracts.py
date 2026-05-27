@@ -343,21 +343,15 @@ class AgentTarget(ABC):
     ``map_error`` (provider-specific error codes); stateless targets inherit
     the safe defaults. ``memory_entity_id`` is an instance attribute (set in
     ``__init__``) so subclasses can mutate it without shadowing a class default.
-
-    NOTE: ``respond`` is concrete-with-``NotImplementedError`` in this commit;
-    it is promoted to ``@abstractmethod`` once every target implements it
-    (RES-808 PR3, final step). This keeps intermediate PR3 commits bisectable.
     """
 
     def __init__(self, memory_entity_id: str | None = None) -> None:
         self.memory_entity_id = memory_entity_id
 
+    @abstractmethod
     async def respond(self, messages: list[Message]) -> AgentResponse:
-        """Send a list of messages; return the response. Override in subclasses."""
-        raise NotImplementedError(
-            f"{type(self).__name__} does not implement respond(messages). "
-            "Implement it, or use send_prompt(prompt) for the single-prompt path."
-        )
+        """Send a list of messages; return the response."""
+        ...
 
     @abstractmethod
     def new(self) -> AgentTarget:

@@ -38,13 +38,12 @@ async def test_send_prompt_delegates_to_respond_with_single_user_message():
     assert target.received[0][0].content == "hello"
 
 
-@pytest.mark.asyncio
-async def test_respond_placeholder_raises_when_not_overridden():
-    """A target that implements only ``new`` (not ``respond``) hits the placeholder."""
+def test_respond_is_abstract_subclass_without_it_cannot_instantiate():
+    """respond is abstract: a subclass that implements only ``new`` is incomplete."""
 
     class _Bare(AgentTarget):
         def new(self) -> _Bare:
             return _Bare()
 
-    with pytest.raises(NotImplementedError, match="does not implement respond"):
-        await _Bare().respond([Message(role="user", content="x")])
+    with pytest.raises(TypeError, match="abstract"):
+        _Bare()  # type: ignore[abstract]
