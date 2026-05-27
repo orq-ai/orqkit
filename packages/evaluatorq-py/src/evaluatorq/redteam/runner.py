@@ -829,7 +829,7 @@ async def _prepare_target(
         agent_context = prefetched_agent_context
     else:
         hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"target": target_value})
-        agent_context = await backend.get_agent_context(target_value)
+        agent_context = await backend.resolve_context(target_value)
         hooks.on_stage_end(PipelineStage.CONTEXT_RETRIEVAL, {
             "num_tools": len(agent_context.tools) if agent_context.tools else 0,
             "num_memory_stores": len(agent_context.memory_stores) if agent_context.memory_stores else 0,
@@ -1097,7 +1097,7 @@ async def _run_dynamic_or_hybrid(
         resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {"targets": all_target_labels})
         for target_str in targets:
             _kind, value = _parse_target(target_str)
-            ctx = await orq_backend.get_agent_context(value)
+            ctx = await orq_backend.resolve_context(value)
             all_agent_contexts[target_str] = ctx
             resolved_hooks.on_stage_end(PipelineStage.CONTEXT_RETRIEVAL, {
                 "target": value,
@@ -1953,7 +1953,7 @@ async def _run_static(
         for t in targets:
             _kind, value = _parse_target(t)
             try:
-                ctx = await static_backend.get_agent_context(value)
+                ctx = await static_backend.resolve_context(value)
                 agent_contexts[value] = ctx
             except Exception:
                 logger.debug(f'Could not retrieve agent context for {value} — skipping')

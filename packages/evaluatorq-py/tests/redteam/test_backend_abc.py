@@ -79,24 +79,24 @@ class _CountingBackend(Backend):
 
 
 @pytest.mark.asyncio
-async def test_get_agent_context_caches_per_key():
-    """Default get_agent_context probes once per key, then serves from cache."""
+async def test_resolve_context_caches_per_key():
+    """Default resolve_context probes once per key, then serves from cache."""
     backend = _CountingBackend()
 
-    first = await backend.get_agent_context("agent-a")
-    second = await backend.get_agent_context("agent-a")
+    first = await backend.resolve_context("agent-a")
+    second = await backend.resolve_context("agent-a")
 
     assert first is second, "cache hit must return the same AgentContext instance"
     assert backend.create_calls == 1, "second call must not re-probe a new target"
 
 
 @pytest.mark.asyncio
-async def test_get_agent_context_caches_distinct_keys_independently():
+async def test_resolve_context_caches_distinct_keys_independently():
     """Distinct agent keys are probed and cached separately."""
     backend = _CountingBackend()
 
-    ctx_a = await backend.get_agent_context("agent-a")
-    ctx_b = await backend.get_agent_context("agent-b")
+    ctx_a = await backend.resolve_context("agent-a")
+    ctx_b = await backend.resolve_context("agent-b")
 
     assert ctx_a.key == "agent-a"
     assert ctx_b.key == "agent-b"

@@ -199,7 +199,7 @@ class MockBackend(Backend):
         self.created_targets.append(target)
         return target
 
-    async def get_agent_context(self, agent_key: str) -> AgentContext:
+    async def resolve_context(self, agent_key: str) -> AgentContext:
         return self._context
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:

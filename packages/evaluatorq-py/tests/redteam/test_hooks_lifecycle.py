@@ -144,9 +144,7 @@ class TestStaticPipelineHooks:
             patch(
                 "evaluatorq.redteam.runner.resolve_backend",
                 return_value=MagicMock(
-                    context_provider=MagicMock(
-                        get_agent_context=AsyncMock(return_value=_make_agent_context())
-                    )
+                    resolve_context=AsyncMock(return_value=_make_agent_context())
                 ),
             ),
         ]
@@ -254,9 +252,7 @@ class TestStaticPipelineHooks:
             patch(
                 "evaluatorq.redteam.runner.resolve_backend",
                 return_value=MagicMock(
-                    context_provider=MagicMock(
-                        get_agent_context=AsyncMock(return_value=_make_agent_context())
-                    )
+                    resolve_context=AsyncMock(return_value=_make_agent_context())
                 ),
             ),
         ):
@@ -461,7 +457,7 @@ class TestDynamicInternalStageOrdering:
     def _build_backend_mock(self, agent_context: AgentContext) -> Any:
         """Construct a mock Backend that returns the given agent context."""
         return MagicMock(
-            get_agent_context=AsyncMock(return_value=agent_context),
+            resolve_context=AsyncMock(return_value=agent_context),
             cleanup_memory=AsyncMock(),
         )
 
@@ -707,7 +703,7 @@ class TestDynamicConfirmPayload:
         datapoints = [DataPoint(inputs={"id": "1", "category": "ASI01", "messages": []})]
         mock_report = _make_report()
         backend_mock = MagicMock(
-            get_agent_context=AsyncMock(return_value=agent_ctx),
+            resolve_context=AsyncMock(return_value=agent_ctx),
             cleanup_memory=AsyncMock(),
         )
 
@@ -834,7 +830,7 @@ class TestDynamicConfirmPayload:
         spy = SpyHooks(confirm_result=False)
         agent_ctx = _make_agent_context()
         backend_mock = MagicMock(
-            get_agent_context=AsyncMock(return_value=agent_ctx),
+            resolve_context=AsyncMock(return_value=agent_ctx),
             cleanup_memory=AsyncMock(),
         )
 
@@ -909,7 +905,7 @@ class TestDynamicConfirmPayload:
         datapoints = [DataPoint(inputs={"id": "1", "category": "ASI01", "messages": []})]
         mock_report = _make_report()
         backend_mock = MagicMock(
-            get_agent_context=AsyncMock(return_value=agent_ctx),
+            resolve_context=AsyncMock(return_value=agent_ctx),
             cleanup_memory=AsyncMock(),
         )
 

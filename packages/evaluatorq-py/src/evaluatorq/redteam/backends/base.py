@@ -7,7 +7,6 @@ subclass. The ORQ implementation lives in ``backends.orq``; other backends
 
 from __future__ import annotations
 
-import asyncio
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
@@ -23,10 +22,11 @@ class AgentTarget(ABC):
     """Abstract base class for agent targets that can receive prompts.
 
     Subclasses must implement ``send_prompt`` and ``new``. Targets that back a
-    server-side memory store override ``get_agent_context``; otherwise the
-    default minimal context is returned. ``memory_entity_id`` is an instance
-    attribute (set in ``__init__``) so subclasses can mutate it without
-    shadowing a class default.
+    server-side memory store override ``get_agent_context`` (self-describing),
+    ``cleanup_memory`` (release created entities), and ``map_error``
+    (provider-specific error codes); stateless targets inherit the safe
+    defaults. ``memory_entity_id`` is an instance attribute (set in
+    ``__init__``) so subclasses can mutate it without shadowing a class default.
     """
 
     def __init__(self, memory_entity_id: str | None = None) -> None:
@@ -46,6 +46,18 @@ class AgentTarget(ABC):
         """Default: minimal context. Override for platform-backed targets."""
         from evaluatorq.redteam.contracts import AgentContext
         return AgentContext(key=getattr(self, "agent_key", "unknown"))
+
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        """Release any memory entities this target created. Default: no-op (stateless)."""
+        return
+
+    def map_error(self, exc: Exception) -> tuple[str, str] | None:
+        """Map an exception to a provider-specific ``(code, message)``.
+
+        Return ``None`` to defer to the backend's default mapping. Stateless
+        targets inherit this no-opinion default.
+        """
+        return None
 
 
 def _coerce_to_agent_response(raw: Any) -> AgentResponse:
@@ -105,8 +117,12 @@ class Backend(ABC):
         """Return normalized ``(error_code, error_message)``."""
         return "target_error", f"{type(exc).__name__}: {exc}"
 
-    async def get_agent_context(self, agent_key: str) -> AgentContext:
-        """Default: probe a target once and cache. Subclasses may override."""
+    async def resolve_context(self, agent_key: str) -> AgentContext:
+        """Resolve agent context for a key by probing a target once, then caching.
+
+        Distinct from ``AgentTarget.get_agent_context()`` (no args, self-describing):
+        a backend resolves context for *any* key, a target describes *itself*.
+        """
         if agent_key in self._ctx_cache:
             return self._ctx_cache[agent_key]
         probe = self.create_target(agent_key)
@@ -131,33 +147,16 @@ class BareTargetBackend(Backend):
         return self._target.new()
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
-        cleanup = getattr(self._target, "cleanup_memory", None)
-        if callable(cleanup):
-            result = cleanup(ctx, entity_ids)
-            if asyncio.iscoroutine(result):
-                await result
-        elif entity_ids:
-            # Target accumulated memory entities but exposes no cleanup hook;
+        if entity_ids and type(self._target).cleanup_memory is AgentTarget.cleanup_memory:
+            # Target created memory entities but inherits the no-op cleanup default;
             # adversarial data may persist. Surface loudly (matches ORQ path).
             logger.warning(
-                f"BareTargetBackend: {type(self._target).__name__} has no cleanup_memory "
-                f"but {len(entity_ids)} memory entity id(s) were created; they may persist. "
-                "Implement cleanup_memory on the target to release them."
+                f"BareTargetBackend: {type(self._target).__name__} created "
+                f"{len(entity_ids)} memory entity id(s) but does not override cleanup_memory; "
+                "they may persist. Implement cleanup_memory on the target to release them."
             )
-        else:
-            logger.debug(
-                f"BareTargetBackend: {type(self._target).__name__} has no "
-                "cleanup_memory; nothing to clean"
-            )
+        await self._target.cleanup_memory(ctx, entity_ids)
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
-        mapper = getattr(self._target, "map_error", None)
-        if callable(mapper):
-            result = mapper(exc)
-            if isinstance(result, tuple) and len(result) == 2:
-                return result  # type: ignore[return-value]
-            logger.warning(
-                f"BareTargetBackend: {type(self._target).__name__}.map_error returned "
-                f"{type(result).__name__}, expected (code, message) tuple; using default mapping."
-            )
-        return super().map_error(exc)
+        result = self._target.map_error(exc)
+        return result if result is not None else super().map_error(exc)
