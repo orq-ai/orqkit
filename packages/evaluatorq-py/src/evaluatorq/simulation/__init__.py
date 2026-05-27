@@ -51,7 +51,6 @@ if TYPE_CHECKING:
     from evaluatorq.simulation.runner.simulation import SimulationRunner, TargetAgent
     from evaluatorq.simulation.target import OrqResponsesTarget
     from evaluatorq.simulation.types import (
-        ChatMessage,
         CommunicationStyle,
         ConversationStrategy,
         Criterion,
@@ -137,7 +136,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {  # noqa: RUF067
     ),
     "TargetAgent": ("evaluatorq.simulation.runner.simulation", "TargetAgent"),
     "DEFAULT_MODEL": ("evaluatorq.simulation.types", "DEFAULT_MODEL"),
-    "ChatMessage": ("evaluatorq.simulation.types", "ChatMessage"),
     "CommunicationStyle": ("evaluatorq.simulation.types", "CommunicationStyle"),
     "ConversationStrategy": (
         "evaluatorq.simulation.types",
@@ -215,7 +213,6 @@ __all__ = [
     # Agents
     "AgentConfig",
     "BaseAgent",
-    "ChatMessage",
     "CommunicationStyle",
     "ConversationStrategy",
     "Criterion",

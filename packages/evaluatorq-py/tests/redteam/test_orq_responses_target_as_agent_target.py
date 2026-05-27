@@ -15,9 +15,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from evaluatorq.contracts import AgentResponse, AgentTarget, LLMCallConfig
+from evaluatorq.contracts import AgentResponse, AgentTarget, LLMCallConfig, Message
 from evaluatorq.simulation.target import OrqResponsesTarget
-from evaluatorq.simulation.types import ChatMessage
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -201,7 +200,7 @@ class TestCallDoesNotCorruptAgentTargetState:
         await target.send_prompt("redteam turn 1")
         thread_id_after_send = target._previous_response_id
 
-        await target([ChatMessage(role="user", content="sim input")])
+        await target([Message(role="user", content="sim input")])
 
         assert target._previous_response_id == thread_id_after_send
 
@@ -214,6 +213,6 @@ class TestCallDoesNotCorruptAgentTargetState:
         target = OrqResponsesTarget(config, client=client)
 
         assert target._previous_response_id is None
-        await target([ChatMessage(role="user", content="sim input")])
+        await target([Message(role="user", content="sim input")])
         # Must still be None — __call__ is stateless w.r.t. self
         assert target._previous_response_id is None

@@ -7,7 +7,8 @@ attributes, and hierarchy of the simulation tracing helpers.
 from __future__ import annotations
 
 import json
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -33,7 +34,7 @@ class _CollectingExporter(SpanExporter):
         pass
 
 
-@pytest.fixture()
+@pytest.fixture
 def span_collector():
     """Set up an in-memory OTel TracerProvider; patch the simulation tracer."""
     exporter = _CollectingExporter()
@@ -506,9 +507,9 @@ async def test_end_to_end_simulation_produces_full_span_tree(
     from evaluatorq.simulation.runner.simulation import SimulationRunner
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.simulation.types import (
-        ChatMessage,
         CommunicationStyle,
         Datapoint,
+        Message,
         Persona,
         Scenario,
         TokenUsage,
@@ -539,7 +540,7 @@ async def test_end_to_end_simulation_produces_full_span_tree(
 
     target_calls: list[int] = []
 
-    async def target_cb(messages: list[ChatMessage]) -> str:
+    async def target_cb(messages: list[Message]) -> str:
         target_calls.append(len(messages))
         return f"agent reply #{len(target_calls)}"
 
@@ -686,7 +687,7 @@ async def test_traceparent_injected_into_chat_completions_call(
     from evaluatorq.contracts import LLMCallConfig
     from evaluatorq.simulation.agents.base import BaseAgent
     from evaluatorq.simulation.tracing import with_simulation_span
-    from evaluatorq.simulation.types import ChatMessage
+    from evaluatorq.simulation.types import Message
 
     class _A(BaseAgent):
         @property
@@ -701,7 +702,7 @@ async def test_traceparent_injected_into_chat_completions_call(
 
     # Wrap in an outer span so traceparent is meaningful to inject.
     async with with_simulation_span("orq.simulation.run", None):
-        await a._call_chat_completions([ChatMessage(role="user", content="hi")])
+        await a._call_chat_completions([Message(role="user", content="hi")])
 
     headers = captured.get("extra_headers")
     assert isinstance(headers, dict)
@@ -860,13 +861,13 @@ async def test_run_span_records_error_metadata_and_usage(
     from evaluatorq.simulation.runner.simulation import SimulationRunner
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.simulation.types import (
-        ChatMessage,
         CommunicationStyle,
         Datapoint,
+        Message,
         Persona,
         Scenario,
-        TokenUsage,
         TerminatedBy,
+        TokenUsage,
     )
 
     judge = MagicMock()
@@ -881,7 +882,7 @@ async def test_run_span_records_error_metadata_and_usage(
     )
     user_sim.generate_first_message = AsyncMock(return_value="hello")
 
-    async def target_cb(messages: list[ChatMessage]) -> str:
+    async def target_cb(messages: list[Message]) -> str:
         return "agent reply"
 
     runner = SimulationRunner(
@@ -930,7 +931,6 @@ async def test_run_span_records_cancellation_metadata_and_usage(
     monkeypatch: pytest.MonkeyPatch,
 ):
     import asyncio
-
     from unittest.mock import AsyncMock, MagicMock
 
     monkeypatch.setenv("ORQ_API_KEY", "test-key")
@@ -938,9 +938,9 @@ async def test_run_span_records_cancellation_metadata_and_usage(
     from evaluatorq.simulation.runner.simulation import SimulationRunner
     from evaluatorq.simulation.tracing import with_simulation_span
     from evaluatorq.simulation.types import (
-        ChatMessage,
         CommunicationStyle,
         Datapoint,
+        Message,
         Persona,
         Scenario,
         TokenUsage,
@@ -958,7 +958,7 @@ async def test_run_span_records_cancellation_metadata_and_usage(
     )
     user_sim.generate_first_message = AsyncMock(return_value="hello")
 
-    async def target_cb(messages: list[ChatMessage]) -> str:
+    async def target_cb(messages: list[Message]) -> str:
         return "agent reply"
 
     runner = SimulationRunner(

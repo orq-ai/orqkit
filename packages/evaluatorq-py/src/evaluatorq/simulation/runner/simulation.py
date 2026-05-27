@@ -21,7 +21,6 @@ from evaluatorq.simulation.tracing import (
 )
 from evaluatorq.simulation.types import (
     DEFAULT_MODEL,
-    ChatMessage,
     Datapoint,
     Judgment,
     Message,
@@ -73,7 +72,7 @@ def _invert_roles_for_simulator(messages: list[Message]) -> list[Message]:
 class TargetAgent(Protocol):
     """Protocol for target agents being tested."""
 
-    async def respond(self, messages: list[ChatMessage]) -> str: ...
+    async def respond(self, messages: list[Message]) -> str: ...
 
 
 @runtime_checkable
@@ -90,7 +89,7 @@ class SimulationUserSimulator(Protocol):
     async def generate_first_message(self) -> str: ...
 
     async def respond_async(
-        self, messages: list[ChatMessage], *, llm_purpose: str | None = None
+        self, messages: list[Message], *, llm_purpose: str | None = None
     ) -> str: ...
 
 
@@ -98,7 +97,7 @@ class SimulationUserSimulator(Protocol):
 class SimulationJudge(Protocol):
     """Protocol for judge agents injected into the runner."""
 
-    async def evaluate(self, messages: list[ChatMessage]) -> Judgment: ...
+    async def evaluate(self, messages: list[Message]) -> Judgment: ...
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +192,7 @@ class SimulationRunner:
         self,
         *,
         target_agent: TargetAgent | None = None,
-        target_callback: Callable[[list[ChatMessage]], str | Awaitable[str]]
+        target_callback: Callable[[list[Message]], str | Awaitable[str]]
         | None = None,
         model: str = DEFAULT_MODEL,
         max_turns: int = 10,
@@ -628,7 +627,7 @@ class SimulationRunner:
     # Private helpers
     # ---------------------------------------------------------------------------
 
-    async def _get_target_response(self, messages: list[ChatMessage]) -> str:
+    async def _get_target_response(self, messages: list[Message]) -> str:
         if self._target_agent:
             return await self._target_agent.respond(messages)
         if self._target_callback:

@@ -15,18 +15,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from evaluatorq.contracts import LLMCallConfig
 from evaluatorq.simulation.runner.simulation import SimulationRunner
 from evaluatorq.simulation.types import (
-    ChatMessage,
     CommunicationStyle,
     Datapoint,
+    Message,
     Persona,
     Scenario,
     TerminatedBy,
     TokenUsage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -135,7 +133,7 @@ class TestSimulateWithInjectedTarget:
 
         call_count = 0
 
-        async def my_target(messages: list[ChatMessage]) -> str:
+        async def my_target(messages: list[Message]) -> str:
             nonlocal call_count
             call_count += 1
             return "agent says hi"
@@ -161,9 +159,9 @@ class TestSimulateWithInjectedTarget:
         """Target callback receives the accumulated message list each turn."""
         monkeypatch.setenv("ORQ_API_KEY", "test-key")
 
-        received_messages: list[list[ChatMessage]] = []
+        received_messages: list[list[Message]] = []
 
-        async def my_target(messages: list[ChatMessage]) -> str:
+        async def my_target(messages: list[Message]) -> str:
             received_messages.append(list(messages))
             return "response"
 
@@ -201,11 +199,11 @@ class TestSimulateTargetPrecedence:
         calls_a: list[int] = []
         calls_b: list[int] = []
 
-        async def target_a(messages: list[ChatMessage]) -> str:
+        async def target_a(messages: list[Message]) -> str:
             calls_a.append(1)
             return "from A"
 
-        async def target_b(messages: list[ChatMessage]) -> str:
+        async def target_b(messages: list[Message]) -> str:
             calls_b.append(1)
             return "from B"
 

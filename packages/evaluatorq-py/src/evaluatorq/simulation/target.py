@@ -11,7 +11,7 @@ from loguru import logger
 
 from evaluatorq.contracts import AgentResponse, AgentTarget, LLMCallConfig
 from evaluatorq.simulation._client import build_simulation_client, extract_responses_output
-from evaluatorq.simulation.types import ChatMessage, TokenUsage
+from evaluatorq.simulation.types import Message, TokenUsage
 from evaluatorq.simulation.utils.retry import with_retry
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ class OrqResponsesTarget(AgentTarget):
         else:
             self._client, self._client_owned = build_simulation_client(config.client)
 
-    async def __call__(self, messages: list[ChatMessage]) -> str:
+    async def __call__(self, messages: list[Message]) -> str:
         """Sim target_callback shape. Sends full message list each turn.
 
         Stateless w.r.t. self: never reads or writes ``_previous_response_id``
@@ -240,7 +240,7 @@ class OrqResponsesTarget(AgentTarget):
             ) from e
 
     @staticmethod
-    def _messages_to_input(messages: list[ChatMessage]) -> list[dict[str, Any]]:
+    def _messages_to_input(messages: list[Message]) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
         for m in messages:
             # Assistant messages with tool_calls require content: null per

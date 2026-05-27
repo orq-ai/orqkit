@@ -18,8 +18,7 @@ import pytest
 
 from evaluatorq.contracts import AgentResponse, LLMCallConfig
 from evaluatorq.simulation.target import OrqResponsesTarget
-from evaluatorq.simulation.types import ChatMessage, TokenUsage
-
+from evaluatorq.simulation.types import Message
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -75,8 +74,8 @@ def _make_target(
     return OrqResponsesTarget(config, instructions=instructions, client=client)
 
 
-def _make_messages(content: str = "hi") -> list[ChatMessage]:
-    return [ChatMessage(role="user", content=content)]
+def _make_messages(content: str = "hi") -> list[Message]:
+    return [Message(role="user", content=content)]
 
 
 # ---------------------------------------------------------------------------
@@ -105,9 +104,9 @@ class TestOrqResponsesTargetCall:
         target = _make_target(client=client)
 
         messages = [
-            ChatMessage(role="user", content="turn 1"),
-            ChatMessage(role="assistant", content="reply"),
-            ChatMessage(role="user", content="turn 2"),
+            Message(role="user", content="turn 1"),
+            Message(role="assistant", content="reply"),
+            Message(role="user", content="turn 2"),
         ]
         await target(messages)
 
