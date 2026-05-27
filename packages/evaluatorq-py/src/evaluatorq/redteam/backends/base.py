@@ -1,8 +1,8 @@
-"""Backend protocols for dynamic red teaming agent targets.
+"""Backend abstract base classes for dynamic red teaming agent targets.
 
-Defines the abstract interfaces that any agent backend must implement.
-The ORQ implementation lives in ``backends.orq``; other backends (HTTP,
-LangChain, custom callables) can implement these protocols independently.
+Defines the ABCs (``AgentTarget``, ``Backend``) that any agent backend must
+subclass. The ORQ implementation lives in ``backends.orq``; other backends
+(HTTP, LangChain, custom callables) subclass these independently.
 """
 
 from __future__ import annotations
@@ -89,6 +89,7 @@ class Backend(ABC):
 
     def __init__(self, name: str) -> None:
         self.name = name
+        self._ctx_cache: dict[str, AgentContext] = {}
 
     @abstractmethod
     def create_target(self, agent_key: str) -> AgentTarget:
@@ -106,13 +107,11 @@ class Backend(ABC):
 
     async def get_agent_context(self, agent_key: str) -> AgentContext:
         """Default: probe a target once and cache. Subclasses may override."""
-        cached = getattr(self, "_ctx_cache", None) or {}
-        if agent_key in cached:
-            return cached[agent_key]
+        if agent_key in self._ctx_cache:
+            return self._ctx_cache[agent_key]
         probe = self.create_target(agent_key)
         ctx = await probe.get_agent_context()
-        cached[agent_key] = ctx
-        self._ctx_cache = cached  # type: ignore[attr-defined]
+        self._ctx_cache[agent_key] = ctx
         return ctx
 
 
@@ -137,10 +136,18 @@ class BareTargetBackend(Backend):
             result = cleanup(ctx, entity_ids)
             if asyncio.iscoroutine(result):
                 await result
+        elif entity_ids:
+            # Target accumulated memory entities but exposes no cleanup hook;
+            # adversarial data may persist. Surface loudly (matches ORQ path).
+            logger.warning(
+                f"BareTargetBackend: {type(self._target).__name__} has no cleanup_memory "
+                f"but {len(entity_ids)} memory entity id(s) were created; they may persist. "
+                "Implement cleanup_memory on the target to release them."
+            )
         else:
             logger.debug(
                 f"BareTargetBackend: {type(self._target).__name__} has no "
-                f"cleanup_memory; skipping ({len(entity_ids)} entity ids)"
+                "cleanup_memory; nothing to clean"
             )
 
     def map_error(self, exc: Exception) -> tuple[str, str]:
@@ -149,4 +156,8 @@ class BareTargetBackend(Backend):
             result = mapper(exc)
             if isinstance(result, tuple) and len(result) == 2:
                 return result  # type: ignore[return-value]
+            logger.warning(
+                f"BareTargetBackend: {type(self._target).__name__}.map_error returned "
+                f"{type(result).__name__}, expected (code, message) tuple; using default mapping."
+            )
         return super().map_error(exc)

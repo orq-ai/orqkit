@@ -55,3 +55,49 @@ def test_openai_backend_map_error_returns_openai_prefix():
     backend = OpenAIBackend(client=MagicMock(), system_prompt=None)
     code, _ = backend.map_error(TimeoutError("slow"))
     assert code.startswith("openai.")
+
+
+class _CountingBackend(Backend):
+    """Backend whose create_target is counted, returning a target with a fixed context."""
+
+    def __init__(self):
+        super().__init__(name="counting")
+        self.create_calls = 0
+
+    def create_target(self, agent_key):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from evaluatorq.redteam.contracts import AgentContext
+
+        self.create_calls += 1
+        target = MagicMock()
+        target.get_agent_context = AsyncMock(return_value=AgentContext(key=agent_key))
+        return target
+
+    async def cleanup_memory(self, ctx, entity_ids):
+        return None
+
+
+@pytest.mark.asyncio
+async def test_get_agent_context_caches_per_key():
+    """Default get_agent_context probes once per key, then serves from cache."""
+    backend = _CountingBackend()
+
+    first = await backend.get_agent_context("agent-a")
+    second = await backend.get_agent_context("agent-a")
+
+    assert first is second, "cache hit must return the same AgentContext instance"
+    assert backend.create_calls == 1, "second call must not re-probe a new target"
+
+
+@pytest.mark.asyncio
+async def test_get_agent_context_caches_distinct_keys_independently():
+    """Distinct agent keys are probed and cached separately."""
+    backend = _CountingBackend()
+
+    ctx_a = await backend.get_agent_context("agent-a")
+    ctx_b = await backend.get_agent_context("agent-b")
+
+    assert ctx_a.key == "agent-a"
+    assert ctx_b.key == "agent-b"
+    assert backend.create_calls == 2

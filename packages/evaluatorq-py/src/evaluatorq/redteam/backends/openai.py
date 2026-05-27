@@ -165,7 +165,7 @@ class OpenAIModelTarget(AgentTarget):
         )
 
     def new(self) -> OpenAIModelTarget:
-        """Return a fresh target instance for parallel job safety (satisfies ``AgentTarget`` protocol)."""
+        """Return a fresh target instance for parallel job safety (satisfies the ``AgentTarget`` ABC)."""
         return OpenAIModelTarget(model=self.model, system_prompt=self.system_prompt, client=self.client, max_tokens=self.max_tokens, timeout_ms=self.timeout_ms)
 
     target_kind: TargetKind = TargetKind.OPENAI

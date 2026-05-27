@@ -36,13 +36,14 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
 from evaluatorq.redteam.backends.base import (
     AgentTarget,
     Backend,
+    BareTargetBackend,
     _coerce_to_agent_response,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.contracts import (
+    PIPELINE_CONFIG,
     AgentContext,
     LLMConfig,
-    PIPELINE_CONFIG,
     Pipeline,
     PipelineStage,
     RedTeamReport,
@@ -243,7 +244,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from openai import AsyncOpenAI
-
 
 
 # ---------------------------------------------------------------------------
@@ -1323,8 +1323,6 @@ async def _run_dynamic_or_hybrid(
             for at in resolved_agent_targets:
                 at_label = agent_target_labels[id(at)]
                 at_ctx = at_contexts[id(at)]
-
-                from evaluatorq.redteam.backends.base import BareTargetBackend  # added in Task 1.9 — lazy import keeps module load OK
 
                 at_backend = BareTargetBackend(at)
                 at_mem_ids: list[str] = []

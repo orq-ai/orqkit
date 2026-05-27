@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from evaluatorq.redteam.backends.base import Backend
 from evaluatorq.redteam.exceptions import BackendError, CredentialError
 
 if TYPE_CHECKING:
@@ -15,6 +14,7 @@ if TYPE_CHECKING:
 
     from openai import AsyncOpenAI
 
+    from evaluatorq.redteam.backends.base import Backend
     from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig, TargetConfig
 
 

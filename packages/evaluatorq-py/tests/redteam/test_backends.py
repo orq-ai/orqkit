@@ -237,7 +237,7 @@ class TestOpenAIModelTarget:
 
 
 # ===========================================================================
-# backends/openai.py — OpenAIErrorMapper
+# backends/openai.py — _openai_map_error
 # ===========================================================================
 
 
@@ -307,7 +307,7 @@ class TestOpenAIErrorMapper:
 
 
 # ===========================================================================
-# backends/orq.py — ORQErrorMapper
+# backends/orq.py — _orq_map_error
 # ===========================================================================
 
 

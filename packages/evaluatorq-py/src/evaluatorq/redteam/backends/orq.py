@@ -1,8 +1,8 @@
 """ORQ backend implementation for dynamic red teaming.
 
-Consolidates all ORQ SDK-specific agent code behind the backend protocols
+Consolidates all ORQ SDK-specific agent code behind the backend ABCs
 defined in ``backends.base``. Other modules import these concrete classes
-when they need ORQ-specific behavior, or accept the protocols when they
+when they need ORQ-specific behavior, or accept the base classes when they
 want to be backend-agnostic.
 """
 
@@ -61,7 +61,7 @@ from evaluatorq.redteam.tracing import record_token_usage, set_span_attrs, trunc
 
 
 async def _orq_cleanup_memory(orq_client: Any, ctx: AgentContext, entity_ids: list[str]) -> None:
-    """Delete memory entities for each memory store × entity_id combination."""
+    """Delete memory entities for each (memory store, entity_id) combination."""
     for ms in ctx.memory_stores:
         if not ms.key:
             logger.warning(f'Memory store {ms.id} has no key, skipping cleanup')
@@ -102,7 +102,7 @@ def _orq_map_error(exc: Exception) -> tuple[str, str]:
 class ORQAgentTarget(AgentTarget):
     """Target adapter for ORQ agents.
 
-    Wraps the ORQ SDK to provide the AgentTarget protocol.
+    Wraps the ORQ SDK to satisfy the ``AgentTarget`` ABC.
     """
 
     def __init__(

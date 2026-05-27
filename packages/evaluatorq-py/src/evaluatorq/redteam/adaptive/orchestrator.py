@@ -21,10 +21,6 @@ from typing_extensions import Self
 from evaluatorq.common.sanitize import xml_escape
 from evaluatorq.contracts import AgentResponse, TextOutputItem
 from evaluatorq.redteam.backends.base import AgentTarget, Backend, _coerce_to_agent_response
-
-
-def _default_map_error(exc: Exception) -> tuple[str, str]:
-    return "target_error", f"{type(exc).__name__}: {exc}"
 from evaluatorq.redteam.contracts import (
     DEFAULT_PIPELINE_MODEL,
     PIPELINE_CONFIG,
@@ -47,6 +43,12 @@ from evaluatorq.redteam.utils import safe_substitute
 
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
+
+
+def _default_map_error(exc: Exception) -> tuple[str, str]:
+    """Fallback error mapping for the no-backend path; mirrors ``Backend.map_error``."""
+    return "target_error", f"{type(exc).__name__}: {exc}"
+
 
 _ui_console = Console(stderr=True)
 _PROGRESS_LABEL_MAX_LEN = 52
