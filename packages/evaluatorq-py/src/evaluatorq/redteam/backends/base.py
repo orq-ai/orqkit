@@ -1,8 +1,10 @@
-"""Backend abstract base classes for dynamic red teaming agent targets.
+"""Backend abstract base class for dynamic red teaming agent targets.
 
-Defines the ABCs (``AgentTarget``, ``Backend``) that any agent backend must
-subclass. The ORQ implementation lives in ``backends.orq``; other backends
-(HTTP, LangChain, custom callables) subclass these independently.
+Defines the ``Backend`` ABC plus the ``BareTargetBackend`` adapter. The
+``AgentTarget`` ABC that backends construct lives in ``evaluatorq.contracts``
+(relocated in RES-808 PR2). The ORQ implementation lives in ``backends.orq``;
+other backends (HTTP, LangChain, custom callables) subclass ``Backend``
+independently.
 """
 
 from __future__ import annotations
