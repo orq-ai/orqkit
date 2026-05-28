@@ -239,7 +239,18 @@ class LangGraphTarget(AgentTarget):
         # Build ToolCallOutputItem directly (not via the .tool_calls view) so
         # interleaved text/tool ordering is preserved in .output.
         output_items: list[OutputMessage] = []
-        for msg in result_messages[self._prev_msg_count:]:
+        sliced = result_messages[self._prev_msg_count:]
+        if not sliced and self._prev_msg_count > 0:
+            # Graph may use a trimming reducer; fall back to the full result set
+            # so the caller receives the current turn's response, not silence.
+            logger.warning(
+                "LangGraphTarget: _prev_msg_count (%d) exceeds result len (%d); "
+                "graph may be trimming messages. Falling back to full result.",
+                self._prev_msg_count,
+                len(result_messages),
+            )
+            sliced = result_messages
+        for msg in sliced:
             if isinstance(msg, dict):
                 if msg.get("role") != "assistant":
                     continue

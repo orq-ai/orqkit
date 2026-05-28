@@ -169,8 +169,8 @@ class OpenAIModelTarget(AgentTarget):
         """Stateless: send the provided message list + system prompt.
 
         Does not read or write ``self._history`` — the caller owns the
-        transcript. ``self.system_prompt`` is always prepended, so any leading
-        ``system`` messages in ``messages`` are stripped to avoid a double
+        transcript. ``self.system_prompt`` is always prepended, so all
+        ``system``-role messages in ``messages`` are stripped to avoid a double
         system prompt. For redteam single-prompt callers that want per-instance
         conversation state, use ``send_prompt`` instead.
         """
