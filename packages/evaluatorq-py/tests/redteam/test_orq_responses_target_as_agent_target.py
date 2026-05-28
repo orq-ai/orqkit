@@ -109,7 +109,7 @@ class TestRespondIsStateless:
 
         await target.send_prompt("attack prompt")
 
-        call_kwargs = client.responses.create.await_args.kwargs
+        call_kwargs = client.responses.create.await_args_list[-1].kwargs
         assert call_kwargs["input"] == [{"role": "user", "content": "attack prompt"}]
         assert "previous_response_id" not in call_kwargs
 

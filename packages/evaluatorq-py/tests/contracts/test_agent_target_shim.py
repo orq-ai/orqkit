@@ -41,9 +41,9 @@ async def test_send_prompt_delegates_to_respond_with_single_user_message():
 def test_respond_is_abstract_subclass_without_it_cannot_instantiate():
     """respond is abstract: a subclass that implements only ``new`` is incomplete."""
 
-    class _Bare(AgentTarget):
+    class _Bare(AgentTarget):  # pyright: ignore[reportImplicitAbstractClass]
         def new(self) -> _Bare:
-            return _Bare()
+            return _Bare()  # pyright: ignore[reportAbstractUsage]
 
     with pytest.raises(TypeError, match="abstract"):
-        _Bare()  # type: ignore[abstract]
+        _Bare()  # type: ignore[abstract]  # pyright: ignore[reportAbstractUsage]
