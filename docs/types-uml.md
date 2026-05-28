@@ -1,6 +1,8 @@
 # Types UML — evaluatorq / redteam / agent simulation
 
-Four regions share one bridge: `AgentResponse`. Evaluatorq core owns the unified output contract; redteam owns the `AgentTarget` protocol, orchestration models, and job I/O boundary (`JobOutputPayload`); backends/integrations provide target implementations; agent simulation owns persona/scenario/result models.
+> Source-of-truth class map · main · 2026-05-22. Renders as `docs/types-uml.html`.
+
+Four regions share one bridge: `AgentResponse`. Evaluatorq core owns the unified output contract; redteam owns the `AgentTarget` protocol, orchestration models, and job I/O boundary (`JobOutputPayload`); backends/integrations provide target implementations; agent simulation owns persona/scenario/result models. **RES-844 proposal section at the bottom** captures the planned move of `AgentTarget` into `evaluatorq.contracts` and the optional stateless `respond(messages)` path.
 
 ## Class diagram — core & redteam contracts
 
@@ -57,6 +59,59 @@ classDiagram
     OutputMessage <|.. ReasoningOutputItem
     AgentResponse "1" *-- "many" OutputMessage
     AgentResponse ..> ToolCallOutputItem : filters in tool_calls
+
+    %% ── REDTEAM — TARGET PROTOCOL FAMILY ────────────
+    class AgentTarget {
+        <<Protocol · redteam.backends.base>>
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() AgentTarget
+    }
+    class AgentTargetFactory {
+        <<Protocol>>
+        +create_target(agent_key) AgentTarget
+    }
+    class AgentContextProvider {
+        <<Protocol>>
+        +get_agent_context(agent_key) AgentContext
+    }
+    class MemoryCleanup {
+        <<Protocol>>
+        +cleanup_memory(ctx, entity_ids)
+    }
+    class ErrorMapper {
+        <<Protocol>>
+        +map_error(exc) tuple~str,str~
+    }
+    class BackendBundle {
+        <<dataclass · slots>>
+        +str name
+        +AgentTargetFactory target_factory
+        +AgentContextProvider context_provider
+        +MemoryCleanup memory_cleanup
+        +ErrorMapper error_mapper
+    }
+    class DirectTargetFactory {
+        +AgentTarget _target
+        +create_target(agent_key) AgentTarget
+    }
+    class NoopMemoryCleanup {
+        +cleanup_memory(ctx, entity_ids)
+    }
+    class DefaultErrorMapper {
+        +map_error(exc) tuple~str,str~
+    }
+
+    AgentTarget ..> AgentResponse : send_prompt returns
+    AgentTargetFactory ..> AgentTarget : creates
+    AgentContextProvider ..> AgentContext : returns
+    BackendBundle *-- AgentTargetFactory
+    BackendBundle *-- AgentContextProvider
+    BackendBundle *-- MemoryCleanup
+    BackendBundle *-- ErrorMapper
+    DirectTargetFactory ..|> AgentTargetFactory
+    NoopMemoryCleanup ..|> MemoryCleanup
+    DefaultErrorMapper ..|> ErrorMapper
 
     %% ── REDTEAM — CONVERSATION TYPES ────────────────
     class Message {
@@ -429,13 +484,6 @@ classDiagram
         +send_prompt(prompt) AgentResponse
         +new() OpenAIModelTarget
     }
-    class BackendBundle {
-        +str name
-        +AgentTargetFactory target_factory
-        +AgentContextProvider context_provider
-        +MemoryCleanup memory_cleanup
-        +ErrorMapper error_mapper
-    }
     class LangGraphTarget {
         +str memory_entity_id
         +send_prompt(prompt) AgentResponse
@@ -476,7 +524,6 @@ classDiagram
     OpenAIAgentTarget ..|> AgentTarget : implements
     VercelAISdkTarget ..|> AgentTarget : implements
     OrqResponsesTarget ..|> AgentTarget : implements
-    BackendBundle o-- AgentTarget
 ```
 
 ## Data flow
@@ -566,3 +613,115 @@ flowchart LR
 - `AgentContext` — describes target agent config (tools, memory, KB, model). Used for adaptive attack generation.
 - Two distinct `TokenUsage` types — redteam (`calls`, `from_completion`, arithmetic) vs sim (slim, no `calls`). Not interchangeable.
 - `SendResult` deprecated → alias of `AgentResponse`.
+
+---
+
+## Proposal — RES-844 protocol unification
+
+[RES-844](https://linear.app/orqai/issue/RES-844) promotes the `AgentTarget` protocol family out of `redteam/backends/base.py` so both red-team and simulation can consume the same contract, and unifies the sim/redteam target shapes. Scope landed on after design review (incl. an adversarial pass from `architecture-reviewer`) and three Orq-docs / codebase audits.
+
+### Current state on main
+
+- `AgentTarget` + `Supports*` family + `BackendBundle` + helpers live in `packages/evaluatorq-py/src/evaluatorq/redteam/backends/base.py` (lines 1–289). Nothing else in the repo defines them.
+- `OrqResponsesTarget` already satisfies the protocol structurally — carries `memory_entity_id`, `send_prompt`, `new()`, and `tests/redteam/test_orq_responses_target_as_agent_target.py` (17/17 passing) asserts `is_agent_target(OrqResponsesTarget) is True`.
+- `simulation/runner/simulation.py:73` defines its own `TargetAgent` protocol with a different shape (`respond(messages) -> str`). No shared contract.
+- `ORQAgentTarget` already uses the Responses route via `agents.responses.create` → `/v3/router/responses` (NOT the legacy `/v3/agents/execute-task` endpoint). State threading is via Orq-specific `task_id` + `memory_entity_id`; tool-call continuation is a client-side loop that re-POSTs synthetic `{kind:'tool_result'}` parts.
+
+### PR A — this cycle (S)
+
+Minimal, behavior-preserving consolidation. Unblocks [RES-845](https://linear.app/orqai/issue/RES-845) (sim CLI), [RES-846](https://linear.app/orqai/issue/RES-846) (sim reports), [RES-847](https://linear.app/orqai/issue/RES-847) (sim hooks parity).
+
+- Move `AgentTarget`, `SupportsTargetMetadata`, `SupportsAgentContext`, `SupportsTargetFactory`, `SupportsMemoryCleanup`, `SupportsErrorMapping`, `AgentTargetFactory`, `MemoryCleanup`, `ErrorMapper`, `BackendBundle`, plus helpers (`is_agent_target`, `adapt_legacy_target`, `validate_agent_target`, `DirectTargetFactory`, `NoopMemoryCleanup`, `DefaultErrorMapper`, `extract_status_code`, `extract_provider_error_code`) into `evaluatorq/contracts.py`. *Not* a new `common/` directory — `AgentResponse` + `LLMCallConfig` + `OutputMessage` already live there.
+- `redteam/backends/base.py` becomes a thin re-export shim. Red-team-side imports (`backends/orq.py`, `backends/openai.py`, `backends/registry.py`, `runtime/orq_agent_job.py`) unchanged.
+- Add optional `async respond(messages: list[ChatMessage]) -> AgentResponse` to `AgentTarget`. Implement on `OrqResponsesTarget` by folding `__call__` into it; `__call__` stays as a thin back-compat shim returning `.text`. Red-team backends do not implement `respond` in PR A.
+- Adapter `as_target_callback(target: AgentTarget) -> Callable[[list[ChatMessage]], Awaitable[str]]` in `contracts.py`. Closes acceptance criterion #2 (red-team backend usable as sim `target_callback`).
+- Replace `simulation/runner/simulation.py:73` `TargetAgent` protocol with `from evaluatorq.contracts import AgentTarget`. One protocol, one source.
+- Round-trip smoke test in `tests/common/test_target_protocol.py`.
+- **Do not touch `ChatMessage`.** Stays chat-completions `{role, content: str}` in `simulation/types.py:217`. Tool-call / tool-result transcript fidelity is PR B scope.
+
+### PR B — separate L ticket (deferred)
+
+True architectural unification on the Orq Responses input model.
+
+- Adopt `openai.types.responses.ResponseInputItemParam` (or a sibling discriminated `InputItem` union in `contracts.py` following the `OutputMessage` pattern at `contracts.py:80–83`). Delete the hand-rolled TypedDicts in `openresponses/types.py`.
+- Migrate all red-team backends to a single `async respond(transcript: list[InputItem]) -> AgentResponse`. Deprecate `send_prompt`.
+- Move `ORQAgentTarget`'s tool-continuation loop OUT of the target and into the orchestrator/caller, so targets stay pure functions of `(transcript) -> AgentResponse`. Server returns aggregated usage per call; local accumulation today is an artifact of the client-side loop.
+- Introduce `ThreadHandle` only if red-team needs fork/rollback for crescendo attacks.
+- Rewrite call sites in `redteam/runner.py:722, 1436`, `redteam/adaptive/pipeline.py:379`, `redteam/adaptive/orchestrator.py:652`, and every integration (`langgraph`, `callable`, `vercel_ai_sdk`, `openai_agents`).
+
+### Why split A vs B
+
+- PR A is additive + a directory move. No call-site rewrites, no protocol semantics change. Reviewable in one sitting.
+- PR B is the real architectural move — touches every backend and call site, and extends the transcript data model. Smuggling it into a "promote protocol family" ticket would balloon RES-844 to L and block RES-845/846/847.
+- Adversarial review surfaced four load-bearing concerns (silent `messages` ignore, concurrency footgun on `OrqResponsesTarget`, tool-result representation gap, `common/`-vs-`contracts` placement). PR A only addresses placement; the other three are scoped to PR B explicitly.
+
+### Decisions log
+
+- **Bandwidth is not a concern.** Stateless caller-owned-history flow re-uploading the full transcript every turn is fine. Rules out cost-based objection to PR B's direction.
+- **`previous_response_id` is not a token-cost optimization.** LLM input tokens are billed identically whether you thread via `previous_response_id` or pass the full transcript inline. Only client→server upload bytes differ.
+- **ORQAgentTarget already uses the Responses route.** Legacy `/v3/agents/execute-task` endpoint is not in play.
+- **Server-side usage is aggregated per call.** Local `_accumulated_usage` exists only because of the client-side tool-continuation loop. Move the loop to the caller (PR B) → local accumulation drops out.
+- **`ChatMessage` cannot represent Responses input items.** OpenAI chat-completions shape (`{role, content: str}`) — no tool-call / tool-result / multi-part content. PR B copies the `OutputMessage` discriminated-union pattern rather than extending `ChatMessage`.
+- **Protocol home is `evaluatorq.contracts`, not a new `common/` module.** `AgentResponse` already lives there.
+
+### Target architecture (after PR A)
+
+```mermaid
+classDiagram
+    direction LR
+
+    class AgentTarget {
+        <<Protocol · evaluatorq.contracts>>
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse «kept»
+        +respond(messages) AgentResponse «new, optional»
+        +new() AgentTarget
+    }
+    class redteam_backends_base {
+        <<shim>>
+        re-exports AgentTarget · Supports* · helpers
+    }
+    class ORQAgentTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OpenAIModelTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class LangGraphTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class CallableTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OpenAIAgentTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class VercelAISdkTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OrqResponsesTarget {
+        send_prompt(prompt) AgentResponse «stateful»
+        respond(messages) AgentResponse «stateless»
+        __call__(messages) str «back-compat shim»
+    }
+    class as_target_callback {
+        <<adapter · evaluatorq.contracts>>
+        (target) => Callable~list~ChatMessage~,Awaitable~str~~
+    }
+    class TargetAgent_simulation {
+        <<removed — aliased to AgentTarget>>
+    }
+
+    redteam_backends_base ..> AgentTarget : re-export
+    ORQAgentTarget ..|> AgentTarget
+    OpenAIModelTarget ..|> AgentTarget
+    LangGraphTarget ..|> AgentTarget
+    CallableTarget ..|> AgentTarget
+    OpenAIAgentTarget ..|> AgentTarget
+    VercelAISdkTarget ..|> AgentTarget
+    OrqResponsesTarget ..|> AgentTarget
+    as_target_callback ..> AgentTarget : wraps
+    TargetAgent_simulation ..> AgentTarget : aliased
+```
+
+Solid Protocol box marks the new home of the contract. Backends unchanged; sim's `TargetAgent` deleted in favor of importing `AgentTarget` directly. `respond(messages)` is optional in PR A — only `OrqResponsesTarget` implements it. PR B makes it required and deprecates `send_prompt`.
