@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Simulation — Architecture Schematic</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+    padding: 2rem;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 1.8rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+  }
+  .section { margin-bottom: 3rem; }
+  .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    font-family: monospace;
+  }
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  .diagram-wrap .mermaid {
+    display: flex;
+    justify-content: center;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .filepath {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--green);
+    background: rgba(63, 185, 80, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+  }
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Agent Simulation — Architecture Schematic</h1>
+<p style="color:var(--muted);margin-bottom:2rem;font-size:0.9rem;">
+  orqkit &nbsp;·&nbsp; evaluatorq-py + @orq-ai/evaluatorq &nbsp;·&nbsp; simulation module
+</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 1. MODULE OVERVIEW -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>1 - Module Overview</h2>
+  <p class="subtitle">packages/evaluatorq-py/src/evaluatorq/ -- top-level simulation components</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+graph TB
+  subgraph PY["evaluatorq-py (Python)"]
+    SIM["simulation/ - Conversation simulation"]
+    INTEG["integrations/ - Agent adapters"]
+    EVAL["evaluators/ - Scoring and judgment"]
+  end
+  subgraph TS["evaluatorq (TypeScript)"]
+    TS_SIM["simulation/ - TS mirror"]
+    TS_EVAL["evaluators/ - TS scorers"]
+  end
+
+  SIM -->|uses| INTEG
+  SIM -->|calls| EVAL
+  TS_SIM -.->|mirrors| SIM
+
+  subgraph PLATFORM["orq.ai Platform"]
+    RESP_API["Responses API v3"]
+    AGENT_API["Agent API"]
+  end
+
+  INTEG -->|HTTP| AGENT_API
+  INTEG -->|HTTP| RESP_API
+
+  style SIM fill:#1a2b1a,stroke:#3fb950,color:#e6edf3
+  style INTEG fill:#2a1f2d,stroke:#bc8cff,color:#e6edf3
+  style EVAL fill:#2b2015,stroke:#d29922,color:#e6edf3
+  style TS_SIM fill:#1a2b1a,stroke:#3fb950,color:#e6edf3
+  style TS_EVAL fill:#2b2015,stroke:#d29922,color:#e6edf3
+  style PLATFORM fill:#1d1d1d,stroke:#30363d,color:#8b949e
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 2. AGENT TARGET PROTOCOL + ADAPTERS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>2 - AgentTarget Protocol and Adapters</h2>
+  <p class="subtitle">redteam/backends/base.py -- AgentTarget ABC -- integrations/*/target.py -- simulation/target.py</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+classDiagram
+  class AgentTarget {
+    &lt;&lt;abstract&gt;&gt;
+    +send_prompt(prompt, ctx) AgentResponse
+    +new() AgentTarget
+    +get_agent_context() AgentContext
+    +cleanup_memory(ctx, entity_ids)
+    +map_error(exc) RedTeamError
+  }
+
+  class OrqResponsesTarget {
+    -_deployment_key str
+    -_previous_response_id str
+    +send_prompt(prompt, ctx) AgentResponse
+    +call(messages) ChatCompletion
+  }
+
+  class ORQAgentTarget {
+    -_deployment_key str
+    -_response_id str
+    +send_prompt(prompt, ctx) AgentResponse
+    +get_agent_context() AgentContext
+  }
+
+  class CallableTarget {
+    -_fn Callable
+    -_usage_fn Callable
+    -_reset_fn Callable
+    +send_prompt(prompt, ctx) AgentResponse
+  }
+
+  class LangGraphTarget {
+    -_graph CompiledGraph
+    -_callback TokenUsageCollector
+    +send_prompt(prompt, ctx) AgentResponse
+  }
+
+  class OpenAIAgentsTarget {
+    -_agent Agent
+    +send_prompt(prompt, ctx) AgentResponse
+  }
+
+  AgentTarget <|-- OrqResponsesTarget
+  AgentTarget <|-- ORQAgentTarget
+  AgentTarget <|-- CallableTarget
+  AgentTarget <|-- LangGraphTarget
+  AgentTarget <|-- OpenAIAgentsTarget
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 3. SIMULATION CORE CLASSES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>3 - Simulation Core Classes</h2>
+  <p class="subtitle">simulation/runner/simulation.py -- simulation/agents/ -- simulation/generators/</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+classDiagram
+  class BaseAgent {
+    &lt;&lt;abstract&gt;&gt;
+    #_client LLMClient
+    #_config AgentConfig
+    +generate(messages) LLMResult
+  }
+
+  class UserSimulatorAgent {
+    -_persona Persona
+    -_scenario Scenario
+    +update_context(persona, scenario)
+    +generate_first_message() str
+    +respond_async(messages) str
+  }
+
+  class JudgeAgent {
+    -_criteria list~Criterion~
+    +evaluate(messages, scenario) Judgment
+  }
+
+  class SimulationRunner {
+    -_user_sim UserSimulatorAgent
+    -_judge JudgeAgent
+    -_target TargetAgent
+    -_max_turns int
+    +run(params) SimulationResult
+    +run_batch(params) list~SimulationResult~
+  }
+
+  class TargetAgent {
+    +respond(messages) AgentResponse
+  }
+
+  class PersonaGenerator {
+    +generate(n, context) list~Persona~
+  }
+
+  class ScenarioGenerator {
+    +generate(topic, personas) list~Scenario~
+  }
+
+  class DatapointGenerator {
+    -_semaphore Semaphore
+    +generate(scenarios, personas) list~Datapoint~
+  }
+
+  class FirstMessageGenerator {
+    +generate(persona, scenario) str
+  }
+
+  BaseAgent <|-- UserSimulatorAgent
+  BaseAgent <|-- JudgeAgent
+
+  SimulationRunner --> UserSimulatorAgent : drives
+  SimulationRunner --> JudgeAgent : evaluates with
+  SimulationRunner --> TargetAgent : probes
+
+  SimulationRunner ..> SimulationResult : produces
+  PersonaGenerator ..> Persona : generates
+  ScenarioGenerator ..> Scenario : generates
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 4. SIMULATION SEQUENCE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>4 - Simulation Execution Sequence</h2>
+  <p class="subtitle">simulation/runner/simulation.py -- SimulationRunner.run()</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+sequenceDiagram
+  actor User
+  participant runner as SimulationRunner
+  participant gen as Generators
+  participant usim as UserSimulatorAgent
+  participant target as TargetAgent
+  participant judge as JudgeAgent
+
+  User->>runner: run(params)
+
+  opt personas or scenarios not provided
+    runner->>gen: generate personas + scenarios
+    gen-->>runner: Persona, Scenario
+  end
+
+  runner->>usim: update_context(persona, scenario)
+  runner->>usim: generate_first_message()
+  usim-->>runner: first_message
+
+  runner->>target: respond([first_message])
+  target-->>runner: AgentResponse
+
+  loop Up to max_turns
+    runner->>usim: respond_async(messages)
+    usim-->>runner: user_message
+
+    runner->>target: respond(messages)
+    target-->>runner: AgentResponse
+
+    runner->>judge: evaluate(messages, scenario)
+    judge-->>runner: Judgment
+
+    alt goal achieved OR rules broken OR max_turns reached
+      runner->>runner: break
+    end
+  end
+
+  runner-->>User: SimulationResult
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 5. DATA MODELS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>5 - Simulation Data Models</h2>
+  <p class="subtitle">simulation/types.py -- Python + TypeScript</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+classDiagram
+  class Persona {
+    +name str
+    +background str
+    +communication_style CommunicationStyle
+    +starting_emotion StartingEmotion
+    +emotional_arc EmotionalArc
+    +cultural_context CulturalContext
+    +conversation_strategy ConversationStrategy
+  }
+
+  class Scenario {
+    +topic str
+    +goal str
+    +criteria list~Criterion~
+    +input_format InputFormat
+    +max_turns int
+  }
+
+  class Criterion {
+    +name str
+    +description str
+    +required bool
+  }
+
+  class Judgment {
+    +goal_achieved bool
+    +rules_broken list~str~
+    +reasoning str
+    +score float
+  }
+
+  class TurnMetrics {
+    +turn_index int
+    +latency_ms float
+    +token_usage TokenUsage
+  }
+
+  class SimulationResult {
+    +messages list~Message~
+    +goal_achieved bool
+    +rules_broken list~str~
+    +turn_count int
+    +token_usage TokenUsage
+    +terminated_by TerminatedBy
+    +judgment Judgment
+    +persona Persona
+    +scenario Scenario
+    +turn_metrics list~TurnMetrics~
+  }
+
+  SimulationResult --> Judgment
+  SimulationResult --> Persona
+  SimulationResult --> Scenario
+  SimulationResult --> TurnMetrics
+  Scenario --> Criterion
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 6. GENERATOR PIPELINE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>6 - Generator Pipeline</h2>
+  <p class="subtitle">simulation/generators/ -- LLM-driven synthetic data generation</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+graph LR
+  INPUT["Input\ntopic + context"]
+
+  subgraph GENERATORS["simulation/generators/"]
+    PG["PersonaGenerator\npersona_generator.py"]
+    SG["ScenarioGenerator\nscenario_generator.py"]
+    FMG["FirstMessageGenerator\nfirst_message_generator.py"]
+    DG["DatapointGenerator\ndatapoint_generator.py"]
+  end
+
+  OUTPUT["SimulationRunner\n+ DataPoints"]
+
+  INPUT --> PG
+  INPUT --> SG
+  PG -->|"list[Persona]"| SG
+  PG -->|"list[Persona]"| FMG
+  SG -->|"list[Scenario]"| FMG
+  PG -->|personas| DG
+  SG -->|scenarios| DG
+  FMG -->|first messages| DG
+  DG -->|"list[Datapoint]"| OUTPUT
+
+  style GENERATORS fill:#1a2b1a,stroke:#3fb950,color:#e6edf3
+  style INPUT fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style OUTPUT fill:#2a1f2d,stroke:#bc8cff,color:#e6edf3
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 7. INTEGRATION ADAPTERS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>7 - Integration Adapters</h2>
+  <p class="subtitle">integrations/ -- how external agents plug in as AgentTarget</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+graph LR
+  subgraph EXTERNAL["External Frameworks"]
+    FN["Plain function\nasync or sync"]
+    LG["LangGraph\nCompiledGraph"]
+    OAI["OpenAI Agents SDK"]
+    VERCEL["Vercel AI SDK"]
+    ORQ_RESP["orq.ai Responses API v3"]
+    ORQ_AGENT["orq.ai Agent API"]
+  end
+
+  subgraph ADAPTERS["integrations/ adapters"]
+    CT["CallableTarget\ncallable_integration/"]
+    LGT["LangGraphTarget\nlanggraph_integration/"]
+    OAIT["OpenAIAgentsTarget\nopenai_agents_integration/"]
+    VT["VercelTarget\nvercel_ai_sdk_integration/"]
+    ORT["OrqResponsesTarget\nsimulation/target.py"]
+    OAGT["ORQAgentTarget\nbackends/orq.py"]
+  end
+
+  AT["AgentTarget ABC"]
+
+  FN --> CT
+  LG --> LGT
+  OAI --> OAIT
+  VERCEL --> VT
+  ORQ_RESP --> ORT
+  ORQ_AGENT --> OAGT
+
+  CT --> AT
+  LGT --> AT
+  OAIT --> AT
+  VT --> AT
+  ORT --> AT
+  OAGT --> AT
+
+  style AT fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style ADAPTERS fill:#1a1a2e,stroke:#30363d,color:#8b949e
+  style EXTERNAL fill:#1a1a1a,stroke:#30363d,color:#8b949e
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 8. SIMULATION ENUMS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>8 - Domain Enums</h2>
+  <p class="subtitle">simulation/types.py -- all StrEnum values</p>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+graph TD
+  A["CommunicationStyle\nFORMAL - CASUAL - TECHNICAL\nEMOTIONAL - ASSERTIVE"]
+  B["StartingEmotion\nNEUTRAL - FRUSTRATED - CURIOUS\nANXIOUS - CONFIDENT"]
+  C["EmotionalArc\nSTABLE - ESCALATING\nDE_ESCALATING - VOLATILE"]
+  D["CulturalContext\nWESTERN - EASTERN - MIDDLE_EASTERN\nLATIN_AMERICAN - AFRICAN"]
+  E["ConversationStrategy\nDIRECT - INDIRECT - PERSUASIVE\nMANIPULATIVE - COLLABORATIVE"]
+  F["TerminatedBy\nGOAL_ACHIEVED - MAX_TURNS\nRULES_BROKEN - ERROR"]
+  G["InputFormat\nTEXT - STRUCTURED - MULTIMODAL"]
+
+  style A fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style B fill:#1a2b1a,stroke:#3fb950,color:#e6edf3
+  style C fill:#1a2b1a,stroke:#3fb950,color:#e6edf3
+  style D fill:#2b2015,stroke:#d29922,color:#e6edf3
+  style E fill:#2a1f2d,stroke:#bc8cff,color:#e6edf3
+  style F fill:#2b1515,stroke:#f85149,color:#e6edf3
+  style G fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 9. TS vs PY MIRROR -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>9 - Python vs TypeScript Mirror</h2>
+  <p class="subtitle">Parallel implementations -- same interface, different runtime</p>
+  <div class="grid-2">
+    <div>
+      <p class="subtitle" style="margin-bottom:0.75rem">Python -- evaluatorq-py</p>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+graph TD
+  R["simulation/runner/simulation.py\nSimulationRunner"]
+  US["simulation/agents/user_simulator.py\nUserSimulatorAgent"]
+  J["simulation/agents/judge.py\nJudgeAgent"]
+  T["simulation/target.py\nOrqResponsesTarget"]
+  PG["simulation/generators/persona_generator.py"]
+  SG["simulation/generators/scenario_generator.py"]
+  DG["simulation/generators/datapoint_generator.py"]
+  FMG["simulation/generators/first_message_generator.py"]
+
+  R --> US
+  R --> J
+  R --> T
+  R --> PG
+  R --> SG
+  R --> DG
+  R --> FMG
+
+  style R fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="subtitle" style="margin-bottom:0.75rem">TypeScript -- evaluatorq</p>
+      <div class="diagram-wrap">
+        <div class="mermaid">
+graph TD
+  R["simulation/runner/simulation.ts\nSimulationRunner"]
+  US["simulation/agents/user-simulator.ts\nUserSimulatorAgent"]
+  J["simulation/agents/judge.ts\nJudgeAgent"]
+  PG["simulation/generators/persona-generator.ts"]
+  SG["simulation/generators/scenario-generator.ts"]
+  DG["simulation/generators/datapoint-generator.ts"]
+  FMG["simulation/generators/first-message-generator.ts"]
+  WA["simulation/wrap-agent.ts\nSimulationJob"]
+
+  R --> US
+  R --> J
+  R --> PG
+  R --> SG
+  R --> DG
+  R --> FMG
+  WA --> R
+
+  style R fill:#1a2332,stroke:#58a6ff,color:#e6edf3
+  style WA fill:#2a1f2d,stroke:#bc8cff,color:#e6edf3
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- FILE INDEX -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>File Index</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.82rem;line-height:1.8;">
+    <div>
+      <p style="color:var(--green);margin-bottom:0.5rem;font-weight:600">Python -- simulation/</p>
+      <p><span class="filepath">simulation/types.py</span> -- Persona, Scenario, SimulationResult enums</p>
+      <p><span class="filepath">simulation/runner/simulation.py</span> -- SimulationRunner</p>
+      <p><span class="filepath">simulation/agents/base.py</span> -- BaseAgent</p>
+      <p><span class="filepath">simulation/agents/user_simulator.py</span> -- UserSimulatorAgent</p>
+      <p><span class="filepath">simulation/agents/judge.py</span> -- JudgeAgent</p>
+      <p><span class="filepath">simulation/target.py</span> -- OrqResponsesTarget</p>
+      <p><span class="filepath">simulation/generators/persona_generator.py</span></p>
+      <p><span class="filepath">simulation/generators/scenario_generator.py</span></p>
+      <p><span class="filepath">simulation/generators/datapoint_generator.py</span></p>
+      <p><span class="filepath">simulation/generators/first_message_generator.py</span></p>
+      <p><span class="filepath">simulation/tracing.py</span> -- OpenTelemetry spans</p>
+      <p><span class="filepath">simulation/evaluators/scorers.py</span> -- simulation scoring</p>
+    </div>
+    <div>
+      <p style="color:var(--accent);margin-bottom:0.5rem;font-weight:600">TypeScript -- simulation/</p>
+      <p><span class="filepath">simulation/types.ts</span> -- TS type definitions</p>
+      <p><span class="filepath">simulation/runner/simulation.ts</span> -- SimulationRunner</p>
+      <p><span class="filepath">simulation/agents/user-simulator.ts</span></p>
+      <p><span class="filepath">simulation/agents/judge.ts</span></p>
+      <p><span class="filepath">simulation/generators/persona-generator.ts</span></p>
+      <p><span class="filepath">simulation/generators/scenario-generator.ts</span></p>
+      <p><span class="filepath">simulation/generators/datapoint-generator.ts</span></p>
+      <p><span class="filepath">simulation/generators/first-message-generator.ts</span></p>
+      <p><span class="filepath">simulation/wrap-agent.ts</span> -- Job wrapper</p>
+      <p><span class="filepath">simulation/index.ts</span> -- simulate() / generateAndSimulate()</p>
+      <p style="color:var(--purple);margin-top:0.5rem;font-weight:600">Shared Adapters</p>
+      <p><span class="filepath">integrations/callable_integration/target.py</span></p>
+      <p><span class="filepath">integrations/langgraph_integration/target.py</span></p>
+      <p><span class="filepath">integrations/openai_agents_integration/target.py</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1a2332',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#58a6ff',
+      lineColor: '#8b949e',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#0d1117',
+      background: '#0d1117',
+      mainBkg: '#161b22',
+      nodeBorder: '#30363d',
+      clusterBkg: '#161b22',
+      titleColor: '#e6edf3',
+      edgeLabelBackground: '#161b22',
+      actorBkg: '#1a2332',
+      actorBorder: '#58a6ff',
+      actorTextColor: '#e6edf3',
+      actorLineColor: '#30363d',
+      signalColor: '#8b949e',
+      signalTextColor: '#e6edf3',
+      labelBoxBkgColor: '#161b22',
+      labelBoxBorderColor: '#30363d',
+      labelTextColor: '#e6edf3',
+      loopTextColor: '#e6edf3',
+      noteBorderColor: '#d29922',
+      noteBkgColor: '#2b2015',
+      noteTextColor: '#e6edf3',
+      activationBorderColor: '#58a6ff',
+      activationBkgColor: '#1a2332',
+      sequenceNumberColor: '#0d1117',
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    sequence: { mirrorActors: false, messageAlign: 'center', useMaxWidth: true },
+    classDiagram: { useMaxWidth: true },
+  });
+</script>
+</body>
+</html>
