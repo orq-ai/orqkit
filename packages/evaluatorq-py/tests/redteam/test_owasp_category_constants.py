@@ -1,7 +1,5 @@
 """Tests for OWASP_LLM_TOP_10 and OWASP_ASI_TOP_10 public constants."""
 
-import pytest
-
 from evaluatorq.redteam import OWASP_ASI_TOP_10, OWASP_LLM_TOP_10
 from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
 
@@ -11,7 +9,7 @@ class TestOwaspLlmTop10:
         assert isinstance(OWASP_LLM_TOP_10, tuple)
 
     def test_length(self) -> None:
-        assert len(OWASP_LLM_TOP_10) == 9  # LLM01–LLM09
+        assert len(OWASP_LLM_TOP_10) == 9  # LLM01-LLM09
 
     def test_all_codes_present(self) -> None:
         expected = {f"LLM{i:02d}" for i in range(1, 10)}
@@ -29,8 +27,8 @@ class TestOwaspLlmTop10:
             assert not code.startswith("OWASP-"), f"{code} should not have OWASP- prefix"
 
     def test_importable_from_redteam_package(self) -> None:
-        from evaluatorq.redteam import OWASP_LLM_TOP_10 as imported  # noqa: PLC0415
-        assert imported is OWASP_LLM_TOP_10
+        from evaluatorq.redteam import OWASP_LLM_TOP_10 as IMPORTED_LLM
+        assert IMPORTED_LLM is OWASP_LLM_TOP_10
 
 
 class TestOwaspAsiTop10:
@@ -38,7 +36,7 @@ class TestOwaspAsiTop10:
         assert isinstance(OWASP_ASI_TOP_10, tuple)
 
     def test_length(self) -> None:
-        assert len(OWASP_ASI_TOP_10) == 10  # ASI01–ASI10
+        assert len(OWASP_ASI_TOP_10) == 10  # ASI01-ASI10
 
     def test_all_codes_present(self) -> None:
         expected = {f"ASI{i:02d}" for i in range(1, 11)}
@@ -56,8 +54,8 @@ class TestOwaspAsiTop10:
             assert not code.startswith("OWASP-"), f"{code} should not have OWASP- prefix"
 
     def test_importable_from_redteam_package(self) -> None:
-        from evaluatorq.redteam import OWASP_ASI_TOP_10 as imported  # noqa: PLC0415
-        assert imported is OWASP_ASI_TOP_10
+        from evaluatorq.redteam import OWASP_ASI_TOP_10 as IMPORTED_ASI
+        assert IMPORTED_ASI is OWASP_ASI_TOP_10
 
 
 class TestDisjoint:
