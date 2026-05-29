@@ -50,6 +50,8 @@ from evaluatorq.redteam.backends.openresponses import (
 )
 from evaluatorq.redteam.backends.registry import register_backend
 from evaluatorq.redteam.contracts import (
+    OWASP_ASI_TOP_10,
+    OWASP_LLM_TOP_10,
     SEVERITY_DEFINITIONS,
     AgentCapability,
     AgentContext,
@@ -144,8 +146,10 @@ from evaluatorq.redteam.vulnerability_registry import (
     resolve_vulnerabilities,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     "ADVERSARIAL_ANALYSIS_PROMPT",
+    "OWASP_ASI_TOP_10",
+    "OWASP_LLM_TOP_10",
     "ADVERSARIAL_INITIAL_USER_PROMPT",
     "ADVERSARIAL_SYSTEM_PROMPT",
     'SEVERITY_DEFINITIONS',

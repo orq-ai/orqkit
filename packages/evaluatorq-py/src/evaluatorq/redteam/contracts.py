@@ -589,6 +589,14 @@ OWASP_CATEGORY_NAMES: dict[str, str] = {
     **{f'OWASP-{k}': v for k, v in _LLM_CATEGORY_NAMES.items()},
 }
 
+# Public constants — ordered tuples of category codes for each framework.
+# Pass these to ``--category`` / the ``category`` argument of ``red_team()``.
+#
+#   from evaluatorq.redteam import OWASP_LLM_TOP_10, OWASP_ASI_TOP_10
+#   red_team(..., categories=list(OWASP_LLM_TOP_10))
+OWASP_LLM_TOP_10: tuple[str, ...] = tuple(_LLM_CATEGORY_NAMES)
+OWASP_ASI_TOP_10: tuple[str, ...] = tuple(_ASI_CATEGORY_NAMES)
+
 
 # ---------------------------------------------------------------------------
 # Vulnerability definition model
