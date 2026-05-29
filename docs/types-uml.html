@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Types UML — evaluatorq / redteam / agent simulation</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='10' fill='%23f6f1e7'/><rect x='8' y='10' width='22' height='18' rx='2' fill='none' stroke='%238e4623' stroke-width='2.5'/><line x1='8' y1='17' x2='30' y2='17' stroke='%238e4623' stroke-width='2.5'/><rect x='34' y='36' width='22' height='18' rx='2' fill='none' stroke='%234a6a85' stroke-width='2.5'/><line x1='34' y1='43' x2='56' y2='43' stroke='%234a6a85' stroke-width='2.5'/><line x1='25' y1='28' x2='39' y2='36' stroke='%237c8493' stroke-width='2.2' stroke-dasharray='3 2'/><polygon points='36,32 41,36 36,38' fill='none' stroke='%237c8493' stroke-width='2'/></svg>" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --ivory: #f6f1e7;
+    --ivory-2: #ece4d2;
+    --slate: #2b2f36;
+    --slate-2: #4a525e;
+    --slate-3: #7c8493;
+    --clay: #c46a3f;
+    --clay-tint: #f0d9c9;
+    --clay-deep: #8e4623;
+    --moss: #5a7a4a;
+    --sky: #4a6a85;
+    --purple: #6a4a85;
+    --purple-tint: #e8ddf0;
+    --rule: #d9d0bd;
+    --font-serif: "Iowan Old Style","Charter","Georgia",serif;
+    --font-sans: "Inter","Helvetica Neue",system-ui,sans-serif;
+    --font-mono: "JetBrains Mono","SF Mono","Menlo",monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ivory); color: var(--slate); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 64px 40px 96px; }
+  header.card { background: var(--clay-tint); border: 1px solid var(--rule); padding: 36px 40px; border-radius: 4px; margin-bottom: 56px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; color: var(--clay-deep); font-weight: 600; margin-bottom: 16px; }
+  h1 { font-family: var(--font-serif); font-size: 44px; line-height: 1.1; margin: 0 0 18px; color: var(--slate); font-weight: 500; }
+  header.card p.tldr { font-family: var(--font-serif); font-size: 19px; line-height: 1.55; margin: 0; color: var(--slate-2); max-width: 780px; }
+  h2 { font-family: var(--font-serif); font-size: 28px; font-weight: 500; margin: 64px 0 8px; color: var(--slate); border-top: 1px solid var(--rule); padding-top: 32px; }
+  h2:first-of-type { border-top: none; padding-top: 0; }
+  h3 { font-family: var(--font-sans); font-size: 14px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--slate-3); font-weight: 600; margin: 32px 0 12px; }
+  p { line-height: 1.65; font-size: 16px; color: var(--slate-2); }
+  ul { line-height: 1.7; color: var(--slate-2); }
+  ul li { margin-bottom: 6px; }
+  code { font-family: var(--font-mono); font-size: 0.92em; background: var(--ivory-2); padding: 1px 6px; border-radius: 3px; color: var(--slate); }
+  .legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0 32px; }
+  .legend .chip { border: 1px solid var(--rule); background: #fff; padding: 14px 16px; border-radius: 4px; }
+  .legend .chip .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .legend .chip.eval .dot { background: var(--clay); }
+  .legend .chip.rt .dot { background: var(--sky); }
+  .legend .chip.sim .dot { background: var(--moss); }
+  .legend .chip.be .dot { background: var(--purple); }
+  .legend .chip strong { font-size: 13px; letter-spacing: 0.04em; color: var(--slate); }
+  .legend .chip small { display: block; color: var(--slate-3); font-size: 12px; margin-top: 4px; }
+  .diagram { background: #fff; border: 1px solid var(--rule); border-radius: 4px; padding: 28px; margin: 16px 0 8px; overflow-x: auto; }
+  .caption { font-size: 13px; color: var(--slate-3); margin: 8px 0 0; font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 32px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); font-size: 14px; vertical-align: top; }
+  th { color: var(--slate-3); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-weight: 600; background: var(--ivory-2); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pill.eval { background: var(--clay-tint); color: var(--clay-deep); }
+  .pill.rt { background: #d9e2eb; color: var(--sky); }
+  .pill.sim { background: #dde7d3; color: var(--moss); }
+  .pill.be { background: var(--purple-tint); color: var(--purple); }
+  details { border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin: 10px 0; background: #fff; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--slate); font-size: 15px; }
+  details[open] summary { margin-bottom: 10px; }
+  footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--rule); color: var(--slate-3); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="card">
+  <div class="eyebrow">Type System Map · main · 2026-05-22</div>
+  <h1>Types UML — evaluatorq, redteam, agent simulation</h1>
+  <p class="tldr">Four regions share one bridge: <code>AgentResponse</code>. Evaluatorq core owns the unified output contract; redteam owns the <code>AgentTarget</code> protocol, orchestration models (<code>Turn</code>-canonical <code>OrchestratorResult</code>), and job I/O boundary (<code>JobOutputPayload</code>); backends/integrations provide target implementations with history; agent simulation owns persona/scenario/result models. <code>OrqResponsesTarget</code> is dual-role with a partial-stateless contract (sim <code>__call__</code> stateless, redteam <code>send_prompt</code> stateful). <strong>RES-844 proposal section</strong> at the bottom captures the planned move of <code>AgentTarget</code> into <code>evaluatorq.contracts</code> and the optional stateless <code>respond(messages)</code> path.</p>
+</header>
+
+<section>
+  <h2>Legend</h2>
+  <div class="legend">
+    <div class="chip eval"><span class="dot"></span><strong>Evaluatorq core</strong><small>contracts.py + openresponses.convert_models</small></div>
+    <div class="chip rt"><span class="dot"></span><strong>Redteam contracts</strong><small>redteam.contracts (re-exports core)</small></div>
+    <div class="chip be"><span class="dot"></span><strong>Backends / integrations</strong><small>redteam.backends + integrations.*</small></div>
+    <div class="chip sim"><span class="dot"></span><strong>Agent simulation</strong><small>simulation.types + simulation.target</small></div>
+  </div>
+</section>
+
+<section>
+  <h2>Class diagram — core &amp; redteam contracts</h2>
+  <p><code>OrchestratorResult.turns</code> is the canonical record — <code>conversation</code>, <code>final_response</code>, <code>n_turns</code> are derived properties. The evaluation chain flows <code>AttackEvaluationResult → EvaluationPayload → UnifiedEvaluationResult</code>. <code>JobOutputPayload</code> is the job I/O boundary between job runner and report builder. <code>RedTeamResult</code> carries <code>AgentInfo</code> and optional <code>ExecutionDetails</code> (dynamic pipeline only).</p>
+  <div class="diagram">
+<pre class="mermaid">
+classDiagram
+    direction TB
+
+    %% ── EVALUATORQ CORE ──────────────────────────────
+    class LLMCallConfig {
+        +str model
+        +str api
+        +float temperature
+        +int max_tokens
+        +int timeout_ms
+        +dict extra_kwargs
+        +Any client
+    }
+    class AgentResponse {
+        +list~OutputMessage~ output
+        +Any usage
+        +str model
+        +str response_id
+        +str finish_reason
+        +text() str
+        +tool_calls() list~ToolCallOutputItem~
+    }
+    class OutputMessage {
+        &lt;&lt;Union&gt;&gt;
+    }
+    class TextOutputItem {
+        +type: output_text
+        +str text
+        +list annotations
+        +list logprobs
+    }
+    class ToolCallOutputItem {
+        +type: function_call
+        +str id
+        +str call_id
+        +str name
+        +str arguments
+        +str status
+        +str result
+        +arguments_dict() dict
+    }
+    class ReasoningOutputItem {
+        +type: reasoning
+        +str text
+        +str id
+    }
+
+    OutputMessage &lt;|.. TextOutputItem
+    OutputMessage &lt;|.. ToolCallOutputItem
+    OutputMessage &lt;|.. ReasoningOutputItem
+    AgentResponse "1" *-- "many" OutputMessage
+    AgentResponse ..&gt; ToolCallOutputItem : filters in tool_calls
+
+    %% ── REDTEAM — TARGET PROTOCOL FAMILY ────────────
+    class AgentTarget {
+        &lt;&lt;Protocol · redteam.backends.base&gt;&gt;
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() AgentTarget
+    }
+    class AgentTargetFactory {
+        &lt;&lt;Protocol&gt;&gt;
+        +create_target(agent_key) AgentTarget
+    }
+    class AgentContextProvider {
+        &lt;&lt;Protocol&gt;&gt;
+        +get_agent_context(agent_key) AgentContext
+    }
+    class MemoryCleanup {
+        &lt;&lt;Protocol&gt;&gt;
+        +cleanup_memory(ctx, entity_ids)
+    }
+    class ErrorMapper {
+        &lt;&lt;Protocol&gt;&gt;
+        +map_error(exc) tuple~str,str~
+    }
+    class BackendBundle {
+        &lt;&lt;dataclass · slots&gt;&gt;
+        +str name
+        +AgentTargetFactory target_factory
+        +AgentContextProvider context_provider
+        +MemoryCleanup memory_cleanup
+        +ErrorMapper error_mapper
+    }
+    class DirectTargetFactory {
+        +AgentTarget _target
+        +create_target(agent_key) AgentTarget
+    }
+    class NoopMemoryCleanup {
+        +cleanup_memory(ctx, entity_ids)
+    }
+    class DefaultErrorMapper {
+        +map_error(exc) tuple~str,str~
+    }
+
+    AgentTarget ..&gt; AgentResponse : send_prompt returns
+    AgentTargetFactory ..&gt; AgentTarget : creates
+    AgentContextProvider ..&gt; AgentContext : returns
+    BackendBundle *-- AgentTargetFactory
+    BackendBundle *-- AgentContextProvider
+    BackendBundle *-- MemoryCleanup
+    BackendBundle *-- ErrorMapper
+    DirectTargetFactory ..|&gt; AgentTargetFactory
+    NoopMemoryCleanup ..|&gt; MemoryCleanup
+    DefaultErrorMapper ..|&gt; ErrorMapper
+
+    %% ── REDTEAM — CONVERSATION + CONTEXT ────────────
+    class Message {
+        +Literal[user,assistant,tool,system] role
+        +str content
+        +list~StrategyToolCall~ tool_calls
+        +str tool_call_id
+        +str name
+    }
+    class AttackerResponse {
+        +str generated_prompt
+        +TokenUsage usage
+        +bool truncated
+        +str finish_reason
+    }
+    class Turn {
+        +AttackerResponse attacker
+        +AgentResponse target
+    }
+    class RedTeamInput {
+        +str id
+        +str vulnerability
+        +str attack_technique
+        +str delivery_method
+        +Severity severity
+        +VulnerabilityDomain vulnerability_domain
+        +Framework framework
+        +TurnType turn_type
+        +str source
+        +dict additional_metadata
+    }
+    class AgentContext {
+        +str key
+        +str display_name
+        +str description
+        +str system_prompt
+        +str instructions
+        +list~ToolInfo~ tools
+        +list~MemoryStoreInfo~ memory_stores
+        +str model
+        +has_tools() bool
+        +has_memory() bool
+    }
+
+    Turn *-- AttackerResponse
+    Turn *-- AgentResponse
+
+    %% ── REDTEAM — ORCHESTRATION ──────────────────────
+    class LLMConfig {
+        +LLMCallConfig attacker
+        +LLMCallConfig evaluator
+        +int retry_count
+        +list~int~ retry_on_codes
+        +int cleanup_timeout_ms
+        +int target_agent_timeout_ms
+        +int max_tool_continuations
+        +retry_config() dict
+    }
+    class TokenUsage_RT {
+        +int total_tokens
+        +int prompt_tokens
+        +int completion_tokens
+        +int calls
+        +from_completion(response) TokenUsage
+        +__add__(other) TokenUsage
+    }
+    class OrchestratorResult {
+        +list~Turn~ turns
+        +bool objective_achieved
+        +float duration_seconds
+        +TokenUsage token_usage
+        +TokenUsage token_usage_adversarial
+        +TokenUsage token_usage_target
+        +str system_prompt
+        +int max_turns
+        +str error
+        +str error_type
+        +str error_stage
+        +str error_code
+        +int error_turn
+        +list~int~ truncated_turns
+        +n_turns() int
+        +conversation() list~Message~
+        +final_response() str
+    }
+    class AttackOutput {
+        +str category
+        +str vulnerability
+    }
+    class ErrorInfo {
+        +str message
+        +str error_type
+        +str stage
+        +str code
+        +dict details
+        +int turn
+    }
+
+    LLMConfig *-- LLMCallConfig
+    OrchestratorResult "1" *-- "many" Turn
+    OrchestratorResult ..&gt; TokenUsage_RT
+    AttackOutput --|&gt; OrchestratorResult
+
+    %% ── REDTEAM — EVALUATION CHAIN ──────────────────
+    class AttackEvaluationResult {
+        +bool passed
+        +str explanation
+        +str evaluator_id
+        +TokenUsage token_usage
+        +dict raw_output
+    }
+    class EvaluationPayload {
+        +str evaluator_id
+        +str evaluator_name
+        +Any value
+        +str explanation
+        +bool passed
+        +str error
+        +TokenUsage token_usage
+    }
+    class UnifiedEvaluationResult {
+        +Any value
+        +bool passed
+        +str explanation
+        +str evaluator_id
+        +str evaluator_name
+        +TokenUsage token_usage
+        +dict raw_output
+    }
+
+    AttackEvaluationResult ..&gt; EvaluationPayload : informs
+    EvaluationPayload ..&gt; UnifiedEvaluationResult : normalized to
+
+    %% ── REDTEAM — JOB BOUNDARY + REPORT ─────────────
+    class JobOutputPayload {
+        +list~Message~ conversation
+        +str final_response
+        +int turns
+        +int max_turns
+        +bool objective_achieved
+        +float duration_seconds
+        +TokenUsage token_usage
+        +TokenUsage token_usage_adversarial
+        +TokenUsage token_usage_target
+        +str system_prompt
+        +str error
+        +str error_type
+        +str error_stage
+        +str error_code
+        +int error_turn
+        +list~int~ truncated_turns
+        +str finish_reason
+        +response_text() str
+    }
+    class AttackInfo {
+        +str id
+        +str vulnerability
+        +str category
+        +Framework framework
+        +AttackTechnique attack_technique
+        +list~DeliveryMethod~ delivery_methods
+        +TurnType turn_type
+        +Severity severity
+        +VulnerabilityDomain vulnerability_domain
+        +str source
+        +str strategy_name
+        +str objective
+        +str evaluator_id
+        +dict additional_metadata
+    }
+    class AgentInfo {
+        +str key
+        +str model
+        +str display_name
+    }
+    class ExecutionDetails {
+        +int turns
+        +int max_turns
+        +float duration_seconds
+        +bool objective_achieved
+        +TokenUsage token_usage
+    }
+    class RedTeamResult {
+        +AttackInfo attack
+        +AgentInfo agent
+        +list~Message~ messages
+        +str response
+        +UnifiedEvaluationResult evaluation
+        +bool vulnerable
+        +ExecutionDetails execution
+        +str error
+        +str error_type
+        +error_info() ErrorInfo
+    }
+    class RedTeamReport {
+        +str version
+        +datetime created_at
+        +str description
+        +Pipeline pipeline
+        +Framework framework
+        +list~str~ categories_tested
+        +list~str~ tested_agents
+        +int total_results
+        +AgentContext agent_context
+        +dict agent_contexts
+        +list~RedTeamResult~ results
+        +ReportSummary summary
+        +TokenUsage token_usage_summary
+        +float duration_seconds
+        +list~str~ pipeline_warnings
+    }
+
+    OrchestratorResult ..&gt; JobOutputPayload : serialized to
+    JobOutputPayload "1" *-- "many" Message
+    JobOutputPayload o-- ToolCallOutputItem
+    JobOutputPayload ..&gt; RedTeamResult : converted from
+    RedTeamResult *-- AttackInfo
+    RedTeamResult *-- AgentInfo
+    RedTeamResult *-- UnifiedEvaluationResult
+    RedTeamResult o-- ExecutionDetails
+    RedTeamResult o-- ToolCallOutputItem
+    RedTeamResult ..&gt; ErrorInfo : error_info property
+    RedTeamReport "1" *-- "many" RedTeamResult
+    RedTeamReport o-- AgentContext
+    RedTeamInput ..&gt; AttackInfo : shapes
+
+    %% ── AGENT SIMULATION ────────────────────────────
+    class OrqResponsesTarget {
+        +LLMCallConfig config
+        +str instructions
+        +str memory_entity_id
+        +str _previous_response_id
+        +TokenUsage _accumulated_usage
+        +__call__(messages) str «stateless»
+        +send_prompt(prompt) AgentResponse «stateful»
+        +new() OrqResponsesTarget
+        +get_usage() TokenUsage
+    }
+    class Persona {
+        +str name
+        +float patience
+        +float assertiveness
+        +float politeness
+        +float technical_level
+        +CommunicationStyle communication_style
+        +str background
+        +EmotionalArc emotional_arc
+        +CulturalContext cultural_context
+    }
+    class Scenario {
+        +str name
+        +str goal
+        +str context
+        +StartingEmotion starting_emotion
+        +list~Criterion~ criteria
+        +bool is_edge_case
+        +ConversationStrategy conversation_strategy
+        +str ground_truth
+        +InputFormat input_format
+    }
+    class Datapoint {
+        +str id
+        +Persona persona
+        +Scenario scenario
+        +str user_system_prompt
+        +str first_message
+    }
+    class Judgment {
+        +bool should_terminate
+        +str reason
+        +bool goal_achieved
+        +list~str~ rules_broken
+        +float goal_completion_score
+        +float response_quality
+        +float hallucination_risk
+        +float tone_appropriateness
+        +float factual_accuracy
+    }
+    class TurnMetrics {
+        +int turn_number
+        +TokenUsage token_usage
+        +float response_quality
+        +float hallucination_risk
+        +float tone_appropriateness
+        +float factual_accuracy
+        +str judge_reason
+    }
+    class TokenUsage_Sim {
+        +int prompt_tokens
+        +int completion_tokens
+        +int total_tokens
+    }
+    class SimulationResult {
+        +list~Message~ messages
+        +TerminatedBy terminated_by
+        +str reason
+        +bool goal_achieved
+        +float goal_completion_score
+        +list~str~ rules_broken
+        +int turn_count
+        +TokenUsage token_usage
+        +list~TurnMetrics~ turn_metrics
+        +dict metadata
+        +dict criteria_results
+        +int total_turns
+    }
+
+    OrqResponsesTarget ..&gt; AgentResponse : produces
+    OrqResponsesTarget *-- LLMCallConfig
+    Datapoint *-- Persona
+    Datapoint *-- Scenario
+    SimulationResult o-- TurnMetrics
+    SimulationResult ..&gt; TokenUsage_Sim
+    TurnMetrics ..&gt; Judgment
+    TurnMetrics ..&gt; TokenUsage_Sim
+</pre>
+  </div>
+  <p class="caption">Solid diamond = composition. Open diamond = aggregation. Dashed arrow = produces/derives. Filled triangle = inheritance. <code>passed=True</code> means RESISTANT (attack failed). <code>OrchestratorResult.turns</code> is canonical — <code>conversation</code> is a derived property.</p>
+</section>
+
+<section>
+  <h2>Class diagram — backend &amp; integration layer</h2>
+  <p><code>AgentTarget</code> is a Protocol (structural subtyping). <code>OpenAIModelTarget</code> and <code>OpenAIAgentTarget</code> both maintain <code>_history</code> for multi-turn context — the former accumulates Chat Completions message pairs, the latter uses the Agents SDK <code>to_input_list()</code>. <code>OrqResponsesTarget</code> threads state via <code>_previous_response_id</code> (Responses v3 API) on its stateful <code>send_prompt</code> path only; its sim <code>__call__</code> path is stateless.</p>
+  <div class="diagram">
+<pre class="mermaid">
+classDiagram
+    direction LR
+
+    class AgentTarget {
+        &lt;&lt;Protocol&gt;&gt;
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() AgentTarget
+    }
+    class ORQAgentTarget {
+        +str agent_key
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() ORQAgentTarget
+    }
+    class OpenAIModelTarget {
+        +str model
+        +str system_prompt
+        +None memory_entity_id
+        +list _history
+        +send_prompt(prompt) AgentResponse
+        +new() OpenAIModelTarget
+    }
+    class LangGraphTarget {
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() LangGraphTarget
+    }
+    class CallableTarget {
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse
+        +new() CallableTarget
+    }
+    class OpenAIAgentTarget {
+        +None memory_entity_id
+        +list _history
+        +send_prompt(prompt) AgentResponse
+        +new() OpenAIAgentTarget
+    }
+    class VercelAISdkTarget {
+        +None memory_entity_id
+        +str endpoint_url
+        +send_prompt(prompt) AgentResponse
+        +new() VercelAISdkTarget
+    }
+    class OrqResponsesTarget {
+        +LLMCallConfig config
+        +str memory_entity_id
+        +str _previous_response_id
+        +TokenUsage _accumulated_usage
+        +__call__(messages) str «stateless»
+        +send_prompt(prompt) AgentResponse «stateful»
+        +new() OrqResponsesTarget
+        +get_usage() TokenUsage
+    }
+
+    ORQAgentTarget ..|&gt; AgentTarget : implements
+    OpenAIModelTarget ..|&gt; AgentTarget : implements
+    LangGraphTarget ..|&gt; AgentTarget : implements
+    CallableTarget ..|&gt; AgentTarget : implements
+    OpenAIAgentTarget ..|&gt; AgentTarget : implements
+    VercelAISdkTarget ..|&gt; AgentTarget : implements
+    OrqResponsesTarget ..|&gt; AgentTarget : implements
+</pre>
+  </div>
+  <p class="caption">Dotted line with open triangle = implements protocol (structural). <code>memory_entity_id=None</code> → stateless target. Non-null → persistent state; <code>new()</code> mints fresh uuid for attack isolation.</p>
+</section>
+
+<section>
+  <h2>Data flow</h2>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    subgraph CORE["evaluatorq core"]
+        AR[AgentResponse]
+        OM[OutputMessage union]
+        LCC[LLMCallConfig]
+    end
+    subgraph BE["backends / integrations"]
+        AT[AgentTarget protocol]
+        ORQ[ORQAgentTarget]
+        OAI[OpenAIModelTarget]
+        LG[LangGraphTarget]
+        CA[CallableTarget]
+        OAA[OpenAIAgentTarget]
+        VER[VercelAISdkTarget]
+    end
+    subgraph SIM["agent simulation"]
+        ORT[OrqResponsesTarget]
+        SIMF[simulate fn]
+        SR[SimulationResult]
+    end
+    subgraph RT["redteam"]
+        RTI[RedTeamInput]
+        ORCH[orchestrator]
+        TRN[Turn]
+        OR[OrchestratorResult]
+        AER[AttackEvaluationResult]
+        EP[EvaluationPayload]
+        UER[UnifiedEvaluationResult]
+        JOP[JobOutputPayload]
+        RTR[RedTeamResult]
+        REP[RedTeamReport]
+    end
+
+    LCC --> ORT
+    ORT -- send_prompt --> AR
+    ORT -- __call__ --> SIMF
+    SIMF --> SR
+    ORQ -. implements .-> AT
+    OAI -. implements .-> AT
+    LG -. implements .-> AT
+    CA -. implements .-> AT
+    OAA -. implements .-> AT
+    VER -. implements .-> AT
+    ORT -. implements .-> AT
+    RTI --> ORCH
+    AT -- send_prompt --> AR
+    AR --> ORCH
+    ORCH --> TRN
+    TRN --> OR
+    OR -- eval --> AER
+    AER --> EP
+    EP --> UER
+    OR -- serialized --> JOP
+    JOP -- converted --> RTR
+    UER --> RTR
+    RTR --> REP
+    AR --> OM
+</pre>
+  </div>
+</section>
+
+<section>
+  <h2>Ownership map</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Home module</th><th>Region</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>AgentResponse</code></td><td><code>evaluatorq.contracts</code></td><td><span class="pill eval">core</span></td><td>Frozen. <code>output</code> list preserves order. Legacy <code>text=</code> shorthand accepted</td></tr>
+      <tr><td><code>LLMCallConfig</code></td><td><code>evaluatorq.contracts</code></td><td><span class="pill eval">core</span></td><td><code>api</code> selects <code>chat_completions</code> vs <code>responses</code></td></tr>
+      <tr><td><code>ReasoningOutputItem</code></td><td><code>evaluatorq.contracts</code></td><td><span class="pill eval">core</span></td><td>For o-series / thinking models. Frozen</td></tr>
+      <tr><td><code>TextOutputItem</code></td><td><code>openresponses.convert_models.OutputTextContent</code></td><td><span class="pill eval">core</span></td><td>Alias. Frozen</td></tr>
+      <tr><td><code>ToolCallOutputItem</code></td><td><code>openresponses.convert_models.FunctionCall</code></td><td><span class="pill eval">core</span></td><td>Alias. Has both <code>id</code> (item) and <code>call_id</code> (correlation). <code>arguments</code> is JSON string — use <code>.arguments_dict</code></td></tr>
+      <tr><td><code>AgentTarget</code></td><td><code>redteam.backends.base</code></td><td><span class="pill rt">redteam</span></td><td>Protocol. <code>send_prompt</code> + <code>new</code> required</td></tr>
+      <tr><td><code>Message</code> (redteam)</td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>5-field OpenAI format. Supports user/assistant/tool/system roles including tool-call and tool-response shapes</td></tr>
+      <tr><td><code>AttackerResponse</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Frozen. <code>generated_prompt</code> is what gets sent to target</td></tr>
+      <tr><td><code>Turn</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Frozen. Canonical per-turn record in <code>OrchestratorResult.turns</code></td></tr>
+      <tr><td><code>RedTeamInput</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Entry-point config for one static attack sample</td></tr>
+      <tr><td><code>AgentContext</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Describes target agent config (tools, memory, KB). Used for adaptive attack generation and stored in <code>RedTeamReport</code></td></tr>
+      <tr><td><code>LLMConfig</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Bundles attacker + evaluator <code>LLMCallConfig</code> plus retry/timeout/continuation settings</td></tr>
+      <tr><td><code>TokenUsage</code> (rt)</td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Has <code>calls</code>, <code>from_completion</code>, <code>__add__</code>. Not interchangeable with sim variant. <code>total=0</code> falls back to <code>prompt+completion</code></td></tr>
+      <tr><td><code>OrchestratorResult</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Canonical record is <code>turns: list[Turn]</code>. <code>conversation</code>, <code>final_response</code>, <code>n_turns</code> are derived properties. Split token usage: <code>token_usage_adversarial</code> + <code>token_usage_target</code></td></tr>
+      <tr><td><code>AttackOutput</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Extends <code>OrchestratorResult</code> with <code>category</code>/<code>vulnerability</code></td></tr>
+      <tr><td><code>ErrorInfo</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Structured view of flat error fields. Returned by <code>RedTeamResult.error_info</code> property</td></tr>
+      <tr><td><code>AttackEvaluationResult</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td><code>passed=True</code> = RESISTANT. Feeds evaluation chain</td></tr>
+      <tr><td><code>EvaluationPayload</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Shared schema for staged/static/hybrid outputs. Normalizes to <code>UnifiedEvaluationResult</code></td></tr>
+      <tr><td><code>UnifiedEvaluationResult</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Stored in <code>RedTeamResult.evaluation</code></td></tr>
+      <tr><td><code>JobOutputPayload</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td><code>extra='allow'</code> absorbs schema drift. <code>response_text</code> fallback chain: <code>final_response → response → output</code></td></tr>
+      <tr><td><code>AttackInfo</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td><code>delivery_methods</code> is always a list. Superset of static + dynamic fields</td></tr>
+      <tr><td><code>AgentInfo</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Target agent metadata stored on <code>RedTeamResult</code></td></tr>
+      <tr><td><code>ExecutionDetails</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Dynamic pipeline only. <code>None</code> for static runs</td></tr>
+      <tr><td><code>RedTeamResult</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Unified result. Carries <code>AgentInfo</code>, <code>ExecutionDetails</code>, <code>UnifiedEvaluationResult</code></td></tr>
+      <tr><td><code>RedTeamReport</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td>Multi-agent via <code>agent_contexts: dict[str, AgentContext]</code>. <code>agent_context</code> is legacy single-agent field</td></tr>
+      <tr><td><code>SendResult</code></td><td><code>redteam.contracts</code></td><td><span class="pill rt">redteam</span></td><td><em>Deprecated</em> → alias of <code>AgentResponse</code></td></tr>
+      <tr><td><code>ORQAgentTarget</code></td><td><code>redteam.backends.orq</code></td><td><span class="pill be">backend</span></td><td>Wraps Orq SDK. Generates <code>memory_entity_id</code> per instance for isolation</td></tr>
+      <tr><td><code>OpenAIModelTarget</code></td><td><code>redteam.backends.openai</code></td><td><span class="pill be">backend</span></td><td>Accumulates <code>_history: list[ChatCompletionMessageParam]</code> for multi-turn. <code>new()</code> resets to empty</td></tr>
+      <tr><td><code>BackendBundle</code></td><td><code>redteam.backends.base</code></td><td><span class="pill be">backend</span></td><td>Groups factory + context provider + cleanup + error mapper</td></tr>
+      <tr><td><code>LangGraphTarget</code></td><td><code>integrations.langgraph_integration</code></td><td><span class="pill be">backend</span></td><td>Thread ID = <code>memory_entity_id</code> for checkpointer isolation</td></tr>
+      <tr><td><code>CallableTarget</code></td><td><code>integrations.callable_integration</code></td><td><span class="pill be">backend</span></td><td>Escape hatch: wraps any <code>fn(str) → str</code></td></tr>
+      <tr><td><code>OpenAIAgentTarget</code></td><td><code>integrations.openai_agents_integration</code></td><td><span class="pill be">backend</span></td><td>Client-side <code>_history</code> via <code>Runner.run().to_input_list()</code></td></tr>
+      <tr><td><code>VercelAISdkTarget</code></td><td><code>integrations.vercel_ai_sdk_integration</code></td><td><span class="pill be">backend</span></td><td>HTTP wrapper. Stateless; <code>memory_entity_id=None</code></td></tr>
+      <tr><td><code>OrqResponsesTarget</code></td><td><code>simulation.target</code></td><td><span class="pill sim">sim</span></td><td>Dual-role, partial-stateless. <code>send_prompt</code> threads via <code>_previous_response_id</code> &amp; accumulates usage; <code>__call__</code> is stateless w.r.t. self (safe to mix on one instance)</td></tr>
+      <tr><td><code>TokenUsage</code> (sim)</td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Slim — no <code>calls</code>, no arithmetic operators</td></tr>
+      <tr><td><code>Persona</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Includes <code>emotional_arc</code>, <code>cultural_context</code></td></tr>
+      <tr><td><code>Scenario</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Includes <code>ground_truth</code>, <code>input_format</code>, <code>conversation_strategy</code></td></tr>
+      <tr><td><code>Datapoint</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Input to <code>simulate()</code>. <code>user_system_prompt</code> is cached — runner always rebuilds from persona+scenario</td></tr>
+      <tr><td><code>Judgment</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Per-turn judge output. Includes <code>rules_broken</code>, all quality scores</td></tr>
+      <tr><td><code>TurnMetrics</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Aggregated from <code>Judgment</code> + token usage per turn</td></tr>
+      <tr><td><code>SimulationResult</code></td><td><code>simulation.types</code></td><td><span class="pill sim">sim</span></td><td>Includes <code>reason</code>, <code>rules_broken</code>, <code>criteria_results</code>, <code>metadata</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Key invariants</h2>
+  <ul>
+    <li><code>OrchestratorResult.turns</code> is the canonical record — <code>conversation</code>, <code>final_response</code>, <code>n_turns</code> are derived. Do not read from <code>conversation</code> if you need per-turn attacker/target pairing.</li>
+    <li><code>AgentResponse.output</code> preserves order. <code>.tool_calls</code> is a filtered view. Use <code>.output</code> when text/reasoning ordering matters.</li>
+    <li><code>ToolCallOutputItem</code> has two IDs: <code>id</code> (item identity) and <code>call_id</code> (tool call correlation across the function_call + function_call_output pair).</li>
+    <li><code>AgentTarget.new()</code> must return a fresh instance with clean state and a new <code>memory_entity_id</code> for persistent-memory targets.</li>
+    <li><code>AttackInfo.delivery_methods</code> is always a <code>list[DeliveryMethod]</code>, never singular.</li>
+    <li><code>JobOutputPayload</code> → <code>RedTeamResult</code> is the required conversion path. Do not construct <code>RedTeamResult</code> directly from <code>OrchestratorResult</code>.</li>
+    <li><code>JobOutputPayload.extra='allow'</code> — forward-compatible with new job output fields.</li>
+    <li>Two distinct <code>TokenUsage</code> types — redteam has <code>calls</code> + arithmetic, sim is slim. Not interchangeable.</li>
+    <li><code>OrqResponsesTarget.__call__</code> resets <code>_previous_response_id</code> per turn (full history passed by sim). Mixing <code>__call__</code> and <code>send_prompt</code> on the same instance corrupts threading.</li>
+    <li><code>RedTeamResult.execution</code> is <code>None</code> for static pipeline runs.</li>
+    <li><code>passed=True</code> means RESISTANT (attack failed to elicit the target behavior). Counterintuitive — read carefully.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Gotchas</h2>
+  <ul>
+    <li><strong><code>OrchestratorResult.conversation</code> is derived.</strong> It unpacks <code>turns</code> into a flat <code>list[Message]</code>. Modifying it has no effect on <code>turns</code>.</li>
+    <li><strong>Two <code>Message</code> types exist.</strong> <code>redteam.contracts.Message</code> (5 fields, supports <code>tool</code> role) vs <code>simulation.types.Message</code> (2 fields, no tool support). Do not swap them.</li>
+    <li><strong><code>OpenAIModelTarget</code> vs <code>OpenAIAgentTarget</code>.</strong> <code>OpenAIModelTarget</code> calls raw Chat Completions — stateless model, no tools/handoffs. <code>OpenAIAgentTarget</code> calls OpenAI Agents SDK — stateful via <code>_history</code>, supports tool use and multi-agent handoffs.</li>
+    <li><strong><code>AgentResponse.text</code> returns the last text item.</strong> Multi-text outputs lose earlier chunks. Read <code>.output</code> for full content.</li>
+    <li><strong><code>ToolCallOutputItem.arguments</code> is a JSON string.</strong> Use <code>.arguments_dict</code> — bad JSON silently becomes empty dict.</li>
+    <li><strong><code>TokenUsage.total_tokens=0</code> fallback.</strong> <code>from_completion</code> computes <code>prompt+completion</code> when provider reports zero total, preventing silent under-counting.</li>
+    <li><strong><code>LLMConfig.retry_config</code> returns <code>{}</code> in OpenAI mode.</strong> The <code>retry</code> param is ORQ-specific and rejected by OpenAI.</li>
+    <li><strong>Legacy migration is implicit.</strong> <code>scope</code> → <code>vulnerability_domain</code>, <code>framework='mixed'</code> → <code>'hybrid'</code>, <code>SendResult</code> → <code>AgentResponse</code>. All silent at validator time.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>FAQ</h2>
+  <details>
+    <summary>Why does OrchestratorResult use turns: list[Turn] instead of conversation: list[Message]?</summary>
+    <p>The canonical record preserves attacker/target pairing per turn — <code>Turn</code> holds both the <code>AttackerResponse</code> (with usage + truncation flag) and the <code>AgentResponse</code> (with full output items). A flat <code>Message</code> list loses this structure. <code>conversation</code> is a convenience property for code that only needs the OpenAI-format history.</p>
+  </details>
+  <details>
+    <summary>Why two TokenUsage types?</summary>
+    <p>Sim's predates the redteam variant; redteam needed <code>calls</code>, <code>from_completion</code>, and arithmetic operators for aggregation across multi-continuation ORQ calls. Merging requires migrating all sim aggregation sites.</p>
+  </details>
+  <details>
+    <summary>Why does JobOutputPayload exist between OrchestratorResult and RedTeamResult?</summary>
+    <p>It's the job I/O wire format — stored, returned via API, deserialized. <code>extra='allow'</code> makes it forward-compatible. <code>RedTeamResult</code> is the report-layer view built after eval enrichment and agent metadata are merged in.</p>
+  </details>
+  <details>
+    <summary>What's the difference between OpenAIModelTarget and OpenAIAgentTarget?</summary>
+    <p><code>OpenAIModelTarget</code>: calls raw Chat Completions API, takes a model name string, accumulates <code>_history</code> as plain message pairs. <code>OpenAIAgentTarget</code>: calls OpenAI Agents SDK <code>Runner.run()</code>, takes an <code>Agent</code> object, threads history via <code>to_input_list()</code>, supports tools and multi-agent handoffs. Use the model target for bare model red-teaming; use the agent target for Agents SDK apps.</p>
+  </details>
+  <details>
+    <summary>Which AgentTarget implementation should I use?</summary>
+    <p>ORQ-hosted agents → <code>ORQAgentTarget</code>. Raw OpenAI model → <code>OpenAIModelTarget</code>. LangGraph graph → <code>LangGraphTarget</code>. OpenAI Agents SDK → <code>OpenAIAgentTarget</code>. Vercel AI SDK HTTP endpoint → <code>VercelAISdkTarget</code>. Anything else → <code>CallableTarget</code> (wraps any <code>fn(str) → str</code>).</p>
+  </details>
+  <details>
+    <summary>Why is OrqResponsesTarget dual-role?</summary>
+    <p>Single implementation serves sim (<code>__call__</code> returning <code>str</code>) and redteam (<code>send_prompt</code> returning <code>AgentResponse</code>). Avoids duplicating Responses v3 client logic, retry, and usage accounting. State semantics differ: <code>__call__</code> is <b>stateless</b> w.r.t. self &mdash; never reads or writes <code>_previous_response_id</code> / <code>_accumulated_usage</code>, the sim runner owns the transcript and tracks usage independently. <code>send_prompt</code> is <b>stateful</b> &mdash; threads via <code>_previous_response_id</code> and accumulates usage on the instance. Internally both paths flow through a shared pure <code>_call_responses_api</code> helper via two private wrappers (<code>_invoke_stateless</code>, <code>_invoke_stateful</code>). A future ADR may split into two classes.</p>
+  </details>
+</section>
+
+<section>
+  <h2>Proposal — RES-844 protocol unification</h2>
+  <p><a href="https://linear.app/orqai/issue/RES-844">RES-844</a> promotes the <code>AgentTarget</code> protocol family out of <code>redteam/backends/base.py</code> so both red-team and simulation can consume the same contract, and unifies the sim/redteam target shapes. Below is the scope we landed on after design review (including an adversarial pass from <code>architecture-reviewer</code>) and three Orq-docs/codebase audits.</p>
+
+  <h3>Current state on main</h3>
+  <ul>
+    <li><code>AgentTarget</code> + <code>Supports*</code> family + <code>BackendBundle</code> + helpers live in <code>packages/evaluatorq-py/src/evaluatorq/redteam/backends/base.py</code> (lines 1–289). Nothing else in the repo defines them.</li>
+    <li><code>OrqResponsesTarget</code> already satisfies the protocol structurally — it carries <code>memory_entity_id</code>, <code>send_prompt</code>, <code>new()</code>, and <code>tests/redteam/test_orq_responses_target_as_agent_target.py</code> (17/17 passing) asserts <code>is_agent_target(OrqResponsesTarget) is True</code>.</li>
+    <li><code>simulation/runner/simulation.py:73</code> defines its own <code>TargetAgent</code> protocol with a different method shape (<code>respond(messages) -&gt; str</code>) — no shared contract with redteam today.</li>
+    <li><code>ORQAgentTarget</code> already uses the Responses route via <code>agents.responses.create</code> → <code>/v3/router/responses</code> (NOT the legacy <code>/v3/agents/execute-task</code> endpoint). State threading is via Orq-specific <code>task_id</code> + <code>memory_entity_id</code>; tool-call continuation is a client-side loop that re-POSTs synthetic <code>{kind:'tool_result'}</code> parts.</li>
+  </ul>
+
+  <h3>PR A — this cycle (S)</h3>
+  <p>Minimal, behavior-preserving consolidation. Unblocks <a href="https://linear.app/orqai/issue/RES-845">RES-845</a> (sim CLI), <a href="https://linear.app/orqai/issue/RES-846">RES-846</a> (sim reports), <a href="https://linear.app/orqai/issue/RES-847">RES-847</a> (sim hooks parity).</p>
+  <ul>
+    <li>Move <code>AgentTarget</code>, <code>SupportsTargetMetadata</code>, <code>SupportsAgentContext</code>, <code>SupportsTargetFactory</code>, <code>SupportsMemoryCleanup</code>, <code>SupportsErrorMapping</code>, <code>AgentTargetFactory</code>, <code>MemoryCleanup</code>, <code>ErrorMapper</code>, <code>BackendBundle</code>, plus helpers (<code>is_agent_target</code>, <code>adapt_legacy_target</code>, <code>validate_agent_target</code>, <code>DirectTargetFactory</code>, <code>NoopMemoryCleanup</code>, <code>DefaultErrorMapper</code>, <code>extract_status_code</code>, <code>extract_provider_error_code</code>) into <code>evaluatorq/contracts.py</code>. <em>Not</em> a new <code>common/</code> directory — <code>AgentResponse</code> + <code>LLMCallConfig</code> + <code>OutputMessage</code> already live in <code>contracts.py</code>, and a sibling junk-drawer module risks fragmenting "shared stuff" forever.</li>
+    <li><code>redteam/backends/base.py</code> becomes a thin re-export shim. All red-team-side imports (<code>backends/orq.py</code>, <code>backends/openai.py</code>, <code>backends/registry.py</code>, <code>runtime/orq_agent_job.py</code>) keep working unchanged.</li>
+    <li>Add an <em>optional</em> stateless method to <code>AgentTarget</code>: <code>async respond(messages: list[ChatMessage]) -&gt; AgentResponse</code>. Implement on <code>OrqResponsesTarget</code> by folding the current <code>__call__</code> path into it; <code>__call__</code> stays as a thin back-compat shim returning <code>.text</code>. Red-team backends do not implement <code>respond</code> in PR A.</li>
+    <li>Add adapter <code>as_target_callback(target: AgentTarget) -&gt; Callable[[list[ChatMessage]], Awaitable[str]]</code> in <code>contracts.py</code>. Internally extracts the last user message and calls <code>send_prompt</code> when <code>respond</code> is absent. Enables passing any red-team backend through the sim's <code>target_callback</code> entrypoint — closes acceptance criterion #2.</li>
+    <li>Replace <code>simulation/runner/simulation.py:73</code>'s ad-hoc <code>TargetAgent</code> protocol with <code>from evaluatorq.contracts import AgentTarget</code>. One protocol, one source.</li>
+    <li>Round-trip smoke test in <code>tests/common/test_target_protocol.py</code>: red-team backend through sim, sim target through red-team.</li>
+    <li><strong>Do not touch <code>ChatMessage</code></strong>. Stays as chat-completions <code>{role, content: str}</code> in <code>simulation/types.py:217</code>. Tool-call / tool-result transcript fidelity is PR B scope.</li>
+  </ul>
+
+  <h3>PR B — separate L ticket (deferred)</h3>
+  <p>True architectural unification on the Orq Responses input model. Should be filed as a new ticket so RES-844 stays small and reviewable.</p>
+  <ul>
+    <li>Adopt <code>openai.types.responses.ResponseInputItemParam</code> (or a sibling discriminated <code>InputItem</code> union in <code>contracts.py</code> following the proven <code>OutputMessage</code> pattern at <code>contracts.py:80–83</code>). Delete the hand-rolled TypedDicts in <code>openresponses/types.py</code>.</li>
+    <li>Migrate <em>all</em> red-team backends to a single <code>async respond(transcript: list[InputItem]) -&gt; AgentResponse</code>. Deprecate <code>send_prompt</code> with one minor's grace period.</li>
+    <li>Move <code>ORQAgentTarget</code>'s tool-continuation loop OUT of the target and into the orchestrator/caller, so targets stay pure functions of <code>(transcript) -&gt; AgentResponse</code>. Server returns aggregated usage per call; local accumulation today is an artifact of the client-side loop, not a requirement.</li>
+    <li>Introduce a <code>ThreadHandle</code> (or equivalent) only if red-team needs fork/rollback for crescendo attacks. Current behavior (per-attack <code>new()</code> instance) is enough for most cases.</li>
+    <li>Rewrite call sites in <code>redteam/runner.py:722, 1436</code>, <code>redteam/adaptive/pipeline.py:379</code>, <code>redteam/adaptive/orchestrator.py:652</code>, and every integration (<code>langgraph</code>, <code>callable</code>, <code>vercel_ai_sdk</code>, <code>openai_agents</code>).</li>
+  </ul>
+
+  <h3>Why split A vs B</h3>
+  <ul>
+    <li>PR A is purely additive + a directory move. No call-site rewrites, no protocol semantics change. Reviewable in one sitting.</li>
+    <li>PR B is the real architectural move — it touches every backend and every call site, and it requires extending the transcript data model. Smuggling it into a "promote protocol family" ticket would balloon RES-844 to L and block the downstream sim tickets.</li>
+    <li>The adversarial review surfaced four load-bearing concerns (silent <code>messages</code> ignore, concurrency footgun on <code>OrqResponsesTarget</code>, tool-result representation gap, <code>common/</code>-vs-<code>contracts</code> placement). PR A only addresses placement; the other three are scoped to PR B explicitly so they get the attention they need.</li>
+  </ul>
+
+  <h3>Decisions log</h3>
+  <ul>
+    <li><strong>Bandwidth is not a concern.</strong> Even if a stateless caller-owned-history flow re-uploads the full transcript every turn, we don't care. Rules out the cost-based objection to PR B's direction.</li>
+    <li><strong><code>previous_response_id</code> is not a token-cost optimization.</strong> LLM input tokens are billed identically whether you thread via <code>previous_response_id</code> or pass the full transcript inline. Only client→server upload bytes differ.</li>
+    <li><strong>ORQAgentTarget already uses the Responses route.</strong> The legacy <code>/v3/agents/execute-task</code> endpoint is not in play. <code>agents.responses.create</code> SDK method maps to <code>/v3/router/responses</code>.</li>
+    <li><strong>Server-side usage is aggregated per call.</strong> Local <code>_accumulated_usage</code> on <code>OrqResponsesTarget</code> and <code>ORQAgentTarget</code> exists only because of the client-side tool-continuation loop. Move the loop to the caller (PR B) and local accumulation drops out.</li>
+    <li><strong><code>ChatMessage</code> cannot represent Responses input items.</strong> It is OpenAI chat-completions shape (<code>{role, content: str}</code>) with no tool-call / tool-result / multi-part content. PR B copies the <code>OutputMessage</code> discriminated-union pattern from <code>contracts.py:80–83</code> rather than extending <code>ChatMessage</code> in-place.</li>
+    <li><strong>Protocol home is <code>evaluatorq.contracts</code>, not a new <code>common/</code> module.</strong> <code>AgentResponse</code> already lives there; making a second "shared stuff" directory creates a fragmentation we'll regret.</li>
+  </ul>
+
+  <h3>Target architecture (after PR A)</h3>
+  <div class="diagram">
+<pre class="mermaid">
+classDiagram
+    direction LR
+
+    class AgentTarget {
+        &lt;&lt;Protocol · evaluatorq.contracts&gt;&gt;
+        +str memory_entity_id
+        +send_prompt(prompt) AgentResponse «kept»
+        +respond(messages) AgentResponse «new, optional»
+        +new() AgentTarget
+    }
+    class redteam_backends_base {
+        &lt;&lt;shim&gt;&gt;
+        re-exports AgentTarget · Supports* · helpers
+    }
+    class ORQAgentTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OpenAIModelTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class LangGraphTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class CallableTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OpenAIAgentTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class VercelAISdkTarget {
+        send_prompt(prompt) AgentResponse
+    }
+    class OrqResponsesTarget {
+        send_prompt(prompt) AgentResponse «stateful»
+        respond(messages) AgentResponse «stateless»
+        __call__(messages) str «back-compat shim»
+    }
+    class as_target_callback {
+        &lt;&lt;adapter · evaluatorq.contracts&gt;&gt;
+        (target) =&gt; Callable~list~ChatMessage~,Awaitable~str~~
+    }
+    class TargetAgent_simulation {
+        &lt;&lt;removed — aliased to AgentTarget&gt;&gt;
+    }
+
+    redteam_backends_base ..&gt; AgentTarget : re-export
+    ORQAgentTarget ..|&gt; AgentTarget
+    OpenAIModelTarget ..|&gt; AgentTarget
+    LangGraphTarget ..|&gt; AgentTarget
+    CallableTarget ..|&gt; AgentTarget
+    OpenAIAgentTarget ..|&gt; AgentTarget
+    VercelAISdkTarget ..|&gt; AgentTarget
+    OrqResponsesTarget ..|&gt; AgentTarget
+    as_target_callback ..&gt; AgentTarget : wraps
+    TargetAgent_simulation ..&gt; AgentTarget : aliased
+</pre>
+  </div>
+  <p class="caption">Solid Protocol box marks the new home of the contract. Backends are unchanged; sim's <code>TargetAgent</code> protocol is deleted in favor of importing <code>AgentTarget</code> directly. <code>respond(messages)</code> is optional on the protocol in PR A — only <code>OrqResponsesTarget</code> implements it. PR B will make it required and deprecate <code>send_prompt</code>.</p>
+</section>
+
+<footer>
+  Source at <code>docs/types-uml.md</code>. Last refresh: main · 2026-05-22 · adds RES-844 proposal section.
+</footer>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif',
+      primaryColor: '#f0d9c9',
+      primaryTextColor: '#2b2f36',
+      primaryBorderColor: '#8e4623',
+      lineColor: '#7c8493',
+      secondaryColor: '#dde7d3',
+      tertiaryColor: '#d9e2eb',
+      background: '#ffffff',
+      mainBkg: '#f6f1e7',
+      nodeBorder: '#4a525e',
+      clusterBkg: '#ece4d2',
+      clusterBorder: '#d9d0bd',
+      titleColor: '#2b2f36',
+      edgeLabelBackground: '#f6f1e7',
+    },
+    flowchart: { curve: 'basis', padding: 16 },
+    class: { useMaxWidth: true },
+  });
+  // Wait for web fonts before mermaid measures text — fixes clipped class boxes.
+  (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+    .then(() => mermaid.run());
+</script>
+</body>
+</html>
