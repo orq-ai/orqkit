@@ -35,10 +35,16 @@ reuse the one existing factory.
    passed through verbatim. `openai/gpt-5.4-mini` works on the Orq router;
    OpenAI-direct users pass a bare name. `OPENAI_BASE_URL` is honored
    automatically by the OpenAI SDK when `base_url is None`.
-4. **CLI flag rename** `--model` → `--generation-model`.
-5. **SDK param rename** `model` → `generation_model` on the two public entry
-   functions only. Hard rename (sole internal caller is the CLI). Internal
-   helpers / generators / agents / runner keep their generic `model` param.
+4. **CLI flag rename** `--model` → `--sim-model` on **both** `run` and
+   `generate`. The param drives the user-simulator, the judge, and (in
+   `generate` only) the persona/scenario/first-message generators — i.e.
+   "the model for everything except the target under test". `run` loads
+   datapoints from JSONL so it does no generation, but still needs the model
+   for its live user-simulator + judge calls — hence a neutral name on both.
+5. **SDK param rename** `model` → `sim_model` on the two public entry
+   functions (`simulate`, `generate_and_simulate`) only, matching the CLI flag.
+   Hard rename (sole internal caller is the CLI). Internal helpers / generators
+   / agents / runner keep their generic `model` param.
 6. **Default model** `DEFAULT_MODEL`: `azure/gpt-4o-mini` → `openai/gpt-5.4-mini`.
 
 ## Changes
@@ -93,25 +99,24 @@ File: `simulation/api.py`
 
 - Add `generation_client: AsyncOpenAI | None = None` to `simulate()` and
   `generate_and_simulate()`, threaded to the generators.
-- Rename `model: str = DEFAULT_MODEL` → `generation_model: str = DEFAULT_MODEL`
+- Rename `model: str = DEFAULT_MODEL` → `sim_model: str = DEFAULT_MODEL`
   on both functions. Update `_simulate_core` / `_simulate_via_evaluatorq`
-  internal call wiring (internal helpers keep `model=`; the public param name is
-  what changes).
-- Docstrings: state the provider-resolution order and that `generation_model`
-  drives generation, user-simulator, and judge.
+  internal call wiring (internal helpers keep `model=`; only the public param
+  name changes — at the boundary pass `model=sim_model`).
+- Docstrings: state the provider-resolution order and that `sim_model`
+  drives the user-simulator, the judge, and the generators.
 
 ### D. CLI
 File: `simulation/cli.py`
 
-- `run` + `generate`: rename option `--model` → `--generation-model`
-  (Python param `generation_model`). Help text:
-  > "Model for persona/scenario/first-message generation, the user-simulator,
-  > and the judge. Provider resolved from env: ORQ_API_KEY → Orq router, else
-  > OPENAI_API_KEY (+ OPENAI_BASE_URL) → OpenAI-compatible endpoint."
-- Pass `generation_model=generation_model` to `simulate()` /
-  `generate_and_simulate()`.
-- No `--generation-client` flag (SDK-only injection). No coupling to
-  `--openai-model`.
+- `run` + `generate`: rename option `--model` → `--sim-model`
+  (Python param `sim_model`). Help text:
+  > "Model for the user-simulator, the judge, and (with `generate`) persona/
+  > scenario/first-message generation. Provider resolved from env: ORQ_API_KEY →
+  > Orq router, else OPENAI_API_KEY (+ OPENAI_BASE_URL) → OpenAI-compatible
+  > endpoint."
+- Pass `sim_model=sim_model` to `simulate()` / `generate_and_simulate()`.
+- No client-injection flag (SDK-only). No coupling to `--openai-model`.
 
 ### E. Default model
 File: `simulation/types.py`
@@ -121,9 +126,9 @@ File: `simulation/types.py`
 ## Data flow (generate, OpenAI-only)
 
 ```
-eq sim generate --openai-model gpt-5.4-mini --generation-model gpt-5.4-mini
+eq sim generate --openai-model gpt-5.4-mini --sim-model gpt-5.4-mini
   (env: OPENAI_API_KEY=sk-..., optional OPENAI_BASE_URL)
-    → cli.generate → generate_and_simulate(generation_model="gpt-5.4-mini", target=<openai>)
+    → cli.generate → generate_and_simulate(sim_model="gpt-5.4-mini", target=<openai>)
         → build_simulation_client(None) → OPENAI_API_KEY branch → AsyncOpenAI(base_url=None→OPENAI_BASE_URL)
         → PersonaGenerator(client) / ScenarioGenerator(client)
         → _simulate_core → user-sim + judge via build_simulation_client (same env)
@@ -151,8 +156,8 @@ eq sim generate --openai-model gpt-5.4-mini --generation-model gpt-5.4-mini
 - **`generate_and_simulate`**: with `generation_client=<mock>` and no
   `ORQ_API_KEY` → runs without raising (no `_require_orq_api_key`).
 - **`simulate`** first-message branch: same, with `generation_client` injected.
-- **CLI**: `--generation-model X` forwards to `generation_model=X` (kwarg
-  capture); `--model` is no longer accepted.
+- **CLI**: `--sim-model X` forwards to `sim_model=X` (kwarg capture) on both
+  `run` and `generate`; `--model` is no longer accepted.
 - **Regression**: existing ORQ-path generation tests stay green; upload gate
   unchanged.
 
