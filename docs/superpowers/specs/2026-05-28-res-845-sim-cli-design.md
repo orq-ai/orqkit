@@ -41,10 +41,13 @@ def run(...): asyncio.run(_run_impl(...))
 
 ## Subcommands
 
+Three symmetric execution verbs mirror the SDK: `generate` (datapoints only), `simulate` (run pre-built datapoints), `run` (generate + simulate). `generate` contacts no agent target — it only calls the `--sim-model` generator; `simulate`/`run` require exactly one target flag.
+
 | Command | Maps to | Required | Output |
 |---|---|---|---|
-| `run` | `simulate(datapoints=load_datapoints_from_jsonl(path), target=..., ...)` | `--datapoints <path.jsonl>` + one target flag | results JSONL via `export_results_to_jsonl` + auto-save run JSON |
-| `generate` | `generate_and_simulate(agent_description=..., target=..., ...)` | `--agent-description` + one target flag | same |
+| `generate` | `generate(agent_description=..., sim_model=..., ...) -> list[Datapoint]` | `--agent-description` + `--output` | datapoints JSONL via `export_datapoints_to_jsonl` (no simulation, no run-store) |
+| `simulate` | `simulate(datapoints=load_datapoints_from_jsonl(path), target=..., ...)` | `--datapoints <path.jsonl>` + one target flag | results JSONL via `export_results_to_jsonl` + auto-save run JSON |
+| `run` | `generate_and_simulate(agent_description=..., target=..., ...)` | `--agent-description` + one target flag | same as `simulate` |
 | `export` | per-result `to_open_responses(result)` over `parse_jsonl(Path(input).read_text(), cls=SimulationResult)` | `--input <results.jsonl>` | OpenResponses payload JSON (list of per-result payloads) |
 | `validate-dataset` | `parse_jsonl(Path(path).read_text(), cls=Datapoint)` | positional `<path.jsonl>` | exit 0 / 1 + count |
 | `runs` | filesystem scan of `.evaluatorq/sim-runs/` | optional positional `<dir>`, `--limit/-n` | Rich table |
@@ -58,7 +61,7 @@ def run(...): asyncio.run(_run_impl(...))
 
 ## Target Resolution
 
-Three mutually exclusive flag group, validated at command entry. Exactly one required for `run` and `generate`. Raises `typer.BadParameter` when zero or >1 supplied.
+Three mutually exclusive flag group, validated at command entry. Exactly one required for `simulate` and `run` (the verbs that contact an agent). `generate` takes no target — it only generates datapoints. Raises `typer.BadParameter` when zero or >1 supplied.
 
 | Flag | Resolves to |
 |---|---|
@@ -76,18 +79,18 @@ Resolver `_resolve_target(*, agent_key, vercel_url, openai_model) -> AgentTarget
 
 | Flag | Commands | Maps to | Notes |
 |---|---|---|---|
-| `--model TEXT` | run, generate | `model=` | default = `DEFAULT_MODEL` from sim types |
-| `--max-turns INT` | run, generate | `max_turns=` | default 10 (api default) |
-| `--parallelism INT` | run, generate | `parallelism=` | default 5 |
-| `--evaluator TEXT` (repeatable) | run, generate | `evaluator_names=...` | **flag absent → pass `None` (api uses defaults); flag present → pass the list** |
-| `--output PATH` | run, generate, export | results JSONL / payload destination | required |
-| `--num-personas INT` | generate | `num_personas=` | default 5 |
-| `--num-scenarios INT` | generate | `num_scenarios=` | default 5 |
-| `--name TEXT` | run, generate | run name for auto-save filename | sanitised (see Run Store) |
-| `--no-save` | run, generate | skip `.evaluatorq/sim-runs/` write | |
+| `--sim-model TEXT` | generate, simulate, run | `sim_model=` | default = `DEFAULT_MODEL`; drives generation + user-sim/judge |
+| `--max-turns INT` | simulate, run | `max_turns=` | default 10 (api default) |
+| `--parallelism INT` | simulate, run | `parallelism=` | default 5 |
+| `--evaluator TEXT` (repeatable) | simulate, run | `evaluator_names=...` | **flag absent → pass `None` (api uses defaults); flag present → pass the list** |
+| `--output PATH` | generate, simulate, run, export | datapoints/results JSONL destination | required for `generate`/`export`; optional for `simulate`/`run` |
+| `--num-personas INT` | generate, run | `num_personas=` | default 5 |
+| `--num-scenarios INT` | generate, run | `num_scenarios=` | default 5 |
+| `--name TEXT` | simulate, run | run name for auto-save filename | sanitised (see Run Store) |
+| `--no-save` | simulate, run | skip `.evaluatorq/sim-runs/` write | |
 | `-v / --verbose` | global | log level DEBUG | mirrors redteam |
 | `-q / --quiet` | global | log level WARNING | mirrors redteam |
-| `-y / --yes` | run, generate | skip confirmation prompts (currently none, kept for forward compat) | mirrors redteam |
+| `-y / --yes` | simulate, run | skip confirmation prompts (currently none, kept for forward compat) | mirrors redteam |
 
 ### Unknown evaluator name
 
@@ -107,7 +110,7 @@ Path: `.evaluatorq/sim-runs/<sanitised_name>_<YYYYMMDD-HHMMSS>.json`. Distinct d
 class SimulationRun(BaseModel):
     run_name: str
     created_at: datetime
-    mode: Literal["run", "generate"]
+    mode: Literal["run", "simulate"]
     target_kind: Literal["orq_deployment", "vercel", "openai_model"]
     evaluator_names: list[str]
     total_results: int
@@ -121,11 +124,11 @@ class SimulationRun(BaseModel):
 
 ## Hooks Integration
 
-CLI imports `RichHooks` from `evaluatorq.simulation.hooks` (lands in RES-847) for `run` and `generate` progress. **Until RES-847 merges**, CLI uses a `_progress_callback` that prints one line per completed result via `typer.echo`. The swap to `RichHooks()` is a one-line change documented in the file. We do **not** commit a stub `RichHooks` import in this ticket; we import the symbol only when RES-847 lands, to avoid coupling on a not-yet-finalised constructor signature.
+CLI imports `RichHooks` from `evaluatorq.simulation.hooks` (lands in RES-847) for `simulate` and `run` progress. **Until RES-847 merges**, CLI uses a `_progress_callback` that prints one line per completed result via `typer.echo`. The swap to `RichHooks()` is a one-line change documented in the file. We do **not** commit a stub `RichHooks` import in this ticket; we import the symbol only when RES-847 lands, to avoid coupling on a not-yet-finalised constructor signature.
 
 ## Async Wrapping
 
-Each `run`/`generate` command body is sync Typer + `asyncio.run(impl(...))`:
+Each command body is sync Typer + `asyncio.run(impl(...))`:
 
 ```python
 @app.command(no_args_is_help=True)
@@ -161,12 +164,13 @@ Specific cases:
 
 | Group | Tests |
 |---|---|
-| `run` happy path | datapoints + `--openai-model` end-to-end with fake target; assert results JSONL written; assert run JSON saved |
-| `run` no-save | `--no-save` skips run-store write |
-| `run` target flags | one passing test per target flag (3); zero-target errors; two-target errors; three-target errors |
-| `generate` happy path | `--agent-description` + 2 personas + 2 scenarios + fake target; covers ticket acceptance |
-| `generate` no-save | as above |
-| Flag-forwarding (kwarg capture) | `--model`, `--max-turns`, `--parallelism`, `--evaluator` (single + repeated + absent), `--num-personas`, `--num-scenarios`, `--name` — patch `_run_impl`, assert kwargs |
+| `simulate` happy path | datapoints + `--openai-model` end-to-end with fake target; assert results JSONL written; assert run JSON saved |
+| `simulate` no-save | `--no-save` skips run-store write |
+| `simulate` target flags | one passing test per target flag (3); zero-target errors; two-target errors; three-target errors |
+| `run` happy path | `--agent-description` + 2 personas + 2 scenarios + fake target; covers ticket acceptance (generate + simulate) |
+| `run` no-save | as above |
+| `generate` (gen-only) | `--agent-description` + `--output` writes datapoints JSONL; no target contacted; `--output` required; gen flags forwarded |
+| Flag-forwarding (kwarg capture) | `--sim-model`, `--max-turns`, `--parallelism`, `--evaluator` (single + repeated + absent), `--num-personas`, `--num-scenarios`, `--name` — patch `_simulate_impl`/`_run_impl`, assert kwargs |
 | `--evaluator` semantics | absent → None forwarded; `--evaluator goal_achieved` → `["goal_achieved"]` forwarded; unknown name → `BadParameter` |
 | `export` | round-trip: 2-result JSONL → payload list of length 2; structural assertion on first payload |
 | `export` error | unreadable input → `BadParameter` |
@@ -174,7 +178,7 @@ Specific cases:
 | `runs` | empty dir → 0 + message; missing dir → 0 + message; 2 valid files → sorted by mtime; 1 valid + 1 malformed → table + warning count |
 | Run-store | `scorer_averages` aggregation over results with mixed evaluator presence (results with/without `evaluator_scores`); empty results → `{}` |
 | Filename | `--name "weird / name"` sanitised; collision in same second → `_001` suffix |
-| Smoke (integration-marked) | full `generate` with mocked `ORQ_API_KEY` env + fake target callable |
+| Smoke (integration-marked) | full `run` (generate + simulate) with mocked `ORQ_API_KEY` env + fake target callable |
 
 Smoke test sets `ORQ_API_KEY` via `monkeypatch.setenv` and patches the persona/scenario generator HTTP clients to return canned responses, so no real network.
 
