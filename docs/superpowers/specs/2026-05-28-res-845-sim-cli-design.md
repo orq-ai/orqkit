@@ -89,6 +89,7 @@ Resolver `_resolve_target(*, agent_key, vercel_url, openai_model) -> AgentTarget
 | `--num-personas INT` | generate, run | `num_personas=` | default 5 |
 | `--num-scenarios INT` | generate, run | `num_scenarios=` | default 5 |
 | `--save-datapoints PATH` | run | `emit_datapoints=` callback → `_write_datapoints` | optional; persists the generated datapoints (raw `Datapoint` JSONL) that simulation consumed, for reproducible re-runs via `simulate --datapoints` |
+| `--report-output PATH` | simulate, run | `_write_report(run, PATH)` | optional; writes the full `SimulationRun` report JSON (results + scorer averages + metadata) to an explicit path. Independent of the `.evaluatorq/sim-runs/` auto-save (which still happens unless `--no-save`) and of `--output` (flat results JSONL) |
 | `--name TEXT` | simulate, run | run name for auto-save filename | sanitised (see Run Store) |
 | `--no-save` | simulate, run | skip `.evaluatorq/sim-runs/` write | |
 | `-v / --verbose` | global | log level DEBUG | mirrors redteam |
