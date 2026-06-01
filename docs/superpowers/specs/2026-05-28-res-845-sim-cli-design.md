@@ -41,7 +41,9 @@ def run(...): asyncio.run(_run_impl(...))
 
 ## Subcommands
 
-Three symmetric execution verbs mirror the SDK: `generate` (datapoints only), `simulate` (run pre-built datapoints), `run` (generate + simulate). `generate` contacts no agent target — it only calls the `--sim-model` generator; `simulate`/`run` require exactly one target flag.
+Three symmetric execution verbs mirror the SDK: `generate` (datapoints only), `simulate` (run pre-built datapoints), `run` (generate then simulate in one shot). `generate` contacts no agent target — it only calls the `--sim-model` generator; `simulate`/`run` require exactly one target flag.
+
+`run` is a convenience wrapper over `generate_and_simulate` — it generates datapoints in-process and simulates them under a single `orq.simulation.pipeline` span. It is **not** a literal `generate` + `simulate` composition (no intermediate file, one span, datapoints not surfaced by default). To capture the exact generated inputs for reproducible re-runs, pass `run --save-datapoints PATH`, which writes the datapoints (raw `Datapoint` JSONL) that simulation consumed; that file re-feeds `simulate --datapoints`.
 
 | Command | Maps to | Required | Output |
 |---|---|---|---|
@@ -86,6 +88,7 @@ Resolver `_resolve_target(*, agent_key, vercel_url, openai_model) -> AgentTarget
 | `--output PATH` | generate, simulate, run, export | datapoints/results JSONL destination | required for `generate`/`export`; optional for `simulate`/`run` |
 | `--num-personas INT` | generate, run | `num_personas=` | default 5 |
 | `--num-scenarios INT` | generate, run | `num_scenarios=` | default 5 |
+| `--save-datapoints PATH` | run | `emit_datapoints=` callback → `_write_datapoints` | optional; persists the generated datapoints (raw `Datapoint` JSONL) that simulation consumed, for reproducible re-runs via `simulate --datapoints` |
 | `--name TEXT` | simulate, run | run name for auto-save filename | sanitised (see Run Store) |
 | `--no-save` | simulate, run | skip `.evaluatorq/sim-runs/` write | |
 | `-v / --verbose` | global | log level DEBUG | mirrors redteam |
