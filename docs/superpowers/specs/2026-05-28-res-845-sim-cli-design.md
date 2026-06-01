@@ -47,7 +47,7 @@ Three symmetric execution verbs mirror the SDK: `generate` (datapoints only), `s
 
 | Command | Maps to | Required | Output |
 |---|---|---|---|
-| `generate` | `generate(agent_description=..., sim_model=..., ...) -> list[Datapoint]` | `--agent-description` + `--output` | datapoints JSONL via `export_datapoints_to_jsonl` (no simulation, no run-store) |
+| `generate` | `generate(agent_description=..., sim_model=..., ...) -> list[Datapoint]` | `--agent-description` + `--output` | raw `Datapoint` JSONL via `_write_datapoints` — the local handoff format read by `load_datapoints_from_jsonl`/`validate-dataset`, not the Orq-upload envelope (no simulation, no run-store) |
 | `simulate` | `simulate(datapoints=load_datapoints_from_jsonl(path), target=..., ...)` | `--datapoints <path.jsonl>` + one target flag | results JSONL via `export_results_to_jsonl` + auto-save run JSON |
 | `run` | `generate_and_simulate(agent_description=..., target=..., ...)` | `--agent-description` + one target flag | same as `simulate` |
 | `export` | per-result `to_open_responses(result)` over `parse_jsonl(Path(input).read_text(), cls=SimulationResult)` | `--input <results.jsonl>` | OpenResponses payload JSON (list of per-result payloads) |
@@ -93,7 +93,6 @@ Resolver `_resolve_target(*, agent_key, vercel_url, openai_model) -> AgentTarget
 | `--no-save` | simulate, run | skip `.evaluatorq/sim-runs/` write | |
 | `-v / --verbose` | global | log level DEBUG | mirrors redteam |
 | `-q / --quiet` | global | log level WARNING | mirrors redteam |
-| `-y / --yes` | simulate, run | skip confirmation prompts (currently none, kept for forward compat) | mirrors redteam |
 
 ### Unknown evaluator name
 
