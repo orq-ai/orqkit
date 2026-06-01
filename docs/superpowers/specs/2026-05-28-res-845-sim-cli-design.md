@@ -110,7 +110,7 @@ Path: `.evaluatorq/sim-runs/<sanitised_name>_<YYYYMMDD-HHMMSS>.json`. Distinct d
 class SimulationRun(BaseModel):
     run_name: str
     created_at: datetime
-    mode: Literal["run", "simulate"]
+    mode: Literal["run", "simulate", "generate"]  # "generate" is a tolerated legacy value (old run-store files predating the verb rename)
     target_kind: Literal["orq_deployment", "vercel", "openai_model"]
     evaluator_names: list[str]
     total_results: int
