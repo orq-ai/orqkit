@@ -139,6 +139,10 @@ export async function withLLMSpan<T>(
     attrs["gen_ai.request.max_tokens"] = options.maxTokens;
   }
   if (options.purpose) {
+    // Domain-neutral key (parity with the Python with_llm_span builders) so a
+    // query on `orq.llm.purpose` finds LLM-purpose spans across all domains;
+    // the legacy `orq.simulation.llm_purpose` is emitted alongside for back-compat.
+    attrs["orq.llm.purpose"] = options.purpose;
     attrs["orq.simulation.llm_purpose"] = options.purpose;
   }
 
@@ -225,12 +229,35 @@ export function recordTokenUsage(
   span.setAttribute("total_tokens", total);
 }
 
-// Max content length per message to avoid oversized spans (matches redteam)
-const MAX_CONTENT_LEN = 2000;
+const TRUNCATION_MARKER = "... [truncated]";
 
+/**
+ * Resolve the per-message span text cap from `EVALUATORQ_SPAN_MAX_TEXT_CHARS`.
+ *
+ * **Defaults to no truncation (capture all).** Set a positive integer (e.g.
+ * 8192) to cap span text at that many characters. `-1` / `0` / unset / invalid
+ * all mean "capture all". Mirrors the Python `_default_span_max_text_chars`.
+ */
+function spanMaxTextChars(): number | null {
+  const raw = process.env.EVALUATORQ_SPAN_MAX_TEXT_CHARS;
+  if (raw === undefined || raw === "") return null;
+  const value = Number.parseInt(raw, 10);
+  if (Number.isNaN(value) || value <= 0) return null;
+  return value;
+}
+
+/**
+ * Truncate text for span attribute storage. Output never exceeds the cap; the
+ * marker is reserved within the budget. Capture-all (no cap) by default.
+ */
 function truncate(text: string): string {
-  if (text.length <= MAX_CONTENT_LEN) return text;
-  return `${text.slice(0, MAX_CONTENT_LEN)}…`;
+  const maxChars = spanMaxTextChars();
+  if (maxChars === null) return text;
+  if (text.length <= maxChars) return text;
+  if (maxChars <= TRUNCATION_MARKER.length) {
+    return TRUNCATION_MARKER.slice(0, maxChars);
+  }
+  return text.slice(0, maxChars - TRUNCATION_MARKER.length) + TRUNCATION_MARKER;
 }
 
 /**
@@ -245,12 +272,15 @@ function serializeMessages(
 }
 
 /**
+ * Whether to write LLM message text (prompts + responses) onto spans.
+ *
  * The OTel GenAI semconv classifies `gen_ai.input.messages` and
- * `gen_ai.output.messages` as opt-in because they may carry PII. Honor the
- * spec env var; default to enabled for the platform UI to keep working.
+ * `gen_ai.output.messages` as opt-in because they may carry PII. Controlled by
+ * `EVALUATORQ_CAPTURE_MESSAGE_CONTENT`; defaults to enabled so the platform UI
+ * keeps rendering input/output panels. Set to `false` / `0` to opt out.
  */
 function captureMessageContent(): boolean {
-  const flag = process.env.OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT;
+  const flag = process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT;
   if (flag === undefined) return true;
   return flag.toLowerCase() === "true" || flag === "1";
 }
@@ -260,7 +290,7 @@ function captureMessageContent(): boolean {
  *
  * Sets both `gen_ai.input.messages` (OTel GenAI convention) and `input`
  * (platform fallback), matching the redteam module's dual-attribute pattern.
- * Suppressed when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
+ * Suppressed when `EVALUATORQ_CAPTURE_MESSAGE_CONTENT=false`.
  */
 export function recordLLMInput(
   span: Span | undefined,
@@ -278,7 +308,7 @@ export function recordLLMInput(
  * Record a single LLM output string on a span.
  *
  * Sets `gen_ai.output.messages` and `output` (platform fallback). Suppressed
- * when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
+ * when `EVALUATORQ_CAPTURE_MESSAGE_CONTENT=false`.
  */
 export function recordLLMOutput(span: Span | undefined, output: string): void {
   if (!span || !output) return;

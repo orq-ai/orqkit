@@ -71,18 +71,13 @@ mock.module(
   }),
 );
 
-// Mock convert to isolate wrapper logic
-mock.module("../../../../src/lib/integrations/simulation/convert.js", () => ({
-  toOpenResponses: (result: SimulationResult, model?: string) => ({
-    id: "resp_mock",
-    object: "response",
-    model: model ?? "simulation",
-    status: "completed",
-    input: [],
-    output: [],
-    metadata: { framework: "simulation", goal_achieved: result.goal_achieved },
-  }),
-}));
+// NOTE: We deliberately do NOT mock `convert.js` here. bun's `mock.module`
+// registrations are process-global and are NOT undone by `mock.restore()`, so
+// mocking `convert.js` leaks into `to-open-responses.spec.ts` (which tests the
+// real `toOpenResponses`) when bun loads that file later in the same process —
+// producing order-dependent CI failures. The real `toOpenResponses` is pure and
+// yields a valid `response` shape from the mocked simulate result, which is all
+// these wrapper tests assert on.
 
 // Now import wrapper (after mocks)
 const { wrapSimulationAgent } = await import(
