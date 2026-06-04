@@ -166,7 +166,7 @@ export class SimulationRunner {
       }
       this.sharedClient = new OpenAI({
         apiKey,
-        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
+        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
       });
     }
     return this.sharedClient;

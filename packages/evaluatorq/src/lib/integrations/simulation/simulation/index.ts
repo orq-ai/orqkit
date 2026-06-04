@@ -126,7 +126,7 @@ async function _simulateCore(
     // Create a shared HTTP client so the generator doesn't leak its own pool
     const sharedClient = new OpenAI({
       apiKey,
-      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v2/router",
+      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
     });
     // Generate first messages for each combination (with bounded concurrency)
     const firstMsgGen = new FirstMessageGenerator({
