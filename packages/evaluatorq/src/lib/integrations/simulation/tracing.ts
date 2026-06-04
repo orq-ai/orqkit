@@ -225,12 +225,35 @@ export function recordTokenUsage(
   span.setAttribute("total_tokens", total);
 }
 
-// Max content length per message to avoid oversized spans (matches redteam)
-const MAX_CONTENT_LEN = 2000;
+const TRUNCATION_MARKER = "... [truncated]";
 
+/**
+ * Resolve the per-message span text cap from `EVALUATORQ_SPAN_MAX_TEXT_CHARS`.
+ *
+ * **Defaults to no truncation (capture all).** Set a positive integer (e.g.
+ * 8192) to cap span text at that many characters. `-1` / `0` / unset / invalid
+ * all mean "capture all". Mirrors the Python `_default_span_max_text_chars`.
+ */
+function spanMaxTextChars(): number | null {
+  const raw = process.env.EVALUATORQ_SPAN_MAX_TEXT_CHARS;
+  if (raw === undefined || raw === "") return null;
+  const value = Number.parseInt(raw, 10);
+  if (Number.isNaN(value) || value <= 0) return null;
+  return value;
+}
+
+/**
+ * Truncate text for span attribute storage. Output never exceeds the cap; the
+ * marker is reserved within the budget. Capture-all (no cap) by default.
+ */
 function truncate(text: string): string {
-  if (text.length <= MAX_CONTENT_LEN) return text;
-  return `${text.slice(0, MAX_CONTENT_LEN)}…`;
+  const maxChars = spanMaxTextChars();
+  if (maxChars === null) return text;
+  if (text.length <= maxChars) return text;
+  if (maxChars <= TRUNCATION_MARKER.length) {
+    return TRUNCATION_MARKER.slice(0, maxChars);
+  }
+  return text.slice(0, maxChars - TRUNCATION_MARKER.length) + TRUNCATION_MARKER;
 }
 
 /**
