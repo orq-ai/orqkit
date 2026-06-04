@@ -253,7 +253,7 @@ export class ScenarioGenerator {
         );
       }
       this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v2/router",
+        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v3/router",
         apiKey,
       });
     }

@@ -417,13 +417,13 @@ class TestGetOrqServerUrl:
     def test_strips_v2_router_suffix(self, monkeypatch):
         from evaluatorq.redteam.backends.orq import _get_orq_server_url
 
-        monkeypatch.setenv("ORQ_BASE_URL", "https://my.orq.ai/v2/router")
+        monkeypatch.setenv("ORQ_BASE_URL", "https://my.orq.ai/v3/router")
         assert _get_orq_server_url() == "https://my.orq.ai"
 
     def test_strips_trailing_slash_and_suffix(self, monkeypatch):
         from evaluatorq.redteam.backends.orq import _get_orq_server_url
 
-        monkeypatch.setenv("ORQ_BASE_URL", "https://my.orq.ai/v2/router/")
+        monkeypatch.setenv("ORQ_BASE_URL", "https://my.orq.ai/v3/router/")
         assert _get_orq_server_url() == "https://my.orq.ai"
 
     def test_returns_url_unchanged_when_no_suffix(self, monkeypatch):
