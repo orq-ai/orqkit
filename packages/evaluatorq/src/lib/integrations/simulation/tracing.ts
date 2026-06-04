@@ -139,6 +139,10 @@ export async function withLLMSpan<T>(
     attrs["gen_ai.request.max_tokens"] = options.maxTokens;
   }
   if (options.purpose) {
+    // Domain-neutral key (parity with the Python with_llm_span builders) so a
+    // query on `orq.llm.purpose` finds LLM-purpose spans across all domains;
+    // the legacy `orq.simulation.llm_purpose` is emitted alongside for back-compat.
+    attrs["orq.llm.purpose"] = options.purpose;
     attrs["orq.simulation.llm_purpose"] = options.purpose;
   }
 
