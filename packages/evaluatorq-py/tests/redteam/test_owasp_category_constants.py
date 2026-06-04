@@ -9,6 +9,7 @@ class TestOwaspLlmTop10:
         assert isinstance(OWASP_LLM_TOP_10, tuple)
 
     def test_length(self) -> None:
+        # LLM10 (Unbounded Consumption) is intentionally excluded — not testable via prompts
         assert len(OWASP_LLM_TOP_10) == 9  # LLM01-LLM09
 
     def test_all_codes_present(self) -> None:

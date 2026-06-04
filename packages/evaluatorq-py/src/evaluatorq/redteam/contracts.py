@@ -580,6 +580,9 @@ _LLM_CATEGORY_NAMES: dict[str, str] = {
     'LLM07': 'System Prompt Leakage',
     'LLM08': 'Vector and Embedding Weaknesses',
     'LLM09': 'Misinformation',
+    # LLM10 (Unbounded Consumption) is intentionally excluded — it covers resource
+    # exhaustion and DoS, which are infrastructure-level risks not testable via
+    # prompt-based red teaming.
 }
 
 OWASP_CATEGORY_NAMES: dict[str, str] = {
@@ -594,6 +597,8 @@ OWASP_CATEGORY_NAMES: dict[str, str] = {
 #
 #   from evaluatorq.redteam import OWASP_LLM_TOP_10, OWASP_ASI_TOP_10
 #   red_team(..., categories=list(OWASP_LLM_TOP_10))
+# Contains LLM01–LLM09. LLM10 (Unbounded Consumption) is excluded because it is an
+# infrastructure-level risk not testable via prompt-based red teaming.
 OWASP_LLM_TOP_10: tuple[str, ...] = tuple(_LLM_CATEGORY_NAMES)
 OWASP_ASI_TOP_10: tuple[str, ...] = tuple(_ASI_CATEGORY_NAMES)
 
