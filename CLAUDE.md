@@ -15,6 +15,10 @@ This is an Nx monorepo that uses Bun as the package manager. Use `bunx` instead 
 - **Explore project graph**: `bunx nx graph`
 - **Sync TypeScript references**: `bunx nx sync`
 
+### Searching
+
+Use `ripgrep` (`rg`) instead of `grep` wherever possible — it is faster and respects `.gitignore`. Check availability first with `which rg`. If not found, suggest installing it (`brew install ripgrep`), but proceed with `grep` rather than blocking.
+
 ### Biome Configuration
 
 The project uses Biome for linting and formatting with:
