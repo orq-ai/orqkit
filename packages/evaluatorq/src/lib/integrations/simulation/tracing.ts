@@ -245,12 +245,15 @@ function serializeMessages(
 }
 
 /**
+ * Whether to write LLM message text (prompts + responses) onto spans.
+ *
  * The OTel GenAI semconv classifies `gen_ai.input.messages` and
- * `gen_ai.output.messages` as opt-in because they may carry PII. Honor the
- * spec env var; default to enabled for the platform UI to keep working.
+ * `gen_ai.output.messages` as opt-in because they may carry PII. Controlled by
+ * `EVALUATORQ_CAPTURE_MESSAGE_CONTENT`; defaults to enabled so the platform UI
+ * keeps rendering input/output panels. Set to `false` / `0` to opt out.
  */
 function captureMessageContent(): boolean {
-  const flag = process.env.OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT;
+  const flag = process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT;
   if (flag === undefined) return true;
   return flag.toLowerCase() === "true" || flag === "1";
 }
@@ -260,7 +263,7 @@ function captureMessageContent(): boolean {
  *
  * Sets both `gen_ai.input.messages` (OTel GenAI convention) and `input`
  * (platform fallback), matching the redteam module's dual-attribute pattern.
- * Suppressed when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
+ * Suppressed when `EVALUATORQ_CAPTURE_MESSAGE_CONTENT=false`.
  */
 export function recordLLMInput(
   span: Span | undefined,
@@ -278,7 +281,7 @@ export function recordLLMInput(
  * Record a single LLM output string on a span.
  *
  * Sets `gen_ai.output.messages` and `output` (platform fallback). Suppressed
- * when `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.
+ * when `EVALUATORQ_CAPTURE_MESSAGE_CONTENT=false`.
  */
 export function recordLLMOutput(span: Span | undefined, output: string): void {
   if (!span || !output) return;
