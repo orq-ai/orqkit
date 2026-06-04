@@ -5,8 +5,8 @@ from evaluatorq.redteam.contracts import OWASP_CATEGORY_NAMES
 
 
 class TestOwaspLlmTop10:
-    def test_is_tuple(self) -> None:
-        assert isinstance(OWASP_LLM_TOP_10, tuple)
+    def test_is_list(self) -> None:
+        assert isinstance(OWASP_LLM_TOP_10, list)
 
     def test_length(self) -> None:
         # LLM10 (Unbounded Consumption) is intentionally excluded — not testable via prompts
@@ -17,7 +17,7 @@ class TestOwaspLlmTop10:
         assert set(OWASP_LLM_TOP_10) == expected
 
     def test_ordered(self) -> None:
-        assert list(OWASP_LLM_TOP_10) == sorted(OWASP_LLM_TOP_10)
+        assert OWASP_LLM_TOP_10 == sorted(OWASP_LLM_TOP_10)
 
     def test_all_codes_in_category_names(self) -> None:
         for code in OWASP_LLM_TOP_10:
@@ -33,8 +33,8 @@ class TestOwaspLlmTop10:
 
 
 class TestOwaspAsiTop10:
-    def test_is_tuple(self) -> None:
-        assert isinstance(OWASP_ASI_TOP_10, tuple)
+    def test_is_list(self) -> None:
+        assert isinstance(OWASP_ASI_TOP_10, list)
 
     def test_length(self) -> None:
         assert len(OWASP_ASI_TOP_10) == 10  # ASI01-ASI10
@@ -44,7 +44,7 @@ class TestOwaspAsiTop10:
         assert set(OWASP_ASI_TOP_10) == expected
 
     def test_ordered(self) -> None:
-        assert list(OWASP_ASI_TOP_10) == sorted(OWASP_ASI_TOP_10)
+        assert OWASP_ASI_TOP_10 == sorted(OWASP_ASI_TOP_10)
 
     def test_all_codes_in_category_names(self) -> None:
         for code in OWASP_ASI_TOP_10:
