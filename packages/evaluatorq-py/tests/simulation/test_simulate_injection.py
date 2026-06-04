@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from evaluatorq.contracts import TokenUsage
 from evaluatorq.simulation.runner.simulation import SimulationRunner
 from evaluatorq.simulation.types import (
     CommunicationStyle,
@@ -23,7 +24,6 @@ from evaluatorq.simulation.types import (
     Persona,
     Scenario,
     TerminatedBy,
-    TokenUsage,
 )
 
 # ---------------------------------------------------------------------------
@@ -238,7 +238,7 @@ class TestSimulateTargetPrecedence:
                     target=target_a,
                     target_callback=target_b,
                     datapoints=[dp],
-                    model="test",
+                    sim_model="test",
                     max_turns=1,
                 )
 
@@ -287,7 +287,7 @@ class TestSimulateAutoRoutesAgentTarget:
                 )
 
         with patch("evaluatorq.simulation.runner.simulation.SimulationRunner", CapturingRunner):
-            await simulate(target=agent_target, datapoints=[dp], model="test", max_turns=1)
+            await simulate(target=agent_target, datapoints=[dp], sim_model="test", max_turns=1)
 
         assert resolved.get("target_agent") is agent_target
         assert resolved.get("target_callback") is None
