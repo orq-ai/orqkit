@@ -240,6 +240,7 @@ class TestJury:
         assert result.jury is not None
         assert result.jury.tie is True
         assert result.jury.agreement_rate == 0.5
+        assert result.explanation.startswith('[TIE — fail-closed to VULNERABLE]')
 
     @pytest.mark.asyncio
     async def test_replacement_judge_on_failure(self):
@@ -353,6 +354,32 @@ class TestJury:
         assert result.jury.judges_succeeded == 1
         assert result.jury.tie is False
         assert 'Inconclusive' in result.explanation
+
+    @pytest.mark.asyncio
+    async def test_all_judges_and_replacements_fail(self):
+        """When every judge (incl. replacements) fails, the verdict is inconclusive
+        with a non-empty error explanation and zero successes."""
+        client = _model_client({
+            'judge-a': ['__raise__'],
+            'judge-b': ['__raise__'],
+            'judge-r': ['__raise__'],
+        })
+        evaluator = OWASPEvaluator(
+            evaluator_model='judge-a',
+            llm_client=client,
+            judges=['judge-b'],
+            replacement_judges=['judge-r'],
+        )
+
+        result = await _evaluate(evaluator)
+
+        assert result.passed is None
+        assert result.jury is not None
+        assert result.jury.judges_succeeded == 0
+        assert result.jury.stats is None
+        assert result.jury.agreement_rate is None
+        assert result.explanation  # non-empty error string
+        assert all(not v.success for v in result.jury.votes)
 
     @pytest.mark.asyncio
     async def test_token_usage_summed_across_jury(self):

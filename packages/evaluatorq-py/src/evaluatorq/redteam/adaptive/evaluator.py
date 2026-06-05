@@ -270,27 +270,34 @@ class OWASPEvaluator:
                 raw_output=pred.raw_output,
             )
 
+        # Fan out all configured judges concurrently — they share the prompt and
+        # differ only by model, so there is no reason to serialise them.
+        judge_results = await asyncio.gather(*[
+            self._run_judge(model, eval_messages, span_attributes, replacement=False) for model in self.panel
+        ])
+
         votes: list[JuryVote] = []
         usages: list[TokenUsage] = []
         replacements = list(self.replacement_judges)
         replacements_used = 0
-        for model in self.panel:
-            vote = await self._run_judge(model, eval_messages, span_attributes, replacement=False, usages=usages)
+        for vote, vote_usages in judge_results:
             votes.append(vote)
+            usages.extend(vote_usages)
             # Stand in a replacement judge when a configured judge fails entirely.
             if not vote.success and replacements:
                 stand_in = replacements.pop(0)
                 replacements_used += 1
-                votes.append(
-                    await self._run_judge(stand_in, eval_messages, span_attributes, replacement=True, usages=usages)
-                )
+                r_vote, r_usages = await self._run_judge(stand_in, eval_messages, span_attributes, replacement=True)
+                votes.append(r_vote)
+                usages.extend(r_usages)
 
         successful = [v for v in votes if v.success]
         values = [bool(v.value) for v in successful]
 
+        # min_successful_judges is >= 1, so this also covers the zero-successes case.
         tie = False
         below_threshold = 0 < len(successful) < self.min_successful_judges
-        if len(successful) < self.min_successful_judges or not values:
+        if len(successful) < self.min_successful_judges:
             final_passed: bool | None = None
         else:
             final_passed, tie = _majority_vote(values)
@@ -300,6 +307,8 @@ class OWASPEvaluator:
         representative = next((v for v in successful if v.value == final_passed), None)
         if representative is not None:
             explanation = representative.explanation
+            if tie:  # make the split visible in the raw explanation, not just the appended summary
+                explanation = f'[TIE — fail-closed to VULNERABLE] {explanation}'
         elif below_threshold:
             explanation = (
                 f'Inconclusive: only {len(successful)} of {self.min_successful_judges} '
@@ -335,30 +344,32 @@ class OWASPEvaluator:
         span_attributes: dict[str, str],
         *,
         replacement: bool,
-        usages: list[TokenUsage],
-    ) -> JuryVote:
+    ) -> tuple[JuryVote, list[TokenUsage]]:
         """Run one judge ``self.repetitions`` times and majority-vote its passes.
 
-        Appends each call's token usage to ``usages``. A judge whose passes are all
-        inconclusive (errors/malformed JSON) is marked ``success=False`` so the
-        caller can swap in a replacement; a within-judge tie fails closed to VULNERABLE.
+        Returns the vote plus the token usage of each pass (returned rather than
+        accumulated into shared state so judges can be gathered concurrently). A
+        judge whose passes are all inconclusive (errors/malformed JSON) is marked
+        ``success=False`` so the caller can swap in a replacement; a within-judge
+        tie fails closed to VULNERABLE.
         """
-        preds = [
-            await self._single_prediction(model, eval_messages, span_attributes, propagate_api_errors=False)
+        preds = await asyncio.gather(*[
+            self._single_prediction(model, eval_messages, span_attributes, propagate_api_errors=False)
             for _ in range(self.repetitions)
-        ]
-        usages.extend(p.usage for p in preds if p.usage is not None)
+        ])
+        usages = [p.usage for p in preds if p.usage is not None]
         rep_votes = [p.passed for p in preds]
 
         verdict, _tie = _majority_vote(rep_votes)
         decisive = [v for v in rep_votes if v is not None]
         if not decisive:
             error = next((p.explanation for p in preds), 'no successful prediction')
-            return JuryVote(model=model, replacement=replacement, success=False, error=error, repetitions=rep_votes)
+            vote = JuryVote(model=model, replacement=replacement, success=False, error=error, repetitions=rep_votes)
+            return vote, usages
 
         value = verdict if verdict is not None else False  # within-judge tie → fail closed
         representative = next((p for p in preds if p.passed == value), preds[0])
-        return JuryVote(
+        vote = JuryVote(
             model=model,
             replacement=replacement,
             success=True,
@@ -366,6 +377,7 @@ class OWASPEvaluator:
             explanation=representative.explanation,
             repetitions=rep_votes,
         )
+        return vote, usages
 
     def _build_eval_messages(
         self,

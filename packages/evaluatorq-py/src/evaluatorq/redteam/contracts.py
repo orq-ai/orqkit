@@ -552,11 +552,16 @@ class LLMConfig(BaseModel):
 
     @model_validator(mode='after')
     def _check_min_successful_judges(self) -> 'LLMConfig':
-        """``min_successful_judges`` cannot exceed the available judge pool."""
-        pool = 1 + len(self.judges) + len(self.replacement_judges)
-        if self.min_successful_judges > pool:
+        """``min_successful_judges`` cannot exceed the panel size.
+
+        Replacement judges substitute 1:1 for failed configured judges, so they
+        never raise the ceiling on simultaneously successful judges — the panel
+        (primary model + ``judges``) is the true upper bound.
+        """
+        panel_size = 1 + len(self.judges)
+        if self.min_successful_judges > panel_size:
             raise ValueError(
-                f'min_successful_judges ({self.min_successful_judges}) exceeds the available judges ({pool})'
+                f'min_successful_judges ({self.min_successful_judges}) exceeds the panel size ({panel_size})'
             )
         return self
 
@@ -1020,7 +1025,12 @@ class JuryVote(BaseModel):
     model: str = Field(description='Judge model ID')
     replacement: bool = Field(default=False, description='True if this judge stood in for a failed configured judge')
     success: bool = Field(description='True if the judge produced a usable verdict')
-    value: bool | float | str | None = Field(default=None, description='Judge verdict (True=RESISTANT, False=VULNERABLE)')
+    # The red-team evaluator only ever writes bool/None, but the type mirrors the
+    # orq platform jury contract (value is number|boolean|string) so numeric/label
+    # judges can reuse this model unchanged.
+    value: bool | float | str | None = Field(
+        default=None, description='Judge verdict (True=RESISTANT, False=VULNERABLE)'
+    )
     explanation: str = Field(default='', description='Explanation from a representative majority pass')
     error: str | None = Field(default=None, description='Failure reason when success is False')
     repetitions: list[bool | None] = Field(
@@ -1053,7 +1063,9 @@ class JuryResult(BaseModel):
     judges_succeeded: int = Field(ge=0, description='Number of judges that produced a usable verdict')
     judges_failed: int = Field(ge=0, description='Number of judge votes that failed')
     replacements_used: int = Field(default=0, ge=0, description='Number of replacement judges invoked')
-    tie: bool = Field(default=False, description='True when the panel split evenly (resolved fail-closed to VULNERABLE)')
+    tie: bool = Field(
+        default=False, description='True when the panel split evenly (resolved fail-closed to VULNERABLE)'
+    )
     votes: list[JuryVote] = Field(default_factory=list, description='Per-judge votes (configured + replacements)')
     stats: JuryStats | None = Field(default=None, description='Verdict distribution over successful judges')
     agreement_rate: float | None = Field(
