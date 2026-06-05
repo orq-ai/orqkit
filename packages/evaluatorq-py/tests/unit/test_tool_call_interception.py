@@ -229,6 +229,10 @@ class TestEvaluatorToolCallsSubstitution:
         evaluator.evaluator_model = "test-model"
         evaluator.llm_kwargs = {}
         evaluator._cfg = LLMCallConfig()
+        evaluator.panel = ["test-model"]
+        evaluator.repetitions = 1
+        evaluator.replacement_judges = []
+        evaluator.min_successful_judges = 1
 
         captured_prompt: list[str] = []
 
@@ -271,6 +275,10 @@ class TestEvaluatorToolCallsSubstitution:
         evaluator.evaluator_model = "test-model"
         evaluator.llm_kwargs = {}
         evaluator._cfg = LLMCallConfig()
+        evaluator.panel = ["test-model"]
+        evaluator.repetitions = 1
+        evaluator.replacement_judges = []
+        evaluator.min_successful_judges = 1
 
         captured_prompt: list[str] = []
 
@@ -501,6 +509,10 @@ class TestRunEvaluatorSanitizationEndToEnd:
         evaluator.evaluator_model = "test-model"
         evaluator.llm_kwargs = {}
         evaluator._cfg = LLMCallConfig()
+        evaluator.panel = ["test-model"]
+        evaluator.repetitions = 1
+        evaluator.replacement_judges = []
+        evaluator.min_successful_judges = 1
 
         captured_prompt: list[str] = []
 
@@ -550,6 +562,7 @@ def _make_fake_eval_result() -> MagicMock:
     result.token_usage = None
     result.evaluator_id = "test"
     result.raw_output = {}
+    result.jury = None
     return result
 
 

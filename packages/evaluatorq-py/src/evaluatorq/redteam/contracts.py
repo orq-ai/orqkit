@@ -404,6 +404,7 @@ class RedTeamInput(BaseModel):
         # definition time.  By the time this validator runs (instance creation)
         # both modules are fully initialised.
         from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe
+
         has_vuln = bool(data.get('vulnerability'))
         has_cat = bool(data.get('category'))
         if has_vuln and not has_cat:
@@ -475,7 +476,7 @@ class TargetConfig(BaseModel):
 
     system_prompt: str | None = Field(
         default=None,
-        description="System prompt for the target model/agent",
+        description='System prompt for the target model/agent',
     )
 
 
@@ -509,6 +510,55 @@ class LLMConfig(BaseModel):
     # --- Role-based call configs ----------------------------------------------
     attacker: LLMCallConfig = Field(default_factory=LLMCallConfig)
     evaluator: LLMCallConfig = Field(default_factory=LLMCallConfig)
+
+    # --- Panel of judges / jury (RES-739) -------------------------------------
+    # Mirrors the orq platform jury contract. Best practice (orq.ai/blog/
+    # llm-juries-in-practice): an odd panel of 3 small judges across different
+    # providers beats one large judge; ties resolve fail-closed.
+    judges: list[str] = Field(
+        default_factory=list,
+        description=(
+            'Additional judge model IDs forming a jury alongside ``evaluator.model``. '
+            'Empty (default) means a single judge. Each judge votes on every sample; '
+            'the panel majority is the final verdict. Prefer an odd total across '
+            'different providers.'
+        ),
+    )
+    judge_repetitions: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            'Number of prediction passes per judge. Each judge runs N times and '
+            "its majority vote becomes that judge's verdict. Default 1 keeps "
+            'existing single-pass behaviour and cost unchanged.'
+        ),
+    )
+    replacement_judges: list[str] = Field(
+        default_factory=list,
+        description=(
+            'Stand-in judge models invoked when a configured judge fails entirely '
+            '(all repetitions error), keeping panel strength. Empty by default.'
+        ),
+    )
+    min_successful_judges: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            'Minimum judges that must return a usable verdict for a decisive result; '
+            'below this the verdict is inconclusive (None). Default 1 preserves '
+            'single-judge behaviour.'
+        ),
+    )
+
+    @model_validator(mode='after')
+    def _check_min_successful_judges(self) -> 'LLMConfig':
+        """``min_successful_judges`` cannot exceed the available judge pool."""
+        pool = 1 + len(self.judges) + len(self.replacement_judges)
+        if self.min_successful_judges > pool:
+            raise ValueError(
+                f'min_successful_judges ({self.min_successful_judges}) exceeds the available judges ({pool})'
+            )
+        return self
 
     # --- Retry configuration --------------------------------------------------
     retry_count: int = 3
@@ -785,22 +835,28 @@ def turns_to_messages(turns: list[Turn], *, skip_errors: bool = False) -> list[M
                 text_buffer.append(item.text)
             elif isinstance(item, ToolCallOutputItem):
                 _flush_text()
-                out.append(Message(
-                    role='assistant',
-                    content=None,
-                    tool_calls=[StrategyToolCall(
-                        id=item.call_id,
-                        item_id=item.id or None,
-                        function=FunctionCall(name=item.name, arguments=item.arguments),
-                    )],
-                ))
+                out.append(
+                    Message(
+                        role='assistant',
+                        content=None,
+                        tool_calls=[
+                            StrategyToolCall(
+                                id=item.call_id,
+                                item_id=item.id or None,
+                                function=FunctionCall(name=item.name, arguments=item.arguments),
+                            )
+                        ],
+                    )
+                )
                 if item.result is not None:
-                    out.append(Message(
-                        role='tool',
-                        tool_call_id=item.call_id,
-                        name=item.name,
-                        content=item.result,
-                    ))
+                    out.append(
+                        Message(
+                            role='tool',
+                            tool_call_id=item.call_id,
+                            name=item.name,
+                            content=item.result,
+                        )
+                    )
             # ReasoningOutputItem intentionally dropped.
         _flush_text()
         # Alternation invariant: every user row must be followed by an assistant row.
@@ -850,17 +906,15 @@ class OrchestratorResult(BaseModel):
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
 
-    @model_validator(mode="after")
-    def _validate_max_turns(self) -> "OrchestratorResult":
+    @model_validator(mode='after')
+    def _validate_max_turns(self) -> 'OrchestratorResult':
         """Enforce that max_turns is not less than the number of executed turns.
 
         max_turns=0 is the unset-sentinel (default) and is always accepted.
         Only positive values represent a configured budget and are validated.
         """
         if self.max_turns > 0 and self.max_turns < len(self.turns):
-            raise ValueError(
-                f"max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})"
-            )
+            raise ValueError(f'max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})')
         return self
 
     @property
@@ -910,6 +964,7 @@ class OrchestratorResult(BaseModel):
             ADVERSARIAL_ANALYSIS_PROMPT,
             ADVERSARIAL_INITIAL_USER_PROMPT,
         )
+
         msgs: list[Message] = [
             Message(role='system', content=self.system_prompt or ''),
             Message(role='user', content=ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=self.max_turns)),
@@ -949,6 +1004,64 @@ class AttackOutput(OrchestratorResult):
     vulnerability: str = ''
 
 
+class JuryVote(BaseModel):
+    """A single judge's vote within a jury (RES-739).
+
+    Mirrors the orq platform jury vote contract so red-team jury results share a
+    shape with LLM-evaluator jury results. ``value`` is the judge's verdict
+    (majority across ``judge_repetitions`` passes); ``repetitions`` keeps the raw
+    per-pass votes for inspection.
+
+    Semantic convention:
+        value=True  → RESISTANT (attack failed)
+        value=False → VULNERABLE (attack succeeded)
+    """
+
+    model: str = Field(description='Judge model ID')
+    replacement: bool = Field(default=False, description='True if this judge stood in for a failed configured judge')
+    success: bool = Field(description='True if the judge produced a usable verdict')
+    value: bool | float | str | None = Field(default=None, description='Judge verdict (True=RESISTANT, False=VULNERABLE)')
+    explanation: str = Field(default='', description='Explanation from a representative majority pass')
+    error: str | None = Field(default=None, description='Failure reason when success is False')
+    repetitions: list[bool | None] = Field(
+        default_factory=list,
+        description='Raw per-repetition votes (True/False/None) in call order',
+    )
+
+
+class JuryStats(BaseModel):
+    """Distribution of judge verdicts, treating RESISTANT=1.0 and VULNERABLE=0.0.
+
+    ``mean`` is the fraction of judges voting RESISTANT; ``std`` is the population
+    standard deviation, which serves as the inter-judge disagreement signal
+    (per LLM-jury best practice — high std flags ambiguous cases worth review).
+    """
+
+    mean: float = Field(description='Mean of judge verdicts (RESISTANT=1, VULNERABLE=0)')
+    std: float = Field(description='Population standard deviation of judge verdicts')
+
+
+class JuryResult(BaseModel):
+    """Aggregated panel-of-judges result (RES-739).
+
+    Mirrors the orq platform jury contract. Ties are resolved fail-closed
+    (treated as VULNERABLE) and flagged via ``tie`` rather than hidden in a null
+    verdict, so split panels surface as edge cases for review.
+    """
+
+    judges_configured: int = Field(ge=0, description='Number of configured (non-replacement) judges')
+    judges_succeeded: int = Field(ge=0, description='Number of judges that produced a usable verdict')
+    judges_failed: int = Field(ge=0, description='Number of judge votes that failed')
+    replacements_used: int = Field(default=0, ge=0, description='Number of replacement judges invoked')
+    tie: bool = Field(default=False, description='True when the panel split evenly (resolved fail-closed to VULNERABLE)')
+    votes: list[JuryVote] = Field(default_factory=list, description='Per-judge votes (configured + replacements)')
+    stats: JuryStats | None = Field(default=None, description='Verdict distribution over successful judges')
+    agreement_rate: float | None = Field(
+        default=None,
+        description='Fraction of successful judges in the largest verdict bloc (1.0=unanimous)',
+    )
+
+
 class AttackEvaluationResult(BaseModel):
     """Result from OWASP evaluator for a single attack.
 
@@ -960,11 +1073,17 @@ class AttackEvaluationResult(BaseModel):
        ``evaluatorq.EvaluationResult`` which is used for generic evaluator scores.
     """
 
-    passed: bool | None = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated')
+    passed: bool | None = Field(
+        description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated'
+    )
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
     raw_output: dict[str, Any] | None = Field(default=None, description='Raw evaluator output')
+    jury: JuryResult | None = Field(
+        default=None,
+        description='Panel-of-judges breakdown when a jury is used (RES-739). None for single-judge runs.',
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1267,7 +1386,9 @@ class RedTeamReport(BaseModel):
     total_results: int
 
     agent_context: AgentContext | None = None
-    agent_contexts: dict[str, AgentContext] = Field(default_factory=dict, description='Per-agent context keyed by agent key')
+    agent_contexts: dict[str, AgentContext] = Field(
+        default_factory=dict, description='Per-agent context keyed by agent key'
+    )
 
     results: list[RedTeamResult]
 
@@ -1482,15 +1603,15 @@ _deprecated_warned: set[str] = set()
 
 
 def __getattr__(name: str):
-    if name == "EvaluationResult":
+    if name == 'EvaluationResult':
         if name not in _deprecated_warned:
             import warnings
+
             _deprecated_warned.add(name)
             warnings.warn(
-                "EvaluationResult is deprecated in evaluatorq.redteam.contracts. "
-                "Use AttackEvaluationResult instead.",
+                'EvaluationResult is deprecated in evaluatorq.redteam.contracts. Use AttackEvaluationResult instead.',
                 DeprecationWarning,
                 stacklevel=2,
             )
         return AttackEvaluationResult
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

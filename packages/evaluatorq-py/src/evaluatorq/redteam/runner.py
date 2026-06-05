@@ -1697,12 +1697,22 @@ async def _run_dynamic_or_hybrid(
         # Build evaluator — hybrid routes on hybrid_source; dynamic uses the
         # dynamic evaluator directly.
         has_static = any(pt.static_datapoints for pt in prepared_targets)
+        evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+        # Panel-of-judges / jury config shared by the dynamic evaluator (RES-739).
+        panel_kwargs: dict[str, Any] = {
+            'judges': pipeline_config.judges if pipeline_config else [],
+            'judge_repetitions': pipeline_config.judge_repetitions if pipeline_config else 1,
+            'replacement_judges': pipeline_config.replacement_judges if pipeline_config else [],
+            'min_successful_judges': pipeline_config.min_successful_judges if pipeline_config else 1,
+        }
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 
-            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
             dynamic_evaluator = create_dynamic_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model,
+                llm_client=evaluator_client,
+                cfg=evaluator_cfg,
+                **panel_kwargs,
             )
             static_evaluator = create_owasp_evaluator(
                 evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
@@ -1725,9 +1735,11 @@ async def _run_dynamic_or_hybrid(
 
             evaluators: list[Any] = [{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}]
         else:
-            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
             evaluator = create_dynamic_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model,
+                llm_client=evaluator_client,
+                cfg=evaluator_cfg,
+                **panel_kwargs,
             )
             evaluators = [evaluator]
 

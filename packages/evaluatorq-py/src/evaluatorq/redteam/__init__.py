@@ -80,6 +80,9 @@ from evaluatorq.redteam.contracts import (
     FrameworkSummary,
     FunctionCall,
     JobOutputPayload,
+    JuryResult,
+    JuryStats,
+    JuryVote,
     KnowledgeBaseInfo,
     LLMCallConfig,
     LLMConfig,
@@ -173,6 +176,9 @@ __all__ = [
     # Message models
     "FunctionCall",
     "JobOutputPayload",
+    "JuryResult",
+    "JuryStats",
+    "JuryVote",
     "KnowledgeBaseInfo",
     # Pipeline config
     "LLMCallConfig",
