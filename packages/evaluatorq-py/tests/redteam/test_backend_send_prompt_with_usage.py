@@ -546,8 +546,8 @@ class TestCallableTargetSendPromptWithUsage:
     async def test_async_callable_returns_send_result(self) -> None:
         from evaluatorq.integrations.callable_integration import CallableTarget
 
-        async def agent(prompt: str) -> str:
-            return f"reply:{prompt}"
+        async def agent(messages: list[dict]) -> str:
+            return f"reply:{messages[-1]['content']}"
 
         target = CallableTarget(agent)
         result = await target.respond([Message(role="user", content="hi")])
@@ -559,7 +559,7 @@ class TestCallableTargetSendPromptWithUsage:
     async def test_sync_callable_returns_send_result(self) -> None:
         from evaluatorq.integrations.callable_integration import CallableTarget
 
-        target = CallableTarget(lambda prompt: f"sync:{prompt}")
+        target = CallableTarget(lambda messages: f"sync:{messages[-1]['content']}")
         result = await target.respond([Message(role="user", content="hi")])
         assert isinstance(result, SendResult)
         assert result.text == "sync:hi"
@@ -569,7 +569,7 @@ class TestCallableTargetSendPromptWithUsage:
     async def test_usage_fn_populates_token_usage(self) -> None:
         from evaluatorq.integrations.callable_integration import CallableTarget
 
-        async def agent(prompt: str) -> str:
+        async def agent(messages: list[dict]) -> str:
             return "ok"
 
         def usage_fn(prompt: str, response: str) -> TokenUsage:
@@ -587,7 +587,7 @@ class TestCallableTargetSendPromptWithUsage:
     async def test_usage_fn_exception_yields_none_usage(self) -> None:
         from evaluatorq.integrations.callable_integration import CallableTarget
 
-        async def agent(prompt: str) -> str:
+        async def agent(messages: list[dict]) -> str:
             return "ok"
 
         def bad_usage_fn(prompt: str, response: str) -> TokenUsage:

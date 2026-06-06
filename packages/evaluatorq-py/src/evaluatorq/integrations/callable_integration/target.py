@@ -11,12 +11,16 @@ from loguru import logger
 from evaluatorq.contracts import AgentTarget, Message
 from evaluatorq.redteam.contracts import AgentContext, AgentResponse, OutputMessage, TextOutputItem, TokenUsage
 
-# Accepted callable signatures — may return str (backward-compat) or AgentResponse
+# Accepted callable signatures — receive the conversation as a list of OpenAI
+# chat-format message dicts (``{"role", "content"}`` plus tool fields). The list
+# holds one message for the opening turn and grows with each turn, so the same
+# callable handles single- and multi-turn red teaming. May return ``str`` or
+# :class:`AgentResponse`.
 AgentCallable = (
-    Callable[[str], Awaitable[AgentResponse]]
-    | Callable[[str], Awaitable[str]]
-    | Callable[[str], AgentResponse]
-    | Callable[[str], str]
+    Callable[[list[dict[str, Any]]], Awaitable[AgentResponse]]
+    | Callable[[list[dict[str, Any]]], Awaitable[str]]
+    | Callable[[list[dict[str, Any]]], AgentResponse]
+    | Callable[[list[dict[str, Any]]], str]
 )
 
 
@@ -24,22 +28,25 @@ class CallableTarget(AgentTarget):
     """Wraps any sync or async function as a red teaming target.
 
     Use this as an escape hatch for frameworks that don't have a dedicated
-    integration. You provide a function that takes a prompt string and
-    returns a response string — the wrapper handles the rest.
+    integration. You provide a function that takes the conversation (a list of
+    OpenAI chat-format message dicts) and returns a response — the wrapper
+    handles the rest. The list contains one message on the opening turn and
+    every prior turn on later turns, so a stateless callable still sees full
+    context, matching the stateless OpenAI / Vercel / OpenAI-Agents targets.
 
     Usage::
 
         from evaluatorq.integrations.callable_integration import CallableTarget
 
-        # Async function
-        async def my_agent(prompt: str) -> str:
-            result = await some_framework.run(prompt)
+        # Async function — receives the whole conversation
+        async def my_agent(messages: list[dict]) -> str:
+            result = await some_framework.run(messages)
             return result.text
 
         target = CallableTarget(my_agent)
 
-        # Or a simple sync function
-        target = CallableTarget(lambda prompt: "I can't help with that.")
+        # A simple sync function (reads the last user turn off the list)
+        target = CallableTarget(lambda messages: "I can't help with that.")
 
         # Plumb token counts via usage_fn
         def get_usage(prompt: str, response: str) -> TokenUsage:
@@ -62,13 +69,18 @@ class CallableTarget(AgentTarget):
         """Create a callable red teaming target.
 
         Args:
-            fn: A sync or async function that takes a prompt and returns a response.
+            fn: A sync or async function taking the conversation as a ``list[dict]``
+                in OpenAI chat format (``{"role", "content"}`` plus tool fields) and
+                returning a ``str`` or an :class:`AgentResponse`. The list grows by
+                one user turn each round, so the same callable serves single- and
+                multi-turn runs.
             reset_fn: Optional callback invoked on ``new()`` to clear shared callable state between attacks.
             usage_fn: Optional callable taking ``(prompt, response) -> TokenUsage | None``.
                 Use this to plumb token counts from your underlying framework when the
-                callable itself only returns a string. The function must be synchronous;
-                async usage extraction is not supported. Exceptions raised by ``usage_fn``
-                are logged as warnings and result in ``usage=None``.
+                callable itself only returns a string. ``prompt`` is the last user
+                turn. The function must be synchronous; async usage extraction is not
+                supported. Exceptions raised by ``usage_fn`` are logged as warnings
+                and result in ``usage=None``.
             agent_context: Optional :class:`AgentContext` describing the wrapped
                 callable's tools, memory, system prompt, etc. The red teaming
                 pipeline uses this for capability-aware strategy filtering —
@@ -85,23 +97,26 @@ class CallableTarget(AgentTarget):
         self._agent_context = agent_context
 
     async def respond(self, messages: list[Message]) -> AgentResponse:
-        """Send the last user message to the wrapped callable; return a structured response.
+        """Send the conversation to the wrapped callable; return a structured response.
 
-        Opaque callables take a single prompt, so ``respond`` forwards the last
-        user turn (the caller owns any prior context). Callables that return a
-        plain ``str`` are wrapped in an :class:`AgentResponse`; those returning
-        :class:`AgentResponse` pass through. Token usage from ``usage_fn`` (if
-        provided) is attached to the returned ``AgentResponse``.
+        Forwards the full transcript as a list of OpenAI chat-format dicts —
+        preserving tool turns — so a stateless callable sees prior context.
+        The list holds a single message on the opening turn and grows each
+        round. Callables that return a plain ``str`` are wrapped in an
+        :class:`AgentResponse`; those returning :class:`AgentResponse` pass
+        through. Token usage from ``usage_fn`` (if provided) is attached to the
+        returned ``AgentResponse``.
         """
         if not messages or messages[-1].role != "user":
             raise ValueError("CallableTarget.respond requires messages[-1].role == 'user'")
         prompt = messages[-1].content or ""
+        convo = [m.to_chat_completion() for m in messages]
+        fn: Callable[[list[dict[str, Any]]], Any] = self._fn
         try:
             if self._is_async:
-                coro: Any = self._fn(prompt)
-                result = await coro  # pyright: ignore[reportGeneralTypeIssues]
+                result = await fn(convo)
             else:
-                result = await asyncio.to_thread(self._fn, prompt)  # type: ignore[arg-type]
+                result = await asyncio.to_thread(fn, convo)
         except (asyncio.CancelledError, asyncio.TimeoutError):
             raise
         except Exception as exc:
@@ -130,4 +145,9 @@ class CallableTarget(AgentTarget):
         """Return a fresh copy sharing the same callable, with state reset via reset_fn."""
         if self._reset_fn is not None:
             self._reset_fn()
-        return CallableTarget(self._fn, reset_fn=self._reset_fn, usage_fn=self._usage_fn, agent_context=self._agent_context)
+        return CallableTarget(
+            self._fn,
+            reset_fn=self._reset_fn,
+            usage_fn=self._usage_fn,
+            agent_context=self._agent_context,
+        )

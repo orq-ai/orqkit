@@ -810,9 +810,10 @@ LangChain agents are covered by the integrations above — no separate target is
 ```python
 from evaluatorq.integrations.callable_integration import CallableTarget
 
-# Any LangChain chain or AgentExecutor
-async def run_chain(prompt: str) -> str:
-    result = await chain.ainvoke({"input": prompt})
+# Any LangChain chain or AgentExecutor. The callable receives the full
+# conversation as OpenAI chat-format dicts; read the latest user turn off the end.
+async def run_chain(messages: list[dict]) -> str:
+    result = await chain.ainvoke({"input": messages[-1]["content"]})
     return result["output"]
 
 target = CallableTarget(run_chain)
@@ -847,34 +848,32 @@ target = OpenAIAgentTarget(agent, run_kwargs={"max_turns": 10})
 
 ### Custom Callable (Escape Hatch)
 
-For frameworks without a dedicated integration, wrap any function that takes a prompt and returns a response:
+For frameworks without a dedicated integration, wrap any function that takes the
+conversation and returns a response. The callable receives the full transcript as
+a list of OpenAI chat-format dicts (`{"role", "content"}`, plus tool fields), so it
+works for both single- and multi-turn attacks — even when the callable is stateless:
 
 ```python
 from evaluatorq.integrations.callable_integration import CallableTarget
 from evaluatorq.redteam import red_team
 
-# Async function
-async def my_agent(prompt: str) -> str:
-    result = await some_framework.run(prompt)
+# Async function — gets the whole conversation, can replay it statelessly
+async def my_agent(messages: list[dict]) -> str:
+    result = await some_framework.run(messages)
     return result.text
 
 target = CallableTarget(my_agent)
 
-# With state management
-history = []
+# Or just read the latest user turn off the end
+async def last_turn_agent(messages: list[dict]) -> str:
+    return await some_framework.run(messages[-1]["content"])
 
-async def stateful_agent(prompt: str) -> str:
-    history.append({"role": "user", "content": prompt})
-    response = await my_llm.chat(history)
-    history.append({"role": "assistant", "content": response})
-    return response
-
-target = CallableTarget(stateful_agent, reset_fn=lambda: history.clear())
+target = CallableTarget(last_turn_agent)
 
 report = await red_team(target=target)
 ```
 
-Sync functions are also supported — they are automatically run in a thread to avoid blocking the event loop.
+Sync functions are also supported — they are automatically run in a thread to avoid blocking the event loop. If your callable holds its own state, pass `reset_fn` to clear it between attacks.
 
 ## 📚 API Reference
 
@@ -1101,12 +1100,12 @@ report = asyncio.run(red_team(
 
 ### LLM Client Configuration
 
-Red teaming needs an OpenAI-compatible LLM for attack generation and evaluation. `OPENAI_*` variables take priority over `ORQ_*`:
+Red teaming needs an OpenAI-compatible LLM for attack generation and evaluation. `ORQ_*` variables take priority over `OPENAI_*`:
 
 | Priority | Variables | Description |
 |----------|-----------|-------------|
-| 1st | `OPENAI_API_KEY` + `OPENAI_BASE_URL` (optional) | Direct OpenAI or any compatible endpoint |
-| 2nd | `ORQ_API_KEY` + `ORQ_BASE_URL` (optional) | ORQ router |
+| 1st | `ORQ_API_KEY` + `ORQ_BASE_URL` (optional) | ORQ router |
+| 2nd | `OPENAI_API_KEY` + `OPENAI_BASE_URL` (optional) | Direct OpenAI or any compatible endpoint |
 
 Or pass a custom client: `red_team(..., llm_client=AsyncOpenAI(api_key="sk-..."))`.
 
