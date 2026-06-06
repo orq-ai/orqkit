@@ -39,6 +39,7 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
 from evaluatorq.redteam.backends.base import (
     Backend,
     BareTargetBackend,
+    HybridAgentBackend,
     _coerce_to_agent_response,
 )
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
@@ -797,6 +798,20 @@ def _create_job_for_target(
 # ---------------------------------------------------------------------------
 
 
+def _make_agent_backend(*, target_config: TargetConfig | None, pipeline_config: LLMConfig | None) -> Backend:
+    """Composite backend for ORQ agent targets: ORQ SDK for context+cleanup,
+    OrqResponses (Responses API) for execution.
+
+    The exec backend is built with ``llm_client=None`` on purpose: the
+    OpenResponses backend forwards its client to OrqResponsesTarget, and the
+    attacker LLM client must NOT become the *target* client — passing None lets
+    the target build its own env client routed to /v3/router.
+    """
+    context_backend = resolve_backend('orq', target_config=target_config, pipeline_config=pipeline_config)
+    exec_backend = resolve_backend('openresponses', llm_client=None, target_config=target_config, pipeline_config=pipeline_config)
+    return HybridAgentBackend(context_backend, exec_backend)
+
+
 async def _prepare_target(
     *,
     target: str,
@@ -850,9 +865,12 @@ async def _prepare_target(
     target_kind, target_value = _parse_target(target)
     safe_target = _make_safe_target(target_value)
 
-    backend = resolve_backend(
-        'orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config
-    )
+    if target_kind == TargetKind.AGENT:
+        backend = _make_agent_backend(target_config=target_config, pipeline_config=pipeline_config)
+    else:
+        backend = resolve_backend(
+            'orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config
+        )
 
     # Context retrieval (skip if already fetched for the confirm step)
     if prefetched_agent_context is not None:
