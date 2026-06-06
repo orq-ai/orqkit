@@ -23,7 +23,7 @@ def test_create_target_prefixes_key_and_delegates_to_exec():
     sentinel_target = object()
     exec_backend.create_target.return_value = sentinel_target
 
-    hybrid = HybridAgentBackend(context_backend, exec_backend)
+    hybrid = HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
     result = hybrid.create_target("my-key")
 
     exec_backend.create_target.assert_called_once_with("agent/my-key")
@@ -38,7 +38,7 @@ async def test_resolve_context_delegates_bare_key_to_context_backend():
     sentinel_ctx = AgentContext(key="my-key")
     context_backend.resolve_context.return_value = sentinel_ctx
 
-    hybrid = HybridAgentBackend(context_backend, exec_backend)
+    hybrid = HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
     result = await hybrid.resolve_context("my-key")
 
     context_backend.resolve_context.assert_called_once_with("my-key")
@@ -53,7 +53,7 @@ async def test_cleanup_memory_delegates_to_context_backend_not_exec():
     ctx = AgentContext(key="my-key")
     entity_ids = ["id-1", "id-2"]
 
-    hybrid = HybridAgentBackend(context_backend, exec_backend)
+    hybrid = HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
     await hybrid.cleanup_memory(ctx, entity_ids)
 
     context_backend.cleanup_memory.assert_called_once_with(ctx, entity_ids)
@@ -65,7 +65,7 @@ def test_map_error_delegates_to_exec_backend():
     exec_backend = _make_backend("exec")
     exec_backend.map_error.return_value = ("exec.error", "something went wrong")
 
-    hybrid = HybridAgentBackend(context_backend, exec_backend)
+    hybrid = HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
     exc = RuntimeError("boom")
     result = hybrid.map_error(exc)
 

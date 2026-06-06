@@ -68,11 +68,11 @@ def _get_otlp_endpoint() -> str | None:
     if os.environ.get("ORQ_API_KEY"):
         base_url = os.environ.get("ORQ_BASE_URL")
         if base_url:
-            # Transform my.*.orq.ai → api.*.orq.ai (matches TS tracing setup)
-            import re
-            base_url = re.sub(r"^(https?://)my\.", r"\1api.", base_url.rstrip("/"))
-            return f"{base_url}/v2/otel"
-        # Default to production endpoint
+            # Use ORQ_BASE_URL as-is; OTEL ingest is served on the same my.orq.ai
+            # host as the rest of the Orq API (verified end-to-end: spans POSTed to
+            # my.orq.ai/v2/otel return 200 and are queryable). No my.→api. rewrite.
+            return f"{base_url.rstrip('/')}/v2/otel"
+        # Default to production endpoint (unified my.orq.ai host).
         return "https://my.orq.ai/v2/otel"
 
     return None

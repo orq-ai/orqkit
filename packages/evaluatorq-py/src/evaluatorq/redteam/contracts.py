@@ -11,7 +11,7 @@ Semantic convention:
 
 import re
 from datetime import datetime
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from pydantic import (
     BaseModel,
@@ -22,6 +22,9 @@ from pydantic import (
 )
 
 from evaluatorq.contracts import StrEnum
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -525,7 +528,7 @@ class LLMConfig(BaseModel):
         description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
     )
 
-    def retry_extra_body(self, client: Any) -> dict[str, Any]:
+    def retry_extra_body(self, client: "AsyncOpenAI | None") -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``, gated on the actual client.
 
         The ``retry`` parameter is ORQ-specific and rejected by a plain OpenAI

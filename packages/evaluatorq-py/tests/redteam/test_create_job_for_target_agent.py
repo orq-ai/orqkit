@@ -78,7 +78,7 @@ class TestAgentBranchUsesOrqResponsesTarget:
             exec_backend = OpenResponsesBackend(client=None, instructions=None)
 
         orq_stub = _fake_orq_backend()
-        hybrid = HybridAgentBackend(orq_stub, exec_backend)
+        hybrid = HybridAgentBackend(context_backend=orq_stub, exec_backend=exec_backend)
 
         with patch(_BUILD_SIM_CLIENT, side_effect=_fake_build_sim_client):
             target = hybrid.create_target("foo")
@@ -131,7 +131,7 @@ class TestAgentBranchUsesOrqResponsesTarget:
             exec_backend = OpenResponsesBackend(client=None, instructions=instructions)
 
         orq_stub = _fake_orq_backend()
-        hybrid = HybridAgentBackend(orq_stub, exec_backend)
+        hybrid = HybridAgentBackend(context_backend=orq_stub, exec_backend=exec_backend)
 
         with patch(_BUILD_SIM_CLIENT, side_effect=_fake_build_sim_client):
             target = hybrid.create_target("bar")

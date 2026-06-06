@@ -101,14 +101,19 @@ class HybridAgentBackend(Backend):
     SDK backend, which can actually introspect and delete.
     """
 
-    def __init__(self, context_backend: Backend, exec_backend: Backend) -> None:
+    def __init__(self, *, context_backend: Backend, exec_backend: Backend) -> None:
+        # Keyword-only: both params are the same type (Backend), so positional
+        # args would let a caller silently swap context↔exec — routing cleanup to
+        # the exec backend and execution to the SDK backend.
         super().__init__(name="hybrid-agent")
         self._context = context_backend
         self._exec = exec_backend
 
     def create_target(self, agent_key: str) -> AgentTarget:
         """Delegate to exec backend with ``agent/`` prefix for OrqResponses routing."""
-        return self._exec.create_target(f"agent/{agent_key}")
+        # Strip any existing prefix first so an already-prefixed key does not become
+        # ``agent/agent/<key>``.
+        return self._exec.create_target(f"agent/{agent_key.removeprefix('agent/')}")
 
     async def resolve_context(self, agent_key: str) -> AgentContext:
         """Delegate context resolution to the ORQ SDK backend (has its own cache)."""

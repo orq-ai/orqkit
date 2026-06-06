@@ -815,7 +815,7 @@ def _make_agent_backend(*, target_config: TargetConfig | None, pipeline_config: 
     """
     context_backend = resolve_backend('orq', target_config=target_config, pipeline_config=pipeline_config)
     exec_backend = resolve_backend('openresponses', llm_client=None, target_config=target_config, pipeline_config=pipeline_config)
-    return HybridAgentBackend(context_backend, exec_backend)
+    return HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
 
 
 async def _prepare_target(

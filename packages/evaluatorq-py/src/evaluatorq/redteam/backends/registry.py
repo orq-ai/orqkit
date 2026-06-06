@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 # Retained for backward-compatible imports; canonical values live in common.llm_client.
 ORQ_DEFAULT_BASE_URL = "https://my.orq.ai"
-_ROUTER_SUFFIX = "/v3/router"
 
 
 def create_async_llm_client(role_config: LLMCallConfig | None = None) -> AsyncOpenAI:
