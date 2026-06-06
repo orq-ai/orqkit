@@ -12,6 +12,7 @@ def build_simulation_client(
     config_client: AsyncOpenAI | None = None,
     *,
     extra_api_key: str | None = None,
+    require_orq: bool = False,
 ) -> tuple[AsyncOpenAI, bool]:
     """Build AsyncOpenAI client.
 
@@ -28,6 +29,10 @@ def build_simulation_client(
        ``ORQ_BASE_URL/v3/router`` (default: ``https://my.orq.ai/v3/router``).
     4. ``OPENAI_API_KEY`` env var — uses the OpenAI SDK default base URL so
        traffic goes to OpenAI directly, not to the Orq router.
+
+    When ``require_orq`` is True, step 4 is disabled: the client must route
+    through Orq (used by ORQ-agent targets whose ``agent/<key>`` model id only
+    resolves on the Orq router).
     """
     from evaluatorq.common.llm_client import resolve_llm_client
 
@@ -35,6 +40,7 @@ def build_simulation_client(
         config_client,
         extra_api_key=extra_api_key,
         honor_openai_base_url=False,
+        require_orq=require_orq,
     )
     return resolved.client, resolved.owned
 

@@ -811,7 +811,10 @@ def _make_agent_backend(*, target_config: TargetConfig | None, pipeline_config: 
     The exec backend is built with ``llm_client=None`` on purpose: the
     OpenResponses backend forwards its client to OrqResponsesTarget, and the
     attacker LLM client must NOT become the *target* client — passing None lets
-    the target build its own env client routed to /v3/router.
+    the target build its own env client routed to /v3/router. The OpenResponses
+    backend defaults to ``require_orq=True``, so that self-built client never
+    falls back to ``OPENAI_API_KEY``: an ``agent/<key>`` model only resolves on
+    the Orq router.
     """
     context_backend = resolve_backend('orq', target_config=target_config, pipeline_config=pipeline_config)
     exec_backend = resolve_backend('openresponses', llm_client=None, target_config=target_config, pipeline_config=pipeline_config)

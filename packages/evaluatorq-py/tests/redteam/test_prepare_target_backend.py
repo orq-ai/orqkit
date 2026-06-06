@@ -146,3 +146,36 @@ class TestMakeAgentBackend:
             _make_agent_backend(target_config=None, pipeline_config=None)
 
         assert received_kwargs.get("llm_client") is None
+
+
+class TestExecBackendRequiresOrq:
+    """The agent exec backend must never resolve a self-built client to OpenAI."""
+
+    def test_default_require_orq_is_true(self):
+        """OpenResponsesBackend exclusively serves agent/<key> → require_orq defaults True."""
+        assert OpenResponsesBackend(client=None)._require_orq is True
+
+    def test_create_target_refuses_openai_fallback(self, monkeypatch):
+        """With only OPENAI_API_KEY set, building an agent target must raise, not
+        silently route the hosted agent to OpenAI."""
+        from evaluatorq.common.llm_client import MissingLLMCredentialsError
+
+        monkeypatch.delenv("ORQ_API_KEY", raising=False)
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+
+        backend = OpenResponsesBackend(client=None)
+        with pytest.raises(MissingLLMCredentialsError):
+            backend.create_target("agent/my-agent")
+
+    def test_create_target_uses_orq_router_when_orq_key_present(self, monkeypatch):
+        """ORQ_API_KEY present → target's self-built client routes through the Orq router."""
+        from evaluatorq.common.llm_client import client_routes_through_orq
+
+        monkeypatch.setenv("ORQ_API_KEY", "sk-orq")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+        monkeypatch.delenv("ORQ_BASE_URL", raising=False)
+
+        backend = OpenResponsesBackend(client=None)
+        target = backend.create_target("agent/my-agent")
+
+        assert client_routes_through_orq(target._client) is True  # pyright: ignore[reportAttributeAccessIssue]

@@ -70,6 +70,7 @@ def resolve_llm_client(
     extra_api_key: str | None = None,
     default_orq_host: str = ORQ_DEFAULT_HOST,
     honor_openai_base_url: bool = True,
+    require_orq: bool = False,
 ) -> ResolvedClient:
     """Resolve an ``AsyncOpenAI`` client from an injected client or env vars.
 
@@ -80,9 +81,15 @@ def resolve_llm_client(
         default_orq_host: Host used when ``ORQ_BASE_URL`` is unset.
         honor_openai_base_url: When True, the OpenAI branch respects
             ``OPENAI_BASE_URL``; when False it forces the OpenAI SDK default.
+        require_orq: When True, the ``OPENAI_API_KEY`` fallback is disabled — the
+            client must route through Orq (injected ``config_client``,
+            ``extra_api_key``, or ``ORQ_API_KEY``). Used by ORQ-agent targets
+            whose ``agent/<key>`` model id only resolves on the Orq router, so an
+            ``OPENAI_API_KEY`` left in the env must never silently capture them.
 
     Raises:
-        MissingLLMCredentialsError: No injected client and neither key is set.
+        MissingLLMCredentialsError: No injected client and no usable ORQ key
+            (and, unless ``require_orq``, no ``OPENAI_API_KEY`` either).
     """
     if config_client is not None:
         return ResolvedClient(
@@ -101,6 +108,14 @@ def resolve_llm_client(
             client=AsyncOpenAI(api_key=orq_api_key, base_url=router_url),
             owned=True,
             routes_through_orq=True,
+        )
+
+    if require_orq:
+        raise MissingLLMCredentialsError(
+            "ORQ routing is required for this target but no Orq credentials were "
+            "found. Set ORQ_API_KEY (optionally ORQ_BASE_URL), or pass a pre-built "
+            "Orq-routed client. The OPENAI_API_KEY fallback is disabled here: "
+            "ORQ agent targets must run on the Orq router."
         )
 
     openai_api_key = os.environ.get("OPENAI_API_KEY")
