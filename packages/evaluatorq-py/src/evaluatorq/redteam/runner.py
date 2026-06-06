@@ -1650,7 +1650,13 @@ async def _run_dynamic_or_hybrid(
                         active_progress = _get_active_progress()
                         if active_progress is not None:
                             await active_progress.finish_attack(None)
-                        return {'response': result.text, 'token_usage': result.usage}
+                        return {
+                            'response': result.text,
+                            'tool_calls': result.tool_calls,
+                            'token_usage': result.usage,
+                            'finish_reason': result.finish_reason,
+                            'model': result.model,
+                        }
 
                     @job(f'redteam:hybrid:{at_safe}')
                     async def at_target_job(
