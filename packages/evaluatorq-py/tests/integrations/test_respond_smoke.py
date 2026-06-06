@@ -36,7 +36,7 @@ async def test_callable_target_respond_accepts_non_user_last():
     """CallableTarget forwards the whole transcript; it imposes no last-turn-role guard."""
     from evaluatorq.integrations.callable_integration import CallableTarget
 
-    target = CallableTarget(lambda messages: messages[-1].content)
+    target = CallableTarget(lambda messages: messages[-1].content or "")
     result = await target.respond([Message(role="assistant", content="x")])
     assert result.text == "x"
 
