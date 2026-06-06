@@ -88,7 +88,7 @@ async def send_results_to_orq(
         )
 
         # Get base URL from environment or use default.
-        base_url = os.getenv("ORQ_BASE_URL", "https://api.orq.ai").rstrip("/")
+        base_url = os.getenv("ORQ_BASE_URL", "https://my.orq.ai").rstrip("/")
 
         # Serialize with aliases, stripping None on optional fields (the API
         # rejects null for ``error``, ``explanation``, etc.) but keeping

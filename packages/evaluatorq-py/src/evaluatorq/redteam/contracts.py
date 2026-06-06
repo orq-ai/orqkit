@@ -9,7 +9,6 @@ Semantic convention:
     ``passed=False`` → the agent is VULNERABLE (attack succeeded)
 """
 
-import os
 import re
 from datetime import datetime
 from typing import Any, TypedDict
@@ -526,26 +525,21 @@ class LLMConfig(BaseModel):
         description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
     )
 
-    @property
-    def retry_config(self) -> dict[str, Any]:
-        """ORQ retry config dict for ``extra_body``.
+    def retry_extra_body(self, client: Any) -> dict[str, Any]:
+        """ORQ retry config dict for ``extra_body``, gated on the actual client.
 
-        Returns empty dict when using the OpenAI API directly (the
-        ``retry`` parameter is ORQ-specific and rejected by OpenAI).
+        The ``retry`` parameter is ORQ-specific and rejected by a plain OpenAI
+        endpoint, so it is emitted only when ``client`` actually routes through
+        the Orq router (``…/v3/router``). Gating on the client's ``base_url``
+        rather than on ``ORQ_API_KEY`` avoids sending ``retry`` to an injected
+        OpenAI client just because ``ORQ_API_KEY`` is in the environment for
+        tracing/result-upload.
         """
-        if os.getenv('OPENAI_API_KEY') or not os.getenv('ORQ_API_KEY'):
+        from evaluatorq.common.llm_client import client_routes_through_orq
+
+        if not client_routes_through_orq(client):
             return {}
         return {'retry': {'count': self.retry_count, 'on_codes': self.retry_on_codes}}
-
-    @property
-    def uses_orq_router(self) -> bool:
-        """True when LLM calls route through the ORQ router.
-
-        The ORQ router is used when no ``OPENAI_API_KEY`` is set but
-        ``ORQ_API_KEY`` is available. Controls base_url selection only —
-        does not transform model names.
-        """
-        return not os.getenv('OPENAI_API_KEY') and bool(os.getenv('ORQ_API_KEY'))
 
 
 # Module-level default used by internal pipeline components.

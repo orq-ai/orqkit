@@ -282,7 +282,7 @@ class TestSendResultsUploadFailures:
         build_results: Callable[..., list[DataPointResult]],
     ):
         async def fake_post(self: httpx.AsyncClient, *args: Any, **kwargs: Any) -> httpx.Response:
-            request = httpx.Request("POST", "https://api.orq.ai/v2/spreadsheets/evaluations/receive")
+            request = httpx.Request("POST", "https://my.orq.ai/v2/spreadsheets/evaluations/receive")
             return httpx.Response(
                 401,
                 request=request,
@@ -310,7 +310,7 @@ class TestSendResultsUploadFailures:
         build_results: Callable[..., list[DataPointResult]],
     ):
         async def fake_post(self: httpx.AsyncClient, *args: Any, **kwargs: Any) -> httpx.Response:
-            request = httpx.Request("POST", "https://api.orq.ai/v2/spreadsheets/evaluations/receive")
+            request = httpx.Request("POST", "https://my.orq.ai/v2/spreadsheets/evaluations/receive")
             raise httpx.RequestError("connection failed", request=request)
 
         monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
@@ -334,7 +334,7 @@ class TestSendResultsUploadFailures:
         build_results: Callable[..., list[DataPointResult]],
     ):
         async def fake_post(self: httpx.AsyncClient, *args: Any, **kwargs: Any) -> httpx.Response:
-            request = httpx.Request("POST", "https://api.orq.ai/v2/spreadsheets/evaluations/receive")
+            request = httpx.Request("POST", "https://my.orq.ai/v2/spreadsheets/evaluations/receive")
             return httpx.Response(503, request=request, json={"error": "service unavailable"})
 
         monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
@@ -358,7 +358,7 @@ class TestSendResultsUploadFailures:
         build_results: Callable[..., list[DataPointResult]],
     ):
         async def fake_post(self: httpx.AsyncClient, *args: Any, **kwargs: Any) -> httpx.Response:
-            request = httpx.Request("POST", "https://api.orq.ai/v2/spreadsheets/evaluations/receive")
+            request = httpx.Request("POST", "https://my.orq.ai/v2/spreadsheets/evaluations/receive")
             raise httpx.RequestError("connection failed", request=request)
 
         monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)

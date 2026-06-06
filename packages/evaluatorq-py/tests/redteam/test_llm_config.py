@@ -61,33 +61,36 @@ def test_pipeline_config_is_llm_config():
     assert isinstance(PIPELINE_CONFIG, LLMConfig)
 
 
-def test_retry_config_empty_when_openai_key_set(monkeypatch):
-    monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
-    monkeypatch.delenv('ORQ_API_KEY', raising=False)
+class _FakeClient:
+    """Minimal stand-in exposing ``base_url`` for retry-gating tests."""
+
+    def __init__(self, base_url):
+        self.base_url = base_url
+
+
+def test_retry_extra_body_populated_for_router_client():
+    """A client routed through the Orq router receives ORQ-specific retry hints."""
     cfg = LLMConfig()
-    assert cfg.retry_config == {}
+    body = cfg.retry_extra_body(_FakeClient('https://my.orq.ai/v3/router'))
+    assert body == {'retry': {'count': cfg.retry_count, 'on_codes': cfg.retry_on_codes}}
 
 
-def test_retry_config_populated_when_only_orq_key(monkeypatch):
-    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
-    monkeypatch.setenv('ORQ_API_KEY', 'orq-test')
+def test_retry_extra_body_empty_for_openai_client():
+    """A plain OpenAI client must not receive the ORQ-only ``retry`` field."""
     cfg = LLMConfig()
-    result = cfg.retry_config
-    assert 'retry' in result
-    assert result['retry']['count'] == 3
+    assert cfg.retry_extra_body(_FakeClient('https://api.openai.com/v1')) == {}
 
 
-def test_uses_orq_router_with_orq_key(monkeypatch):
-    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
-    monkeypatch.setenv('ORQ_API_KEY', 'orq-test')
+def test_retry_extra_body_gates_on_client_not_env(monkeypatch):
+    """Gating is on the client's base_url, not on ORQ_API_KEY in the environment."""
+    monkeypatch.setenv('ORQ_API_KEY', 'orq-test')  # present (e.g. for tracing) but irrelevant
     cfg = LLMConfig()
-    assert cfg.uses_orq_router is True
+    assert cfg.retry_extra_body(_FakeClient('https://api.openai.com/v1')) == {}
 
 
-def test_uses_orq_router_false_with_openai_key(monkeypatch):
-    monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
+def test_retry_extra_body_empty_for_client_without_base_url():
     cfg = LLMConfig()
-    assert cfg.uses_orq_router is False
+    assert cfg.retry_extra_body(object()) == {}
 
 
 @pytest.mark.asyncio

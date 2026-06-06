@@ -32,11 +32,11 @@ def _make_report():
 
 
 # ---------------------------------------------------------------------------
-# 1. create_async_llm_client — env var priority (OPENAI first, then ORQ)
+# 1. create_async_llm_client — env var priority (ORQ first, then OPENAI)
 # ---------------------------------------------------------------------------
 
 class TestCreateAsyncLlmClientPriority:
-    """Verify OPENAI_* env vars take priority over ORQ_*."""
+    """Verify ORQ_* env vars take priority over OPENAI_*."""
 
     @patch.dict(
         'os.environ',
@@ -44,11 +44,14 @@ class TestCreateAsyncLlmClientPriority:
         clear=True,
     )
     @patch('openai.AsyncOpenAI')
-    def test_openai_takes_priority_over_orq(self, mock_cls):
+    def test_orq_takes_priority_over_openai(self, mock_cls):
         from evaluatorq.redteam.backends.registry import create_async_llm_client
 
         create_async_llm_client()
-        mock_cls.assert_called_once_with(api_key='sk-openai')
+        mock_cls.assert_called_once_with(
+            api_key='orq-key',
+            base_url='https://my.orq.ai/v3/router',
+        )
 
     @patch.dict(
         'os.environ',
