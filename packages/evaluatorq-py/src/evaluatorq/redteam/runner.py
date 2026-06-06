@@ -1147,13 +1147,23 @@ async def _run_dynamic_or_hybrid(
 
     resolved_agent_targets = agent_targets or []
     all_target_labels, agent_target_labels = _deduplicate_target_labels(targets, resolved_agent_targets)
+    if targets:
+        target_kinds = {_parse_target(t)[0] for t in targets}
+        if target_kinds == {TargetKind.AGENT}:
+            backend_label = 'openresponses'
+        elif TargetKind.AGENT not in target_kinds:
+            backend_label = 'orq'
+        else:
+            backend_label = 'mixed'
+    else:
+        backend_label = 'orq'
     async with with_redteam_span(
         'orq.redteam.pipeline',
         attributes={
             'orq.trace_type': 'evaluatorq',
             'orq.redteam.targets': ', '.join(all_target_labels),
             'orq.redteam.mode': mode,
-            'orq.redteam.backend': 'orq',
+            'orq.redteam.backend': backend_label,
             'orq.redteam.max_turns': max_turns,
             'orq.redteam.parallelism': parallelism,
         },
