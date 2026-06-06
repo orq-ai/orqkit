@@ -787,7 +787,10 @@ def _create_job_for_target(
     kind, value = _parse_target(target)
     common = dict(llm_client=llm_client, system_prompt=system_prompt)
     if kind == TargetKind.AGENT:
-        return create_model_job(agent_key=value, **common)
+        tcfg = TargetConfig(system_prompt=system_prompt)
+        backend = _make_agent_backend(target_config=tcfg, pipeline_config=cfg)
+        at = backend.create_target(value)   # composite prefixes -> model "agent/<value>"
+        return _create_static_job_for_agent_target(at, label=value)
     if kind == TargetKind.DEPLOYMENT:
         return create_model_job(deployment_key=value, **common)
     return create_model_job(model=value, **common)
