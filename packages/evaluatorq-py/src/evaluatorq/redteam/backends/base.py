@@ -91,6 +91,38 @@ class Backend(ABC):
         return ctx
 
 
+class HybridAgentBackend(Backend):
+    """Composite backend for ORQ agent targets: ORQ SDK for context + cleanup,
+    OrqResponses for execution.
+
+    ``create_target`` prefixes the key with ``agent/`` so the OrqResponses
+    Responses API invokes the hosted agent (server-side tools/memory/KB are then
+    applied automatically). Context retrieval and memory cleanup stay on the ORQ
+    SDK backend, which can actually introspect and delete.
+    """
+
+    def __init__(self, context_backend: Backend, exec_backend: Backend) -> None:
+        super().__init__(name="hybrid-agent")
+        self._context = context_backend
+        self._exec = exec_backend
+
+    def create_target(self, agent_key: str) -> AgentTarget:
+        """Delegate to exec backend with ``agent/`` prefix for OrqResponses routing."""
+        return self._exec.create_target(f"agent/{agent_key}")
+
+    async def resolve_context(self, agent_key: str) -> AgentContext:
+        """Delegate context resolution to the ORQ SDK backend (has its own cache)."""
+        return await self._context.resolve_context(agent_key)
+
+    async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
+        """Delegate memory cleanup to the ORQ SDK backend."""
+        await self._context.cleanup_memory(ctx, entity_ids)
+
+    def map_error(self, exc: Exception) -> tuple[str, str]:
+        """Delegate error taxonomy to the exec backend."""
+        return self._exec.map_error(exc)
+
+
 class BareTargetBackend(Backend):
     """Adapter wrapping a bare ``AgentTarget`` so it satisfies the ``Backend`` ABC.
 
