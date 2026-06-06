@@ -1057,16 +1057,16 @@ eq --install-completion
 
 ```python
 import asyncio
-from evaluatorq.redteam import TargetConfig, red_team
+from evaluatorq.redteam import OpenAIModelTarget, red_team
 
 report = asyncio.run(red_team(
-    "llm:gpt-5-mini",
+    OpenAIModelTarget(
+        "gpt-5-mini",
+        system_prompt="You are a helpful customer support assistant.",
+    ),
     categories=["LLM01", "LLM07"],
     max_dynamic_datapoints=5,
     max_turns=2,
-    target_config=TargetConfig(
-        system_prompt="You are a helpful customer support assistant."
-    ),
 ))
 print(f"Resistance rate: {report.summary.resistance_rate:.0%}")
 ```
@@ -1093,11 +1093,11 @@ report = asyncio.run(red_team(
 
 ### Target Types
 
-- **`llm:<model>`** — Test an LLM directly via OpenAI API. Provide a system prompt via `TargetConfig`.
 - **`agent:<key>`** — Test an ORQ platform agent. Auto-discovers tools, memory, and system prompt.
 - **`deployment:<key>`** — Test an ORQ deployment.
+- **`OpenAIModelTarget(<model>)`** — Test an OpenAI model directly (Python API only). Pass `system_prompt=` for the target's system prompt.
 
-`agent:` and `deployment:` targets automatically use the ORQ backend.
+`agent:` and `deployment:` string targets automatically use the ORQ backend. The removed `llm:`/`openai:` string prefixes raise an error — use `OpenAIModelTarget` instead.
 
 ### LLM Client Configuration
 
@@ -1114,18 +1114,17 @@ Or pass a custom client: `red_team(..., llm_client=AsyncOpenAI(api_key="sk-...")
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `target` | `str \| list[str]` | **required** | Target identifier(s) |
+| `target` | `str \| AgentTarget \| list` | **required** | Target(s): `"agent:<key>"`, `"deployment:<key>"`, or an `AgentTarget` such as `OpenAIModelTarget(...)` |
 | `mode` | `str` | `"dynamic"` | `"dynamic"`, `"static"`, or `"hybrid"` |
 | `categories` | `list[str] \| None` | all | OWASP categories (e.g. `["ASI01", "LLM07"]`) |
+| `vulnerabilities` | `list[str] \| None` | `None` | Specific vulnerability IDs to test |
 | `max_turns` | `int` | `5` | Max conversation turns per attack |
 | `max_dynamic_datapoints` | `int \| None` | `None` | Cap generated attack datapoints |
-| `attack_model` | `str` | `"gpt-5-mini"` | Model for adversarial prompt generation |
-| `evaluator_model` | `str` | `"gpt-5-mini"` | Model for evaluation scoring |
-| `parallelism` | `int` | `5` | Max concurrent jobs |
-| `name` | `str \| None` | `"red-team"` | Experiment name |
-| `backend` | `str` | `"openai"` | `"openai"` or `"orq"` (auto-detected for agent targets) |
+| `llm_config` | `LLMConfig \| None` | `None` | Per-role attacker/evaluator model config (replaces the old `attack_model`/`evaluator_model`) |
+| `parallelism` | `int` | `10` | Max concurrent jobs |
+| `name` | `str \| None` | `None` | Experiment name (defaults to `"red-team"`) |
 | `llm_client` | `AsyncOpenAI \| None` | `None` | Custom LLM client |
-| `dataset_path` | `str \| None` | `None` | Path to local static dataset |
+| `dataset` | `Path \| str \| None` | `None` | Path to local static dataset |
 
 ### CLI
 
@@ -1133,8 +1132,8 @@ Or pass a custom client: `red_team(..., llm_client=AsyncOpenAI(api_key="sk-...")
 # Show all options
 eq redteam run --help
 
-# Test an LLM with a system prompt
-eq redteam run -t "llm:gpt-5-mini" \
+# Test an ORQ agent with a system prompt
+eq redteam run -t "agent:my-agent-key" \
   --system-prompt "You are a helpful assistant." \
   -c LLM01 -c LLM07 --max-turns 2 --max-dynamic-datapoints 5 -y
 
@@ -1143,16 +1142,18 @@ eq redteam run -t "agent:my-agent-key" \
   -c ASI01 -c LLM07 --max-turns 3 -y
 
 # Multi-target comparison
-eq redteam run -t "llm:gpt-5-mini" -t "llm:gpt-4o" \
+eq redteam run -t "agent:my-agent-key" -t "deployment:my-deployment-key" \
   -c LLM07 --max-turns 2 --max-dynamic-datapoints 3 -y
 
 # Export reports
-eq redteam run -t "llm:gpt-5-mini" \
+eq redteam run -t "agent:my-agent-key" \
   --save-report report.json --export-md ./reports --export-html ./reports -y
 
 # List previous runs
 eq redteam runs
 ```
+
+The CLI accepts `agent:` and `deployment:` targets only. To red-team an OpenAI model directly, use `OpenAIModelTarget` in the Python API.
 
 See [examples/redteam/](examples/redteam/) for complete Python examples covering both backends.
 
