@@ -732,7 +732,10 @@ def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
 
             return {
                 'response': result.text,
+                'tool_calls': result.tool_calls,
                 'token_usage': result.usage,
+                'finish_reason': result.finish_reason,
+                'model': result.model,
             }
         finally:
             target_close = getattr(target, 'close', None)

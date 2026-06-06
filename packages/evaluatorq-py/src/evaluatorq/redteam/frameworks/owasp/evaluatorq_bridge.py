@@ -13,8 +13,9 @@ from pydantic import BaseModel, ValidationError
 
 from evaluatorq import DataPoint, EvaluationResult
 from evaluatorq.redteam.backends.registry import create_async_llm_client
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, LLMCallConfig, PIPELINE_CONFIG, EvaluatorConfig, RedTeamInput, StaticDataset
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, EvaluatorConfig, LLMCallConfig, PIPELINE_CONFIG, RedTeamInput, StaticDataset
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
+from evaluatorq.redteam.frameworks.owasp.prompt_render import render_owasp_evaluator_prompt
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -149,14 +150,13 @@ def create_owasp_evaluator(
             })
 
         output_text = output.get('response', '') if isinstance(output, dict) else str(output)
-        prompt = evaluator_entity.prompt
-        # Replace {{input.all_messages}} BEFORE inserting untrusted output_text so that
-        # a crafted response containing "{{input.all_messages}}" cannot expand the template.
-        prompt = prompt.replace(
-            '{{input.all_messages}}',
-            json.dumps(data.inputs.get('messages', []), indent=2),
+        tool_calls_raw = output.get('tool_calls') if isinstance(output, dict) else None
+        prompt = render_owasp_evaluator_prompt(
+            evaluator_entity.prompt,
+            messages=data.inputs.get('messages', []),
+            response=output_text,
+            tool_calls=tool_calls_raw,
         )
-        prompt = prompt.replace('{{output.response}}', output_text)
 
         resolved_cfg = cfg or PIPELINE_CONFIG.evaluator
         client = llm_client or resolved_cfg.client or create_async_llm_client()
