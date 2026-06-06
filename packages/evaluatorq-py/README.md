@@ -1061,6 +1061,37 @@ evaluatorq --install-completion
 eq --install-completion
 ```
 
+### Install the CLI as a standalone tool (`uv tool`)
+
+The red teaming (`eq redteam`) and agent simulation (`eq sim`) commands are exposed through the `eq` / `evaluatorq` binary. Install them as an isolated [`uv` tool](https://docs.astral.sh/uv/concepts/tools/) so the CLI is on your `PATH` globally without polluting your current project's environment:
+
+```bash
+# Red teaming CLI
+uv tool install "evaluatorq[redteam]"
+
+# Agent simulation CLI
+uv tool install "evaluatorq[simulation]"
+
+# Both at once
+uv tool install "evaluatorq[redteam,simulation]"
+```
+
+Then call the CLI from anywhere:
+
+```bash
+eq redteam run -t "agent:my-agent-key" -c LLM01 -y
+eq sim run --help
+```
+
+Prefer not to install at all? Run it one-off with `uvx` (downloads to a cache, nothing added to `PATH`):
+
+```bash
+uvx --from "evaluatorq[redteam]" eq redteam run -t "agent:my-agent-key" -c LLM01 -y
+uvx --from "evaluatorq[simulation]" eq sim run --help
+```
+
+Upgrade or remove later with `uv tool upgrade evaluatorq` / `uv tool uninstall evaluatorq`.
+
 #### Test an LLM (OpenAI)
 
 ```python
