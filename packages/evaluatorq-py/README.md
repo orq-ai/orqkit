@@ -808,12 +808,13 @@ LangChain agents are covered by the integrations above — no separate target is
 - **Custom chains or legacy `AgentExecutor`** → wrap with `CallableTarget`:
 
 ```python
+from evaluatorq.contracts import Message
 from evaluatorq.integrations.callable_integration import CallableTarget
 
 # Any LangChain chain or AgentExecutor. The callable receives the full
-# conversation as OpenAI chat-format dicts; read the latest user turn off the end.
-async def run_chain(messages: list[dict]) -> str:
-    result = await chain.ainvoke({"input": messages[-1]["content"]})
+# conversation as typed Message objects; read the latest turn off the end.
+async def run_chain(messages: list[Message]) -> str:
+    result = await chain.ainvoke({"input": messages[-1].content})
     return result["output"]
 
 target = CallableTarget(run_chain)
@@ -850,25 +851,33 @@ target = OpenAIAgentTarget(agent, run_kwargs={"max_turns": 10})
 
 For frameworks without a dedicated integration, wrap any function that takes the
 conversation and returns a response. The callable receives the full transcript as
-a list of OpenAI chat-format dicts (`{"role", "content"}`, plus tool fields), so it
-works for both single- and multi-turn attacks — even when the callable is stateless:
+a list of typed `Message` objects, so it works for both single- and multi-turn
+attacks — even when the callable is stateless:
 
 ```python
+from evaluatorq.contracts import Message
 from evaluatorq.integrations.callable_integration import CallableTarget
 from evaluatorq.redteam import red_team
 
 # Async function — gets the whole conversation, can replay it statelessly
-async def my_agent(messages: list[dict]) -> str:
+async def my_agent(messages: list[Message]) -> str:
     result = await some_framework.run(messages)
     return result.text
 
 target = CallableTarget(my_agent)
 
-# Or just read the latest user turn off the end
-async def last_turn_agent(messages: list[dict]) -> str:
-    return await some_framework.run(messages[-1]["content"])
+# Or just read the latest turn off the end
+async def last_turn_agent(messages: list[Message]) -> str:
+    return await some_framework.run(messages[-1].content)
 
 target = CallableTarget(last_turn_agent)
+
+# Need OpenAI chat-completion dicts? Convert at the boundary yourself:
+async def openai_agent(messages: list[Message]) -> str:
+    chat = [m.to_chat_completion() for m in messages]
+    return (await client.chat.completions.create(model="gpt-4o", messages=chat)).choices[0].message.content
+
+target = CallableTarget(openai_agent)
 
 report = await red_team(target=target)
 ```

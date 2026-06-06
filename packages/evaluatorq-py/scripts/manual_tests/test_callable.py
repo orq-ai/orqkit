@@ -3,8 +3,8 @@
 Tests state management, reset isolation, clone independence,
 sync-in-thread behavior, and error handling.
 
-Callables receive the conversation as a list of OpenAI chat-format dicts;
-read the latest user turn off ``messages[-1]["content"]``.
+Callables receive the conversation as a list of typed ``Message`` objects;
+read the latest turn off ``messages[-1].content``.
 
 No API keys needed. Run with:
     cd packages/evaluatorq-py
@@ -13,7 +13,6 @@ No API keys needed. Run with:
 
 import asyncio
 import time
-from typing import Any
 
 from evaluatorq.contracts import Message
 from evaluatorq.integrations.callable_integration import CallableTarget
@@ -32,8 +31,8 @@ def check(name: str, condition: bool, detail: str = "") -> None:
         print(f"  ✗ {name} — {detail}")
 
 
-def _last(messages: list[dict[str, Any]]) -> str:
-    return messages[-1]["content"]
+def _last(messages: list[Message]) -> str:
+    return messages[-1].content or ""
 
 
 async def _say(target: CallableTarget, text: str) -> str:
@@ -44,7 +43,7 @@ async def test_async_callable() -> None:
     """Async function works and returns correct type."""
     print("\n--- Async callable ---")
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         return f"echo: {_last(messages)}"
 
     target = CallableTarget(agent)
@@ -57,7 +56,7 @@ async def test_sync_runs_in_thread() -> None:
     """Sync function runs in a thread and doesn't block the event loop."""
     print("\n--- Sync runs in thread ---")
 
-    def slow_agent(messages: list[dict[str, Any]]) -> str:
+    def slow_agent(messages: list[Message]) -> str:
         time.sleep(0.3)
         return f"slow: {_last(messages)}"
 
@@ -82,7 +81,7 @@ async def test_stateful_reset() -> None:
 
     history: list[str] = []
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         history.append(_last(messages))
         return f"count={len(history)}"
 
@@ -113,7 +112,7 @@ async def test_full_conversation_forwarded() -> None:
     """Callable receives the full transcript, not just the last turn."""
     print("\n--- Full conversation ---")
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         return f"turns={len(messages)} last={_last(messages)}"
 
     target = CallableTarget(agent)
@@ -131,7 +130,7 @@ async def test_clone_independence() -> None:
 
     counter = {"value": 0}
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         counter["value"] += 1
         return f"call #{counter['value']}"
 
@@ -156,7 +155,7 @@ async def test_parallel_clones() -> None:
     """Multiple clones can run concurrently without errors."""
     print("\n--- Parallel clones ---")
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         await asyncio.sleep(0.05)
         return f"reply to: {_last(messages)}"
 
@@ -177,7 +176,7 @@ async def test_empty_and_long_prompts() -> None:
     """Edge cases: empty string and very long prompts."""
     print("\n--- Edge cases ---")
 
-    async def agent(messages: list[dict[str, Any]]) -> str:
+    async def agent(messages: list[Message]) -> str:
         return f"len={len(_last(messages))}"
 
     target = CallableTarget(agent)
