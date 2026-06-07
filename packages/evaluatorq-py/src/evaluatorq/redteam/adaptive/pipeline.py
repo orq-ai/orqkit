@@ -71,6 +71,9 @@ def _set_attack_span_attrs(span: Any, result: AttackOutput) -> None:
         'orq.redteam.actual_turns': result.n_turns,
         'orq.redteam.duration_seconds': result.duration_seconds,
     })
+    if result.objective_rationale:
+        # Attacker self-report (signal, not evidence) — recorded for auditing only.
+        set_span_attrs(span, {'orq.redteam.objective_rationale': result.objective_rationale[:500]})
     if result.error:
         set_span_attrs(span, {
             'orq.redteam.error_type': result.error_type,

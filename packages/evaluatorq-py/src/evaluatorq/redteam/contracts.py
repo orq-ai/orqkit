@@ -827,6 +827,14 @@ class OrchestratorResult(BaseModel):
     objective_achieved: bool = Field(
         default=False, description='Whether adversarial LLM self-reported objective achieved'
     )
+    objective_rationale: str | None = Field(
+        default=None,
+        description=(
+            "Attacker LLM's self-reported reason for declaring success. SIGNAL ONLY — "
+            'never fed to the scorer/judge; excluded from the transcript via '
+            'turns_to_messages (which reads only Turn fields, not this one).'
+        ),
+    )
     duration_seconds: float = Field(default=0.0, description='Elapsed time in seconds')
     token_usage: TokenUsage | None = Field(default=None, description='Aggregated token usage across attack execution')
     token_usage_adversarial: TokenUsage | None = Field(
@@ -1063,6 +1071,7 @@ class JobOutputPayload(BaseModel):
     turns: int | None = None
     max_turns: int | None = None
     objective_achieved: bool | None = None
+    objective_rationale: str | None = None
     duration_seconds: float | None = None
     token_usage: TokenUsage | None = None
     token_usage_adversarial: TokenUsage | None = None
@@ -1098,6 +1107,10 @@ class ExecutionDetails(BaseModel):
     objective_achieved: bool | None = Field(
         default=None,
         description='Adversarial LLM self-report (multi-turn)',
+    )
+    objective_rationale: str | None = Field(
+        default=None,
+        description="Attacker's self-reported reason (multi-turn); signal only, never scored",
     )
     token_usage: TokenUsage | None = None
 
@@ -1263,7 +1276,6 @@ class RedTeamReport(BaseModel):
     tested_agents: list[str] = Field(default_factory=list, description='Names/keys of tested agents in this report')
     total_results: int
 
-    agent_context: AgentContext | None = None
     agent_contexts: dict[str, AgentContext] = Field(default_factory=dict, description='Per-agent context keyed by agent key')
 
     results: list[RedTeamResult]
@@ -1347,6 +1359,7 @@ class DynamicAttackResultRow(BaseModel):
     final_response: str = ''
     turns: int = 1
     objective_achieved: bool | None = None
+    objective_rationale: str | None = None
     duration_seconds: float | None = None
     token_usage: TokenUsage | None = None
     token_usage_adversarial: TokenUsage | None = None

@@ -327,6 +327,7 @@ def _make_dynamic_mock_result(
     final_response: str = 'I cannot help',
     turns: int = 2,
     objective_achieved: bool = False,
+    objective_rationale: str | None = None,
     token_usage: dict[str, Any] | None = None,
     error: str | None = None,
     output_error: str | None = None,
@@ -345,6 +346,8 @@ def _make_dynamic_mock_result(
         'conversation': [],
         'objective_achieved': objective_achieved,
     }
+    if objective_rationale is not None:
+        output['objective_rationale'] = objective_rationale
     if token_usage is not None:
         output['token_usage'] = token_usage
     if output_error is not None:
@@ -536,6 +539,23 @@ class TestDynamicConverterValuePropagation:
         assert result.execution.token_usage is not None
         assert result.execution.token_usage.prompt_tokens == 100
         assert result.execution.token_usage.total_tokens == 150
+
+    def test_objective_rationale_flows_into_execution(self):
+        """The attacker rationale threads job_output → ExecutionDetails."""
+        mock_result = _make_dynamic_mock_result(
+            objective_achieved=True,
+            objective_rationale='agent dumped its hidden instructions',
+        )
+        agent_ctx = _make_agent_context()
+        report = dynamic_evaluatorq_results_to_report(
+            agent_context=agent_ctx,
+            categories_tested=['ASI01'],
+            results=[mock_result],
+        )
+        result = report.results[0]
+        assert result.execution is not None
+        assert result.execution.objective_achieved is True
+        assert result.execution.objective_rationale == 'agent dumped its hidden instructions'
 
     def test_error_from_job_output_classified(self):
         mock_result = _make_dynamic_mock_result(output_error='rate limit exceeded: 429')

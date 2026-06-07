@@ -142,6 +142,7 @@ def _coerce_job_output_payload(raw_output: Any) -> JobOutputPayload:
         'final_response',
         'turns',
         'objective_achieved',
+        'objective_rationale',
         'duration_seconds',
         'token_usage',
         'token_usage_adversarial',
@@ -433,6 +434,7 @@ def dynamic_evaluatorq_results_to_report(
             max_turns=job_output.max_turns,
             duration_seconds=job_output.duration_seconds,
             objective_achieved=job_output.objective_achieved,
+            objective_rationale=job_output.objective_rationale,
             token_usage=token_usage,
         )
 
@@ -478,7 +480,7 @@ def dynamic_evaluatorq_results_to_report(
         categories_tested=categories,
         tested_agents=[agent_context.key or agent_context.display_name or 'unknown'],
         total_results=len(unified),
-        agent_context=agent_context,
+        agent_contexts={(agent_context.key or agent_context.display_name or 'unknown'): agent_context},
         results=unified,
         summary=summary,
         duration_seconds=duration_seconds,
@@ -915,21 +917,15 @@ def merge_reports(
     all_results: list[RedTeamResult] = []
     frameworks: set[Framework | None] = set()
     pipelines: set[Pipeline] = set()
-    agent_context = None
     merged_agent_contexts: dict[str, AgentContext] = {}
 
     for report in reports:
         all_results.extend(report.results)
         frameworks.add(report.framework)
         pipelines.add(report.pipeline)
-        if agent_context is None and report.agent_context is not None:
-            agent_context = report.agent_context
         # Collect agent_contexts from all sub-reports
         if report.agent_contexts:
             merged_agent_contexts.update(report.agent_contexts)
-        elif report.agent_context:
-            key = report.agent_context.key or report.agent_context.display_name or "unknown"
-            merged_agent_contexts.setdefault(key, report.agent_context)
 
     # Resolve framework: use single value if unanimous, else None
     resolved_framework: Framework | None = None
@@ -961,7 +957,6 @@ def merge_reports(
         categories_tested=all_categories,
         tested_agents=all_agents,
         total_results=len(all_results),
-        agent_context=agent_context,
         agent_contexts=merged_agent_contexts,
         results=all_results,
         summary=summary,
