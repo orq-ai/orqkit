@@ -18,20 +18,13 @@ from loguru import logger
 from openai import APIConnectionError, APIStatusError
 from pydantic import BaseModel, ValidationError
 
-try:
-    from enum import StrEnum
-except ImportError:  # Python 3.10
-    from enum import Enum
-
-    class StrEnum(str, Enum):  # type: ignore[no-redef]
-        pass
-
-
 from evaluatorq.common.llm_call import execute_chat_completion
 from evaluatorq.common.template_engine import render_template
 from evaluatorq.contracts import (
     LLMCallConfig,
+    Message,
     OutputMessage,
+    StrEnum,
     TextOutputItem,
     TokenUsage,
     ToolCallOutputItem,
@@ -100,7 +93,7 @@ def _format_output_message(item: OutputMessage) -> dict[str, Any] | None:
 
 def build_eval_replacements(
     *,
-    input_messages: list[dict[str, Any]] | list[Any],
+    input_messages: list[dict[str, Any]] | list[Message],
     output_messages: list[OutputMessage],
     expected_output: str | None = None,
     system_instructions: str | None = None,
@@ -201,7 +194,7 @@ async def run_judge(
             )
         raw_content = response.choices[0].message.content or '{}'
         payload = response_model.model_validate_json(raw_content)
-        return JudgeOutcome(payload=payload, token_usage=usage, raw_content=raw_content)  # type: ignore[arg-type]
+        return JudgeOutcome(payload=payload, token_usage=usage, raw_content=raw_content)  # pyright: ignore[reportArgumentType]
     except asyncio.TimeoutError:
         logger.error('Judge timed out after {}ms', cfg.timeout_ms)
         return JudgeOutcome(

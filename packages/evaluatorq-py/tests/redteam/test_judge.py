@@ -4,7 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from openai import APIConnectionError
+from openai import APIConnectionError, APIStatusError
 
 from evaluatorq.contracts import LLMCallConfig
 from evaluatorq.redteam.judge import EvaluatorResponsePayload, JudgeError, run_judge
@@ -34,6 +34,8 @@ async def test_success_parses_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     assert outcome.error_kind is None
     assert isinstance(outcome.payload, EvaluatorResponsePayload)
     assert outcome.payload.value is True
+    assert outcome.token_usage is not None
+    assert outcome.raw_content == '{"value": true, "explanation": "resisted"}'
 
 
 @pytest.mark.asyncio
@@ -67,6 +69,7 @@ async def test_parse_error_captured(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert outcome.error_kind is JudgeError.PARSE
     assert outcome.payload is None
+    assert outcome.raw_content == 'not json'
 
 
 @pytest.mark.asyncio
@@ -83,4 +86,41 @@ async def test_api_connection_captured_with_exc(monkeypatch: pytest.MonkeyPatch)
         replacements={},
     )
     assert outcome.error_kind is JudgeError.API_CONNECTION
+    assert outcome.error_exc is exc
+
+
+@pytest.mark.asyncio
+async def test_api_status_captured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('evaluatorq.common.llm_call.get_trace_context_headers', AsyncMock(return_value={}))
+    client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.headers = {}
+    exc = APIStatusError('internal server error', response=mock_response, body=None)
+    client.chat.completions.create = AsyncMock(side_effect=exc)
+    outcome = await run_judge(
+        client=client,
+        model='m',
+        cfg=LLMCallConfig(),
+        prompt_template='x',
+        replacements={},
+    )
+    assert outcome.error_kind is JudgeError.API_STATUS
+    assert outcome.error_exc is exc
+
+
+@pytest.mark.asyncio
+async def test_unknown_error_captured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('evaluatorq.common.llm_call.get_trace_context_headers', AsyncMock(return_value={}))
+    client = MagicMock()
+    exc = ValueError('boom')
+    client.chat.completions.create = AsyncMock(side_effect=exc)
+    outcome = await run_judge(
+        client=client,
+        model='m',
+        cfg=LLMCallConfig(),
+        prompt_template='x',
+        replacements={},
+    )
+    assert outcome.error_kind is JudgeError.UNKNOWN
     assert outcome.error_exc is exc
