@@ -15,6 +15,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from evaluatorq import DataPoint, EvaluationResult
+from evaluatorq.contracts import TextOutputItem, ToolCallOutputItem
+from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
+    _adapt_static_output,
+    _adapt_tool_call,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -223,3 +228,72 @@ class TestStaticOWASPScorerToolCalls:
         rendered = captured_prompts[0]
         # REAL_RESPONSE should appear exactly once (in the response section)
         assert rendered.count('REAL_RESPONSE') == 1
+
+
+# ---------------------------------------------------------------------------
+# Direct unit tests for the static-output adapters (all three tool-call shapes)
+# ---------------------------------------------------------------------------
+
+
+class TestAdaptToolCall:
+    """_adapt_tool_call must coerce every supported tool-call shape into a real
+    ToolCallOutputItem (build_eval_replacements filters by isinstance)."""
+
+    def test_already_tool_call_item_returned_as_is(self) -> None:
+        tc = ToolCallOutputItem(id='c1', call_id='c1', name='read', arguments='{}', result=None)
+        assert _adapt_tool_call(tc) is tc
+
+    def test_openai_nested_function_dict_shape(self) -> None:
+        # The real on-disk static-dataset shape: {"id", "function": {"name", "arguments"}}.
+        tc = _adapt_tool_call({
+            'id': 'call_9',
+            'function': {'name': 'execute_shell', 'arguments': '{"cmd": "rm -rf /"}'},
+            'result': 'denied',
+        })
+        assert isinstance(tc, ToolCallOutputItem)
+        assert tc.name == 'execute_shell'
+        assert tc.id == 'call_9'
+        assert tc.arguments_dict == {'cmd': 'rm -rf /'}
+        assert tc.result == 'denied'
+
+    def test_flat_dict_shape_with_dict_arguments(self) -> None:
+        # Flat dict (no nested "function"), arguments as a dict → serialized to a JSON string.
+        tc = _adapt_tool_call({'name': 'fetch', 'arguments': {'url': 'http://x'}, 'id': 'c2'})
+        assert isinstance(tc, ToolCallOutputItem)
+        assert tc.name == 'fetch'
+        assert tc.arguments_dict == {'url': 'http://x'}
+
+    def test_attribute_object_shape_uses_arguments_dict(self) -> None:
+        # Attribute-bearing object (orchestrator item / test double). MagicMock's `name=`
+        # kwarg is reserved, so set .name explicitly to mimic the real item shape.
+        src = MagicMock()
+        src.name = 'do_thing'
+        src.arguments_dict = {'k': 'v'}
+        src.id = 'c3'
+        src.result = 'ok'
+        tc = _adapt_tool_call(src)
+        assert isinstance(tc, ToolCallOutputItem)
+        assert tc.name == 'do_thing'
+        assert tc.arguments_dict == {'k': 'v'}
+        assert tc.result == 'ok'
+
+
+class TestAdaptStaticOutput:
+    def test_bare_string_becomes_single_text_item(self) -> None:
+        items = _adapt_static_output('just text')
+        assert len(items) == 1
+        assert isinstance(items[0], TextOutputItem)
+        assert items[0].text == 'just text'
+
+    def test_empty_string_yields_no_items(self) -> None:
+        assert _adapt_static_output('') == []
+
+    def test_dict_with_response_and_dict_tool_calls(self) -> None:
+        items = _adapt_static_output({
+            'response': 'hi',
+            'tool_calls': [{'function': {'name': 'f', 'arguments': '{}'}, 'id': 'c1'}],
+        })
+        assert isinstance(items[0], TextOutputItem)
+        assert items[0].text == 'hi'
+        assert isinstance(items[1], ToolCallOutputItem)
+        assert items[1].name == 'f'

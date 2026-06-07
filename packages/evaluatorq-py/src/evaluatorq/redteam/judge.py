@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
-from openai import APIConnectionError, APIStatusError
+from openai import APIConnectionError, APIStatusError, APITimeoutError
 from pydantic import BaseModel, ValidationError
 
 from evaluatorq.common.llm_call import execute_chat_completion
@@ -129,7 +129,7 @@ def build_eval_replacements(
             'messages': out_transcript,
         },
         'log': {
-            'input': in_msgs[-1]['content'] if in_msgs else '',
+            'input': in_msgs[-1].get('content', '') if in_msgs else '',
             'output': response,
             'reference': reference,
             'expected_output': reference,
@@ -188,14 +188,16 @@ async def run_judge(
                 span=span,
                 timeout_s=cfg.timeout_ms / 1000.0,
                 temperature=cfg.temperature,
-                max_tokens=cfg.max_tokens,
+                max_completion_tokens=cfg.max_tokens,
                 response_format={'type': 'json_object'},
                 extra_kwargs=cfg.extra_kwargs or None,
             )
         raw_content = response.choices[0].message.content or '{}'
         payload = response_model.model_validate_json(raw_content)
         return JudgeOutcome(payload=payload, token_usage=usage, raw_content=raw_content)  # pyright: ignore[reportArgumentType]
-    except asyncio.TimeoutError:
+    except (asyncio.TimeoutError, APITimeoutError):
+        # APITimeoutError subclasses APIConnectionError, so catch it HERE (before the
+        # connection branch) to classify client-side timeouts as TIMEOUT, not API_CONNECTION.
         logger.error('Judge timed out after {}ms', cfg.timeout_ms)
         return JudgeOutcome(
             error_kind=JudgeError.TIMEOUT,
@@ -203,10 +205,12 @@ async def run_judge(
             timeout_ms=cfg.timeout_ms,
         )
     except ValidationError as e:
-        logger.error('Judge returned malformed JSON: {}', e)
+        logger.error('Judge returned malformed JSON: {} | raw (truncated): {}', e, repr(raw_content)[:500])
         return JudgeOutcome(error_kind=JudgeError.PARSE, error_message=str(e), raw_content=raw_content)
     except (APIConnectionError, APIStatusError) as e:
-        return JudgeOutcome(error_kind=_classify(e), error_message=str(e), error_exc=e)
+        kind = _classify(e)
+        logger.error('Judge API error ({}): {}', kind.value, e)
+        return JudgeOutcome(error_kind=kind, error_message=str(e), error_exc=e)
     except Exception as e:
-        logger.error('Judge failed: {}', e)
+        logger.exception('Judge failed (unknown): {}', e)
         return JudgeOutcome(error_kind=JudgeError.UNKNOWN, error_message=str(e), error_exc=e)

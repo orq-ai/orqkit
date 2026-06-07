@@ -4,7 +4,7 @@ Faithful port of Orq's canonical evaluator template engine. Source of truth:
 orquesta-web ``apps/evals/python-runner/evals_python_runner/utils/evaluator_manager/
 llm/evaluator.py`` (``replace_curly_entries`` / ``is_valid_template_path`` /
 ``VALID_PATH_PATTERN``), mirrored in Go at ``libs/go/graders/template_engine.go``.
-Ported from orquesta-web commit 95d9a2fef3 (capture the exact SHA at port time).
+Ported from orquesta-web commit 95d9a2fef32229c179c24e44a49ccdffcc2d9361.
 
 This is a FORK: upstream evolves in a repo evaluatorq-py does not depend on, with no
 CI link. The parity suite (tests/common/test_template_engine.py) pins behaviour at
@@ -26,7 +26,7 @@ from loguru import logger
 # Whitelist: bare identifier, dot-separated identifiers / pure-numeric segments,
 # bracketed (possibly negative) numeric indices, or any mix. Rejects function
 # calls, string literals, assignments, ``;``, ``{}``, etc. Byte-identical to
-# upstream VALID_PATH_PATTERN.
+# upstream VALID_PATH_PATTERN as of the port SHA (manual re-sync; not CI-enforced).
 VALID_PATH_PATTERN = r'^[a-zA-Z_][a-zA-Z0-9_]*(?:\.(?:[a-zA-Z_][a-zA-Z0-9_]*|\d+)|\[-?\d+\])*$'
 
 _CURLY = re.compile(r'{{(.*?)}}')

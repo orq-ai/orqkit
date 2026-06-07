@@ -34,6 +34,7 @@ async def execute_chat_completion(
     timeout_s: float,
     temperature: float | None = None,
     max_tokens: int | None = None,
+    max_completion_tokens: int | None = None,
     tools: list[dict[str, Any]] | None = None,
     response_format: dict[str, Any] | None = None,
     inject_trace_headers: bool = True,
@@ -49,6 +50,8 @@ async def execute_chat_completion(
         params['temperature'] = temperature
     if max_tokens is not None:
         params['max_tokens'] = max_tokens
+    if max_completion_tokens is not None:
+        params['max_completion_tokens'] = max_completion_tokens
     if tools:  # truthiness (not `is not None`) for parity with BaseAgent
         params['tools'] = tools
         params['tool_choice'] = 'auto'

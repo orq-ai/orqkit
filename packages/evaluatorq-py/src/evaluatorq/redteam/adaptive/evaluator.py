@@ -36,10 +36,14 @@ class OWASPEvaluator:
         cfg: LLMCallConfig | None = None,
     ):
         """Initialize the evaluator with the given model and optional async LLM client."""
-        self._cfg = cfg or PIPELINE_CONFIG.evaluator
+        base_cfg = cfg or PIPELINE_CONFIG.evaluator
+        # Fold constructor-level llm_kwargs into the cfg's extra_kwargs so they reach
+        # run_judge (which forwards cfg.extra_kwargs). Without this, llm_kwargs threaded
+        # via create_dynamic_evaluator would be silently dropped on the judge call.
+        self.llm_kwargs = {**base_cfg.extra_kwargs, **(llm_kwargs or {})}
+        self._cfg = base_cfg.model_copy(update={'extra_kwargs': self.llm_kwargs})
         self.evaluator_model = evaluator_model
-        self.client = llm_client or self._cfg.client or create_async_llm_client()
-        self.llm_kwargs = {**self._cfg.extra_kwargs, **(llm_kwargs or {})}
+        self.client = llm_client or base_cfg.client or create_async_llm_client()
         logger.debug(f'Initialized OWASPEvaluator with model: {evaluator_model}')
 
     async def evaluate_vulnerability(
