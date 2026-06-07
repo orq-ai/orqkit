@@ -13,6 +13,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from openai import AsyncOpenAI
 
+from evaluatorq.contracts import TextOutputItem
+
 
 def _make_report():
     """Create a minimal RedTeamReport for use in tests."""
@@ -138,6 +140,33 @@ class TestOWASPEvaluatorLlmClient:
         mock_create.assert_called_once()
         assert evaluator.client is mock_create.return_value
 
+    @pytest.mark.asyncio
+    @patch('evaluatorq.redteam.adaptive.evaluator.get_evaluator_for_category')
+    @patch('evaluatorq.redteam.adaptive.evaluator.resolve_category_safe')
+    async def test_dynamic_evaluator_empty_choices_inconclusive(self, mock_resolve, mock_get_cat):
+        """The dynamic OWASPEvaluator must degrade an empty ``choices`` list to an
+        inconclusive result (passed=None), not raise IndexError. Pins the broad-except
+        safety net so a future narrowing can't reintroduce the crash."""
+        from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
+
+        mock_resolve.return_value = None  # force the category-fallback path
+        mock_eval = MagicMock()
+        mock_eval.prompt = 'Evaluate the response'
+        mock_get_cat.return_value = mock_eval
+
+        custom_client = AsyncMock(spec=AsyncOpenAI)
+        bad_response = MagicMock()
+        bad_response.choices = []  # choices[0] would IndexError
+        custom_client.chat.completions.create = AsyncMock(return_value=bad_response)
+
+        evaluator = OWASPEvaluator(llm_client=custom_client)
+        result = await evaluator.evaluate(
+            'OWASP-UNKNOWN', messages=[], output_messages=[TextOutputItem(text='hi', annotations=[])]
+        )
+
+        assert result.passed is None
+        assert result.raw_output is not None and 'error' in result.raw_output
+
 
 # ---------------------------------------------------------------------------
 # 4. create_dynamic_evaluator — threads llm_client to OWASPEvaluator
@@ -176,10 +205,13 @@ class TestCreateOWASPEvaluatorLlmClient:
         from evaluatorq import DataPoint, EvaluationResult
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 
+        from types import SimpleNamespace
+
         custom_client = AsyncMock(spec=AsyncOpenAI)
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = '{"value": true, "explanation": "Resistant"}'
+        mock_response.usage = SimpleNamespace(prompt_tokens=7, completion_tokens=3, total_tokens=10)
         custom_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         mock_eval = MagicMock()
@@ -195,6 +227,41 @@ class TestCreateOWASPEvaluatorLlmClient:
         custom_client.chat.completions.create.assert_awaited_once()
         mock_create.assert_not_called()
         assert isinstance(result, EvaluationResult)
+        # The judge's token usage + raw response are captured (was dropped before).
+        assert result.token_usage is not None
+        assert result.token_usage.total_tokens == 10
+        assert result.token_usage.prompt_tokens == 7
+        assert result.token_usage.completion_tokens == 3
+        # raw_output carries only the raw model content (no duplicated value/explanation).
+        assert result.raw_output == {'raw_content': '{"value": true, "explanation": "Resistant"}'}
+
+    @pytest.mark.asyncio
+    @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.get_evaluator_for_category')
+    @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.create_async_llm_client')
+    async def test_scorer_empty_choices_degrades_to_error(self, mock_create, mock_get_eval):
+        """An empty ``choices`` list (e.g. content-filter block) must degrade to a
+        clean inconclusive result, not raise IndexError past the error handling."""
+        from evaluatorq import DataPoint, EvaluationResult
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
+
+        custom_client = AsyncMock(spec=AsyncOpenAI)
+        bad_response = MagicMock()
+        bad_response.choices = []  # no choices → choices[0] would IndexError
+        custom_client.chat.completions.create = AsyncMock(return_value=bad_response)
+
+        mock_eval = MagicMock()
+        mock_eval.prompt = 'Evaluate: {{output.response}}'
+        mock_get_eval.return_value = mock_eval
+
+        evaluator_config = create_owasp_evaluator(llm_client=custom_client)
+        result = await evaluator_config['scorer']({
+            'data': DataPoint(inputs={'category': 'ASI01', 'messages': []}),
+            'output': {'response': 'test response'},
+        })
+
+        assert isinstance(result, EvaluationResult)
+        assert result.value == 'error'
+        assert result.pass_ is None
 
     @pytest.mark.asyncio
     @patch('evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge.get_evaluator_for_category')

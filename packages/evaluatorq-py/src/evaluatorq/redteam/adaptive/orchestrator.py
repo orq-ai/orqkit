@@ -265,9 +265,13 @@ def _parse_objective_marker(text: str) -> tuple[bool, str | None, str]:
       legacy no-colon form it is the same-line remainder (preserving old behavior).
     """
     stripped = text.lstrip()
-    if not stripped.startswith(OBJECTIVE_MARKER):
-        return False, None, text.strip()
     after = stripped[len(OBJECTIVE_MARKER) :]
+    # Require a word boundary after the marker so a token that merely *begins*
+    # with it (e.g. ``OBJECTIVE_ACHIEVEDX`` or ``OBJECTIVE_ACHIEVED_LATER``) is
+    # not misread as a success signal. Accept only end-of-string, whitespace,
+    # or a ``:`` rationale separator immediately after the marker.
+    if not stripped.startswith(OBJECTIVE_MARKER) or (after and after[0] not in ': \t\r\n'):
+        return False, None, text.strip()
     first_line, _, rest = after.partition('\n')
     if first_line.lstrip().startswith(':'):
         rationale = first_line.lstrip()[1:].strip() or None
@@ -675,13 +679,24 @@ class MultiTurnOrchestrator:
                         # Rebuild attacker record with stripped prompt
                         current_attacker = current_attacker.model_copy(update={'generated_prompt': attack_prompt})
                         if not attack_prompt:
-                            # Adversarial LLM signaled success but no more prompts needed
-                            logger.info('Adversarial LLM signaled objective achieved')
+                            # Nothing left to send. Distinguish a genuine accepted
+                            # success from a rejected turn-0 marker (objective_achieved
+                            # stays False above) so logs/spans never claim a success
+                            # that was dropped.
+                            if objective_achieved:
+                                logger.info('Adversarial LLM signaled objective achieved')
+                                finish_reason = 'objective_achieved'
+                            else:
+                                logger.info(
+                                    'Adversarial LLM produced only a rejected turn-0 marker; '
+                                    'ending with no usable prompt'
+                                )
+                                finish_reason = 'no_usable_prompt'
                             if progress is not None and task_id is not None:
                                 await progress.update_attack(task_id, completed=turn + 1)
                             set_span_attrs(turn_span, {
                                 "orq.redteam.adversarial_tokens": int(usage.total_tokens or 0) if usage is not None else 0,
-                                "orq.redteam.finish_reason": "objective_achieved",
+                                "orq.redteam.finish_reason": finish_reason,
                                 "orq.redteam.objective_rationale": (objective_rationale or "")[:500],
                             })
                             break

@@ -222,10 +222,15 @@ def create_owasp_evaluator(
                 'pass': None,
             })
 
+        # Carry the judge's cost + raw response so the report layer can surface and
+        # aggregate evaluator token usage (stripped from the platform upload at the
+        # send boundary; see evaluatorq.send_results).
         return EvaluationResult.model_validate({
             'value': outcome.payload.value,
             'explanation': outcome.payload.explanation,
             'pass': outcome.payload.value,
+            'token_usage': outcome.token_usage,
+            'raw_output': {'raw_content': outcome.raw_content},
         })
 
     return {'name': 'owasp-agentic-security', 'scorer': scorer}

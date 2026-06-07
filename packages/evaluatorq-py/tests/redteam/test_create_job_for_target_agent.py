@@ -20,7 +20,9 @@ _RUNNER = "evaluatorq.redteam.runner"
 _BUILD_SIM_CLIENT = "evaluatorq.openresponses.client.build_simulation_client"
 
 
-def _fake_build_sim_client(config_client: object = None, *, extra_api_key: object = None) -> tuple[MagicMock, bool]:
+def _fake_build_sim_client(
+    config_client: object = None, *, extra_api_key: object = None, require_orq: object = False
+) -> tuple[MagicMock, bool]:
     """Stub for build_simulation_client — returns a MagicMock client so no env-var
     lookups happen at OrqResponsesTarget construction time."""
     return MagicMock(), True

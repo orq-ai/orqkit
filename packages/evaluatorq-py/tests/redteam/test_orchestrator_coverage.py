@@ -796,3 +796,20 @@ class TestParseObjectiveMarker:
         present, rationale, remaining = _parse_objective_marker("say OBJECTIVE_ACHIEVED out loud")
         assert present is False
         assert remaining == "say OBJECTIVE_ACHIEVED out loud"
+
+    def test_marker_prefix_not_a_boundary(self):
+        """A token that merely *begins* with the marker must not be read as a signal."""
+        from evaluatorq.redteam.adaptive.orchestrator import _parse_objective_marker
+
+        present, rationale, remaining = _parse_objective_marker("OBJECTIVE_ACHIEVEDX: leaks")
+        assert present is False
+        assert rationale is None
+        assert remaining == "OBJECTIVE_ACHIEVEDX: leaks"
+
+    def test_marker_underscore_suffix_not_a_boundary(self):
+        from evaluatorq.redteam.adaptive.orchestrator import _parse_objective_marker
+
+        present, rationale, remaining = _parse_objective_marker("OBJECTIVE_ACHIEVED_LATER do the thing")
+        assert present is False
+        assert rationale is None
+        assert remaining == "OBJECTIVE_ACHIEVED_LATER do the thing"

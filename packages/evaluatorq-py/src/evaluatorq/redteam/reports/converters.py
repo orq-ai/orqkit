@@ -272,6 +272,7 @@ def static_sample_to_result(
         bool(eval_dict.get('explanation')),
         bool(eval_dict.get('error')),
         eval_dict.get('token_usage') is not None,
+        eval_dict.get('raw_output') is not None,
     ])
     evaluation: UnifiedEvaluationResult | None = None
     if has_eval:
@@ -285,12 +286,18 @@ def static_sample_to_result(
                 'evaluator_name', evaluator_meta.get('evaluator_name', OWASP_CATEGORY_NAMES.get(category))
             ),
             token_usage=evaluation_usage,
+            raw_output=eval_dict.get('raw_output'),
         )
 
     # Determine vulnerability status
     vulnerable = evaluation is not None and evaluation.passed is False
 
     agent = AgentInfo(key=agent_key, model=agent_model)
+
+    # Target-generation cost (one inference) lives on execution, kept separate from
+    # the judge cost on the evaluation. ``execution_token_usage`` is an optional
+    # passthrough set by the dynamic-datapoint static converter.
+    execution_usage = _normalize_token_usage(normalized_sample.get('execution_token_usage'))
 
     return RedTeamResult(
         attack=attack,
@@ -299,7 +306,7 @@ def static_sample_to_result(
         response=row.response,
         evaluation=evaluation,
         vulnerable=vulnerable,
-        execution=None,
+        execution=ExecutionDetails(turns=1, max_turns=1, token_usage=execution_usage),
         error=row.error,
         error_type=_classify_error(row.error, existing_type=row.error_type),
         error_stage=getattr(row, 'error_stage', None),
@@ -372,6 +379,8 @@ def dynamic_evaluatorq_results_to_report(
         eval_passed: bool | None = None
         eval_value: Any = None
         eval_explanation = ''
+        evaluation_usage: TokenUsage | None = None
+        evaluation_raw: dict[str, Any] | None = None
         job_result = None
 
         job_results = getattr(result, 'job_results', None) or []
@@ -386,6 +395,15 @@ def dynamic_evaluatorq_results_to_report(
                 eval_value = score.value
                 eval_passed = _coerce_score_passed(score.value)
                 eval_explanation = score.explanation or ''
+                # The scorer forwards the LLM judge's cost + raw response on the
+                # optional token_usage/raw_output EvaluationResult fields (serialized
+                # in local dumps, stripped at the Orq send boundary — see
+                # evaluatorq.send_results); read them off the live score so the report
+                # surfaces and aggregates evaluator token usage.
+                # getattr-guarded: ``score`` is an Any-typed external (evaluatorq)
+                # result, and these two are optional metadata that other scorers omit.
+                evaluation_usage = _normalize_token_usage(getattr(score, 'token_usage', None))
+                evaluation_raw = getattr(score, 'raw_output', None)
 
         error = getattr(result, 'error', None) or job_output.error
         error_type = _classify_error(error, existing_type=job_output.error_type)
@@ -427,6 +445,8 @@ def dynamic_evaluatorq_results_to_report(
             explanation=eval_explanation,
             evaluator_id=evaluator_id,
             evaluator_name=evaluator_name,
+            token_usage=evaluation_usage,
+            raw_output=evaluation_raw,
         )
 
         execution = ExecutionDetails(
@@ -536,6 +556,9 @@ def static_evaluatorq_results_to_reports(
             scores = job_result.evaluator_scores or []
             if scores:
                 score = scores[0].score
+                # The judge's own cost goes on the evaluation; the target's
+                # generation cost (output_usage) is routed to execution below so the
+                # two stay separable (and each correctly reports a single call).
                 eval_result = {
                     'value': score.value,
                     'passed': _coerce_score_passed(score.value),
@@ -544,11 +567,8 @@ def static_evaluatorq_results_to_reports(
                     'evaluator_name': evaluator_meta.get(
                         'evaluator_name', OWASP_CATEGORY_NAMES.get(inputs.get('category', ''))
                     ),
-                    'token_usage': output_usage,
-                }
-            elif output_usage is not None:
-                eval_result = {
-                    'token_usage': output_usage,
+                    'token_usage': getattr(score, 'token_usage', None),
+                    'raw_output': getattr(score, 'raw_output', None),
                 }
 
             raw_error = dp_error or job_result.error or output_dict.error
@@ -560,6 +580,8 @@ def static_evaluatorq_results_to_reports(
                 'error_stage': output_dict.error_stage,
                 'error_code': output_dict.error_code,
                 'error_details': output_dict.error_details,
+                # Target-generation usage → execution slot (kept apart from the judge).
+                'execution_token_usage': output_usage.model_dump(mode='json') if output_usage else None,
                 'evaluation_result': eval_result,
             }
             samples_by_job.setdefault(job_name, []).append(sample)

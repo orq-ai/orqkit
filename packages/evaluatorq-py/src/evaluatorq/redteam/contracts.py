@@ -969,7 +969,12 @@ class AttackEvaluationResult(BaseModel):
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
-    raw_output: dict[str, Any] | None = Field(default=None, description='Raw evaluator output')
+    raw_output: dict[str, Any] | None = Field(
+        default=None,
+        description="Verbatim model output for inspection: {'raw_content': <str>} on "
+        "success, {'error': <str>, ...} on failure. Display/debug only — consumers "
+        "must read the parsed verdict from passed/explanation, not from here.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1044,7 +1049,13 @@ class UnifiedEvaluationResult(BaseModel):
     evaluator_id: str | None = None
     evaluator_name: str | None = None
     token_usage: TokenUsage | None = None
-    raw_output: dict[str, Any] | None = None
+    raw_output: dict[str, Any] | None = Field(
+        default=None,
+        description="Verbatim model output for inspection: {'raw_content': <str>} on "
+        "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
+        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
+        "from passed/explanation, not from here.",
+    )
 
 
 class EvaluationPayload(BaseModel):
@@ -1057,6 +1068,13 @@ class EvaluationPayload(BaseModel):
     passed: bool | None = None
     error: str | None = None
     token_usage: TokenUsage | None = None
+    raw_output: dict[str, Any] | None = Field(
+        default=None,
+        description="Verbatim model output for inspection: {'raw_content': <str>} on "
+        "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
+        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
+        "from passed/explanation, not from here.",
+    )
 
 
 class JobOutputPayload(BaseModel):

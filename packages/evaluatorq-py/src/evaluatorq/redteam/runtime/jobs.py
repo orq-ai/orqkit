@@ -12,10 +12,14 @@ from evaluatorq.redteam.adaptive.orchestrator import _get_active_progress
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import Message, TokenUsage
 from evaluatorq.redteam.exceptions import CredentialError
-from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+
+
+def _sanitize_job_name(value: str) -> str:
+    """Sanitize a value for use in job names (alphanumeric, dash, underscore)."""
+    return ''.join(ch if ch.isalnum() or ch in {'-', '_'} else '-' for ch in value).strip('-') or 'unknown'
 
 
 def create_model_job(

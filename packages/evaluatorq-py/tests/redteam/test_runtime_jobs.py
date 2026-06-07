@@ -1,4 +1,4 @@
-"""Unit tests for runtime/jobs.py and runtime/orq_agent_job.py."""
+"""Unit tests for runtime/jobs.py."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from evaluatorq.redteam.contracts import Message, TokenUsage
 
 
 # ===========================================================================
-# runtime/orq_agent_job.py — _sanitize_job_name
+# runtime/jobs.py — _sanitize_job_name
 # ===========================================================================
 
 
@@ -19,48 +19,48 @@ class TestSanitizeJobName:
     """Tests for _sanitize_job_name()."""
 
     def test_alphanumeric_passthrough(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         assert _sanitize_job_name("abc123") == "abc123"
 
     def test_dash_and_underscore_preserved(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         assert _sanitize_job_name("my-agent_key") == "my-agent_key"
 
     def test_special_chars_replaced_with_dash(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         result = _sanitize_job_name("my.agent/key@v2")
         assert result == "my-agent-key-v2"
 
     def test_leading_trailing_dashes_stripped(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         result = _sanitize_job_name(".leading-trailing.")
         assert not result.startswith("-")
         assert not result.endswith("-")
 
     def test_empty_string_returns_unknown(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         assert _sanitize_job_name("") == "unknown"
 
     def test_all_special_chars_becomes_unknown(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         # All special chars → all dashes → strip → empty → 'unknown'
         result = _sanitize_job_name("@@@")
         assert result == "unknown"
 
     def test_spaces_replaced(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         result = _sanitize_job_name("my agent key")
         assert " " not in result
 
     def test_model_with_slash(self):
-        from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+        from evaluatorq.redteam.runtime.jobs import _sanitize_job_name
 
         result = _sanitize_job_name("azure/gpt-4o-mini")
         assert "/" not in result
