@@ -81,7 +81,9 @@ class TestMakeAgentBackend:
         name on config.model, so we verify that attribute equals 'agent/k'.
         """
         orq_mock = _make_orq_backend_mock()
-        openresponses_backend = OpenResponsesBackend(client=None)
+        # Inject a client so create_target builds the target without resolving real
+        # ORQ credentials (CI has no ORQ_API_KEY); we only assert the prefixed model.
+        openresponses_backend = OpenResponsesBackend(client=MagicMock())
 
         def _fake_resolve_backend(name, *, llm_client=None, target_config=None, pipeline_config=None):
             if name == "orq":
