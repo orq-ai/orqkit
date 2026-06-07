@@ -272,6 +272,7 @@ def static_sample_to_result(
         bool(eval_dict.get('explanation')),
         bool(eval_dict.get('error')),
         eval_dict.get('token_usage') is not None,
+        eval_dict.get('raw_output') is not None,
     ])
     evaluation: UnifiedEvaluationResult | None = None
     if has_eval:
@@ -285,6 +286,7 @@ def static_sample_to_result(
                 'evaluator_name', evaluator_meta.get('evaluator_name', OWASP_CATEGORY_NAMES.get(category))
             ),
             token_usage=evaluation_usage,
+            raw_output=eval_dict.get('raw_output'),
         )
 
     # Determine vulnerability status
@@ -299,7 +301,7 @@ def static_sample_to_result(
         response=row.response,
         evaluation=evaluation,
         vulnerable=vulnerable,
-        execution=None,
+        execution=ExecutionDetails(turns=1, max_turns=1),
         error=row.error,
         error_type=_classify_error(row.error, existing_type=row.error_type),
         error_stage=getattr(row, 'error_stage', None),
@@ -372,6 +374,8 @@ def dynamic_evaluatorq_results_to_report(
         eval_passed: bool | None = None
         eval_value: Any = None
         eval_explanation = ''
+        evaluation_usage: TokenUsage | None = None
+        evaluation_raw: dict[str, Any] | None = None
         job_result = None
 
         job_results = getattr(result, 'job_results', None) or []
@@ -386,6 +390,11 @@ def dynamic_evaluatorq_results_to_report(
                 eval_value = score.value
                 eval_passed = _coerce_score_passed(score.value)
                 eval_explanation = score.explanation or ''
+                # The scorer forwards the LLM judge's cost + raw response on the
+                # core EvaluationResult; thread them into the per-attack evaluation
+                # so the report surfaces and aggregates evaluator token usage.
+                evaluation_usage = _normalize_token_usage(getattr(score, 'token_usage', None))
+                evaluation_raw = getattr(score, 'raw_output', None)
 
         error = getattr(result, 'error', None) or job_output.error
         error_type = _classify_error(error, existing_type=job_output.error_type)
@@ -427,6 +436,8 @@ def dynamic_evaluatorq_results_to_report(
             explanation=eval_explanation,
             evaluator_id=evaluator_id,
             evaluator_name=evaluator_name,
+            token_usage=evaluation_usage,
+            raw_output=evaluation_raw,
         )
 
         execution = ExecutionDetails(
@@ -536,6 +547,12 @@ def static_evaluatorq_results_to_reports(
             scores = job_result.evaluator_scores or []
             if scores:
                 score = scores[0].score
+                # Static reports have no separate execution slot, so the target's
+                # generation usage (output_usage) and the LLM judge's usage
+                # (score.token_usage, now populated by the bridge) are both surfaced
+                # through evaluation.token_usage. Sum so neither is lost from totals.
+                judge_usage = _normalize_token_usage(getattr(score, 'token_usage', None))
+                combined_usage = _sum_optional_usage(output_usage, judge_usage)
                 eval_result = {
                     'value': score.value,
                     'passed': _coerce_score_passed(score.value),
@@ -544,7 +561,8 @@ def static_evaluatorq_results_to_reports(
                     'evaluator_name': evaluator_meta.get(
                         'evaluator_name', OWASP_CATEGORY_NAMES.get(inputs.get('category', ''))
                     ),
-                    'token_usage': output_usage,
+                    'token_usage': combined_usage,
+                    'raw_output': getattr(score, 'raw_output', None),
                 }
             elif output_usage is not None:
                 eval_result = {
@@ -589,6 +607,16 @@ def _rate(numerator: int, denominator: int, *, default: float = 1.0) -> float:
 def _is_evaluated(r: RedTeamResult) -> bool:
     """Return True if the result has a definitive boolean evaluation outcome."""
     return r.evaluation is not None and isinstance(r.evaluation.passed, bool)
+
+
+def _sum_optional_usage(*usages: TokenUsage | None) -> TokenUsage | None:
+    """Sum any non-None TokenUsage values, returning None if all are None."""
+    total: TokenUsage | None = None
+    for usage in usages:
+        if usage is None:
+            continue
+        total = usage if total is None else total + usage
+    return total
 
 
 def _is_vulnerable(r: RedTeamResult) -> bool:
