@@ -542,6 +542,7 @@ dependencies = [
     { name = "loguru" },
     { name = "pydantic" },
     { name = "rich" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -558,9 +559,7 @@ all = [
     { name = "opentelemetry-semantic-conventions" },
     { name = "orq-ai-sdk" },
     { name = "plotly" },
-    { name = "python-dotenv" },
     { name = "streamlit" },
-    { name = "typer" },
     { name = "watchdog" },
 ]
 export = [
@@ -588,9 +587,7 @@ redteam = [
     { name = "huggingface-hub" },
     { name = "openai" },
     { name = "plotly" },
-    { name = "python-dotenv" },
     { name = "streamlit" },
-    { name = "typer" },
     { name = "watchdog" },
 ]
 simulation = [
@@ -614,7 +611,6 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
-    { name = "python-dotenv" },
     { name = "ruff" },
     { name = "typer" },
     { name = "watchdog" },
@@ -640,10 +636,9 @@ requires-dist = [
     { name = "orq-ai-sdk", marker = "extra == 'simulation'", specifier = ">=4.4.7" },
     { name = "plotly", marker = "extra == 'redteam'", specifier = ">=5.18.0" },
     { name = "pydantic", specifier = ">=2.0" },
-    { name = "python-dotenv", marker = "extra == 'redteam'", specifier = ">=1.0.0" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "streamlit", marker = "extra == 'redteam'", specifier = ">=1.30.0" },
-    { name = "typer", marker = "extra == 'redteam'", specifier = ">=0.12.0" },
+    { name = "typer", specifier = ">=0.12.0" },
     { name = "watchdog", marker = "extra == 'redteam'", specifier = ">=4.0.0" },
 ]
 provides-extras = ["orq", "otel", "langchain", "langgraph", "openai-agents", "redteam", "simulation", "export", "all"]
@@ -664,7 +659,6 @@ dev = [
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "ruff", specifier = ">=0.14.3" },
     { name = "typer", specifier = ">=0.12.0" },
     { name = "watchdog", specifier = ">=4.0.0" },

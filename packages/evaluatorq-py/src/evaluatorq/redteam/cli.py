@@ -316,10 +316,6 @@ def run(
     ] = None,
 ) -> None:
     """Run red teaming against one or more targets."""
-    from dotenv import load_dotenv
-
-    load_dotenv(override=False)
-
     if quiet:
         verbose = -1
     _configure_logging(verbose)
