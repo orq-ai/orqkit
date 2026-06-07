@@ -17,7 +17,9 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _RUNNER = "evaluatorq.redteam.runner"
-_BUILD_SIM_CLIENT = "evaluatorq.openresponses.client.build_simulation_client"
+# Patch where it is *used*: target.py does `from ...client import build_simulation_client`,
+# so it holds its own binding — patching the client module's attribute would not intercept it.
+_BUILD_SIM_CLIENT = "evaluatorq.openresponses.target.build_simulation_client"
 
 
 def _fake_build_sim_client(

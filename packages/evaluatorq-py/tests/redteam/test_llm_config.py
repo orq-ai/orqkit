@@ -1,7 +1,12 @@
 # tests/redteam/test_llm_config.py
 import os
+from typing import TYPE_CHECKING, cast
+
 import pytest
 from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig, PIPELINE_CONFIG, DEFAULT_PIPELINE_MODEL
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
 
 
 def test_llm_call_config_defaults():
@@ -68,49 +73,43 @@ class _FakeClient:
         self.base_url = base_url
 
 
+def _as_client(obj: object) -> "AsyncOpenAI":
+    """Cast a structural stand-in to AsyncOpenAI for retry_extra_body's signature.
+
+    retry_extra_body only reads ``base_url`` via client_routes_through_orq, so the
+    fake is sufficient at runtime; this routes the cast through ``object`` to satisfy
+    basedpyright (a direct _FakeClient→AsyncOpenAI cast is rejected as non-overlapping).
+    """
+    return cast("AsyncOpenAI", obj)
+
+
 def test_retry_extra_body_populated_for_router_client():
     """A client routed through the Orq router receives ORQ-specific retry hints."""
     cfg = LLMConfig()
-    body = cfg.retry_extra_body(_FakeClient('https://my.orq.ai/v3/router'))
+    body = cfg.retry_extra_body(_as_client(_FakeClient('https://my.orq.ai/v3/router')))
     assert body == {'retry': {'count': cfg.retry_count, 'on_codes': cfg.retry_on_codes}}
 
 
 def test_retry_extra_body_empty_for_openai_client():
     """A plain OpenAI client must not receive the ORQ-only ``retry`` field."""
     cfg = LLMConfig()
-    assert cfg.retry_extra_body(_FakeClient('https://api.openai.com/v1')) == {}
+    assert cfg.retry_extra_body(_as_client(_FakeClient('https://api.openai.com/v1'))) == {}
 
 
 def test_retry_extra_body_gates_on_client_not_env(monkeypatch):
-    """Gating is on the client's base_url, not on ORQ_API_KEY in the environment."""
+    """Gating is on the client's base_url, not on ORQ_API_KEY in the environment.
+
+    An injected OpenAI client must not receive the ORQ-only ``retry`` field just
+    because ORQ_API_KEY happens to be in the environment (it is needed for tracing).
+    """
     monkeypatch.setenv('ORQ_API_KEY', 'orq-test')  # present (e.g. for tracing) but irrelevant
     cfg = LLMConfig()
-    assert cfg.retry_extra_body(_FakeClient('https://api.openai.com/v1')) == {}
+    assert cfg.retry_extra_body(_as_client(_FakeClient('https://api.openai.com/v1'))) == {}
 
 
 def test_retry_extra_body_empty_for_client_without_base_url():
     cfg = LLMConfig()
-    assert cfg.retry_extra_body(object()) == {}
-
-
-def test_retry_extra_body_emitted_for_router_client():
-    from types import SimpleNamespace
-
-    cfg = LLMConfig()
-    router_client = SimpleNamespace(base_url='https://my.orq.ai/v3/router')
-    body = cfg.retry_extra_body(router_client)
-    assert body == {'retry': {'count': cfg.retry_count, 'on_codes': cfg.retry_on_codes}}
-
-
-def test_retry_extra_body_empty_for_non_router_client_even_with_orq_key(monkeypatch):
-    """Gating is on the client's base_url, not env: an injected OpenAI client must
-    not receive the ORQ-only ``retry`` field just because ORQ_API_KEY is set."""
-    from types import SimpleNamespace
-
-    monkeypatch.setenv('ORQ_API_KEY', 'sk-orq-present')
-    cfg = LLMConfig()
-    openai_client = SimpleNamespace(base_url='https://api.openai.com/v1')
-    assert cfg.retry_extra_body(openai_client) == {}
+    assert cfg.retry_extra_body(_as_client(object())) == {}
     assert cfg.retry_extra_body(None) == {}
 
 
