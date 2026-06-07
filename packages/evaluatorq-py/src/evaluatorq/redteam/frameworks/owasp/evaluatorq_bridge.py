@@ -165,6 +165,16 @@ def create_owasp_evaluator(
     cfg: LLMCallConfig | None = None,
 ) -> EvaluatorConfig:
     """Create an evaluatorq scorer that routes by OWASP category."""
+    # Build the client + merged cfg ONCE here (not per datapoint). Creating them
+    # inside scorer() would spin up a fresh AsyncOpenAI connection pool for every
+    # datapoint in a batch, none explicitly closed. Mirrors OWASPEvaluator.__init__.
+    resolved_cfg = cfg or PIPELINE_CONFIG.evaluator
+    client = llm_client or resolved_cfg.client or create_async_llm_client()
+    merged_cfg = resolved_cfg.model_copy(
+        update={
+            'extra_kwargs': {**resolved_cfg.extra_kwargs, **(llm_kwargs or {})},
+        }
+    )
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
@@ -188,14 +198,6 @@ def create_owasp_evaluator(
             })
 
         output_messages = _adapt_static_output(output)
-
-        resolved_cfg = cfg or PIPELINE_CONFIG.evaluator
-        client = llm_client or resolved_cfg.client or create_async_llm_client()
-        merged_cfg = resolved_cfg.model_copy(
-            update={
-                'extra_kwargs': {**resolved_cfg.extra_kwargs, **(llm_kwargs or {})},
-            }
-        )
 
         outcome = await run_judge(
             client=client,
