@@ -27,10 +27,10 @@ from loguru import logger
 # bracketed (possibly negative) numeric indices, or any mix. Rejects function
 # calls, string literals, assignments, ``;``, ``{}``, etc. Byte-identical to
 # upstream VALID_PATH_PATTERN.
-VALID_PATH_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9_]*(?:\.(?:[a-zA-Z_][a-zA-Z0-9_]*|\d+)|\[-?\d+\])*$"
+VALID_PATH_PATTERN = r'^[a-zA-Z_][a-zA-Z0-9_]*(?:\.(?:[a-zA-Z_][a-zA-Z0-9_]*|\d+)|\[-?\d+\])*$'
 
-_CURLY = re.compile(r"{{(.*?)}}")
-_BRACKET_INDEX = re.compile(r"\[(-?\d+)\]")
+_CURLY = re.compile(r'{{(.*?)}}')
+_BRACKET_INDEX = re.compile(r'\[(-?\d+)\]')
 _NOT_FOUND = object()
 
 
@@ -49,8 +49,8 @@ def render_template(template: str, replacements: dict[str, Any]) -> str:
 
     def _resolve_nested(data: dict[str, Any], path: str) -> Any:
         current: Any = data
-        for segment in path.split("."):
-            bracket_at = segment.find("[")
+        for segment in path.split('.'):
+            bracket_at = segment.find('[')
             if bracket_at == -1:
                 if not isinstance(current, dict) or segment not in current:
                     return _NOT_FOUND
@@ -81,10 +81,11 @@ def render_template(template: str, replacements: dict[str, Any]) -> str:
 
     def _replacer(match: re.Match[str]) -> str:
         key = match.group(1).strip()
-        if " " in key or "\t" in key or "\n" in key or "\r" in key:
+        # \n unreachable (no re.DOTALL) but kept for parity with upstream
+        if ' ' in key or '\t' in key or '\n' in key or '\r' in key:
             return match.group(0)
         if not is_valid_template_path(key):
-            logger.warning("Rejected template path: {!r}", key)
+            logger.warning('Rejected template path: {!r}', key)
             return match.group(0)
         if key in replacements:
             return _format(replacements[key])
