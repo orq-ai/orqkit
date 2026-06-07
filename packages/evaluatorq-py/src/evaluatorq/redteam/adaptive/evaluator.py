@@ -16,9 +16,6 @@ from evaluatorq.redteam.contracts import (
     Vulnerability,
 )
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category, get_evaluator_for_vulnerability
-from evaluatorq.redteam.frameworks.owasp.prompt_render import (
-    _sanitize_placeholders,  # noqa: F401 — re-exported for backwards-compat test imports
-)
 from evaluatorq.redteam.judge import JudgeError, build_eval_replacements, run_judge
 from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
 
@@ -192,7 +189,3 @@ async def evaluate_attack(
     return await evaluator.evaluate(category, messages, output_messages=output_messages)
 
 
-# _sanitize_placeholders is imported from prompt_render (above) and re-exported
-# from this module's namespace so existing tests that do
-#   ``from evaluatorq.redteam.adaptive.evaluator import _sanitize_placeholders``
-# continue to work without modification.
