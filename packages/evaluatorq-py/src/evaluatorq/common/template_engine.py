@@ -77,6 +77,8 @@ def render_template(template: str, replacements: dict[str, Any]) -> str:
             return json.dumps(value, indent=2)
         if isinstance(value, str):
             return value
+        # Parity with upstream: bool/None/number use Python str (True/False/None),
+        # NOT JSON (true/false/null). Pinned by the parity suite — do not "fix".
         return str(value)
 
     def _replacer(match: re.Match[str]) -> str:

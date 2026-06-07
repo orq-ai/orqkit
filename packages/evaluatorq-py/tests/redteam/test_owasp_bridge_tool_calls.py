@@ -261,7 +261,34 @@ class TestAdaptToolCall:
         tc = _adapt_tool_call({'name': 'fetch', 'arguments': {'url': 'http://x'}, 'id': 'c2'})
         assert isinstance(tc, ToolCallOutputItem)
         assert tc.name == 'fetch'
+        assert tc.id == 'c2'
         assert tc.arguments_dict == {'url': 'http://x'}
+
+    def test_dict_shape_with_none_arguments_defaults_to_empty_object(self) -> None:
+        # arguments None (non-str, non-dict) → `raw_args or {}` guard → '{}'.
+        tc = _adapt_tool_call({'name': 'noop', 'arguments': None, 'id': 'c4'})
+        assert tc.name == 'noop'
+        assert tc.arguments_dict == {}
+
+    def test_attribute_object_without_arguments_dict_falls_back_to_arguments(self) -> None:
+        # arguments_dict absent/None → fall back to .arguments (str passthrough + non-str dump).
+        src_str = MagicMock()
+        src_str.name = 'g'
+        src_str.arguments_dict = None
+        src_str.arguments = '{"a": 1}'
+        src_str.id = 'c5'
+        src_str.result = None
+        tc_str = _adapt_tool_call(src_str)
+        assert tc_str.arguments_dict == {'a': 1}
+
+        src_obj = MagicMock()
+        src_obj.name = 'h'
+        src_obj.arguments_dict = None
+        src_obj.arguments = {'b': 2}  # non-str → json.dumps'd
+        src_obj.id = 'c6'
+        src_obj.result = None
+        tc_obj = _adapt_tool_call(src_obj)
+        assert tc_obj.arguments_dict == {'b': 2}
 
     def test_attribute_object_shape_uses_arguments_dict(self) -> None:
         # Attribute-bearing object (orchestrator item / test double). MagicMock's `name=`

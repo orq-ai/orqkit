@@ -72,7 +72,14 @@ class JudgeOutcome:
 
 
 def _format_output_message(item: OutputMessage) -> dict[str, Any] | None:
-    """Project one OutputMessage to a transcript row; drop reasoning items."""
+    """Project one OutputMessage to a transcript row; drop reasoning items.
+
+    Note: ``function.arguments`` is the PARSED dict (``arguments_dict``), not the
+    JSON string the Chat Completions wire format uses. This row is only ever
+    ``json.dumps``-ed into an evaluator PROMPT (never sent to an API), and our
+    evaluator prompts are authored against the parsed-object form — so arguments
+    render as a nested JSON object, intentionally diverging from wire format.
+    """
     if isinstance(item, TextOutputItem):
         return {'role': 'assistant', 'content': item.text}
     if isinstance(item, ToolCallOutputItem):
@@ -161,7 +168,6 @@ async def run_judge(
     prompt_template: str,
     replacements: dict[str, Any],
     system_prompt: str = DEFAULT_SECURITY_EVALUATOR_SYSTEM_PROMPT,
-    response_model: type[BaseModel] = EvaluatorResponsePayload,
     span_attributes: dict[str, str] | None = None,
 ) -> JudgeOutcome:
     """Render the template, call the judge model, parse the verdict.
@@ -176,9 +182,11 @@ async def run_judge(
     ]
     raw_content = '{}'
     try:
+        # Input recording is owned by execute_chat_completion (record_llm_input).
+        # Don't pass input_messages here too — it would write gen_ai.input.messages
+        # twice (span creation + record_llm_input), the second silently winning.
         async with with_llm_span(
             model=model,
-            input_messages=messages,
             attributes=span_attributes or {},
         ) as span:
             response, usage = await execute_chat_completion(
@@ -193,8 +201,8 @@ async def run_judge(
                 extra_kwargs=cfg.extra_kwargs or None,
             )
         raw_content = response.choices[0].message.content or '{}'
-        payload = response_model.model_validate_json(raw_content)
-        return JudgeOutcome(payload=payload, token_usage=usage, raw_content=raw_content)  # pyright: ignore[reportArgumentType]
+        payload = EvaluatorResponsePayload.model_validate_json(raw_content)
+        return JudgeOutcome(payload=payload, token_usage=usage, raw_content=raw_content)
     except (asyncio.TimeoutError, APITimeoutError):
         # APITimeoutError subclasses APIConnectionError, so catch it HERE (before the
         # connection branch) to classify client-side timeouts as TIMEOUT, not API_CONNECTION.

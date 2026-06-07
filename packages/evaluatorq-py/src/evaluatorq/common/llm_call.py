@@ -65,7 +65,10 @@ async def execute_chat_completion(
     if inject_trace_headers:
         headers = await get_trace_context_headers()
         if headers:
-            params['extra_headers'] = headers
+            # Merge, don't overwrite: a caller may have supplied extra_headers via
+            # extra_kwargs. Trace headers win on conflict.
+            existing = params.get('extra_headers') or {}
+            params['extra_headers'] = {**existing, **headers}
 
     response = await asyncio.wait_for(client.chat.completions.create(**params), timeout=timeout_s)
     record_llm_response(span, response)
