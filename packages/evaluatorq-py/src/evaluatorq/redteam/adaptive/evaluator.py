@@ -187,5 +187,3 @@ async def evaluate_attack(
     if vulnerability is not None:
         return await evaluator.evaluate_vulnerability(vulnerability, messages, output_messages=output_messages)
     return await evaluator.evaluate(category, messages, output_messages=output_messages)
-
-
