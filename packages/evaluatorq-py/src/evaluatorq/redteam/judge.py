@@ -32,6 +32,8 @@ from evaluatorq.contracts import (
 from evaluatorq.redteam.tracing import with_llm_span
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from openai import AsyncOpenAI
 
 DEFAULT_SECURITY_EVALUATOR_SYSTEM_PROMPT = (
@@ -101,7 +103,7 @@ def _format_output_message(item: OutputMessage) -> dict[str, Any] | None:
 def build_eval_replacements(
     *,
     input_messages: list[dict[str, Any]] | list[Message],
-    output_messages: list[OutputMessage],
+    output_messages: Sequence[OutputMessage],
     expected_output: str | None = None,
     system_instructions: str | None = None,
 ) -> dict[str, Any]:

@@ -7,7 +7,7 @@ from evaluatorq.redteam.judge import build_eval_replacements
 
 
 def _text(s: str) -> TextOutputItem:
-    return TextOutputItem(text=s)
+    return TextOutputItem(text=s, annotations=[])
 
 
 def _tool(name: str, args: str, result: str | None, id_: str) -> ToolCallOutputItem:

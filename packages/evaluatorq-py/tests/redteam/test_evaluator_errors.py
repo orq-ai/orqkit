@@ -90,7 +90,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate_vulnerability(
                 vuln=Vulnerability.GOAL_HIJACKING,
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='agent response')],
+                output_messages=[TextOutputItem(text='agent response', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)
@@ -119,7 +119,7 @@ class TestRunEvaluatorErrorPaths:
                 await evaluator.evaluate_vulnerability(
                     vuln=Vulnerability.GOAL_HIJACKING,
                     messages=[{'role': 'user', 'content': 'attack prompt'}],
-                    output_messages=[TextOutputItem(text='agent response')],
+                    output_messages=[TextOutputItem(text='agent response', annotations=[])],
                 )
 
     # ------------------------------------------------------------------
@@ -153,7 +153,7 @@ class TestRunEvaluatorErrorPaths:
                 await evaluator.evaluate_vulnerability(
                     vuln=Vulnerability.GOAL_HIJACKING,
                     messages=[{'role': 'user', 'content': 'attack prompt'}],
-                    output_messages=[TextOutputItem(text='agent response')],
+                    output_messages=[TextOutputItem(text='agent response', annotations=[])],
                 )
 
     # ------------------------------------------------------------------
@@ -178,7 +178,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate_vulnerability(
                 vuln=Vulnerability.GOAL_HIJACKING,
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='agent response')],
+                output_messages=[TextOutputItem(text='agent response', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)
@@ -208,7 +208,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate_vulnerability(
                 vuln=Vulnerability.GOAL_HIJACKING,
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='agent response')],
+                output_messages=[TextOutputItem(text='agent response', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)
@@ -245,7 +245,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate(
                 category='UNKNOWN-CATEGORY-99',
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='agent response')],
+                output_messages=[TextOutputItem(text='agent response', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)
@@ -286,7 +286,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate(
                 category='OWASP-CUSTOM01',
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='sensitive data leaked')],
+                output_messages=[TextOutputItem(text='sensitive data leaked', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)
@@ -317,7 +317,7 @@ class TestRunEvaluatorErrorPaths:
             result = await evaluator.evaluate(
                 category='ASI01',
                 messages=[{'role': 'user', 'content': 'attack prompt'}],
-                output_messages=[TextOutputItem(text='I cannot help with that.')],
+                output_messages=[TextOutputItem(text='I cannot help with that.', annotations=[])],
             )
 
         assert isinstance(result, AttackEvaluationResult)

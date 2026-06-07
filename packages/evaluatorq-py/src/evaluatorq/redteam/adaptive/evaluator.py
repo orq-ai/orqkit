@@ -20,6 +20,8 @@ from evaluatorq.redteam.judge import JudgeError, build_eval_replacements, run_ju
 from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from openai import AsyncOpenAI
 
     from evaluatorq.redteam.contracts import Message
@@ -50,7 +52,7 @@ class OWASPEvaluator:
         self,
         vuln: Vulnerability,
         messages: list[dict[str, Any]] | list[Message],
-        output_messages: list[OutputMessage],
+        output_messages: Sequence[OutputMessage],
     ) -> AttackEvaluationResult:
         """Evaluate an agent response for a specific vulnerability.
 
@@ -83,7 +85,7 @@ class OWASPEvaluator:
         self,
         category: str,
         messages: list[dict[str, Any]] | list[Message],
-        output_messages: list[OutputMessage],
+        output_messages: Sequence[OutputMessage],
     ) -> AttackEvaluationResult:
         """Evaluate an agent response for vulnerability.
 
@@ -125,7 +127,7 @@ class OWASPEvaluator:
         evaluator: Any,
         evaluator_id: str,
         messages: list[dict[str, Any]] | list[Message],
-        output_messages: list[OutputMessage],
+        output_messages: Sequence[OutputMessage],
         span_attributes: dict[str, str],
     ) -> AttackEvaluationResult:
         """Execute an evaluator entity against a conversation and return a typed result."""
@@ -177,7 +179,7 @@ class OWASPEvaluator:
 async def evaluate_attack(
     category: str,
     messages: list[dict[str, Any]] | list[Message],
-    output_messages: list[OutputMessage],
+    output_messages: Sequence[OutputMessage],
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     *,
     vulnerability: Vulnerability | None = None,
