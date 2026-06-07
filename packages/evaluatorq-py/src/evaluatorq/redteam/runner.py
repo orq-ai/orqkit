@@ -19,6 +19,7 @@ from loguru import logger
 
 from evaluatorq import DataPoint, EvaluationResult, job
 from evaluatorq.common.async_utils import await_maybe, warn_if_sync_hooks
+from evaluatorq.common.messages import coerce_content_text
 from evaluatorq.contracts import AgentTarget, Message
 from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities, classify_agent_capabilities
 from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay, _get_active_progress
@@ -696,15 +697,9 @@ def _extract_static_prompt(data: DataPoint) -> str:
     messages = _build_messages(data)
     user_parts: list[str] = []
     for m in messages:
-        role = m.get('role')
-        content = m.get('content')
-        if role == 'system' or content is None:
+        if m.get('role') == 'system' or m.get('content') is None:
             continue
-        if isinstance(content, list):
-            content = '\n'.join(
-                str(part.get('text', '')) for part in content if isinstance(part, dict) and part.get('type') == 'text'
-            )
-        user_parts.append(str(content))
+        user_parts.append(coerce_content_text(m.get('content')))
     return '\n\n'.join(p for p in user_parts if p)
 
 
@@ -1187,17 +1182,22 @@ async def _run_dynamic_or_hybrid(
         # capabilities per target so the on_stage_end(CONTEXT_RETRIEVAL) signal
         # for each target carries the classifier output. Hook implementations
         # render the per-target capability table from that meta payload.
-        orq_backend = resolve_backend(
-            'orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config
-        )
         all_agent_contexts: dict[str, AgentContext] = {}
         await await_maybe(
             resolved_hooks.on_stage_start(PipelineStage.CONTEXT_RETRIEVAL, {'targets': all_target_labels})
         )
-        for target_str in targets:
-            _kind, value = _parse_target(target_str)
-            ctx = await orq_backend.resolve_context(value)
-            all_agent_contexts[target_str] = ctx
+        # Only build the ORQ SDK backend when there are string targets to resolve
+        # context for. A pure bring-your-own AgentTarget run never touches it, so this
+        # avoids importing/requiring orq-ai-sdk for those runs (mirrors the lazy factory
+        # in _make_agent_backend for the static path).
+        if targets:
+            orq_backend = resolve_backend(
+                'orq', llm_client=llm_client, target_config=target_config, pipeline_config=pipeline_config
+            )
+            for target_str in targets:
+                _kind, value = _parse_target(target_str)
+                ctx = await orq_backend.resolve_context(value)
+                all_agent_contexts[target_str] = ctx
         # Pre-fetch contexts for AgentTarget objects (they may provide their own context)
         at_contexts: dict[int, AgentContext] = {}
         for at in resolved_agent_targets:
@@ -1650,7 +1650,9 @@ async def _run_dynamic_or_hybrid(
                         """Send a static datapoint to the AgentTarget via respond."""
                         messages = _build_messages(data)
                         prompt = '\n'.join(
-                            content for m in messages if m.get('role') == 'user' and (content := m.get('content'))
+                            text
+                            for m in messages
+                            if m.get('role') == 'user' and (text := coerce_content_text(m.get('content')))
                         )
                         if not prompt:
                             sample_id = data.inputs.get('id', 'unknown')
