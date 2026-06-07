@@ -49,7 +49,7 @@ async def execute_chat_completion(
         params['temperature'] = temperature
     if max_tokens is not None:
         params['max_tokens'] = max_tokens
-    if tools:
+    if tools:  # truthiness (not `is not None`) for parity with BaseAgent
         params['tools'] = tools
         params['tool_choice'] = 'auto'
     if response_format is not None:

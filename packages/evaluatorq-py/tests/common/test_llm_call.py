@@ -1,5 +1,8 @@
+"""Tests for the shared chat-completion mechanic in ``common.llm_call``."""
+
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -11,6 +14,7 @@ def _fake_response() -> MagicMock:
     resp = MagicMock()
     resp.choices = [MagicMock()]
     resp.choices[0].message.content = 'ok'
+    resp.usage = None
     return resp
 
 
@@ -32,6 +36,7 @@ async def test_builds_params_and_returns_response_and_usage(monkeypatch: pytest.
     )
 
     assert response.choices[0].message.content == 'ok'
+    assert usage is None
     kwargs = client.chat.completions.create.call_args.kwargs
     assert kwargs['model'] == 'gpt-x'
     assert kwargs['temperature'] == 0.0
@@ -111,3 +116,39 @@ async def test_extra_kwargs_and_tools_merged(monkeypatch: pytest.MonkeyPatch) ->
     assert kwargs['tools'] == [{'type': 'function'}]
     assert kwargs['tool_choice'] == 'auto'
     assert kwargs['seed'] == 7
+
+
+@pytest.mark.asyncio
+async def test_records_input_and_response_on_span(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('evaluatorq.common.llm_call.get_trace_context_headers', AsyncMock(return_value={}))
+    record_input = MagicMock()
+    record_response = MagicMock()
+    monkeypatch.setattr('evaluatorq.common.llm_call.record_llm_input', record_input)
+    monkeypatch.setattr('evaluatorq.common.llm_call.record_llm_response', record_response)
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(return_value=_fake_response())
+    span = MagicMock()
+    await execute_chat_completion(
+        client=client,
+        model='m',
+        messages=[{'role': 'user', 'content': 'x'}],
+        span=span,
+        timeout_s=5.0,
+    )
+    record_input.assert_called_once()
+    record_response.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_propagates_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('evaluatorq.common.llm_call.get_trace_context_headers', AsyncMock(return_value={}))
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(side_effect=asyncio.TimeoutError)
+    with pytest.raises(asyncio.TimeoutError):
+        await execute_chat_completion(
+            client=client,
+            model='m',
+            messages=[{'role': 'user', 'content': 'x'}],
+            span=None,
+            timeout_s=5.0,
+        )
