@@ -65,6 +65,21 @@ class TestAllPlaceholdersFilled:
         assert "{{input.all_messages}}" not in rendered
         assert "attack me" in rendered
 
+    def test_list_content_surfaces_text_not_python_repr(self) -> None:
+        # Multi-part content (e.g. tool/result messages) must surface the text,
+        # not an opaque Python repr of the list.
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": "secret payload"}]},
+        ]
+        rendered = render_owasp_evaluator_prompt(
+            FULL_PROMPT,
+            messages=messages,
+            response="safe reply",
+            tool_calls=None,
+        )
+        assert "secret payload" in rendered
+        assert "'type': 'text'" not in rendered  # no Python repr leaked
+
     def test_response_placeholder_filled(self) -> None:
         rendered = render_owasp_evaluator_prompt(
             FULL_PROMPT,

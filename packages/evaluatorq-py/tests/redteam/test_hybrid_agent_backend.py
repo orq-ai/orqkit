@@ -72,3 +72,50 @@ def test_map_error_delegates_to_exec_backend():
     exec_backend.map_error.assert_called_once_with(exc)
     context_backend.map_error.assert_not_called()
     assert result == ("exec.error", "something went wrong")
+
+
+def test_requires_exactly_one_context_source():
+    exec_backend = _make_backend("exec")
+    # Neither provided.
+    with pytest.raises(ValueError, match="exactly one"):
+        HybridAgentBackend(exec_backend=exec_backend)
+    # Both provided.
+    with pytest.raises(ValueError, match="exactly one"):
+        HybridAgentBackend(
+            context_backend=_make_backend("context"),
+            context_backend_factory=lambda: _make_backend("context"),
+            exec_backend=exec_backend,
+        )
+
+
+def test_lazy_context_factory_not_called_for_execution_paths():
+    """A static agent: run only uses exec — the ORQ SDK context backend (and its
+    orq-ai-sdk import) must not be built until context resolution is actually needed."""
+    exec_backend = _make_backend("exec")
+    exec_backend.map_error.return_value = ("exec.error", "boom")
+    factory = MagicMock(side_effect=lambda: _make_backend("context"))
+
+    hybrid = HybridAgentBackend(context_backend_factory=factory, exec_backend=exec_backend)
+    # Construction must not build the context backend.
+    factory.assert_not_called()
+    # Execution paths must not build it either.
+    hybrid.create_target("k")
+    hybrid.map_error(RuntimeError("x"))
+    factory.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_lazy_context_factory_built_once_on_first_context_use():
+    context_backend = _make_backend("context")
+    factory = MagicMock(return_value=context_backend)
+    exec_backend = _make_backend("exec")
+
+    hybrid = HybridAgentBackend(context_backend_factory=factory, exec_backend=exec_backend)
+    ctx = AgentContext(key="my-key")
+    await hybrid.resolve_context("my-key")
+    await hybrid.cleanup_memory(ctx, ["id-1"])
+
+    # Built exactly once (cached), and both calls reached the real context backend.
+    factory.assert_called_once_with()
+    context_backend.resolve_context.assert_called_once_with("my-key")
+    context_backend.cleanup_memory.assert_called_once_with(ctx, ["id-1"])

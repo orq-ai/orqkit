@@ -86,14 +86,30 @@ def render_owasp_evaluator_prompt(
     return prompt.replace("{{output.response}}", response or "")
 
 
+def _coerce_content_text(content: Any) -> str:
+    """Flatten message content to text.
+
+    Multi-part content (e.g. tool/result messages shaped like
+    ``[{"type": "text", "text": "..."}]``) must surface the text, not a Python
+    ``repr`` of the list. Plain strings (and anything else) pass through ``str``.
+    """
+    if isinstance(content, list):
+        return "\n".join(
+            part.get("text", "")
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "text"
+        )
+    return str(content or "")
+
+
 def _serialize_messages(messages: list[dict[str, Any]] | list[Any]) -> list[dict[str, Any]]:
     """Normalize messages to plain role/content dicts for prompt interpolation."""
     serialized: list[dict[str, Any]] = []
     for msg in messages:
         if isinstance(msg, dict):
-            serialized.append({"role": str(msg.get("role", "")), "content": str(msg.get("content", ""))})
+            serialized.append({"role": str(msg.get("role", "")), "content": _coerce_content_text(msg.get("content"))})
             continue
-        serialized.append({"role": str(msg.role), "content": str(msg.content or "")})
+        serialized.append({"role": str(msg.role), "content": _coerce_content_text(msg.content)})
     return serialized
 
 

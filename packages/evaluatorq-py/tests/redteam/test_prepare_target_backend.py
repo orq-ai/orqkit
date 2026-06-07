@@ -119,8 +119,9 @@ class TestMakeAgentBackend:
 
         with patch("evaluatorq.redteam.runner.resolve_backend", side_effect=_fake_resolve_backend):
             hybrid = _make_agent_backend(target_config=None, pipeline_config=None)
-
-        result = await hybrid.resolve_context("my-agent")
+            # The ORQ context backend is built lazily on first context use, so resolve
+            # inside the patch to capture the mocked backend.
+            result = await hybrid.resolve_context("my-agent")
 
         orq_mock.resolve_context.assert_called_once_with("my-agent")
         assert result is sentinel_ctx

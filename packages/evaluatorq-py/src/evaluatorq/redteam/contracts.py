@@ -1052,9 +1052,9 @@ class UnifiedEvaluationResult(BaseModel):
     raw_output: dict[str, Any] | None = Field(
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
-        "success, {'error': <str>, ...} on failure. Display/debug only and stripped at "
-        "the Orq send boundary — consumers must read the parsed verdict from passed/"
-        "explanation, not from here.",
+        "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
+        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
+        "from passed/explanation, not from here.",
     )
 
 
@@ -1071,9 +1071,9 @@ class EvaluationPayload(BaseModel):
     raw_output: dict[str, Any] | None = Field(
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
-        "success, {'error': <str>, ...} on failure. Display/debug only and stripped at "
-        "the Orq send boundary — consumers must read the parsed verdict from passed/"
-        "explanation, not from here.",
+        "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
+        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
+        "from passed/explanation, not from here.",
     )
 
 

@@ -59,8 +59,7 @@ from evaluatorq.redteam.contracts import (
 from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
-from evaluatorq.redteam.runtime.jobs import _build_messages, create_model_job
-from evaluatorq.redteam.runtime.orq_agent_job import _sanitize_job_name
+from evaluatorq.redteam.runtime.jobs import _build_messages, _sanitize_job_name, create_model_job
 from evaluatorq.common.tracing import set_span_attrs
 from evaluatorq.redteam.tracing import with_redteam_span
 from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_vulnerabilities
@@ -819,9 +818,16 @@ def _make_agent_backend(*, target_config: TargetConfig | None, pipeline_config: 
     falls back to ``OPENAI_API_KEY``: an ``agent/<key>`` model only resolves on
     the Orq router.
     """
-    context_backend = resolve_backend('orq', target_config=target_config, pipeline_config=pipeline_config)
+    # Build the ORQ SDK context backend lazily: a static ``agent:`` run only ever
+    # calls exec (create_target), so deferring this avoids importing/requiring
+    # ``orq-ai-sdk`` for targets that never touch context resolution or memory cleanup.
     exec_backend = resolve_backend('openresponses', llm_client=None, target_config=target_config, pipeline_config=pipeline_config)
-    return HybridAgentBackend(context_backend=context_backend, exec_backend=exec_backend)
+    return HybridAgentBackend(
+        context_backend_factory=lambda: resolve_backend(
+            'orq', target_config=target_config, pipeline_config=pipeline_config
+        ),
+        exec_backend=exec_backend,
+    )
 
 
 async def _prepare_target(
@@ -1162,7 +1168,9 @@ async def _run_dynamic_or_hybrid(
         else:
             backend_label = 'mixed'
     else:
-        backend_label = 'orq'
+        # No string targets: a pure bring-your-own AgentTarget run uses
+        # BareTargetBackend, not the ORQ SDK — label it accordingly.
+        backend_label = 'direct' if resolved_agent_targets else 'orq'
     async with with_redteam_span(
         'orq.redteam.pipeline',
         attributes={
