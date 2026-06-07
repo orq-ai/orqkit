@@ -74,9 +74,10 @@ The port pins the upstream commit SHA in a provenance comment (see Decisions).
 |---|----------|--------|
 | Q1 | Port vs import | **Port** the algorithm into evaluatorq-py. |
 | Q2 | Engine vs builder scope | **Engine full fidelity** (generic `dict[str, Any]`); **builder lean** (only fields we emit). |
-| Q3 | `output.tool_calls` naming | **Migrate** prompts to canonical `{{output.tools_called}}`; builder emits canonical keys only, no aliases. |
+| Q3 | `output.tool_calls` naming | **Migrate** prompts to canonical `{{output.tools_called}}`; no `tool_calls` alias. Stay canonical; the sole sanctioned non-canonical addition is `output.messages` (see builder). |
 | Q4 | Judge boundary | **Render + judge-call → neutral `JudgeOutcome`**; callers map to their own result type + apply their own error policy. |
 | — | Judge location | **Option A** — `run_judge` lives redteam-side (couples redteam tracing); only the pure engine goes to `common/`. |
+| — | Shared call mechanic | Extract `execute_chat_completion` to `common/llm_call.py`; span + retry + parsing stay caller-owned (consumed by `run_judge` **and** `BaseAgent`). |
 
 ## Architecture
 
@@ -220,7 +221,8 @@ upstream `nats_service.py::build_signal_messages` + `evaluator.py::_build_templa
   does NOT contain the agent's responses or tool calls. Upstream's grader never
   folds output into `messages`; in upstream the output side is the independent
   `response` + `tool_calls` config fields.
-- `output.response` = the **plaintext** final response.
+- `output.response` = the **plaintext** response — all assistant text joined (see
+  the projection rule above), NOT last-turn-only.
 - `output.tools_called` = **only the output tool calls** the agent made — a subset
   of `output.messages`.
 - `output.messages` = **NEW evaluatorq extension** — the agent's full output
@@ -234,14 +236,21 @@ upstream `nats_service.py::build_signal_messages` + `evaluator.py::_build_templa
 Emitted keys (no retrievals, no variables):
 
 - **Flat overrides (formatted strings, win on exact match):** `input.all_messages`,
-  `output.tools_called`, `output.messages`, `log.messages`, `log.tool_calls`.
+  `output.tools_called`, `output.messages`, `log.messages`.
   **These keep OUR current `json.dumps` formatting** — our existing prompts were
   authored against the current renderer's JSON output, NOT upstream's
   human-readable prose. Intentional builder-level divergence; the **engine** is
   faithful, the **builder values are ours**. Documented in the builder docstring.
 - **Nested (enable indexing):** `input.{all_messages, expected_output,
   system_instructions}`, `output.{response, tools_called, messages}`, legacy
-  `log.{input, output, reference, expected_output, messages, tool_calls}`.
+  `log.{input, output, reference, expected_output, messages}`.
+- **Legacy `log.*` mapping** (kept for backward-compat with prompts using the old
+  namespace; dropped vs upstream: `retrievals` and `tool_calls` — no consumer):
+  `log.input` = last user query; `log.output` = `output.response` (plaintext, all
+  assistant text joined); `log.reference` = `log.expected_output` = the reference
+  (expected output) passed at evaluation; `log.messages` = `input.all_messages`
+  (the input thread — we drop upstream's trailing-user-drop nuance; the two are
+  identical here). `log.*` carries **no** tool calls.
 - **Tool-call object key set is OURS:** `{name, arguments, result, id}` (matching
   the current renderer + existing prompts/tests), NOT upstream's `model_dump()`
   keys (`tool_name`, ...). Documented divergence.
@@ -352,6 +361,20 @@ prompt) → open redteam `with_llm_span(span_attributes)` → call
 **`execute_chat_completion`** (the shared core, with `response_format={"type":
 "json_object"}`) → parse `response_model`. The wait_for / create / record / usage
 mechanics live in the core, not duplicated here.
+
+**Error capture is `run_judge`'s job** (the core propagates, per its boundary
+contract). `run_judge` wraps the `execute_chat_completion` + parse in try/except and
+maps: `asyncio.TimeoutError` (caught specifically, not builtin `TimeoutError`) →
+`TIMEOUT`; `ValidationError`/`JSONDecodeError` → `PARSE`; `APIConnectionError` →
+`API_CONNECTION`; `APIStatusError` → `API_STATUS`; anything else → `UNKNOWN`. The
+original exception is stashed in `error_exc` for caller re-raise.
+
+**Timeout units:** the core takes `timeout_s` (seconds — native to
+`asyncio.wait_for`, and what `BaseAgent` already uses). `run_judge` converts
+`cfg.timeout_ms / 1000` for the core and stamps `outcome.timeout_ms = cfg.timeout_ms`
+on a `TIMEOUT` (the existing dynamic test asserts the ms-shaped `raw_output`).
+Milliseconds live only at the `LLMCallConfig` / `JudgeOutcome` edges; seconds
+everywhere inside.
 
 `JudgeOutcome` captures **all** outcomes — it makes **no** policy decision:
 
