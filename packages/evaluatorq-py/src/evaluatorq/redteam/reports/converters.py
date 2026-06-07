@@ -294,6 +294,11 @@ def static_sample_to_result(
 
     agent = AgentInfo(key=agent_key, model=agent_model)
 
+    # Target-generation cost (one inference) lives on execution, kept separate from
+    # the judge cost on the evaluation. ``execution_token_usage`` is an optional
+    # passthrough set by the dynamic-datapoint static converter.
+    execution_usage = _normalize_token_usage(normalized_sample.get('execution_token_usage'))
+
     return RedTeamResult(
         attack=attack,
         agent=agent,
@@ -301,7 +306,7 @@ def static_sample_to_result(
         response=row.response,
         evaluation=evaluation,
         vulnerable=vulnerable,
-        execution=ExecutionDetails(turns=1, max_turns=1),
+        execution=ExecutionDetails(turns=1, max_turns=1, token_usage=execution_usage),
         error=row.error,
         error_type=_classify_error(row.error, existing_type=row.error_type),
         error_stage=getattr(row, 'error_stage', None),
@@ -391,8 +396,10 @@ def dynamic_evaluatorq_results_to_report(
                 eval_passed = _coerce_score_passed(score.value)
                 eval_explanation = score.explanation or ''
                 # The scorer forwards the LLM judge's cost + raw response on the
-                # core EvaluationResult; thread them into the per-attack evaluation
-                # so the report surfaces and aggregates evaluator token usage.
+                # (exclude=True) EvaluationResult fields; read them off the live
+                # score so the report surfaces and aggregates evaluator token usage.
+                # getattr-guarded: ``score`` is an Any-typed external (evaluatorq)
+                # result, and these two are optional metadata that other scorers omit.
                 evaluation_usage = _normalize_token_usage(getattr(score, 'token_usage', None))
                 evaluation_raw = getattr(score, 'raw_output', None)
 
@@ -547,12 +554,9 @@ def static_evaluatorq_results_to_reports(
             scores = job_result.evaluator_scores or []
             if scores:
                 score = scores[0].score
-                # Static reports have no separate execution slot, so the target's
-                # generation usage (output_usage) and the LLM judge's usage
-                # (score.token_usage, now populated by the bridge) are both surfaced
-                # through evaluation.token_usage. Sum so neither is lost from totals.
-                judge_usage = _normalize_token_usage(getattr(score, 'token_usage', None))
-                combined_usage = _sum_optional_usage(output_usage, judge_usage)
+                # The judge's own cost goes on the evaluation; the target's
+                # generation cost (output_usage) is routed to execution below so the
+                # two stay separable (and each correctly reports a single call).
                 eval_result = {
                     'value': score.value,
                     'passed': _coerce_score_passed(score.value),
@@ -561,12 +565,8 @@ def static_evaluatorq_results_to_reports(
                     'evaluator_name': evaluator_meta.get(
                         'evaluator_name', OWASP_CATEGORY_NAMES.get(inputs.get('category', ''))
                     ),
-                    'token_usage': combined_usage,
+                    'token_usage': getattr(score, 'token_usage', None),
                     'raw_output': getattr(score, 'raw_output', None),
-                }
-            elif output_usage is not None:
-                eval_result = {
-                    'token_usage': output_usage,
                 }
 
             raw_error = dp_error or job_result.error or output_dict.error
@@ -578,6 +578,8 @@ def static_evaluatorq_results_to_reports(
                 'error_stage': output_dict.error_stage,
                 'error_code': output_dict.error_code,
                 'error_details': output_dict.error_details,
+                # Target-generation usage → execution slot (kept apart from the judge).
+                'execution_token_usage': output_usage.model_dump(mode='json') if output_usage else None,
                 'evaluation_result': eval_result,
             }
             samples_by_job.setdefault(job_name, []).append(sample)
@@ -607,16 +609,6 @@ def _rate(numerator: int, denominator: int, *, default: float = 1.0) -> float:
 def _is_evaluated(r: RedTeamResult) -> bool:
     """Return True if the result has a definitive boolean evaluation outcome."""
     return r.evaluation is not None and isinstance(r.evaluation.passed, bool)
-
-
-def _sum_optional_usage(*usages: TokenUsage | None) -> TokenUsage | None:
-    """Sum any non-None TokenUsage values, returning None if all are None."""
-    total: TokenUsage | None = None
-    for usage in usages:
-        if usage is None:
-            continue
-        total = usage if total is None else total + usage
-    return total
 
 
 def _is_vulnerable(r: RedTeamResult) -> bool:

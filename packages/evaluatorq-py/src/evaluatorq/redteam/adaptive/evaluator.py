@@ -196,11 +196,9 @@ class OWASPEvaluator:
                 explanation=parsed.explanation,
                 evaluator_id=evaluator_id,
                 token_usage=usage,
-                raw_output={
-                    'value': parsed.value,
-                    'explanation': parsed.explanation,
-                    'raw_content': raw_content,
-                },
+                # raw_output carries only the verbatim model output; the parsed
+                # value/explanation already live on the top-level fields above.
+                raw_output={'raw_content': raw_content},
             )
         except ValidationError as e:
             logger.error(f'Evaluator model returned malformed JSON for {evaluator_id}: {e}. Raw: {raw_content!r:.500}')

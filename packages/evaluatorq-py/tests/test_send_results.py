@@ -167,6 +167,8 @@ def serialize_with_fixup(results: list[DataPointResult]) -> dict[str, Any]:
             for es in jr.get("evaluatorScores") or []:
                 if "score" in es:
                     es["score"].setdefault("explanation", "")
+                    es["score"].pop("token_usage", None)
+                    es["score"].pop("raw_output", None)
                 es.setdefault("error", "")
 
     return payload_dict
@@ -198,6 +200,42 @@ class TestSendResultsDefaults:
         jr = payload["results"][0]["jobResults"][0]
         assert "output" in jr
         assert jr["output"] is None
+
+    def test_evaluator_token_usage_and_raw_output_stripped_from_upload(self):
+        # Evaluator-cost metadata is kept in local result dumps but must NOT be
+        # uploaded to the platform — the send-boundary fixup strips it.
+        from evaluatorq.contracts import TokenUsage
+
+        results = [
+            DataPointResult(
+                data_point=DataPoint(inputs={"text": "hello"}),
+                job_results=[
+                    JobResult(
+                        job_name="job1",
+                        output="result",
+                        evaluator_scores=[
+                            EvaluatorScore(
+                                evaluator_name="eval1",
+                                score=EvaluationResult(
+                                    value=True,
+                                    explanation="resistant",
+                                    token_usage=TokenUsage(
+                                        prompt_tokens=4, completion_tokens=2, total_tokens=6, calls=1
+                                    ),
+                                    raw_output={"raw_content": "{}"},
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ]
+        # Plain serialize keeps them (local dumps like 02_attack_results.json).
+        assert "token_usage" in extract_score(serialize(results))
+        # The upload fixup strips them.
+        score = extract_score(serialize_with_fixup(results))
+        assert "token_usage" not in score
+        assert "raw_output" not in score
 
     def test_null_error_becomes_empty_string(self):
         # error=None on JobResult is stripped by exclude_none; the fixup must restore it as ""
