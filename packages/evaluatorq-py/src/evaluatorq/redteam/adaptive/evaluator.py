@@ -197,7 +197,8 @@ class OWASPEvaluator:
                 evaluator_id=evaluator_id,
                 token_usage=usage,
                 # raw_output carries only the verbatim model output; the parsed
-                # value/explanation already live on the top-level fields above.
+                # verdict/explanation already live on the top-level passed/explanation
+                # fields above.
                 raw_output={'raw_content': raw_content},
             )
         except ValidationError as e:

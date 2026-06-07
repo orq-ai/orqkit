@@ -396,8 +396,10 @@ def dynamic_evaluatorq_results_to_report(
                 eval_passed = _coerce_score_passed(score.value)
                 eval_explanation = score.explanation or ''
                 # The scorer forwards the LLM judge's cost + raw response on the
-                # (exclude=True) EvaluationResult fields; read them off the live
-                # score so the report surfaces and aggregates evaluator token usage.
+                # optional token_usage/raw_output EvaluationResult fields (serialized
+                # in local dumps, stripped at the Orq send boundary — see
+                # evaluatorq.send_results); read them off the live score so the report
+                # surfaces and aggregates evaluator token usage.
                 # getattr-guarded: ``score`` is an Any-typed external (evaluatorq)
                 # result, and these two are optional metadata that other scorers omit.
                 evaluation_usage = _normalize_token_usage(getattr(score, 'token_usage', None))

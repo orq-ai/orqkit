@@ -138,6 +138,31 @@ class TestOWASPEvaluatorLlmClient:
         mock_create.assert_called_once()
         assert evaluator.client is mock_create.return_value
 
+    @pytest.mark.asyncio
+    @patch('evaluatorq.redteam.adaptive.evaluator.get_evaluator_for_category')
+    @patch('evaluatorq.redteam.adaptive.evaluator.resolve_category_safe')
+    async def test_dynamic_evaluator_empty_choices_inconclusive(self, mock_resolve, mock_get_cat):
+        """The dynamic OWASPEvaluator must degrade an empty ``choices`` list to an
+        inconclusive result (passed=None), not raise IndexError. Pins the broad-except
+        safety net so a future narrowing can't reintroduce the crash."""
+        from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
+
+        mock_resolve.return_value = None  # force the category-fallback path
+        mock_eval = MagicMock()
+        mock_eval.prompt = 'Evaluate the response'
+        mock_get_cat.return_value = mock_eval
+
+        custom_client = AsyncMock(spec=AsyncOpenAI)
+        bad_response = MagicMock()
+        bad_response.choices = []  # choices[0] would IndexError
+        custom_client.chat.completions.create = AsyncMock(return_value=bad_response)
+
+        evaluator = OWASPEvaluator(llm_client=custom_client)
+        result = await evaluator.evaluate('OWASP-UNKNOWN', messages=[], response='hi')
+
+        assert result.passed is None
+        assert result.raw_output is not None and 'error' in result.raw_output
+
 
 # ---------------------------------------------------------------------------
 # 4. create_dynamic_evaluator — threads llm_client to OWASPEvaluator

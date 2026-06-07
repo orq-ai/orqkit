@@ -93,6 +93,27 @@ def test_retry_extra_body_empty_for_client_without_base_url():
     assert cfg.retry_extra_body(object()) == {}
 
 
+def test_retry_extra_body_emitted_for_router_client():
+    from types import SimpleNamespace
+
+    cfg = LLMConfig()
+    router_client = SimpleNamespace(base_url='https://my.orq.ai/v3/router')
+    body = cfg.retry_extra_body(router_client)
+    assert body == {'retry': {'count': cfg.retry_count, 'on_codes': cfg.retry_on_codes}}
+
+
+def test_retry_extra_body_empty_for_non_router_client_even_with_orq_key(monkeypatch):
+    """Gating is on the client's base_url, not env: an injected OpenAI client must
+    not receive the ORQ-only ``retry`` field just because ORQ_API_KEY is set."""
+    from types import SimpleNamespace
+
+    monkeypatch.setenv('ORQ_API_KEY', 'sk-orq-present')
+    cfg = LLMConfig()
+    openai_client = SimpleNamespace(base_url='https://api.openai.com/v1')
+    assert cfg.retry_extra_body(openai_client) == {}
+    assert cfg.retry_extra_body(None) == {}
+
+
 @pytest.mark.asyncio
 async def test_red_team_accepts_legacy_config_keyword(monkeypatch):
     from evaluatorq.redteam import red_team

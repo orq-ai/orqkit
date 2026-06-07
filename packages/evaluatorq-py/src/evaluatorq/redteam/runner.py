@@ -709,19 +709,21 @@ def _extract_static_prompt(data: DataPoint) -> str:
     return '\n\n'.join(p for p in user_parts if p)
 
 
-def _create_static_job_for_agent_target(at: Any, label: str) -> Any:
+def _create_static_job_for_agent_target(target_factory: Callable[[], Any], label: str) -> Any:
     """Create an evaluatorq static job that drives an :class:`AgentTarget`.
 
-    The job extracts the datapoint's messages as a single prompt, creates
-    an isolated target via ``at.new()`` for each attack, and returns the
-    response in the dict shape expected by the OWASP evaluator.
+    ``target_factory`` mints a fresh, isolated target per attack; the job closes
+    it afterwards (a no-op for externally-injected, caller-owned clients). Callers
+    that own the target lifecycle pass ``at.new``; the internal ``agent:`` path
+    passes a factory that builds an owned target per row, so no long-lived parent
+    target (and its unused HTTP client) is left dangling.
     """
     safe = _sanitize_job_name(label)
 
     @job(f'redteam:static:{safe}')
     async def agent_target_job(data: DataPoint, _row: int) -> dict[str, Any]:
         prompt = _extract_static_prompt(data)
-        target = at.new()
+        target = target_factory()
         try:
             raw_response = await target.respond([Message(role='user', content=prompt)])
             result = _coerce_to_agent_response(raw_response)
@@ -792,8 +794,9 @@ def _create_job_for_target(
     if kind == TargetKind.AGENT:
         tcfg = TargetConfig(system_prompt=system_prompt)
         backend = _make_agent_backend(target_config=tcfg, pipeline_config=cfg)
-        at = backend.create_target(value)   # composite prefixes -> model "agent/<value>"
-        return _create_static_job_for_agent_target(at, label=value)
+        # Build a fresh owned target per row (composite prefixes -> model
+        # "agent/<value>"); no long-lived parent target/client is left dangling.
+        return _create_static_job_for_agent_target(lambda: backend.create_target(value), label=value)
     if kind == TargetKind.DEPLOYMENT:
         return create_model_job(deployment_key=value, **common)
     return create_model_job(model=value, **common)
@@ -2130,7 +2133,9 @@ async def _run_static(
     jobs: list[Any] = [
         _create_job_for_target(t, llm_client, sys_prompt, pipeline_config=pipeline_config) for t in targets
     ]
-    jobs.extend(_create_static_job_for_agent_target(at, agent_target_labels[id(at)]) for at in resolved_agent_targets)
+    jobs.extend(
+        _create_static_job_for_agent_target(at.new, agent_target_labels[id(at)]) for at in resolved_agent_targets
+    )
 
     from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 

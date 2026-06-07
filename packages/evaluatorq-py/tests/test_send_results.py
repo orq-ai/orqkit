@@ -390,6 +390,77 @@ class TestSendResultsUploadFailures:
         assert result is None
 
     @pytest.mark.asyncio
+    async def test_evaluator_metadata_absent_from_posted_payload(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        # End-to-end guard on the real upload boundary: token_usage/raw_output must
+        # never reach the platform. Exercises the prod strip in send_results_to_orq
+        # (not the test-local fixup), so deleting those .pop()s fails this test.
+        from evaluatorq.contracts import TokenUsage
+
+        captured: dict[str, Any] = {}
+
+        async def fake_post(self: httpx.AsyncClient, *args: Any, **kwargs: Any) -> httpx.Response:
+            captured["json"] = kwargs["json"]
+            request = httpx.Request("POST", "https://my.orq.ai/v2/spreadsheets/evaluations/receive")
+            return httpx.Response(
+                200,
+                request=request,
+                json={
+                    "sheet_id": "s1",
+                    "manifest_id": "m1",
+                    "experiment_name": "eval",
+                    "rows_created": 1,
+                },
+            )
+
+        monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+
+        results = [
+            DataPointResult(
+                data_point=DataPoint(inputs={"text": "hello"}),
+                job_results=[
+                    JobResult(
+                        job_name="job1",
+                        output="result",
+                        evaluator_scores=[
+                            EvaluatorScore(
+                                evaluator_name="eval1",
+                                score=EvaluationResult(
+                                    value=True,
+                                    explanation="resistant",
+                                    token_usage=TokenUsage(
+                                        prompt_tokens=4, completion_tokens=2, total_tokens=6, calls=1
+                                    ),
+                                    raw_output={"raw_content": "{}"},
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ]
+
+        await send_results_to_orq(
+            api_key="key",
+            evaluation_name="eval",
+            evaluation_description=None,
+            dataset_id=None,
+            results=results,
+            start_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            end_time=datetime(2026, 1, 1, 0, 0, 1, tzinfo=timezone.utc),
+            raise_on_error=True,
+        )
+
+        score = extract_score(captured["json"])
+        assert "token_usage" not in score
+        assert "raw_output" not in score
+        # Required fields survive the strip.
+        assert score["explanation"] == "resistant"
+        assert captured["json"]["results"][0]["jobResults"][0]["output"] == "result"
+
+    @pytest.mark.asyncio
     async def test_network_error_returns_none_when_raise_on_error_false(
         self,
         monkeypatch: pytest.MonkeyPatch,

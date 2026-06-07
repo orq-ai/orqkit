@@ -1049,7 +1049,13 @@ class UnifiedEvaluationResult(BaseModel):
     evaluator_id: str | None = None
     evaluator_name: str | None = None
     token_usage: TokenUsage | None = None
-    raw_output: dict[str, Any] | None = None
+    raw_output: dict[str, Any] | None = Field(
+        default=None,
+        description="Verbatim model output for inspection: {'raw_content': <str>} on "
+        "success, {'error': <str>, ...} on failure. Display/debug only and stripped at "
+        "the Orq send boundary — consumers must read the parsed verdict from passed/"
+        "explanation, not from here.",
+    )
 
 
 class EvaluationPayload(BaseModel):
@@ -1062,7 +1068,13 @@ class EvaluationPayload(BaseModel):
     passed: bool | None = None
     error: str | None = None
     token_usage: TokenUsage | None = None
-    raw_output: dict[str, Any] | None = None
+    raw_output: dict[str, Any] | None = Field(
+        default=None,
+        description="Verbatim model output for inspection: {'raw_content': <str>} on "
+        "success, {'error': <str>, ...} on failure. Display/debug only and stripped at "
+        "the Orq send boundary — consumers must read the parsed verdict from passed/"
+        "explanation, not from here.",
+    )
 
 
 class JobOutputPayload(BaseModel):
