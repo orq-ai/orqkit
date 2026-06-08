@@ -66,6 +66,29 @@ async def test_injects_trace_headers_when_enabled(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
+async def test_trace_headers_merged_with_existing_extra_headers(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        'evaluatorq.common.llm_call.get_trace_context_headers',
+        AsyncMock(return_value={'traceparent': 'trace-val'}),
+    )
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(return_value=_fake_response())
+
+    await execute_chat_completion(
+        client=client,
+        model='m',
+        messages=[{'role': 'user', 'content': 'x'}],
+        span=None,
+        timeout_s=5.0,
+        inject_trace_headers=True,
+        extra_kwargs={'extra_headers': {'x-custom': 'existing'}},
+    )
+    kwargs = client.chat.completions.create.call_args.kwargs
+    # Caller header survives; trace header is added (and wins on key conflict).
+    assert kwargs['extra_headers'] == {'x-custom': 'existing', 'traceparent': 'trace-val'}
+
+
+@pytest.mark.asyncio
 async def test_no_trace_headers_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         'evaluatorq.common.llm_call.get_trace_context_headers', AsyncMock(return_value={'traceparent': 'abc'})

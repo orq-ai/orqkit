@@ -14,6 +14,14 @@ def _json_response(content: str) -> MagicMock:
     resp = MagicMock()
     resp.choices = [MagicMock()]
     resp.choices[0].message.content = content
+    # Explicit integer usage. Without this, resp.usage is an auto-MagicMock whose
+    # numeric fields coerce to 1, so a `token_usage is not None` assertion would
+    # pass regardless of whether usage is actually threaded through.
+    usage = MagicMock()
+    usage.prompt_tokens = 10
+    usage.completion_tokens = 5
+    usage.total_tokens = 15
+    resp.usage = usage
     return resp
 
 
@@ -35,6 +43,7 @@ async def test_success_parses_payload(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(outcome.payload, EvaluatorResponsePayload)
     assert outcome.payload.value is True
     assert outcome.token_usage is not None
+    assert (outcome.token_usage.prompt_tokens, outcome.token_usage.completion_tokens, outcome.token_usage.total_tokens) == (10, 5, 15)
     assert outcome.raw_content == '{"value": true, "explanation": "resisted"}'
 
 
