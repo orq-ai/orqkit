@@ -387,7 +387,7 @@ def _render_focus_areas_html(section: ReportSection) -> str:
         agent_remediation = area.get("agent_specific_remediation", "")
         if agent_remediation:
             card_lines.append(
-                f'<div style="margin-top:8px;padding:8px 12px;background:{_COLORS["sand_100"]};border-left:3px solid {_COLORS["orange_300"]};border-radius:4px">'
+                f'<div class="callout warn">'
                 f'<strong>Agent-specific:</strong> {_esc(agent_remediation)}</div>'
             )
 
@@ -807,7 +807,7 @@ def _render_agent_context_html(section: ReportSection) -> str:
         chip_groups: list[str] = []
         if tools:
             tool_chips = "".join(
-                f'<span style="display:inline-block;background:#e8f4f8;border:1px solid #b3d9ea;'
+                f'<span style="display:inline-block;background:var(--clay-tint);border:1px solid var(--clay);'
                 f'border-radius:12px;padding:.15rem .6rem;font-size:.8em;margin:.15rem .15rem .15rem 0">'
                 f"{_esc(t)}</span>"
                 for t in tools
@@ -815,7 +815,7 @@ def _render_agent_context_html(section: ReportSection) -> str:
             chip_groups.append(f"<p><strong>Tools:</strong> {tool_chips}</p>")
         if memory_stores:
             mem_chips = "".join(
-                f'<span style="display:inline-block;background:#f0f8e8;border:1px solid #c3e0a0;'
+                f'<span style="display:inline-block;background:var(--olive-tint);border:1px solid var(--olive);'
                 f'border-radius:12px;padding:.15rem .6rem;font-size:.8em;margin:.15rem .15rem .15rem 0">'
                 f"{_esc(m)}</span>"
                 for m in memory_stores
@@ -823,7 +823,7 @@ def _render_agent_context_html(section: ReportSection) -> str:
             chip_groups.append(f"<p><strong>Memory:</strong> {mem_chips}</p>")
         if knowledge_bases:
             kb_chips = "".join(
-                f'<span style="display:inline-block;background:#fdf0e8;border:1px solid #f0c080;'
+                f'<span style="display:inline-block;background:var(--gray-100);border:1px solid var(--gray-300);'
                 f'border-radius:12px;padding:.15rem .6rem;font-size:.8em;margin:.15rem .15rem .15rem 0">'
                 f"{_esc(k)}</span>"
                 for k in knowledge_bases
@@ -1301,7 +1301,7 @@ def _render_agent_comparison_html(section: ReportSection) -> str:
         asr_class = "kpi-alert" if asr >= 0.5 else ("kpi-warn" if asr >= 0.2 else "")
         parts.append(
             f'<div class="kpi-card {asr_class}" style="flex:1 1 160px;">'
-            f'<div class="kpi-label" style="font-size:.9em;color:var(--teal-400);">{agent_name}</div>'
+            f'<div class="kpi-label" style="font-size:.9em;color:var(--clay);">{agent_name}</div>'
             f'<div class="kpi-value">{_pct(asr)}</div>'
             f'<div class="kpi-subtitle">'
             f'{_esc(str(am["vulnerabilities_found"]))} vulns / {_esc(str(am["total_attacks"]))} attacks'
