@@ -392,12 +392,12 @@ def create_dynamic_redteam_job(
                         agent_resp = _coerce_to_agent_response(raw)
                         response = agent_resp.text
                         token_usage: TokenUsage | None = agent_resp.usage
-                        _resp_text = truncate_for_span(response or '')
+                        resp_text = truncate_for_span(response or '')
                         set_span_attrs(
                             tgt_span,
                             {
-                                'output': _resp_text,
-                                'orq.redteam.output': _resp_text,
+                                'output': resp_text,
+                                'orq.redteam.output': resp_text,
                             },
                         )
                 except asyncio.TimeoutError:

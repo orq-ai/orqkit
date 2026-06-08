@@ -158,6 +158,11 @@ def _parse_hf_source(rest: str) -> tuple[str, str]:
     return f'{parts[0]}/{parts[1]}', DEFAULT_HF_FILENAME
 
 
+def _error_result(explanation: str) -> EvaluationResult:
+    """Inconclusive scorer row: not RESISTANT/VULNERABLE, just unscoreable."""
+    return EvaluationResult.model_validate({'value': 'error', 'explanation': explanation, 'pass': None})
+
+
 def create_owasp_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
@@ -182,20 +187,12 @@ def create_owasp_evaluator(
         category = data.inputs.get('category', '')
         if not category:
             logger.error("Scorer received datapoint with missing 'category' field")
-            return EvaluationResult.model_validate({
-                'value': 'error',
-                'explanation': "Missing 'category' in datapoint inputs — cannot score",
-                'pass': None,
-            })
+            return _error_result("Missing 'category' in datapoint inputs — cannot score")
 
         evaluator_entity = get_evaluator_for_category(category, evaluator_model)
         if evaluator_entity is None:
             logger.warning(f'No evaluator found for category {category}')
-            return EvaluationResult.model_validate({
-                'value': 'error',
-                'explanation': f'No evaluator found for category {category}',
-                'pass': None,
-            })
+            return _error_result(f'No evaluator found for category {category}')
 
         output_messages = _adapt_static_output(output)
 
@@ -212,17 +209,9 @@ def create_owasp_evaluator(
 
         # Static path swallows ALL errors into an inconclusive row (never re-raises).
         if outcome.error_kind is JudgeError.TIMEOUT:
-            return EvaluationResult.model_validate({
-                'value': 'error',
-                'explanation': f'Evaluation timed out after {outcome.timeout_ms}ms',
-                'pass': None,
-            })
+            return _error_result(f'Evaluation timed out after {outcome.timeout_ms}ms')
         if outcome.error_kind is not None or outcome.payload is None:
-            return EvaluationResult.model_validate({
-                'value': 'error',
-                'explanation': f'Evaluation error: {outcome.error_message}',
-                'pass': None,
-            })
+            return _error_result(f'Evaluation error: {outcome.error_message}')
 
         # Carry the judge's cost + raw response so the report layer can surface and
         # aggregate evaluator token usage (stripped from the platform upload at the

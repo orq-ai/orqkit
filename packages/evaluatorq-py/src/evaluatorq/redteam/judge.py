@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai import APIConnectionError, APIStatusError, APITimeoutError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from evaluatorq.common.llm_call import execute_chat_completion
+from evaluatorq.common.messages import coerce_content_text
 from evaluatorq.common.template_engine import render_template
 from evaluatorq.contracts import (
     LLMCallConfig,
@@ -60,9 +60,11 @@ class JudgeError(StrEnum):
     UNKNOWN = 'unknown'
 
 
-@dataclass
-class JudgeOutcome:
+class JudgeOutcome(BaseModel):
     """Neutral judge result. Makes no policy decision — callers map it."""
+
+    # error_exc holds a raw Exception (re-raised by the dynamic caller); allow it through.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     payload: EvaluatorResponsePayload | None = None
     token_usage: TokenUsage | None = None
@@ -115,7 +117,7 @@ def build_eval_replacements(
     authored against it, not upstream prose).
     """
     in_msgs = [
-        m if isinstance(m, dict) else {'role': str(m.role), 'content': str(m.content or '')} for m in input_messages
+        m if isinstance(m, dict) else {'role': str(m.role), 'content': coerce_content_text(m.content)} for m in input_messages
     ]
     response = ''.join(i.text for i in output_messages if isinstance(i, TextOutputItem))
     tools_called = [
