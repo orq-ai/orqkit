@@ -649,7 +649,7 @@ def _render_attack_heatmap_html(section: ReportSection) -> str:
     def _heatmap_color(asr: float, total: int) -> str:
         """Interpolate from success_400 (0%) to red_400 (100%)."""
         if total == 0:
-            return "#e0e0e0"
+            return "#D1CFC5"  # --gray-300
         # success_400: #2ebd85, red_400: #d92d20 via yellow_400 #f2b600 at 50%
         if asr <= 0.5:
             t = asr / 0.5
@@ -1565,7 +1565,7 @@ def _render_methodology_html(section: ReportSection) -> str:
             for cat in untested
         )
         untested_html = (
-            f'<div style="margin-top:16px;padding:12px;background:#fff3cd;border-left:3px solid #ffc107;border-radius:4px">'
+            f'<div class="callout warn" style="margin-top:16px">'
             f'<strong>{len(untested)} supported categories not tested:</strong>'
             f'<ul style="margin:8px 0 0 0">{items}</ul></div>'
         )
