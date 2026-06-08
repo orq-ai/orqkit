@@ -680,7 +680,7 @@ def _render_attack_heatmap_html(section: ReportSection) -> str:
                     f'<td><span class="heatmap-cell" style="background:{color}">{_esc(label)}</span></td>'
                 )
             else:
-                row_parts.append('<td><span class="heatmap-cell" style="background:#e0e0e0;color:#999">—</span></td>')
+                row_parts.append('<td><span class="heatmap-cell" style="background:var(--gray-300);color:var(--gray-500)">—</span></td>')
         body_rows.append("<tr>" + "".join(row_parts) + "</tr>")
 
     table_html = (
@@ -691,7 +691,7 @@ def _render_attack_heatmap_html(section: ReportSection) -> str:
     )
 
     legend = (
-        '<p style="font-size:.8em;color:#888;margin-top:.5rem">'
+        '<p style="font-size:.8em;color:var(--gray-500);margin-top:.5rem">'
         "Cell color: green = low ASR (resistant), yellow = medium, red = high ASR (vulnerable). "
         "Grey = no attacks for that combination."
         "</p>"
@@ -1735,6 +1735,8 @@ def export_html(report: RedTeamReport) -> str:
             # Wrap each section in a div with an anchor ID for TOC navigation
             anchor = f"section-{section.kind}"
             rendered = renderer(section)
+            # Inject section-rule divider after the opening h2 of each section
+            rendered = rendered.replace("</h2>", '</h2>\n<hr class="section-rule">', 1)
             body_parts.append(f'<div id="{anchor}">{rendered}</div>')
 
     body_parts.append(
@@ -1753,7 +1755,9 @@ def export_html(report: RedTeamReport) -> str:
         f"<style>\n{_load_css()}</style>\n"
         "</head>\n"
         "<body>\n"
+        '<div class="container">\n'
         f"{body_html}\n"
+        "</div>\n"
         "</body>\n"
         "</html>\n"
     )
