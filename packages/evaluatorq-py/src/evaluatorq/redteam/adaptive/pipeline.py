@@ -685,15 +685,15 @@ def create_dynamic_evaluator(
             bool(eval_result.passed) if eval_result.passed is not None else 'inconclusive'
         )
         return EvaluationResult.model_validate({
-            "value": result_value,
-            "explanation": _append_jury_summary(eval_result.explanation, eval_result.jury),
-            "pass": eval_result.passed,
+            'value': result_value,
+            'explanation': _append_jury_summary(eval_result.explanation, eval_result.jury),
+            'pass': eval_result.passed,
             # Carry the judge's cost + raw response so the report layer can surface
             # and aggregate evaluator token usage. They are kept in local result
             # dumps but stripped from the Orq platform upload at the send boundary
             # (see evaluatorq.send_results).
-            "token_usage": eval_result.token_usage,
-            "raw_output": eval_result.raw_output,
+            'token_usage': eval_result.token_usage,
+            'raw_output': eval_result.raw_output,
         })
 
     return {'name': 'owasp-dynamic-security', 'scorer': scorer}

@@ -104,8 +104,12 @@ def _agreement_rate(values: list[bool]) -> float | None:
 
 
 def _jury_explanation(votes: list[JuryVote]) -> str:
-    """Fallback explanation when no judge matched the final verdict (all failed)."""
-    for vote in votes:
+    """Fallback explanation when no judge matched the final verdict (all failed).
+
+    Iterates in reverse so the reported error is the most recent failure —
+    replacement votes are appended last, so they win over the primaries they stood in for.
+    """
+    for vote in reversed(votes):
         if vote.error:
             return f'No judge produced a usable verdict; last error: {vote.error}'
     return 'No judge produced a usable verdict.'
@@ -281,16 +285,20 @@ class OWASPEvaluator:
 
         votes: list[JuryVote] = []
         usages: list[TokenUsage] = []
-        replacements = list(self.replacement_judges)
-        replacements_used = 0
         for vote, vote_usages in judge_results:
             votes.append(vote)
             usages.extend(vote_usages)
-            # Stand in a replacement judge when a configured judge fails entirely.
-            if not vote.success and replacements:
-                stand_in = replacements.pop(0)
-                replacements_used += 1
-                r_vote, r_usages = await self._run_judge(stand_in, eval_messages, span_attributes, replacement=True)
+
+        # Stand in replacement judges for those that failed entirely — one per
+        # failure, capped by the pool, and fanned out concurrently.
+        failures = sum(1 for v in votes if not v.success)
+        stand_ins = self.replacement_judges[:failures]
+        replacements_used = len(stand_ins)
+        if stand_ins:
+            replacement_results = await asyncio.gather(*[
+                self._run_judge(model, eval_messages, span_attributes, replacement=True) for model in stand_ins
+            ])
+            for r_vote, r_usages in replacement_results:
                 votes.append(r_vote)
                 usages.extend(r_usages)
 

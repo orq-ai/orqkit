@@ -583,7 +583,7 @@ class LLMConfig(BaseModel):
         description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
     )
 
-    def retry_extra_body(self, client: "AsyncOpenAI | None") -> dict[str, Any]:
+    def retry_extra_body(self, client: 'AsyncOpenAI | None') -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``, gated on the actual client.
 
         The ``retry`` parameter is ORQ-specific and rejected by a plain OpenAI
@@ -1100,7 +1100,7 @@ class AttackEvaluationResult(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only — consumers "
-        "must read the parsed verdict from passed/explanation, not from here.",
+        'must read the parsed verdict from passed/explanation, not from here.',
     )
     jury: JuryResult | None = Field(
         default=None,
@@ -1184,8 +1184,8 @@ class UnifiedEvaluationResult(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
-        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
-        "from passed/explanation, not from here.",
+        'the local report JSON, not uploaded) — consumers must read the parsed verdict '
+        'from passed/explanation, not from here.',
     )
 
 
@@ -1203,8 +1203,8 @@ class EvaluationPayload(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
-        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
-        "from passed/explanation, not from here.",
+        'the local report JSON, not uploaded) — consumers must read the parsed verdict '
+        'from passed/explanation, not from here.',
     )
 
 
@@ -1425,7 +1425,9 @@ class RedTeamReport(BaseModel):
     tested_agents: list[str] = Field(default_factory=list, description='Names/keys of tested agents in this report')
     total_results: int
 
-    agent_contexts: dict[str, AgentContext] = Field(default_factory=dict, description='Per-agent context keyed by agent key')
+    agent_contexts: dict[str, AgentContext] = Field(
+        default_factory=dict, description='Per-agent context keyed by agent key'
+    )
 
     results: list[RedTeamResult]
 
