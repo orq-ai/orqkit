@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias
 
 from loguru import logger
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -18,6 +18,7 @@ else:
 
     class StrEnum(str, Enum):  # type: ignore[no-redef]
         """String enum compatible with Python 3.10."""
+
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -30,7 +31,7 @@ else:
 # Pipeline defaults (mirrored from redteam.contracts for shared use)
 # ---------------------------------------------------------------------------
 
-DEFAULT_PIPELINE_MODEL: str = "gpt-5-mini"
+DEFAULT_PIPELINE_MODEL: str = 'gpt-5-mini'
 DEFAULT_TARGET_MAX_TOKENS: int = 5000
 DEFAULT_TARGET_TIMEOUT_MS: int = 240_000
 
@@ -51,7 +52,7 @@ class LLMCallConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     model: str = DEFAULT_PIPELINE_MODEL
-    api: Literal["chat_completions", "responses"] = "chat_completions"
+    api: Literal['chat_completions', 'responses'] = 'chat_completions'
     temperature: float = Field(default=1.0, ge=0.0, le=2.0)
     max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
     timeout_ms: int = Field(default=90_000, gt=0)
@@ -86,14 +87,14 @@ class ReasoningOutputItem(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    type: Literal["reasoning"] = "reasoning"
+    type: Literal['reasoning'] = 'reasoning'
     text: str
     id: str | None = None
 
 
 OutputMessage = Annotated[
     TextOutputItem | ToolCallOutputItem | ReasoningOutputItem,
-    Field(discriminator="type"),
+    Field(discriminator='type'),
 ]
 
 
@@ -110,22 +111,22 @@ OutputMessage = Annotated[
 class FunctionCall(BaseModel):
     """Function call details in OpenAI tool call format."""
 
-    name: str = Field(description="Function name to call")
-    arguments: str = Field(description="JSON string of function arguments")
+    name: str = Field(description='Function name to call')
+    arguments: str = Field(description='JSON string of function arguments')
 
 
 class StrategyToolCall(BaseModel):
     """Tool call in assistant message (OpenAI format)."""
 
-    id: str = Field(description="Unique tool call ID (e.g., call_abc123)")
-    type: Literal["function"] = Field(default="function", description="Tool type")
-    function: FunctionCall = Field(description="Function call details")
+    id: str = Field(description='Unique tool call ID (e.g., call_abc123)')
+    type: Literal['function'] = Field(default='function', description='Tool type')
+    function: FunctionCall = Field(description='Function call details')
     # Responses-API item id (e.g. ``fc_abc123``), distinct from ``id`` (which maps to
     # the chat-completions / Responses ``call_id``). Preserved through transcript
     # replay so :class:`OpenAIAgentTarget` can echo the original ``function_call``
     # item back to the Responses API on subsequent turns. ``None`` for tool calls
     # that did not originate from a Responses-API turn.
-    item_id: str | None = Field(default=None, description="Responses-API function_call item id (fc_*)")
+    item_id: str | None = Field(default=None, description='Responses-API function_call item id (fc_*)')
 
 
 class Message(BaseModel):
@@ -137,21 +138,19 @@ class Message(BaseModel):
     - Tool response: ``{"role": "tool", "tool_call_id": "...", "name": "...", "content": "..."}``
     """
 
-    role: Literal["user", "assistant", "tool", "system"]
+    role: Literal['user', 'assistant', 'tool', 'system']
     content: str | None = Field(
         default=None,
-        description="Message content (required for user/system, optional for assistant with tool_calls)",
+        description='Message content (required for user/system, optional for assistant with tool_calls)',
     )
 
     # Tool call fields (OpenAI format)
-    tool_calls: list[StrategyToolCall] | None = Field(
-        default=None, description="Tool calls made by assistant"
-    )
+    tool_calls: list[StrategyToolCall] | None = Field(default=None, description='Tool calls made by assistant')
     tool_call_id: str | None = Field(
         default=None,
-        description="ID linking tool response to call (for role=tool)",
+        description='ID linking tool response to call (for role=tool)',
     )
-    name: str | None = Field(default=None, description="Function name (for role=tool)")
+    name: str | None = Field(default=None, description='Function name (for role=tool)')
 
     def to_chat_completion(self) -> dict[str, Any]:
         """Render this message as an OpenAI chat-completions message dict.
@@ -161,73 +160,182 @@ class Message(BaseModel):
         ``tool_call_id``/``name``. Used by stateless targets to replay a transcript
         (built by ``turns_to_messages``) without losing multi-turn tool context.
         """
-        if self.role == "tool":
+        if self.role == 'tool':
             # A tool message carries a result keyed to tool_call_id; tool_calls belong
             # on assistant messages, so any present here are malformed and not emitted.
             param: dict[str, Any] = {
-                "role": "tool",
-                "tool_call_id": self.tool_call_id or "",
-                "content": self.content or "",
+                'role': 'tool',
+                'tool_call_id': self.tool_call_id or '',
+                'content': self.content or '',
             }
             if self.name:
-                param["name"] = self.name
+                param['name'] = self.name
             return param
-        if self.role == "assistant" and self.tool_calls:
+        if self.role == 'assistant' and self.tool_calls:
             # content may be None on a pure tool-call turn; OpenAI accepts null.
             return {
-                "role": "assistant",
-                "content": self.content,
-                "tool_calls": [
+                'role': 'assistant',
+                'content': self.content,
+                'tool_calls': [
                     {
-                        "id": tc.id,
-                        "type": "function",
-                        "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                        'id': tc.id,
+                        'type': 'function',
+                        'function': {'name': tc.function.name, 'arguments': tc.function.arguments},
                     }
                     for tc in self.tool_calls
                 ],
             }
-        return {"role": self.role, "content": self.content or ""}
+        return {'role': self.role, 'content': self.content or ''}
+
+
+def _usage_get(usage: Any, key: str, default: Any = None) -> Any:
+    """Read ``key`` from a usage object or dict, returning ``default`` if absent."""
+    if isinstance(usage, dict):
+        return usage.get(key, default)
+    return getattr(usage, key, default)
+
+
+def _usage_first_int(usage: Any, keys: tuple[str, ...]) -> int:
+    """First numeric value across ``keys``, coerced to int (0 if none present).
+
+    Only genuine ``int``/``float`` values count; ``None`` and non-numeric stand-ins
+    (e.g. a bare ``MagicMock`` attribute) are skipped so the next alias is tried.
+    """
+    for key in keys:
+        val = _usage_get(usage, key)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            return int(val)
+    return 0
+
+
+def _usage_detail_int(usage: Any, containers: tuple[str, ...], key: str) -> int:
+    """Read a nested detail token count (e.g. input_tokens_details.cached_tokens)."""
+    for container in containers:
+        detail = _usage_get(usage, container)
+        if detail is not None:
+            val = _usage_get(detail, key)
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                return int(val)
+    return 0
+
+
+def _usage_first_float(usage: Any, keys: tuple[str, ...]) -> float | None:
+    """First numeric value across ``keys`` coerced to float, or None if absent."""
+    for key in keys:
+        val = _usage_get(usage, key)
+        if isinstance(val, (int, float)) and not isinstance(val, bool):
+            return float(val)
+    return None
 
 
 class TokenUsage(BaseModel):
     """Token usage and cost for an LLM call or aggregation of calls.
 
-    ``total_tokens`` is stored as provided by the upstream provider and is
-    never overridden. This preserves provider-specific token breakdowns
-    (cached_tokens, reasoning_tokens, audio tokens, etc.) that would be
-    silently corrupted by a normalisation step.
+    Field naming follows the OpenTelemetry GenAI semconv / OpenResponses standard
+    (``input_tokens``/``output_tokens`` rather than ``prompt``/``completion``).
+    ``cached_tokens`` is a subset of ``input_tokens`` and ``reasoning_tokens`` a
+    subset of ``output_tokens``, so the reconciliation invariant is
+    ``total_tokens == input_tokens + output_tokens`` (with cached ≤ input,
+    reasoning ≤ output). ``total_tokens`` is stored as provided by the upstream
+    provider and never overridden.
+
+    Back-compat: the legacy ``prompt_tokens``/``completion_tokens`` names are
+    accepted on construction and exposed as read-only properties so call sites
+    that have not migrated keep working.
     """
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
-    total_tokens: int = Field(default=0, ge=0, description="Total tokens used as reported by the provider")
-    prompt_tokens: int = Field(default=0, ge=0, description="Prompt/input tokens")
-    completion_tokens: int = Field(default=0, ge=0, description="Completion/output tokens")
-    calls: int = Field(default=0, ge=0, description="Number of LLM API calls")
+    input_tokens: int = Field(
+        default=0,
+        ge=0,
+        validation_alias=AliasChoices('input_tokens', 'prompt_tokens'),
+        description='Input/prompt tokens (includes cached_tokens)',
+    )
+    output_tokens: int = Field(
+        default=0,
+        ge=0,
+        validation_alias=AliasChoices('output_tokens', 'completion_tokens'),
+        description='Output/completion tokens (includes reasoning_tokens)',
+    )
+    total_tokens: int = Field(default=0, ge=0, description='Total tokens as reported by the provider')
+    cached_tokens: int = Field(default=0, ge=0, description='Cached input tokens (subset of input_tokens)')
+    reasoning_tokens: int = Field(default=0, ge=0, description='Reasoning output tokens (subset of output_tokens)')
+    cost_usd: float | None = Field(
+        default=None, ge=0, description='Cost in USD when the provider reports it, else None'
+    )
+    calls: int = Field(default=0, ge=0, description='Number of LLM API calls')
+
+    @property
+    def prompt_tokens(self) -> int:
+        """Deprecated alias for :attr:`input_tokens`."""
+        return self.input_tokens
+
+    @property
+    def completion_tokens(self) -> int:
+        """Deprecated alias for :attr:`output_tokens`."""
+        return self.output_tokens
+
+    @model_serializer(mode='wrap')
+    def _serialize(self, handler: Any) -> dict[str, Any]:
+        """Emit the legacy ``prompt_tokens``/``completion_tokens`` keys alongside the
+        standard names so dict/JSON consumers that have not migrated keep working."""
+        data = handler(self)
+        data['prompt_tokens'] = self.input_tokens
+        data['completion_tokens'] = self.output_tokens
+        return data
+
+    @classmethod
+    def extract(cls, usage: Any, *, calls: int = 1) -> TokenUsage | None:
+        """Map any provider usage shape (object or dict) into a TokenUsage.
+
+        Handles chat-completions (``prompt``/``completion_tokens`` + ``*_details``),
+        responses (``input``/``output_tokens`` + ``*_tokens_details``), vercel
+        camelCase, and langgraph ``usage_metadata``. A single fallback rule:
+        ``total_tokens`` is trusted when > 0, otherwise ``input + output``.
+        """
+        if usage is None:
+            return None
+        inp = _usage_first_int(usage, ('input_tokens', 'prompt_tokens', 'promptTokens', 'prompt'))
+        out = _usage_first_int(usage, ('output_tokens', 'completion_tokens', 'completionTokens', 'completion'))
+        # Provider total is trusted only when > 0; otherwise fall back to input+output.
+        reported_total = _usage_first_int(usage, ('total_tokens', 'totalTokens', 'total'))
+        total = reported_total if reported_total > 0 else inp + out
+        cached = _usage_detail_int(usage, ('input_tokens_details', 'prompt_tokens_details'), 'cached_tokens')
+        reasoning = _usage_detail_int(usage, ('output_tokens_details', 'completion_tokens_details'), 'reasoning_tokens')
+        cost = _usage_first_float(usage, ('cost_usd', 'cost', 'total_cost'))
+        # Honour a calls count already carried by the payload (e.g. an aggregated
+        # TokenUsage dump); fall back to the per-call default otherwise.
+        raw_calls = _usage_get(usage, 'calls')
+        resolved_calls = (
+            int(raw_calls) if isinstance(raw_calls, (int, float)) and not isinstance(raw_calls, bool) else calls
+        )
+        return cls(
+            input_tokens=inp,
+            output_tokens=out,
+            total_tokens=total,
+            cached_tokens=cached,
+            reasoning_tokens=reasoning,
+            cost_usd=cost,
+            calls=resolved_calls,
+        )
 
     @classmethod
     def from_completion(cls, response: Any) -> TokenUsage | None:
         """Extract token usage from an OpenAI-compatible completion response."""
-        usage = getattr(response, "usage", None)
-        if usage is None:
-            return None
-        prompt = int(getattr(usage, "prompt_tokens", 0) or 0)
-        completion = int(getattr(usage, "completion_tokens", 0) or 0)
-        # Mirror the > 0 guard used by other integrations: a provider-reported
-        # total of 0 (or absent) falls back to prompt+completion rather than
-        # propagating the zero, which would silently under-count totals on
-        # responses where prompt+completion are non-zero.
-        raw_total = getattr(usage, "total_tokens", None)
-        total = int(raw_total) if raw_total is not None and int(raw_total) > 0 else prompt + completion
-        return cls(prompt_tokens=prompt, completion_tokens=completion, total_tokens=total, calls=1)
+        return cls.extract(getattr(response, 'usage', None), calls=1)
 
     def __add__(self, other: TokenUsage | None) -> TokenUsage:
         if other is None:
             return self.model_copy()
+        cost = self.cost_usd if other.cost_usd is None else (self.cost_usd or 0.0) + other.cost_usd
         return TokenUsage(
-            prompt_tokens=self.prompt_tokens + other.prompt_tokens,
-            completion_tokens=self.completion_tokens + other.completion_tokens,
+            input_tokens=self.input_tokens + other.input_tokens,
+            output_tokens=self.output_tokens + other.output_tokens,
             total_tokens=self.total_tokens + other.total_tokens,
+            cached_tokens=self.cached_tokens + other.cached_tokens,
+            reasoning_tokens=self.reasoning_tokens + other.reasoning_tokens,
+            cost_usd=cost,
             calls=self.calls + other.calls,
         )
 
@@ -316,25 +424,23 @@ class AgentResponse(BaseModel):
             error: AgentResponseError | None = None,
         ) -> None: ...
 
-    @model_validator(mode="before")
+    @model_validator(mode='before')
     @classmethod
     def _accept_text_shorthand(cls, data: Any) -> Any:
         # Preserve legacy ``AgentResponse(text="...")`` construction.
-        if isinstance(data, dict) and "text" in data:
+        if isinstance(data, dict) and 'text' in data:
             payload = dict(data)
-            text = payload.pop("text")
-            if payload.get("output") is not None:
-                raise ValueError("AgentResponse accepts either output= or text=, not both")
-            payload["output"] = (
-                [TextOutputItem(text=text, annotations=[])] if text is not None else []
-            )
+            text = payload.pop('text')
+            if payload.get('output') is not None:
+                raise ValueError('AgentResponse accepts either output= or text=, not both')
+            payload['output'] = [TextOutputItem(text=text, annotations=[])] if text is not None else []
             return payload
         return data
 
     @property
     def text(self) -> str:
         """Concatenate all text output items into a single string."""
-        return "".join(item.text for item in self.output if isinstance(item, TextOutputItem))
+        return ''.join(item.text for item in self.output if isinstance(item, TextOutputItem))
 
     @property
     def tool_calls(self) -> list[ToolCallOutputItem]:
@@ -355,56 +461,52 @@ class AgentResponse(BaseModel):
         applied by callers to the returned object's ``usage``.
         """
         items: list[OutputMessage] = []
-        for item in _gf(response, "output") or []:
-            item_type = _gf(item, "type")
-            if item_type == "message":
-                for part in _gf(item, "content") or []:
-                    if _gf(part, "type") == "output_text" and _gf(part, "text"):
+        for item in _gf(response, 'output') or []:
+            item_type = _gf(item, 'type')
+            if item_type == 'message':
+                for part in _gf(item, 'content') or []:
+                    if _gf(part, 'type') == 'output_text' and _gf(part, 'text'):
                         items.append(
                             TextOutputItem(
-                                type="output_text",
-                                text=_gf(part, "text"),
+                                type='output_text',
+                                text=_gf(part, 'text'),
                                 annotations=[],
                                 logprobs=[],
                             )
                         )
-            elif item_type == "function_call":
-                raw_args = _gf(item, "arguments") or "{}"
-                call_id = _gf(item, "call_id") or _gf(item, "id") or ""
-                result = _gf(item, "result")
+            elif item_type == 'function_call':
+                raw_args = _gf(item, 'arguments') or '{}'
+                call_id = _gf(item, 'call_id') or _gf(item, 'id') or ''
+                result = _gf(item, 'result')
                 items.append(
                     ToolCallOutputItem(
-                        type="function_call",
-                        name=str(_gf(item, "name") or ""),
+                        type='function_call',
+                        name=str(_gf(item, 'name') or ''),
                         call_id=str(call_id),
                         arguments=raw_args if isinstance(raw_args, str) else json.dumps(raw_args),
                         result=str(result) if result is not None else None,
                     )
                 )
-            elif item_type == "reasoning":
+            elif item_type == 'reasoning':
                 pass  # o1/o3/o4-mini reasoning steps intentionally excluded
             else:
-                logger.warning("AgentResponse.from_openresponses: skipping unknown item type={!r}", item_type)
+                logger.warning('AgentResponse.from_openresponses: skipping unknown item type={!r}', item_type)
 
-        usage_obj = _gf(response, "usage")
+        usage_obj = _gf(response, 'usage')
         if usage_obj is None:
             logger.warning(
-                "AgentResponse.from_openresponses: response.usage is None; usage left "
-                "None so cost reports do not record fake-zero usage for billed calls"
+                'AgentResponse.from_openresponses: response.usage is None; usage left '
+                'None so cost reports do not record fake-zero usage for billed calls'
             )
             usage = None
         else:
-            input_toks = int(_gf(usage_obj, "input_tokens", 0) or 0)
-            output_toks = int(_gf(usage_obj, "output_tokens", 0) or 0)
-            usage = TokenUsage(
-                prompt_tokens=input_toks,
-                completion_tokens=output_toks,
-                total_tokens=input_toks + output_toks,
-            )
+            # calls=0 here; the caller patches +1 once it knows this was a billed call.
+            # extract() carries cached_tokens / reasoning_tokens that the old hand-roll dropped.
+            usage = TokenUsage.extract(usage_obj, calls=0)
 
-        model = _gf(response, "model")
-        status = _gf(response, "status")
-        response_id = _gf(response, "id")
+        model = _gf(response, 'model')
+        status = _gf(response, 'status')
+        response_id = _gf(response, 'id')
         return cls(
             output=items,
             usage=usage,
@@ -523,7 +625,7 @@ class AgentTarget(ABC):
 
     async def get_agent_context(self) -> AgentContext:
         """Default: minimal context. Override for platform-backed targets."""
-        return AgentContext(key=getattr(self, "agent_key", "unknown"))
+        return AgentContext(key=getattr(self, 'agent_key', 'unknown'))
 
     async def cleanup_memory(self, ctx: AgentContext, entity_ids: list[str]) -> None:
         """Release any memory entities this target created. Default: no-op (stateless)."""
@@ -545,39 +647,39 @@ class AgentTarget(ABC):
 
 ReportSectionKind = Literal[
     # Shared
-    "summary",
-    "token_usage",
-    "individual_results",
-    "agent_context",
+    'summary',
+    'token_usage',
+    'individual_results',
+    'agent_context',
     # Simulation-specific
-    "overview",
-    "failures_first",
-    "failure_mode",
-    "persona_scenario_heatmap",
-    "score_distribution",
-    "turn_quality_timeline",
-    "persona_breakdown",
-    "scenario_breakdown",
-    "judge_verdicts",
-    "turn_metrics",
-    "evaluator_scores",
-    "errors",
+    'overview',
+    'failures_first',
+    'failure_mode',
+    'persona_scenario_heatmap',
+    'score_distribution',
+    'turn_quality_timeline',
+    'persona_breakdown',
+    'scenario_breakdown',
+    'judge_verdicts',
+    'turn_metrics',
+    'evaluator_scores',
+    'errors',
     # Red-team-specific
-    "focus_areas",
-    "vulnerability_breakdown",
-    "category_breakdown",
-    "technique_breakdown",
-    "delivery_breakdown",
-    "error_analysis",
-    "attack_heatmap",
-    "agent_comparison",
-    "agent_disagreements",
-    "framework_breakdown",
-    "turn_scope_breakdown",
-    "turn_depth_analysis",
-    "source_distribution",
-    "severity_definitions",
-    "methodology",
+    'focus_areas',
+    'vulnerability_breakdown',
+    'category_breakdown',
+    'technique_breakdown',
+    'delivery_breakdown',
+    'error_analysis',
+    'attack_heatmap',
+    'agent_comparison',
+    'agent_disagreements',
+    'framework_breakdown',
+    'turn_scope_breakdown',
+    'turn_depth_analysis',
+    'source_distribution',
+    'severity_definitions',
+    'methodology',
 ]
 """Closed set of known report section kinds across simulation and red-team."""
 
@@ -607,25 +709,25 @@ class ReportSection:
 
 
 __all__ = [
-    "DEFAULT_PIPELINE_MODEL",
-    "DEFAULT_TARGET_MAX_TOKENS",
-    "DEFAULT_TARGET_TIMEOUT_MS",
-    "AgentContext",
-    "AgentResponse",
-    "AgentResponseError",
-    "AgentTarget",
-    "FunctionCall",
-    "KnowledgeBaseInfo",
-    "LLMCallConfig",
-    "MemoryStoreInfo",
-    "Message",
-    "OutputMessage",
-    "ReasoningOutputItem",
-    "ReportSection",
-    "ReportSectionKind",
-    "StrategyToolCall",
-    "TextOutputItem",
-    "TokenUsage",
-    "ToolCallOutputItem",
-    "ToolInfo",
+    'DEFAULT_PIPELINE_MODEL',
+    'DEFAULT_TARGET_MAX_TOKENS',
+    'DEFAULT_TARGET_TIMEOUT_MS',
+    'AgentContext',
+    'AgentResponse',
+    'AgentResponseError',
+    'AgentTarget',
+    'FunctionCall',
+    'KnowledgeBaseInfo',
+    'LLMCallConfig',
+    'MemoryStoreInfo',
+    'Message',
+    'OutputMessage',
+    'ReasoningOutputItem',
+    'ReportSection',
+    'ReportSectionKind',
+    'StrategyToolCall',
+    'TextOutputItem',
+    'TokenUsage',
+    'ToolCallOutputItem',
+    'ToolInfo',
 ]
