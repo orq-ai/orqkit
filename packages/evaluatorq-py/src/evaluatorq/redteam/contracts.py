@@ -406,6 +406,7 @@ class RedTeamInput(BaseModel):
         # definition time.  By the time this validator runs (instance creation)
         # both modules are fully initialised.
         from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_category_safe
+
         has_vuln = bool(data.get('vulnerability'))
         has_cat = bool(data.get('category'))
         if has_vuln and not has_cat:
@@ -477,7 +478,7 @@ class TargetConfig(BaseModel):
 
     system_prompt: str | None = Field(
         default=None,
-        description="System prompt for the target model/agent",
+        description='System prompt for the target model/agent',
     )
 
 
@@ -528,7 +529,7 @@ class LLMConfig(BaseModel):
         description='Max client-driven tool-result continuation rounds for ORQ agents that emit pending_tool_calls.',
     )
 
-    def retry_extra_body(self, client: "AsyncOpenAI | None") -> dict[str, Any]:
+    def retry_extra_body(self, client: 'AsyncOpenAI | None') -> dict[str, Any]:
         """ORQ retry config dict for ``extra_body``, gated on the actual client.
 
         The ``retry`` parameter is ORQ-specific and rejected by a plain OpenAI
@@ -782,22 +783,28 @@ def turns_to_messages(turns: list[Turn], *, skip_errors: bool = False) -> list[M
                 text_buffer.append(item.text)
             elif isinstance(item, ToolCallOutputItem):
                 _flush_text()
-                out.append(Message(
-                    role='assistant',
-                    content=None,
-                    tool_calls=[StrategyToolCall(
-                        id=item.call_id,
-                        item_id=item.id or None,
-                        function=FunctionCall(name=item.name, arguments=item.arguments),
-                    )],
-                ))
+                out.append(
+                    Message(
+                        role='assistant',
+                        content=None,
+                        tool_calls=[
+                            StrategyToolCall(
+                                id=item.call_id,
+                                item_id=item.id or None,
+                                function=FunctionCall(name=item.name, arguments=item.arguments),
+                            )
+                        ],
+                    )
+                )
                 if item.result is not None:
-                    out.append(Message(
-                        role='tool',
-                        tool_call_id=item.call_id,
-                        name=item.name,
-                        content=item.result,
-                    ))
+                    out.append(
+                        Message(
+                            role='tool',
+                            tool_call_id=item.call_id,
+                            name=item.name,
+                            content=item.result,
+                        )
+                    )
             # ReasoningOutputItem intentionally dropped.
         _flush_text()
         # Alternation invariant: every user row must be followed by an assistant row.
@@ -855,17 +862,15 @@ class OrchestratorResult(BaseModel):
         default_factory=list, description='Turn numbers where adversarial LLM hit max_tokens'
     )
 
-    @model_validator(mode="after")
-    def _validate_max_turns(self) -> "OrchestratorResult":
+    @model_validator(mode='after')
+    def _validate_max_turns(self) -> 'OrchestratorResult':
         """Enforce that max_turns is not less than the number of executed turns.
 
         max_turns=0 is the unset-sentinel (default) and is always accepted.
         Only positive values represent a configured budget and are validated.
         """
         if self.max_turns > 0 and self.max_turns < len(self.turns):
-            raise ValueError(
-                f"max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})"
-            )
+            raise ValueError(f'max_turns ({self.max_turns}) must be >= len(turns) ({len(self.turns)})')
         return self
 
     @property
@@ -915,6 +920,7 @@ class OrchestratorResult(BaseModel):
             ADVERSARIAL_ANALYSIS_PROMPT,
             ADVERSARIAL_INITIAL_USER_PROMPT,
         )
+
         msgs: list[Message] = [
             Message(role='system', content=self.system_prompt or ''),
             Message(role='user', content=ADVERSARIAL_INITIAL_USER_PROMPT.format(max_turns=self.max_turns)),
@@ -965,7 +971,9 @@ class AttackEvaluationResult(BaseModel):
        ``evaluatorq.EvaluationResult`` which is used for generic evaluator scores.
     """
 
-    passed: bool | None = Field(description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated')
+    passed: bool | None = Field(
+        description='True=RESISTANT (attack failed), False=VULNERABLE (attack succeeded), None=error/unevaluated'
+    )
     explanation: str = Field(description='Evaluator explanation')
     evaluator_id: str = Field(description='Evaluator identifier used')
     token_usage: TokenUsage | None = Field(default=None, description='Token usage and cost for this evaluation call')
@@ -973,7 +981,7 @@ class AttackEvaluationResult(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only — consumers "
-        "must read the parsed verdict from passed/explanation, not from here.",
+        'must read the parsed verdict from passed/explanation, not from here.',
     )
 
 
@@ -1053,8 +1061,8 @@ class UnifiedEvaluationResult(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
-        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
-        "from passed/explanation, not from here.",
+        'the local report JSON, not uploaded) — consumers must read the parsed verdict '
+        'from passed/explanation, not from here.',
     )
 
 
@@ -1072,8 +1080,8 @@ class EvaluationPayload(BaseModel):
         default=None,
         description="Verbatim model output for inspection: {'raw_content': <str>} on "
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
-        "the local report JSON, not uploaded) — consumers must read the parsed verdict "
-        "from passed/explanation, not from here.",
+        'the local report JSON, not uploaded) — consumers must read the parsed verdict '
+        'from passed/explanation, not from here.',
     )
 
 
@@ -1256,6 +1264,10 @@ class ReportSummary(BaseModel):
     total_errors: int = 0
     errors_by_type: dict[str, int] = Field(default_factory=dict, description='Error counts grouped by type')
     token_usage_total: TokenUsage | None = Field(default=None, description='Aggregated token usage across all results')
+    token_usage_by_source: dict[str, TokenUsage] = Field(
+        default_factory=dict,
+        description='Token usage grouped by datapoint source (static/template_dynamic/generated_dynamic); sums to token_usage_total',
+    )
     by_vulnerability: dict[str, VulnerabilitySummary] = Field(default_factory=dict)
     by_category: dict[str, CategorySummary] = Field(default_factory=dict)
     by_technique: dict[str, TechniqueSummary] = Field(default_factory=dict)
@@ -1294,7 +1306,9 @@ class RedTeamReport(BaseModel):
     tested_agents: list[str] = Field(default_factory=list, description='Names/keys of tested agents in this report')
     total_results: int
 
-    agent_contexts: dict[str, AgentContext] = Field(default_factory=dict, description='Per-agent context keyed by agent key')
+    agent_contexts: dict[str, AgentContext] = Field(
+        default_factory=dict, description='Per-agent context keyed by agent key'
+    )
 
     results: list[RedTeamResult]
 
@@ -1510,15 +1524,15 @@ _deprecated_warned: set[str] = set()
 
 
 def __getattr__(name: str):
-    if name == "EvaluationResult":
+    if name == 'EvaluationResult':
         if name not in _deprecated_warned:
             import warnings
+
             _deprecated_warned.add(name)
             warnings.warn(
-                "EvaluationResult is deprecated in evaluatorq.redteam.contracts. "
-                "Use AttackEvaluationResult instead.",
+                'EvaluationResult is deprecated in evaluatorq.redteam.contracts. Use AttackEvaluationResult instead.',
                 DeprecationWarning,
                 stacklevel=2,
             )
         return AttackEvaluationResult
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

@@ -637,6 +637,24 @@ def _aggregate_token_usage(results: list[RedTeamResult]) -> TokenUsage | None:
     return total if found else None
 
 
+def _aggregate_token_usage_by_source(results: list[RedTeamResult]) -> dict[str, TokenUsage]:
+    """Group token usage by datapoint source (static/template_dynamic/...).
+
+    Each result's execution + evaluation usage is attributed to ``attack.source``,
+    so the per-source values sum exactly to :func:`_aggregate_token_usage`.
+    """
+    by_source: dict[str, TokenUsage] = {}
+    for r in results:
+        source = r.attack.source if r.attack and r.attack.source else 'unknown'
+        for usage in (
+            r.execution.token_usage if r.execution else None,
+            r.evaluation.token_usage if r.evaluation else None,
+        ):
+            if usage is not None:
+                by_source[source] = by_source.get(source, TokenUsage()) + usage
+    return by_source
+
+
 def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
     """Compute summary statistics from unified results."""
     if not results:
@@ -889,6 +907,7 @@ def compute_report_summary(results: list[RedTeamResult]) -> ReportSummary:
         total_errors=total_errors,
         errors_by_type=errors_by_type,
         token_usage_total=_aggregate_token_usage(results),
+        token_usage_by_source=_aggregate_token_usage_by_source(results),
         by_vulnerability=vuln_summaries,
         by_category=cat_summaries,
         by_technique=by_technique,

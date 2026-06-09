@@ -175,3 +175,124 @@ class TestTokenUsageFromCompletion:
         result = TokenUsage.from_completion(response)
         assert result is not None
         assert result.calls == 1
+
+
+class TestExtractAcrossShapes:
+    """RES-906: one shared extractor maps every provider usage shape with a single
+    fallback rule, carries cached/reasoning, and the result reconciles."""
+
+    def test_chat_shape_with_details(self) -> None:
+        usage = {
+            'prompt_tokens': 100,
+            'completion_tokens': 40,
+            'total_tokens': 140,
+            'prompt_tokens_details': {'cached_tokens': 30},
+            'completion_tokens_details': {'reasoning_tokens': 12},
+        }
+        u = TokenUsage.extract(usage)
+        assert u is not None
+        assert (u.input_tokens, u.output_tokens, u.total_tokens) == (100, 40, 140)
+        assert u.cached_tokens == 30
+        assert u.reasoning_tokens == 12
+        # reconciliation invariants
+        assert u.total_tokens == u.input_tokens + u.output_tokens
+        assert u.cached_tokens <= u.input_tokens
+        assert u.reasoning_tokens <= u.output_tokens
+
+    def test_responses_shape_with_details(self) -> None:
+        usage = {
+            'input_tokens': 80,
+            'output_tokens': 20,
+            'total_tokens': 100,
+            'input_tokens_details': {'cached_tokens': 16},
+            'output_tokens_details': {'reasoning_tokens': 5},
+        }
+        u = TokenUsage.extract(usage)
+        assert u is not None
+        assert (u.input_tokens, u.output_tokens, u.cached_tokens, u.reasoning_tokens) == (80, 20, 16, 5)
+        assert u.total_tokens == u.input_tokens + u.output_tokens
+
+    def test_langchain_usage_metadata_detail_keys(self) -> None:
+        usage = {
+            'input_tokens': 50,
+            'output_tokens': 10,
+            'total_tokens': 60,
+            'input_token_details': {'cache_read': 8},
+            'output_token_details': {'reasoning': 3},
+        }
+        u = TokenUsage.extract(usage)
+        assert u is not None
+        assert u.cached_tokens == 8
+        assert u.reasoning_tokens == 3
+
+    def test_vercel_camelcase_shape(self) -> None:
+        u = TokenUsage.extract({'promptTokens': 12, 'completionTokens': 4, 'totalTokens': 16})
+        assert u is not None
+        assert (u.input_tokens, u.output_tokens, u.total_tokens) == (12, 4, 16)
+
+    def test_unified_fallback_zero_total_synthesized(self) -> None:
+        """A contradictory total=0 with nonzero components → input+output (one rule)."""
+        u = TokenUsage.extract({'prompt_tokens': 7, 'completion_tokens': 5, 'total_tokens': 0})
+        assert u is not None
+        assert u.total_tokens == 12
+
+    def test_provider_total_above_components_is_trusted(self) -> None:
+        """A provider total larger than input+output (e.g. audio tokens) is kept."""
+        u = TokenUsage.extract({'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 20})
+        assert u is not None
+        assert u.total_tokens == 20
+
+    def test_extract_reads_calls_from_payload(self) -> None:
+        with_calls = TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1, 'calls': 3})
+        assert with_calls is not None
+        assert with_calls.calls == 3
+        # default when absent
+        default_calls = TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1})
+        assert default_calls is not None
+        assert default_calls.calls == 1
+
+
+class TestDetailsAndCostArithmetic:
+    def test_add_sums_cached_reasoning_and_cost(self) -> None:
+        a = TokenUsage(
+            input_tokens=10, output_tokens=5, total_tokens=15, cached_tokens=4, reasoning_tokens=2, cost_usd=0.01
+        )
+        b = TokenUsage(
+            input_tokens=20, output_tokens=8, total_tokens=28, cached_tokens=6, reasoning_tokens=1, cost_usd=0.02
+        )
+        c = a + b
+        assert (c.input_tokens, c.output_tokens, c.total_tokens) == (30, 13, 43)
+        assert (c.cached_tokens, c.reasoning_tokens) == (10, 3)
+        assert c.cost_usd == pytest.approx(0.03)
+
+    def test_cost_none_aware(self) -> None:
+        a = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2)  # cost None
+        b = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2, cost_usd=0.05)
+        assert (a + a).cost_usd is None
+        assert (a + b).cost_usd == pytest.approx(0.05)
+        assert (b + a).cost_usd == pytest.approx(0.05)
+
+    def test_sub_component_wise_clamped(self) -> None:
+        after = TokenUsage(
+            input_tokens=30, output_tokens=12, total_tokens=42, cached_tokens=8, reasoning_tokens=3, calls=2
+        )
+        before = TokenUsage(
+            input_tokens=10, output_tokens=4, total_tokens=14, cached_tokens=3, reasoning_tokens=1, calls=1
+        )
+        d = after - before
+        assert (d.input_tokens, d.output_tokens, d.total_tokens) == (20, 8, 28)
+        assert (d.cached_tokens, d.reasoning_tokens, d.calls) == (5, 2, 1)
+        # clamp: subtracting a larger value never goes negative
+        assert (before - after).input_tokens == 0
+
+
+class TestBackCompatSerialization:
+    def test_construct_with_legacy_names(self) -> None:
+        u = TokenUsage(prompt_tokens=9, completion_tokens=3, total_tokens=12)
+        assert u.input_tokens == 9 and u.output_tokens == 3
+        assert u.prompt_tokens == 9 and u.completion_tokens == 3
+
+    def test_dump_emits_both_old_and_new_keys(self) -> None:
+        d = TokenUsage(input_tokens=9, output_tokens=3, total_tokens=12).model_dump(mode='json')
+        assert d['input_tokens'] == 9 and d['output_tokens'] == 3
+        assert d['prompt_tokens'] == 9 and d['completion_tokens'] == 3
