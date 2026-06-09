@@ -6,7 +6,7 @@ process refunds) without connecting to real external services. MockToolRegistry
 intercepts tool calls and returns configurable mock responses.
 
 Prerequisites:
-    Install the agent-simulation research package (not on PyPI — install from source):
+    Install the agent-simulation research package (not on PyPI - install from source):
 
         uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
 
@@ -107,7 +107,7 @@ async def tool_using_agent(messages: list[Message], tool_simulator: ToolSimulato
 
 async def main() -> None:
     if not os.getenv("ORQ_API_KEY"):
-        raise SystemExit("ORQ_API_KEY is not set — needed for UserSimulator and Judge LLMs")
+        raise SystemExit("ORQ_API_KEY is not set - needed for UserSimulator and Judge LLMs")
 
     # 1. Set up mock tool registry with custom responses
     registry = MockToolRegistry()
@@ -187,13 +187,13 @@ async def main() -> None:
 
     # 5. Inspect tool call history and results
     if not results:
-        logger.warning("No results returned — check ORQ_API_KEY and network connectivity")
+        logger.warning("No results returned - check ORQ_API_KEY and network connectivity")
         return
 
     tool_history = simulator.get_tool_call_history()
     logger.info(f"Tool calls made: {len(tool_history)}")
     for call in tool_history:
-        logger.info(f"  → {call['tool']}: {call['args']}")
+        logger.info(f"  -> {call['tool']}: {call['args']}")
 
     result = results[0]
     logger.info(f"Goal achieved: {result.goal_achieved}")

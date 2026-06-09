@@ -56,7 +56,7 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
     """Return a target_callback that calls an orq A2A agent via the Responses API.
 
     The Responses API (client.agents.responses.create) is the production path for
-    full A2A agents in orq.ai — agents with memory, tool use, and multi-step
+    full A2A agents in orq.ai - agents with memory, tool use, and multi-step
     reasoning, as opposed to stateless deployments (prompt + model config).
 
     Each call passes the full conversation history so the agent has context.
@@ -82,7 +82,7 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
         agent_resp = AgentResponse.from_openresponses(response)
         if not agent_resp.output:
             raise RuntimeError(
-                f"A2A agent '{agent_key}' returned no output — "
+                f"A2A agent '{agent_key}' returned no output - "
                 "check agent_key and API connectivity"
             )
         return agent_resp.text
@@ -95,8 +95,8 @@ async def main() -> None:
         description="Batch simulation against an orq.ai deployment or A2A agent"
     )
     target_group = parser.add_mutually_exclusive_group(required=True)
-    target_group.add_argument("--deployment", "-d", help="orq.ai deployment key (from AI Studio → Deployments)")
-    target_group.add_argument("--agent", "-a", help="orq.ai A2A agent key (from AI Studio → Agents)")
+    target_group.add_argument("--deployment", "-d", help="orq.ai deployment key (from AI Studio -> Deployments)")
+    target_group.add_argument("--agent", "-a", help="orq.ai A2A agent key (from AI Studio -> Agents)")
     parser.add_argument(
         "--description",
         default="",
@@ -113,7 +113,7 @@ async def main() -> None:
 
     if args.deployment:
         # Deployment path: agent_key= routes through from_orq_deployment() internally,
-        # which calls evaluatorq.deployment.invoke — stateless prompt + model config.
+        # which calls evaluatorq.deployment.invoke - stateless prompt + model config.
         target_key = args.deployment
         agent_description = args.description or f"orq.ai deployment '{args.deployment}'"
         target_kwargs: dict[str, Any] = {"agent_key": target_key}

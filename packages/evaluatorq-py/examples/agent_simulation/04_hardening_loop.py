@@ -2,8 +2,8 @@
 """Example: Iterative agent instruction improvement with the hardening loop.
 
 NOTE: This example uses two packages:
-- evaluatorq.simulation.types — production SDK types (Persona, Scenario, Criterion, enums)
-- agent_simulation — research package for HardeningLoop (not in production evaluatorq yet)
+- evaluatorq.simulation.types - production SDK types (Persona, Scenario, Criterion, enums)
+- agent_simulation - research package for HardeningLoop (not in production evaluatorq yet)
 
 String literals (e.g. communication_style="casual") are used instead of enum values
 because agent_simulation.models.persona.Persona uses Pydantic Literal types, not enums.
@@ -19,7 +19,7 @@ This is especially useful when you have a set of test scenarios and want the
 agent's instructions to pass them reliably.
 
 Prerequisites:
-    Install the agent-simulation research package (not on PyPI — install from source):
+    Install the agent-simulation research package (not on PyPI - install from source):
 
         uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
 
@@ -54,7 +54,7 @@ except ImportError as e:
 
 from evaluatorq.contracts import Message
 
-# A deliberately weak set of instructions — the loop will improve these
+# A deliberately weak set of instructions - the loop will improve these
 INITIAL_INSTRUCTIONS = """
 You are a customer support agent. Help customers with their questions.
 Be helpful and polite.
@@ -79,7 +79,7 @@ def make_agent(instructions: str) -> Callable[[list[Message]], Awaitable[str]]:
             return "I'll process that refund. What's your order number?"
         if "cancel" in last:
             if can_cancel:
-                return "Of course — I can cancel that order for you. What's the order number?"
+                return "Of course - I can cancel that order for you. What's the order number?"
             # Deliberately bad until the hardening loop improves the instructions
             return "I'm sorry, I cannot help with cancellations."
         if "speak" in last and "manager" in last:
@@ -91,7 +91,7 @@ def make_agent(instructions: str) -> Callable[[list[Message]], Awaitable[str]]:
 
 async def main() -> None:
     if not os.getenv("ORQ_API_KEY"):
-        raise SystemExit("ORQ_API_KEY is not set — needed for DiagnosisAgent and FixGeneratorAgent")
+        raise SystemExit("ORQ_API_KEY is not set - needed for DiagnosisAgent and FixGeneratorAgent")
 
     datapoints = [
         Datapoint.generate(
@@ -164,7 +164,7 @@ async def main() -> None:
     ) as loop:
         report = await loop.harden(datapoints, max_iterations=3)
 
-    logger.info(f"Pass rate: {report.original_pass_rate:.0%} → {report.final_pass_rate:.0%}")
+    logger.info(f"Pass rate: {report.original_pass_rate:.0%} -> {report.final_pass_rate:.0%}")
     logger.info(f"Iterations: {report.total_iterations}")
 
     logger.info("--- Improved Instructions ---")
@@ -172,7 +172,7 @@ async def main() -> None:
 
     logger.info("--- Iteration Summary ---")
     for i, iteration in enumerate(report.iterations, 1):
-        logger.info(f"Iteration {i}: {iteration.pass_rate_before:.0%} → {iteration.pass_rate_after:.0%}")
+        logger.info(f"Iteration {i}: {iteration.pass_rate_before:.0%} -> {iteration.pass_rate_after:.0%}")
 
 
 if __name__ == "__main__":

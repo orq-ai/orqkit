@@ -43,7 +43,7 @@ from evaluatorq.simulation.types import (
 
 
 async def support_agent(messages: list[Message]) -> str:  # noqa: RUF029
-    """Simple mock customer support agent — replace with your own logic.
+    """Simple mock customer support agent - replace with your own logic.
 
     Declared `async` because target_callback must be awaitable per the simulation
     runner protocol; a real agent here would `await` an LLM/HTTP call.
@@ -60,9 +60,9 @@ async def support_agent(messages: list[Message]) -> str:  # noqa: RUF029
 
 async def main() -> None:
     if not os.getenv("ORQ_API_KEY"):
-        raise SystemExit("ORQ_API_KEY is not set — needed for UserSimulator and Judge LLMs")
+        raise SystemExit("ORQ_API_KEY is not set - needed for UserSimulator and Judge LLMs")
 
-    # 1. Define a persona — who the simulated user is
+    # 1. Define a persona - who the simulated user is
     persona = Persona(
         name="Impatient Customer",
         patience=0.2,
@@ -74,7 +74,7 @@ async def main() -> None:
         emotional_arc=EmotionalArc.escalating,  # optional: tone escalates each turn
     )
 
-    # 2. Define a scenario — what the user wants to achieve
+    # 2. Define a scenario - what the user wants to achieve
     scenario = Scenario(
         name="Wrong Item Refund",
         goal="Get a full refund for the wrong item received",
@@ -104,7 +104,7 @@ async def main() -> None:
 
     # 4. Inspect results
     if not results:
-        logger.warning("No results returned — check ORQ_API_KEY and network connectivity")
+        logger.warning("No results returned - check ORQ_API_KEY and network connectivity")
         return
     result = results[0]
     logger.info(f"Goal achieved: {result.goal_achieved}")

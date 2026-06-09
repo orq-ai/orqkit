@@ -7,7 +7,7 @@ simulate() call in two important ways:
 1. wrap_simulation_agent() creates a job function that evaluatorq() calls once per
    DataPoint, reusing the resolved agent callback across the batch.
 2. evaluatorq() handles CI gating, result display, and auto-upload to orq.ai
-   Experiments — so results land in the Experiments table and are linked to the
+   Experiments - so results land in the Experiments table and are linked to the
    deployment, not just returned in memory.
 
 Use this pattern when:
@@ -25,7 +25,7 @@ Usage:
         --deployment my-support-agent
 
 Where outputs land:
-- Experiment row created in orq.ai — URL printed to stdout on completion
+- Experiment row created in orq.ai - URL printed to stdout on completion
 - OTel spans under orq.job / orq.simulation.run / orq.simulation.turn
 - SimulationResult objects converted to OpenResponses format and returned
   as DataPointResult.output by evaluatorq()
@@ -57,7 +57,7 @@ from evaluatorq.simulation.types import (
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="Simulation wired into evaluatorq() — the production pattern")
+    parser = argparse.ArgumentParser(description="Simulation wired into evaluatorq() - the production pattern")
     parser.add_argument("--deployment", "-d", required=True, help="orq.ai deployment key (from AI Studio)")
     parser.add_argument("--max-turns", type=int, default=6)
     args = parser.parse_args()
@@ -127,7 +127,7 @@ async def main() -> None:
     logger.info(f"Running {len(data)} simulations ({len(personas)} personas x {len(scenarios)} scenarios)")
 
     # 3. Create the simulation job.
-    #    agent_key= is the orq.ai deployment key — routes through from_orq_deployment() internally.
+    #    agent_key= is the orq.ai deployment key - routes through from_orq_deployment() internally.
     #    Use target_callback= for local functions or third-party agents.
     job = wrap_simulation_agent(
         name="support-simulation",
@@ -148,7 +148,7 @@ async def main() -> None:
     finally:
         await job.aclose()
 
-    logger.info("Simulation complete — check orq.ai Experiments for results")
+    logger.info("Simulation complete - check orq.ai Experiments for results")
 
 
 if __name__ == "__main__":
