@@ -146,12 +146,12 @@ class ORQAgentTarget(AgentTarget):
 
         Token usage is accumulated across pending-tool-call continuations.
         """
-        if not messages or messages[-1].role != "user":
+        if not messages or messages[-1].role != 'user':
             raise ValueError(
                 "ORQAgentTarget.respond requires messages[-1].role == 'user'. "
-                "Server-side conversation state is held via task_id."
+                'Server-side conversation state is held via task_id.'
             )
-        prompt = messages[-1].content or ""
+        prompt = messages[-1].content or ''
         accumulated_usage = TokenUsage()
 
         def _accumulate_usage(resp: object) -> None:
@@ -195,7 +195,11 @@ class ORQAgentTarget(AgentTarget):
             items: list[ToolCallOutputItem] = []
             for call in pending:
                 name = getattr(call, 'name', None) or (call.get('name') if isinstance(call, dict) else None) or ''
-                args_raw = getattr(call, 'arguments', None) or (call.get('arguments') if isinstance(call, dict) else None) or {}
+                args_raw = (
+                    getattr(call, 'arguments', None)
+                    or (call.get('arguments') if isinstance(call, dict) else None)
+                    or {}
+                )
                 if isinstance(args_raw, str):
                     try:
                         json.loads(args_raw)
@@ -457,7 +461,7 @@ class ORQBackend(Backend):
     """
 
     def __init__(self, *, orq_client: Any = None, timeout_ms: int | None = None) -> None:
-        super().__init__(name="orq")
+        super().__init__(name='orq')
         timeout_ms = timeout_ms or PIPELINE_CONFIG.target_agent_timeout_ms
         self._timeout_ms = timeout_ms
         if orq_client is not None:
@@ -465,8 +469,7 @@ class ORQBackend(Backend):
         else:
             if _orq_cls is None:
                 raise ImportError(
-                    "ORQ backend requires the orq-ai-sdk package. "
-                    "Install with: pip install evaluatorq[orq]"
+                    'ORQ backend requires the orq-ai-sdk package. Install with: pip install evaluatorq[orq]'
                 )
             self._orq_client = _orq_cls(
                 api_key=_get_orq_api_key(),
