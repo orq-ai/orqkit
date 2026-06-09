@@ -661,7 +661,7 @@ class TestJuryReliabilityKappa:
         from evaluatorq.redteam.reports.converters import _compute_jury_reliability
 
         # No jury on any result -> None (single-judge runs unaffected).
-        results = [SimpleNamespace(evaluation=SimpleNamespace(jury=None))]
+        results: list[Any] = [SimpleNamespace(evaluation=SimpleNamespace(jury=None))]
         assert _compute_jury_reliability(results) is None
 
     def test_aggregator_tolerates_failed_judges(self):
@@ -681,7 +681,7 @@ class TestJuryReliabilityKappa:
             )
 
         # Second sample has only one surviving judge -> not pairable, dropped silently.
-        results = [
+        results: list[Any] = [
             SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True, True, False]))),
             SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True]))),
             SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True, False, False]))),
@@ -739,6 +739,7 @@ class TestJuryRawOutputCarrier:
         assert lifted is not None and len(lifted.votes) == 2
         # ...and stripped from raw_output so it is not stored twice.
         stripped = _raw_output_without_jury(raw)
+        assert stripped is not None
         assert JURY_RAW_OUTPUT_KEY not in stripped
         assert stripped['value'] is False and stripped['explanation'] == 'x'
 
