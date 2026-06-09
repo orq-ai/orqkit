@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import contextlib
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -31,7 +31,7 @@ from evaluatorq.redteam.adaptive.evaluator import (
     _panel_composition_messages,
     provider_family,
 )
-from evaluatorq.redteam.contracts import AttackEvaluationResult, Vulnerability
+from evaluatorq.redteam.contracts import AttackEvaluationResult, TextOutputItem, Vulnerability
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -89,14 +89,11 @@ def _model_client(per_model: dict[str, list[str]], usage_tokens: int | None = No
 
 
 def _patch_tracing():
-    @contextlib.asynccontextmanager
-    async def _noop_span(*args: Any, **kwargs: Any):
-        yield MagicMock()
-
-    return (
-        patch('evaluatorq.redteam.adaptive.evaluator.with_llm_span', side_effect=_noop_span),
-        patch('evaluatorq.redteam.adaptive.evaluator.record_llm_response'),
-    )
+    # Judge execution now runs through evaluatorq.redteam.judge.run_judge ->
+    # execute_chat_completion. Tracing there is inert without a configured tracer
+    # (with_llm_span yields None, record_* no-op on a None span), so no patching is
+    # needed; keep two null contexts so existing call sites stay unchanged.
+    return (contextlib.nullcontext(), contextlib.nullcontext())
 
 
 async def _evaluate(evaluator: OWASPEvaluator) -> AttackEvaluationResult:
@@ -105,7 +102,7 @@ async def _evaluate(evaluator: OWASPEvaluator) -> AttackEvaluationResult:
         return await evaluator.evaluate_vulnerability(
             vuln=Vulnerability.GOAL_HIJACKING,
             messages=[{'role': 'user', 'content': 'attack prompt'}],
-            response='agent response',
+            output_messages=[TextOutputItem(text='agent response', annotations=[])],
         )
 
 

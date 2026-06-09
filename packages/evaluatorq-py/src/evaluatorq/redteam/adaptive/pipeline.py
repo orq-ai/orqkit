@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from evaluatorq import DataPoint, EvaluationResult, Job, job
+from evaluatorq.common.tracing import set_span_attrs, truncate_for_span
 from evaluatorq.contracts import AgentResponse, Message
 from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt, generate_objective
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
@@ -50,7 +51,6 @@ from evaluatorq.redteam.contracts import (
     TurnType,
     Vulnerability,
 )
-from evaluatorq.common.tracing import set_span_attrs, truncate_for_span
 from evaluatorq.redteam.tracing import with_redteam_span
 from evaluatorq.redteam.vulnerability_registry import (
     get_primary_category,
@@ -394,12 +394,12 @@ def create_dynamic_redteam_job(
                         agent_resp = _coerce_to_agent_response(raw)
                         response = agent_resp.text
                         token_usage: TokenUsage | None = agent_resp.usage
-                        _resp_text = truncate_for_span(response or '')
+                        resp_text = truncate_for_span(response or '')
                         set_span_attrs(
                             tgt_span,
                             {
-                                'output': _resp_text,
-                                'orq.redteam.output': _resp_text,
+                                'output': resp_text,
+                                'orq.redteam.output': resp_text,
                             },
                         )
                 except asyncio.TimeoutError:
@@ -639,12 +639,10 @@ def create_dynamic_evaluator(
                 explanation=f'Skipped: target returned error — {output.error}',
             )
 
-        conversation = output.chat_completions
-        final_response = output.final_response
         category = output.category or data.inputs.get('category', '')
         vulnerability = output.vulnerability or data.inputs.get('vulnerability', '')
-        # Flatten all tool calls across turns so the evaluator can optionally inspect them
-        all_tool_calls = [tc for t in output.turns for tc in t.target.tool_calls]
+        input_messages = [{'role': 'user', 'content': t.attacker.generated_prompt} for t in output.turns]
+        output_messages = [item for t in output.turns for item in t.target.output]
 
         # Prefer vulnerability-first path when a valid Vulnerability enum can be resolved
         resolved_vuln: Vulnerability | None = None
@@ -665,20 +663,18 @@ def create_dynamic_evaluator(
             if resolved_vuln is not None:
                 eval_result = await owasp_evaluator.evaluate_vulnerability(
                     vuln=resolved_vuln,
-                    messages=conversation,
-                    response=final_response,
-                    tool_calls=all_tool_calls or None,
+                    messages=input_messages,
+                    output_messages=output_messages,
                 )
             else:
                 eval_result = await owasp_evaluator.evaluate(
                     category=category,
-                    messages=conversation,
-                    response=final_response,
-                    tool_calls=all_tool_calls or None,
+                    messages=input_messages,
+                    output_messages=output_messages,
                 )
             span_attrs: dict[str, Any] = {
                 'orq.redteam.passed': eval_result.passed,
-                'input': final_response or '',
+                'input': output.final_response or '',
                 'output': eval_result.explanation or '',
             }
             if eval_result.jury is not None:
