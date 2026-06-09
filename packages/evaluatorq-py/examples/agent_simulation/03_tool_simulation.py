@@ -8,7 +8,7 @@ intercepts tool calls and returns configurable mock responses.
 Prerequisites:
     Install the agent-simulation research package (not on PyPI — install from source):
 
-        pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
+        uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
 
 Usage:
     cd packages/evaluatorq-py
