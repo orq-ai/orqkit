@@ -659,7 +659,7 @@ def _render_attack_heatmap_html(section: ReportSection) -> str:
     def _heatmap_color(asr: float, total: int) -> str:
         """Interpolate from success_400 (0%) to red_400 (100%)."""
         if total == 0:
-            return "#D1CFC5"  # --gray-300
+            return "var(--gray-300)"  # absent cell — neutral border grey
         # success_400: #2ebd85, red_400: #d92d20 via yellow_400 #f2b600 at 50%
         if asr <= 0.5:
             t = asr / 0.5
