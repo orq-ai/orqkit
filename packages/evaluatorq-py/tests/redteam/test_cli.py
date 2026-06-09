@@ -206,3 +206,124 @@ class TestVulnerabilityHelpText:
         """Help text mentions OWASP category codes are also accepted (e.g. ASI01)."""
         output = self._get_help_output()
         assert "ASI01" in output or "LLM01" in output
+
+
+# ---------------------------------------------------------------------------
+# 4. --strategy / --delivery-method flags
+# ---------------------------------------------------------------------------
+
+
+class TestStrategyFlag:
+    """--strategy / -s short and long form, single + repeated."""
+
+    def test_short_flag_s_accepted_single_value(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-s", "direct_injection_attack", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] == ["direct_injection_attack"]
+
+    def test_short_flag_s_repeats(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            [
+                "run",
+                "--target", "agent:test-agent",
+                "-s", "direct_injection_attack",
+                "-s", "crescendo_injection",
+                "--yes",
+            ]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] == [
+            "direct_injection_attack",
+            "crescendo_injection",
+        ]
+
+    def test_long_flag_strategy(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--strategy", "alpha", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] == ["alpha"]
+
+    def test_strategy_defaults_to_none_when_omitted(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] is None
+
+
+class TestDeliveryMethodFlag:
+    """--delivery-method / -d short and long form, enum validation."""
+
+    def test_short_flag_d_accepted_single_value(self):
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-d", "crescendo", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == [DeliveryMethod.CRESCENDO]
+
+    def test_short_flag_d_repeats(self):
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
+        result, mock_rt = _run_with_mocked_red_team(
+            [
+                "run",
+                "--target", "agent:test-agent",
+                "-d", "crescendo",
+                "-d", "base64",
+                "--yes",
+            ]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == [
+            DeliveryMethod.CRESCENDO,
+            DeliveryMethod.BASE64,
+        ]
+
+    def test_long_flag_delivery_method(self):
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--delivery-method", "leetspeak", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == [DeliveryMethod.LEETSPEAK]
+
+    def test_delivery_method_unknown_value_rejected_by_typer(self):
+        # Typer/Click rejects values outside the DeliveryMethod enum at parse time.
+        result, _mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-d", "not-a-real-method", "--yes"]
+        )
+        assert result.exit_code != 0
+
+    def test_delivery_method_defaults_to_none_when_omitted(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] is None
+
+
+class TestStrategyAndDeliveryMethodCombined:
+    """--strategy and --delivery-method can be combined freely."""
+
+    def test_both_flags_forwarded_together(self):
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
+        result, mock_rt = _run_with_mocked_red_team(
+            [
+                "run",
+                "--target", "agent:test-agent",
+                "-s", "crescendo_injection",
+                "-d", "crescendo",
+                "--yes",
+            ]
+        )
+        assert result.exit_code == 0, result.output
+        kwargs = mock_rt.call_args.kwargs
+        assert kwargs["strategies"] == ["crescendo_injection"]
+        assert kwargs["delivery_methods"] == [DeliveryMethod.CRESCENDO]

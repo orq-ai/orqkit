@@ -13,7 +13,7 @@ from typing import Annotated, Any
 
 import typer
 
-from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, SaveMode, Vulnerability
+from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, DeliveryMethod, SaveMode, Vulnerability
 
 app = typer.Typer(
     name="redteam",
@@ -199,6 +199,30 @@ def run(
             ),
         ),
     ] = None,
+    strategies: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--strategy",
+            "-s",
+            help=(
+                "Restrict the run to attack strategies whose name matches one of "
+                "the supplied values. Repeatable. Filter applies to both registry "
+                "and LLM-generated strategies. Unknown names emit a warning."
+            ),
+        ),
+    ] = None,
+    delivery_methods: Annotated[
+        list[DeliveryMethod] | None,
+        typer.Option(
+            "--delivery-method",
+            "-d",
+            help=(
+                "Restrict the run to strategies using one of the listed delivery "
+                "methods. Repeatable. Combines with --strategy as AND. "
+                f"Available: {', '.join(m.value for m in DeliveryMethod)}."
+            ),
+        ),
+    ] = None,
     max_turns: Annotated[
         int,
         typer.Option(help="Maximum conversation turns for multi-turn attacks."),
@@ -357,6 +381,8 @@ def run(
                 mode=mode,
                 categories=categories,
                 vulnerabilities=vulnerabilities,
+                strategies=strategies,
+                delivery_methods=delivery_methods,
                 max_turns=max_turns,
                 max_per_category=max_per_category,
                 parallelism=parallelism,

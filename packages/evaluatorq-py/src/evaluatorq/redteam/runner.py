@@ -48,6 +48,7 @@ from evaluatorq.redteam.backends.registry import create_async_llm_client, resolv
 from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AgentContext,
+    DeliveryMethod,
     LLMConfig,
     Pipeline,
     PipelineStage,
@@ -298,6 +299,8 @@ async def red_team(
     mode: Pipeline | str = Pipeline.DYNAMIC,
     categories: list[str] | None = None,
     vulnerabilities: list[str] | None = None,
+    strategies: list[str] | None = None,
+    delivery_methods: list[DeliveryMethod] | None = None,
     max_turns: int = 5,
     max_per_category: int | None = None,
     parallelism: int = 10,
@@ -333,6 +336,16 @@ async def red_team(
             Defaults to all available categories. Ignored if ``vulnerabilities`` is set.
         vulnerabilities: Vulnerability IDs to test (e.g., ``["goal_hijacking", "prompt_injection"]``).
             Takes precedence over ``categories``.
+        strategies: Restrict the run to attack strategies whose ``name`` matches
+            one of the supplied values. Filtering applies to both registry
+            strategies and LLM-generated strategies, and runs before the
+            ``max_per_category`` cap so explicit selections survive the
+            per-category limit. Unknown names emit a warning and are ignored.
+            ``None`` disables the filter.
+        delivery_methods: Restrict the run to strategies whose
+            ``delivery_methods`` list overlaps the supplied selection. Combines
+            with ``strategies`` using AND semantics. Unknown values emit a
+            warning and are ignored. ``None`` disables the filter.
         max_turns: Maximum conversation turns for multi-turn attacks.
         max_per_category: Cap strategies per category (None = no cap).
         llm_config: Role-based LLM configuration. Use ``LLMConfig(attacker=LLMCallConfig(...),
@@ -493,6 +506,12 @@ async def red_team(
         if is_huggingface_source(dataset):
             ensure_huggingface_available()
 
+    # Convert filter inputs to sets for the planner. Pass through verbatim —
+    # do not pre-validate against the registry. Unknown names and empty
+    # intersections are detected post-filter from the actually-matched set.
+    resolved_strategy_names: set[str] | None = set(strategies) if strategies is not None else None
+    resolved_delivery_methods: set[DeliveryMethod] | None = set(delivery_methods) if delivery_methods is not None else None
+
     resolved_vulns: list[Vulnerability] | None
     if vulnerabilities:
         resolved_vulns = resolve_vulnerabilities(vulnerabilities)
@@ -610,6 +629,8 @@ async def red_team(
             attacker_instructions=attacker_instructions,
             verbosity=verbosity,
             pipeline_config=config,
+            resolved_strategy_names=resolved_strategy_names,
+            resolved_delivery_methods=resolved_delivery_methods,
         )
     elif resolved_mode == Pipeline.STATIC:
         report = await _run_static(
@@ -951,6 +972,8 @@ async def _prepare_target(
     prefetched_static_data: list[Any] | None = None,
     verbosity: int = 0,
     pipeline_config: LLMConfig | None = None,
+    resolved_strategy_names: set[str] | None = None,
+    resolved_delivery_methods: set[DeliveryMethod] | None = None,
 ) -> PreparedTarget:
     """Prepare all per-target state for a dynamic or hybrid run.
 
@@ -1037,6 +1060,8 @@ async def _prepare_target(
                 attacker_instructions=attacker_instructions,
                 pipeline_config=pipeline_config,
                 agent_capabilities=prefetched_agent_capabilities,
+                strategy_names=resolved_strategy_names,
+                delivery_methods=resolved_delivery_methods,
             )
         else:
             # Fallback: categories that could not be resolved to vulnerabilities
@@ -1053,7 +1078,27 @@ async def _prepare_target(
                 attacker_instructions=attacker_instructions,
                 pipeline_config=pipeline_config,
                 agent_capabilities=prefetched_agent_capabilities,
+                strategy_names=resolved_strategy_names,
+                delivery_methods=resolved_delivery_methods,
             )
+
+        # Detect unknown strategy names (requested but never matched by the
+        # filter) and empty-intersection (filter set but no datapoints).
+        if resolved_strategy_names is not None or resolved_delivery_methods is not None:
+            matched_names = {dp.inputs.get('strategy', {}).get('name') for dp in dynamic_datapoints}
+            matched_names.discard(None)
+            if resolved_strategy_names is not None:
+                unmatched = sorted(resolved_strategy_names - matched_names)
+                if unmatched:
+                    logger.warning(
+                        f'Unknown or unmatched strategy name(s): {unmatched} — no datapoints generated for them.'
+                    )
+            if not dynamic_datapoints:
+                logger.warning(
+                    'Empty intersection: filter selection produced zero datapoints. '
+                    f'(strategies={sorted(resolved_strategy_names) if resolved_strategy_names else None}, '
+                    f'delivery_methods={sorted(m.value for m in resolved_delivery_methods) if resolved_delivery_methods else None})'
+                )
 
         if (
             max_dynamic_datapoints is not None
@@ -1216,6 +1261,8 @@ async def _run_dynamic_or_hybrid(
     attacker_instructions: str | None = None,
     verbosity: int = 0,
     pipeline_config: LLMConfig | None = None,
+    resolved_strategy_names: set[str] | None = None,
+    resolved_delivery_methods: set[DeliveryMethod] | None = None,
 ) -> RedTeamReport:
     """Run dynamic or hybrid red teaming for multiple targets in a single evaluatorq call.
 
@@ -1591,6 +1638,8 @@ async def _run_dynamic_or_hybrid(
             attacker_instructions=attacker_instructions,
             verbosity=verbosity,
             pipeline_config=pipeline_config,
+            resolved_strategy_names=resolved_strategy_names,
+            resolved_delivery_methods=resolved_delivery_methods,
         )
 
         prepared_targets: list[PreparedTarget]
@@ -1697,6 +1746,8 @@ async def _run_dynamic_or_hybrid(
                             attacker_instructions=attacker_instructions,
                             pipeline_config=pipeline_config,
                             agent_capabilities=at_pref_caps,
+                            strategy_names=resolved_strategy_names,
+                            delivery_methods=resolved_delivery_methods,
                         )
                     else:
                         at_dps, at_filter_meta = await generate_dynamic_datapoints(
@@ -1712,6 +1763,8 @@ async def _run_dynamic_or_hybrid(
                             attacker_instructions=attacker_instructions,
                             pipeline_config=pipeline_config,
                             agent_capabilities=at_pref_caps,
+                            strategy_names=resolved_strategy_names,
+                            delivery_methods=resolved_delivery_methods,
                         )
                     if (
                         max_dynamic_datapoints is not None
