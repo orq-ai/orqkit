@@ -66,7 +66,7 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[dict]], Coroutine[Any, A
     from orq_ai_sdk import Orq
     from orq_ai_sdk.models import A2AMessage, TextPart
 
-    client = Orq(api_key=os.environ["ORQ_API_KEY"])
+    client = Orq(api_key=os.getenv("ORQ_API_KEY", ""))
 
     async def callback(messages: list[dict]) -> str:
         last = messages[-1]
@@ -107,7 +107,7 @@ async def main() -> None:
     parser.add_argument("--num-personas", type=int, default=3)
     parser.add_argument("--num-scenarios", type=int, default=4)
     parser.add_argument("--max-turns", type=int, default=8)
-    parser.add_argument("--output", default="data/results.jsonl", help="Output path for JSONL results (relative to project root)")
+    parser.add_argument("--output", default="data/results.jsonl", help="Output path for JSONL results (relative to packages/evaluatorq-py/)")
     args = parser.parse_args()
 
     if not os.getenv("ORQ_API_KEY"):

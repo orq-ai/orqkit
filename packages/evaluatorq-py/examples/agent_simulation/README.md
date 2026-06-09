@@ -5,14 +5,14 @@ Python examples for simulating user interactions against AI agents — testing g
 ## Prerequisites
 
 ```bash
-pip install evaluatorq
+uv pip install evaluatorq
 ```
 
 > **Examples 03 and 04** (`03_tool_simulation.py`, `04_hardening_loop.py`) also require the
 > `agent-simulation` research package (not on PyPI — install from source):
 >
 > ```bash
-> pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
+> uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
 > ```
 
 ## Quick Start
@@ -21,10 +21,10 @@ pip install evaluatorq
 export ORQ_API_KEY="orq-..."
 
 # Simplest example — runs against a local mock agent, no deployment needed
-python 01_basic_simulation.py
+uv run python examples/agent_simulation/01_basic_simulation.py
 
 # Against a live orq.ai deployment
-python 02_orq_deployment_simulation.py --deployment my-support-agent
+uv run python examples/agent_simulation/02_orq_deployment_simulation.py --deployment my-support-agent
 ```
 
 ## Examples
