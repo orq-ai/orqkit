@@ -186,6 +186,8 @@ class TestCreateDynamicEvaluatorLlmClient:
             repetitions=1,
             replacement_judges=None,
             min_successful_judges=1,
+            target_models=None,
+            strict_panel=False,
         )
 
     @patch('evaluatorq.redteam.adaptive.pipeline.OWASPEvaluator')
@@ -202,6 +204,8 @@ class TestCreateDynamicEvaluatorLlmClient:
             repetitions=1,
             replacement_judges=None,
             min_successful_judges=1,
+            target_models=None,
+            strict_panel=False,
         )
 
 

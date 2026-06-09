@@ -551,19 +551,36 @@ class LLMConfig(BaseModel):
             'single-judge behaviour.'
         ),
     )
+    strict_panel: bool = Field(
+        default=False,
+        description=(
+            'When True, panel-composition problems (single-provider panel, or a judge '
+            'sharing the provider family of the target model) raise instead of warning. '
+            'Default False keeps existing configs running with an advisory warning.'
+        ),
+    )
 
     @model_validator(mode='after')
     def _check_min_successful_judges(self) -> 'LLMConfig':
-        """``min_successful_judges`` cannot exceed the panel size.
+        """``min_successful_judges`` cannot exceed the effective panel size.
 
         Replacement judges substitute 1:1 for failed configured judges, so they
         never raise the ceiling on simultaneously successful judges — the panel
-        (primary model + ``judges``) is the true upper bound.
+        (primary model + ``judges``) is the true upper bound. The panel is
+        de-duplicated exactly as ``OWASPEvaluator.__init__`` does (primary first,
+        dropping the primary if it reappears in ``judges`` and any repeated
+        judges), so this catches an unsatisfiable floor at config time rather than
+        letting it surface as a runtime error after de-duplication shrinks the
+        panel. Keep the two in sync.
         """
-        panel_size = 1 + len(self.judges)
-        if self.min_successful_judges > panel_size:
+        panel: list[str] = [self.evaluator.model]
+        for j in self.judges:
+            if j and j not in panel:
+                panel.append(j)
+        if self.min_successful_judges > len(panel):
             raise ValueError(
-                f'min_successful_judges ({self.min_successful_judges}) exceeds the panel size ({panel_size})'
+                f'min_successful_judges ({self.min_successful_judges}) exceeds the effective '
+                f'panel size ({len(panel)}) after de-duplication; panel={panel}'
             )
         return self
 
@@ -1014,6 +1031,13 @@ class AttackOutput(OrchestratorResult):
     vulnerability: str = ''
 
 
+# Key under which the dynamic scorer stashes the serialized JuryResult inside the
+# framework-agnostic EvaluationResult.raw_output, and under which the red-team
+# converters lift it back onto the typed model. Shared so the writer (pipeline.py)
+# and reader (reports/converters.py) cannot drift apart silently (RES-739).
+JURY_RAW_OUTPUT_KEY = 'jury'
+
+
 class JuryVote(BaseModel):
     """A single judge's vote within a jury (RES-739).
 
@@ -1026,6 +1050,8 @@ class JuryVote(BaseModel):
         value=True  → RESISTANT (attack failed)
         value=False → VULNERABLE (attack succeeded)
     """
+
+    model_config = ConfigDict(frozen=True)
 
     model: str = Field(description='Judge model ID')
     replacement: bool = Field(default=False, description='True if this judge stood in for a failed configured judge')
@@ -1043,6 +1069,17 @@ class JuryVote(BaseModel):
         description='Raw per-repetition votes (True/False/None) in call order',
     )
 
+    @model_validator(mode='after')
+    def _check_vote_consistency(self) -> 'JuryVote':
+        # A usable verdict must carry a value; a failed vote must not. This rules
+        # out the representable-but-illegal states (success=True/value=None and
+        # success=False/value=True) so consumers can trust the success flag.
+        if self.success and self.value is None:
+            raise ValueError('successful JuryVote must have a non-null value')
+        if not self.success and self.value is not None:
+            raise ValueError('failed JuryVote must have a null value')
+        return self
+
 
 class JuryStats(BaseModel):
     """Distribution of judge verdicts, treating RESISTANT=1.0 and VULNERABLE=0.0.
@@ -1052,8 +1089,10 @@ class JuryStats(BaseModel):
     (per LLM-jury best practice — high std flags ambiguous cases worth review).
     """
 
-    mean: float = Field(description='Mean of judge verdicts (RESISTANT=1, VULNERABLE=0)')
-    std: float = Field(description='Population standard deviation of judge verdicts')
+    model_config = ConfigDict(frozen=True)
+
+    mean: float = Field(ge=0.0, le=1.0, description='Mean of judge verdicts (RESISTANT=1, VULNERABLE=0)')
+    std: float = Field(ge=0.0, description='Population standard deviation of judge verdicts')
 
 
 class JuryResult(BaseModel):
@@ -1064,19 +1103,71 @@ class JuryResult(BaseModel):
     verdict, so split panels surface as edge cases for review.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     judges_configured: int = Field(ge=0, description='Number of configured (non-replacement) judges')
-    judges_succeeded: int = Field(ge=0, description='Number of judges that produced a usable verdict')
-    judges_failed: int = Field(ge=0, description='Number of judge votes that failed')
+    judges_succeeded: int = Field(
+        ge=0, description='Number of judges (configured or replacement) that produced a usable verdict'
+    )
+    judges_failed: int = Field(
+        ge=0,
+        description=(
+            'Number of *configured* judges that failed entirely (and triggered a replacement attempt). '
+            'Scoped to the configured panel, so judges_failed <= judges_configured. Replacement-vote '
+            'outcomes are not counted here — read them from `votes` (filter on replacement=True).'
+        ),
+    )
     replacements_used: int = Field(default=0, ge=0, description='Number of replacement judges invoked')
     tie: bool = Field(
         default=False, description='True when the panel split evenly (resolved fail-closed to VULNERABLE)'
     )
-    votes: list[JuryVote] = Field(default_factory=list, description='Per-judge votes (configured + replacements)')
-    stats: JuryStats | None = Field(default=None, description='Verdict distribution over successful judges')
-    agreement_rate: float | None = Field(
-        default=None,
-        description='Fraction of successful judges in the largest verdict bloc (1.0=unanimous)',
+    inconclusive: bool = Field(
+        default=False,
+        description=(
+            'True when too few judges produced a usable verdict (below min_successful_judges), so the panel '
+            'issued no decisive verdict. When set, stats and raw_agreement are None — any agreement over the '
+            'sub-quorum would be meaningless. Distinct from tie (an even split that DID reach a verdict).'
+        ),
     )
+    votes: list[JuryVote] = Field(default_factory=list, description='Per-judge votes (configured + replacements)')
+    stats: JuryStats | None = Field(
+        default=None, description='Verdict distribution over successful judges; None when inconclusive'
+    )
+    raw_agreement: float | None = Field(
+        default=None,
+        ge=0.5,
+        le=1.0,
+        description=(
+            'Raw fraction of successful judges in the largest verdict bloc (1.0=unanimous, 0.5=even split). '
+            'NOT chance-corrected — with few binary judges a high value can arise by chance, so do not read '
+            'it as reliability; for that use ReportSummary.jury_reliability (Krippendorff alpha). None when '
+            'inconclusive (a sub-quorum bloc fraction would be meaningless).'
+        ),
+    )
+
+    @model_validator(mode='after')
+    def _check_jury_consistency(self) -> 'JuryResult':
+        successes = sum(1 for v in self.votes if v.success)
+        if self.judges_succeeded != successes:
+            raise ValueError(
+                f'judges_succeeded ({self.judges_succeeded}) does not match successful votes ({successes})'
+            )
+        if self.judges_failed > self.judges_configured:
+            raise ValueError(
+                f'judges_failed ({self.judges_failed}) exceeds judges_configured ({self.judges_configured})'
+            )
+        replacement_votes = sum(1 for v in self.votes if v.replacement)
+        if self.replacements_used != replacement_votes:
+            raise ValueError(
+                f'replacements_used ({self.replacements_used}) does not match replacement votes ({replacement_votes})'
+            )
+        # len(votes) == configured panel + replacements fanned out
+        if len(self.votes) != self.judges_configured + self.replacements_used:
+            raise ValueError(
+                f'vote count ({len(self.votes)}) != judges_configured + replacements_used '
+                f'({self.judges_configured} + {self.replacements_used})'
+            )
+        return self
 
 
 class AttackEvaluationResult(BaseModel):
@@ -1186,6 +1277,11 @@ class UnifiedEvaluationResult(BaseModel):
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
         'the local report JSON, not uploaded) — consumers must read the parsed verdict '
         'from passed/explanation, not from here.',
+    )
+    jury: JuryResult | None = Field(
+        default=None,
+        description='Panel-of-judges breakdown when a jury ran (RES-739). None for single-judge runs. '
+        'Carries per-judge votes, disagreement stats and raw agreement through to the report layer.',
     )
 
 
@@ -1371,6 +1467,31 @@ class FrameworkSummary(DimensionSummary):
     """Per-framework summary statistics (useful for mixed reports)."""
 
 
+class JuryReliability(BaseModel):
+    """Run-level inter-judge reliability for panel-of-judges runs (RES-739).
+
+    Unlike per-sample ``raw_agreement`` (which cannot tell real consensus from
+    chance), this is a chance-corrected statistic across all multi-judge samples:
+    Krippendorff's alpha on the nominal RESISTANT/VULNERABLE verdicts. Alpha
+    tolerates judges that failed on *some* samples (variable ratings per unit), so
+    a sample where only some of the panel responded still contributes — provided
+    at least two verdicts remain. Samples that drop below two verdicts form no
+    rateable pair and are excluded (the ``samples`` count reflects what actually
+    contributed). 1.0 = perfect agreement, ~0 = chance-level, < 0 = systematic
+    disagreement. ``None`` when undefined (every verdict identical, or fewer than
+    two multi-judge samples).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    krippendorff_alpha: float | None = Field(
+        default=None,
+        description='Chance-corrected inter-judge agreement (nominal Krippendorff alpha); None if undefined',
+    )
+    samples: int = Field(default=0, ge=0, description='Multi-judge samples (>=2 verdicts) that contributed')
+    method: str = Field(default='krippendorff_alpha_nominal', description='Reliability coefficient used')
+
+
 class ReportSummary(BaseModel):
     """Aggregate summary statistics for a report."""
 
@@ -1395,6 +1516,11 @@ class ReportSummary(BaseModel):
     by_turn_type: dict[str, TurnTypeSummary] = Field(default_factory=dict)
     by_domain: dict[str, DomainSummary] = Field(default_factory=dict)
     by_framework: dict[str, FrameworkSummary] = Field(default_factory=dict)
+    jury_reliability: JuryReliability | None = Field(
+        default=None,
+        description='Chance-corrected inter-judge reliability across panel-of-judges samples (RES-739). '
+        'None for single-judge runs.',
+    )
     datapoint_breakdown: dict[str, int] | None = Field(
         default=None,
         description='Datapoint counts by source: static, template_dynamic, generated_dynamic (hybrid runs only)',

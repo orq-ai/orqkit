@@ -1754,12 +1754,23 @@ async def _run_dynamic_or_hybrid(
         # dynamic evaluator directly.
         has_static = any(pt.static_datapoints for pt in prepared_targets)
         evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+        # Self-judge / family-bias guard (RES-739): compare the panel against the
+        # target's underlying model. ``agent_context.model`` is populated for ORQ
+        # agents (from the agent config), deployments, and direct-model backends —
+        # so this covers the common path, not just direct models. Targets that
+        # leave it unset (or set it to an opaque label) resolve to provider family
+        # 'unknown' downstream and never trigger a spurious warning.
+        target_models = list(
+            dict.fromkeys(pt.agent_context.model for pt in prepared_targets if pt.agent_context.model)
+        )
         # Panel-of-judges / jury config shared by the dynamic evaluator (RES-739).
         panel_kwargs: dict[str, Any] = {
             'judges': pipeline_config.judges if pipeline_config else [],
             'judge_repetitions': pipeline_config.judge_repetitions if pipeline_config else 1,
             'replacement_judges': pipeline_config.replacement_judges if pipeline_config else [],
             'min_successful_judges': pipeline_config.min_successful_judges if pipeline_config else 1,
+            'target_models': target_models,
+            'strict_panel': pipeline_config.strict_panel if pipeline_config else False,
         }
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator

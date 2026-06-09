@@ -28,6 +28,8 @@ from evaluatorq.redteam.adaptive.evaluator import (
     _agreement_rate,
     _jury_stats,
     _majority_vote,
+    _panel_composition_messages,
+    provider_family,
 )
 from evaluatorq.redteam.contracts import AttackEvaluationResult, Vulnerability
 
@@ -179,7 +181,7 @@ class TestJury:
         assert result.jury is not None
         jury = result.jury
         assert jury.tie is False
-        assert jury.agreement_rate == 1.0
+        assert jury.raw_agreement == 1.0
         assert jury.judges_configured == 3
         assert jury.judges_succeeded == 3
         assert jury.judges_failed == 0
@@ -207,7 +209,7 @@ class TestJury:
         assert result.passed is True  # 2 RESISTANT vs 1 VULNERABLE
         assert result.jury is not None
         assert result.jury.tie is False
-        assert result.jury.agreement_rate == pytest.approx(2 / 3)
+        assert result.jury.raw_agreement == pytest.approx(2 / 3)
         verdicts = {v.model: v.value for v in result.jury.votes}
         assert verdicts == {'judge-a': True, 'judge-b': True, 'judge-c': False}
 
@@ -239,7 +241,7 @@ class TestJury:
         assert result.passed is False  # fail-closed
         assert result.jury is not None
         assert result.jury.tie is True
-        assert result.jury.agreement_rate == 0.5
+        assert result.jury.raw_agreement == 0.5
         assert result.explanation.startswith('[TIE — fail-closed to VULNERABLE]')
 
     @pytest.mark.asyncio
@@ -354,6 +356,29 @@ class TestJury:
         assert result.jury.judges_succeeded == 1
         assert result.jury.tie is False
         assert 'Inconclusive' in result.explanation
+        # Sub-quorum: flagged inconclusive, and stats/raw_agreement nulled so the
+        # single surviving verdict is not surfaced as confident agreement.
+        assert result.jury.inconclusive is True
+        assert result.jury.stats is None
+        assert result.jury.raw_agreement is None
+
+    def test_min_successful_judges_validated_against_deduped_panel(self):
+        """min_successful_judges must be checked against the *effective* panel.
+
+        The LLMConfig validator only sees ``1 + len(judges)``, but __init__
+        de-duplicates the panel. A duplicate judge shrinks the real panel below
+        that count, which would otherwise leave the floor permanently
+        unsatisfiable (every verdict silently inconclusive). __init__ must reject
+        it loudly instead.
+        """
+        # panel de-dups to ['judge-a', 'judge-b'] (size 2); floor of 3 is impossible.
+        with pytest.raises(ValueError, match='effective panel size'):
+            OWASPEvaluator(
+                evaluator_model='judge-a',
+                llm_client=_model_client({}),
+                judges=['judge-a', 'judge-b'],
+                min_successful_judges=3,
+            )
 
     @pytest.mark.asyncio
     async def test_all_judges_and_replacements_fail(self):
@@ -377,7 +402,7 @@ class TestJury:
         assert result.jury is not None
         assert result.jury.judges_succeeded == 0
         assert result.jury.stats is None
-        assert result.jury.agreement_rate is None
+        assert result.jury.raw_agreement is None
         assert result.explanation  # non-empty error string
         assert all(not v.success for v in result.jury.votes)
 
@@ -452,7 +477,7 @@ class TestEndToEndScorer:
 
         # 2 RESISTANT vs 1 VULNERABLE → pass, and the jury summary surfaces in the explanation.
         assert result.pass_ is True
-        assert '[jury: 3/3 judges, agreement 67%]' in (result.explanation or '')
+        assert '[jury: 3/3 judges, raw agreement 67%]' in (result.explanation or '')
         # 3 judges actually got called.
         assert client.chat.completions.create.await_count == 3
 
@@ -460,22 +485,30 @@ class TestEndToEndScorer:
 class TestJurySummary:
     def test_summary_appended_when_jury_present(self):
         from evaluatorq.redteam.adaptive.pipeline import _append_jury_summary
-        from evaluatorq.redteam.contracts import JuryResult
+        from evaluatorq.redteam.contracts import JuryResult, JuryVote
 
         jury = JuryResult(
             judges_configured=3,
             judges_succeeded=3,
             judges_failed=0,
-            agreement_rate=2 / 3,
+            votes=[JuryVote(model=f'm{i}', success=True, value=True) for i in range(3)],
+            raw_agreement=2 / 3,
         )
         out = _append_jury_summary('Agent resisted.', jury)
-        assert out == 'Agent resisted. [jury: 3/3 judges, agreement 67%]'
+        assert out == 'Agent resisted. [jury: 3/3 judges, raw agreement 67%]'
 
     def test_summary_flags_tie(self):
         from evaluatorq.redteam.adaptive.pipeline import _append_jury_summary
-        from evaluatorq.redteam.contracts import JuryResult
+        from evaluatorq.redteam.contracts import JuryResult, JuryVote
 
-        jury = JuryResult(judges_configured=2, judges_succeeded=2, judges_failed=0, tie=True, agreement_rate=0.5)
+        jury = JuryResult(
+            judges_configured=2,
+            judges_succeeded=2,
+            judges_failed=0,
+            votes=[JuryVote(model='a', success=True, value=True), JuryVote(model='b', success=True, value=False)],
+            tie=True,
+            raw_agreement=0.5,
+        )
         out = _append_jury_summary('Split.', jury)
         assert 'TIE (fail-closed)' in out
 
@@ -483,3 +516,237 @@ class TestJurySummary:
         from evaluatorq.redteam.adaptive.pipeline import _append_jury_summary
 
         assert _append_jury_summary('Agent resisted.', None) == 'Agent resisted.'
+
+
+class TestPanelComposition:
+    """Self-judge / family-bias guard and judge-diversity warnings (RES-739 P0#1/#2)."""
+
+    def test_provider_family_inference(self):
+        assert provider_family('gpt-4o') == 'openai'
+        assert provider_family('gpt4o') == 'openai'
+        assert provider_family('o3-mini') == 'openai'
+        assert provider_family('claude-sonnet-4-6') == 'anthropic'
+        assert provider_family('gemini-2.0-flash') == 'google'
+        assert provider_family('openai/gpt-4o') == 'openai'
+        assert provider_family('anthropic/claude-3.5') == 'anthropic'
+        assert provider_family('command-r-plus') == 'cohere'
+        assert provider_family('some-unknown-model') == 'unknown'
+        assert provider_family('') == 'unknown'
+
+    def test_provider_family_does_not_match_incidental_substrings(self):
+        # Token-anchored: a marker like 'o1'/'o3' must be a token or token prefix,
+        # not an incidental substring of an unrelated id (the old substring trap).
+        assert provider_family('neo3-7b') == 'unknown'
+        assert provider_family('histo1-chat') == 'unknown'
+        assert provider_family('yi-large') == 'unknown'
+        # A genuine same-family pair under strict_panel must still abort — proving
+        # the anchoring didn't over-tighten into missing real matches.
+        msgs = _panel_composition_messages(['o3-mini'], ['gpt-4o'])
+        assert any('share the target' in m for m in msgs)
+
+    def test_single_provider_panel_flagged(self):
+        msgs = _panel_composition_messages(['gpt-4o', 'o3-mini'], [])
+        assert any('single provider family' in m for m in msgs)
+
+    def test_mixed_provider_panel_not_flagged(self):
+        msgs = _panel_composition_messages(['gpt-4o', 'claude-sonnet-4-6'], [])
+        assert not any('single provider family' in m for m in msgs)
+
+    def test_unknown_family_panel_not_flagged(self):
+        # Cannot prove same-family for unknown IDs, so stay silent.
+        assert _panel_composition_messages(['mystery-a', 'mystery-b'], []) == []
+
+    def test_self_judge_family_flagged(self):
+        msgs = _panel_composition_messages(['gpt-4o'], ['gpt-4o-mini'])
+        assert any('share the target' in m for m in msgs)
+
+    def test_cross_family_judge_not_flagged(self):
+        assert _panel_composition_messages(['claude-sonnet-4-6'], ['gpt-4o']) == []
+
+    def test_strict_panel_raises_on_self_judge(self):
+        with pytest.raises(ValueError, match='share the target'):
+            OWASPEvaluator(
+                evaluator_model='gpt-4o',
+                llm_client=_model_client({}),
+                target_models=['gpt-4o-mini'],
+                strict_panel=True,
+            )
+
+    def test_non_strict_panel_warns_but_constructs(self):
+        # Default (advisory) path must not raise — existing configs keep running.
+        ev = OWASPEvaluator(
+            evaluator_model='gpt-4o',
+            llm_client=_model_client({}),
+            target_models=['gpt-4o-mini'],
+        )
+        assert ev.panel == ['gpt-4o']
+
+
+class TestJuryReachesReport:
+    """P0#4: the jury breakdown survives the scorer -> report conversion."""
+
+    def test_jury_lifted_from_raw_output(self):
+        from evaluatorq.redteam.contracts import JuryResult, JuryVote
+        from evaluatorq.redteam.reports.converters import _extract_jury
+
+        jury = JuryResult(
+            judges_configured=2,
+            judges_succeeded=2,
+            judges_failed=0,
+            votes=[JuryVote(model='a', success=True, value=True), JuryVote(model='b', success=True, value=True)],
+            raw_agreement=1.0,
+        )
+        raw_output = {'value': True, 'explanation': 'ok', 'jury': jury.model_dump(mode='json')}
+        lifted = _extract_jury(raw_output)
+        assert lifted is not None
+        assert lifted.judges_configured == 2
+        assert lifted.raw_agreement == 1.0
+        assert len(lifted.votes) == 2
+
+    def test_extract_jury_none_for_single_judge(self):
+        from evaluatorq.redteam.reports.converters import _extract_jury
+
+        assert _extract_jury({'value': True, 'explanation': 'ok'}) is None
+        assert _extract_jury(None) is None
+
+    def test_extract_jury_discards_malformed(self):
+        from evaluatorq.redteam.reports.converters import _extract_jury
+
+        # judges_succeeded inconsistent with votes -> validator rejects -> None.
+        assert _extract_jury({'jury': {'judges_configured': 2, 'judges_succeeded': 5, 'judges_failed': 0}}) is None
+
+
+class TestJuryReliabilityKappa:
+    """P0#3: run-level chance-corrected inter-judge agreement (Krippendorff alpha)."""
+
+    def test_perfect_agreement(self):
+        from evaluatorq.redteam.reports.converters import _krippendorff_alpha_binary
+
+        alpha, samples = _krippendorff_alpha_binary([[True, True], [False, False], [True, True]])
+        assert alpha == pytest.approx(1.0)
+        assert samples == 3
+
+    def test_systematic_disagreement_is_negative(self):
+        from evaluatorq.redteam.reports.converters import _krippendorff_alpha_binary
+
+        alpha, _ = _krippendorff_alpha_binary([[True, False], [True, False]])
+        assert alpha is not None and alpha < 0
+
+    def test_known_value(self):
+        from evaluatorq.redteam.reports.converters import _krippendorff_alpha_binary
+
+        # Hand-computed: O01=2, n0=3, n1=6 -> 1 - 8*2/18 = 1/9.
+        alpha, samples = _krippendorff_alpha_binary([
+            [True, True, False],
+            [True, False, False],
+            [True, True, True],
+        ])
+        assert alpha == pytest.approx(1 / 9)
+        assert samples == 3
+
+    def test_unanimous_is_undefined(self):
+        from evaluatorq.redteam.reports.converters import _krippendorff_alpha_binary
+
+        # Every verdict identical -> no expected disagreement -> alpha undefined.
+        alpha, samples = _krippendorff_alpha_binary([[True, True], [True, True, True]])
+        assert alpha is None
+        assert samples == 2
+
+    def test_insufficient_data_is_undefined(self):
+        from evaluatorq.redteam.reports.converters import _krippendorff_alpha_binary
+
+        # No sample has >=2 verdicts.
+        assert _krippendorff_alpha_binary([[True], [False]]) == (None, 0)
+
+    def test_aggregator_skips_single_judge_runs(self):
+        from types import SimpleNamespace
+
+        from evaluatorq.redteam.reports.converters import _compute_jury_reliability
+
+        # No jury on any result -> None (single-judge runs unaffected).
+        results = [SimpleNamespace(evaluation=SimpleNamespace(jury=None))]
+        assert _compute_jury_reliability(results) is None
+
+    def test_aggregator_tolerates_failed_judges(self):
+        from types import SimpleNamespace
+
+        from evaluatorq.redteam.contracts import JuryResult, JuryVote
+        from evaluatorq.redteam.reports.converters import _compute_jury_reliability
+
+        def _jury(values: list[bool]) -> JuryResult:
+            votes = [JuryVote(model=f'm{i}', success=True, value=v) for i, v in enumerate(values)]
+            return JuryResult(
+                judges_configured=len(values),
+                judges_succeeded=len(values),
+                judges_failed=0,
+                votes=votes,
+                raw_agreement=max(sum(values), len(values) - sum(values)) / len(values),
+            )
+
+        # Second sample has only one surviving judge -> not pairable, dropped silently.
+        results = [
+            SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True, True, False]))),
+            SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True]))),
+            SimpleNamespace(evaluation=SimpleNamespace(jury=_jury([True, False, False]))),
+        ]
+        rel = _compute_jury_reliability(results)
+        assert rel is not None
+        assert rel.samples == 2  # only the two multi-judge samples
+        assert rel.method == 'krippendorff_alpha_nominal'
+
+
+class TestConfigLevelMinSuccessfulValidation:
+    """F1: LLMConfig validates min_successful_judges against the DE-DUPED panel,
+    so an unsatisfiable floor is rejected at config time (not at run time)."""
+
+    def test_dedup_aware_validator_rejects_at_config_time(self):
+        from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig
+
+        # Primary model also listed in judges -> effective panel size 2, floor 3 impossible.
+        with pytest.raises(ValueError, match='effective panel size'):
+            LLMConfig(
+                evaluator=LLMCallConfig(model='gpt-4o'),
+                judges=['gpt-4o', 'claude-3'],
+                min_successful_judges=3,
+            )
+
+    def test_valid_panel_passes(self):
+        from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig
+
+        cfg = LLMConfig(
+            evaluator=LLMCallConfig(model='gpt-4o'),
+            judges=['claude-3', 'gemini-1.5'],
+            min_successful_judges=3,
+        )
+        assert cfg.min_successful_judges == 3
+
+
+class TestJuryRawOutputCarrier:
+    """F4/F5: jury rides through raw_output under a shared key and is lifted once."""
+
+    def test_shared_key_constant_is_used_end_to_end(self):
+        from evaluatorq.redteam.contracts import JURY_RAW_OUTPUT_KEY, JuryResult, JuryVote
+        from evaluatorq.redteam.reports.converters import _extract_jury, _raw_output_without_jury
+
+        jury = JuryResult(
+            judges_configured=2,
+            judges_succeeded=2,
+            judges_failed=0,
+            votes=[JuryVote(model='a', success=True, value=True), JuryVote(model='b', success=True, value=False)],
+            raw_agreement=0.5,
+            tie=True,
+        )
+        raw = {'value': False, 'explanation': 'x', JURY_RAW_OUTPUT_KEY: jury.model_dump(mode='json')}
+        # Lifted onto the typed field...
+        lifted = _extract_jury(raw)
+        assert lifted is not None and len(lifted.votes) == 2
+        # ...and stripped from raw_output so it is not stored twice.
+        stripped = _raw_output_without_jury(raw)
+        assert JURY_RAW_OUTPUT_KEY not in stripped
+        assert stripped['value'] is False and stripped['explanation'] == 'x'
+
+    def test_raw_output_without_jury_passthrough_when_absent(self):
+        from evaluatorq.redteam.reports.converters import _raw_output_without_jury
+
+        assert _raw_output_without_jury({'value': True}) == {'value': True}
+        assert _raw_output_without_jury(None) is None

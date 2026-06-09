@@ -37,6 +37,7 @@ from evaluatorq.redteam.contracts import (
     PIPELINE_CONFIG,
     AttackerResponse,
     AttackOutput,
+    JURY_RAW_OUTPUT_KEY,
     AttackStrategy,
     EvaluatorConfig,
     JuryResult,
@@ -558,10 +559,10 @@ def _append_jury_summary(explanation: str, jury: JuryResult | None) -> str:
     """
     if jury is None:
         return explanation
-    rate = f'{jury.agreement_rate:.0%}' if jury.agreement_rate is not None else 'n/a'
+    rate = f'{jury.raw_agreement:.0%}' if jury.raw_agreement is not None else 'n/a'
     summary = (
         f'[jury: {jury.judges_succeeded}/{jury.judges_configured} judges, '
-        f'agreement {rate}{", TIE (fail-closed)" if jury.tie else ""}]'
+        f'raw agreement {rate}{", TIE (fail-closed)" if jury.tie else ""}]'
     )
     return f'{explanation} {summary}' if explanation else summary
 
@@ -575,6 +576,9 @@ def create_dynamic_evaluator(
     judge_repetitions: int = 1,
     replacement_judges: list[str] | None = None,
     min_successful_judges: int = 1,
+    target_models: list[str] | None = None,
+    *,
+    strict_panel: bool = False,
 ) -> EvaluatorConfig:
     """Create an evaluator that uses OWASPEvaluator on the attack conversation.
 
@@ -584,6 +588,8 @@ def create_dynamic_evaluator(
     ``judges`` adds panel models alongside ``evaluator_model``; ``judge_repetitions``
     runs each judge N times with majority voting; ``replacement_judges`` stand in for
     failed judges; ``min_successful_judges`` is the decisive-verdict floor (RES-739).
+    ``target_models`` (known direct-model targets only) drives the self-judge/family
+    warning; ``strict_panel`` upgrades composition warnings to hard errors.
     """
     owasp_evaluator = OWASPEvaluator(
         evaluator_model=evaluator_model,
@@ -594,6 +600,8 @@ def create_dynamic_evaluator(
         repetitions=judge_repetitions,
         replacement_judges=replacement_judges,
         min_successful_judges=min_successful_judges,
+        target_models=target_models,
+        strict_panel=strict_panel,
     )
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
@@ -674,7 +682,7 @@ def create_dynamic_evaluator(
                 'output': eval_result.explanation or '',
             }
             if eval_result.jury is not None:
-                span_attrs['orq.redteam.jury.agreement_rate'] = eval_result.jury.agreement_rate
+                span_attrs['orq.redteam.jury.raw_agreement'] = eval_result.jury.raw_agreement
                 span_attrs['orq.redteam.jury.tie'] = eval_result.jury.tie
                 span_attrs['orq.redteam.jury.judges_succeeded'] = eval_result.jury.judges_succeeded
             set_span_attrs(eval_span, span_attrs)
@@ -684,6 +692,14 @@ def create_dynamic_evaluator(
         result_value: str | int | float | bool = (
             bool(eval_result.passed) if eval_result.passed is not None else 'inconclusive'
         )
+        # The generic EvaluationResult is framework-agnostic, so the structured jury
+        # breakdown rides through raw_output (the judge's-raw-response passthrough)
+        # rather than as a typed field; the red-team converters lift it back onto
+        # UnifiedEvaluationResult.jury so per-judge votes + agreement reach the report
+        # (RES-739 DoD), not just the OTel span + inline explanation text.
+        scored_raw_output: dict[str, Any] = dict(eval_result.raw_output or {})
+        if eval_result.jury is not None:
+            scored_raw_output[JURY_RAW_OUTPUT_KEY] = eval_result.jury.model_dump(mode='json')
         return EvaluationResult.model_validate({
             'value': result_value,
             'explanation': _append_jury_summary(eval_result.explanation, eval_result.jury),
@@ -693,7 +709,7 @@ def create_dynamic_evaluator(
             # dumps but stripped from the Orq platform upload at the send boundary
             # (see evaluatorq.send_results).
             'token_usage': eval_result.token_usage,
-            'raw_output': eval_result.raw_output,
+            'raw_output': scored_raw_output,
         })
 
     return {'name': 'owasp-dynamic-security', 'scorer': scorer}
