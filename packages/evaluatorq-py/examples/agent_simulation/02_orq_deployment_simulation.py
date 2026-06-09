@@ -140,11 +140,11 @@ async def main() -> None:
     )
 
     # Summary
-    passed = sum(r.goal_achieved for r in results)
-    if results:
-        logger.info(f"Pass rate: {passed}/{len(results)} ({100 * passed / len(results):.0f}%)")
-    else:
+    if not results:
         logger.warning("No results to summarise")
+    else:
+        passed = sum(r.goal_achieved for r in results)
+        logger.info(f"Pass rate: {passed}/{len(results)} ({100 * passed / len(results):.0f}%)")
 
     for r in results:
         status = "PASS" if r.goal_achieved else "FAIL"
@@ -152,7 +152,7 @@ async def main() -> None:
         logger.info(f"         terminated_by={r.terminated_by} rules_broken={r.rules_broken or []}")
 
     # Export to JSONL for offline analysis or seeding an orq.ai Dataset
-    output_path = Path(__file__).parent.parent.parent / args.output
+    output_path = Path.cwd() / args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
     export_results_to_jsonl(results, str(output_path))
     logger.info(f"Results written to {output_path}")

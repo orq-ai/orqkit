@@ -18,6 +18,11 @@ Demonstrates how to automatically improve an agent's system prompt by:
 This is especially useful when you have a set of test scenarios and want the
 agent's instructions to pass them reliably.
 
+Prerequisites:
+    Install the agent-simulation research package (not on PyPI — install from source):
+
+        pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
+
 Usage:
     cd packages/evaluatorq-py
     uv run python examples/agent_simulation/04_hardening_loop.py

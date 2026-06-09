@@ -9,8 +9,11 @@ pip install evaluatorq
 ```
 
 > **Examples 03 and 04** (`03_tool_simulation.py`, `04_hardening_loop.py`) also require the
-> `agent-simulation` research package from
-> [orq-ai/research](https://github.com/orq-ai/research/tree/main/projects/agent-simulation).
+> `agent-simulation` research package (not on PyPI — install from source):
+>
+> ```bash
+> pip install "agent-simulation @ git+https://github.com/orq-ai/research.git#subdirectory=projects/agent-simulation"
+> ```
 
 ## Quick Start
 
