@@ -43,21 +43,21 @@ STATUS_COLORS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 _CSS_CACHE: dict[Path, str] = {}
-_LOGO_CACHE: str | None = None
+_logo_cache: str | None = None
 
 
 def load_logo_svg() -> str:
     """Return the orq logo SVG as an inline string, or empty string if missing."""
-    global _LOGO_CACHE
-    if _LOGO_CACHE is not None:
-        return _LOGO_CACHE
+    global _logo_cache
+    if _logo_cache is not None:
+        return _logo_cache
     logo_path = Path(__file__).parent / 'assets' / 'Orq_ai_Symbol_Dark.svg'
     try:
-        _LOGO_CACHE = logo_path.read_text(encoding='utf-8')
+        _logo_cache = logo_path.read_text(encoding='utf-8')
     except FileNotFoundError:
         logger.warning('orq logo asset not found at {}; header will render without logo', logo_path)
-        _LOGO_CACHE = ''
-    return _LOGO_CACHE
+        _logo_cache = ''
+    return _logo_cache
 
 
 def load_css(css_path: Path | None = None) -> str:
