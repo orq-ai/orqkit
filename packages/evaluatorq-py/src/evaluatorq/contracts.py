@@ -272,6 +272,25 @@ class TokenUsage(BaseModel):
     )
     calls: int = Field(default=0, ge=0, description='Number of LLM API calls')
 
+    if TYPE_CHECKING:
+        # The legacy ``prompt_tokens``/``completion_tokens`` names are accepted at
+        # runtime via the validation aliases above, but a static type checker only
+        # sees the declared field names. Declare the constructor explicitly so call
+        # sites passing either spelling type-check cleanly.
+        def __init__(  # pyright: ignore[reportMissingSuperCall]
+            self,
+            *,
+            input_tokens: int = ...,
+            output_tokens: int = ...,
+            prompt_tokens: int = ...,
+            completion_tokens: int = ...,
+            total_tokens: int = ...,
+            cached_tokens: int = ...,
+            reasoning_tokens: int = ...,
+            cost_usd: float | None = ...,
+            calls: int = ...,
+        ) -> None: ...
+
     @property
     def prompt_tokens(self) -> int:
         """Deprecated alias for :attr:`input_tokens`."""

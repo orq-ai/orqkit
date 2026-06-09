@@ -243,9 +243,13 @@ class TestExtractAcrossShapes:
         assert u.total_tokens == 20
 
     def test_extract_reads_calls_from_payload(self) -> None:
-        assert TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1, 'calls': 3}).calls == 3
+        with_calls = TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1, 'calls': 3})
+        assert with_calls is not None
+        assert with_calls.calls == 3
         # default when absent
-        assert TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1}).calls == 1
+        default_calls = TokenUsage.extract({'input_tokens': 1, 'output_tokens': 1})
+        assert default_calls is not None
+        assert default_calls.calls == 1
 
 
 class TestDetailsAndCostArithmetic:
