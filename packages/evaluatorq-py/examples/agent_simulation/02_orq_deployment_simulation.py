@@ -24,9 +24,8 @@ Usage:
 
 Where outputs land:
 - OTel spans appear automatically in orq.ai under orq.simulation.pipeline
-- An Experiment row is created in orq.ai (URL printed to stdout) when the
-  run is wired through evaluatorq() — see wrap_simulation_agent() for
-  production use with CI gating and auto-upload
+- An Experiment row is created in orq.ai by default (URL printed to stdout);
+  pass upload_results=False to generate_and_simulate() to suppress this
 - Results are exported to JSONL for offline analysis or dataset seeding
 """
 
@@ -46,13 +45,14 @@ load_dotenv()
 
 # generate_and_simulate() synthesises Persona × Scenario pairs from a plain-text
 # description, then runs the full simulation batch in one call.
+from evaluatorq.contracts import AgentResponse, Message  # noqa: E402
 from evaluatorq.simulation import (  # noqa: E402
     export_results_to_jsonl,
     generate_and_simulate,
 )
 
 
-def make_a2a_callback(agent_key: str) -> Callable[[list[dict]], Coroutine[Any, Any, str]]:
+def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any, Any, str]]:
     """Return a target_callback that calls an orq A2A agent via the Responses API.
 
     The Responses API (client.agents.responses.create) is the production path for
@@ -60,34 +60,32 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[dict]], Coroutine[Any, A
     reasoning, as opposed to stateless deployments (prompt + model config).
 
     Each call passes the full conversation history so the agent has context.
-    The response's output is a list of AgentResponseMessage objects; we extract
-    text parts from the last agent message.
     """
     from orq_ai_sdk import Orq
     from orq_ai_sdk.models import A2AMessage, TextPart
 
     client = Orq(api_key=os.getenv("ORQ_API_KEY", ""))
 
-    async def callback(messages: list[dict]) -> str:
+    async def callback(messages: list[Message]) -> str:
         last = messages[-1]
         message = A2AMessage(
             role="user",
-            parts=[TextPart(kind="text", text=last["content"])],
+            parts=[TextPart(kind="text", text=last.content or "")],
         )
         response = await asyncio.to_thread(
             client.agents.responses.create,
             agent_key=agent_key,
             message=message,
         )
-        # output is a list of AgentResponseMessage; extract text from agent turns
-        texts = [
-            part.text
-            for msg in response.output
-            if msg.role == "agent"
-            for part in msg.parts
-            if hasattr(part, "text")
-        ]
-        return " ".join(texts) if texts else ""
+        # Parse the Responses API wire format via AgentResponse.from_openresponses,
+        # which handles type="message" items with content[].type="output_text".
+        agent_resp = AgentResponse.from_openresponses(response)
+        if not agent_resp.output:
+            raise RuntimeError(
+                f"A2A agent '{agent_key}' returned no output — "
+                "check agent_key and API connectivity"
+            )
+        return agent_resp.text
 
     return callback
 

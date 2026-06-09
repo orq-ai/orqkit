@@ -16,7 +16,9 @@ Usage:
 
 Where outputs land:
 - OTel spans appear automatically in orq.ai under orq.simulation.pipeline
-- SimulationResult objects are returned in memory (transcript, scores, etc.)
+- An Experiment row is created in orq.ai by default when ORQ_API_KEY is set
+  (pass upload_results=False to simulate() to suppress this)
+- SimulationResult objects are also returned in memory (transcript, scores, etc.)
 - Tool call history is accessible via ToolSimulator.get_tool_call_history()
 """
 
@@ -39,6 +41,7 @@ except ImportError as e:
         '  uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git'
         '#subdirectory=projects/agent-simulation"'
     ) from e
+from evaluatorq.contracts import Message  # noqa: E402
 from evaluatorq.simulation import simulate  # noqa: E402
 from evaluatorq.simulation.types import (  # noqa: E402
     CommunicationStyle,
@@ -49,13 +52,13 @@ from evaluatorq.simulation.types import (  # noqa: E402
 )
 
 
-async def tool_using_agent(messages: list[dict], tool_simulator: ToolSimulator) -> str:
+async def tool_using_agent(messages: list[Message], tool_simulator: ToolSimulator) -> str:
     """Mock agent that uses tools to answer questions.
 
     In a real scenario this would be your LLM agent; here we fake tool calls
     so the example runs without an API key for the target agent itself.
     """
-    last = messages[-1]["content"].lower() if messages else ""
+    last = (messages[-1].content or "").lower() if messages else ""
 
     # Mimics the OpenAI function-call response format so ToolSimulator can intercept it
     if "order" in last or "status" in last or "where" in last:
@@ -142,7 +145,7 @@ async def main() -> None:
     simulator = ToolSimulator(tool_registry=registry)
 
     # 2. Wrap the agent so it has access to the tool simulator
-    async def agent_with_tools(messages: list[dict]) -> str:
+    async def agent_with_tools(messages: list[Message]) -> str:
         return await tool_using_agent(messages, simulator)
 
     # 3. Define a scenario that will trigger tool use

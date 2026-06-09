@@ -13,10 +13,9 @@ Usage:
 Where outputs land:
 - OTel spans appear automatically in orq.ai under orq.simulation.pipeline
   (requires ORQ_API_KEY to be set)
-- Results are returned in memory as SimulationResult objects
-- An Experiment row is created in orq.ai when ORQ_API_KEY is set and
-  evaluatorq() framework handles the upload (bare simulate() returns results
-  in memory; wire into evaluatorq() or wrap_simulation_agent() for auto-upload)
+- An Experiment row is created in orq.ai by default when ORQ_API_KEY is set
+  (pass upload_results=False to simulate() to suppress this)
+- Results are also returned in memory as SimulationResult objects
 """
 
 from __future__ import annotations
@@ -31,6 +30,7 @@ from loguru import logger
 # library init code that reads them (e.g. evaluatorq tracing setup).
 load_dotenv()
 
+from evaluatorq.contracts import Message  # noqa: E402
 from evaluatorq.simulation import simulate  # noqa: E402
 from evaluatorq.simulation.types import (  # noqa: E402
     CommunicationStyle,
@@ -42,9 +42,9 @@ from evaluatorq.simulation.types import (  # noqa: E402
 )
 
 
-async def support_agent(messages: list[dict]) -> str:
+async def support_agent(messages: list[Message]) -> str:
     """Simple mock customer support agent — replace with your own logic."""
-    last = messages[-1]["content"].lower() if messages else ""
+    last = (messages[-1].content or "").lower() if messages else ""
     if "refund" in last:
         return "I can help with that. Could you share your order number?"
     if "order" in last or "status" in last:
@@ -86,7 +86,7 @@ async def main() -> None:
 
     # 3. Run simulation
     # target_callback=: pass any async function; use agent_key= for orq.ai deployments.
-    # model=: the LLM used for the UserSimulator and Judge (defaults to openai/gpt-4o-mini).
+    # sim_model=: the LLM used for the UserSimulator and Judge (defaults to openai/gpt-5.4-mini).
     # evaluator_names=: scorers applied to each result (default: goal_achieved, criteria_met).
     logger.info("Running simulation...")
     results = await simulate(
