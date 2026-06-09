@@ -55,6 +55,7 @@ def load_logo_svg() -> str:
     try:
         _LOGO_CACHE = logo_path.read_text(encoding='utf-8')
     except FileNotFoundError:
+        logger.warning('orq logo asset not found at {}; header will render without logo', logo_path)
         _LOGO_CACHE = ''
     return _LOGO_CACHE
 

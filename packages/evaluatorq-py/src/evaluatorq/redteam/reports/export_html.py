@@ -1767,9 +1767,6 @@ def export_html(report: RedTeamReport) -> str:
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>Red Team Security Report</title>\n"
-        '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
-        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-        '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">\n'
         f"<style>\n{_load_css()}</style>\n"
         "</head>\n"
         "<body>\n"
