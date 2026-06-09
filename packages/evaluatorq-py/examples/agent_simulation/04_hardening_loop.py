@@ -148,9 +148,9 @@ async def main() -> None:
     logger.info("Starting hardening loop...")
     logger.info(f"Initial instructions:\n{INITIAL_INSTRUCTIONS.strip()}")
 
-    current_agent: list[Callable[[list[dict]], Awaitable[str]]] = [make_agent(INITIAL_INSTRUCTIONS)]
+    current_agent: list[Callable[[list[Message]], Awaitable[str]]] = [make_agent(INITIAL_INSTRUCTIONS)]
 
-    async def agent_proxy(messages: list[dict]) -> str:
+    async def agent_proxy(messages: list[Message]) -> str:
         return await current_agent[0](messages)
 
     runner = SimulationRunner(target_callback=agent_proxy, max_turns=6)
