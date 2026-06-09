@@ -40,10 +40,7 @@ class _TokenUsageCollector(BaseCallbackHandler):
 
     def __init__(self) -> None:
         super().__init__()
-        self.prompt_tokens: int = 0
-        self.completion_tokens: int = 0
-        self.total_tokens: int = 0
-        self.calls: int = 0
+        self._usage: TokenUsage = TokenUsage()
 
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """Accumulate token usage from a completed LLM call."""
@@ -65,17 +62,11 @@ class _TokenUsageCollector(BaseCallbackHandler):
                         "tokens for this call will not be captured"
                     )
                     continue
-                input_tokens = meta.get("input_tokens")
-                prompt = int(input_tokens) if input_tokens is not None else 0
-                output_tokens = meta.get("output_tokens")
-                completion = int(output_tokens) if output_tokens is not None else 0
-                raw_total = meta.get("total_tokens")
-                # CRITICAL: use `is not None`, not truthiness — total_tokens=0 is valid.
-                total = int(raw_total) if raw_total is not None else prompt + completion
-                self.prompt_tokens += prompt
-                self.completion_tokens += completion
-                self.total_tokens += total
-                self.calls += 1
+                # Shared extractor carries cached/reasoning from input_token_details /
+                # output_token_details and applies the unified total fallback.
+                delta = TokenUsage.extract(meta, calls=1)
+                if delta is not None:
+                    self._usage = self._usage + delta
             except Exception as exc:
                 logger.warning("_TokenUsageCollector.on_llm_end: failed to extract usage: %s", exc)
 
@@ -93,14 +84,9 @@ class _TokenUsageCollector(BaseCallbackHandler):
 
     def to_token_usage(self) -> TokenUsage | None:
         """Return aggregated usage, or None if no calls were recorded."""
-        if self.calls == 0:
+        if self._usage.calls == 0:
             return None
-        return TokenUsage(
-            prompt_tokens=self.prompt_tokens,
-            completion_tokens=self.completion_tokens,
-            total_tokens=self.total_tokens,
-            calls=self.calls,
-        )
+        return self._usage
 
 
 class LangGraphTarget(AgentTarget):

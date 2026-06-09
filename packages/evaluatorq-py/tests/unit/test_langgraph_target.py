@@ -361,20 +361,16 @@ class TestLangGraphTargetTokenUsage:
         result = LLMResult(generations=[[gen]])
         collector.on_llm_end(result)
 
-        assert collector.prompt_tokens == 100
-        assert collector.completion_tokens == 10
-        assert collector.total_tokens == 110
-        assert collector.calls == 1
-
         usage = collector.to_token_usage()
         assert usage is not None
-        assert usage.prompt_tokens == 100
-        assert usage.completion_tokens == 10
+        assert usage.input_tokens == 100
+        assert usage.output_tokens == 10
         assert usage.total_tokens == 110
         assert usage.calls == 1
 
-    def test_total_tokens_zero_not_re_synthesized(self) -> None:
-        """total_tokens=0 must be kept as 0, not replaced by prompt+completion sum."""
+    def test_total_tokens_zero_synthesized_from_components(self) -> None:
+        """A contradictory total_tokens=0 with nonzero input/output is synthesized to
+        input+output by the unified fallback rule (RES-906), so total reconciles."""
         from langchain_core.messages import AIMessage
         from langchain_core.messages.ai import UsageMetadata
         from langchain_core.outputs import ChatGeneration, LLMResult
@@ -390,10 +386,10 @@ class TestLangGraphTargetTokenUsage:
         result = LLMResult(generations=[[gen]])
         collector.on_llm_end(result)
 
-        assert collector.total_tokens == 0
         usage = collector.to_token_usage()
         assert usage is not None
-        assert usage.total_tokens == 0
+        assert usage.total_tokens == 100
+        assert usage.total_tokens == usage.input_tokens + usage.output_tokens
 
     def test_n_greater_than_1_no_double_count(self) -> None:
         """When n>1, only the first candidate in each inner list is counted."""
@@ -414,10 +410,12 @@ class TestLangGraphTargetTokenUsage:
         collector.on_llm_end(result)
 
         # Only gen1 should be counted
-        assert collector.calls == 1
-        assert collector.prompt_tokens == 20
-        assert collector.completion_tokens == 5
-        assert collector.total_tokens == 25
+        usage = collector.to_token_usage()
+        assert usage is not None
+        assert usage.calls == 1
+        assert usage.input_tokens == 20
+        assert usage.output_tokens == 5
+        assert usage.total_tokens == 25
 
     def test_on_llm_error_does_not_crash(self) -> None:
         """on_llm_error must not raise; to_token_usage returns None when nothing captured."""

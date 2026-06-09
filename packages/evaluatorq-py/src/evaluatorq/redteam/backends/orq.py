@@ -152,28 +152,18 @@ class ORQAgentTarget(AgentTarget):
                 "Server-side conversation state is held via task_id."
             )
         prompt = messages[-1].content or ""
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-        total_tokens = 0
-        total_calls = 0
+        accumulated_usage = TokenUsage()
 
         def _accumulate_usage(resp: object) -> None:
-            """Accumulate token usage from a response into running totals."""
-            nonlocal total_prompt_tokens, total_completion_tokens, total_tokens, total_calls
-            resp_usage = getattr(resp, 'usage', None)
-            if resp_usage is None:
-                return
-            prompt_tokens = int(getattr(resp_usage, 'prompt_tokens', 0) or 0)
-            completion_tokens = int(getattr(resp_usage, 'completion_tokens', 0) or 0)
-            raw_total = getattr(resp_usage, 'total_tokens', None)
-            if raw_total is not None and int(raw_total) > 0:
-                total = int(raw_total)
-            else:
-                total = prompt_tokens + completion_tokens
-            total_prompt_tokens += prompt_tokens
-            total_completion_tokens += completion_tokens
-            total_tokens += total
-            total_calls += 1
+            """Accumulate token usage from a response into a running total.
+
+            Routes through the shared extractor so cached/reasoning/cost are carried
+            and the total fallback matches every other path.
+            """
+            nonlocal accumulated_usage
+            delta = TokenUsage.extract(getattr(resp, 'usage', None), calls=1)
+            if delta is not None:
+                accumulated_usage = accumulated_usage + delta
 
         def _extract_text(resp: object) -> str:
             """Extract the first non-empty text part from an agent response."""
@@ -320,16 +310,7 @@ class ORQAgentTarget(AgentTarget):
                     },
                 )
 
-                usage = (
-                    TokenUsage(
-                        prompt_tokens=total_prompt_tokens,
-                        completion_tokens=total_completion_tokens,
-                        total_tokens=total_tokens,
-                        calls=total_calls,
-                    )
-                    if total_calls > 0
-                    else None
-                )
+                usage = accumulated_usage if accumulated_usage.calls > 0 else None
                 output: list[OutputMessage] = cast('list[OutputMessage]', list(all_tool_calls))
                 output.append(TextOutputItem(text=result_text, annotations=[]))
                 return AgentResponse(
@@ -344,13 +325,13 @@ class ORQAgentTarget(AgentTarget):
                 logger.error(f'ORQ agent call failed: {e}')
                 raise
             finally:
-                if total_calls > 0:
+                if accumulated_usage.calls > 0:
                     record_token_usage(
                         span,
-                        prompt_tokens=total_prompt_tokens,
-                        completion_tokens=total_completion_tokens,
-                        total_tokens=total_tokens,
-                        calls=total_calls,
+                        prompt_tokens=accumulated_usage.input_tokens,
+                        completion_tokens=accumulated_usage.output_tokens,
+                        total_tokens=accumulated_usage.total_tokens,
+                        calls=accumulated_usage.calls,
                     )
 
     def new(self) -> ORQAgentTarget:

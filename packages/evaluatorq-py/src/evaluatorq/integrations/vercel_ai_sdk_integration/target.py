@@ -255,17 +255,10 @@ def _parse_data_stream(raw: str) -> tuple[str, TokenUsage | None]:
                 continue
             u = obj.get('usage') if isinstance(obj, dict) else None
             if isinstance(u, dict):
-                p = int(u.get('promptTokens', 0) or 0)
-                c = int(u.get('completionTokens', 0) or 0)
-                if p > 0 or c > 0:
-                    t = u.get('totalTokens')
-                    total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
-                    usage = TokenUsage(
-                        prompt_tokens=p,
-                        completion_tokens=c,
-                        total_tokens=total,
-                        calls=1,
-                    )
+                extracted = TokenUsage.extract(u, calls=1)
+                # Only the final frame carries real usage; skip empty interim frames.
+                if extracted is not None and (extracted.input_tokens > 0 or extracted.output_tokens > 0):
+                    usage = extracted
     return ''.join(parts), usage
 
 
@@ -290,24 +283,13 @@ def _parse_json_response(raw: str) -> tuple[str, TokenUsage | None]:
     if isinstance(data, dict):
         # Extract usage if present — support both OpenAI shape
         # (prompt_tokens/completion_tokens) and Vercel shape (promptTokens/completionTokens)
+        # extract() handles both OpenAI (prompt/completion_tokens) and Vercel
+        # camelCase (promptTokens/completionTokens) shapes in one pass.
         u = data.get("usage")
         if isinstance(u, dict):
-            # OpenAI-compat shape
-            p = int(u.get("prompt_tokens", 0) or 0)
-            c = int(u.get("completion_tokens", 0) or 0)
-            # Fall back to Vercel camelCase shape when snake_case is absent
-            if p == 0 and c == 0:
-                p = int(u.get("promptTokens", 0) or 0)
-                c = int(u.get("completionTokens", 0) or 0)
-            t = u.get("total_tokens") or u.get("totalTokens")
-            total = int(t) if isinstance(t, (int, float)) and t > 0 else p + c
-            if p > 0 or c > 0:
-                usage = TokenUsage(
-                    prompt_tokens=p,
-                    completion_tokens=c,
-                    total_tokens=total,
-                    calls=1,
-                )
+            extracted = TokenUsage.extract(u, calls=1)
+            if extracted is not None and (extracted.input_tokens > 0 or extracted.output_tokens > 0):
+                usage = extracted
 
         # {"message": {"content": "..."}} or {"message": "..."}
         msg = data.get("message")

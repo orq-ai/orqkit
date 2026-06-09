@@ -208,14 +208,20 @@ def _usage_first_int(usage: Any, keys: tuple[str, ...]) -> int:
     return 0
 
 
-def _usage_detail_int(usage: Any, containers: tuple[str, ...], key: str) -> int:
-    """Read a nested detail token count (e.g. input_tokens_details.cached_tokens)."""
+def _usage_detail_int(usage: Any, containers: tuple[str, ...], keys: tuple[str, ...]) -> int:
+    """Read a nested detail token count (e.g. input_tokens_details.cached_tokens).
+
+    Tries each container name and, within it, each key — covering responses
+    (``input_tokens_details.cached_tokens``) and langchain
+    (``input_token_details.cache_read``) shapes alike.
+    """
     for container in containers:
         detail = _usage_get(usage, container)
-        if detail is not None:
-            val = _usage_get(detail, key)
-            if isinstance(val, (int, float)) and not isinstance(val, bool):
-                return int(val)
+        if detail is None:
+            continue
+        val = _usage_first_int(detail, keys)
+        if val:
+            return val
     return 0
 
 
@@ -301,8 +307,16 @@ class TokenUsage(BaseModel):
         # Provider total is trusted only when > 0; otherwise fall back to input+output.
         reported_total = _usage_first_int(usage, ('total_tokens', 'totalTokens', 'total'))
         total = reported_total if reported_total > 0 else inp + out
-        cached = _usage_detail_int(usage, ('input_tokens_details', 'prompt_tokens_details'), 'cached_tokens')
-        reasoning = _usage_detail_int(usage, ('output_tokens_details', 'completion_tokens_details'), 'reasoning_tokens')
+        cached = _usage_detail_int(
+            usage,
+            ('input_tokens_details', 'prompt_tokens_details', 'input_token_details'),
+            ('cached_tokens', 'cache_read'),
+        )
+        reasoning = _usage_detail_int(
+            usage,
+            ('output_tokens_details', 'completion_tokens_details', 'output_token_details'),
+            ('reasoning_tokens', 'reasoning'),
+        )
         cost = _usage_first_float(usage, ('cost_usd', 'cost', 'total_cost'))
         # Honour a calls count already carried by the payload (e.g. an aggregated
         # TokenUsage dump); fall back to the per-call default otherwise.

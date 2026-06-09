@@ -322,16 +322,14 @@ def _build_adversarial_system_prompt(
 
 
 def _merge_usage(*usages: TokenUsage | None) -> TokenUsage | None:
-    """Merge multiple usage records into one aggregate."""
+    """Merge multiple usage records into one aggregate (carries cached/reasoning/cost)."""
     present = [u for u in usages if u is not None]
     if not present:
         return None
-    return TokenUsage(
-        prompt_tokens=sum(int(u.prompt_tokens or 0) for u in present),
-        completion_tokens=sum(int(u.completion_tokens or 0) for u in present),
-        total_tokens=sum(int(u.total_tokens or 0) for u in present),
-        calls=sum(int(u.calls or 0) for u in present),
-    )
+    merged = present[0]
+    for u in present[1:]:
+        merged = merged + u
+    return merged
 
 
 class MultiTurnOrchestrator:
@@ -460,10 +458,8 @@ class MultiTurnOrchestrator:
             OrchestratorResult with conversation, turns, objective status, and token usage
         """
         start_time = time.time()
-        adversarial_prompt_tokens = 0
-        adversarial_completion_tokens = 0
-        adversarial_total_tokens = 0
-        adversarial_calls = 0
+        # TokenUsage accumulators so cached/reasoning/cost carry through, not just totals.
+        adversarial_usage_acc = TokenUsage()
 
         # Build adversarial system prompt
         system_prompt = _build_adversarial_system_prompt(
@@ -483,10 +479,7 @@ class MultiTurnOrchestrator:
 
         objective_achieved = False
         objective_rationale: str | None = None
-        target_prompt_tokens = 0
-        target_completion_tokens = 0
-        target_total_tokens = 0
-        target_calls = 0
+        target_usage_acc = TokenUsage()
         error: str | None = None
         error_type: str | None = None
         error_stage: str | None = None
@@ -559,10 +552,7 @@ class MultiTurnOrchestrator:
                             )
                             usage = TokenUsage.from_completion(attack_response)
                             if usage is not None:
-                                adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
-                                adversarial_completion_tokens += int(usage.completion_tokens or 0)
-                                adversarial_total_tokens += int(usage.total_tokens or 0)
-                                adversarial_calls += int(usage.calls or 0) or 1
+                                adversarial_usage_acc = adversarial_usage_acc + usage
                             attack_prompt = attack_response.choices[0].message.content or ''
                             record_llm_response(adv_span, attack_response, output_content=attack_prompt)
                     except asyncio.TimeoutError:
@@ -812,10 +802,11 @@ class MultiTurnOrchestrator:
                     # arithmetic bugs aren't mapped to target_error. Only the success
                     # path sets turn_usage; recoverable error turns leave it None.
                     if turn_usage is not None:
-                        target_prompt_tokens += int(turn_usage.prompt_tokens or 0)
-                        target_completion_tokens += int(turn_usage.completion_tokens or 0)
-                        target_total_tokens += int(turn_usage.total_tokens or 0)
-                        target_calls += int(turn_usage.calls or 0) or 1
+                        # Targets report their own call count (orq sums tool-continuation
+                        # rounds); fall back to 1 only when a usage-bearing turn forgot to.
+                        if turn_usage.calls == 0:
+                            turn_usage = turn_usage.model_copy(update={'calls': 1})
+                        target_usage_acc = target_usage_acc + turn_usage
 
                     # Record the completed turn (target succeeded)
                     turns_record.append(Turn(attacker=current_attacker, target=_tgt_result))
@@ -868,26 +859,8 @@ class MultiTurnOrchestrator:
             + (f', error_type={error_type}' if error_type else '')
         )
 
-        adversarial_usage = (
-            TokenUsage(
-                prompt_tokens=adversarial_prompt_tokens,
-                completion_tokens=adversarial_completion_tokens,
-                total_tokens=adversarial_total_tokens,
-                calls=adversarial_calls,
-            )
-            if adversarial_calls > 0
-            else None
-        )
-        target_usage = (
-            TokenUsage(
-                prompt_tokens=target_prompt_tokens,
-                completion_tokens=target_completion_tokens,
-                total_tokens=target_total_tokens,
-                calls=target_calls,
-            )
-            if target_calls > 0
-            else None
-        )
+        adversarial_usage = adversarial_usage_acc if adversarial_usage_acc.calls > 0 else None
+        target_usage = target_usage_acc if target_usage_acc.calls > 0 else None
 
         return OrchestratorResult(
             turns=turns_record,

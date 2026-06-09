@@ -184,23 +184,9 @@ class OpenAIAgentTarget(AgentTarget):
         if last_text != final_text:
             output_items.append(TextOutputItem(text=final_text, annotations=[]))
 
-        usage: TokenUsage | None = None
         ctx = getattr(result, 'context_wrapper', None)
         agent_usage = getattr(ctx, 'usage', None) if ctx is not None else None
-        if agent_usage is not None:
-            prompt_tokens = int(getattr(agent_usage, 'input_tokens', 0) or 0)
-            completion_tokens = int(getattr(agent_usage, 'output_tokens', 0) or 0)
-            total = getattr(agent_usage, 'total_tokens', None)
-            if total is not None and int(total) > 0:
-                total_tokens = int(total)
-            else:
-                total_tokens = prompt_tokens + completion_tokens
-            usage = TokenUsage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=total_tokens,
-                calls=1,
-            )
+        usage = TokenUsage.extract(agent_usage, calls=1)
 
         return AgentResponse(output=output_items, usage=usage)
 
