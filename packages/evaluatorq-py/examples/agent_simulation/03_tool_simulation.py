@@ -34,16 +34,16 @@ from loguru import logger
 load_dotenv()
 
 try:
-    from agent_simulation.tools import MockToolRegistry, ToolSimulator  # noqa: E402
+    from agent_simulation.tools import MockToolRegistry, ToolSimulator
 except ImportError as e:
     raise ImportError(
         'agent-simulation package not found. Install from source:\n'
         '  uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git'
         '#subdirectory=projects/agent-simulation"'
     ) from e
-from evaluatorq.contracts import Message  # noqa: E402
-from evaluatorq.simulation import simulate  # noqa: E402
-from evaluatorq.simulation.types import (  # noqa: E402
+from evaluatorq.contracts import Message
+from evaluatorq.simulation import simulate
+from evaluatorq.simulation.types import (
     CommunicationStyle,
     Criterion,
     Persona,
@@ -52,7 +52,7 @@ from evaluatorq.simulation.types import (  # noqa: E402
 )
 
 
-async def tool_using_agent(messages: list[Message], tool_simulator: ToolSimulator) -> str:
+async def tool_using_agent(messages: list[Message], tool_simulator: ToolSimulator) -> str:  # noqa: RUF029
     """Mock agent that uses tools to answer questions.
 
     In a real scenario this would be your LLM agent; here we fake tool calls

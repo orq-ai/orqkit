@@ -15,7 +15,7 @@ Use this pattern when:
 - You are running simulations as part of a CI/CD pipeline
 - You need to compose simulation scoring with other evaluatorq evaluators
 
-Use simulate() or generate_and_simulate() (see examples 01–02) when you want
+Use simulate() or generate_and_simulate() (see examples 01-02) when you want
 a simpler call without composing alongside other evaluatorq evaluators, or
 when you want to pass upload_results=False to suppress the Experiment upload.
 
@@ -44,9 +44,9 @@ from loguru import logger
 # library init code that reads them (e.g. evaluatorq tracing setup).
 load_dotenv()
 
-from evaluatorq import DataPoint, evaluatorq  # noqa: E402
-from evaluatorq.simulation import wrap_simulation_agent  # noqa: E402
-from evaluatorq.simulation.types import (  # noqa: E402
+from evaluatorq import DataPoint, evaluatorq
+from evaluatorq.simulation import wrap_simulation_agent
+from evaluatorq.simulation.types import (
     CommunicationStyle,
     Criterion,
     EmotionalArc,
@@ -124,7 +124,7 @@ async def main() -> None:
         for persona in personas
         for scenario in scenarios
     ]
-    logger.info(f"Running {len(data)} simulations ({len(personas)} personas × {len(scenarios)} scenarios)")
+    logger.info(f"Running {len(data)} simulations ({len(personas)} personas x {len(scenarios)} scenarios)")
 
     # 3. Create the simulation job.
     #    agent_key= is the orq.ai deployment key — routes through from_orq_deployment() internally.

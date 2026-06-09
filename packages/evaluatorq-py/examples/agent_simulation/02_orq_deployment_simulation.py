@@ -43,10 +43,10 @@ from loguru import logger
 
 load_dotenv()
 
-# generate_and_simulate() synthesises Persona × Scenario pairs from a plain-text
+# generate_and_simulate() synthesises Persona x Scenario pairs from a plain-text
 # description, then runs the full simulation batch in one call.
-from evaluatorq.contracts import AgentResponse, Message  # noqa: E402
-from evaluatorq.simulation import (  # noqa: E402
+from evaluatorq.contracts import AgentResponse, Message
+from evaluatorq.simulation import (
     export_results_to_jsonl,
     generate_and_simulate,
 )
@@ -121,12 +121,12 @@ async def main() -> None:
     else:
         # A2A agent path: wrap client.agents.responses.create as a target_callback.
         # Use this for full agents with memory, tools, and multi-step reasoning.
-        assert args.agent is not None  # guaranteed by mutually exclusive group
+        assert args.agent is not None, "argparse mutually-exclusive group guarantees one of --deployment/--agent"  # noqa: S101
         agent_description = args.description or f"orq.ai A2A agent '{args.agent}'"
         target_kwargs = {"target_callback": make_a2a_callback(args.agent)}
         logger.info(f"Target: A2A agent '{args.agent}' via Responses API")
 
-    logger.info(f"Generating {args.num_personas} personas × {args.num_scenarios} scenarios...")
+    logger.info(f"Generating {args.num_personas} personas x {args.num_scenarios} scenarios...")
     results = await generate_and_simulate(
         evaluation_name="orq-deployment-simulation-example",
         agent_description=agent_description,

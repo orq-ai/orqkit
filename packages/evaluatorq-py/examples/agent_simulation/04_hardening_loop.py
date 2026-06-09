@@ -40,11 +40,11 @@ from loguru import logger
 load_dotenv()
 
 try:
-    from agent_simulation import SimulationRunner  # noqa: E402
-    from agent_simulation.hardening import HardeningLoop  # noqa: E402
-    from agent_simulation.models.datapoint import Datapoint  # noqa: E402
-    from agent_simulation.models.persona import Persona  # noqa: E402
-    from agent_simulation.models.scenario import Criterion, Scenario  # noqa: E402
+    from agent_simulation import SimulationRunner
+    from agent_simulation.hardening import HardeningLoop
+    from agent_simulation.models.datapoint import Datapoint
+    from agent_simulation.models.persona import Persona
+    from agent_simulation.models.scenario import Criterion, Scenario
 except ImportError as e:
     raise ImportError(
         'agent-simulation package not found. Install from source:\n'
@@ -52,8 +52,7 @@ except ImportError as e:
         '#subdirectory=projects/agent-simulation"'
     ) from e
 
-from evaluatorq.contracts import Message  # noqa: E402
-
+from evaluatorq.contracts import Message
 
 # A deliberately weak set of instructions — the loop will improve these
 INITIAL_INSTRUCTIONS = """
@@ -74,7 +73,7 @@ def make_agent(instructions: str) -> Callable[[list[Message]], Awaitable[str]]:
     """
     can_cancel = "cancellation" in instructions.lower() or "cancel" in instructions.lower()
 
-    async def agent(messages: list[Message]) -> str:
+    async def agent(messages: list[Message]) -> str:  # noqa: RUF029
         last = (messages[-1].content or "").lower() if messages else ""
         if "refund" in last:
             return "I'll process that refund. What's your order number?"

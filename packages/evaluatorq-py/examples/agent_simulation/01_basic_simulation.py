@@ -30,9 +30,9 @@ from loguru import logger
 # library init code that reads them (e.g. evaluatorq tracing setup).
 load_dotenv()
 
-from evaluatorq.contracts import Message  # noqa: E402
-from evaluatorq.simulation import simulate  # noqa: E402
-from evaluatorq.simulation.types import (  # noqa: E402
+from evaluatorq.contracts import Message
+from evaluatorq.simulation import simulate
+from evaluatorq.simulation.types import (
     CommunicationStyle,
     Criterion,
     EmotionalArc,
@@ -42,8 +42,12 @@ from evaluatorq.simulation.types import (  # noqa: E402
 )
 
 
-async def support_agent(messages: list[Message]) -> str:
-    """Simple mock customer support agent — replace with your own logic."""
+async def support_agent(messages: list[Message]) -> str:  # noqa: RUF029
+    """Simple mock customer support agent — replace with your own logic.
+
+    Declared `async` because target_callback must be awaitable per the simulation
+    runner protocol; a real agent here would `await` an LLM/HTTP call.
+    """
     last = (messages[-1].content or "").lower() if messages else ""
     if "refund" in last:
         return "I can help with that. Could you share your order number?"
