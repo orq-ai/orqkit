@@ -60,6 +60,6 @@ Thumbs.db
 **/*.tsbuildinfo
 *.env
 packages/evaluatorq-py/outputs/*
-packages/evaluatorq-py/examples/agent_simulation/data/
+packages/evaluatorq-py/data/
 outputs/
 .worktrees/

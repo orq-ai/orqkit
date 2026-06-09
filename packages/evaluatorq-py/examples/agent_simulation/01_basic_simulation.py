@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Example: Basic agent simulation with a mock agent.
 
-Demonstrates the core simulation loop without needing an orq.ai account:
+Demonstrates the core simulation loop with a local mock agent:
 - Define a persona and scenario manually
 - Run a simulation against a local callback function
 - Inspect the conversation and result
@@ -86,7 +86,7 @@ async def main() -> None:
 
     # 3. Run simulation
     # target_callback=: pass any async function; use agent_key= for orq.ai deployments.
-    # model=: the LLM used for the UserSimulator and Judge (defaults to openai/gpt-5.4-mini).
+    # model=: the LLM used for the UserSimulator and Judge (defaults to openai/gpt-4o-mini).
     # evaluator_names=: scorers applied to each result (default: goal_achieved, criteria_met).
     logger.info("Running simulation...")
     results = await simulate(

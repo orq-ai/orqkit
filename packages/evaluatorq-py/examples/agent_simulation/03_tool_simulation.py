@@ -31,10 +31,14 @@ from loguru import logger
 
 load_dotenv()
 
-# MockToolRegistry and ToolSimulator are part of the agent_simulation research
-# package. The production evaluatorq SDK does not ship these yet — they are
-# available when you install agent-simulation from this repository.
-from agent_simulation.tools import MockToolRegistry, ToolSimulator  # noqa: E402
+try:
+    from agent_simulation.tools import MockToolRegistry, ToolSimulator  # noqa: E402
+except ImportError as e:
+    raise ImportError(
+        'agent-simulation package not found. Install from source:\n'
+        '  uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git'
+        '#subdirectory=projects/agent-simulation"'
+    ) from e
 from evaluatorq.simulation import simulate  # noqa: E402
 from evaluatorq.simulation.types import (  # noqa: E402
     CommunicationStyle,

@@ -123,6 +123,7 @@ async def main() -> None:
     else:
         # A2A agent path: wrap client.agents.responses.create as a target_callback.
         # Use this for full agents with memory, tools, and multi-step reasoning.
+        assert args.agent is not None  # guaranteed by mutually exclusive group
         agent_description = args.description or f"orq.ai A2A agent '{args.agent}'"
         target_kwargs = {"target_callback": make_a2a_callback(args.agent)}
         logger.info(f"Target: A2A agent '{args.agent}' via Responses API")
@@ -152,7 +153,7 @@ async def main() -> None:
         logger.info(f"         terminated_by={r.terminated_by} rules_broken={r.rules_broken or []}")
 
     # Export to JSONL for offline analysis or seeding an orq.ai Dataset
-    output_path = Path.cwd() / args.output
+    output_path = Path(__file__).parent.parent.parent / args.output
     output_path.parent.mkdir(parents=True, exist_ok=True)
     export_results_to_jsonl(results, str(output_path))
     logger.info(f"Results written to {output_path}")

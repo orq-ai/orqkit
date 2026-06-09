@@ -39,11 +39,18 @@ from loguru import logger
 
 load_dotenv()
 
-from agent_simulation import SimulationRunner  # noqa: E402
-from agent_simulation.hardening import HardeningLoop  # noqa: E402
-from agent_simulation.models.datapoint import Datapoint  # noqa: E402
-from agent_simulation.models.persona import Persona  # noqa: E402
-from agent_simulation.models.scenario import Criterion, Scenario  # noqa: E402
+try:
+    from agent_simulation import SimulationRunner  # noqa: E402
+    from agent_simulation.hardening import HardeningLoop  # noqa: E402
+    from agent_simulation.models.datapoint import Datapoint  # noqa: E402
+    from agent_simulation.models.persona import Persona  # noqa: E402
+    from agent_simulation.models.scenario import Criterion, Scenario  # noqa: E402
+except ImportError as e:
+    raise ImportError(
+        'agent-simulation package not found. Install from source:\n'
+        '  uv pip install "agent-simulation @ git+https://github.com/orq-ai/research.git'
+        '#subdirectory=projects/agent-simulation"'
+    ) from e
 
 
 # A deliberately weak set of instructions — the loop will improve these
