@@ -52,6 +52,8 @@ except ImportError as e:
         '#subdirectory=projects/agent-simulation"'
     ) from e
 
+from evaluatorq.contracts import Message  # noqa: E402
+
 
 # A deliberately weak set of instructions — the loop will improve these
 INITIAL_INSTRUCTIONS = """
@@ -60,7 +62,7 @@ Be helpful and polite.
 """
 
 
-def make_agent(instructions: str) -> Callable[[list[dict]], Awaitable[str]]:
+def make_agent(instructions: str) -> Callable[[list[Message]], Awaitable[str]]:
     """Return an agent callback whose behaviour reflects the given instructions.
 
     The mock checks whether key phrases have been added to the instructions by
@@ -72,8 +74,8 @@ def make_agent(instructions: str) -> Callable[[list[dict]], Awaitable[str]]:
     """
     can_cancel = "cancellation" in instructions.lower() or "cancel" in instructions.lower()
 
-    async def agent(messages: list[dict]) -> str:
-        last = messages[-1]["content"].lower() if messages else ""
+    async def agent(messages: list[Message]) -> str:
+        last = (messages[-1].content or "").lower() if messages else ""
         if "refund" in last:
             return "I'll process that refund. What's your order number?"
         if "cancel" in last:

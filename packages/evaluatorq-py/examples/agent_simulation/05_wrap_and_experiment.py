@@ -15,8 +15,9 @@ Use this pattern when:
 - You are running simulations as part of a CI/CD pipeline
 - You need to compose simulation scoring with other evaluatorq evaluators
 
-Use simulate() (see basic_simulation or orq_deployment_simulation) when you
-just want results back in memory for a one-off exploratory run.
+Use simulate() or generate_and_simulate() (see examples 01–02) when you want
+a simpler call without composing alongside other evaluatorq evaluators, or
+when you want to pass upload_results=False to suppress the Experiment upload.
 
 Usage:
     cd packages/evaluatorq-py
