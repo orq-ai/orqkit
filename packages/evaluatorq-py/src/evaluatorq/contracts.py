@@ -361,6 +361,24 @@ class TokenUsage(BaseModel):
             return other.__add__(self)
         return NotImplemented
 
+    def __sub__(self, other: TokenUsage | None) -> TokenUsage:
+        """Component-wise difference, clamped at 0 — used for per-turn deltas."""
+        if other is None:
+            return self.model_copy()
+        if self.cost_usd is None and other.cost_usd is None:
+            cost = None
+        else:
+            cost = max((self.cost_usd or 0.0) - (other.cost_usd or 0.0), 0.0)
+        return TokenUsage(
+            input_tokens=max(self.input_tokens - other.input_tokens, 0),
+            output_tokens=max(self.output_tokens - other.output_tokens, 0),
+            total_tokens=max(self.total_tokens - other.total_tokens, 0),
+            cached_tokens=max(self.cached_tokens - other.cached_tokens, 0),
+            reasoning_tokens=max(self.reasoning_tokens - other.reasoning_tokens, 0),
+            cost_usd=cost,
+            calls=max(self.calls - other.calls, 0),
+        )
+
 
 # ---------------------------------------------------------------------------
 # AgentResponseError
