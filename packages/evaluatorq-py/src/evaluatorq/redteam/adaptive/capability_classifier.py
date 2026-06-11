@@ -217,12 +217,15 @@ async def _infer_resource_capabilities(
     # Cap token contribution: production system prompts can be 10k+ tokens, and this
     # call runs per classified target. 2000 chars is ample signal for is_multi_agent.
     instructions = instructions[:2000]
+    # Same cost / prompt-injection bound as instructions; 500 chars is conclusive
+    # for is_multi_agent ("orchestrator that routes tasks between worker agents").
+    description = (agent_context.description or '(none)')[:500]
     prompt = safe_substitute(
         RESOURCE_CAPABILITY_PROMPT,
         {
             '{has_memory_stores}': str(bool(agent_context.memory_stores)),
             '{has_knowledge_bases}': str(bool(agent_context.knowledge_bases)),
-            '{description}': agent_context.description or '(none)',
+            '{description}': description,
             '{instructions}': instructions,
             '{tool_list}': tool_list,
         },
