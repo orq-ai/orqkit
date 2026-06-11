@@ -11,7 +11,7 @@ import logging
 import re
 import time
 from inspect import signature
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from loguru import logger
 from openai import AsyncOpenAI
@@ -283,7 +283,9 @@ def _looks_like_refusal(text: str) -> bool:
     return any(pat.match(head) for pat in _REFUSAL_PATTERNS)
 
 
-def _classify_attacker_output(attack_prompt: str, finish_reason: str | None) -> str | None:
+def _classify_attacker_output(
+    attack_prompt: str, finish_reason: str | None
+) -> Literal['content_filter', 'self_censored'] | None:
     """Classify why an attacker turn is unusable, or ``None`` if it is a real attack.
 
     Returns ``'content_filter'`` when the provider blocked generation, or

@@ -257,7 +257,13 @@ async def _infer_resource_capabilities(
     except (APIConnectionError, APIStatusError):
         raise
     except Exception as e:
-        logger.error(f'Capability inference failed, falling back to explicit resource check: {e}')
+        # is_multi_agent defaults False here, so multi-agent-only attacks (ASI07/08) are
+        # suppressed for this target. Say so explicitly: a coverage gap caused by an
+        # inference error must be distinguishable from a confident single-agent result.
+        logger.error(
+            f'Capability inference failed, falling back to explicit resource check; '
+            f'is_multi_agent assumed False (ASI07/08 will be skipped for this target): {e}'
+        )
         return ResourceCapabilityInference(
             memory_read=bool(agent_context.memory_stores),
             memory_write=bool(agent_context.memory_stores),
