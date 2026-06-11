@@ -397,6 +397,7 @@ class TestJury:
 
         assert result.passed is None
         assert result.jury is not None
+        assert result.jury.inconclusive is True
         assert result.jury.judges_succeeded == 0
         assert result.jury.stats is None
         assert result.jury.raw_agreement is None
@@ -697,25 +698,29 @@ class TestConfigLevelMinSuccessfulValidation:
     so an unsatisfiable floor is rejected at config time (not at run time)."""
 
     def test_dedup_aware_validator_rejects_at_config_time(self):
-        from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig
+        from evaluatorq.redteam.contracts import EvaluatorConfig, LLMConfig
 
         # Primary model also listed in judges -> effective panel size 2, floor 3 impossible.
         with pytest.raises(ValueError, match='effective panel size'):
             LLMConfig(
-                evaluator=LLMCallConfig(model='gpt-4o'),
-                judges=['gpt-4o', 'claude-3'],
-                min_successful_judges=3,
+                evaluator=EvaluatorConfig(
+                    model='gpt-4o',
+                    judges=['gpt-4o', 'claude-3'],
+                    min_successful_judges=3,
+                ),
             )
 
     def test_valid_panel_passes(self):
-        from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig
+        from evaluatorq.redteam.contracts import EvaluatorConfig, LLMConfig
 
         cfg = LLMConfig(
-            evaluator=LLMCallConfig(model='gpt-4o'),
-            judges=['claude-3', 'gemini-1.5'],
-            min_successful_judges=3,
+            evaluator=EvaluatorConfig(
+                model='gpt-4o',
+                judges=['claude-3', 'gemini-1.5'],
+                min_successful_judges=3,
+            ),
         )
-        assert cfg.min_successful_judges == 3
+        assert cfg.evaluator.min_successful_judges == 3
 
 
 class TestJuryRawOutputCarrier:
