@@ -624,6 +624,7 @@ class TestRunAttack:
         assert result.error_code == "adversarial.self_censored"
         assert result.error_type == "self_censored"
         assert result.error_stage == "adversarial_generation"
+        assert result.error_details is not None
         assert result.error_details["attempts"] == 3
         # The load-bearing safety guarantee: a benign refusal must not reach the target.
         target.respond.assert_not_called()
