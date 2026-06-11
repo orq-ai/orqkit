@@ -45,7 +45,7 @@ load_dotenv()
 
 # generate_and_simulate() synthesises Persona x Scenario pairs from a plain-text
 # description, then runs the full simulation batch in one call.
-from evaluatorq.contracts import AgentResponse, Message
+from evaluatorq.contracts import Message
 from evaluatorq.simulation import (
     export_results_to_jsonl,
     generate_and_simulate,
@@ -59,7 +59,8 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
     full A2A agents in orq.ai - agents with memory, tool use, and multi-step
     reasoning, as opposed to stateless deployments (prompt + model config).
 
-    Each call passes the full conversation history so the agent has context.
+    Each call sends only the latest user message; the A2A agent's server-side
+    memory provides conversation context across turns.
     """
     from orq_ai_sdk import Orq
     from orq_ai_sdk.models import A2AMessage, TextPart
@@ -77,15 +78,21 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
             agent_key=agent_key,
             message=message,
         )
-        # Parse the Responses API wire format via AgentResponse.from_openresponses,
-        # which handles type="message" items with content[].type="output_text".
-        agent_resp = AgentResponse.from_openresponses(response)
-        if not agent_resp.output:
+        # A2A response: output is List[AgentResponseMessage]; agent turns have
+        # role == "agent" and TextPart entries in .parts (kind="text").
+        texts = [
+            part.text
+            for msg in response.output
+            if msg.role == "agent"
+            for part in msg.parts
+            if isinstance(part, TextPart)
+        ]
+        if not texts:
             raise RuntimeError(
-                f"A2A agent '{agent_key}' returned no output - "
+                f"A2A agent '{agent_key}' returned no text output - "
                 "check agent_key and API connectivity"
             )
-        return agent_resp.text
+        return " ".join(texts)
 
     return callback
 
