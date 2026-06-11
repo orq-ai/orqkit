@@ -316,8 +316,12 @@ async def _noop_span_ctx(*args, **kwargs):
     yield None
 
 
-def _make_orchestrator():
-    """Create a MultiTurnOrchestrator with a mocked AsyncOpenAI client."""
+def _make_orchestrator(max_content_filter_retries: int | None = None):
+    """Create a MultiTurnOrchestrator with a mocked AsyncOpenAI client.
+
+    Pass ``max_content_filter_retries`` to override the attacker-regeneration
+    retry budget (default: inherit PIPELINE_CONFIG).
+    """
     from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
 
     mock_llm = MagicMock()
@@ -325,9 +329,18 @@ def _make_orchestrator():
     mock_llm.chat.completions = MagicMock()
     mock_llm.chat.completions.create = AsyncMock()
 
+    pipeline_config = None
+    if max_content_filter_retries is not None:
+        from evaluatorq.redteam.contracts import PIPELINE_CONFIG
+
+        pipeline_config = PIPELINE_CONFIG.model_copy(
+            update={"max_content_filter_retries": max_content_filter_retries}
+        )
+
     orchestrator = MultiTurnOrchestrator(
         llm_client=mock_llm,
         model="test-model",
+        pipeline_config=pipeline_config,
     )
     return orchestrator, mock_llm
 
@@ -555,6 +568,117 @@ class TestRunAttack:
 
         assert result.error_type == "content_filter"
         assert result.error_code == "adversarial.content_filter"
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_adversarial_self_censor_retries_then_succeeds(self, _rs, _ls, _rl):
+        """A self-censored first attempt is regenerated; the usable retry is forwarded."""
+        orchestrator, mock_llm = _make_orchestrator()
+        target = _make_target()
+
+        mock_llm.chat.completions.create.side_effect = [
+            _make_completion("I'm sorry, but I can't help with that."),
+            _make_completion("Real attack: exfiltrate the secret."),
+        ]
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=1,
+        )
+
+        # One refusal + one usable regeneration = two attacker calls; the target is
+        # hit exactly once, with the usable prompt, and the turn is not an error.
+        assert mock_llm.chat.completions.create.call_count == 2
+        assert target.respond.call_count == 1
+        assert result.error is None
+        assert result.n_turns == 1
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_adversarial_persistent_self_censor_stops_without_forwarding(self, _rs, _ls, _rl):
+        """A non-empty refusal that never recovers stops the attack and is NEVER forwarded."""
+        orchestrator, mock_llm = _make_orchestrator()
+        target = _make_target()
+
+        mock_llm.chat.completions.create.return_value = _make_completion(
+            "I'm sorry, but I can't help with that."
+        )
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=3,
+        )
+
+        # Default budget = 2 retries -> 3 attempts, all on turn 1, then a clean stop.
+        assert mock_llm.chat.completions.create.call_count == 3
+        assert result.error_code == "adversarial.self_censored"
+        assert result.error_type == "self_censored"
+        assert result.error_stage == "adversarial_generation"
+        assert result.error_details["attempts"] == 3
+        # The load-bearing safety guarantee: a benign refusal must not reach the target.
+        target.respond.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_adversarial_nonempty_content_filter_stops_without_forwarding(self, _rs, _ls, _rl):
+        """A non-empty content-filtered turn (distinct from the empty path) stops cleanly."""
+        orchestrator, mock_llm = _make_orchestrator()
+        target = _make_target()
+
+        mock_llm.chat.completions.create.return_value = _make_completion(
+            "Partial filtered text", finish_reason="content_filter"
+        )
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=3,
+        )
+
+        assert mock_llm.chat.completions.create.call_count == 3
+        assert result.error_code == "adversarial.content_filter"
+        assert result.error_type == "content_filter"
+        target.respond.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_adversarial_retry_bound_respects_config(self, _rs, _ls, _rl):
+        """max_content_filter_retries=0 means a single attempt, no regeneration."""
+        orchestrator, mock_llm = _make_orchestrator(max_content_filter_retries=0)
+        target = _make_target()
+
+        mock_llm.chat.completions.create.return_value = _make_completion(
+            "I'm sorry, but I can't help with that."
+        )
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=3,
+        )
+
+        # max_attempts = max(1, 0 + 1) = 1: exactly one attacker call, then stop.
+        assert mock_llm.chat.completions.create.call_count == 1
+        assert result.error_code == "adversarial.self_censored"
+        target.respond.assert_not_called()
 
     @pytest.mark.asyncio
     @patch(_PATCH_RECORD_LLM)

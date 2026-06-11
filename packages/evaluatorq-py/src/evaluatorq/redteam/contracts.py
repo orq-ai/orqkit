@@ -520,7 +520,7 @@ class LLMConfig(BaseModel):
     # giving up and stopping the attack. Distinct from retry_count/retry_on_codes,
     # which only cover HTTP errors via the ORQ router. 0 disables retries (the
     # unusable turn stops the attack immediately rather than being forwarded).
-    max_content_filter_retries: int = 2
+    max_content_filter_retries: int = Field(default=2, ge=0, le=10)
 
     # --- Cleanup timeout ------------------------------------------------------
     cleanup_timeout_ms: int = 60_000
