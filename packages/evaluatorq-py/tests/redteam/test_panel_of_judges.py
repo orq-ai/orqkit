@@ -23,14 +23,22 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from evaluatorq.redteam.adaptive.evaluator import (
-    OWASPEvaluator,
+from evaluatorq.common.jury import (
     _agreement_rate,
     _jury_stats,
-    _majority_vote,
     _panel_composition_messages,
+    _plurality_vote,
     provider_family,
 )
+from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator
+
+
+def _majority_vote(votes: list[bool | None]) -> tuple[bool | float | str | None, bool]:
+    """Test shim: filters None values then delegates to _plurality_vote (mirrors old evaluator helper)."""
+    decisive = [v for v in votes if v is not None]
+    if not decisive:
+        return None, False
+    return _plurality_vote(decisive)
 from evaluatorq.redteam.contracts import AttackEvaluationResult, TextOutputItem, Vulnerability
 
 # ---------------------------------------------------------------------------
@@ -223,6 +231,37 @@ class TestJury:
         assert result.jury is not None
         assert len(result.jury.votes) == 1
         assert result.jury.votes[0].repetitions == [True, True, False]
+
+    @pytest.mark.asyncio
+    async def test_per_judge_repetition_tie_abstains(self):
+        """A single judge with repetitions=2 returning [True, False] (even split)
+        and no tie_break → ABSTAIN (success=True, abstained=True, value=None).
+        Covers jury.py ~177-189 (the no-tie-break path)."""
+        from evaluatorq.common.jury import Prediction, VerdictKind, run_jury
+
+        call_count = 0
+
+        async def judge(model: str) -> Prediction:
+            nonlocal call_count
+            call_count += 1
+            return Prediction(value=call_count % 2 == 1, explanation=f'rep {call_count}')
+
+        # run_jury with no tie_break: per-judge tie → abstain
+        deliberation = await run_jury(
+            judge_fn=judge,
+            panel=['judge-a'],
+            repetitions=2,
+            verdict_kind=VerdictKind.CATEGORICAL,
+            tie_break=None,
+        )
+
+        assert deliberation.verdict is None
+        assert deliberation.jury.inconclusive is True
+        assert len(deliberation.jury.votes) == 1
+        vote = deliberation.jury.votes[0]
+        assert vote.success is True
+        assert vote.abstained is True
+        assert vote.value is None
 
     @pytest.mark.asyncio
     async def test_even_jury_tie_fails_closed(self):
@@ -508,7 +547,7 @@ class TestJurySummary:
             raw_agreement=0.5,
         )
         out = _append_jury_summary('Split.', jury)
-        assert 'TIE (fail-closed)' in out
+        assert 'TIE (tie-break applied)' in out
 
     def test_no_summary_for_single_judge(self):
         from evaluatorq.redteam.adaptive.pipeline import _append_jury_summary

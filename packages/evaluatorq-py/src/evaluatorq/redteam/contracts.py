@@ -11,7 +11,7 @@ Semantic convention:
 
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, TypedDict
 
 from pydantic import (
     BaseModel,
@@ -25,6 +25,10 @@ from evaluatorq.contracts import StrEnum
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+
+    _Client: TypeAlias = AsyncOpenAI | None
+else:
+    _Client = Any
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -491,8 +495,89 @@ from evaluatorq.contracts import (  # noqa: F401
     DEFAULT_PIPELINE_MODEL,
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
+    JURY_RAW_OUTPUT_KEY,
+    JuryResult,
+    JuryStats,
+    JuryVote,
     LLMCallConfig,
 )
+
+
+class EvaluatorConfig(BaseModel):
+    """LLM evaluator-role configuration, including the optional judge panel.
+
+    ``model="x"`` is accepted as shorthand for ``judges=["x"]``. Decode/client
+    fields are shared across every judge in the panel.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra='forbid')
+
+    model: str | None = Field(
+        default=None,
+        exclude=True,
+        description='Primary judge model shorthand; normalized to judges[0].',
+    )
+    judges: list[str] = Field(
+        default_factory=lambda: [DEFAULT_PIPELINE_MODEL],
+        min_length=1,
+        description="Judge model IDs. judges[0] is the primary evaluator model.",
+    )
+    api: Literal['chat_completions', 'responses'] = 'chat_completions'
+    temperature: float = Field(default=1.0, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
+    timeout_ms: int = Field(default=90_000, gt=0)
+    extra_kwargs: dict[str, Any] = Field(default_factory=dict)
+    client: _Client = None
+    repetitions: int = Field(default=1, ge=1)
+    replacement_judges: list[str] = Field(default_factory=list)
+    min_successful_judges: int = Field(default=1, ge=1)
+    strict_panel: bool = False
+
+    @model_validator(mode='before')
+    @classmethod
+    def _accept_model_sugar(cls, data: Any) -> Any:
+        if isinstance(data, LLMCallConfig):
+            data = data.model_dump()
+        if isinstance(data, dict):
+            payload = dict(data)
+            model = payload.get('model')
+            if model is not None:
+                judges = list(payload.get('judges') or [])
+                payload['judges'] = [model, *[j for j in judges if j != model]]
+            return payload
+        return data
+
+    @property
+    def primary_model(self) -> str:
+        return self.judges[0]
+
+    def as_call_config(self) -> LLMCallConfig:
+        return LLMCallConfig(
+            model=self.model or self.judges[0],
+            api=self.api,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            timeout_ms=self.timeout_ms,
+            extra_kwargs=self.extra_kwargs,
+            client=self.client,
+        )
+
+    @model_validator(mode='after')
+    def _check_min_successful_judges(self) -> 'EvaluatorConfig':
+        panel: list[str] = []
+        for j in self.judges:
+            if j and j not in panel:
+                panel.append(j)
+        if not panel:
+            raise ValueError('evaluator.judges must contain at least one model')
+        if self.min_successful_judges > len(panel):
+            raise ValueError(
+                f'min_successful_judges ({self.min_successful_judges}) exceeds the effective '
+                f'panel size ({len(panel)}) after de-duplication; panel={panel}'
+            )
+        object.__setattr__(self, 'judges', panel)
+        object.__setattr__(self, 'model', panel[0])
+        return self
 
 
 class LLMConfig(BaseModel):
@@ -505,84 +590,15 @@ class LLMConfig(BaseModel):
 
         config = LLMConfig(
             attacker=LLMCallConfig(model="anthropic/claude-3-5-sonnet", temperature=0.9),
-            evaluator=LLMCallConfig(model="openai/gpt-4o-mini", temperature=0.0),
+            evaluator=EvaluatorConfig(model="openai/gpt-4o-mini", temperature=0.0),
         )
     """
 
+    model_config = ConfigDict(extra='forbid')
+
     # --- Role-based call configs ----------------------------------------------
     attacker: LLMCallConfig = Field(default_factory=LLMCallConfig)
-    evaluator: LLMCallConfig = Field(default_factory=LLMCallConfig)
-
-    # --- Panel of judges / jury (RES-739) -------------------------------------
-    # Mirrors the orq platform jury contract. Best practice (orq.ai/blog/
-    # llm-juries-in-practice): an odd panel of 3 small judges across different
-    # providers beats one large judge; ties resolve fail-closed.
-    judges: list[str] = Field(
-        default_factory=list,
-        description=(
-            'Additional judge model IDs forming a jury alongside ``evaluator.model``. '
-            'Empty (default) means a single judge. Each judge votes on every sample; '
-            'the panel majority is the final verdict. Prefer an odd total across '
-            'different providers.'
-        ),
-    )
-    judge_repetitions: int = Field(
-        default=1,
-        ge=1,
-        description=(
-            'Number of prediction passes per judge. Each judge runs N times and '
-            "its majority vote becomes that judge's verdict. Default 1 keeps "
-            'existing single-pass behaviour and cost unchanged.'
-        ),
-    )
-    replacement_judges: list[str] = Field(
-        default_factory=list,
-        description=(
-            'Stand-in judge models invoked when a configured judge fails entirely '
-            '(all repetitions error), keeping panel strength. Empty by default.'
-        ),
-    )
-    min_successful_judges: int = Field(
-        default=1,
-        ge=1,
-        description=(
-            'Minimum judges that must return a usable verdict for a decisive result; '
-            'below this the verdict is inconclusive (None). Default 1 preserves '
-            'single-judge behaviour.'
-        ),
-    )
-    strict_panel: bool = Field(
-        default=False,
-        description=(
-            'When True, panel-composition problems (single-provider panel, or a judge '
-            'sharing the provider family of the target model) raise instead of warning. '
-            'Default False keeps existing configs running with an advisory warning.'
-        ),
-    )
-
-    @model_validator(mode='after')
-    def _check_min_successful_judges(self) -> 'LLMConfig':
-        """``min_successful_judges`` cannot exceed the effective panel size.
-
-        Replacement judges substitute 1:1 for failed configured judges, so they
-        never raise the ceiling on simultaneously successful judges — the panel
-        (primary model + ``judges``) is the true upper bound. The panel is
-        de-duplicated exactly as ``OWASPEvaluator.__init__`` does (primary first,
-        dropping the primary if it reappears in ``judges`` and any repeated
-        judges), so this catches an unsatisfiable floor at config time rather than
-        letting it surface as a runtime error after de-duplication shrinks the
-        panel. Keep the two in sync.
-        """
-        panel: list[str] = [self.evaluator.model]
-        for j in self.judges:
-            if j and j not in panel:
-                panel.append(j)
-        if self.min_successful_judges > len(panel):
-            raise ValueError(
-                f'min_successful_judges ({self.min_successful_judges}) exceeds the effective '
-                f'panel size ({len(panel)}) after de-duplication; panel={panel}'
-            )
-        return self
+    evaluator: EvaluatorConfig = Field(default_factory=EvaluatorConfig)
 
     # --- Retry configuration --------------------------------------------------
     retry_count: int = 3
@@ -666,7 +682,7 @@ OWASP_CATEGORY_NAMES: dict[str, str] = {
 #
 #   from evaluatorq.redteam import OWASP_LLM_TOP_10, OWASP_ASI_TOP_10
 #   red_team(..., categories=OWASP_LLM_TOP_10)
-# Contains LLM01–LLM09. LLM10 (Unbounded Consumption) is excluded because it is an
+# Contains LLM01-LLM09. LLM10 (Unbounded Consumption) is excluded because it is an
 # infrastructure-level risk not testable via prompt-based red teaming.
 OWASP_LLM_TOP_10: list[str] = list(_LLM_CATEGORY_NAMES)
 OWASP_ASI_TOP_10: list[str] = list(_ASI_CATEGORY_NAMES)
@@ -844,10 +860,10 @@ def turns_to_messages(turns: list[Turn], *, skip_errors: bool = False) -> list[M
         text_buffer: list[str] = []
         target = turn.target
 
-        def _flush_text() -> None:
-            if text_buffer:
-                out.append(Message(role='assistant', content=''.join(text_buffer)))
-                text_buffer.clear()
+        def _flush_text(buffer: list[str] = text_buffer) -> None:
+            if buffer:
+                out.append(Message(role='assistant', content=''.join(buffer)))
+                buffer.clear()
 
         for item in target.output:
             if isinstance(item, TextOutputItem):
@@ -1029,145 +1045,6 @@ class AttackOutput(OrchestratorResult):
 
     category: str = ''
     vulnerability: str = ''
-
-
-# Key under which the dynamic scorer stashes the serialized JuryResult inside the
-# framework-agnostic EvaluationResult.raw_output, and under which the red-team
-# converters lift it back onto the typed model. Shared so the writer (pipeline.py)
-# and reader (reports/converters.py) cannot drift apart silently (RES-739).
-JURY_RAW_OUTPUT_KEY = 'jury'
-
-
-class JuryVote(BaseModel):
-    """A single judge's vote within a jury (RES-739).
-
-    Mirrors the orq platform jury vote contract so red-team jury results share a
-    shape with LLM-evaluator jury results. ``value`` is the judge's verdict
-    (majority across ``judge_repetitions`` passes); ``repetitions`` keeps the raw
-    per-pass votes for inspection.
-
-    Semantic convention:
-        value=True  → RESISTANT (attack failed)
-        value=False → VULNERABLE (attack succeeded)
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    model: str = Field(description='Judge model ID')
-    replacement: bool = Field(default=False, description='True if this judge stood in for a failed configured judge')
-    success: bool = Field(description='True if the judge produced a usable verdict')
-    # The red-team evaluator only ever writes bool/None, but the type mirrors the
-    # orq platform jury contract (value is number|boolean|string) so numeric/label
-    # judges can reuse this model unchanged.
-    value: bool | float | str | None = Field(
-        default=None, description='Judge verdict (True=RESISTANT, False=VULNERABLE)'
-    )
-    explanation: str = Field(default='', description='Explanation from a representative majority pass')
-    error: str | None = Field(default=None, description='Failure reason when success is False')
-    repetitions: list[bool | None] = Field(
-        default_factory=list,
-        description='Raw per-repetition votes (True/False/None) in call order',
-    )
-
-    @model_validator(mode='after')
-    def _check_vote_consistency(self) -> 'JuryVote':
-        # A usable verdict must carry a value; a failed vote must not. This rules
-        # out the representable-but-illegal states (success=True/value=None and
-        # success=False/value=True) so consumers can trust the success flag.
-        if self.success and self.value is None:
-            raise ValueError('successful JuryVote must have a non-null value')
-        if not self.success and self.value is not None:
-            raise ValueError('failed JuryVote must have a null value')
-        return self
-
-
-class JuryStats(BaseModel):
-    """Distribution of judge verdicts, treating RESISTANT=1.0 and VULNERABLE=0.0.
-
-    ``mean`` is the fraction of judges voting RESISTANT; ``std`` is the population
-    standard deviation, which serves as the inter-judge disagreement signal
-    (per LLM-jury best practice — high std flags ambiguous cases worth review).
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    mean: float = Field(ge=0.0, le=1.0, description='Mean of judge verdicts (RESISTANT=1, VULNERABLE=0)')
-    std: float = Field(ge=0.0, description='Population standard deviation of judge verdicts')
-
-
-class JuryResult(BaseModel):
-    """Aggregated panel-of-judges result (RES-739).
-
-    Mirrors the orq platform jury contract. Ties are resolved fail-closed
-    (treated as VULNERABLE) and flagged via ``tie`` rather than hidden in a null
-    verdict, so split panels surface as edge cases for review.
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    judges_configured: int = Field(ge=0, description='Number of configured (non-replacement) judges')
-    judges_succeeded: int = Field(
-        ge=0, description='Number of judges (configured or replacement) that produced a usable verdict'
-    )
-    judges_failed: int = Field(
-        ge=0,
-        description=(
-            'Number of *configured* judges that failed entirely (and triggered a replacement attempt). '
-            'Scoped to the configured panel, so judges_failed <= judges_configured. Replacement-vote '
-            'outcomes are not counted here — read them from `votes` (filter on replacement=True).'
-        ),
-    )
-    replacements_used: int = Field(default=0, ge=0, description='Number of replacement judges invoked')
-    tie: bool = Field(
-        default=False, description='True when the panel split evenly (resolved fail-closed to VULNERABLE)'
-    )
-    inconclusive: bool = Field(
-        default=False,
-        description=(
-            'True when too few judges produced a usable verdict (below min_successful_judges), so the panel '
-            'issued no decisive verdict. When set, stats and raw_agreement are None — any agreement over the '
-            'sub-quorum would be meaningless. Distinct from tie (an even split that DID reach a verdict).'
-        ),
-    )
-    votes: list[JuryVote] = Field(default_factory=list, description='Per-judge votes (configured + replacements)')
-    stats: JuryStats | None = Field(
-        default=None, description='Verdict distribution over successful judges; None when inconclusive'
-    )
-    raw_agreement: float | None = Field(
-        default=None,
-        ge=0.5,
-        le=1.0,
-        description=(
-            'Raw fraction of successful judges in the largest verdict bloc (1.0=unanimous, 0.5=even split). '
-            'NOT chance-corrected — with few binary judges a high value can arise by chance, so do not read '
-            'it as reliability; for that use ReportSummary.jury_reliability (Krippendorff alpha). None when '
-            'inconclusive (a sub-quorum bloc fraction would be meaningless).'
-        ),
-    )
-
-    @model_validator(mode='after')
-    def _check_jury_consistency(self) -> 'JuryResult':
-        successes = sum(1 for v in self.votes if v.success)
-        if self.judges_succeeded != successes:
-            raise ValueError(
-                f'judges_succeeded ({self.judges_succeeded}) does not match successful votes ({successes})'
-            )
-        if self.judges_failed > self.judges_configured:
-            raise ValueError(
-                f'judges_failed ({self.judges_failed}) exceeds judges_configured ({self.judges_configured})'
-            )
-        replacement_votes = sum(1 for v in self.votes if v.replacement)
-        if self.replacements_used != replacement_votes:
-            raise ValueError(
-                f'replacements_used ({self.replacements_used}) does not match replacement votes ({replacement_votes})'
-            )
-        # len(votes) == configured panel + replacements fanned out
-        if len(self.votes) != self.judges_configured + self.replacements_used:
-            raise ValueError(
-                f'vote count ({len(self.votes)}) != judges_configured + replacements_used '
-                f'({self.judges_configured} + {self.replacements_used})'
-            )
-        return self
 
 
 class AttackEvaluationResult(BaseModel):
@@ -1467,6 +1344,12 @@ class FrameworkSummary(DimensionSummary):
     """Per-framework summary statistics (useful for mixed reports)."""
 
 
+class ReliabilityMethod(StrEnum):
+    """Closed set of supported inter-judge reliability coefficient methods."""
+
+    KRIPPENDORFF_ALPHA_NOMINAL = 'krippendorff_alpha_nominal'
+
+
 class JuryReliability(BaseModel):
     """Run-level inter-judge reliability for panel-of-judges runs (RES-739).
 
@@ -1489,7 +1372,10 @@ class JuryReliability(BaseModel):
         description='Chance-corrected inter-judge agreement (nominal Krippendorff alpha); None if undefined',
     )
     samples: int = Field(default=0, ge=0, description='Multi-judge samples (>=2 verdicts) that contributed')
-    method: str = Field(default='krippendorff_alpha_nominal', description='Reliability coefficient used')
+    method: ReliabilityMethod = Field(
+        default=ReliabilityMethod.KRIPPENDORFF_ALPHA_NOMINAL,
+        description='Reliability coefficient used',
+    )
 
 
 class ReportSummary(BaseModel):
@@ -1746,7 +1632,7 @@ class DatasetInferenceRow(BaseModel):
     error_type: str | None = None
 
 
-class EvaluatorConfig(TypedDict):
+class EvaluatorqEvaluatorConfig(TypedDict):
     """Minimal evaluatorq evaluator contract."""
 
     name: str
