@@ -574,14 +574,14 @@ class TestHuggingFacePreflight:
     def test_is_huggingface_source(self):
         from pathlib import Path
 
-        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _is_huggingface_source
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import is_huggingface_source
 
-        assert _is_huggingface_source(None) is True  # default HF dataset
-        assert _is_huggingface_source('hf:org/repo') is True
-        assert _is_huggingface_source('hf:org/repo/file.json') is True
-        assert _is_huggingface_source('/tmp/local.json') is False
-        assert _is_huggingface_source(Path('/tmp/local.json')) is False
-        assert _is_huggingface_source('orq:dataset-id') is False
+        assert is_huggingface_source(None) is True  # default HF dataset
+        assert is_huggingface_source('hf:org/repo') is True
+        assert is_huggingface_source('hf:org/repo/file.json') is True
+        assert is_huggingface_source('/tmp/local.json') is False
+        assert is_huggingface_source(Path('/tmp/local.json')) is False
+        assert is_huggingface_source('orq:dataset-id') is False
 
     def test_ensure_huggingface_available_raises_when_missing(self, monkeypatch):
         import sys

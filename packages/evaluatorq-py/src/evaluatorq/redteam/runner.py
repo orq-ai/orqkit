@@ -482,11 +482,11 @@ async def red_team(
     # dependency would otherwise surface after minutes of (now wasted) work.
     if resolved_mode in (Pipeline.STATIC, Pipeline.HYBRID):
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
-            _is_huggingface_source,
             ensure_huggingface_available,
+            is_huggingface_source,
         )
 
-        if _is_huggingface_source(dataset):
+        if is_huggingface_source(dataset):
             ensure_huggingface_available()
 
     resolved_vulns: list[Vulnerability] | None

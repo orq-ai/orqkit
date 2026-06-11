@@ -331,7 +331,7 @@ _HF_MISSING_MSG = (
 )
 
 
-def _is_huggingface_source(dataset: str | Path | None) -> bool:
+def is_huggingface_source(dataset: str | Path | None) -> bool:
     """Return True when ``dataset`` resolves to a HuggingFace fetch.
 
     ``None`` (the default ``orq/redteam-vulnerabilities`` dataset) and any

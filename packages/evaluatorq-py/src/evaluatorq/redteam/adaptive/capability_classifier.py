@@ -214,6 +214,9 @@ async def _infer_resource_capabilities(
     cfg = cfg or PIPELINE_CONFIG
     tool_list = '\n'.join(f'- {t.name}: {t.description or "No description"}' for t in agent_context.tools) or '- none'
     instructions = (agent_context.instructions or agent_context.system_prompt or '(none)').strip() or '(none)'
+    # Cap token contribution: production system prompts can be 10k+ tokens, and this
+    # call runs per classified target. 2000 chars is ample signal for is_multi_agent.
+    instructions = instructions[:2000]
     prompt = safe_substitute(
         RESOURCE_CAPABILITY_PROMPT,
         {
