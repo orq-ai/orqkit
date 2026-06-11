@@ -21,6 +21,7 @@ const DEFAULT_BASE_URL = "https://api.orq.ai/v2/proxy";
 export interface OrqAiProviderSettings {
   apiKey: string;
   baseURL?: string;
+  fetch?: FetchFunction;
   headers?: Record<string, string>;
 }
 
@@ -58,6 +59,7 @@ export function createOrqAiProvider(
     provider: `orq.ai.${modelType}`,
     url: ({ path }) => `${baseURL}${path}`,
     headers: getHeaders,
+    fetch: options.fetch,
   });
 
   const createChatModel = (modelId: string) => {
