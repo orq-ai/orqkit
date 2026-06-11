@@ -20,6 +20,7 @@ from loguru import logger
 from evaluatorq import DataPoint, EvaluationResult, job
 from evaluatorq.common.async_utils import await_maybe, warn_if_sync_hooks
 from evaluatorq.common.messages import coerce_content_text
+from evaluatorq.common.tracing import set_span_attrs
 from evaluatorq.contracts import AgentTarget, Message
 from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities, classify_agent_capabilities
 from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay, _get_active_progress
@@ -61,7 +62,6 @@ from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
 from evaluatorq.redteam.runtime.jobs import _build_messages, _sanitize_job_name, create_model_job
-from evaluatorq.common.tracing import set_span_attrs
 from evaluatorq.redteam.tracing import with_redteam_span
 from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_vulnerabilities
 from evaluatorq.send_results import send_results_to_orq
@@ -464,7 +464,7 @@ async def red_team(
     resolved_mode = Pipeline(mode)
 
     attack_model = config.attacker.model
-    evaluator_model = config.evaluator.model
+    evaluator_model = config.evaluator.model or config.evaluator.judges[0]
 
     # Early credential validation — fail fast with a clear message.
     # Also check per-role clients: if either role has a pre-configured client,
@@ -549,12 +549,12 @@ async def red_team(
         try:
             rec_client = llm_client or config.evaluator.client
             if rec_client is None:
-                rec_client = create_async_llm_client(role_config=config.evaluator)
+                rec_client = create_async_llm_client(role_config=config.evaluator.as_call_config())
 
             report.focus_area_recommendations = await generate_focus_area_recommendations(
                 report=report,
                 llm_client=rec_client,
-                model=config.evaluator.model,
+                model=evaluator_model,
                 cfg=config,
             )
         except (TypeError, AttributeError, ImportError, NameError, KeyError):
@@ -722,9 +722,9 @@ def _create_static_job_for_agent_target(target_factory: Callable[[], Any], label
             raw_response = await target.respond([Message(role='user', content=prompt)])
             result = _coerce_to_agent_response(raw_response)
 
-            _active_progress = _get_active_progress()
-            if _active_progress is not None:
-                await _active_progress.finish_attack(None)
+            active_progress = _get_active_progress()
+            if active_progress is not None:
+                await active_progress.finish_attack(None)
 
             return {
                 'response': result.text,
@@ -1764,13 +1764,14 @@ async def _run_dynamic_or_hybrid(
             dict.fromkeys(pt.agent_context.model for pt in prepared_targets if pt.agent_context.model)
         )
         # Panel-of-judges / jury config shared by the dynamic evaluator (RES-739).
+        panel_cfg = pipeline_config.evaluator if pipeline_config else None
         panel_kwargs: dict[str, Any] = {
-            'judges': pipeline_config.judges if pipeline_config else [],
-            'judge_repetitions': pipeline_config.judge_repetitions if pipeline_config else 1,
-            'replacement_judges': pipeline_config.replacement_judges if pipeline_config else [],
-            'min_successful_judges': pipeline_config.min_successful_judges if pipeline_config else 1,
+            'judges': panel_cfg.judges[1:] if panel_cfg else [],
+            'judge_repetitions': panel_cfg.repetitions if panel_cfg else 1,
+            'replacement_judges': panel_cfg.replacement_judges if panel_cfg else [],
+            'min_successful_judges': panel_cfg.min_successful_judges if panel_cfg else 1,
             'target_models': target_models,
-            'strict_panel': pipeline_config.strict_panel if pipeline_config else False,
+            'strict_panel': panel_cfg.strict_panel if panel_cfg else False,
         }
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
@@ -1782,7 +1783,7 @@ async def _run_dynamic_or_hybrid(
                 **panel_kwargs,
             )
             static_evaluator = create_owasp_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg, **panel_kwargs
             )
 
             async def hybrid_scorer(params: Any) -> EvaluationResult:
@@ -2175,7 +2176,21 @@ async def _run_static(
     evaluator_client = pipeline_config.evaluator.client if pipeline_config else None
     evaluator_client = evaluator_client or llm_client
     evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
-    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
+    panel_cfg = pipeline_config.evaluator if pipeline_config else None
+    panel_kwargs: dict[str, Any] = {
+        'judges': panel_cfg.judges[1:] if panel_cfg else [],
+        'judge_repetitions': panel_cfg.repetitions if panel_cfg else 1,
+        'replacement_judges': panel_cfg.replacement_judges if panel_cfg else [],
+        'min_successful_judges': panel_cfg.min_successful_judges if panel_cfg else 1,
+        'target_models': list(dict.fromkeys(targets)),
+        'strict_panel': panel_cfg.strict_panel if panel_cfg else False,
+    }
+    evaluator = create_owasp_evaluator(
+        evaluator_model=evaluator_model,
+        llm_client=evaluator_client,
+        cfg=evaluator_cfg,
+        **panel_kwargs,
+    )
 
     # Confirm hook — report aggregate counts
     vulnerabilities: list[str] = list(

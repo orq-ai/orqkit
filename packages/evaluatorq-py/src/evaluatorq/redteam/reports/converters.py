@@ -9,6 +9,7 @@ from loguru import logger as _converters_logger
 from pydantic import ValidationError
 
 from evaluatorq.redteam.contracts import (
+    JURY_RAW_OUTPUT_KEY,
     OWASP_CATEGORY_NAMES,
     AgentContext,
     AgentInfo,
@@ -24,7 +25,6 @@ from evaluatorq.redteam.contracts import (
     ExecutionDetails,
     Framework,
     FrameworkSummary,
-    JURY_RAW_OUTPUT_KEY,
     JobOutputPayload,
     JuryReliability,
     JuryResult,
@@ -718,7 +718,7 @@ def _compute_jury_reliability(results: list[RedTeamResult]) -> JuryReliability |
         jury = r.evaluation.jury if r.evaluation else None
         if jury is None:
             continue
-        verdicts = [bool(v.value) for v in jury.votes if v.success and v.value is not None]
+        verdicts = [v.value for v in jury.votes if v.success and not v.abstained and isinstance(v.value, bool)]
         if len(verdicts) >= 2:
             units.append(verdicts)
     if not units:

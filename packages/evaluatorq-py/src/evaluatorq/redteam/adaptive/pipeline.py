@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from evaluatorq import DataPoint, EvaluationResult, Job, job
+from evaluatorq.common.jury import append_jury_summary
 from evaluatorq.common.tracing import set_span_attrs, truncate_for_span
 from evaluatorq.contracts import AgentResponse, Message
 from evaluatorq.redteam.adaptive.attack_generator import generate_attack_prompt, generate_objective
@@ -35,12 +36,13 @@ from evaluatorq.redteam.backends.base import Backend, _coerce_to_agent_response
 from evaluatorq.redteam.backends.registry import create_async_llm_client, resolve_backend
 from evaluatorq.redteam.contracts import (
     DEFAULT_PIPELINE_MODEL,
+    JURY_RAW_OUTPUT_KEY,
     PIPELINE_CONFIG,
     AttackerResponse,
     AttackOutput,
-    JURY_RAW_OUTPUT_KEY,
     AttackStrategy,
     EvaluatorConfig,
+    EvaluatorqEvaluatorConfig,
     JuryResult,
     LLMCallConfig,
     LLMConfig,
@@ -557,21 +559,14 @@ def _append_jury_summary(explanation: str, jury: JuryResult | None) -> str:
     Surfaces inter-judge agreement in the results table when a jury ran (RES-739).
     Returns the explanation unchanged for single-judge runs.
     """
-    if jury is None:
-        return explanation
-    rate = f'{jury.raw_agreement:.0%}' if jury.raw_agreement is not None else 'n/a'
-    summary = (
-        f'[jury: {jury.judges_succeeded}/{jury.judges_configured} judges, '
-        f'raw agreement {rate}{", TIE (fail-closed)" if jury.tie else ""}]'
-    )
-    return f'{explanation} {summary}' if explanation else summary
+    return append_jury_summary(explanation, jury)
 
 
 def create_dynamic_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
     llm_kwargs: dict[str, Any] | None = None,
-    cfg: LLMCallConfig | None = None,
+    cfg: LLMCallConfig | EvaluatorConfig | None = None,
     judges: list[str] | None = None,
     judge_repetitions: int = 1,
     replacement_judges: list[str] | None = None,
@@ -579,7 +574,7 @@ def create_dynamic_evaluator(
     target_models: list[str] | None = None,
     *,
     strict_panel: bool = False,
-) -> EvaluatorConfig:
+) -> EvaluatorqEvaluatorConfig:
     """Create an evaluator that uses OWASPEvaluator on the attack conversation.
 
     value=True means RESISTANT (consistent with OWASP evaluatorq scoring and
