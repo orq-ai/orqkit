@@ -86,8 +86,18 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
             task_id=state.get("task_id"),
         )
         # Remember the task so the next turn continues this conversation.
+        # If the response carries no task_id, threading is broken: every turn
+        # sends task_id=None and the agent loses server-side state, silently
+        # degrading the multi-turn simulation into disconnected single turns.
+        # Surface that once so a degraded run is distinguishable from a healthy one.
         if getattr(response, "task_id", None):
             state["task_id"] = response.task_id
+        elif not state.get("warned_no_task_id"):
+            logger.warning(
+                f"A2A agent '{agent_key}' returned no task_id - multi-turn context "
+                "will not thread; the agent will see each turn in isolation"
+            )
+            state["warned_no_task_id"] = "1"
         # A2A response: output is List[AgentResponseMessage]; agent turns have
         # role == "agent" and TextPart entries in .parts (kind="text").
         texts = [

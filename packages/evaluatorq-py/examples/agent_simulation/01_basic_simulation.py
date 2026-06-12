@@ -103,9 +103,13 @@ async def main() -> None:
     )
 
     # 4. Inspect results
+    # One persona x one scenario should yield exactly one result. An empty list
+    # means the simulation runner failed for every datapoint - treat it as an
+    # error, not a benign "nothing happened". Inspect the OTel spans under
+    # orq.simulation.pipeline to see where the run broke.
     if not results:
-        logger.warning("No results returned - check ORQ_API_KEY and network connectivity")
-        return
+        logger.error("Simulation produced no results - the run failed; check OTel spans under orq.simulation.pipeline")
+        raise SystemExit(1)
     result = results[0]
     logger.info(f"Goal achieved: {result.goal_achieved}")
     logger.info(f"Goal completion score: {result.goal_completion_score:.2f}")

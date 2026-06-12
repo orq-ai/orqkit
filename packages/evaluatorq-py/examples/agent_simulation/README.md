@@ -43,7 +43,7 @@ A successful run prints per-simulation pass/fail lines and a final pass rate:
 ```
 INFO | Pass rate: 8/12 (67%)
 INFO |   [PASS] score=0.85 turns=4
-INFO |          terminated_by=goal_reached rules_broken=[]
+INFO |          terminated_by=judge rules_broken=[]
 INFO |   [FAIL] score=0.30 turns=8
 INFO |          terminated_by=max_turns rules_broken=['no-pii-disclosure']
 ```
