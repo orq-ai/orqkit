@@ -186,9 +186,12 @@ async def main() -> None:
     )
 
     # 5. Inspect tool call history and results
+    # One persona x one scenario should yield exactly one result. An empty list
+    # means the run failed for every datapoint - treat it as an error and inspect
+    # the OTel spans under orq.simulation.pipeline rather than exiting cleanly.
     if not results:
-        logger.warning("No results returned - check ORQ_API_KEY and network connectivity")
-        return
+        logger.error("Simulation produced no results - the run failed; check OTel spans under orq.simulation.pipeline")
+        raise SystemExit(1)
 
     tool_history = simulator.get_tool_call_history()
     logger.info(f"Tool calls made: {len(tool_history)}")
