@@ -578,7 +578,7 @@ class TestPanelComposition:
         assert provider_family('yi-large') == 'unknown'
         # A genuine same-family pair under strict_panel must still abort — proving
         # the anchoring didn't over-tighten into missing real matches.
-        msgs = _panel_composition_messages(['o3-mini'], ['gpt-4o'])
+        msgs = _panel_composition_messages(['o3-mini'], ['gpt-4o'], strict=True)
         assert any('share the target' in m for m in msgs)
 
     def test_single_provider_panel_flagged(self):
@@ -594,8 +594,14 @@ class TestPanelComposition:
         assert _panel_composition_messages(['mystery-a', 'mystery-b'], []) == []
 
     def test_self_judge_family_flagged(self):
-        msgs = _panel_composition_messages(['gpt-4o'], ['gpt-4o-mini'])
-        assert any('share the target' in m for m in msgs)
+        # A lone judge sharing the target family is advisory-only noise on a
+        # default run (no panel decision to act on), so it stays silent...
+        assert _panel_composition_messages(['gpt-4o'], ['gpt-4o-mini']) == []
+        # ...but is surfaced under strict_panel (a configuration error there)...
+        assert any('share the target' in m for m in _panel_composition_messages(['gpt-4o'], ['gpt-4o-mini'], strict=True))
+        # ...and whenever the user is actively composing a multi-judge panel.
+        multi = _panel_composition_messages(['gpt-4o', 'claude-sonnet-4-6'], ['gpt-4o-mini'])
+        assert any('share the target' in m for m in multi)
 
     def test_cross_family_judge_not_flagged(self):
         assert _panel_composition_messages(['claude-sonnet-4-6'], ['gpt-4o']) == []

@@ -84,8 +84,16 @@ class OWASPEvaluator:
             if j and j not in panel:
                 panel.append(j)
         self.panel = panel
-        # Replacement judges that are not already configured judges.
-        self.replacement_judges = [r for r in (replacement_judges or []) if r and r not in panel]
+        # Replacement judges not already configured as judges, de-duplicated
+        # within the list too — a repeated stand-in would cast two independent
+        # votes from one model and could manufacture a false consensus.
+        seen_replacements: set[str] = set(panel)
+        deduped_replacements: list[str] = []
+        for r in replacement_judges or []:
+            if r and r not in seen_replacements:
+                deduped_replacements.append(r)
+                seen_replacements.add(r)
+        self.replacement_judges = deduped_replacements
         self.repetitions = max(1, repetitions)
         self.min_successful_judges = max(1, min_successful_judges)
         # Validate against the *effective* panel, not the raw judge count. The
@@ -101,7 +109,7 @@ class OWASPEvaluator:
         # Composition warnings (judge diversity + self-judge / family bias). These
         # are advisory by default so existing configs keep running; strict_panel
         # turns them into hard errors for callers who want fail-closed composition.
-        for issue in _panel_composition_messages(self.panel, target_models or []):
+        for issue in _panel_composition_messages(self.panel, target_models or [], strict=strict_panel):
             if strict_panel:
                 raise ValueError(issue)
             logger.warning(issue)
@@ -222,6 +230,12 @@ class OWASPEvaluator:
             )
             return self._single_outcome_to_result(outcome, evaluator_id)
 
+        # A lone judge with no replacements has no redundancy to absorb an
+        # outage. Mirror the single-judge fast path's fail-loud policy: infra
+        # errors must abort the run rather than degrade every datapoint to an
+        # inconclusive verdict (e.g. an invalid API key with judge_repetitions>1).
+        no_redundancy = len(self.panel) == 1 and not self.replacement_judges
+
         async def judge_fn(model: str) -> Prediction:
             outcome = await run_judge(
                 client=self.client,
@@ -231,6 +245,8 @@ class OWASPEvaluator:
                 replacements=replacements,
                 span_attributes=span_attributes,
             )
+            if outcome.error_kind in (JudgeError.API_CONNECTION, JudgeError.API_STATUS) and outcome.error_exc is not None:
+                raise outcome.error_exc
             if outcome.error_kind is not None or outcome.payload is None:
                 return Prediction(error=outcome.error_message or (outcome.error_kind.value if outcome.error_kind else 'error'))
             return Prediction(
@@ -249,6 +265,7 @@ class OWASPEvaluator:
             verdict_kind=VerdictKind.CATEGORICAL,
             tie_break=lambda _values: False,
             tie_break_label='fail-closed to VULNERABLE',
+            propagate_errors=no_redundancy,
         )
         final_passed = deliberation.verdict if isinstance(deliberation.verdict, bool) else None
         explanation = deliberation.explanation

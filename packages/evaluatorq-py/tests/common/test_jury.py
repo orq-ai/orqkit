@@ -149,3 +149,48 @@ async def test_numeric_median_even_count() -> None:
     )
 
     assert result.verdict == pytest.approx(0.5)
+
+
+@pytest.mark.asyncio
+async def test_duplicate_replacement_judges_deduped() -> None:
+    """A repeated stand-in must not cast two independent replacement votes."""
+    calls: list[str] = []
+
+    async def judge(model: str) -> Prediction:
+        calls.append(model)
+        if model == 'primary':
+            return Prediction(error='primary down')
+        return Prediction(value=True, explanation=model)
+
+    result = await run_jury(
+        judge_fn=judge,
+        panel=['primary'],
+        replacement_judges=['stand-in', 'stand-in'],
+    )
+
+    # Only one unique replacement is summoned despite the duplicate in the list.
+    assert calls.count('stand-in') == 1
+    assert result.jury.replacements_used == 1
+
+
+@pytest.mark.asyncio
+async def test_propagate_errors_aborts_for_lone_judge() -> None:
+    """With no redundancy, an infra error propagates instead of degrading."""
+
+    async def judge(model: str) -> Prediction:
+        raise RuntimeError('api down')
+
+    with pytest.raises(RuntimeError, match='api down'):
+        await run_jury(judge_fn=judge, panel=['only'], propagate_errors=True)
+
+
+@pytest.mark.asyncio
+async def test_errors_swallowed_when_not_propagating() -> None:
+    """Default (panel has redundancy): a judge error degrades to a failed vote."""
+
+    async def judge(model: str) -> Prediction:
+        raise RuntimeError('api down')
+
+    result = await run_jury(judge_fn=judge, panel=['only'], propagate_errors=False)
+    assert result.jury.votes[0].success is False
+    assert result.jury.inconclusive is True

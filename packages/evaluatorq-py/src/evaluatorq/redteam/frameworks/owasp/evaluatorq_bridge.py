@@ -202,7 +202,7 @@ def create_owasp_evaluator(
             f'min_successful_judges ({min_success}) exceeds the effective panel size ({len(panel)}) '
             f'after de-duplication; panel={panel}'
         )
-    for issue in _panel_composition_messages(panel, target_models or []):
+    for issue in _panel_composition_messages(panel, target_models or [], strict=strict_panel):
         if strict_panel:
             raise ValueError(issue)
         logger.warning(issue)

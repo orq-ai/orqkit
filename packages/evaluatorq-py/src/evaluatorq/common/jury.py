@@ -126,10 +126,17 @@ def append_jury_summary(explanation: str | None, jury: JuryResult | None) -> str
     return f'{base} {summary}' if base else summary
 
 
-async def _call_prediction(judge_fn: Callable[[str], Awaitable[Prediction]], model: str) -> Prediction:
+async def _call_prediction(
+    judge_fn: Callable[[str], Awaitable[Prediction]], model: str, *, propagate_errors: bool = False
+) -> Prediction:
     try:
         return await judge_fn(model)
     except Exception as exc:
+        # When the caller has no redundancy to fall back on (a lone judge, no
+        # replacements), let the error abort the run instead of silently
+        # degrading to an inconclusive verdict across every datapoint.
+        if propagate_errors:
+            raise
         logger.warning('jury judge_fn raised: {}', exc)
         return Prediction(error=str(exc))
 
@@ -143,8 +150,11 @@ async def _judge_vote(
     tie_break: TieBreak | None,
     replacement: bool,
     numeric_aggregation: Literal['mean', 'median'],
+    propagate_errors: bool = False,
 ) -> tuple[JuryVote, list[TokenUsage]]:
-    predictions = await asyncio.gather(*[_call_prediction(judge_fn, model) for _ in range(max(1, repetitions))])
+    predictions = await asyncio.gather(
+        *[_call_prediction(judge_fn, model, propagate_errors=propagate_errors) for _ in range(max(1, repetitions))]
+    )
     usages = [p.token_usage for p in predictions if p.token_usage is not None]
     decisive = [p for p in predictions if p.decisive]
     abstained = bool(predictions) and not decisive and any(p.abstained for p in predictions)
@@ -231,10 +241,25 @@ async def run_jury(
     tie_break: TieBreak | None = None,
     numeric_aggregation: Literal['mean', 'median'] = 'mean',
     tie_break_label: str | None = None,
+    propagate_errors: bool = False,
 ) -> JuryDeliberation:
-    """Run a generic panel of judges and aggregate their verdicts."""
+    """Run a generic panel of judges and aggregate their verdicts.
+
+    ``propagate_errors`` re-raises a judge_fn exception instead of recording it
+    as a failed vote. Callers set this when the panel has no redundancy (a lone
+    judge with no replacements) so an outage aborts loudly rather than producing
+    inconclusive verdicts on every datapoint.
+    """
     resolved_panel = resolve_panel(panel)
-    replacement_pool = [r for r in (replacement_judges or []) if r and r not in resolved_panel]
+    # Dedup the replacement pool against the panel AND within itself; a repeated
+    # stand-in (e.g. ['mistral-large', 'mistral-large']) would otherwise cast two
+    # independent votes from one model and could manufacture a false consensus.
+    seen: set[str] = set(resolved_panel)
+    replacement_pool: list[str] = []
+    for r in replacement_judges or []:
+        if r and r not in seen:
+            replacement_pool.append(r)
+            seen.add(r)
 
     judge_results = await asyncio.gather(*[
         _judge_vote(
@@ -245,6 +270,7 @@ async def run_jury(
             tie_break=tie_break,
             replacement=False,
             numeric_aggregation=numeric_aggregation,
+            propagate_errors=propagate_errors,
         )
         for model in resolved_panel
     ])
@@ -366,13 +392,19 @@ def provider_family(model_id: str) -> str:
         return 'unknown'
     if tokens[0] in _KNOWN_FAMILIES:
         return tokens[0]
+    # Match a marker as a whole token, or as a prefix immediately followed by a
+    # version DIGIT (gpt4o, o1, claude3). The digit guard is what stops the old
+    # substring trap where a short marker bled into an unrelated word
+    # (palmyra->palm, command->...): 'palmyra'.startswith('palm') is True but the
+    # next char 'y' is alphabetic, so it no longer maps to google.
     for marker, family in _FAMILY_MARKERS:
-        if any(tok == marker or tok.startswith(marker) for tok in tokens):
-            return family
+        for tok in tokens:
+            if tok == marker or (tok.startswith(marker) and len(tok) > len(marker) and tok[len(marker)].isdigit()):
+                return family
     return 'unknown'
 
 
-def _panel_composition_messages(panel: list[str], target_models: list[str]) -> list[str]:
+def _panel_composition_messages(panel: list[str], target_models: list[str], *, strict: bool = False) -> list[str]:
     messages: list[str] = []
     families = {provider_family(m) for m in panel}
     known = families - {'unknown'}
@@ -384,7 +416,11 @@ def _panel_composition_messages(panel: list[str], target_models: list[str]) -> l
         )
     target_families = {provider_family(m) for m in target_models} - {'unknown'}
     shared = known & target_families
-    if shared:
+    # For a single-judge run there is no diversity decision to act on, so the
+    # advisory warning is pure noise (it would fire on the default gpt-4o-mini
+    # eval vs gpt-4o target). Still surface it when the user opted into
+    # strict_panel — there a self-judging lone judge is a configuration error.
+    if shared and (len(panel) > 1 or strict):
         offenders = [m for m in panel if provider_family(m) in shared]
         shared_label = ', '.join(sorted(shared))
         messages.append(

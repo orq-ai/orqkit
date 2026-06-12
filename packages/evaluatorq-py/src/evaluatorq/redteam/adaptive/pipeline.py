@@ -688,8 +688,12 @@ def create_dynamic_evaluator(
         # rather than as a typed field; the red-team converters lift it back onto
         # UnifiedEvaluationResult.jury so per-judge votes + agreement reach the report
         # (RES-739 DoD), not just the OTel span + inline explanation text.
-        scored_raw_output: dict[str, Any] = dict(eval_result.raw_output or {})
+        # Only materialize a dict when there is jury data to inject; otherwise
+        # pass raw_output through untouched so a pre-existing ``None`` stays
+        # ``null`` in serialized reports (consumers distinguish null from {}).
+        scored_raw_output: dict[str, Any] | None = eval_result.raw_output
         if eval_result.jury is not None:
+            scored_raw_output = dict(eval_result.raw_output or {})
             scored_raw_output[JURY_RAW_OUTPUT_KEY] = eval_result.jury.model_dump(mode='json')
         return EvaluationResult.model_validate({
             'value': result_value,
