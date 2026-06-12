@@ -476,6 +476,19 @@ async def red_team(
             'Set OPENAI_API_KEY for direct OpenAI access, or ORQ_API_KEY to use the ORQ router.'
         )
 
+    # Fail fast: static/hybrid runs that pull static datapoints from HuggingFace
+    # need huggingface-hub. Check now rather than deep in the static leg — in
+    # hybrid mode that leg runs only after the entire dynamic leg, so a missing
+    # dependency would otherwise surface after minutes of (now wasted) work.
+    if resolved_mode in (Pipeline.STATIC, Pipeline.HYBRID):
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
+            ensure_huggingface_available,
+            is_huggingface_source,
+        )
+
+        if is_huggingface_source(dataset):
+            ensure_huggingface_available()
+
     resolved_vulns: list[Vulnerability] | None
     if vulnerabilities:
         resolved_vulns = resolve_vulnerabilities(vulnerabilities)
@@ -494,6 +507,52 @@ async def red_team(
             resolved_vulns = resolve_vulnerabilities(resolved_categories)
         except ValueError:
             resolved_vulns = None
+
+    # Evaluability gate: explicitly-requested categories/vulnerabilities with no
+    # registered automated evaluator (LLM03 Supply Chain, LLM10 Unbounded
+    # Consumption) can be *attacked* but not *scored* by prompt-based red teaming —
+    # they are infrastructure/resource-level concerns. (All ten ASI categories now
+    # have prompt-based evaluators; ASI07/08 are multi-agent-gated at strategy
+    # selection, not pruned here.) Without this gate the dynamic leg burns attacker and
+    # target tokens generating attacks that always return inconclusive, and the
+    # summary cannot distinguish "unmeasured" from "resisted" (resistance_rate
+    # defaults to 0.0 at zero evaluation coverage, which reads as fully
+    # vulnerable). Prune them up front. The default category set from
+    # list_available_categories() is already evaluator-backed, so this only ever
+    # affects explicit user selections; the static leg keeps its own
+    # datapoint-level coverage guard in _run_static().
+    unevaluable_codes: list[str] = []
+    if resolved_vulns is not None:
+        from evaluatorq.redteam.frameworks.owasp.evaluators import VULNERABILITY_EVALUATOR_REGISTRY
+        from evaluatorq.redteam.vulnerability_registry import resolve_category_safe
+
+        evaluable_vulns = [v for v in resolved_vulns if v in VULNERABILITY_EVALUATOR_REGISTRY]
+        dropped_vulns = [v for v in resolved_vulns if v not in VULNERABILITY_EVALUATOR_REGISTRY]
+        if dropped_vulns:
+            unevaluable_codes = [get_primary_category(v) for v in dropped_vulns]
+            if not evaluable_vulns:
+                raise ValueError(
+                    'None of the requested categories/vulnerabilities have an automated '
+                    f'evaluator: {", ".join(unevaluable_codes)}. These OWASP categories '
+                    '(e.g. LLM03 Supply Chain, LLM10 Unbounded Consumption) are '
+                    'infrastructure/resource-level and cannot be scored by prompt-based '
+                    'red teaming. Pick evaluator-backed categories '
+                    f'({", ".join(list_available_categories())}), or test these with a '
+                    'custom AgentTarget + evaluator via the SDK.'
+                )
+            dropped_set = set(dropped_vulns)
+            resolved_categories = [
+                c for c in resolved_categories if resolve_category_safe(c) not in dropped_set
+            ]
+            resolved_vulns = evaluable_vulns
+            logger.warning(
+                'Skipping %d requested categor%s with no automated evaluator: %s. '
+                'These require live-system testing and cannot be scored by prompt-based '
+                'red teaming — they would only produce inconclusive results.',
+                len(unevaluable_codes),
+                'y' if len(unevaluable_codes) == 1 else 'ies',
+                ', '.join(unevaluable_codes),
+            )
 
     if resolved_mode in (Pipeline.DYNAMIC, Pipeline.HYBRID):
         report = await _run_dynamic_or_hybrid(
@@ -543,6 +602,17 @@ async def red_team(
     else:
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
         raise ValueError(msg)
+
+    # Record categories dropped by the evaluability gate so the report is honest
+    # about reduced scope (rather than silently testing fewer categories).
+    if unevaluable_codes:
+        report.pipeline_warnings.insert(
+            0,
+            f'Skipped {len(unevaluable_codes)} requested categor'
+            f'{"y" if len(unevaluable_codes) == 1 else "ies"} with no automated '
+            f'evaluator ({", ".join(unevaluable_codes)}): not scoreable via '
+            'prompt-based red teaming (requires live-system testing).',
+        )
 
     # Generate LLM-based recommendations for focus areas (opt-in)
     if generate_recommendations:
