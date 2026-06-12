@@ -59,13 +59,19 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
     full A2A agents in orq.ai - agents with memory, tool use, and multi-step
     reasoning, as opposed to stateless deployments (prompt + model config).
 
-    Each call sends only the latest user message; the A2A agent's server-side
-    memory provides conversation context across turns.
+    Each call sends only the latest user message. Conversation context is
+    preserved by threading the task_id returned from the first response into
+    subsequent calls (task_id= continues the existing agent execution), so the
+    agent's server-side state carries across turns.
     """
     from orq_ai_sdk import Orq
     from orq_ai_sdk.models import A2AMessage, TextPart
 
     client = Orq(api_key=os.getenv("ORQ_API_KEY", ""))
+
+    # Persists across turns within this callback's lifetime: the first call
+    # returns a task_id; later calls pass it back to continue the same execution.
+    state: dict[str, str] = {}
 
     async def callback(messages: list[Message]) -> str:
         last = messages[-1]
@@ -77,7 +83,11 @@ def make_a2a_callback(agent_key: str) -> Callable[[list[Message]], Coroutine[Any
             client.agents.responses.create,
             agent_key=agent_key,
             message=message,
+            task_id=state.get("task_id"),
         )
+        # Remember the task so the next turn continues this conversation.
+        if getattr(response, "task_id", None):
+            state["task_id"] = response.task_id
         # A2A response: output is List[AgentResponseMessage]; agent turns have
         # role == "agent" and TextPart entries in .parts (kind="text").
         texts = [
