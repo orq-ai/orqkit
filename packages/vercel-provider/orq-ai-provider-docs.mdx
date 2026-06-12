@@ -198,8 +198,24 @@ The Orq AI provider accepts the following configuration options:
 ```ts
 interface OrqAiProviderOptions {
   apiKey: string;                           // Required: Your Orq API key
+  baseURL?: string;                         // Optional: Custom API endpoint
+  fetch?: typeof fetch;                     // Optional: Custom fetch implementation
   headers?: Record<string, string>;         // Optional: Additional HTTP headers
 }
+```
+
+Use `fetch` when you need to route requests through a custom runtime,
+proxy, or test transport:
+
+```ts
+const orq = createOrqAiProvider({
+    apiKey: 'YOUR_ORQ_API',
+    fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        headers.set('X-Debug-Transport', 'local');
+        return fetch(input, { ...init, headers });
+    },
+});
 ```
 
 ## Additional Resources
