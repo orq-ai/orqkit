@@ -545,7 +545,7 @@ class TestEvaluabilityGate:
                 'evaluatorq.redteam.frameworks.owasp.evaluators.VULNERABILITY_EVALUATOR_REGISTRY',
                 patched,
             ),
-            pytest.raises(ValueError, match='no automated evaluator|infrastructure'),
+            pytest.raises(ValueError, match='have an automated evaluator'),
         ):
             await red_team('agent:test', mode='dynamic', categories=['ASI03', 'ASI07'])
 
@@ -564,6 +564,38 @@ class TestEvaluabilityGate:
         kwargs = mock_dyn.call_args.kwargs
         assert set(kwargs['categories']) == {'ASI01', 'ASI02'}
         assert not any('no automated evaluator' in w for w in result.pipeline_warnings)
+
+    @pytest.mark.asyncio
+    async def test_real_llm03_is_evaluable_not_gated(self):
+        """Unpatched: LLM03 resolves to supply_chain (scored by the ASI04 evaluator) and
+        is NOT gated. Pins the real behavior Arian flagged — LLM03 Supply Chain is now
+        scorable, so the gate must let it through rather than drop it as unevaluable.
+        """
+        from unittest.mock import AsyncMock, patch
+
+        from evaluatorq.redteam.contracts import Vulnerability
+
+        mock_report = _make_report()
+        with patch(
+            'evaluatorq.redteam.runner._run_dynamic_or_hybrid',
+            new_callable=AsyncMock,
+            return_value=mock_report,
+        ) as mock_dyn:
+            result = await red_team('agent:test', mode='dynamic', categories=['LLM03'])
+
+        kwargs = mock_dyn.call_args.kwargs
+        assert Vulnerability.SUPPLY_CHAIN in (kwargs['resolved_vulns'] or [])
+        assert 'LLM03' in kwargs['categories']
+        assert not any('no automated evaluator' in w for w in result.pipeline_warnings)
+
+    @pytest.mark.asyncio
+    async def test_real_unknown_category_raises(self):
+        """Unpatched: an unrecognized category (e.g. LLM10, which is not an OWASP
+        category) raises instead of silently swallowing the error and proceeding with no
+        vulnerabilities resolved — which would run a meaningless, unscored attack.
+        """
+        with pytest.raises(ValueError, match='Unrecognized categor'):
+            await red_team('agent:test', mode='dynamic', categories=['LLM10'])
 
 
 class TestHuggingFacePreflight:
