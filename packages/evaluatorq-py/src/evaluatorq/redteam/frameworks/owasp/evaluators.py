@@ -15,10 +15,12 @@ observation). ASI07/08 assume multi-agent architectures, so they are gated to
 multi-agent targets at strategy-selection time (see AgentContext.is_multi_agent);
 against a single-agent target they are skipped rather than scored on a weak proxy.
 
-Excluded LLM categories (no prompt-based evaluator — pruned by the runner's
-evaluability gate when explicitly requested):
-- LLM03: Supply Chain — excluded (infrastructure-level, no dataset samples)
-- LLM10: Unbounded Consumption — excluded (resource exhaustion, not testable via prompt-based red teaming)
+Excluded from the category registry (not evaluable via prompt-based red teaming):
+- LLM10: Unbounded Consumption — resource exhaustion; not a category code in this registry.
+  Passing categories=['LLM10'] raises ValueError('Unrecognized category').
+
+Note: LLM03 (Supply Chain) is NOT excluded — it resolves to the supply_chain vulnerability
+and is scored by the ASI04 evaluator. The runner logs a relabel notice at INFO level.
 """
 
 from collections.abc import Callable
