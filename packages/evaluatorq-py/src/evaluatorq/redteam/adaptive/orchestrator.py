@@ -611,6 +611,11 @@ class MultiTurnOrchestrator:
                                     adversarial_completion_tokens += int(usage.completion_tokens or 0)
                                     adversarial_total_tokens += int(usage.total_tokens or 0)
                                     adversarial_calls += int(usage.calls or 0) or 1
+                                else:
+                                    # The provider can omit usage (common on content_filter),
+                                    # but a real call still happened — and the retry loop can
+                                    # make several. Count it so the call total isn't undercounted.
+                                    adversarial_calls += 1
                                 attack_prompt = attack_response.choices[0].message.content or ''
                                 record_llm_response(adv_span, attack_response, output_content=attack_prompt)
 

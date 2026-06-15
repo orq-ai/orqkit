@@ -719,6 +719,37 @@ class TestRunAttack:
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_content_filter_retries_counted_when_usage_absent(self, _rs, _ls, _rl):
+        """Each content-filtered retry is a real call even when the provider omits usage.
+
+        Regression: with usage=None on every attempt, the old code left adversarial_calls
+        at 0 and dropped token_usage_adversarial to None entirely. The retry loop can make
+        several such calls — they must be counted.
+        """
+        orchestrator, mock_llm = _make_orchestrator(max_content_filter_retries=2)
+        target = _make_target()
+
+        # content_filter, no usage attached, on every attempt (1 + 2 retries = 3 calls).
+        mock_llm.chat.completions.create.return_value = _make_completion(
+            "", finish_reason="content_filter", usage=None
+        )
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=1,
+        )
+
+        assert mock_llm.chat.completions.create.call_count == 3
+        assert result.token_usage_adversarial is not None
+        assert result.token_usage_adversarial.calls == 3
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
     async def test_adversarial_empty_max_tokens(self, _rs, _ls, _rl):
         """Empty content due to max-tokens truncation maps to 'max_tokens' error."""
         orchestrator, mock_llm = _make_orchestrator()
