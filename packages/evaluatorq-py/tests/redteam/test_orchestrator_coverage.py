@@ -750,6 +750,42 @@ class TestRunAttack:
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_content_filter_raised_as_error_is_classified(self, _rs, _ls, _rl):
+        """A content filter surfaced as an HTTP error (Azure → 400 code='content_filter')
+        is classified as content_filter, not a generic adversarial.llm_exception.
+
+        Mirrors the empirically-observed Orq router shape (code on the exception + body).
+        """
+        orchestrator, mock_llm = _make_orchestrator()
+        target = _make_target()
+
+        class _FilterError(Exception):
+            def __init__(self):
+                super().__init__(
+                    "The response was filtered due to Azure OpenAI's content management policy."
+                )
+                self.code = "content_filter"
+                self.body = {"code": "content_filter", "param": "prompt"}
+
+        mock_llm.chat.completions.create.side_effect = _FilterError()
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=1,
+        )
+
+        assert result.error_code == "adversarial.content_filter"
+        assert result.error_type == "content_filter"
+        # A blocked attacker prompt is never forwarded to the target.
+        target.respond.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
     async def test_adversarial_empty_max_tokens(self, _rs, _ls, _rl):
         """Empty content due to max-tokens truncation maps to 'max_tokens' error."""
         orchestrator, mock_llm = _make_orchestrator()

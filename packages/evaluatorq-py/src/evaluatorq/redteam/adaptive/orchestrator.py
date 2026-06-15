@@ -266,6 +266,22 @@ def _classify_attacker_output(
     return 'content_filter' if finish_reason == 'content_filter' else None
 
 
+def _is_content_filter_error(exc: BaseException) -> bool:
+    """Return True if ``exc`` is a provider content-filter block surfaced as an error.
+
+    Some providers filter at the prompt layer and raise an HTTP error instead of
+    returning ``finish_reason='content_filter'`` on a 200 — verified empirically: Azure
+    via the Orq router raises ``openai.BadRequestError`` (HTTP 400) with
+    ``code='content_filter'``. We key on the structured error ``code`` (exposed by the
+    OpenAI SDK as ``exc.code``, and mirrored in the JSON body), NOT on the message prose,
+    so it stays provider-agnostic for any block the router normalizes to that code.
+    """
+    if getattr(exc, 'code', None) == 'content_filter':
+        return True
+    body = getattr(exc, 'body', None)
+    return isinstance(body, dict) and body.get('code') == 'content_filter'
+
+
 def _parse_objective_marker(text: str) -> tuple[bool, str | None, str]:
     """Split an adversarial response into its objective-achieved signal and payload.
 
@@ -664,10 +680,18 @@ class MultiTurnOrchestrator:
                             break
                         continue
                     except Exception as e:
+                        # A provider can block the attacker prompt at the moderation layer
+                        # and raise (e.g. Azure → HTTP 400 code='content_filter') instead
+                        # of returning finish_reason='content_filter'. Classify that as a
+                        # content filter, not a generic LLM error, so it's detected the same
+                        # way as the 200-response form.
+                        is_filter = _is_content_filter_error(e)
                         error = f'Adversarial LLM exception: {e}'
-                        error_type = 'llm_error'
+                        error_type = 'content_filter' if is_filter else 'llm_error'
                         error_stage = 'adversarial_generation'
-                        error_code = 'adversarial.llm_exception'
+                        error_code = (
+                            'adversarial.content_filter' if is_filter else 'adversarial.llm_exception'
+                        )
                         error_details = {
                             'exception_type': type(e).__name__,
                             'raw_message': str(e),
