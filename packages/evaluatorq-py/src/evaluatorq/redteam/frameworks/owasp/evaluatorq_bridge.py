@@ -290,7 +290,9 @@ def create_owasp_evaluator(
                 replacements=eval_replacements,
             )
             if outcome.error_kind is not None or outcome.payload is None:
-                return Prediction(error=outcome.error_message or (outcome.error_kind.value if outcome.error_kind else 'error'))
+                return Prediction(
+                    error=outcome.error_message or (outcome.error_kind.value if outcome.error_kind else 'error')
+                )
             return Prediction(
                 value=outcome.payload.value,
                 explanation=outcome.payload.explanation,
@@ -460,10 +462,19 @@ def _load_from_file(
 ) -> list[DataPoint]:
     """Load OWASP dataset from a local JSON file in ``{"samples": [...]}`` format."""
     path = Path(path)
-    with path.open() as f:
-        raw = json.load(f)
-
-    dataset = StaticDataset.model_validate(raw)
+    try:
+        with path.open() as f:
+            raw = json.load(f)
+        dataset = StaticDataset.model_validate(raw)
+    except (OSError, json.JSONDecodeError, ValidationError) as e:
+        # Unreadable file, malformed JSON, or a payload that is not the expected
+        # ``{"samples": [...]}`` shape. Surface a RedTeamError the run CLI prints
+        # cleanly instead of a raw traceback (mirrors the HuggingFace path above).
+        msg = (
+            f'Failed to load red team dataset from {path}: {e}. '
+            'Check that the file exists and contains valid JSON in {"samples": [...]} format.'
+        )
+        raise DatasetError(msg) from e
     samples = dataset.samples
 
     if categories:

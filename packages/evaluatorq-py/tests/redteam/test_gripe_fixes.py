@@ -97,6 +97,37 @@ class TestDatasetDownloadError:
         assert issubclass(DatasetError, RedTeamError)
 
 
+class TestLoadFromFileError:
+    """_load_from_file's JSON parse/validation surfaces a clean DatasetError (gripe #4)."""
+
+    def test_malformed_json_raises_dataset_error(self, tmp_path):
+        from evaluatorq.redteam.exceptions import DatasetError
+        from evaluatorq.redteam.frameworks.owasp import evaluatorq_bridge
+
+        bad = tmp_path / 'dataset.json'
+        bad.write_text('{not valid json')
+
+        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+            evaluatorq_bridge._load_from_file(bad)
+
+    def test_missing_file_raises_dataset_error(self, tmp_path):
+        from evaluatorq.redteam.exceptions import DatasetError
+        from evaluatorq.redteam.frameworks.owasp import evaluatorq_bridge
+
+        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+            evaluatorq_bridge._load_from_file(tmp_path / 'does_not_exist.json')
+
+    def test_wrong_shape_raises_dataset_error(self, tmp_path):
+        from evaluatorq.redteam.exceptions import DatasetError
+        from evaluatorq.redteam.frameworks.owasp import evaluatorq_bridge
+
+        wrong = tmp_path / 'dataset.json'
+        wrong.write_text('{"not_samples": []}')
+
+        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+            evaluatorq_bridge._load_from_file(wrong)
+
+
 class TestMultiAgentGate:
     """ASI07/08 are skipped for single-agent targets and kept for multi-agent ones (gripe #5)."""
 
