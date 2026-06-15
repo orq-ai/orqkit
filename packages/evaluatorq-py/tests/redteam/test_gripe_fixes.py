@@ -8,6 +8,7 @@ self-censor / content-filter handling.
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 from loguru import logger
@@ -107,25 +108,31 @@ class TestLoadFromFileError:
         bad = tmp_path / 'dataset.json'
         bad.write_text('{not valid json')
 
-        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+        with pytest.raises(DatasetError, match='Failed to load red team dataset') as ei:
             evaluatorq_bridge._load_from_file(bad)
+        # __cause__ pins that this distinct except arm was the one hit (not a broadened catch).
+        assert isinstance(ei.value.__cause__, json.JSONDecodeError)
 
     def test_missing_file_raises_dataset_error(self, tmp_path):
         from evaluatorq.redteam.exceptions import DatasetError
         from evaluatorq.redteam.frameworks.owasp import evaluatorq_bridge
 
-        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+        with pytest.raises(DatasetError, match='Failed to load red team dataset') as ei:
             evaluatorq_bridge._load_from_file(tmp_path / 'does_not_exist.json')
+        assert isinstance(ei.value.__cause__, OSError)
 
     def test_wrong_shape_raises_dataset_error(self, tmp_path):
+        from pydantic import ValidationError
+
         from evaluatorq.redteam.exceptions import DatasetError
         from evaluatorq.redteam.frameworks.owasp import evaluatorq_bridge
 
         wrong = tmp_path / 'dataset.json'
         wrong.write_text('{"not_samples": []}')
 
-        with pytest.raises(DatasetError, match='Failed to load red team dataset'):
+        with pytest.raises(DatasetError, match='Failed to load red team dataset') as ei:
             evaluatorq_bridge._load_from_file(wrong)
+        assert isinstance(ei.value.__cause__, ValidationError)
 
 
 class TestMultiAgentGate:
