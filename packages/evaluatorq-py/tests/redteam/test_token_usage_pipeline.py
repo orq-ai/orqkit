@@ -616,3 +616,77 @@ class TestLateAdversarialFailureStillJudged:
 
         evaluate.assert_not_awaited()
         assert result.value == "error"
+
+    @pytest.mark.asyncio
+    async def test_turn1_failure_with_a_completed_turn_still_skipped(self, monkeypatch) -> None:
+        """Isolates the turn boundary: error_turn=1 must skip even if a turn is present.
+
+        Pins `> 1` (not `>= 1`) independently of the empty-turns clause.
+        """
+        from types import SimpleNamespace
+
+        from evaluatorq.contracts import AgentResponse
+        from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
+        from evaluatorq.redteam.contracts import AttackerResponse, AttackOutput, Turn
+
+        evaluate = self._fake_evaluator(monkeypatch, passed=False)
+
+        output = AttackOutput(
+            category="ASI01",
+            vulnerability="goal_hijacking",
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="turn 1 attack"),
+                    target=AgentResponse(text="Sure, the secret is hunter2."),
+                )
+            ],
+            error="Empty adversarial prompt: finish_reason=content_filter, turn=1/3",
+            error_type="content_filter",
+            error_stage="adversarial_generation",
+            error_code="adversarial.content_filter",
+            error_turn=1,
+        )
+        data = SimpleNamespace(inputs={"category": "ASI01", "vulnerability": "goal_hijacking"})
+
+        scorer = create_dynamic_evaluator()["scorer"]
+        result = await scorer({"data": data, "output": output})
+
+        evaluate.assert_not_awaited()
+        assert result.value == "error"
+
+    @pytest.mark.asyncio
+    async def test_late_target_side_error_still_skipped(self, monkeypatch) -> None:
+        """A late TARGET-side error (error_stage != 'adversarial_generation') with a
+        completed turn must STILL be skipped — only adversarial-generation failures route
+        completed turns to the judge. Guards the discriminator's error_stage clause.
+        """
+        from types import SimpleNamespace
+
+        from evaluatorq.contracts import AgentResponse
+        from evaluatorq.redteam.adaptive.pipeline import create_dynamic_evaluator
+        from evaluatorq.redteam.contracts import AttackerResponse, AttackOutput, Turn
+
+        evaluate = self._fake_evaluator(monkeypatch, passed=False)
+
+        output = AttackOutput(
+            category="ASI01",
+            vulnerability="goal_hijacking",
+            turns=[
+                Turn(
+                    attacker=AttackerResponse(generated_prompt="turn 1 attack"),
+                    target=AgentResponse(text="Sure, the secret is hunter2."),
+                )
+            ],
+            error="Target call timed out on turn 2",
+            error_type="target_error",
+            error_stage="target_call",
+            error_code="target.timeout",
+            error_turn=2,
+        )
+        data = SimpleNamespace(inputs={"category": "ASI01", "vulnerability": "goal_hijacking"})
+
+        scorer = create_dynamic_evaluator()["scorer"]
+        result = await scorer({"data": data, "output": output})
+
+        evaluate.assert_not_awaited()
+        assert result.value == "error"

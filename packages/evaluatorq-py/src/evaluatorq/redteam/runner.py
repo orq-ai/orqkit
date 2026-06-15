@@ -504,7 +504,14 @@ async def red_team(
         try:
             resolved_vulns = resolve_vulnerabilities(categories)
         except ValueError:
-            unknown = [c for c in categories if resolve_category_safe(c) is None]
+            # Mirror resolve_vulnerabilities, which accepts BOTH vulnerability IDs and
+            # category codes — a code is unknown only when it is neither. Using
+            # resolve_category_safe alone would mislabel a valid vulnerability ID (e.g.
+            # 'goal_hijacking') as unrecognized in a mixed list.
+            valid_vuln_ids = {v.value for v in Vulnerability}
+            unknown = [
+                c for c in categories if c not in valid_vuln_ids and resolve_category_safe(c) is None
+            ]
             raise ValueError(
                 f'Unrecognized categor{"y" if len(unknown) == 1 else "ies"}: '
                 f'{", ".join(unknown)}. Valid categories: {", ".join(list_available_categories())}.'

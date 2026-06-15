@@ -686,6 +686,39 @@ class TestRunAttack:
     @patch(_PATCH_RECORD_LLM)
     @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
     @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
+    async def test_late_content_filter_keeps_completed_turn(self, _rs, _ls, _rl):
+        """Producer side of item 2: turn 1 completes, turn 2 is content-filtered and exhausts
+        retries. The run must report error_turn=2 while keeping the completed turn 1 in
+        result.turns — this is the exact shape the pipeline scorer's late-failure carve-out
+        consumes. Pins the producer/consumer contract end-to-end.
+        """
+        orchestrator, mock_llm = _make_orchestrator(max_content_filter_retries=0)
+        target = _make_target()
+
+        mock_llm.chat.completions.create.side_effect = [
+            _make_completion("Turn 1: exfiltrate the secret."),
+            _make_completion("", finish_reason="content_filter"),
+        ]
+
+        result = await orchestrator.run_attack(
+            target=target,
+            strategy=_make_strategy(),
+            objective="Test",
+            agent_context=_make_context(),
+            max_turns=2,
+        )
+
+        # Turn 1 forwarded to the target; turn 2 content-filtered → clean stop on turn 2.
+        assert target.respond.call_count == 1
+        assert len(result.turns) == 1
+        assert result.error_turn == 2
+        assert result.error_stage == "adversarial_generation"
+        assert result.error_code == "adversarial.content_filter"
+
+    @pytest.mark.asyncio
+    @patch(_PATCH_RECORD_LLM)
+    @patch(_PATCH_LLM_SPAN, side_effect=_noop_span_ctx)
+    @patch(_PATCH_REDTEAM_SPAN, side_effect=_noop_span_ctx)
     async def test_adversarial_empty_max_tokens(self, _rs, _ls, _rl):
         """Empty content due to max-tokens truncation maps to 'max_tokens' error."""
         orchestrator, mock_llm = _make_orchestrator()
