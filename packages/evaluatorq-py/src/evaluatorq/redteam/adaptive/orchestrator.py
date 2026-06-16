@@ -18,7 +18,11 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 from typing_extensions import Self
 
-from evaluatorq.common.content_filter import classify_finish_reason, is_content_filter_error
+from evaluatorq.common.content_filter import (
+    classify_finish_reason,
+    is_content_filter_error,
+    regenerate_on_content_filter,
+)
 from evaluatorq.common.sanitize import xml_escape
 from evaluatorq.common.tracing import record_llm_response, set_span_attrs, truncate_for_span
 from evaluatorq.contracts import AgentResponse, AgentResponseError, AgentTarget, Message, TextOutputItem
@@ -554,69 +558,75 @@ class MultiTurnOrchestrator:
                     attack_prompt = ''
                     attack_response: Any = None
                     max_attempts = max(1, self._cfg.max_content_filter_retries + 1)
-                    try:
-                        for attempt in range(max_attempts):
-                            async with (
-                                with_redteam_span(
-                                    'orq.redteam.adversarial_generation',
-                                    {
-                                        'orq.redteam.turn': turn + 1,
-                                        'orq.redteam.strategy_name': strategy.name,
-                                    },
-                                ),
-                                with_llm_span(
-                                    model=self.model,
-                                    temperature=self._cfg.attacker.temperature,
-                                    max_tokens=self._cfg.attacker.max_tokens,
-                                    input_messages=adversarial_messages,
-                                    attributes={
-                                        'orq.redteam.llm_purpose': 'adversarial',
-                                        'orq.redteam.turn': turn + 1,
-                                        'orq.redteam.strategy_name': strategy.name,
-                                    },
-                                ) as adv_span,
-                            ):
-                                attack_response = await asyncio.wait_for(
-                                    self.llm_client.chat.completions.create(
-                                        model=self.model,
-                                        messages=adversarial_messages,
-                                        temperature=self._cfg.attacker.temperature,
-                                        max_completion_tokens=self._cfg.attacker.max_tokens,
-                                        extra_body=self._cfg.retry_extra_body(self.llm_client),
-                                        **self._cfg.attacker.extra_kwargs,
-                                    ),
-                                    timeout=llm_timeout_s,
-                                )
-                                usage = TokenUsage.from_completion(attack_response)
-                                if usage is not None:
-                                    adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
-                                    adversarial_completion_tokens += int(usage.completion_tokens or 0)
-                                    adversarial_total_tokens += int(usage.total_tokens or 0)
-                                    adversarial_calls += int(usage.calls or 0) or 1
-                                else:
-                                    # The provider can omit usage (common on content_filter),
-                                    # but a real call still happened — and the retry loop can
-                                    # make several. Count it so the call total isn't undercounted.
-                                    adversarial_calls += 1
-                                attack_prompt = attack_response.choices[0].message.content or ''
-                                record_llm_response(adv_span, attack_response, output_content=attack_prompt)
 
-                                choice = attack_response.choices[0] if attack_response.choices else None
-                                finish_reason = getattr(choice, 'finish_reason', None) if choice else None
-                                unusable_kind = classify_finish_reason(finish_reason)
-                                if unusable_kind is None or attempt >= max_attempts - 1:
-                                    break
-                                logger.warning(
-                                    f'Attack model {unusable_kind} for {strategy.name} on turn {turn + 1}; '
-                                    f'regenerating attack turn ({attempt + 1}/{max_attempts - 1})'
-                                )
-                                set_span_attrs(
-                                    adv_span,
-                                    {
-                                        'orq.redteam.adversarial_retry': attempt + 1,
-                                        'orq.redteam.adversarial_unusable': unusable_kind,
-                                    },
-                                )
+                    # Loop vars are bound as eager defaults (_turn/_strategy/_messages) so the
+                    # closure doesn't capture the mutating loop variables (avoids B023).
+                    async def _generate_attack_turn(
+                        attempt: int,
+                        _turn=turn,
+                        _strategy=strategy,
+                        _messages=adversarial_messages,
+                        _timeout=llm_timeout_s,
+                    ) -> Any:
+                        # One adversarial generation. Owns its span + per-attempt token
+                        # accounting (every attempt counts, including content-filtered
+                        # retries, so the call total isn't undercounted). The shared
+                        # regenerate_on_content_filter helper decides whether to retry.
+                        nonlocal usage, attack_prompt, adversarial_prompt_tokens, adversarial_completion_tokens, adversarial_total_tokens, adversarial_calls
+                        async with (
+                            with_redteam_span(
+                                'orq.redteam.adversarial_generation',
+                                {
+                                    'orq.redteam.turn': _turn + 1,
+                                    'orq.redteam.strategy_name': _strategy.name,
+                                },
+                            ),
+                            with_llm_span(
+                                model=self.model,
+                                temperature=self._cfg.attacker.temperature,
+                                max_tokens=self._cfg.attacker.max_tokens,
+                                input_messages=_messages,
+                                attributes={
+                                    'orq.redteam.llm_purpose': 'adversarial',
+                                    'orq.redteam.turn': _turn + 1,
+                                    'orq.redteam.strategy_name': _strategy.name,
+                                },
+                            ) as adv_span,
+                        ):
+                            if attempt > 0:
+                                set_span_attrs(adv_span, {'orq.redteam.adversarial_retry': attempt})
+                            response = await asyncio.wait_for(
+                                self.llm_client.chat.completions.create(
+                                    model=self.model,
+                                    messages=_messages,
+                                    temperature=self._cfg.attacker.temperature,
+                                    max_completion_tokens=self._cfg.attacker.max_tokens,
+                                    extra_body=self._cfg.retry_extra_body(self.llm_client),
+                                    **self._cfg.attacker.extra_kwargs,
+                                ),
+                                timeout=_timeout,
+                            )
+                            usage = TokenUsage.from_completion(response)
+                            if usage is not None:
+                                adversarial_prompt_tokens += int(usage.prompt_tokens or 0)
+                                adversarial_completion_tokens += int(usage.completion_tokens or 0)
+                                adversarial_total_tokens += int(usage.total_tokens or 0)
+                                adversarial_calls += int(usage.calls or 0) or 1
+                            else:
+                                adversarial_calls += 1
+                            attack_prompt = response.choices[0].message.content or ''
+                            record_llm_response(adv_span, response, output_content=attack_prompt)
+                            return response
+
+                    try:
+                        attack_response = await regenerate_on_content_filter(
+                            _generate_attack_turn,
+                            max_attempts=max_attempts,
+                            label=f'Attack model for {strategy.name} on turn {turn + 1}',
+                        )
+                        choice = attack_response.choices[0] if attack_response.choices else None
+                        finish_reason = getattr(choice, 'finish_reason', None) if choice else None
+                        unusable_kind = classify_finish_reason(finish_reason)
                     except asyncio.TimeoutError:
                         consecutive_adversarial_timeouts += 1
                         logger.warning(
