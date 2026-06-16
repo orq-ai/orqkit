@@ -187,3 +187,106 @@ These are shared with agent simulation — the same tracing layer (`evaluatorq.c
 ## Convention
 
 Throughout this package: `passed=True` / `vulnerable=False` means the agent **resisted** the attack (good). `passed=False` / `vulnerable=True` means the agent was **vulnerable** (bad).
+
+## Modes
+
+| Mode | Description |
+|------|-------------|
+| `dynamic` | Generates adversarial attacks using LLM-based strategy planning and multi-turn orchestration |
+| `static` | Runs a pre-built OWASP dataset for reproducible regression testing |
+| `hybrid` | Combines dynamic generation with a static dataset in a single run |
+
+## `red_team()` parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `target` | `str \| AgentTarget \| list` | **required** | Target(s): `"agent:<key>"`, `"deployment:<key>"`, or an `AgentTarget` such as `OpenAIModelTarget(...)` |
+| `mode` | `str` | `"dynamic"` | `"dynamic"`, `"static"`, or `"hybrid"` |
+| `categories` | `list[str] \| None` | all | OWASP categories (e.g. `["ASI01", "LLM07"]`) |
+| `vulnerabilities` | `list[str] \| None` | `None` | Specific vulnerability IDs to test |
+| `max_turns` | `int` | `5` | Max conversation turns per attack |
+| `max_dynamic_datapoints` | `int \| None` | `None` | Cap generated attack datapoints |
+| `llm_config` | `LLMConfig \| None` | `None` | Per-role attacker/evaluator model config |
+| `parallelism` | `int` | `10` | Max concurrent jobs |
+| `name` | `str \| None` | `None` | Experiment name (defaults to `"red-team"`) |
+| `llm_client` | `AsyncOpenAI \| None` | `None` | Custom LLM client |
+| `dataset` | `Path \| str \| None` | `None` | Path to local static dataset |
+
+### LLM client configuration
+
+Red teaming needs an OpenAI-compatible LLM for attack generation and evaluation. `ORQ_*` variables take priority over `OPENAI_*`:
+
+| Priority | Variables | Description |
+|----------|-----------|-------------|
+| 1st | `ORQ_API_KEY` + `ORQ_BASE_URL` (optional) | ORQ router |
+| 2nd | `OPENAI_API_KEY` + `OPENAI_BASE_URL` (optional) | Direct OpenAI or any compatible endpoint |
+
+Or pass a custom client: `red_team(..., llm_client=AsyncOpenAI(api_key="sk-..."))`.
+
+## External agent frameworks
+
+Agents built with external frameworks are wrapped into a target the pipeline can attack. Install the matching extra (`pip install evaluatorq[langgraph]`, `evaluatorq[openai-agents]`, or `evaluatorq[all]`).
+
+### LangGraph
+
+Wrap any compiled LangGraph state graph. The graph must use `MessagesState` (or a state with a `messages` key).
+
+```python
+from langgraph.prebuilt import create_react_agent
+from evaluatorq.integrations.langgraph_integration import LangGraphTarget
+from evaluatorq.redteam import red_team
+
+graph = create_react_agent(model, tools=[...])
+target = LangGraphTarget(graph)  # or LangGraphTarget(graph, config={"recursion_limit": 50})
+report = await red_team(target=target)
+```
+
+Each attack gets a fresh thread; `clone()` creates independent copies for parallel attacks.
+
+### LangChain agents
+
+- Agents built with `create_react_agent` / `StateGraph` run on LangGraph → use `LangGraphTarget` directly.
+- Custom chains or legacy `AgentExecutor` → wrap with `CallableTarget` (see below).
+
+### OpenAI Agents SDK
+
+```python
+from agents import Agent
+from evaluatorq.integrations.openai_agents_integration import OpenAIAgentTarget
+from evaluatorq.redteam import red_team
+
+agent = Agent(name="my-agent", instructions="You are a helpful assistant.")
+target = OpenAIAgentTarget(agent)  # or OpenAIAgentTarget(agent, run_kwargs={"max_turns": 10})
+report = await red_team(target=target)
+```
+
+### Custom callable (escape hatch)
+
+Wrap any function that takes the conversation and returns a response. The callable receives the full transcript as typed `Message` objects, so it works for single- and multi-turn attacks even when stateless:
+
+```python
+from evaluatorq.contracts import Message
+from evaluatorq.integrations.callable_integration import CallableTarget
+from evaluatorq.redteam import red_team
+
+async def my_agent(messages: list[Message]) -> str:
+    result = await some_framework.run(messages)
+    return result.text
+
+target = CallableTarget(my_agent)
+report = await red_team(target=target)
+```
+
+Sync functions are run in a thread automatically. If the callable holds state, pass `reset_fn` to clear it between attacks.
+
+## CLI
+
+`eq redteam` exposes the same capability. It accepts `agent:` / `deployment:` targets only — for an OpenAI model use `OpenAIModelTarget` in the Python API.
+
+```bash
+uv tool install "evaluatorq[redteam]"
+eq redteam run -t "agent:my-agent-key" -c LLM01 -c LLM07 --max-turns 2 -y
+eq redteam run --help   # all options
+```
+
+For the full flag reference (multi-target, report export, `eq redteam runs`, etc.), see [`examples/redteam/README.md`](../../../examples/redteam/README.md#cli-reference).
