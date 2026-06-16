@@ -507,7 +507,7 @@ class MultiTurnOrchestrator:
                 planner = ToolChainingPlanner(
                     client=self.llm_client,
                     model=self.model,
-                    llm_timeout=self._cfg.attacker.timeout_ms / 1000.0,
+                    pipeline_config=self._cfg,
                 )
                 decomposition = await planner.decompose(
                     objective=objective,
@@ -518,7 +518,7 @@ class MultiTurnOrchestrator:
                 # Schema-only verification against the agent's real tool list — no
                 # extra LLM cost, deterministic, and drops steps naming unknown tools.
                 verifier = ToolChainingVerifier(available_tools=tool_names)
-                valid_steps, _ = await verifier.verify_all(decomposition.steps)
+                valid_steps, _ = verifier.verify_all(decomposition.steps)
                 if not valid_steps:
                     logger.warning(
                         f'Tool-chaining: no steps survived verification for {strategy.name}; '
@@ -533,9 +533,11 @@ class MultiTurnOrchestrator:
                     valid_steps = valid_steps[:max_turns]
                 return format_plan_for_prompt(valid_steps), decomposition.token_usage
         except Exception as e:
+            # repr-style detail: str(asyncio.TimeoutError()) is '' on 3.10+, so log
+            # the type to keep timeouts/cancellations identifiable in the fallback.
             logger.warning(
-                f'Tool-chaining decomposition failed for {strategy.name} ({e}); '
-                'falling back to adaptive attack'
+                f'Tool-chaining decomposition failed for {strategy.name} '
+                f'({type(e).__name__}: {e}); falling back to adaptive attack'
             )
             return None, None
 
