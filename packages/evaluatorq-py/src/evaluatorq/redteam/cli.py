@@ -555,7 +555,12 @@ def validate_dataset(
             )
             raise typer.Exit(code=1)
         with open(local_path) as f:
-            raw = json.load(f)
+        try:
+            with open(local_path) as f:
+                raw = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            typer.echo(f"Failed to read dataset file: {e}", err=True)
+            raise typer.Exit(code=1)
     elif dataset.startswith("hf:"):
         try:
             from huggingface_hub import hf_hub_download
