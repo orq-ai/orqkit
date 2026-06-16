@@ -189,9 +189,9 @@ class TestAttackerSelfCensor:
     """
 
     def test_classify_content_filter(self):
-        from evaluatorq.redteam.adaptive.orchestrator import _classify_attacker_output
+        from evaluatorq.common.content_filter import classify_finish_reason
 
-        assert _classify_attacker_output('content_filter') == 'content_filter'
+        assert classify_finish_reason('content_filter') == 'content_filter'
 
     @pytest.mark.parametrize(
         'finish_reason',
@@ -200,9 +200,9 @@ class TestAttackerSelfCensor:
     def test_non_filter_reasons_are_usable(self, finish_reason: str | None):
         # A prose refusal arrives as finish_reason='stop' and must NOT be flagged —
         # it is forwarded to the target rather than killing the attack.
-        from evaluatorq.redteam.adaptive.orchestrator import _classify_attacker_output
+        from evaluatorq.common.content_filter import classify_finish_reason
 
-        assert _classify_attacker_output(finish_reason) is None
+        assert classify_finish_reason(finish_reason) is None
 
     def test_retry_config_default(self):
         from evaluatorq.redteam.contracts import LLMConfig

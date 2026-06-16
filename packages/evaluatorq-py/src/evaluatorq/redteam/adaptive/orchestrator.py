@@ -10,7 +10,7 @@ import contextvars
 import logging
 import time
 from inspect import signature
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from openai import AsyncOpenAI
@@ -18,6 +18,7 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 from typing_extensions import Self
 
+from evaluatorq.common.content_filter import classify_finish_reason, is_content_filter_error
 from evaluatorq.common.sanitize import xml_escape
 from evaluatorq.common.tracing import record_llm_response, set_span_attrs, truncate_for_span
 from evaluatorq.contracts import AgentResponse, AgentResponseError, AgentTarget, Message, TextOutputItem
@@ -245,41 +246,6 @@ Constraints:
 
 
 OBJECTIVE_MARKER = 'OBJECTIVE_ACHIEVED'
-
-
-def _classify_attacker_output(
-    finish_reason: str | None,
-) -> Literal['content_filter'] | None:
-    """Return ``'content_filter'`` when the provider blocked attacker generation, else ``None``.
-
-    Provider content filtering is the only structurally-detectable "unusable attacker
-    turn": it surfaces as the canonical OpenAI ``finish_reason='content_filter'`` signal
-    (enumerated in the chat-completion wire protocol the Orq router speaks).
-
-    A model that self-censors in natural-language prose is deliberately NOT detected: at
-    the protocol level it is indistinguishable from a real attack (``finish_reason='stop'``,
-    no ``refusal`` field — verified empirically for Anthropic via the Orq router), and its
-    refusal text is contextual rather than an enumerable set. Keyword-matching it produced
-    false positives that silently killed genuine attack turns, so such turns are forwarded
-    to the target and left for the judge to score.
-    """
-    return 'content_filter' if finish_reason == 'content_filter' else None
-
-
-def _is_content_filter_error(exc: BaseException) -> bool:
-    """Return True if ``exc`` is a provider content-filter block surfaced as an error.
-
-    Some providers filter at the prompt layer and raise an HTTP error instead of
-    returning ``finish_reason='content_filter'`` on a 200 — verified empirically: Azure
-    via the Orq router raises ``openai.BadRequestError`` (HTTP 400) with
-    ``code='content_filter'``. We key on the structured error ``code`` (exposed by the
-    OpenAI SDK as ``exc.code``, and mirrored in the JSON body), NOT on the message prose,
-    so it stays provider-agnostic for any block the router normalizes to that code.
-    """
-    if getattr(exc, 'code', None) == 'content_filter':
-        return True
-    body = getattr(exc, 'body', None)
-    return isinstance(body, dict) and body.get('code') == 'content_filter'
 
 
 def _parse_objective_marker(text: str) -> tuple[bool, str | None, str]:
@@ -637,7 +603,7 @@ class MultiTurnOrchestrator:
 
                                 choice = attack_response.choices[0] if attack_response.choices else None
                                 finish_reason = getattr(choice, 'finish_reason', None) if choice else None
-                                unusable_kind = _classify_attacker_output(finish_reason)
+                                unusable_kind = classify_finish_reason(finish_reason)
                                 if unusable_kind is None or attempt >= max_attempts - 1:
                                     break
                                 logger.warning(
@@ -685,7 +651,7 @@ class MultiTurnOrchestrator:
                         # of returning finish_reason='content_filter'. Classify that as a
                         # content filter, not a generic LLM error, so it's detected the same
                         # way as the 200-response form.
-                        is_filter = _is_content_filter_error(e)
+                        is_filter = is_content_filter_error(e)
                         error = f'Adversarial LLM exception: {e}'
                         error_type = 'content_filter' if is_filter else 'llm_error'
                         error_stage = 'adversarial_generation'

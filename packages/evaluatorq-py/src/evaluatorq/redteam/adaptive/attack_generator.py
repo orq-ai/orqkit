@@ -18,8 +18,14 @@ if TYPE_CHECKING:
 
     from evaluatorq.redteam.contracts import AgentContext, AttackStrategy
 
+from evaluatorq.common.content_filter import classify_finish_reason, is_content_filter_error
 from evaluatorq.redteam.contracts import DEFAULT_PIPELINE_MODEL, PIPELINE_CONFIG, LLMConfig
 from evaluatorq.redteam.utils import safe_substitute
+
+# Provider content filters can block the tool-adaptation call. Regenerate a few times
+# before degrading to the un-adapted prompt — tool adaptation is an optional enhancement,
+# so exhausting retries is non-fatal.
+_MAX_CONTENT_FILTER_ATTEMPTS = 3
 
 
 def fill_template(template: str, agent_context: AgentContext) -> str:
@@ -172,21 +178,46 @@ async def adapt_prompt_to_tools(
         '{tool_list}': tool_list,
     })
 
-    try:
-        response = await llm_client.chat.completions.parse(
-            model=model,
-            messages=[{'role': 'user', 'content': prompt}],
-            response_format=ToolAnalysis,
-            temperature=cfg.attacker.temperature,
-            max_completion_tokens=cfg.attacker.max_tokens,
-            extra_body=cfg.retry_extra_body(llm_client),
-            **cfg.attacker.extra_kwargs,
-        )
+    # Regenerate on a provider content-filter block (200 finish_reason='content_filter'
+    # or an error carrying code='content_filter') up to a few times; a non-filter error
+    # re-raises (transport/status) or degrades to the un-adapted prompt (anything else).
+    for attempt in range(1, _MAX_CONTENT_FILTER_ATTEMPTS + 1):
+        try:
+            response = await llm_client.chat.completions.parse(
+                model=model,
+                messages=[{'role': 'user', 'content': prompt}],
+                response_format=ToolAnalysis,
+                temperature=cfg.attacker.temperature,
+                max_completion_tokens=cfg.attacker.max_tokens,
+                extra_body=cfg.retry_extra_body(llm_client),
+                **cfg.attacker.extra_kwargs,
+            )
 
-        analysis = response.choices[0].message.parsed
-        if analysis is None:
-            raise ValueError('Tool analysis returned no parsed content')
-        relevant = [t for t in analysis.tools if t.relevant]
+            choices = response.choices or []
+            finish_reason = choices[0].finish_reason if choices else None
+            if classify_finish_reason(finish_reason) is not None:
+                logger.warning(
+                    f'Tool adaptation blocked by content filter '
+                    f'(attempt {attempt}/{_MAX_CONTENT_FILTER_ATTEMPTS}, finish_reason=content_filter)'
+                )
+                continue
+
+            analysis = response.choices[0].message.parsed
+            if analysis is None:
+                raise ValueError('Tool analysis returned no parsed content')
+            relevant = [t for t in analysis.tools if t.relevant]
+
+        except (APIConnectionError, APIStatusError) as e:
+            if is_content_filter_error(e):
+                logger.warning(
+                    f'Tool adaptation blocked by content filter '
+                    f'(attempt {attempt}/{_MAX_CONTENT_FILTER_ATTEMPTS}): {e}'
+                )
+                continue
+            raise
+        except Exception as e:
+            logger.error(f'Tool adaptation failed, using generic prompt without tool-specific targeting: {e}')
+            return base_prompt
 
         if not relevant:
             return base_prompt
@@ -199,8 +230,8 @@ async def adapt_prompt_to_tools(
         logger.debug(f'Tool adaptation: {len(relevant)}/{len(agent_context.tools)} tools relevant for {strategy.name}')
         return base_prompt + tool_reference
 
-    except (APIConnectionError, APIStatusError):
-        raise
-    except Exception as e:
-        logger.error(f'Tool adaptation failed, using generic prompt without tool-specific targeting: {e}')
-        return base_prompt
+    logger.warning(
+        f'Tool adaptation content-filtered after {_MAX_CONTENT_FILTER_ATTEMPTS} attempts; '
+        f'using un-adapted prompt for {strategy.name}'
+    )
+    return base_prompt

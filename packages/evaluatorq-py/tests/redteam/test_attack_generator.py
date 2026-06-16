@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from openai import APIStatusError
 
 from evaluatorq.redteam.adaptive.attack_generator import (
     ToolAnalysis,
@@ -213,6 +214,44 @@ def _mock_llm_client(analysis: ToolAnalysis) -> AsyncMock:
     return client
 
 
+def _ok_response(analysis: ToolAnalysis) -> MagicMock:
+    """A clean parse response (finish_reason='stop') carrying ``analysis``."""
+    message = MagicMock()
+    message.parsed = analysis
+    choice = MagicMock()
+    choice.message = message
+    choice.finish_reason = 'stop'
+    response = MagicMock()
+    response.choices = [choice]
+    return response
+
+
+def _content_filter_response() -> MagicMock:
+    """A 200 response blocked by the provider content filter."""
+    choice = MagicMock()
+    choice.finish_reason = 'content_filter'
+    choice.message = MagicMock(parsed=None)
+    response = MagicMock()
+    response.choices = [choice]
+    return response
+
+
+class _ContentFilterStatusError(APIStatusError):
+    """APIStatusError carrying a structured ``code`` (Azure surfaces filters this way).
+
+    Bypasses ``super().__init__`` to avoid building a real ``httpx.Response`` — the code
+    under test only reads ``.code``/``.body`` and ``str(e)``.
+    """
+
+    def __init__(self, code: str = 'content_filter') -> None:
+        self.code = code
+        self.body = {'code': code}
+        self.message = f'blocked: {code}'
+
+    def __str__(self) -> str:
+        return self.message
+
+
 class TestAdaptPromptToTools:
     """Tests for adapt_prompt_to_tools function."""
 
@@ -334,3 +373,63 @@ class TestAdaptPromptToTools:
             llm_client=client,
         )
         assert result == 'Original prompt'
+
+    @pytest.mark.asyncio
+    async def test_content_filter_finish_reason_retries_then_succeeds(self):
+        """A 200 finish_reason='content_filter' regenerates; a later clean turn wins."""
+        context = AgentContext(
+            key='test_agent',
+            tools=[ToolInfo(name='shell_execute', description='Execute shell commands')],
+        )
+        strategy = _make_strategy()
+        analysis = ToolAnalysis(
+            tools=[ToolRelevance(tool_name='shell_execute', relevant=True, exploitation_hint='runs shell')]
+        )
+        client = AsyncMock()
+        client.chat.completions.parse = AsyncMock(
+            side_effect=[_content_filter_response(), _content_filter_response(), _ok_response(analysis)]
+        )
+
+        result = await adapt_prompt_to_tools('Run this', context, strategy, llm_client=client)
+        assert 'shell_execute' in result
+        assert client.chat.completions.parse.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_content_filter_exhausted_returns_base_prompt(self):
+        """All attempts content-filtered → degrade to the un-adapted prompt after 3 tries."""
+        context = AgentContext(key='test_agent', tools=[ToolInfo(name='search')])
+        strategy = _make_strategy()
+        client = AsyncMock()
+        client.chat.completions.parse = AsyncMock(return_value=_content_filter_response())
+
+        result = await adapt_prompt_to_tools('Original prompt', context, strategy, llm_client=client)
+        assert result == 'Original prompt'
+        assert client.chat.completions.parse.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_content_filter_raised_as_error_retries(self):
+        """A content-filter block surfaced as an APIStatusError also triggers regeneration."""
+        context = AgentContext(key='test_agent', tools=[ToolInfo(name='search')])
+        strategy = _make_strategy()
+        analysis = ToolAnalysis(
+            tools=[ToolRelevance(tool_name='search', relevant=True, exploitation_hint='searches')]
+        )
+        client = AsyncMock()
+        client.chat.completions.parse = AsyncMock(
+            side_effect=[_ContentFilterStatusError(), _ok_response(analysis)]
+        )
+
+        result = await adapt_prompt_to_tools('Run this', context, strategy, llm_client=client)
+        assert 'search' in result
+        assert client.chat.completions.parse.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_non_filter_api_status_error_reraises(self):
+        """A non-content-filter APIStatusError propagates (not retried, not swallowed)."""
+        context = AgentContext(key='test_agent', tools=[ToolInfo(name='search')])
+        strategy = _make_strategy()
+        client = AsyncMock()
+        client.chat.completions.parse = AsyncMock(side_effect=_ContentFilterStatusError(code='rate_limit'))
+
+        with pytest.raises(APIStatusError):
+            await adapt_prompt_to_tools('Run this', context, strategy, llm_client=client)
