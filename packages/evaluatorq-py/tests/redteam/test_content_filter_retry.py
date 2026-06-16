@@ -4,6 +4,7 @@ the live objective-generation call (objective_generator)."""
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 from openai import APIStatusError
 
@@ -14,20 +15,24 @@ from evaluatorq.common.content_filter import (
 )
 
 
-class _ContentFilterStatusError(APIStatusError):
-    """APIStatusError carrying a structured ``code`` (Azure surfaces filters this way).
+def _cf_error(code: str = 'content_filter') -> APIStatusError:
+    """A real ``APIStatusError`` carrying a structured ``code`` (how Azure surfaces a filter).
 
-    Bypasses ``super().__init__`` to avoid building a real ``httpx.Response`` — the code
-    under test only reads ``.code``/``.body`` and ``str(e)``.
+    Built from a genuine httpx.Response so ``isinstance(..., APIStatusError)`` holds and the
+    SDK derives ``.code``/``.body`` — the helper's ``except (APIConnectionError, APIStatusError)``
+    catches it exactly like a live block.
     """
+    request = httpx.Request('POST', 'https://router.example/v3')
+    response = httpx.Response(400, request=request)
+    return APIStatusError(f'blocked: {code}', response=response, body={'code': code})
 
-    def __init__(self, code: str = 'content_filter') -> None:
-        self.code = code
-        self.body = {'code': code}
-        self.message = f'blocked: {code}'
 
-    def __str__(self) -> str:
-        return self.message
+class _BodyOnlyError(Exception):
+    """Exception exposing only a structured ``body`` (no ``.code``) to exercise the body fallback."""
+
+    def __init__(self, body: dict[str, object]) -> None:
+        super().__init__('content filtered')
+        self.body = body
 
 
 def _resp(finish_reason: str | None, *, parsed: object = None, content: str | None = None) -> SimpleNamespace:
@@ -45,15 +50,13 @@ class TestClassifiers:
         assert classify_finish_reason(fr) is None
 
     def test_is_content_filter_error_on_code_attr(self):
-        assert is_content_filter_error(_ContentFilterStatusError()) is True
+        assert is_content_filter_error(_cf_error()) is True
 
     def test_is_content_filter_error_on_body(self):
-        exc = Exception()
-        exc.body = {'code': 'content_filter'}  # type: ignore[attr-defined]
-        assert is_content_filter_error(exc) is True
+        assert is_content_filter_error(_BodyOnlyError({'code': 'content_filter'})) is True
 
     def test_is_content_filter_error_false_for_other(self):
-        assert is_content_filter_error(_ContentFilterStatusError(code='rate_limit')) is False
+        assert is_content_filter_error(_cf_error('rate_limit')) is False
         assert is_content_filter_error(ValueError('nope')) is False
 
 
@@ -94,21 +97,21 @@ class TestRegenerateOnContentFilter:
     @pytest.mark.asyncio
     async def test_retries_on_error_form_then_succeeds(self):
         usable = _resp('stop')
-        call = AsyncMock(side_effect=[_ContentFilterStatusError(), usable])
+        call = AsyncMock(side_effect=[_cf_error(), usable])
         result = await regenerate_on_content_filter(call, max_attempts=3)
         assert result is usable
         assert call.call_count == 2
 
     @pytest.mark.asyncio
     async def test_error_form_on_last_attempt_propagates(self):
-        call = AsyncMock(side_effect=_ContentFilterStatusError())
+        call = AsyncMock(side_effect=_cf_error())
         with pytest.raises(APIStatusError):
             await regenerate_on_content_filter(call, max_attempts=2)
         assert call.call_count == 2
 
     @pytest.mark.asyncio
     async def test_non_filter_error_propagates_without_retry(self):
-        call = AsyncMock(side_effect=_ContentFilterStatusError(code='rate_limit'))
+        call = AsyncMock(side_effect=_cf_error('rate_limit'))
         with pytest.raises(APIStatusError):
             await regenerate_on_content_filter(call, max_attempts=3)
         assert call.call_count == 1
@@ -164,14 +167,14 @@ class TestObjectiveGenerationRetry:
 
     @pytest.mark.asyncio
     async def test_error_form_filter_degrades_to_empty(self):
-        client = self._client(_ContentFilterStatusError())
+        client = self._client(_cf_error())
         result = await self._call(client, retries=1)
         assert result == []
         assert client.chat.completions.parse.call_count == 2
 
     @pytest.mark.asyncio
     async def test_non_filter_status_error_propagates(self):
-        client = self._client(_ContentFilterStatusError(code='rate_limit'))
+        client = self._client(_cf_error('rate_limit'))
         with pytest.raises(APIStatusError):
             await self._call(client)
         assert client.chat.completions.parse.call_count == 1
