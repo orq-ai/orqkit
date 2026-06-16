@@ -554,7 +554,6 @@ def validate_dataset(
                 err=True,
             )
             raise typer.Exit(code=1)
-        with open(local_path) as f:
         try:
             with open(local_path) as f:
                 raw = json.load(f)
@@ -584,8 +583,12 @@ def validate_dataset(
                 err=True,
             )
             raise typer.Exit(code=1)
-        with open(local_path) as f:
-            raw = json.load(f)
+        try:
+            with open(local_path) as f:
+                raw = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            typer.echo(f"Failed to read dataset file: {e}", err=True)
+            raise typer.Exit(code=1)
     else:
         path = Path(dataset)
         typer.echo(f"Validating local file: {path}")
