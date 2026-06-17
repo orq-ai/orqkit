@@ -24,9 +24,12 @@ redteam/
 │   ├── evaluator.py          #   Vulnerability scoring
 │   └── pipeline.py           #   evaluatorq DataPoint/Job/Evaluator wiring
 ├── backends/                 # Pluggable target backends
+│   ├── base.py               #   Backend ABC + create_target() (AgentTarget lives in contracts)
 │   ├── orq.py                #   ORQ platform agent target (default)
 │   ├── openai.py             #   Direct OpenAI model target
-│   └── registry.py           #   Backend resolution + LLM client factory
+│   ├── openresponses.py      #   OpenResponses (/responses) agent target
+│   ├── registry.py           #   Backend resolution + LLM client factory
+│   └── _errors.py            #   Status/provider error-code extraction helpers
 ├── frameworks/               # Framework-specific strategy libraries
 │   ├── owasp_asi.py          #   ASI01–ASI10 attack strategies
 │   ├── owasp_llm.py          #   LLM01–LLM09 attack strategies
