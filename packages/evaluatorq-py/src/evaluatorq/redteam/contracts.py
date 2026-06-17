@@ -11,7 +11,7 @@ Semantic convention:
 
 import re
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, TypedDict
 
 from pydantic import (
     BaseModel,
@@ -25,6 +25,10 @@ from evaluatorq.contracts import StrEnum
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
+
+    _Client: TypeAlias = AsyncOpenAI | None
+else:
+    _Client = Any
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -491,8 +495,89 @@ from evaluatorq.contracts import (  # noqa: F401
     DEFAULT_PIPELINE_MODEL,
     DEFAULT_TARGET_MAX_TOKENS,
     DEFAULT_TARGET_TIMEOUT_MS,
+    JURY_RAW_OUTPUT_KEY,
+    JuryResult,
+    JuryStats,
+    JuryVote,
     LLMCallConfig,
 )
+
+
+class EvaluatorConfig(BaseModel):
+    """LLM evaluator-role configuration, including the optional judge panel.
+
+    ``model="x"`` is accepted as shorthand for ``judges=["x"]``. Decode/client
+    fields are shared across every judge in the panel.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra='forbid')
+
+    model: str | None = Field(
+        default=None,
+        exclude=True,
+        description='Primary judge model shorthand; normalized to judges[0].',
+    )
+    judges: list[str] = Field(
+        default_factory=lambda: [DEFAULT_PIPELINE_MODEL],
+        min_length=1,
+        description='Judge model IDs. judges[0] is the primary evaluator model.',
+    )
+    api: Literal['chat_completions', 'responses'] = 'chat_completions'
+    temperature: float = Field(default=1.0, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=DEFAULT_TARGET_MAX_TOKENS, gt=0)
+    timeout_ms: int = Field(default=90_000, gt=0)
+    extra_kwargs: dict[str, Any] = Field(default_factory=dict)
+    client: _Client = None
+    repetitions: int = Field(default=1, ge=1)
+    replacement_judges: list[str] = Field(default_factory=list)
+    min_successful_judges: int = Field(default=1, ge=1)
+    strict_panel: bool = False
+
+    @model_validator(mode='before')
+    @classmethod
+    def _accept_model_sugar(cls, data: Any) -> Any:
+        if isinstance(data, LLMCallConfig):
+            data = data.model_dump()
+        if isinstance(data, dict):
+            payload = dict(data)
+            model = payload.get('model')
+            if model is not None:
+                judges = list(payload.get('judges') or [])
+                payload['judges'] = [model, *[j for j in judges if j != model]]
+            return payload
+        return data
+
+    @property
+    def primary_model(self) -> str:
+        return self.judges[0]
+
+    def as_call_config(self) -> LLMCallConfig:
+        return LLMCallConfig(
+            model=self.model or self.judges[0],
+            api=self.api,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            timeout_ms=self.timeout_ms,
+            extra_kwargs=self.extra_kwargs,
+            client=self.client,
+        )
+
+    @model_validator(mode='after')
+    def _check_min_successful_judges(self) -> 'EvaluatorConfig':
+        panel: list[str] = []
+        for j in self.judges:
+            if j and j not in panel:
+                panel.append(j)
+        if not panel:
+            raise ValueError('evaluator.judges must contain at least one model')
+        if self.min_successful_judges > len(panel):
+            raise ValueError(
+                f'min_successful_judges ({self.min_successful_judges}) exceeds the effective '
+                f'panel size ({len(panel)}) after de-duplication; panel={panel}'
+            )
+        object.__setattr__(self, 'judges', panel)
+        object.__setattr__(self, 'model', panel[0])
+        return self
 
 
 class LLMConfig(BaseModel):
@@ -505,17 +590,25 @@ class LLMConfig(BaseModel):
 
         config = LLMConfig(
             attacker=LLMCallConfig(model="anthropic/claude-3-5-sonnet", temperature=0.9),
-            evaluator=LLMCallConfig(model="openai/gpt-4o-mini", temperature=0.0),
+            evaluator=EvaluatorConfig(model="openai/gpt-4o-mini", temperature=0.0),
         )
     """
 
+    model_config = ConfigDict(extra='forbid')
+
     # --- Role-based call configs ----------------------------------------------
     attacker: LLMCallConfig = Field(default_factory=LLMCallConfig)
-    evaluator: LLMCallConfig = Field(default_factory=LLMCallConfig)
+    evaluator: EvaluatorConfig = Field(default_factory=EvaluatorConfig)
 
     # --- Retry configuration --------------------------------------------------
     retry_count: int = 3
     retry_on_codes: list[int] = Field(default=[429, 500, 502, 503, 504])
+    # How many times to regenerate an attacker turn that the attack model
+    # content-filtered or self-censored (a refusal/safety disclaimer) before
+    # giving up and stopping the attack. Distinct from retry_count/retry_on_codes,
+    # which only cover HTTP errors via the ORQ router. 0 disables retries (the
+    # unusable turn stops the attack immediately rather than being forwarded).
+    max_content_filter_retries: int = Field(default=2, ge=0, le=10)
 
     # --- Cleanup timeout ------------------------------------------------------
     cleanup_timeout_ms: int = 60_000
@@ -595,7 +688,7 @@ OWASP_CATEGORY_NAMES: dict[str, str] = {
 #
 #   from evaluatorq.redteam import OWASP_LLM_TOP_10, OWASP_ASI_TOP_10
 #   red_team(..., categories=OWASP_LLM_TOP_10)
-# Contains LLM01–LLM09. LLM10 (Unbounded Consumption) is excluded because it is an
+# Contains LLM01-LLM09. LLM10 (Unbounded Consumption) is excluded because it is an
 # infrastructure-level risk not testable via prompt-based red teaming.
 OWASP_LLM_TOP_10: list[str] = list(_LLM_CATEGORY_NAMES)
 OWASP_ASI_TOP_10: list[str] = list(_ASI_CATEGORY_NAMES)
@@ -773,10 +866,10 @@ def turns_to_messages(turns: list[Turn], *, skip_errors: bool = False) -> list[M
         text_buffer: list[str] = []
         target = turn.target
 
-        def _flush_text() -> None:
-            if text_buffer:
-                out.append(Message(role='assistant', content=''.join(text_buffer)))
-                text_buffer.clear()
+        def _flush_text(buffer: list[str] = text_buffer) -> None:
+            if buffer:
+                out.append(Message(role='assistant', content=''.join(buffer)))
+                buffer.clear()
 
         for item in target.output:
             if isinstance(item, TextOutputItem):
@@ -983,6 +1076,10 @@ class AttackEvaluationResult(BaseModel):
         "success, {'error': <str>, ...} on failure. Display/debug only — consumers "
         'must read the parsed verdict from passed/explanation, not from here.',
     )
+    jury: JuryResult | None = Field(
+        default=None,
+        description='Panel-of-judges breakdown when a jury is used (RES-739). None for single-judge runs.',
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1063,6 +1160,11 @@ class UnifiedEvaluationResult(BaseModel):
         "success, {'error': <str>, ...} on failure. Display/debug only (serialized into "
         'the local report JSON, not uploaded) — consumers must read the parsed verdict '
         'from passed/explanation, not from here.',
+    )
+    jury: JuryResult | None = Field(
+        default=None,
+        description='Panel-of-judges breakdown when a jury ran (RES-739). None for single-judge runs. '
+        'Carries per-judge votes, disagreement stats and raw agreement through to the report layer.',
     )
 
 
@@ -1248,6 +1350,40 @@ class FrameworkSummary(DimensionSummary):
     """Per-framework summary statistics (useful for mixed reports)."""
 
 
+class ReliabilityMethod(StrEnum):
+    """Closed set of supported inter-judge reliability coefficient methods."""
+
+    KRIPPENDORFF_ALPHA_NOMINAL = 'krippendorff_alpha_nominal'
+
+
+class JuryReliability(BaseModel):
+    """Run-level inter-judge reliability for panel-of-judges runs (RES-739).
+
+    Unlike per-sample ``raw_agreement`` (which cannot tell real consensus from
+    chance), this is a chance-corrected statistic across all multi-judge samples:
+    Krippendorff's alpha on the nominal RESISTANT/VULNERABLE verdicts. Alpha
+    tolerates judges that failed on *some* samples (variable ratings per unit), so
+    a sample where only some of the panel responded still contributes — provided
+    at least two verdicts remain. Samples that drop below two verdicts form no
+    rateable pair and are excluded (the ``samples`` count reflects what actually
+    contributed). 1.0 = perfect agreement, ~0 = chance-level, < 0 = systematic
+    disagreement. ``None`` when undefined (every verdict identical, or fewer than
+    two multi-judge samples).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    krippendorff_alpha: float | None = Field(
+        default=None,
+        description='Chance-corrected inter-judge agreement (nominal Krippendorff alpha); None if undefined',
+    )
+    samples: int = Field(default=0, ge=0, description='Multi-judge samples (>=2 verdicts) that contributed')
+    method: ReliabilityMethod = Field(
+        default=ReliabilityMethod.KRIPPENDORFF_ALPHA_NOMINAL,
+        description='Reliability coefficient used',
+    )
+
+
 class ReportSummary(BaseModel):
     """Aggregate summary statistics for a report."""
 
@@ -1276,6 +1412,11 @@ class ReportSummary(BaseModel):
     by_turn_type: dict[str, TurnTypeSummary] = Field(default_factory=dict)
     by_domain: dict[str, DomainSummary] = Field(default_factory=dict)
     by_framework: dict[str, FrameworkSummary] = Field(default_factory=dict)
+    jury_reliability: JuryReliability | None = Field(
+        default=None,
+        description='Chance-corrected inter-judge reliability across panel-of-judges samples (RES-739). '
+        'None for single-judge runs.',
+    )
     datapoint_breakdown: dict[str, int] | None = Field(
         default=None,
         description='Datapoint counts by source: static, template_dynamic, generated_dynamic (hybrid runs only)',
@@ -1501,7 +1642,7 @@ class DatasetInferenceRow(BaseModel):
     error_type: str | None = None
 
 
-class EvaluatorConfig(TypedDict):
+class EvaluatorqEvaluatorConfig(TypedDict):
     """Minimal evaluatorq evaluator contract."""
 
     name: str

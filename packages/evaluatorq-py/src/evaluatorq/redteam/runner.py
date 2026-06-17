@@ -20,6 +20,7 @@ from loguru import logger
 from evaluatorq import DataPoint, EvaluationResult, job
 from evaluatorq.common.async_utils import await_maybe, warn_if_sync_hooks
 from evaluatorq.common.messages import coerce_content_text
+from evaluatorq.common.tracing import set_span_attrs
 from evaluatorq.contracts import AgentTarget, Message
 from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities, classify_agent_capabilities
 from evaluatorq.redteam.adaptive.orchestrator import ProgressDisplay, _get_active_progress
@@ -61,9 +62,12 @@ from evaluatorq.redteam.exceptions import CancelledError, CredentialError
 from evaluatorq.redteam.hooks import ConfirmPayload, DefaultHooks, PipelineHooks
 from evaluatorq.redteam.reports.recommendations import generate_focus_area_recommendations
 from evaluatorq.redteam.runtime.jobs import _build_messages, _sanitize_job_name, create_model_job
-from evaluatorq.common.tracing import set_span_attrs
 from evaluatorq.redteam.tracing import with_redteam_span
-from evaluatorq.redteam.vulnerability_registry import get_primary_category, resolve_vulnerabilities
+from evaluatorq.redteam.vulnerability_registry import (
+    get_primary_category,
+    resolve_category_safe,
+    resolve_vulnerabilities,
+)
 from evaluatorq.send_results import send_results_to_orq
 from evaluatorq.tracing import capture_parent_context, init_tracing_if_needed
 
@@ -464,7 +468,7 @@ async def red_team(
     resolved_mode = Pipeline(mode)
 
     attack_model = config.attacker.model
-    evaluator_model = config.evaluator.model
+    evaluator_model = config.evaluator.model or config.evaluator.judges[0]
 
     # Early credential validation — fail fast with a clear message.
     # Also check per-role clients: if either role has a pre-configured client,
@@ -476,24 +480,108 @@ async def red_team(
             'Set OPENAI_API_KEY for direct OpenAI access, or ORQ_API_KEY to use the ORQ router.'
         )
 
+    # Fail fast: static/hybrid runs that pull static datapoints from HuggingFace
+    # need huggingface-hub. Check now rather than deep in the static leg — in
+    # hybrid mode that leg runs only after the entire dynamic leg, so a missing
+    # dependency would otherwise surface after minutes of (now wasted) work.
+    if resolved_mode in (Pipeline.STATIC, Pipeline.HYBRID):
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import (
+            ensure_huggingface_available,
+            is_huggingface_source,
+        )
+
+        if is_huggingface_source(dataset):
+            ensure_huggingface_available()
+
     resolved_vulns: list[Vulnerability] | None
     if vulnerabilities:
         resolved_vulns = resolve_vulnerabilities(vulnerabilities)
         resolved_categories = [get_primary_category(v) for v in resolved_vulns]
     elif categories:
-        # Resolve category strings to vulnerabilities so the pipeline can use the
-        # vulnerability-first path; fall back gracefully if any code is unknown.
+        # Surface unrecognized codes instead of silently swallowing the ValueError and
+        # proceeding with resolved_vulns=None — that skips the evaluability gate and runs
+        # a meaningless attack with no scoring.
         try:
             resolved_vulns = resolve_vulnerabilities(categories)
         except ValueError:
-            resolved_vulns = None
+            # Mirror resolve_vulnerabilities, which accepts BOTH vulnerability IDs and
+            # category codes — a code is unknown only when it is neither. Using
+            # resolve_category_safe alone would mislabel a valid vulnerability ID (e.g.
+            # 'goal_hijacking') as unrecognized in a mixed list.
+            valid_vuln_ids = {v.value for v in Vulnerability}
+            unknown = [
+                c for c in categories if c not in valid_vuln_ids and resolve_category_safe(c) is None
+            ]
+            raise ValueError(
+                f'Unrecognized categor{"y" if len(unknown) == 1 else "ies"}: '
+                f'{", ".join(unknown)}. Valid categories: {", ".join(list_available_categories())}.'
+            ) from None
         resolved_categories = categories
+        # A cross-framework code (e.g. LLM03) resolves to a vulnerability whose canonical
+        # label lives in another framework (supply_chain → ASI04); results are reported
+        # under that label. Log the relabel so it isn't surprising in the report.
+        for c in categories:
+            v = resolve_category_safe(c)
+            primary = get_primary_category(v) if v is not None else None
+            if primary is not None and primary != c:
+                logger.info(
+                    'Category %s is scored by the %s evaluator and reported under %s.',
+                    c,
+                    v.value,  # pyright: ignore[reportOptionalMemberAccess] - v is not None here
+                    primary,
+                )
     else:
         resolved_categories = list_available_categories()
         try:
             resolved_vulns = resolve_vulnerabilities(resolved_categories)
         except ValueError:
             resolved_vulns = None
+
+    # Evaluability gate (forward-looking guard): a requested vulnerability with no
+    # registered automated evaluator can be *attacked* but not *scored* by prompt-based
+    # red teaming. Without this gate the dynamic leg would burn attacker and target
+    # tokens generating attacks that always return inconclusive, and the summary could
+    # not distinguish "unmeasured" from "resisted" (resistance_rate defaults to 0.0 at
+    # zero evaluation coverage, which reads as fully vulnerable). Such vulnerabilities
+    # are pruned up front; if NONE of the requested ones are scorable, we raise.
+    #
+    # As of this writing every vulnerability in the registry HAS an evaluator (all ten
+    # ASI categories plus the LLM Top 10 mappings — e.g. LLM03 Supply Chain resolves to
+    # the supply_chain vulnerability, scored by the ASI04 evaluator), so this gate is
+    # currently inert. It is retained deliberately: it is the safety net that stops a
+    # future vulnerability shipped without an evaluator from being silently reported as
+    # resisted. The default category set from list_available_categories() is already
+    # evaluator-backed, so it only ever affects explicit user selections; the static leg
+    # keeps its own datapoint-level coverage guard in _run_static().
+    unevaluable_codes: list[str] = []
+    if resolved_vulns is not None:
+        from evaluatorq.redteam.frameworks.owasp.evaluators import VULNERABILITY_EVALUATOR_REGISTRY
+
+        evaluable_vulns = [v for v in resolved_vulns if v in VULNERABILITY_EVALUATOR_REGISTRY]
+        dropped_vulns = [v for v in resolved_vulns if v not in VULNERABILITY_EVALUATOR_REGISTRY]
+        if dropped_vulns:
+            unevaluable_codes = [get_primary_category(v) for v in dropped_vulns]
+            if not evaluable_vulns:
+                raise ValueError(
+                    'None of the requested categories/vulnerabilities have an automated '
+                    f'evaluator: {", ".join(unevaluable_codes)}. They cannot be scored by '
+                    'prompt-based red teaming. Pick evaluator-backed categories '
+                    f'({", ".join(list_available_categories())}), or test these with a '
+                    'custom AgentTarget + evaluator via the SDK.'
+                )
+            dropped_set = set(dropped_vulns)
+            resolved_categories = [
+                c for c in resolved_categories if resolve_category_safe(c) not in dropped_set
+            ]
+            resolved_vulns = evaluable_vulns
+            logger.warning(
+                'Skipping %d requested categor%s with no automated evaluator: %s. '
+                'These require live-system testing and cannot be scored by prompt-based '
+                'red teaming — they would only produce inconclusive results.',
+                len(unevaluable_codes),
+                'y' if len(unevaluable_codes) == 1 else 'ies',
+                ', '.join(unevaluable_codes),
+            )
 
     if resolved_mode in (Pipeline.DYNAMIC, Pipeline.HYBRID):
         report = await _run_dynamic_or_hybrid(
@@ -544,17 +632,28 @@ async def red_team(
         msg = f'Invalid mode {mode!r}. Must be "dynamic", "static", or "hybrid".'
         raise ValueError(msg)
 
+    # Record categories dropped by the evaluability gate so the report is honest
+    # about reduced scope (rather than silently testing fewer categories).
+    if unevaluable_codes:
+        report.pipeline_warnings.insert(
+            0,
+            f'Skipped {len(unevaluable_codes)} requested categor'
+            f'{"y" if len(unevaluable_codes) == 1 else "ies"} with no automated '
+            f'evaluator ({", ".join(unevaluable_codes)}): not scoreable via '
+            'prompt-based red teaming (requires live-system testing).',
+        )
+
     # Generate LLM-based recommendations for focus areas (opt-in)
     if generate_recommendations:
         try:
             rec_client = llm_client or config.evaluator.client
             if rec_client is None:
-                rec_client = create_async_llm_client(role_config=config.evaluator)
+                rec_client = create_async_llm_client(role_config=config.evaluator.as_call_config())
 
             report.focus_area_recommendations = await generate_focus_area_recommendations(
                 report=report,
                 llm_client=rec_client,
-                model=config.evaluator.model,
+                model=evaluator_model,
                 cfg=config,
             )
         except (TypeError, AttributeError, ImportError, NameError, KeyError):
@@ -722,9 +821,9 @@ def _create_static_job_for_agent_target(target_factory: Callable[[], Any], label
             raw_response = await target.respond([Message(role='user', content=prompt)])
             result = _coerce_to_agent_response(raw_response)
 
-            _active_progress = _get_active_progress()
-            if _active_progress is not None:
-                await _active_progress.finish_attack(None)
+            active_progress = _get_active_progress()
+            if active_progress is not None:
+                await active_progress.finish_attack(None)
 
             return {
                 'response': result.text,
@@ -1753,15 +1852,37 @@ async def _run_dynamic_or_hybrid(
         # Build evaluator — hybrid routes on hybrid_source; dynamic uses the
         # dynamic evaluator directly.
         has_static = any(pt.static_datapoints for pt in prepared_targets)
+        evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
+        # Self-judge / family-bias guard (RES-739): compare the panel against the
+        # target's underlying model. ``agent_context.model`` is populated for ORQ
+        # agents (from the agent config), deployments, and direct-model backends —
+        # so this covers the common path, not just direct models. Targets that
+        # leave it unset (or set it to an opaque label) resolve to provider family
+        # 'unknown' downstream and never trigger a spurious warning.
+        target_models = list(
+            dict.fromkeys(pt.agent_context.model for pt in prepared_targets if pt.agent_context.model)
+        )
+        # Panel-of-judges / jury config shared by the dynamic evaluator (RES-739).
+        panel_cfg = pipeline_config.evaluator if pipeline_config else None
+        panel_kwargs: dict[str, Any] = {
+            'judges': panel_cfg.judges[1:] if panel_cfg else [],
+            'judge_repetitions': panel_cfg.repetitions if panel_cfg else 1,
+            'replacement_judges': panel_cfg.replacement_judges if panel_cfg else [],
+            'min_successful_judges': panel_cfg.min_successful_judges if panel_cfg else 1,
+            'target_models': target_models,
+            'strict_panel': panel_cfg.strict_panel if panel_cfg else False,
+        }
         if mode == Pipeline.HYBRID and has_static:
             from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import create_owasp_evaluator
 
-            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
             dynamic_evaluator = create_dynamic_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model,
+                llm_client=evaluator_client,
+                cfg=evaluator_cfg,
+                **panel_kwargs,
             )
             static_evaluator = create_owasp_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg, **panel_kwargs
             )
 
             async def hybrid_scorer(params: Any) -> EvaluationResult:
@@ -1781,9 +1902,11 @@ async def _run_dynamic_or_hybrid(
 
             evaluators: list[Any] = [{'name': 'hybrid-owasp-security', 'scorer': hybrid_scorer}]
         else:
-            evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
             evaluator = create_dynamic_evaluator(
-                evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg
+                evaluator_model=evaluator_model,
+                llm_client=evaluator_client,
+                cfg=evaluator_cfg,
+                **panel_kwargs,
             )
             evaluators = [evaluator]
 
@@ -2152,7 +2275,21 @@ async def _run_static(
     evaluator_client = pipeline_config.evaluator.client if pipeline_config else None
     evaluator_client = evaluator_client or llm_client
     evaluator_cfg = pipeline_config.evaluator if pipeline_config else None
-    evaluator = create_owasp_evaluator(evaluator_model=evaluator_model, llm_client=evaluator_client, cfg=evaluator_cfg)
+    panel_cfg = pipeline_config.evaluator if pipeline_config else None
+    panel_kwargs: dict[str, Any] = {
+        'judges': panel_cfg.judges[1:] if panel_cfg else [],
+        'judge_repetitions': panel_cfg.repetitions if panel_cfg else 1,
+        'replacement_judges': panel_cfg.replacement_judges if panel_cfg else [],
+        'min_successful_judges': panel_cfg.min_successful_judges if panel_cfg else 1,
+        'target_models': list(dict.fromkeys(targets)),
+        'strict_panel': panel_cfg.strict_panel if panel_cfg else False,
+    }
+    evaluator = create_owasp_evaluator(
+        evaluator_model=evaluator_model,
+        llm_client=evaluator_client,
+        cfg=evaluator_cfg,
+        **panel_kwargs,
+    )
 
     # Confirm hook — report aggregate counts
     vulnerabilities: list[str] = list(

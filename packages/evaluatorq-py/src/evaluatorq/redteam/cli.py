@@ -20,6 +20,7 @@ app = typer.Typer(
     name="redteam",
     help="Red teaming CLI for evaluatorq.",
     no_args_is_help=True,
+    rich_markup_mode=None,
 )
 
 
@@ -321,7 +322,7 @@ def run(
     _configure_logging(verbose)
 
     from evaluatorq.redteam import red_team
-    from evaluatorq.redteam.contracts import LLMCallConfig, LLMConfig, TargetConfig
+    from evaluatorq.redteam.contracts import EvaluatorConfig, LLMCallConfig, LLMConfig, TargetConfig
     from evaluatorq.redteam.exceptions import CancelledError, RedTeamError
     from evaluatorq.redteam.hooks import RichHooks
 
@@ -345,7 +346,7 @@ def run(
     # Build LLMConfig from CLI flags
     config = LLMConfig(
         attacker=LLMCallConfig(model=attack_model),
-        evaluator=LLMCallConfig(model=evaluator_model),
+        evaluator=EvaluatorConfig(model=evaluator_model),
     )
 
     try:
@@ -384,6 +385,11 @@ def run(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
     except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1)
+    except ImportError as e:
+        # e.g. static/hybrid run needs huggingface-hub — show the install hint
+        # cleanly instead of a traceback.
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
 
@@ -535,11 +541,25 @@ def validate_dataset(
         typer.echo(
             f"Downloading from HuggingFace: {DEFAULT_HF_REPO}/{DEFAULT_HF_FILENAME}"
         )
-        local_path = hf_hub_download(
-            repo_id=DEFAULT_HF_REPO, filename=DEFAULT_HF_FILENAME, repo_type="dataset"
-        )
-        with open(local_path) as f:
-            raw = json.load(f)
+        try:
+            local_path = hf_hub_download(
+                repo_id=DEFAULT_HF_REPO, filename=DEFAULT_HF_FILENAME, repo_type="dataset"
+            )
+        except Exception as e:
+            typer.echo(
+                f"Failed to download dataset from HuggingFace "
+                f"({DEFAULT_HF_REPO}/{DEFAULT_HF_FILENAME}): {e}. Check your network "
+                "connection, that the repository exists, and your access "
+                "(set HF_TOKEN for gated/private datasets).",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        try:
+            with open(local_path) as f:
+                raw = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            typer.echo(f"Failed to read dataset file: {e}", err=True)
+            raise typer.Exit(code=1)
     elif dataset.startswith("hf:"):
         try:
             from huggingface_hub import hf_hub_download
@@ -551,11 +571,24 @@ def validate_dataset(
             raise typer.Exit(code=1)
         repo, filename = _parse_hf_source(dataset.removeprefix("hf:"))
         typer.echo(f"Downloading from HuggingFace: {repo}/{filename}")
-        local_path = hf_hub_download(
-            repo_id=repo, filename=filename, repo_type="dataset"
-        )
-        with open(local_path) as f:
-            raw = json.load(f)
+        try:
+            local_path = hf_hub_download(
+                repo_id=repo, filename=filename, repo_type="dataset"
+            )
+        except Exception as e:
+            typer.echo(
+                f"Failed to download dataset from HuggingFace ({repo}/{filename}): {e}. "
+                "Check your network connection, that the repository exists, and your "
+                "access (set HF_TOKEN for gated/private datasets).",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        try:
+            with open(local_path) as f:
+                raw = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            typer.echo(f"Failed to read dataset file: {e}", err=True)
+            raise typer.Exit(code=1)
     else:
         path = Path(dataset)
         typer.echo(f"Validating local file: {path}")

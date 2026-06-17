@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import Counter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -11,20 +12,26 @@ from loguru import logger
 from pydantic import ValidationError
 
 from evaluatorq import DataPoint, EvaluationResult
-from evaluatorq.contracts import OutputMessage, TextOutputItem, ToolCallOutputItem
+from evaluatorq.common.judge import JudgeError, build_eval_replacements, run_judge
+from evaluatorq.common.jury import Prediction, VerdictKind, _panel_composition_messages, append_jury_summary, run_jury
+from evaluatorq.contracts import JURY_RAW_OUTPUT_KEY, OutputMessage, TextOutputItem, ToolCallOutputItem
 from evaluatorq.redteam.backends.registry import create_async_llm_client
 from evaluatorq.redteam.contracts import (
     DEFAULT_PIPELINE_MODEL,
     PIPELINE_CONFIG,
     EvaluatorConfig,
+    EvaluatorqEvaluatorConfig,
     LLMCallConfig,
     RedTeamInput,
     StaticDataset,
+    normalize_category,
 )
+from evaluatorq.redteam.exceptions import DatasetError
 from evaluatorq.redteam.frameworks.owasp.evaluators import get_evaluator_for_category
-from evaluatorq.redteam.judge import JudgeError, build_eval_replacements, run_judge
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from openai import AsyncOpenAI
 
     from evaluatorq.types import ScorerParameter
@@ -70,6 +77,32 @@ def _adapt_static_output(output: Any) -> list[OutputMessage]:
     elif output:
         items.append(TextOutputItem(text=str(output), annotations=[]))
     return items
+
+
+def _filter_by_categories(
+    items: list[Any],
+    categories: list[str],
+    category_of: Callable[[Any], str],
+) -> list[Any]:
+    """Filter ``items`` to the requested OWASP categories.
+
+    Logs the aggregate post-filter count, and — critically — emits a per-category
+    ``WARNING`` for each requested category that has zero matching datapoints, so a
+    silently-empty category (e.g. one the dataset has no entries for) is visible
+    rather than mistaken for a genuine 0% attack-success result. Shared by both the
+    file loader and the platform-datapoint path so the warning behaviour is identical.
+    """
+    requested = {normalize_category(c.upper()) for c in categories}
+    present = Counter(normalize_category(category_of(it).upper()) for it in items)
+    filtered = [it for it in items if normalize_category(category_of(it).upper()) in requested]
+    logger.info(f'Filtered to categories: {sorted(requested)} ({len(filtered)} samples)')
+    for cat in sorted(requested):
+        if present[cat] == 0:
+            logger.warning(
+                f'Requested category {cat}: 0 static datapoints available in the dataset '
+                '(it will contribute no static results).'
+            )
+    return filtered
 
 
 def _normalize_num_samples(num_samples: int | None) -> int | None:
@@ -167,8 +200,15 @@ def create_owasp_evaluator(
     evaluator_model: str = DEFAULT_PIPELINE_MODEL,
     llm_client: AsyncOpenAI | None = None,
     llm_kwargs: dict[str, Any] | None = None,
-    cfg: LLMCallConfig | None = None,
-) -> EvaluatorConfig:
+    cfg: LLMCallConfig | EvaluatorConfig | None = None,
+    judges: list[str] | None = None,
+    judge_repetitions: int = 1,
+    replacement_judges: list[str] | None = None,
+    min_successful_judges: int = 1,
+    target_models: list[str] | None = None,
+    *,
+    strict_panel: bool = False,
+) -> EvaluatorqEvaluatorConfig:
     """Create an evaluatorq scorer that routes by OWASP category."""
     # Build the client + merged cfg ONCE here (not per datapoint). Creating them
     # inside scorer() would spin up a fresh AsyncOpenAI connection pool for every
@@ -180,6 +220,23 @@ def create_owasp_evaluator(
             'extra_kwargs': {**resolved_cfg.extra_kwargs, **(llm_kwargs or {})},
         }
     )
+    call_cfg = merged_cfg.as_call_config() if isinstance(merged_cfg, EvaluatorConfig) else merged_cfg
+    panel = [evaluator_model]
+    for judge in judges or []:
+        if judge and judge not in panel:
+            panel.append(judge)
+    replacements = [r for r in (replacement_judges or []) if r and r not in panel]
+    repetitions = max(1, judge_repetitions)
+    min_success = max(1, min_successful_judges)
+    if min_success > len(panel):
+        raise ValueError(
+            f'min_successful_judges ({min_success}) exceeds the effective panel size ({len(panel)}) '
+            f'after de-duplication; panel={panel}'
+        )
+    for issue in _panel_composition_messages(panel, target_models or [], strict=strict_panel):
+        if strict_panel:
+            raise ValueError(issue)
+        logger.warning(issue)
 
     async def scorer(params: ScorerParameter) -> EvaluationResult:
         data = params['data']
@@ -196,35 +253,112 @@ def create_owasp_evaluator(
 
         output_messages = _adapt_static_output(output)
 
-        outcome = await run_judge(
-            client=client,
-            model=evaluator_model,
-            cfg=merged_cfg,
-            prompt_template=evaluator_entity.prompt,
-            replacements=build_eval_replacements(
-                input_messages=data.inputs.get('messages', []),
-                output_messages=output_messages,
-            ),
+        eval_replacements = build_eval_replacements(
+            input_messages=data.inputs.get('messages', []),
+            output_messages=output_messages,
         )
 
-        # Static path swallows ALL errors into an inconclusive row (never re-raises).
-        if outcome.error_kind is JudgeError.TIMEOUT:
-            return _error_result(f'Evaluation timed out after {outcome.timeout_ms}ms')
-        if outcome.error_kind is not None or outcome.payload is None:
-            return _error_result(f'Evaluation error: {outcome.error_message}')
+        if len(panel) == 1 and repetitions == 1 and not replacements:
+            outcome = await run_judge(
+                client=client,
+                model=evaluator_model,
+                cfg=call_cfg,
+                prompt_template=evaluator_entity.prompt,
+                replacements=eval_replacements,
+            )
 
-        # Carry the judge's cost + raw response so the report layer can surface and
-        # aggregate evaluator token usage (stripped from the platform upload at the
-        # send boundary; see evaluatorq.send_results).
+            # Static path swallows ALL errors into an inconclusive row (never re-raises).
+            if outcome.error_kind is JudgeError.TIMEOUT:
+                return _error_result(f'Evaluation timed out after {outcome.timeout_ms}ms')
+            if outcome.error_kind is not None or outcome.payload is None:
+                return _error_result(f'Evaluation error: {outcome.error_message}')
+
+            return EvaluationResult.model_validate({
+                'value': outcome.payload.value,
+                'explanation': outcome.payload.explanation,
+                'pass': outcome.payload.value if isinstance(outcome.payload.value, bool) else None,
+                'token_usage': outcome.token_usage,
+                'raw_output': {'raw_content': outcome.raw_content},
+            })
+
+        async def judge_fn(model: str) -> Prediction:
+            outcome = await run_judge(
+                client=client,
+                model=model,
+                cfg=call_cfg,
+                prompt_template=evaluator_entity.prompt,
+                replacements=eval_replacements,
+            )
+            if outcome.error_kind is not None or outcome.payload is None:
+                return Prediction(
+                    error=outcome.error_message or (outcome.error_kind.value if outcome.error_kind else 'error')
+                )
+            return Prediction(
+                value=outcome.payload.value,
+                explanation=outcome.payload.explanation,
+                token_usage=outcome.token_usage,
+                abstained=outcome.payload.abstain,
+            )
+
+        deliberation = await run_jury(
+            judge_fn=judge_fn,
+            panel=panel,
+            repetitions=repetitions,
+            replacement_judges=replacements,
+            min_successful_judges=min_success,
+            verdict_kind=VerdictKind.CATEGORICAL,
+            tie_break=lambda _values: False,
+        )
+        passed = deliberation.verdict if isinstance(deliberation.verdict, bool) else None
         return EvaluationResult.model_validate({
-            'value': outcome.payload.value,
-            'explanation': outcome.payload.explanation,
-            'pass': outcome.payload.value,
-            'token_usage': outcome.token_usage,
-            'raw_output': {'raw_content': outcome.raw_content},
+            'value': passed if passed is not None else 'inconclusive',
+            'explanation': append_jury_summary(deliberation.explanation, deliberation.jury),
+            'pass': passed,
+            'token_usage': deliberation.token_usage,
+            'raw_output': {
+                'value': passed,
+                'explanation': deliberation.explanation,
+                JURY_RAW_OUTPUT_KEY: deliberation.jury.model_dump(mode='json'),
+            },
         })
 
     return {'name': 'owasp-agentic-security', 'scorer': scorer}
+
+
+_HF_MISSING_MSG = (
+    'Loading static datapoints from HuggingFace requires the huggingface-hub package. '
+    "Install the redteam extra: pip install 'evaluatorq[redteam]' "
+    "(or: uv pip install 'evaluatorq[redteam]'). "
+    'Alternatively pass a local --dataset path, or use --mode dynamic to skip static datapoints.'
+)
+
+
+def is_huggingface_source(dataset: str | Path | None) -> bool:
+    """Return True when ``dataset`` resolves to a HuggingFace fetch.
+
+    ``None`` (the default ``orq/redteam-vulnerabilities`` dataset) and any
+    ``hf:`` specifier require huggingface-hub; local paths and ``orq:`` dataset
+    IDs do not.
+    """
+    if dataset is None:
+        return True
+    if isinstance(dataset, Path):
+        return False
+    return str(dataset).startswith('hf:')
+
+
+def ensure_huggingface_available() -> None:
+    """Raise a clear ``ImportError`` if huggingface-hub is needed but not installed.
+
+    Use this as a fail-fast preflight before a static/hybrid run that will pull
+    datapoints from HuggingFace, so the failure surfaces immediately rather than
+    deep in the static leg (which, in hybrid mode, runs only after the entire
+    dynamic leg has completed).
+    """
+    try:
+        import huggingface_hub  # noqa: F401
+    except ImportError as e:
+        raise ImportError(_HF_MISSING_MSG) from e
 
 
 def _fetch_from_huggingface(
@@ -237,18 +371,26 @@ def _fetch_from_huggingface(
     try:
         from huggingface_hub import hf_hub_download
     except ImportError as e:
-        msg = (
-            'Loading datasets from HuggingFace requires the huggingface-hub package. '
-            'Install it with: pip install evaluatorq[redteam]'
-        )
-        raise ImportError(msg) from e
+        raise ImportError(_HF_MISSING_MSG) from e
 
     logger.info(f'Downloading dataset from HuggingFace: {repo}/{filename}...')
-    local_path = hf_hub_download(
-        repo_id=repo,
-        filename=filename,
-        repo_type='dataset',
-    )
+    try:
+        local_path = hf_hub_download(
+            repo_id=repo,
+            filename=filename,
+            repo_type='dataset',
+        )
+    except Exception as e:
+        # Network failure, auth/401, gated-or-missing repo, etc. Surface an
+        # actionable message instead of a raw huggingface_hub traceback. The run
+        # CLI catches RedTeamError and prints it cleanly.
+        msg = (
+            f'Failed to download red team dataset from HuggingFace ({repo}/{filename}): {e}. '
+            'Check your network connection, that the repository and file exist, and that you '
+            'have access (set HF_TOKEN for gated or private datasets). Alternatively pass a '
+            'local --dataset path, or use --mode dynamic to skip static datapoints.'
+        )
+        raise DatasetError(msg) from e
     datapoints = _load_from_file(local_path, num_samples=num_samples, categories=categories)
     logger.info(f'Loaded {len(datapoints)} samples from HuggingFace ({repo})')
     return datapoints
@@ -320,16 +462,23 @@ def _load_from_file(
 ) -> list[DataPoint]:
     """Load OWASP dataset from a local JSON file in ``{"samples": [...]}`` format."""
     path = Path(path)
-    with path.open() as f:
-        raw = json.load(f)
-
-    dataset = StaticDataset.model_validate(raw)
+    try:
+        with path.open() as f:
+            raw = json.load(f)
+        dataset = StaticDataset.model_validate(raw)
+    except (OSError, json.JSONDecodeError, ValidationError) as e:
+        # Unreadable file, malformed JSON, or a payload that is not the expected
+        # ``{"samples": [...]}`` shape. Surface a RedTeamError the run CLI prints
+        # cleanly instead of a raw traceback (mirrors the HuggingFace path above).
+        msg = (
+            f'Failed to load red team dataset from {path}: {e}. '
+            'Check that the file exists and contains valid JSON in {"samples": [...]} format.'
+        )
+        raise DatasetError(msg) from e
     samples = dataset.samples
 
     if categories:
-        normalized = {c.upper().replace('OWASP-', '') for c in categories}
-        samples = [s for s in samples if s.input.category.upper().replace('OWASP-', '') in normalized]
-        logger.info(f'Filtered to categories: {sorted(normalized)} ({len(samples)} samples)')
+        samples = _filter_by_categories(samples, categories, category_of=lambda s: s.input.category)
 
     num_samples = _normalize_num_samples(num_samples)
     if num_samples is not None:
@@ -355,11 +504,7 @@ def _apply_filters(
 ) -> list[DataPoint]:
     """Apply category and sample-count filters to datapoints."""
     if categories:
-        normalized = {c.upper().replace('OWASP-', '') for c in categories}
-        datapoints = [
-            dp for dp in datapoints if dp.inputs.get('category', '').upper().replace('OWASP-', '') in normalized
-        ]
-        logger.info(f'Filtered to categories: {sorted(normalized)} ({len(datapoints)} samples)')
+        datapoints = _filter_by_categories(datapoints, categories, category_of=lambda dp: dp.inputs.get('category', ''))
 
     num_samples = _normalize_num_samples(num_samples)
     if num_samples is not None:
