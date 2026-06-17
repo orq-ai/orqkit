@@ -292,6 +292,16 @@ class TestDetailsAndCostArithmetic:
         # clamp: subtracting a larger value never goes negative
         assert (before - after).input_tokens == 0
 
+    def test_sub_cost_propagates_unknown(self) -> None:
+        """A None cost on either side yields a None (unknown) delta rather than a
+        spurious known $0 — mirroring __add__'s None-awareness."""
+        known = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2, cost_usd=5.0)
+        unknown = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2)  # cost None
+        assert (unknown - unknown).cost_usd is None
+        assert (unknown - known).cost_usd is None
+        assert (known - unknown).cost_usd is None
+        assert (known - known).cost_usd == 0.0
+
 
 class TestBackCompatSerialization:
     def test_construct_with_legacy_names(self) -> None:

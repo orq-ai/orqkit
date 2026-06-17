@@ -304,7 +304,11 @@ class TokenUsage(BaseModel):
     @model_serializer(mode='wrap')
     def _serialize(self, handler: Any) -> dict[str, Any]:
         """Emit the legacy ``prompt_tokens``/``completion_tokens`` keys alongside the
-        standard names so dict/JSON consumers that have not migrated keep working."""
+        standard names so dict/JSON consumers that have not migrated keep working.
+
+        Note: the legacy aliases are injected unconditionally, so ``model_dump`` with
+        ``include=``/``exclude=`` does not filter them out — field-level filtering is
+        not supported on this model."""
         data = handler(self)
         data['prompt_tokens'] = self.input_tokens
         data['completion_tokens'] = self.output_tokens
@@ -388,10 +392,9 @@ class TokenUsage(BaseModel):
         """Component-wise difference, clamped at 0 — used for per-turn deltas."""
         if other is None:
             return self.model_copy()
-        if self.cost_usd is None and other.cost_usd is None:
-            cost = None
-        else:
-            cost = max((self.cost_usd or 0.0) - (other.cost_usd or 0.0), 0.0)
+        # Propagate "unknown" (None) if either side lacks a cost — otherwise a
+        # None minuend would silently become a known $0 delta.
+        cost = None if self.cost_usd is None or other.cost_usd is None else max(self.cost_usd - other.cost_usd, 0.0)
         return TokenUsage(
             input_tokens=max(self.input_tokens - other.input_tokens, 0),
             output_tokens=max(self.output_tokens - other.output_tokens, 0),
