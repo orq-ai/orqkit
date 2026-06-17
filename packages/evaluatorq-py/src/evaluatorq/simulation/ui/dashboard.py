@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from pydantic import ValidationError
 
 from evaluatorq.simulation.reports.sections import build_report_sections
 from evaluatorq.simulation.types import SimulationResult, SimulationRun
@@ -64,7 +65,9 @@ _TERMINATED_BY_COLORS = {
 
 
 @st.cache_data
-def _load_run(path: str) -> dict[str, Any]:
+def _load_run(path: str, mtime: float) -> dict[str, Any]:
+    # mtime is unused in the body but part of the cache key, so overwriting a
+    # run file in place (same path, new contents) invalidates the cached parse.
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
@@ -523,10 +526,17 @@ def _render_dashboard() -> None:
     st.sidebar.title("Agent Simulation")
 
     if run_path_str and Path(run_path_str).exists():
-        run = _parse_run(_load_run(run_path_str))
+        run = _parse_run(_load_run(run_path_str, Path(run_path_str).stat().st_mtime))
     else:
         uploaded = st.sidebar.file_uploader("Upload run JSON", type=["json"])
-        run = _parse_run(json.loads(uploaded.read())) if uploaded is not None else None
+        run = None
+        if uploaded is not None:
+            try:
+                run = _parse_run(json.loads(uploaded.read()))
+            except (json.JSONDecodeError, ValidationError) as exc:
+                st.error(f"Could not parse uploaded file: {exc}")
+                st.stop()
+                return
 
     if run is None:
         st.info(

@@ -462,7 +462,7 @@ def ui(
     from evaluatorq.common.ui.launch import launch_streamlit
 
     dashboard_script = Path(__file__).parent / "ui" / "dashboard.py"
-    launch_streamlit(dashboard_script, report_path, port=port, host=host)
+    launch_streamlit(dashboard_script, report_path, port=port, host=host, extra="redteam")
 
 
 @app.command()

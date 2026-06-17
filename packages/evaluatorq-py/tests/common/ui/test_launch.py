@@ -27,7 +27,7 @@ def test_launch_streamlit_builds_command(tmp_path: Path) -> None:
         patch.object(launch_mod, "ensure_streamlit"),
         pytest.raises(typer.Exit) as exc,
     ):
-        launch_streamlit(script, report, port=9000, host="0.0.0.0")
+        launch_streamlit(script, report, port=9000, host="0.0.0.0", extra="redteam")
 
     assert exc.value.exit_code == 0
     cmd = run.call_args.args[0]
@@ -46,13 +46,13 @@ def test_launch_streamlit_propagates_exit_code(tmp_path: Path) -> None:
         patch.object(launch_mod, "ensure_streamlit"),
         pytest.raises(typer.Exit) as exc,
     ):
-        launch_streamlit(script, report)
+        launch_streamlit(script, report, extra="redteam")
     assert exc.value.exit_code == 3
 
 
 def test_launch_streamlit_missing_script(tmp_path: Path) -> None:
     with pytest.raises(typer.Exit) as exc:
-        launch_streamlit(tmp_path / "nope.py", tmp_path / "run.json")
+        launch_streamlit(tmp_path / "nope.py", tmp_path / "run.json", extra="redteam")
     assert exc.value.exit_code == 1
 
 

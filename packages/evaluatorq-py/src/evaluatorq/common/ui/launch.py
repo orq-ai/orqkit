@@ -27,7 +27,7 @@ def _install_hint(extra: str) -> str:
     )
 
 
-def ensure_streamlit(extra: str = "redteam") -> None:
+def ensure_streamlit(extra: str) -> None:
     """Exit with a friendly hint if Streamlit (an optional extra) is missing.
 
     ``extra`` names the optional dependency group to install — each caller passes
@@ -46,7 +46,7 @@ def launch_streamlit(
     *,
     port: int = 8501,
     host: str = "localhost",
-    extra: str = "redteam",
+    extra: str,
 ) -> None:
     """Run ``streamlit run <dashboard_script> -- <report_path>`` and exit.
 
