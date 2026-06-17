@@ -156,18 +156,17 @@ class TestTokenUsageFromCompletion:
         assert result.total_tokens == 150
         assert result.calls == 1
 
-    def test_returns_zero_fields_when_usage_fields_none(self) -> None:
-        """Fields that are None on usage object fall back to 0."""
+    def test_returns_none_when_all_usage_fields_none(self) -> None:
+        """A usage object whose token fields are all None carries no signal and is
+        treated as a present-but-empty payload — extract returns None rather than
+        fabricating a billed-zero record (see TokenUsage.extract gate)."""
         response = MagicMock()
         usage = MagicMock()
         usage.prompt_tokens = None
         usage.completion_tokens = None
         usage.total_tokens = None
         response.usage = usage
-        result = TokenUsage.from_completion(response)
-        assert result is not None
-        assert result.prompt_tokens == 0
-        assert result.completion_tokens == 0
+        assert TokenUsage.from_completion(response) is None
 
     def test_calls_is_always_one(self) -> None:
         response = MagicMock()
@@ -251,6 +250,30 @@ class TestExtractAcrossShapes:
         assert default_calls is not None
         assert default_calls.calls == 1
 
+    def test_extract_none_input_returns_none(self) -> None:
+        assert TokenUsage.extract(None) is None
+
+    def test_extract_empty_payload_returns_none(self) -> None:
+        """A present-but-empty/unparseable usage block yields no signal and must NOT
+        be fabricated into a confident 'billed-zero, 1 call' record — that would
+        undercount tokens on a genuinely billed call while still counting the call.
+        Mirrors from_openresponses' usage=None contract."""
+        assert TokenUsage.extract({}) is None
+        assert TokenUsage.extract({'input_tokens': 0, 'output_tokens': 0, 'total_tokens': 0}) is None
+
+    def test_extract_zero_tokens_kept_when_cost_or_cached_present(self) -> None:
+        """A genuine zero-token call carrying a cost or cached tokens is real and kept."""
+        with_cost = TokenUsage.extract({'input_tokens': 0, 'output_tokens': 0, 'cost': 0.002})
+        assert with_cost is not None
+        assert with_cost.cost_usd == pytest.approx(0.002)
+        with_cached = TokenUsage.extract({
+            'input_tokens': 0,
+            'output_tokens': 0,
+            'prompt_tokens_details': {'cached_tokens': 8},
+        })
+        assert with_cached is not None
+        assert with_cached.cached_tokens == 8
+
 
 class TestDetailsAndCostArithmetic:
     def test_add_sums_cached_reasoning_and_cost(self) -> None:
@@ -293,13 +316,16 @@ class TestDetailsAndCostArithmetic:
         assert (before - after).input_tokens == 0
 
     def test_sub_cost_propagates_unknown(self) -> None:
-        """A None cost on either side yields a None (unknown) delta rather than a
-        spurious known $0 — mirroring __add__'s None-awareness."""
+        """Cost stays None (unknown) only when BOTH sides are unknown. If either side
+        carries a known cost the missing side is treated as 0.0, so a real known cost
+        is never discarded — mirroring __add__'s asymmetric None-awareness."""
         known = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2, cost_usd=5.0)
         unknown = TokenUsage(input_tokens=1, output_tokens=1, total_tokens=2)  # cost None
         assert (unknown - unknown).cost_usd is None
-        assert (unknown - known).cost_usd is None
-        assert (known - unknown).cost_usd is None
+        # known - unknown: baseline unknown, after known → keep the known cost (0 baseline).
+        assert (known - unknown).cost_usd == 5.0
+        # unknown - known: would be negative, clamped to 0.0 (not poisoned to None).
+        assert (unknown - known).cost_usd == 0.0
         assert (known - known).cost_usd == 0.0
 
 

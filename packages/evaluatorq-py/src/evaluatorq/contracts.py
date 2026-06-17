@@ -322,6 +322,12 @@ class TokenUsage(BaseModel):
         responses (``input``/``output_tokens`` + ``*_tokens_details``), vercel
         camelCase, and langgraph ``usage_metadata``. A single fallback rule:
         ``total_tokens`` is trusted when > 0, otherwise ``input + output``.
+
+        Returns ``None`` when the payload is present but yields no positive token
+        counts and no cost — i.e. an unparseable/empty usage block. This mirrors
+        ``from_openresponses``: a present-but-empty payload must not be recorded as
+        a confident "0 tokens, 1 call", which would undercount tokens on a genuinely
+        billed call while still incrementing the call count.
         """
         if usage is None:
             return None
@@ -342,9 +348,17 @@ class TokenUsage(BaseModel):
         )
         # Clamp at 0: a provider may report a negative cost (credit/adjustment),
         # which would otherwise trip the cost_usd ge=0 constraint and crash the
-        # whole extraction path for an otherwise-valid billed call.
+        # whole extraction path for an otherwise-valid billed call. Log it so a
+        # genuine provider/accounting bug is not silently rewritten to $0.
         cost_raw = _usage_first_float(usage, ('cost_usd', 'cost', 'total_cost'))
+        if cost_raw is not None and cost_raw < 0:
+            logger.warning('TokenUsage.extract: provider reported negative cost {!r}; clamping to 0.0', cost_raw)
         cost = max(cost_raw, 0.0) if cost_raw is not None else None
+        # A present-but-empty/unparseable payload yields no signal: don't fabricate a
+        # billed-zero record. A genuine zero-token call is kept only if it carries
+        # some signal — cached tokens or a cost (e.g. a cached-only / minimum charge).
+        if total <= 0 and cached <= 0 and cost is None:
+            return None
         # Honour a calls count already carried by the payload (e.g. an aggregated
         # TokenUsage dump); fall back to the per-call default otherwise.
         raw_calls = _usage_get(usage, 'calls')
@@ -392,9 +406,16 @@ class TokenUsage(BaseModel):
         """Component-wise difference, clamped at 0 — used for per-turn deltas."""
         if other is None:
             return self.model_copy()
-        # Propagate "unknown" (None) if either side lacks a cost — otherwise a
-        # None minuend would silently become a known $0 delta.
-        cost = None if self.cost_usd is None or other.cost_usd is None else max(self.cost_usd - other.cost_usd, 0.0)
+        # Cost stays "unknown" (None) only when BOTH sides are unknown; if either
+        # side carries a known cost, treat the missing side as 0.0 rather than
+        # poisoning the delta to None (which would discard a real known cost on the
+        # first turn a cost-bearing provider appears). Mirrors __add__'s asymmetric
+        # "known + None = known" handling.
+        cost = (
+            None
+            if self.cost_usd is None and other.cost_usd is None
+            else max((self.cost_usd or 0.0) - (other.cost_usd or 0.0), 0.0)
+        )
         return TokenUsage(
             input_tokens=max(self.input_tokens - other.input_tokens, 0),
             output_tokens=max(self.output_tokens - other.output_tokens, 0),
