@@ -88,6 +88,22 @@ def _pct(value: float) -> str:
     return f"{value * 100:.0f}%"
 
 
+def _content_text(content: Any) -> str:
+    """Flatten message content into markdown text.
+
+    Multi-modal / tool-call messages return a list of content blocks rather than
+    a plain string; join their text fields so they don't render as raw Python
+    list notation.
+    """
+    if isinstance(content, list):
+        parts = [
+            block.get("text", "") if isinstance(block, dict) else str(block)
+            for block in content
+        ]
+        return "\n\n".join(p for p in parts if p)
+    return content or ""
+
+
 # ---------------------------------------------------------------------------
 # Filters (operate on raw results so aggregates recompute reactively)
 # ---------------------------------------------------------------------------
@@ -381,7 +397,7 @@ def _render_transcripts(sections: list[ReportSection]) -> None:
         label = role_label.get(msg["role"], msg["role"])
         with st.chat_message("user" if msg["role"] == "user" else "assistant"):
             st.markdown(f"**{label}**")
-            st.markdown(msg["content"] or "_(empty)_")
+            st.markdown(_content_text(msg.get("content")) or "_(empty)_")
 
 
 def _render_turn_quality(sections: list[ReportSection]) -> None:
@@ -526,7 +542,12 @@ def _render_dashboard() -> None:
     st.sidebar.title("Agent Simulation")
 
     if run_path_str and Path(run_path_str).exists():
-        run = _parse_run(_load_run(run_path_str, Path(run_path_str).stat().st_mtime))
+        try:
+            run = _parse_run(_load_run(run_path_str, Path(run_path_str).stat().st_mtime))
+        except (OSError, json.JSONDecodeError, ValidationError) as exc:
+            st.error(f"Could not load run file: {exc}")
+            st.stop()
+            return
     else:
         uploaded = st.sidebar.file_uploader("Upload run JSON", type=["json"])
         run = None
