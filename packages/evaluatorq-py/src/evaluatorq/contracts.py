@@ -336,7 +336,11 @@ class TokenUsage(BaseModel):
             ('output_tokens_details', 'completion_tokens_details', 'output_token_details'),
             ('reasoning_tokens', 'reasoning'),
         )
-        cost = _usage_first_float(usage, ('cost_usd', 'cost', 'total_cost'))
+        # Clamp at 0: a provider may report a negative cost (credit/adjustment),
+        # which would otherwise trip the cost_usd ge=0 constraint and crash the
+        # whole extraction path for an otherwise-valid billed call.
+        cost_raw = _usage_first_float(usage, ('cost_usd', 'cost', 'total_cost'))
+        cost = max(cost_raw, 0.0) if cost_raw is not None else None
         # Honour a calls count already carried by the payload (e.g. an aggregated
         # TokenUsage dump); fall back to the per-call default otherwise.
         raw_calls = _usage_get(usage, 'calls')

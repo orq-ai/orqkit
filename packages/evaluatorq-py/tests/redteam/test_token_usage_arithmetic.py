@@ -272,6 +272,13 @@ class TestDetailsAndCostArithmetic:
         assert (a + b).cost_usd == pytest.approx(0.05)
         assert (b + a).cost_usd == pytest.approx(0.05)
 
+    def test_negative_provider_cost_clamped_not_raised(self) -> None:
+        """A provider credit/adjustment (negative cost) clamps to 0 rather than
+        tripping the cost_usd ge=0 constraint and crashing extraction."""
+        u = TokenUsage.extract({'input_tokens': 5, 'output_tokens': 3, 'cost': -0.01})
+        assert u is not None
+        assert u.cost_usd == 0.0
+
     def test_sub_component_wise_clamped(self) -> None:
         after = TokenUsage(
             input_tokens=30, output_tokens=12, total_tokens=42, cached_tokens=8, reasoning_tokens=3, calls=2
