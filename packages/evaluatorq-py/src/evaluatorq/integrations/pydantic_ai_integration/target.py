@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -116,14 +117,15 @@ class PydanticAITarget(AgentTarget):
         if self._agent_context is not None:
             return self._agent_context
         agent = self._agent
-        key = str(getattr(agent, "name", None) or "pydantic_ai_agent")
+        raw_key = str(getattr(agent, "name", None) or "pydantic_ai_agent").lower()
+        key = re.sub(r"[^a-z0-9_]+", "_", raw_key).strip("_") or "pydantic_ai_agent"
         model_attr = getattr(agent, "model", None)
         model = getattr(model_attr, "model_name", None) or (
             str(model_attr) if model_attr is not None else None
         )
         return AgentContext(
             key=key,
-            display_name=key,
+            display_name=raw_key,
             description="Pydantic AI agent target",
             model=model,
         )
