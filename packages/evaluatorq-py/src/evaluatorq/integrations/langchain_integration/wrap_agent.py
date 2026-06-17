@@ -36,7 +36,8 @@ def _extract_schema_parameters(
         return schema_obj.model_json_schema()
     # Pydantic v1 model class
     if hasattr(schema_obj, "schema") and callable(schema_obj.schema):
-        return schema_obj.schema()
+        schema = schema_obj.schema()
+        return schema if isinstance(schema, dict) else None
     return None
 
 
