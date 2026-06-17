@@ -130,6 +130,8 @@ class PydanticAITarget(AgentTarget):
 
     def new(self) -> PydanticAITarget:
         """Return an independent instance with fresh conversation state."""
+        # The Agent is shared by reference: Pydantic AI agents are stateless, and
+        # each clone owns its own _history, so parallel runs don't interfere.
         return PydanticAITarget(
             self._agent,
             run_kwargs=dict(self._run_kwargs),
@@ -166,6 +168,11 @@ def _make_part_classifier() -> Callable[[Any], str]:
     return by_isinstance
 
 
+# Built once: the underlying import is cached in sys.modules, but the classifier
+# closure itself need only be constructed a single time.
+_classify_part = _make_part_classifier()
+
+
 def _build_output(result: Any) -> list[OutputMessage]:
     """Convert a run's new messages into ordered AgentResponse output items.
 
@@ -180,7 +187,7 @@ def _build_output(result: Any) -> list[OutputMessage]:
     except Exception:  # pragma: no cover - defensive
         return []
 
-    classify = _make_part_classifier()
+    classify = _classify_part
     items: list[OutputMessage] = []
     tool_index: dict[str, int] = {}
     for msg in new_messages:

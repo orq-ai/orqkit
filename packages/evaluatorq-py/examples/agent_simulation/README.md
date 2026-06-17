@@ -81,6 +81,10 @@ framework's quirks:
 | Pydantic AI | `PydanticAITarget` | Threads typed `message_history` internally; tool calls extracted from message parts; usage has no total (derived) |
 | CrewAI | `CrewAITarget` | Sync `kickoff` run off-thread; transcript flattened to one `{conversation}` input; final crew output is "the response" |
 
+> **Python 3.10 note:** the `crewai` extra is gated to Python >= 3.11 (its
+> `onnxruntime` dependency ships no 3.10 wheels), so `evaluatorq[crewai]` is
+> silently unavailable on 3.10. The other three frameworks support 3.10+.
+
 ```python
 from evaluatorq.integrations.langgraph_integration import LangGraphTarget
 from evaluatorq.simulation import simulate
