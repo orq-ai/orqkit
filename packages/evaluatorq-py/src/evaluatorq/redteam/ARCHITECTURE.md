@@ -62,7 +62,7 @@ from evaluatorq.redteam import red_team
 from evaluatorq.redteam.backends.registry import resolve_backend
 
 bundle = resolve_backend("openresponses")
-target = bundle.target_factory.create_target("my-agent-id")
+target = bundle.create_target("my-agent-id")
 
 report = await red_team(target, vulnerabilities=["prompt_injection"])
 ```
