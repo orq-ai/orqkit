@@ -781,7 +781,7 @@ print(f"Resistance rate: {report.summary.resistance_rate:.0%}")
 print(f"Vulnerabilities found: {report.summary.vulnerabilities_found}")
 ```
 
-No deployment? Red-team a raw model with `OpenAIModelTarget("gpt-5-mini", system_prompt=...)` instead of the `"agent:<key>"` string.
+No deployment? Red-team a raw model with `OpenAIModelTarget("openai/gpt-5.4-mini", system_prompt=...)` instead of the `"agent:<key>"` string. (Model IDs route through the ORQ router — use the `openai/` prefix; drop it if you target OpenAI directly.)
 
 **Target types:** `"agent:<key>"` (ORQ agent), `"deployment:<key>"` (ORQ deployment), `OpenAIModelTarget(...)` (raw model, Python API only). Agents from **external frameworks** (LangGraph, OpenAI Agents SDK, custom callables) are wrapped into a target too.
 

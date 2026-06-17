@@ -12,6 +12,8 @@ This subpackage probes AI agents and LLMs for security weaknesses using a multi-
 4. **Multi-turn orchestration** — An adversarial LLM runs an adaptive attack loop: it observes the target's responses each turn and adjusts its approach.
 5. **Evaluation** — Each attack result is scored against the relevant vulnerability evaluator to determine resistance or vulnerability.
 
+> Internals (pipeline architecture, design decisions, the OpenResponses backend) live in [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Vulnerability-first design
 
 The atomic primitive is the **vulnerability**, not the framework category. Each vulnerability has a stable, framework-agnostic ID (e.g. `prompt_injection`, `goal_hijacking`) that maps to one or more framework categories. You can target attacks at either level:
@@ -19,7 +21,7 @@ The atomic primitive is the **vulnerability**, not the framework category. Each 
 ```python
 from evaluatorq.redteam import OpenAIModelTarget, red_team
 
-target = OpenAIModelTarget("gpt-5-mini", system_prompt="You are helpful.")
+target = OpenAIModelTarget("openai/gpt-5.4-mini", system_prompt="You are helpful.")
 
 # Target specific vulnerabilities
 report = await red_team(target, vulnerabilities=["prompt_injection", "goal_hijacking"])
@@ -27,6 +29,8 @@ report = await red_team(target, vulnerabilities=["prompt_injection", "goal_hijac
 # Or filter by framework category
 report = await red_team(target, categories=["LLM01", "ASI01"])
 ```
+
+> Model IDs route through the ORQ router by default, so use the provider-prefixed form (`openai/gpt-5.4-mini`). If you target OpenAI directly (only `OPENAI_API_KEY` set), drop the prefix: `gpt-5.4-mini`.
 
 ### Supported vulnerabilities
 
@@ -63,130 +67,6 @@ Vulnerabilities map to industry security frameworks via `framework_mappings`:
 | **OWASP LLM Top 10** | LLM01–LLM09 | LLM-layer risks (prompt injection, data leakage, etc.) |
 
 Some vulnerabilities map to multiple frameworks (e.g. `supply_chain` → ASI04 + LLM03).
-
-## Architecture
-
-```
-redteam/
-├── contracts.py              # Shared types, enums, Pydantic schemas
-├── vulnerability_registry.py # Single source of truth: vulnerability → framework mappings
-├── runner.py                 # Unified red_team() entry point
-├── cli.py                    # Typer CLI (eq redteam run / runs)
-├── hooks.py                  # Pipeline lifecycle hooks (Default, Rich)
-├── tracing.py                # OpenTelemetry span helpers
-├── exceptions.py             # Custom exceptions
-├── adaptive/                 # Pipeline brain
-│   ├── agent_context.py      #   Retrieve agent config from ORQ API
-│   ├── capability_classifier.py  #   LLM-based tool capability tagging
-│   ├── strategy_planner.py   #   Select + generate attack strategies
-│   ├── strategy_registry.py  #   Strategy lookup by vulnerability/category
-│   ├── attack_generator.py   #   Fill templates + adapt prompts to context
-│   ├── objective_generator.py #  Generate attack objectives
-│   ├── orchestrator.py       #   Multi-turn adversarial attack loop
-│   ├── evaluator.py          #   Vulnerability scoring
-│   └── pipeline.py           #   evaluatorq DataPoint/Job/Evaluator wiring
-├── backends/                 # Pluggable target backends
-│   ├── orq.py                #   ORQ platform agent target (default)
-│   ├── openai.py             #   Direct OpenAI model target
-│   └── registry.py           #   Backend resolution + LLM client factory
-├── frameworks/               # Framework-specific strategy libraries
-│   ├── owasp_asi.py          #   ASI01–ASI10 attack strategies
-│   ├── owasp_llm.py          #   LLM01–LLM09 attack strategies
-│   └── owasp/                #   Evaluator prompts and bridge
-├── reports/                  # Report generation and export
-│   ├── converters.py         #   Result → RedTeamReport conversion
-│   ├── display.py            #   Rich terminal summary tables
-│   ├── export_html.py        #   HTML dashboard export
-│   ├── export_md.py          #   Markdown report export
-│   ├── recommendations.py    #   LLM-generated remediation advice
-│   └── sections.py           #   Report section builders
-├── runtime/                  # Job execution
-│   └── jobs.py               #   Async job runner + job-name sanitizer
-└── ui/                       # Streamlit interactive dashboard
-    └── dashboard.py
-```
-
-## Key design decisions
-
-- **Vulnerability is the atomic primitive** — strategies, evaluators, and datapoints bind to `Vulnerability` enum values. Framework categories are a derived mapping layer.
-- **Agent-aware** — targets ORQ agents with tools, memory, and knowledge bases. The capability classifier ensures strategies only run when the agent has the required capabilities.
-- **Adaptive attacks** — the adversarial LLM observes defenses and adjusts strategy mid-conversation.
-- **Pluggable backends** — ORQ backend for production agents, OpenAI for raw models, or bring your own `AsyncOpenAI`-compatible client.
-- **Parallel-safe** — each attack gets a unique memory entity ID, preventing cross-contamination. Post-run cleanup removes test data.
-
-## OpenResponses backend (RES-540)
-
-Target agents and deployments through the platform's `/responses` API in the
-OpenResponses request shape:
-
-```python
-from evaluatorq.redteam import red_team
-from evaluatorq.redteam.backends.registry import resolve_backend
-
-bundle = resolve_backend("openresponses")
-target = bundle.target_factory.create_target("my-agent-id")
-
-report = await red_team(target, vulnerabilities=["prompt_injection"])
-```
-
-Every attack the orchestrator runs is sent over the wire as:
-
-```json
-{"model": "my-agent-id",
- "input": [{"role": "user", "content": "<adversarial prompt>"}]}
-```
-
-The backend reuses `evaluatorq.openresponses.target.OrqResponsesTarget`, so
-redteam and simulation share retry behavior, `previous_response_id` threading,
-output parsing, and token-usage extraction.
-
-Trace spans use `gen_ai.*` attributes plus `orq.openresponses.request` /
-`orq.openresponses.response` so observability surfaces the exact payload that
-went over the wire.
-
-### Dataset helpers
-
-For consumers that need to build OpenResponses payloads or load redteam static
-datasets authored in OpenResponses input shape:
-
-```python
-from evaluatorq.openresponses import (
-    build_openresponses_request,
-    load_openresponses_dataset,
-    turns_to_openresponses_input,
-    redteam_sample_from_openresponses,
-)
-```
-
-- `build_openresponses_request(model=..., prompt=..., conversation=...)` — assemble the wire payload.
-- `load_openresponses_dataset(path)` — load a JSON / JSONL static redteam dataset authored as OpenResponses input arrays.
-- `turns_to_openresponses_input(orchestrator_result.turns)` — convert an executed attack back into the OpenResponses input array (useful for replay, dataset capture, debugging).
-- `redteam_sample_from_openresponses(input=..., openresponses_input=...)` — load datasets authored in OpenResponses format into the existing `RedTeamSample` schema.
-
-### Registry shortcut
-
-The backend is also registered for resolution via the standard registry, so it
-slots into the same machinery as the ORQ / OpenAI backends:
-
-```python
-from evaluatorq.redteam.backends.registry import resolve_backend
-bundle = resolve_backend("openresponses")
-```
-
-## Tracing & PII
-
-Red teaming emits OpenTelemetry spans for every LLM call (attacker generation, target response, evaluation). By default these spans include the **message content** — the adversarial prompts sent and the target's responses — so the Orq dashboard can render input/output panels.
-
-Because attack transcripts can contain sensitive target data, content capture is gated by an env var:
-
-- `EVALUATORQ_CAPTURE_MESSAGE_CONTENT` — **default `true`**. Set to `false` (or `0`) to suppress message text on spans (both inputs and outputs) while still recording token usage, model, finish reason, and latency. Use this when exporting traces to a third-party backend or when prompts/responses may contain PII.
-- `EVALUATORQ_SPAN_MAX_TEXT_CHARS` — max characters of message text (inputs and outputs) per span attribute before truncation (`... [truncated]` marker). **Defaults to capturing all content (no truncation).** Set a positive integer (e.g. `8192`) to cap; `-1` / `0` / unset all mean capture all.
-
-These are shared with agent simulation — the same tracing layer (`evaluatorq.common.tracing`) backs both.
-
-## Convention
-
-Throughout this package: `passed=True` / `vulnerable=False` means the agent **resisted** the attack (good). `passed=False` / `vulnerable=True` means the agent was **vulnerable** (bad).
 
 ## Modes
 
@@ -290,3 +170,18 @@ eq redteam run --help   # all options
 ```
 
 For the full flag reference (multi-target, report export, `eq redteam runs`, etc.), see [`examples/redteam/README.md`](../../../examples/redteam/README.md#cli-reference).
+
+## Tracing & PII
+
+Red teaming emits OpenTelemetry spans for every LLM call (attacker generation, target response, evaluation). By default these spans include the **message content** — the adversarial prompts sent and the target's responses — so the Orq dashboard can render input/output panels.
+
+Because attack transcripts can contain sensitive target data, content capture is gated by an env var:
+
+- `EVALUATORQ_CAPTURE_MESSAGE_CONTENT` — **default `true`**. Set to `false` (or `0`) to suppress message text on spans (both inputs and outputs) while still recording token usage, model, finish reason, and latency. Use this when exporting traces to a third-party backend or when prompts/responses may contain PII.
+- `EVALUATORQ_SPAN_MAX_TEXT_CHARS` — max characters of message text (inputs and outputs) per span attribute before truncation (`... [truncated]` marker). **Defaults to capturing all content (no truncation).** Set a positive integer (e.g. `8192`) to cap; `-1` / `0` / unset all mean capture all.
+
+These are shared with agent simulation — the same tracing layer (`evaluatorq.common.tracing`) backs both.
+
+## Convention
+
+Throughout this package: `passed=True` / `vulnerable=False` means the agent **resisted** the attack (good). `passed=False` / `vulnerable=True` means the agent was **vulnerable** (bad).
