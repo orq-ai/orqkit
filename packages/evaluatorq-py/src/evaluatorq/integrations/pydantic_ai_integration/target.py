@@ -18,6 +18,8 @@ from evaluatorq.redteam.contracts import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pydantic_ai import Agent
 
 logger = logging.getLogger(__name__)
@@ -87,16 +89,23 @@ class PydanticAITarget(AgentTarget):
             **self._run_kwargs,
         )
         # Persist the full typed history so the next turn continues this thread.
+        # If this fails, history is now STALE (missing this turn's exchange) and
+        # later turns will see a truncated conversation — surface it loudly rather
+        # than silently degrading.
         try:
             self._history = list(result.all_messages())
         except Exception as exc:  # pragma: no cover - defensive
-            logger.warning("PydanticAITarget: could not read all_messages(): %s", exc)
+            logger.warning(
+                "PydanticAITarget: result.all_messages() failed (%s); conversation "
+                "history is now stale and subsequent turns may be incoherent",
+                exc,
+            )
 
         # Build output items from this turn's messages, preserving interleaved
         # text/tool ordering so tool-usage criteria are visible to the judge —
         # parity with LangGraphTarget / OpenAIAgentTarget. Falls back to plain
         # text if the message objects don't expose the expected parts.
-        output = _build_output(result)
+        output: list[OutputMessage] = _build_output(result)
         if not output:
             text = "" if result.output is None else str(result.output)
             output = [TextOutputItem(text=text, annotations=[])]
@@ -128,6 +137,35 @@ class PydanticAITarget(AgentTarget):
         )
 
 
+def _make_part_classifier() -> Callable[[Any], str]:
+    """Return a function mapping a Pydantic AI message part to a kind string.
+
+    Prefers ``isinstance`` against the real part classes (so subclassed variants
+    are still recognised); falls back to ``type(part).__name__`` if the message
+    module can't be imported. Returns one of ``"TextPart"``, ``"ToolCallPart"``,
+    ``"ToolReturnPart"`` or ``""``.
+    """
+    try:
+        from pydantic_ai.messages import TextPart, ToolCallPart, ToolReturnPart
+    except Exception:  # pragma: no cover - defensive
+        def by_name(part: Any) -> str:
+            name = type(part).__name__
+            return name if name in {"TextPart", "ToolCallPart", "ToolReturnPart"} else ""
+
+        return by_name
+
+    def by_isinstance(part: Any) -> str:
+        if isinstance(part, TextPart):
+            return "TextPart"
+        if isinstance(part, ToolCallPart):
+            return "ToolCallPart"
+        if isinstance(part, ToolReturnPart):
+            return "ToolReturnPart"
+        return ""
+
+    return by_isinstance
+
+
 def _build_output(result: Any) -> list[OutputMessage]:
     """Convert a run's new messages into ordered AgentResponse output items.
 
@@ -142,11 +180,12 @@ def _build_output(result: Any) -> list[OutputMessage]:
     except Exception:  # pragma: no cover - defensive
         return []
 
+    classify = _make_part_classifier()
     items: list[OutputMessage] = []
     tool_index: dict[str, int] = {}
     for msg in new_messages:
         for part in getattr(msg, "parts", []) or []:
-            kind = type(part).__name__
+            kind = classify(part)
             if kind == "TextPart":
                 text = getattr(part, "content", "")
                 if isinstance(text, str) and text:

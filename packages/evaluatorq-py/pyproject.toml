@@ -174,7 +174,7 @@ dependencies = [
   langgraph = [ "langgraph>=0.2.0" ]
   openai-agents = [ "openai-agents>=0.1.0" ]
   pydantic-ai = [ "pydantic-ai-slim[openai]>=1.0.0" ]
-  crewai = [ "crewai>=0.70.0" ]
+  crewai = [ "crewai>=0.70.0; python_version >= '3.11'" ]
   redteam = [
   "openai>=1.0.0,<3.0.0",
   "huggingface-hub>=0.20.0",

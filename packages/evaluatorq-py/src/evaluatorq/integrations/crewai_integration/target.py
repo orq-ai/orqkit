@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
@@ -129,7 +130,10 @@ class CrewAITarget(AgentTarget):
             return self._agent_context
         agents = getattr(self._crew, "agents", None) or []
         roles = [str(getattr(a, "role", "")) for a in agents if getattr(a, "role", None)]
-        key = (roles[0] if roles else "crewai_crew").replace(" ", "_").lower()
+        raw_key = (roles[0] if roles else "crewai_crew").lower()
+        # Real CrewAI role strings contain spaces, slashes, punctuation; collapse
+        # anything outside [a-z0-9_] so the key is always well-formed.
+        key = re.sub(r"[^a-z0-9_]+", "_", raw_key).strip("_") or "crewai_crew"
         description = (
             f"CrewAI crew target ({len(agents)} agent(s): {', '.join(roles)})"
             if roles
@@ -166,7 +170,11 @@ def _flatten(messages: list[Message]) -> str:
         if not m.content:
             continue
         label = _ROLE_LABELS.get(m.role, m.role.capitalize())
-        lines.append(f"{label}: {m.content}")
+        # Escape braces: CrewAI fills {input_key} via str.format on the task
+        # description, so any literal { } in user content would otherwise raise
+        # KeyError or collide with other task variables (template injection).
+        safe = m.content.replace("{", "{{").replace("}", "}}")
+        lines.append(f"{label}: {safe}")
     return "\n".join(lines)
 
 
