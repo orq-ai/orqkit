@@ -28,6 +28,7 @@ from pydantic import BaseModel, Field
 
 from evaluatorq.contracts import StrEnum
 from evaluatorq.redteam.contracts import PIPELINE_CONFIG, LLMConfig, TokenUsage
+from evaluatorq.redteam.utils import safe_substitute
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
@@ -131,11 +132,17 @@ class ToolChainingPlanner:
         a plan-free attack.
         """
         tool_list = ', '.join(available_tools)
-        user_msg = _PLANNER_USER_TEMPLATE.format(
-            objective=objective,
-            agent_name=agent_name,
-            agent_description=agent_description,
-            tool_list=tool_list,
+        # safe_substitute (single-pass, literal placeholders) rather than str.format:
+        # objectives/descriptions are filled from earlier templates and can contain
+        # stray {...} that would raise KeyError under format. Matches the rest of adaptive/.
+        user_msg = safe_substitute(
+            _PLANNER_USER_TEMPLATE,
+            {
+                '{objective}': objective,
+                '{agent_name}': agent_name,
+                '{agent_description}': agent_description,
+                '{tool_list}': tool_list,
+            },
         )
         logger.debug(f'Tool-chaining planner decomposing objective for agent={agent_name}, tools={tool_list}')
 

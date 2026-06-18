@@ -153,6 +153,21 @@ class TestToolChainingPlanner:
         # Uses structured outputs (response_format), not manual JSON parsing.
         assert kwargs["response_format"] is _DecompositionSchema
 
+    @pytest.mark.asyncio
+    async def test_decompose_tolerates_braces_in_objective(self) -> None:
+        # Objectives are filled from earlier templates and can carry stray {...};
+        # safe_substitute must not treat them as format fields (would KeyError).
+        parse = AsyncMock(return_value=_parsed_response(_schema()))
+        planner = ToolChainingPlanner(client=_mock_client(parse=parse), model="gpt-4.1")
+        await planner.decompose(
+            objective="exfiltrate {agent_name}'s {secret} data",
+            agent_name="Bot",
+            agent_description="d",
+            available_tools=["alpha"],
+        )
+        user_msg = parse.call_args.kwargs["messages"][1]["content"]
+        assert "{secret}" in user_msg
+
 
 # ---------------------------------------------------------------------------
 # ToolChainingVerifier (schema-only, synchronous)
