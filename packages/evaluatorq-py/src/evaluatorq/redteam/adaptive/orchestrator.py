@@ -499,6 +499,10 @@ class MultiTurnOrchestrator:
             )
             return None, None
 
+        # Track planner usage outside the try so an exception raised after decompose()
+        # has already billed tokens (verify/format are pure Python, so the window is
+        # narrow) still folds that cost into the adversarial totals.
+        planner_usage: TokenUsage | None = None
         try:
             async with with_redteam_span(
                 'orq.redteam.tool_chain_decomposition',
@@ -515,6 +519,7 @@ class MultiTurnOrchestrator:
                     agent_description=agent_context.description or 'An AI assistant',
                     available_tools=tool_names,
                 )
+                planner_usage = decomposition.token_usage
                 # Schema-only verification against the agent's real tool list — no
                 # extra LLM cost, deterministic, and drops steps naming unknown tools.
                 verifier = ToolChainingVerifier(available_tools=tool_names)
@@ -524,14 +529,14 @@ class MultiTurnOrchestrator:
                         f'Tool-chaining: no steps survived verification for {strategy.name}; '
                         'falling back to adaptive attack'
                     )
-                    return None, decomposition.token_usage
+                    return None, planner_usage
                 # Cap to the turn budget — steps beyond max_turns can never be reached.
                 if len(valid_steps) > max_turns:
                     logger.debug(
                         f'Tool-chaining: capping {len(valid_steps)} steps to max_turns={max_turns}'
                     )
                     valid_steps = valid_steps[:max_turns]
-                return format_plan_for_prompt(valid_steps), decomposition.token_usage
+                return format_plan_for_prompt(valid_steps), planner_usage
         except Exception as e:
             # repr-style detail: str(asyncio.TimeoutError()) is '' on 3.10+, so log
             # the type to keep timeouts/cancellations identifiable in the fallback.
@@ -539,7 +544,7 @@ class MultiTurnOrchestrator:
                 f'Tool-chaining decomposition failed for {strategy.name} '
                 f'({type(e).__name__}: {e}); falling back to adaptive attack'
             )
-            return None, None
+            return None, planner_usage
 
     async def run_attack(
         self,

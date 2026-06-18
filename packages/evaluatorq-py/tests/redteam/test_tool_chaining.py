@@ -112,7 +112,9 @@ class TestToolChainingPlanner:
         assert result.token_usage.calls == 1
 
     @pytest.mark.asyncio
-    async def test_decompose_sorts_steps_by_step_index(self) -> None:
+    async def test_decompose_preserves_emit_order(self) -> None:
+        # Emit order is authoritative; the model-supplied step_index is ignored
+        # (it can be duplicated/gapped), so steps come back exactly as emitted.
         schema = _schema([_make_step(2, "third"), _make_step(0, "first"), _make_step(1, "second")])
         planner = ToolChainingPlanner(
             client=_mock_client(parse=AsyncMock(return_value=_parsed_response(schema))), model="gpt-4.1"
@@ -120,8 +122,7 @@ class TestToolChainingPlanner:
         result = await planner.decompose(
             objective="x", agent_name="Bot", agent_description="d", available_tools=["first", "second", "third"]
         )
-        assert [s.step_index for s in result.steps] == [0, 1, 2]
-        assert [s.tool_name for s in result.steps] == ["first", "second", "third"]
+        assert [s.tool_name for s in result.steps] == ["third", "first", "second"]
 
     @pytest.mark.asyncio
     async def test_decompose_raises_when_parsed_none(self) -> None:
@@ -199,6 +200,14 @@ def test_format_plan_lists_tools_in_order() -> None:
     assert "Tool-Chaining Decomposition Plan" in plan
     assert plan.index("lookup_tool") < plan.index("email_tool")
     assert "1." in plan and "2." in plan
+
+
+def test_format_plan_numbers_sequentially_ignoring_step_index() -> None:
+    # Duplicate/gapped model indices must not garble display numbering.
+    plan = format_plan_for_prompt([_make_step(0, "a"), _make_step(0, "b"), _make_step(5, "c")])
+    assert "1. Elicit the `a`" in plan
+    assert "2. Elicit the `b`" in plan
+    assert "3. Elicit the `c`" in plan
 
 
 # ---------------------------------------------------------------------------
