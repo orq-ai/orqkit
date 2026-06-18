@@ -172,6 +172,11 @@ class TestToolChainingVerifier:
         verifier = ToolChainingVerifier(available_tools=None)
         assert verifier.verify(_make_step(0, "any")).status == VerificationStatus.SKIPPED
 
+    def test_empty_tool_list_invalidates_all(self) -> None:
+        # [] means "agent exposes no tools" → INVALID_TOOL, not SKIPPED (None).
+        verifier = ToolChainingVerifier(available_tools=[])
+        assert verifier.verify(_make_step(0, "any")).status == VerificationStatus.INVALID_TOOL
+
     def test_case_insensitive_tool_match(self) -> None:
         verifier = ToolChainingVerifier(available_tools=["Email_Tool"])
         assert verifier.verify(_make_step(0, "email_tool")).status == VerificationStatus.VALID

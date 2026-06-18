@@ -202,8 +202,12 @@ class ToolChainingVerifier:
     """
 
     def __init__(self, available_tools: list[str] | None = None) -> None:
-        # Normalise to a lowercase set for case-insensitive lookup.
-        self._available_tools: set[str] | None = {t.lower() for t in available_tools} if available_tools else None
+        # Normalise to a lowercase set for case-insensitive lookup. An empty list
+        # means "agent exposes no tools" → every step is INVALID_TOOL; only None
+        # (no schema supplied) yields SKIPPED.
+        self._available_tools: set[str] | None = (
+            {t.lower() for t in available_tools} if available_tools is not None else None
+        )
 
     def verify(self, step: ToolCallStep) -> VerificationResult:
         """Verify a single step against the declared tool schema."""
