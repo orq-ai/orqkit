@@ -21,6 +21,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from pydantic import ValidationError
 
+from evaluatorq.common.messages import coerce_content_text
 from evaluatorq.simulation.reports.sections import build_report_sections
 from evaluatorq.simulation.types import SimulationResult, SimulationRun
 from evaluatorq.simulation.ui.colors import (
@@ -86,22 +87,6 @@ def _section(sections: list[ReportSection], kind: str) -> dict[str, Any]:
 
 def _pct(value: float) -> str:
     return f"{value * 100:.0f}%"
-
-
-def _content_text(content: Any) -> str:
-    """Flatten message content into markdown text.
-
-    Multi-modal / tool-call messages return a list of content blocks rather than
-    a plain string; join their text fields so they don't render as raw Python
-    list notation.
-    """
-    if isinstance(content, list):
-        parts = [
-            block.get("text", "") if isinstance(block, dict) else str(block)
-            for block in content
-        ]
-        return "\n\n".join(p for p in parts if p)
-    return content or ""
 
 
 # ---------------------------------------------------------------------------
@@ -397,7 +382,7 @@ def _render_transcripts(sections: list[ReportSection]) -> None:
         label = role_label.get(msg["role"], msg["role"])
         with st.chat_message("user" if msg["role"] == "user" else "assistant"):
             st.markdown(f"**{label}**")
-            st.markdown(_content_text(msg.get("content")) or "_(empty)_")
+            st.markdown(coerce_content_text(msg.get("content")) or "_(empty)_")
 
 
 def _render_turn_quality(sections: list[ReportSection]) -> None:
