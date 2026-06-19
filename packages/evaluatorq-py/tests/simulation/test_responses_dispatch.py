@@ -176,6 +176,7 @@ class TestCallLlmDispatch:
             ],
         )
 
+        assert client.responses.create.await_args is not None
         sent = client.responses.create.await_args.kwargs
         assert sent["tools"] == [
             {

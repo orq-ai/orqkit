@@ -29,7 +29,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, NoReturn
 
 import typer
 
@@ -192,7 +192,7 @@ async def _resolve_agent_description(
     return ctx.description
 
 
-def _handle_cli_error(exc: Exception) -> None:
+def _handle_cli_error(exc: Exception) -> NoReturn:
     typer.echo(f"Error: {exc}", err=True)
     raise typer.Exit(1) from None
 

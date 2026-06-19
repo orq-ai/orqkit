@@ -253,6 +253,7 @@ class BaseAgent(ABC):
             reasoning_kwargs = {'reasoning_effort': DEFAULT_REASONING_EFFORT} if DEFAULT_REASONING_EFFORT else None
 
             async def _do_call() -> LLMResult:
+                finish_reason: str | None = None
                 for attempt in range(2):
                     response, delta = await execute_chat_completion(
                         client=self._client,

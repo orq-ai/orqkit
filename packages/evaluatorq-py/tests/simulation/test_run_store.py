@@ -106,8 +106,9 @@ def test_build_simulation_run_aggregates_scorer_averages() -> None:
 
 
 def test_build_simulation_run_skips_non_numeric_scores() -> None:
+    bad_scores: dict[str, Any] = {"goal_achieved": 1.0, "bad_scorer": "not_a_number"}
     results = [
-        _make_result(scorer_scores={"goal_achieved": 1.0, "bad_scorer": "not_a_number"}),
+        _make_result(scorer_scores=bad_scores),
         _make_result(scorer_scores={"goal_achieved": 0.5}),
     ]
     run = build_simulation_run(
