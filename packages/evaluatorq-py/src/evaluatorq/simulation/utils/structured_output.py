@@ -11,12 +11,12 @@ from __future__ import annotations
 import logging
 from typing import Any, TypeVar, cast
 
-from openai import APIStatusError, AsyncOpenAI
+from openai import APIStatusError, AsyncOpenAI, LengthFinishReasonError
 from pydantic import BaseModel
 
+from evaluatorq.common.retry import with_retry
 from evaluatorq.common.tracing import get_trace_context_headers, record_llm_input, record_llm_response
 from evaluatorq.simulation.tracing import with_llm_span
-from evaluatorq.common.retry import with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,17 @@ async def generate_structured(
             #   orq.simulation.structured_output.fallback=true
             # once a get_current_span() helper is wired into this module.
             if span is not None:
-                span.set_attribute("orq.simulation.structured_output.fallback", True)
+                fallback = True
+                span.set_attribute("orq.simulation.structured_output.fallback", fallback)
+        except LengthFinishReasonError:
+            logger.warning(
+                "%s: structured output hit length limit, falling back to json_object",
+                label,
+            )
+            if span is not None:
+                fallback = True
+                span.set_attribute("orq.simulation.structured_output.fallback", fallback)
+                span.set_attribute("orq.simulation.structured_output.fallback_reason", "length")
 
         # 2. Fallback: json_object mode
         fallback_response = await with_retry(

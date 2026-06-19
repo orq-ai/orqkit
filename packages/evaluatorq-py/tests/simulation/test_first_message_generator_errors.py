@@ -9,6 +9,7 @@ Covers:
 
 from __future__ import annotations
 
+# ruff: noqa: S101
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -63,6 +64,24 @@ def _client_with_response(message_content: str | None) -> MagicMock:
     return client
 
 
+def _client_with_responses(*message_contents: str | None) -> MagicMock:
+    responses = []
+    for message_content in message_contents:
+        msg = MagicMock()
+        msg.content = message_content
+        choice = MagicMock()
+        choice.message = msg
+        resp = MagicMock()
+        resp.choices = [choice]
+        resp.usage = MagicMock(prompt_tokens=1, completion_tokens=1, total_tokens=2)
+        responses.append(resp)
+    client = MagicMock()
+    client.chat = MagicMock()
+    client.chat.completions = MagicMock()
+    client.chat.completions.create = AsyncMock(side_effect=responses)
+    return client
+
+
 def _client_raising(exc: Exception) -> MagicMock:
     client = MagicMock()
     client.chat = MagicMock()
@@ -110,6 +129,13 @@ class TestFirstMessageGeneratorErrors:
         gen = FirstMessageGenerator(model="gpt-4o", client=client)
         result = await gen.generate(_persona(), _scenario("login"))
         assert result == "Hi, I need help with: login"
+
+    async def test_empty_content_retries_before_fallback(self):
+        client = _client_with_responses("", "I need help logging in")
+        gen = FirstMessageGenerator(model="gpt-4o", client=client)
+        result = await gen.generate(_persona(), _scenario("login"))
+        assert result == "I need help logging in"
+        assert client.chat.completions.create.await_count == 2
 
     async def test_leading_and_trailing_double_quotes_stripped(self):
         client = _client_with_response('"hello there"')

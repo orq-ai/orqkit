@@ -12,6 +12,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
+from openai import BadRequestError
+
 from evaluatorq.common.tracing import (
     get_trace_context_headers,
     record_llm_input,
@@ -70,6 +72,14 @@ async def execute_chat_completion(
             existing = params.get('extra_headers') or {}
             params['extra_headers'] = {**existing, **headers}
 
-    response = await asyncio.wait_for(client.chat.completions.create(**params), timeout=timeout_s)
+    try:
+        response = await asyncio.wait_for(client.chat.completions.create(**params), timeout=timeout_s)
+    except BadRequestError:
+        # "where possible": endpoints that don't support reasoning_effort 400 on
+        # it — drop the param and retry once rather than failing the call.
+        if 'reasoning_effort' not in params:
+            raise
+        params.pop('reasoning_effort', None)
+        response = await asyncio.wait_for(client.chat.completions.create(**params), timeout=timeout_s)
     record_llm_response(span, response)
     return response, TokenUsage.from_completion(response)
