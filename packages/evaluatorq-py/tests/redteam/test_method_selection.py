@@ -246,9 +246,11 @@ class TestCheckFilterResults:
                 dps, None, {DeliveryMethod.CRESCENDO, DeliveryMethod.BASE64}
             )
         )
-        assert any("Unmatched delivery method(s)" in m and "base64" in m for m in msgs)
-        # 'crescendo' matched, so it must not be reported as unmatched.
-        assert not any("crescendo" in m for m in msgs if "Unmatched delivery" in m)
+        warning = next((m for m in msgs if "Unmatched delivery method(s)" in m), None)
+        assert warning is not None
+        assert "base64" in warning  # the unmatched method is named
+        # 'crescendo' matched, so it appears in the Present hint, not as unmatched.
+        assert "Present: ['crescendo']" in warning
 
     def test_delivery_method_only_no_warning_when_matched(self) -> None:
         from evaluatorq.redteam.runner import _check_filter_results
@@ -452,6 +454,15 @@ class TestBridgeDeliveryFilter:
         dps = [self._dp('Base64'), self._dp('Direct Request'), self._dp('base64')]
         kept = _apply_filters(dps, delivery_methods=['base64'])
         assert [dp.inputs['delivery_method'] for dp in kept] == ['base64']
+
+    def test_open_set_custom_method_is_filterable(self) -> None:
+        # A non-enum (custom) delivery method present in a dataset can still be
+        # selected — the open-set promise, exercised through the loader filter.
+        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _apply_filters
+
+        dps = [self._dp('my-custom-method'), self._dp('crescendo')]
+        kept = _apply_filters(dps, delivery_methods=['my-custom-method'])
+        assert [dp.inputs['delivery_method'] for dp in kept] == ['my-custom-method']
 
     def test_empty_delivery_value_never_matches(self) -> None:
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _apply_filters

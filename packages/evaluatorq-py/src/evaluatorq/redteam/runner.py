@@ -1020,7 +1020,14 @@ def _check_filter_results(
     if delivery_methods is not None:
         unmatched_methods = sorted(set(_delivery_method_values(delivery_methods) or []) - matched_methods)
         if unmatched_methods:
-            logger.warning(f'Unmatched delivery method(s): {unmatched_methods} — no datapoints use them.')
+            msg = f'Unmatched delivery method(s): {unmatched_methods} — no datapoints use them.'
+            # When some methods DID match, name what's actually present so a
+            # spelling/case mismatch is visible (matching is exact). On a fully
+            # empty run matched_methods is empty and the RedTeamError below reports
+            # the dataset's present methods instead.
+            if matched_methods:
+                msg += f' Present: {sorted(matched_methods)}.'
+            logger.warning(msg)
 
     if not datapoints:
         names_repr = sorted(strategy_names) if strategy_names else None

@@ -1129,7 +1129,10 @@ class AttackInfo(BaseModel):
     category: str = Field(description="Short-form category code (e.g., 'ASI01', 'LLM01') — kept for backwards compat")
     framework: Framework = Field(description="OWASP framework ('OWASP-ASI' or 'OWASP-LLM')")
     attack_technique: AttackTechnique
-    delivery_methods: list[DeliveryMethod] = Field(description='Delivery methods (always a list)')
+    delivery_methods: list[DeliveryMethod | str] = Field(
+        description='Delivery methods (always a list). Open set: known values are DeliveryMethod '
+        'members, custom dataset values are kept as raw strings.'
+    )
     turn_type: TurnType
     severity: Severity
     vulnerability_domain: VulnerabilityDomain | None = Field(

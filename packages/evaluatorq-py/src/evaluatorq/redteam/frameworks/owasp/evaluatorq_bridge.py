@@ -129,8 +129,8 @@ def load_owasp_agentic_dataset(
         num_samples: Maximum number of samples to load (None = all).
         categories: Filter to these OWASP category codes.
         delivery_methods: Filter to rows whose ``delivery_method`` matches one of
-            these values (case-insensitive). Applied before the ``num_samples``
-            cap. ``None`` disables the filter.
+            these values (exact match — no case/punctuation folding). Applied
+            before the ``num_samples`` cap. ``None`` disables the filter.
 
     Returns:
         List of DataPoint instances ready for evaluatorq evaluation.
