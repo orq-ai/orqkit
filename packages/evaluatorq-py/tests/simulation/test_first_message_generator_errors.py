@@ -1,8 +1,8 @@
 """Tests for FirstMessageGenerator error / fallback paths.
 
 Covers:
-- 401/403 APIStatusError re-raised (auth errors are not silently masked)
-- non-auth APIStatusError returns generic fallback
+- 4xx APIStatusError re-raised (auth + client errors are not silently masked)
+- 5xx / 429 APIStatusError returns generic fallback (keeps a long run alive)
 - empty content returns generic fallback
 - leading/trailing quote stripping on returned message
 """
@@ -107,16 +107,27 @@ class TestFirstMessageGeneratorErrors:
         assert exc_info.value.status_code == 403
 
     async def test_500_falls_back_to_generic_message(self):
+        # Persistent server error (survived with_retry) — fall back to keep a
+        # long run alive rather than abort it.
         client = _client_raising(_api_error(500))
         gen = FirstMessageGenerator(model="gpt-4o", client=client)
         result = await gen.generate(_persona(), _scenario("reset my pw"))
         assert result == "Hi, I need help with: reset my pw"
 
-    async def test_400_non_auth_falls_back(self):
+    async def test_429_falls_back_to_generic_message(self):
+        client = _client_raising(_api_error(429))
+        gen = FirstMessageGenerator(model="gpt-4o", client=client)
+        result = await gen.generate(_persona(), _scenario("rate limited"))
+        assert result == "Hi, I need help with: rate limited"
+
+    async def test_400_is_reraised_not_masked(self):
+        # A 4xx client error (bad request / model-not-found) is a real
+        # misconfiguration — surface it, don't hide it behind a canned message.
         client = _client_raising(_api_error(400))
         gen = FirstMessageGenerator(model="gpt-4o", client=client)
-        result = await gen.generate(_persona(), _scenario("xyz"))
-        assert result == "Hi, I need help with: xyz"
+        with pytest.raises(APIStatusError) as exc_info:
+            await gen.generate(_persona(), _scenario("xyz"))
+        assert exc_info.value.status_code == 400
 
     async def test_empty_content_falls_back_to_generic(self):
         client = _client_with_response("")

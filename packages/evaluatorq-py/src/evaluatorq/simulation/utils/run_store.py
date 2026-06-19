@@ -12,12 +12,15 @@ Saved runs land in ``.evaluatorq/sim-runs/`` under collision-free
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from evaluatorq.simulation.types import SimulationRun
+
+logger = logging.getLogger(__name__)
 
 SIM_RUNS_DIR_NAME = Path(".evaluatorq") / "sim-runs"
 
@@ -53,6 +56,11 @@ def build_simulation_run(
         for scorer_name, score in scores.items():
             if isinstance(score, (int, float)):
                 scorer_totals.setdefault(scorer_name, []).append(float(score))
+            else:
+                # Drop non-numeric scores so a misbehaving evaluator can't crash
+                # the build — but log it, or the average silently reflects fewer
+                # data points than the run produced.
+                logger.warning("Dropping non-numeric score from scorer %r: %r", scorer_name, score)
 
     scorer_averages = {k: sum(v) / len(v) for k, v in scorer_totals.items() if v}
 

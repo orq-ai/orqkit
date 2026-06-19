@@ -170,11 +170,18 @@ Keep it natural - this is how they would actually open a conversation."""
             return message
 
         except APIStatusError as e:
-            # Re-throw auth errors
-            if e.status_code in (401, 403):
+            # Re-raise client errors (auth, bad request, model-not-found, …) —
+            # those are real misconfigurations, not transient, and a canned
+            # message would silently mask them. Only fall back for persistent
+            # server (5xx) / rate-limit (429) errors that survived with_retry, so
+            # a long run isn't aborted by an infra blip; log loudly so the
+            # degraded input is visible.
+            if e.status_code < 500 and e.status_code != 429:
                 raise
             logger.warning(
-                "FirstMessageGenerator: API call failed, using generic fallback. Error: %s",
+                "FirstMessageGenerator: generation failed after retries (HTTP %s); "
+                "using a generic first message for this datapoint. Error: %s",
+                e.status_code,
                 e,
             )
             return f"Hi, I need help with: {scenario.goal}"
