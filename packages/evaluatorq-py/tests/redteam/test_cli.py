@@ -11,11 +11,11 @@ Covers:
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 from click.testing import Result as CliResult
 from typer.testing import CliRunner
 
 from evaluatorq.redteam.cli import app
-
 
 runner = CliRunner()
 
@@ -85,6 +85,14 @@ class TestVulnerabilityShortFlag:
         assert result.exit_code == 0, result.output
         _kwargs = mock_rt.call_args.kwargs
         assert _kwargs["vulnerabilities"] == ["tool_misuse"]
+
+    def test_comma_separated_vulnerabilities(self):
+        """-V accepts comma-separated IDs, split before validation."""
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-V", "goal_hijacking,prompt_injection", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["vulnerabilities"] == ["goal_hijacking", "prompt_injection"]
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +256,22 @@ class TestStrategyFlag:
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["strategies"] == ["jailbreak_dan"]
 
+    def test_comma_separated_strategies(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-s", "direct_override,crescendo_injection", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] == ["direct_override", "crescendo_injection"]
+
+    def test_comma_separated_strategy_with_invalid_token_rejected(self):
+        # One bad token in a CSV list is rejected via the known_strategy_names
+        # branch (distinct from the delivery-method enum validation).
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-s", "direct_override,definitely_not_a_strategy", "--yes"]
+        )
+        assert result.exit_code != 0
+        mock_rt.assert_not_called()
+
     def test_strategy_defaults_to_none_when_omitted(self):
         result, mock_rt = _run_with_mocked_red_team(
             ["run", "--target", "agent:test-agent", "--yes"]
@@ -311,12 +335,13 @@ class TestDeliveryMethodFlag:
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["delivery_methods"] == [DeliveryMethod.LEETSPEAK]
 
-    def test_delivery_method_unknown_value_rejected_by_typer(self):
-        # Typer/Click rejects values outside the DeliveryMethod enum at parse time.
-        result, _mock_rt = _run_with_mocked_red_team(
+    def test_delivery_method_unknown_value_rejected(self):
+        # Values outside the DeliveryMethod enum are rejected (BadParameter), no run.
+        result, mock_rt = _run_with_mocked_red_team(
             ["run", "--target", "agent:test-agent", "-d", "not-a-real-method", "--yes"]
         )
         assert result.exit_code != 0
+        mock_rt.assert_not_called()
 
     def test_delivery_method_defaults_to_none_when_omitted(self):
         result, mock_rt = _run_with_mocked_red_team(
@@ -324,6 +349,25 @@ class TestDeliveryMethodFlag:
         )
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["delivery_methods"] is None
+
+    def test_comma_separated_delivery_methods(self):
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-d", "crescendo,base64", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == [
+            DeliveryMethod.CRESCENDO,
+            DeliveryMethod.BASE64,
+        ]
+
+    def test_comma_separated_with_invalid_token_rejected(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "-d", "crescendo,bogus", "--yes"]
+        )
+        assert result.exit_code != 0
+        mock_rt.assert_not_called()
 
 
 class TestStrategyAndDeliveryMethodCombined:

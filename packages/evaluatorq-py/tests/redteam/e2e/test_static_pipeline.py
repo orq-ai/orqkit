@@ -100,6 +100,53 @@ async def test_static_category_filtering(
 
 
 @pytest.mark.asyncio
+async def test_static_delivery_method_filtering(
+    mock_llm_client: DeterministicAsyncOpenAI,
+    mock_backend_bundle: MockBackend,
+    static_dataset_path: Path,
+) -> None:
+    """delivery_methods filter on the full static path lets matching rows reach jobs.
+
+    All 3 fixture rows are 'direct-request', so filtering to it keeps all 3 — proving
+    the filter threads end-to-end through red_team(mode='static') to the results.
+    """
+    from evaluatorq.redteam.contracts import DeliveryMethod
+
+    with _static_patches(mock_backend_bundle):
+        report = await red_team(
+            "agent:e2e-static-model",
+            mode="static",
+            delivery_methods=[DeliveryMethod.DIRECT_REQUEST],
+            parallelism=2,
+            dataset=str(static_dataset_path),
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
+        )
+
+    assert report.total_results == 3
+
+
+@pytest.mark.asyncio
+async def test_static_delivery_method_empty_match_hard_fails(
+    mock_llm_client: DeterministicAsyncOpenAI,
+    mock_backend_bundle: MockBackend,
+    static_dataset_path: Path,
+) -> None:
+    """A delivery filter matching no static row raises rather than running nothing."""
+    from evaluatorq.redteam.contracts import DeliveryMethod
+    from evaluatorq.redteam.exceptions import RedTeamError
+
+    with _static_patches(mock_backend_bundle), pytest.raises(RedTeamError, match="zero datapoints"):
+        await red_team(
+            "agent:e2e-static-model",
+            mode="static",
+            delivery_methods=[DeliveryMethod.BASE64],  # no fixture row uses this
+            parallelism=2,
+            dataset=str(static_dataset_path),
+            llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
+        )
+
+
+@pytest.mark.asyncio
 async def test_static_datapoint_capping(
     mock_llm_client: DeterministicAsyncOpenAI,
     mock_backend_bundle: MockBackend,
