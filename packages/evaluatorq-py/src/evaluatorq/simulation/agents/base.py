@@ -36,15 +36,36 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        raise ValueError(f'Environment variable {name}={raw!r} must be a number') from None
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f'Environment variable {name}={raw!r} must be an integer') from None
+
+
 # Per-LLM-call timeout. Self-hosted endpoints (e.g. a single-GPU tailscale box
 # under parallel load) can exceed the default; raise via EVALUATORQ_LLM_TIMEOUT_S.
-DEFAULT_TIMEOUT_S = float(os.environ.get('EVALUATORQ_LLM_TIMEOUT_S', '60'))
+DEFAULT_TIMEOUT_S = _env_float('EVALUATORQ_LLM_TIMEOUT_S', 60.0)
 
 # Default completion-token budget. Reasoning models (e.g. gemma-4) spend tokens
 # on hidden reasoning before the tool call; too small a budget truncates the
 # response (finish_reason=length) before the tool call is emitted, surfacing as
 # "no text and no tool calls". Raise via EVALUATORQ_LLM_MAX_TOKENS for such models.
-DEFAULT_MAX_TOKENS = int(os.environ.get('EVALUATORQ_LLM_MAX_TOKENS', '8192'))
+DEFAULT_MAX_TOKENS = _env_int('EVALUATORQ_LLM_MAX_TOKENS', 8192)
 
 # Default reasoning effort for reasoning-capable models. "medium" keeps hidden
 # reasoning bounded (far fewer tokens than the model's default), which avoids

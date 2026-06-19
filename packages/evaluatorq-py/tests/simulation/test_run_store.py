@@ -423,7 +423,15 @@ async def test_simulate_run_output_writes_explicit_path(tmp_path: Path, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_simulate_save_failure_still_returns_results(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "error",
+    # OSError = disk/perms, RuntimeError = collision exhaustion, ValueError =
+    # pydantic serialization (PydanticSerializationError <: ValueError).
+    [OSError("disk full"), RuntimeError("no free filename"), ValueError("cannot serialize")],
+)
+async def test_simulate_save_failure_still_returns_results(
+    error: Exception, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # A persistence failure must not discard a completed, paid-for run.
     from unittest.mock import AsyncMock, patch
 
@@ -433,7 +441,7 @@ async def test_simulate_save_failure_still_returns_results(tmp_path: Path, monke
     results = [_make_result(scorer_scores={"goal_achieved": 1.0})]
 
     def _boom(**_kwargs: Any) -> Path:
-        raise OSError("disk full")
+        raise error
 
     with (
         patch("evaluatorq.simulation.api._simulate_via_evaluatorq", AsyncMock(return_value=results)),

@@ -95,6 +95,11 @@ def auto_save_run(*, run: SimulationRun, run_name: str) -> Path:
                 _ = fh.write(payload)
         except FileExistsError:  # noqa: PERF203 — exclusive-create retry is the point
             target_path = runs_dir / f"{base}_{counter + 1:03d}.json"
+        except OSError:
+            # "x" created the file before the write failed (e.g. disk full) —
+            # don't leave an empty/partial orphan behind.
+            target_path.unlink(missing_ok=True)
+            raise
         else:
             return target_path
     raise RuntimeError(

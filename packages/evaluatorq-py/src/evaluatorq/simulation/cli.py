@@ -198,9 +198,14 @@ def _handle_cli_error(exc: Exception) -> NoReturn:
 
 
 def _clean_cli_error_types() -> tuple[type[Exception], ...]:
-    from evaluatorq.common.llm_client import MissingLLMCredentialsError
-    from evaluatorq.redteam.exceptions import BackendError, CredentialError
-
+    # Guard the lazy imports: this runs while evaluating an `except` clause, so a
+    # failed import here would replace the exception being handled with an
+    # ImportError. Fall back to the base types instead of masking the real error.
+    try:
+        from evaluatorq.common.llm_client import MissingLLMCredentialsError
+        from evaluatorq.redteam.exceptions import BackendError, CredentialError
+    except ImportError:
+        return (ValueError, RuntimeError)
     return (ValueError, RuntimeError, BackendError, CredentialError, MissingLLMCredentialsError)
 
 

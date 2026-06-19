@@ -533,8 +533,13 @@ async def _simulate_core(
     # TODO(RES-963): inline because on_run_complete carries no run metadata and
     # hooks aren't yet composable; move to a save hook once that lands.
     if save:
+        # Mirror _resolve_target's precedence: target/target_callback win over
+        # agent_key, so a callable passed alongside agent_key is a 'callback'
+        # run, not an 'orq_deployment' one.
         if target_agent is not None:
             target_kind = 'orq_agent'
+        elif target is not None or target_callback is not None:
+            target_kind = 'callback'
         elif agent_key is not None:
             target_kind = 'orq_deployment'
         else:
@@ -556,7 +561,11 @@ async def _simulate_core(
             else:
                 saved_path = auto_save_run(run=run, run_name=run.run_name)
             _log_saved_run(saved_path)
-        except (OSError, RuntimeError) as exc:
+        except Exception as exc:  # noqa: BLE001 — deliberate; see comment
+            # Broad by design: this guards a disk-write side-effect that must
+            # never discard already-completed work. Covers OSError, the
+            # collision RuntimeError, and pydantic serialization errors
+            # (PydanticSerializationError <: ValueError) from model_dump_json.
             logger.error(f'Failed to save simulation run (results still returned): {exc}')
     return results
 
