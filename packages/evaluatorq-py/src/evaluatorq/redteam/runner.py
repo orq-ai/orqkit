@@ -972,6 +972,7 @@ def _check_filter_results(
     delivery_methods: set[DeliveryMethod] | None,
     *,
     names_apply: bool = True,
+    present_methods: list[str] | None = None,
 ) -> None:
     """Surface strategy/delivery-method filter mismatches; fail on an empty run.
 
@@ -985,6 +986,12 @@ def _check_filter_results(
     ``names_apply=False`` suppresses per-name warnings on paths whose datapoints
     never carry a strategy name (static mode), where the caller warns once that
     name filtering does not apply instead.
+
+    ``present_methods`` (static path) lists the ``delivery_method`` values
+    actually present in the dataset; when an empty run is caused by a delivery
+    filter, they are surfaced in the error so the user sees a spelling mismatch
+    (``you asked for 'crescendo', the dataset uses 'Crescendo attack'``) rather
+    than a bare "zero datapoints".
     """
     if strategy_names is None and delivery_methods is None:
         return
@@ -1018,10 +1025,13 @@ def _check_filter_results(
     if not datapoints:
         names_repr = sorted(strategy_names) if strategy_names else None
         methods_repr = sorted(m.value for m in delivery_methods) if delivery_methods else None
-        raise RedTeamError(
+        msg = (
             'Filter selection produced zero datapoints — nothing to run. '
             f'(strategies={names_repr}, delivery_methods={methods_repr})'
         )
+        if present_methods:
+            msg += f' Delivery methods present in the dataset: {present_methods}.'
+        raise RedTeamError(msg)
 
 
 async def _prepare_target(
@@ -2397,7 +2407,14 @@ async def _run_static(
             f'ignoring strategy filter {sorted(resolved_strategy_names)} in static mode.'
         )
     if isinstance(data, list):
-        _check_filter_results(data, None, resolved_delivery_methods, names_apply=False)
+        # On an empty delivery-filtered static run, reload unfiltered (cheap, error
+        # path only) to report the delivery_method values the dataset actually
+        # carries — surfacing spelling/format drift instead of a bare "zero datapoints".
+        present_methods: list[str] | None = None
+        if resolved_delivery_methods is not None and not data:
+            present_rows = load_owasp_agentic_dataset(dataset=dataset, categories=categories)
+            present_methods = sorted({m for dp in present_rows if (m := dp.inputs.get('delivery_method'))})
+        _check_filter_results(data, None, resolved_delivery_methods, names_apply=False, present_methods=present_methods)
         _save_stage(output_dir, '01_datapoints.json', json.dumps([dp.inputs for dp in data], indent=2, default=str))
 
     # Build one job per target using the shared helper

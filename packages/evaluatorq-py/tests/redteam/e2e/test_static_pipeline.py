@@ -131,11 +131,13 @@ async def test_static_delivery_method_empty_match_hard_fails(
     mock_backend_bundle: MockBackend,
     static_dataset_path: Path,
 ) -> None:
-    """A delivery filter matching no static row raises rather than running nothing."""
+    """A delivery filter matching no static row raises, naming the dataset's actual methods."""
     from evaluatorq.redteam.contracts import DeliveryMethod
     from evaluatorq.redteam.exceptions import RedTeamError
 
-    with _static_patches(mock_backend_bundle), pytest.raises(RedTeamError, match="zero datapoints"):
+    # All fixture rows use 'direct-request'; filtering to base64 empties the run.
+    # The error must surface what the dataset actually carries.
+    with _static_patches(mock_backend_bundle), pytest.raises(RedTeamError, match="direct-request") as exc:
         await red_team(
             "agent:e2e-static-model",
             mode="static",
@@ -144,6 +146,7 @@ async def test_static_delivery_method_empty_match_hard_fails(
             dataset=str(static_dataset_path),
             llm_client=cast(AsyncOpenAI, cast(object, mock_llm_client)),
         )
+    assert "zero datapoints" in str(exc.value)
 
 
 @pytest.mark.asyncio
