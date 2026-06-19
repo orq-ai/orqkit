@@ -295,18 +295,6 @@ class TestCheckFilterResults:
         )
         assert msgs == []
 
-    def test_case_and_punctuation_drift_no_false_unmatched_warning(self) -> None:
-        # A static row spelled 'Direct Request' (case + space) is kept by the
-        # loader's normalized match, so it must NOT be reported "unmatched" here.
-        from evaluatorq.redteam.runner import _check_filter_results
-
-        msgs = _capture_warnings(
-            lambda: _check_filter_results(
-                _static_dps("Direct Request"), None, {DeliveryMethod.DIRECT_REQUEST}, names_apply=False
-            )
-        )
-        assert msgs == []
-
     def test_mixed_dynamic_and_static_datapoints(self) -> None:
         # The docstring claims the check covers a combined dynamic+static set
         # (hybrid mode). A dynamic strategy provides the name match; a static row
@@ -441,21 +429,29 @@ class TestBridgeDeliveryFilter:
         kept = _apply_filters(dps, num_samples=2, delivery_methods=['crescendo'])
         assert [dp.inputs['delivery_method'] for dp in kept] == ['crescendo']
 
-    def test_delivery_match_is_case_insensitive(self) -> None:
-        # delivery_method is a free-form str; tolerate case drift vs enum slugs.
+    def test_redteam_input_coerces_delivery_method(self) -> None:
+        # Pattern A: known value -> DeliveryMethod enum (usable as-is); unknown -> raw str.
+        from evaluatorq.redteam.contracts import RedTeamInput, Severity, TurnType, VulnerabilityDomain
+
+        base = dict(
+            id='t1', category='ASI01', severity=Severity.MEDIUM,
+            vulnerability_domain=next(iter(VulnerabilityDomain)), turn_type=TurnType.SINGLE, source='test',
+        )
+        known = RedTeamInput(delivery_method='direct-request', **base)
+        assert known.delivery_method is DeliveryMethod.DIRECT_REQUEST
+
+        unknown = RedTeamInput(delivery_method='my-custom-method', **base)
+        assert unknown.delivery_method == 'my-custom-method'
+        assert not isinstance(unknown.delivery_method, DeliveryMethod)
+
+    def test_delivery_match_is_exact(self) -> None:
+        # delivery_method must equal the enum value exactly — no case/punctuation
+        # coercion. A row spelled differently simply does not match.
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _apply_filters
 
-        dps = [self._dp('Base64'), self._dp('CRESCENDO')]
+        dps = [self._dp('Base64'), self._dp('Direct Request'), self._dp('base64')]
         kept = _apply_filters(dps, delivery_methods=['base64'])
-        assert [dp.inputs['delivery_method'] for dp in kept] == ['Base64']
-
-    def test_delivery_match_tolerates_space_and_underscore_drift(self) -> None:
-        # Dataset rows spelled with spaces/underscores still match the hyphenated slug.
-        from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _apply_filters
-
-        dps = [self._dp('Direct Request'), self._dp('direct_request'), self._dp('base64')]
-        kept = _apply_filters(dps, delivery_methods=['direct-request'])
-        assert [dp.inputs['delivery_method'] for dp in kept] == ['Direct Request', 'direct_request']
+        assert [dp.inputs['delivery_method'] for dp in kept] == ['base64']
 
     def test_empty_delivery_value_never_matches(self) -> None:
         from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import _apply_filters

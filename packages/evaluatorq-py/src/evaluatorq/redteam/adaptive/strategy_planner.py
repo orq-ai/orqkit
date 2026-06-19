@@ -51,7 +51,7 @@ async def plan_strategies_for_vulnerabilities(
     pipeline_config: LLMConfig | None = None,
     agent_capabilities: AgentCapabilities | None = None,
     strategy_names: set[str] | None = None,
-    delivery_methods: set[DeliveryMethod] | None = None,
+    delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> tuple[dict[Vulnerability, list[AttackStrategy]], dict[Vulnerability, dict[str, Any]], AgentCapabilities]:
     """Build per-vulnerability strategy plans for dynamic red teaming.
 
@@ -246,7 +246,7 @@ async def plan_strategies_for_categories(
     pipeline_config: LLMConfig | None = None,
     agent_capabilities: AgentCapabilities | None = None,
     strategy_names: set[str] | None = None,
-    delivery_methods: set[DeliveryMethod] | None = None,
+    delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> tuple[dict[str, list[AttackStrategy]], dict[str, dict[str, Any]], AgentCapabilities]:
     """Build per-category strategy plans for dynamic red teaming.
 

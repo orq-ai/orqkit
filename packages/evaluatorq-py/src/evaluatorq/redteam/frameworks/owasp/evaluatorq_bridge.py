@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from collections import Counter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -494,8 +493,8 @@ def _load_from_file(
         samples = _filter_by_categories(samples, categories, category_of=lambda s: s.input.category)
 
     if delivery_methods:
-        selected = {normalize_delivery_method(m) for m in delivery_methods}
-        samples = [s for s in samples if _matches_delivery(s.input.delivery_method, selected)]
+        selected = set(delivery_methods)
+        samples = [s for s in samples if s.input.delivery_method in selected]
         logger.info(f'Filtered to delivery methods: {sorted(selected)} ({len(samples)} samples)')
 
     num_samples = _normalize_num_samples(num_samples)
@@ -515,26 +514,6 @@ def _load_from_file(
     return datapoints
 
 
-def normalize_delivery_method(value: str) -> str:
-    """Normalize a free-form ``delivery_method`` for comparison against enum slugs.
-
-    ``RedTeamInput.delivery_method`` is an unconstrained string (default ``''``),
-    so we fold case and collapse whitespace/underscores to hyphens — letting
-    dataset values like ``'Direct Request'`` or ``'direct_request'`` match the
-    canonical ``'direct-request'`` :class:`DeliveryMethod` slug.
-    """
-    return re.sub(r'[\s_]+', '-', value.strip().lower())
-
-
-def _matches_delivery(value: str | None, selected: set[str]) -> bool:
-    """Membership test for the free-form ``delivery_method`` field.
-
-    ``selected`` must already be normalized via :func:`normalize_delivery_method`.
-    Empty/missing values never match.
-    """
-    return bool(value) and normalize_delivery_method(value) in selected
-
-
 def _apply_filters(
     datapoints: list[DataPoint],
     num_samples: int | None = None,
@@ -551,8 +530,8 @@ def _apply_filters(
         datapoints = _filter_by_categories(datapoints, categories, category_of=lambda dp: dp.inputs.get('category', ''))
 
     if delivery_methods:
-        selected = {normalize_delivery_method(m) for m in delivery_methods}
-        datapoints = [dp for dp in datapoints if _matches_delivery(dp.inputs.get('delivery_method'), selected)]
+        selected = set(delivery_methods)
+        datapoints = [dp for dp in datapoints if dp.inputs.get('delivery_method') in selected]
         logger.info(f'Filtered to delivery methods: {sorted(selected)} ({len(datapoints)} samples)')
 
     num_samples = _normalize_num_samples(num_samples)

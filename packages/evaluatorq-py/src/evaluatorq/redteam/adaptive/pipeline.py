@@ -108,7 +108,7 @@ async def generate_dynamic_datapoints_for_vulnerabilities(
     pipeline_config: LLMConfig | None = None,
     agent_capabilities: AgentCapabilities | None = None,
     strategy_names: set[str] | None = None,
-    delivery_methods: set[DeliveryMethod] | None = None,
+    delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming, keyed by Vulnerability enum.
 
@@ -187,7 +187,7 @@ async def generate_dynamic_datapoints(
     pipeline_config: LLMConfig | None = None,
     agent_capabilities: AgentCapabilities | None = None,
     strategy_names: set[str] | None = None,
-    delivery_methods: set[DeliveryMethod] | None = None,
+    delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> tuple[list[DataPoint], dict[str, Any]]:
     """Generate evaluatorq DataPoints for dynamic red teaming.
 

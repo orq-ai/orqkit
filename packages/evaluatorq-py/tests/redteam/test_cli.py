@@ -335,13 +335,15 @@ class TestDeliveryMethodFlag:
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["delivery_methods"] == [DeliveryMethod.LEETSPEAK]
 
-    def test_delivery_method_unknown_value_rejected(self):
-        # Values outside the DeliveryMethod enum are rejected (BadParameter), no run.
+    def test_delivery_method_unknown_value_accepted_as_open_set(self):
+        # Unknown delivery methods are an open set: accepted (with a warning) and
+        # forwarded as a raw string so a dataset's custom method stays filterable.
         result, mock_rt = _run_with_mocked_red_team(
             ["run", "--target", "agent:test-agent", "-d", "not-a-real-method", "--yes"]
         )
-        assert result.exit_code != 0
-        mock_rt.assert_not_called()
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == ["not-a-real-method"]
+        assert "not in DeliveryMethod" in result.output
 
     def test_delivery_method_defaults_to_none_when_omitted(self):
         result, mock_rt = _run_with_mocked_red_team(
@@ -362,12 +364,15 @@ class TestDeliveryMethodFlag:
             DeliveryMethod.BASE64,
         ]
 
-    def test_comma_separated_with_invalid_token_rejected(self):
+    def test_comma_separated_mixes_known_and_unknown(self):
+        # Known token -> enum, unknown token -> raw string (open set), both forwarded.
+        from evaluatorq.redteam.contracts import DeliveryMethod
+
         result, mock_rt = _run_with_mocked_red_team(
             ["run", "--target", "agent:test-agent", "-d", "crescendo,bogus", "--yes"]
         )
-        assert result.exit_code != 0
-        mock_rt.assert_not_called()
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["delivery_methods"] == [DeliveryMethod.CRESCENDO, "bogus"]
 
 
 class TestStrategyAndDeliveryMethodCombined:

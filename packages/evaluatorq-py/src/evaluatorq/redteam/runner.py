@@ -300,7 +300,7 @@ async def red_team(
     categories: list[str] | None = None,
     vulnerabilities: list[str] | None = None,
     strategies: list[str] | None = None,
-    delivery_methods: list[DeliveryMethod] | None = None,
+    delivery_methods: list[DeliveryMethod | str] | None = None,
     max_turns: int = 5,
     max_per_category: int | None = None,
     parallelism: int = 10,
@@ -517,7 +517,7 @@ async def red_team(
     # rejected at the CLI boundary; here we pass through verbatim and detect
     # empty/unmatched intersections post-filter from the actually-matched set.
     resolved_strategy_names: set[str] | None = set(strategies) if strategies is not None else None
-    resolved_delivery_methods: set[DeliveryMethod] | None = (
+    resolved_delivery_methods: set[DeliveryMethod | str] | None = (
         set(delivery_methods) if delivery_methods is not None else None
     )
 
@@ -956,20 +956,24 @@ def _make_agent_backend(*, target_config: TargetConfig | None, pipeline_config: 
     )
 
 
-def _delivery_method_values(delivery_methods: set[DeliveryMethod] | None) -> list[str] | None:
-    """Convert a DeliveryMethod set to enum-value strings for the dataset loader.
+def _delivery_method_values(delivery_methods: set[DeliveryMethod | str] | None) -> list[str] | None:
+    """Convert a delivery-method selection to plain strings for the dataset loader.
 
-    Static rows are filtered by delivery method inside ``load_owasp_agentic_dataset``
-    (before its ``num_samples`` cap), which takes plain string values. ``None``
-    stays ``None`` so the loader leaves the filter disabled.
+    The selection is an open set: known methods are :class:`DeliveryMethod` enum
+    members, unknown ones are raw strings. Both become their string value for the
+    loader (which filters by exact string match). Static rows are filtered inside
+    ``load_owasp_agentic_dataset`` before its ``num_samples`` cap. ``None`` stays
+    ``None`` so the loader leaves the filter disabled.
     """
-    return [m.value for m in delivery_methods] if delivery_methods is not None else None
+    if delivery_methods is None:
+        return None
+    return [m.value if isinstance(m, DeliveryMethod) else m for m in delivery_methods]
 
 
 def _check_filter_results(
     datapoints: list[DataPoint],
     strategy_names: set[str] | None,
-    delivery_methods: set[DeliveryMethod] | None,
+    delivery_methods: set[DeliveryMethod | str] | None,
     *,
     names_apply: bool = True,
     present_methods: list[str] | None = None,
@@ -998,33 +1002,29 @@ def _check_filter_results(
 
     matched_names: set[str] = set()
     matched_methods: set[str] = set()
-    # Normalize delivery methods the same way the dataset loader does, so a row
-    # kept by the case-insensitive loader filter is not then reported "unmatched".
-    from evaluatorq.redteam.frameworks.owasp.evaluatorq_bridge import normalize_delivery_method
-
     for dp in datapoints:
         strategy = dp.inputs.get('strategy')
         if isinstance(strategy, dict):
             name = strategy.get('name')
             if name:
                 matched_names.add(name)
-            matched_methods.update(normalize_delivery_method(m) for m in (strategy.get('delivery_methods') or []))
+            matched_methods.update(strategy.get('delivery_methods') or [])
         single = dp.inputs.get('delivery_method')  # static datapoint shape (singular)
         if single:
-            matched_methods.add(normalize_delivery_method(single))
+            matched_methods.add(single)
 
     if strategy_names is not None and names_apply:
         unmatched = sorted(strategy_names - matched_names)
         if unmatched:
             logger.warning(f'Unmatched strategy name(s): {unmatched} — no datapoints matched.')
     if delivery_methods is not None:
-        unmatched_methods = sorted({normalize_delivery_method(m.value) for m in delivery_methods} - matched_methods)
+        unmatched_methods = sorted(set(_delivery_method_values(delivery_methods) or []) - matched_methods)
         if unmatched_methods:
             logger.warning(f'Unmatched delivery method(s): {unmatched_methods} — no datapoints use them.')
 
     if not datapoints:
         names_repr = sorted(strategy_names) if strategy_names else None
-        methods_repr = sorted(m.value for m in delivery_methods) if delivery_methods else None
+        methods_repr = sorted(_delivery_method_values(delivery_methods) or []) if delivery_methods else None
         msg = (
             'Filter selection produced zero datapoints — nothing to run. '
             f'(strategies={names_repr}, delivery_methods={methods_repr})'
@@ -1062,7 +1062,7 @@ async def _prepare_target(
     verbosity: int = 0,
     pipeline_config: LLMConfig | None = None,
     resolved_strategy_names: set[str] | None = None,
-    resolved_delivery_methods: set[DeliveryMethod] | None = None,
+    resolved_delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> PreparedTarget:
     """Prepare all per-target state for a dynamic or hybrid run.
 
@@ -1338,7 +1338,7 @@ async def _run_dynamic_or_hybrid(
     verbosity: int = 0,
     pipeline_config: LLMConfig | None = None,
     resolved_strategy_names: set[str] | None = None,
-    resolved_delivery_methods: set[DeliveryMethod] | None = None,
+    resolved_delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> RedTeamReport:
     """Run dynamic or hybrid red teaming for multiple targets in a single evaluatorq call.
 
@@ -2344,7 +2344,7 @@ async def _run_static(
     target_config: TargetConfig | None = None,
     pipeline_config: LLMConfig | None = None,
     resolved_strategy_names: set[str] | None = None,
-    resolved_delivery_methods: set[DeliveryMethod] | None = None,
+    resolved_delivery_methods: set[DeliveryMethod | str] | None = None,
 ) -> RedTeamReport:
     """Run static red teaming for multiple targets in a single ``evaluatorq()`` call.
 

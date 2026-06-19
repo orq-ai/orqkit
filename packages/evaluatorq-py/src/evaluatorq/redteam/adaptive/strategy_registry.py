@@ -201,7 +201,7 @@ def select_applicable_strategies_for_vulnerability(
 def _filter_by_method(
     strategies: list[AttackStrategy],
     names: set[str] | None,
-    delivery_methods: set[DeliveryMethod] | None,
+    delivery_methods: set[DeliveryMethod | str] | None,
 ) -> list[AttackStrategy]:
     """Filter strategies by name and/or delivery method.
 
