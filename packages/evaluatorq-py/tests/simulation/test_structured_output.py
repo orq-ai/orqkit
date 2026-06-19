@@ -15,31 +15,26 @@ class SampleResponse(BaseModel):
 
 
 @pytest.mark.asyncio
-async def test_generate_structured_falls_back_when_parse_hits_length_limit() -> None:
-    parsed_completion = MagicMock()
-    parse_error = LengthFinishReasonError(completion=parsed_completion)
-
-    fallback_message = MagicMock()
-    fallback_message.content = '{"value": "fallback"}'
-    fallback_choice = MagicMock()
-    fallback_choice.message = fallback_message
-    fallback_response = MagicMock()
-    fallback_response.choices = [fallback_choice]
+async def test_generate_structured_raises_when_parse_hits_length_limit() -> None:
+    # Length-truncated structured output is unusable — fail with a clear,
+    # actionable error instead of falling back to a same-budget json_object call
+    # that would truncate again.
+    parse_error = LengthFinishReasonError(completion=MagicMock())
 
     client = MagicMock()
     client.chat.completions.parse = AsyncMock(side_effect=parse_error)
-    client.chat.completions.create = AsyncMock(return_value=fallback_response)
+    client.chat.completions.create = AsyncMock()
 
-    parsed, raw = await generate_structured(
-        client,
-        model="local-model",
-        messages=[{"role": "user", "content": "return json"}],
-        response_format=SampleResponse,
-        temperature=0.0,
-        max_tokens=4000,
-        label="Sample.generate",
-    )
+    with pytest.raises(RuntimeError, match="EVALUATORQ_LLM_MAX_TOKENS"):
+        await generate_structured(
+            client,
+            model="local-model",
+            messages=[{"role": "user", "content": "return json"}],
+            response_format=SampleResponse,
+            temperature=0.0,
+            max_tokens=4000,
+            label="Sample.generate",
+        )
 
-    assert parsed is None
-    assert raw == '{"value": "fallback"}'
-    client.chat.completions.create.assert_awaited_once()
+    # No json_object fallback call — the truncated result is not salvaged.
+    client.chat.completions.create.assert_not_awaited()

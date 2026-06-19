@@ -396,11 +396,17 @@ class BaseAgent(ABC):
                 tool_call_items = [i for i in output_items if isinstance(i, ToolCallOutputItem)]
 
                 if not text_items and not tool_call_items:
-                    # No text, no tool calls — warn but don't raise (redteam callers may handle empty)
+                    # No text, no tool calls — warn but don't raise (redteam callers
+                    # may handle empty). Surface the reason so it's clear to the user:
+                    # reason=max_output_tokens means the budget was too small.
+                    incomplete = getattr(response, 'incomplete_details', None)
+                    reason = getattr(incomplete, 'reason', None) if incomplete else getattr(response, 'status', None)
                     logger.warning(
-                        '%s._call_responses: no text or tool calls in response (model=%s)',
+                        '%s._call_responses: empty response — no text or tool calls (model=%s, reason=%s). '
+                        'If reason=max_output_tokens, raise the budget via EVALUATORQ_LLM_MAX_TOKENS.',
                         self.name,
                         self.config.model,
+                        reason,
                     )
 
                 text = ''.join(getattr(i, 'text', '') for i in text_items)

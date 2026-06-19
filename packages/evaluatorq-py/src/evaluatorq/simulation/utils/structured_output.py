@@ -98,15 +98,16 @@ async def generate_structured(
             if span is not None:
                 fallback = True
                 span.set_attribute("orq.simulation.structured_output.fallback", fallback)
-        except LengthFinishReasonError:
-            logger.warning(
-                "%s: structured output hit length limit, falling back to json_object",
-                label,
-            )
-            if span is not None:
-                fallback = True
-                span.set_attribute("orq.simulation.structured_output.fallback", fallback)
-                span.set_attribute("orq.simulation.structured_output.fallback_reason", "length")
+        except LengthFinishReasonError as exc:
+            # Length-truncated structured output is unusable — the JSON is cut
+            # off mid-string. Falling back to json_object would truncate at the
+            # same budget, so fail loudly with an actionable message instead.
+            logger.error("%s: structured output truncated at the token limit (max_tokens=%s)", label, max_tokens)
+            raise RuntimeError(
+                f"{label}: the model hit the token limit (max_tokens={max_tokens}) and the "
+                f"structured output was truncated, so the result is unusable. Raise the budget "
+                f"via EVALUATORQ_LLM_MAX_TOKENS and retry."
+            ) from exc
 
         # 2. Fallback: json_object mode
         fallback_response = await with_retry(
