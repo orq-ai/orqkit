@@ -207,7 +207,7 @@ def run(
             help=(
                 "Restrict the run to attack strategies whose name matches one of "
                 "the supplied values. Repeatable. Filter applies to both registry "
-                "and LLM-generated strategies. Unknown names emit a warning."
+                "and LLM-generated strategies. Unknown registry names are rejected."
             ),
         ),
     ] = None,
@@ -362,6 +362,19 @@ def run(
                     f"Unknown vulnerability ID: {v!r}. "
                     f"Valid IDs: {sorted(vi.value for vi in Vulnerability)}"
                 )
+
+    # Validate strategy names early: must be a registered strategy or a
+    # runtime-generated name (generated_* prefix). Mirrors --vulnerability.
+    if strategies:
+        from evaluatorq.redteam.adaptive.strategy_registry import known_strategy_names
+
+        known = known_strategy_names()
+        unknown = [s for s in strategies if s not in known and not s.startswith("generated_")]
+        if unknown:
+            raise typer.BadParameter(
+                f"Unknown strategy name(s): {unknown}. "
+                f"Valid names: {sorted(known)} (or a 'generated_*' name from a prior run)."
+            )
 
     target_config = TargetConfig(system_prompt=system_prompt) if system_prompt else None
     targets: list[str] | str = target if len(target) > 1 else target[0]

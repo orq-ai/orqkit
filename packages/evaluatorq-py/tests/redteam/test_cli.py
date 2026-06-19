@@ -173,7 +173,9 @@ class TestVulnerabilityHelpText:
 
     def _get_help_output(self) -> str:
         import re
-        result = runner.invoke(app, ["run", "--help"])
+        # TERM=dumb + wide COLUMNS: stop rich from routing help to its own
+        # terminal console (empty captured output) or wrapping flag tokens.
+        result = runner.invoke(app, ["run", "--help"], env={"TERM": "dumb", "COLUMNS": "200"})
         # Strip ANSI escape codes so assertions work regardless of terminal width
         return re.sub(r'\x1b\[[0-9;]*m', '', result.output)
 
@@ -218,33 +220,33 @@ class TestStrategyFlag:
 
     def test_short_flag_s_accepted_single_value(self):
         result, mock_rt = _run_with_mocked_red_team(
-            ["run", "--target", "agent:test-agent", "-s", "direct_injection_attack", "--yes"]
+            ["run", "--target", "agent:test-agent", "-s", "direct_override", "--yes"]
         )
         assert result.exit_code == 0, result.output
-        assert mock_rt.call_args.kwargs["strategies"] == ["direct_injection_attack"]
+        assert mock_rt.call_args.kwargs["strategies"] == ["direct_override"]
 
     def test_short_flag_s_repeats(self):
         result, mock_rt = _run_with_mocked_red_team(
             [
                 "run",
                 "--target", "agent:test-agent",
-                "-s", "direct_injection_attack",
+                "-s", "direct_override",
                 "-s", "crescendo_injection",
                 "--yes",
             ]
         )
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["strategies"] == [
-            "direct_injection_attack",
+            "direct_override",
             "crescendo_injection",
         ]
 
     def test_long_flag_strategy(self):
         result, mock_rt = _run_with_mocked_red_team(
-            ["run", "--target", "agent:test-agent", "--strategy", "alpha", "--yes"]
+            ["run", "--target", "agent:test-agent", "--strategy", "jailbreak_dan", "--yes"]
         )
         assert result.exit_code == 0, result.output
-        assert mock_rt.call_args.kwargs["strategies"] == ["alpha"]
+        assert mock_rt.call_args.kwargs["strategies"] == ["jailbreak_dan"]
 
     def test_strategy_defaults_to_none_when_omitted(self):
         result, mock_rt = _run_with_mocked_red_team(
@@ -252,6 +254,22 @@ class TestStrategyFlag:
         )
         assert result.exit_code == 0, result.output
         assert mock_rt.call_args.kwargs["strategies"] is None
+
+    def test_unknown_strategy_name_rejected(self):
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--strategy", "definitely_not_a_strategy", "--yes"]
+        )
+        assert result.exit_code == 2  # typer.BadParameter
+        mock_rt.assert_not_called()
+
+    def test_generated_prefix_name_accepted(self):
+        # Runtime-generated strategy names (generated_*) are not in the registry
+        # but must still pass validation so a user can re-filter a prior run.
+        result, mock_rt = _run_with_mocked_red_team(
+            ["run", "--target", "agent:test-agent", "--strategy", "generated_single_01_foo", "--yes"]
+        )
+        assert result.exit_code == 0, result.output
+        assert mock_rt.call_args.kwargs["strategies"] == ["generated_single_01_foo"]
 
 
 class TestDeliveryMethodFlag:

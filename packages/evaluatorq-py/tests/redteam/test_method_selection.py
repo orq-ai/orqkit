@@ -144,3 +144,57 @@ class TestRegistryNameUniqueness:
         assert all(s.name == sample_name for s in kept)
 
 
+def _capture_warnings(fn) -> list[str]:
+    """Run fn() with a temporary loguru sink and return WARNING-level messages."""
+    from loguru import logger
+
+    msgs: list[str] = []
+    sink_id = logger.add(msgs.append, level="WARNING")
+    try:
+        fn()
+    finally:
+        logger.remove(sink_id)
+    return msgs
+
+
+class TestWarnOnFilterMismatch:
+    """Runner-level warning behavior shared by single- and multi-target paths."""
+
+    def _dps(self, *names: str) -> list:
+        from evaluatorq import DataPoint
+
+        return [DataPoint(inputs={"strategy": {"name": n}}) for n in names]
+
+    def test_no_filter_emits_nothing(self) -> None:
+        from evaluatorq.redteam.runner import _warn_on_filter_mismatch
+
+        msgs = _capture_warnings(lambda: _warn_on_filter_mismatch(self._dps("alpha"), None, None))
+        assert msgs == []
+
+    def test_unmatched_name_warns(self) -> None:
+        from evaluatorq.redteam.runner import _warn_on_filter_mismatch
+
+        msgs = _capture_warnings(
+            lambda: _warn_on_filter_mismatch(self._dps("alpha"), {"alpha", "ghost"}, None)
+        )
+        assert any("Unmatched strategy name(s)" in m and "ghost" in m for m in msgs)
+        # 'alpha' matched, so it must not be reported as unmatched.
+        assert not any("alpha" in m for m in msgs)
+
+    def test_all_names_matched_no_warning(self) -> None:
+        from evaluatorq.redteam.runner import _warn_on_filter_mismatch
+
+        msgs = _capture_warnings(
+            lambda: _warn_on_filter_mismatch(self._dps("alpha", "beta"), {"alpha"}, None)
+        )
+        assert msgs == []
+
+    def test_empty_intersection_warns(self) -> None:
+        from evaluatorq.redteam.runner import _warn_on_filter_mismatch
+
+        msgs = _capture_warnings(
+            lambda: _warn_on_filter_mismatch([], {"alpha"}, {DeliveryMethod.CRESCENDO})
+        )
+        assert any("Empty intersection" in m for m in msgs)
+
+

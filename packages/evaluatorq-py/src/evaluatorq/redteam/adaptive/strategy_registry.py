@@ -234,6 +234,16 @@ def _filter_by_method(
     return kept
 
 
+def known_strategy_names() -> set[str]:
+    """Return all strategy names registered in the hardcoded registry.
+
+    Used to validate user-supplied `--strategy` filters. Excludes runtime
+    LLM-generated strategy names, which carry a ``generated_`` prefix and
+    cannot be enumerated ahead of a run.
+    """
+    return {strategy.name for strategies in VULNERABILITY_STRATEGY_REGISTRY.values() for strategy in strategies}
+
+
 def _fallback_capability_check(required: list[AgentCapability], agent_context: AgentContext) -> bool:
     """Check capabilities without LLM classification using agent config heuristics.
 
