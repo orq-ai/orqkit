@@ -31,9 +31,9 @@ from evaluatorq.common.llm_client import ORQ_DEFAULT_HOST, ORQ_ROUTER_SUFFIX
 from evaluatorq.contracts import AgentContext, AgentResponse, AgentTarget, LLMCallConfig
 from evaluatorq.openresponses.target import OrqResponsesTarget
 from evaluatorq.redteam.backends.registry import resolve_backend
-from evaluatorq.simulation import generate_and_simulate
+from evaluatorq.simulation import auto_save_run, build_simulation_run, generate_and_simulate
 from evaluatorq.simulation.agents.user_simulator import UserSimulatorAgent
-from evaluatorq.simulation.types import Message  # noqa: TC001
+from evaluatorq.simulation.types import DEFAULT_EVALUATOR_NAMES, Message  # noqa: TC001
 
 load_dotenv()
 
@@ -43,9 +43,9 @@ REFUND_DEMO_ROOT = Path(__file__).parents[1] / "redteam" / "refund_agent_demo"
 
 
 def _configure_logging(verbosity: int) -> None:
-    # Two channels: stdlib (the lib's "Run saved: ..." line at INFO) and loguru
-    # (per-turn hooks). Default shows the saved-run path but keeps the chatty
-    # hooks at WARNING so the ui-load hint isn't buried.
+    # Two channels: stdlib (the lib's INFO diagnostics) and loguru (per-turn
+    # hooks). Default keeps the chatty per-turn hooks at WARNING so the results
+    # table and the ui-load hint this script prints at the end aren't buried.
     if verbosity < 0:
         stdlib_level, loguru_level = "ERROR", "ERROR"
     elif verbosity == 0:
@@ -334,11 +334,9 @@ async def main() -> None:
             generation_client=generation_client,
             max_turns=args.max_turns,
             parallelism=args.parallelism,
-            evaluator_names=["goal_achieved", "criteria_met"],
+            evaluator_names=DEFAULT_EVALUATOR_NAMES,
             user_simulator=user_simulator,
             upload_results=args.upload_results,
-            save=not args.no_save,
-            run_output=args.run_output,
         )
     finally:
         close_target = getattr(target, "close", None)
@@ -347,6 +345,24 @@ async def main() -> None:
         await generation_client.close()
 
     _print_results_summary(results)
+
+    # Save after the summary so the "load in UI" hint is the last line printed.
+    # (generate_and_simulate's save= would log it mid-run, before the table.)
+    if not args.no_save:
+        run = build_simulation_run(
+            run_name=f"sim:{args.agent}:tailscale-openai",
+            mode="simulate",
+            target_kind="callback",
+            evaluator_names=DEFAULT_EVALUATOR_NAMES,
+            results=results,
+        )
+        if args.run_output:
+            saved = Path(args.run_output)
+            saved.parent.mkdir(parents=True, exist_ok=True)
+            saved.write_text(run.model_dump_json(indent=2), encoding="utf-8")
+        else:
+            saved = auto_save_run(run=run, run_name=run.run_name)
+        print(f'\nLoad in dashboard:  evaluatorq sim ui "{saved}"')
 
 
 if __name__ == "__main__":
