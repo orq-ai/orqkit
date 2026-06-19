@@ -539,19 +539,25 @@ async def _simulate_core(
             target_kind = 'orq_deployment'
         else:
             target_kind = 'callback'
-        run = build_simulation_run(
-            run_name=evaluation_name or 'sim',
-            mode='simulate' if caller == 'simulate' else 'run',
-            target_kind=target_kind,
-            evaluator_names=resolved_evaluator_names,
-            results=results,
-        )
-        if run_output is not None:
-            write_report(run, Path(run_output))
-            saved_path = Path(run_output)
-        else:
-            saved_path = auto_save_run(run=run, run_name=run.run_name)
-        _log_saved_run(saved_path)
+        # A persistence failure (disk full, read-only .evaluatorq/, perms, or the
+        # collision-exhaustion RuntimeError) must NOT discard a completed, paid-for
+        # run. Log and still return results — the saved file is a convenience.
+        try:
+            run = build_simulation_run(
+                run_name=evaluation_name or 'sim',
+                mode='simulate' if caller == 'simulate' else 'run',
+                target_kind=target_kind,
+                evaluator_names=resolved_evaluator_names,
+                results=results,
+            )
+            if run_output is not None:
+                write_report(run, Path(run_output))
+                saved_path = Path(run_output)
+            else:
+                saved_path = auto_save_run(run=run, run_name=run.run_name)
+            _log_saved_run(saved_path)
+        except (OSError, RuntimeError) as exc:
+            logger.error(f'Failed to save simulation run (results still returned): {exc}')
     return results
 
 

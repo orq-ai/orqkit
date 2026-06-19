@@ -362,11 +362,18 @@ class BaseAgent(ABC):
                         self._client.responses.create(**call_kwargs),
                         timeout=timeout_s,
                     )
-                except BadRequestError:
+                except BadRequestError as exc:
                     # "where possible": drop reasoning and retry if the endpoint
-                    # rejects it, rather than failing the call.
-                    if 'reasoning' not in call_kwargs:
+                    # rejects it, rather than failing the call. Gate on the error
+                    # body so an unrelated 400 isn't masked by a stripped retry.
+                    err_body = str(getattr(exc, 'body', None) or getattr(exc, 'message', '') or '').lower()
+                    if 'reasoning' not in call_kwargs or 'reasoning' not in err_body:
                         raise
+                    logger.warning(
+                        '%s._call_responses: model %s rejected reasoning; dropping it and retrying once',
+                        self.name,
+                        self.config.model,
+                    )
                     call_kwargs.pop('reasoning', None)
                     response = await asyncio.wait_for(
                         self._client.responses.create(**call_kwargs),

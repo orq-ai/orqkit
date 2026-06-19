@@ -420,3 +420,32 @@ async def test_simulate_run_output_writes_explicit_path(tmp_path: Path, monkeypa
     await _run_simulate(runs_dir=auto_dir, monkeypatch=monkeypatch, save=True, run_output=str(explicit))
     assert explicit.exists()
     assert list(auto_dir.glob("*.json")) == []  # explicit path bypasses auto-save dir
+
+
+@pytest.mark.asyncio
+async def test_simulate_save_failure_still_returns_results(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # A persistence failure must not discard a completed, paid-for run.
+    from unittest.mock import AsyncMock, patch
+
+    from evaluatorq.simulation.api import simulate
+
+    monkeypatch.setattr("evaluatorq.simulation.utils.run_store.get_sim_runs_dir", lambda: tmp_path)
+    results = [_make_result(scorer_scores={"goal_achieved": 1.0})]
+
+    def _boom(**_kwargs: Any) -> Path:
+        raise OSError("disk full")
+
+    with (
+        patch("evaluatorq.simulation.api._simulate_via_evaluatorq", AsyncMock(return_value=results)),
+        patch("evaluatorq.simulation.api.auto_save_run", _boom),
+    ):
+        out = await simulate(
+            target=lambda _messages: "hi",
+            datapoints=[_make_datapoint()],
+            sim_model="test",
+            upload_results=False,
+            save=True,
+        )
+
+    assert out == results  # results survived the save failure
+    assert list(tmp_path.glob("*.json")) == []  # nothing written
