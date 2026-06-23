@@ -1,5 +1,13 @@
 # evaluatorq-py
 
+> # 📦➡️ This package has moved
+>
+> **`evaluatorq-py` now lives in its own repository: [github.com/orq-ai/evaluatorq](https://github.com/orq-ai/evaluatorq)**
+>
+> Docs: <https://orq-ai.github.io/evaluatorq/>
+>
+> This in-monorepo copy is **frozen** — do not open new PRs against `packages/evaluatorq-py`. All Python `evaluatorq` development happens in the standalone repo.
+
 An evaluation framework library for Python that provides a flexible way to run parallel evaluations and optionally integrate with the Orq AI platform.
 
 ## Why evaluatorq?
