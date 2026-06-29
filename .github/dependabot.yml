@@ -1,0 +1,16 @@
+# ponytail: this file exists only to silence Dependabot for packages/evaluatorq-py,
+# which is now managed in its own standalone repo. A repo-level config overrides the
+# org-level default; open-pull-requests-limit: 0 disables version-update PRs.
+# Delete this file once packages/evaluatorq-py is removed from the monorepo.
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/packages/evaluatorq-py"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+  - package-ecosystem: "uv"
+    directory: "/packages/evaluatorq-py/examples/redteam/refund_agent_demo"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
