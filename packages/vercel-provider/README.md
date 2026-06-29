@@ -185,6 +185,7 @@ const orq = createOrqAiProvider({
   headers: {                                 // Optional: Additional headers
     "X-Custom-Header": "value",
   },
+  fetch: customFetch,                        // Optional: Custom fetch implementation
 });
 ```
 
@@ -199,6 +200,7 @@ Creates an Orq AI provider instance.
 - `options`: Configuration object with:
   - `apiKey`: String (required) - Your Orq API key
   - `baseURL`: String (optional) - Custom API base URL
+  - `fetch`: Function (optional) - Custom fetch implementation
   - `headers`: Object (optional) - Additional HTTP headers
 
 #### Returns:
@@ -219,6 +221,7 @@ Provider instance with model access methods.
 interface OrqAiProviderOptions {
   apiKey: string;
   baseURL?: string;
+  fetch?: typeof fetch;
   headers?: Record<string, string>;
 }
 ```
