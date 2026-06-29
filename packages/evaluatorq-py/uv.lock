@@ -3000,7 +3000,7 @@ wheels = [
 
 [[package]]
 name = "orq-ai-sdk"
-version = "4.4.7"
+version = "4.10.36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpcore" },
@@ -3008,9 +3008,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/14/28422e81beeb846453e297eb86fac2e932dc8e5c145bd366e3eda1507ed5/orq_ai_sdk-4.4.7.tar.gz", hash = "sha256:78cd38e78fa253699c6b9c4109ad39010a75253da7ae94bf26dadd0bb6e45e03", size = 629447, upload-time = "2026-02-26T13:01:25.02Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/fe/fc45172eec71536a94260902645fd59cfa320111fffed6503d8758fad366/orq_ai_sdk-4.10.36.tar.gz", hash = "sha256:acb15617827be4b5e238b3792e7b69dc5df9b2e70bd4e7a4d73e347f8fba12cd", size = 743405, upload-time = "2026-06-28T21:56:11.479Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/ce/0d77fc9500cd3fb45f7895e0606e60fceeb0ab63a3d6c200a84e9fefcd99/orq_ai_sdk-4.4.7-py3-none-any.whl", hash = "sha256:43aa5ad7d90a18ed22693cd8c814acc1f7286b42cb6ae7f27be3fcbc8120faaa", size = 786852, upload-time = "2026-02-26T13:01:26.911Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/37/22c4c77e4398380c64c4693ff095974be0a9a336e2c03e304dcc7da353b7/orq_ai_sdk-4.10.36-py3-none-any.whl", hash = "sha256:5700176422d7bee450853efc14857ea897a4a8995e2175f469d38d19df594955", size = 1032092, upload-time = "2026-06-28T21:56:09.21Z" },
 ]
 
 [[package]]
@@ -4252,7 +4252,7 @@ wheels = [
 
 [[package]]
 name = "requests"
-version = "2.32.4"
+version = "2.33.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -4260,9 +4260,9 @@ dependencies = [
     { name = "idna" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/0a/929373653770d8a0d7ea76c37de6e41f11eb07559b103b1c02cafb3f7cf8/requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422", size = 135258, upload-time = "2025-06-09T16:43:07.34Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/64/8860370b167a9721e8956ae116825caff829224fbca0ca6e7bf8ddef8430/requests-2.33.0.tar.gz", hash = "sha256:c7ebc5e8b0f21837386ad0e1c8fe8b829fa5f544d8df3b2253bff14ef29d7652", size = 134232, upload-time = "2026-03-25T15:10:41.586Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/e4/56027c4a6b4ae70ca9de302488c5ca95ad4a39e190093d6c1a8ace08341b/requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c", size = 64847, upload-time = "2025-06-09T16:43:05.728Z" },
+    { url = "https://files.pythonhosted.org/packages/56/5d/c814546c2333ceea4ba42262d8c4d55763003e767fa169adc693bd524478/requests-2.33.0-py3-none-any.whl", hash = "sha256:3324635456fa185245e24865e810cecec7b4caf933d7eb133dcde67d48cee69b", size = 65017, upload-time = "2026-03-25T15:10:40.382Z" },
 ]
 
 [[package]]
