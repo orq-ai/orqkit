@@ -140,6 +140,104 @@ def test_conversation_output_only_yields_no_user_message() -> None:
     assert conversation.first_user_message is None
 
 
+def test_conversation_from_gen_ai_attributes() -> None:
+    """Real ``/v2/traces/{id}/v3spans`` shape: top-level input/output are null,
+    the conversation lives under ``attributes.gen_ai`` as OTel messages whose
+    content is a list of typed ``parts``. Non-text parts (tool calls) must not
+    leak into the transcript."""
+    spans = [
+        {
+            "parent_id": None,
+            "type": "Trace",
+            "input": None,
+            "output": None,
+            "attributes": {
+                "gen_ai": {
+                    "request": {"model": "gpt-4o", "temperature": 0.7},
+                    "response": {"id": "resp_1", "model": "gpt-4o"},
+                    "input": {
+                        "messages": [
+                            {"role": "system", "parts": [{"type": "text", "content": "Be helpful."}]},
+                            {"role": "user", "parts": [{"type": "text", "content": "Where is my order?"}]},
+                        ]
+                    },
+                    "output": {
+                        "messages": [
+                            {
+                                "role": "assistant",
+                                "parts": [
+                                    {"type": "tool_call", "name": "lookup_order", "arguments": {}},
+                                    {"type": "text", "content": "It ships tomorrow."},
+                                ],
+                                "finish_reason": "stop",
+                            }
+                        ],
+                        "type": "text",
+                    },
+                },
+            },
+        }
+    ]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.messages == [
+        {"role": "system", "content": "Be helpful."},
+        {"role": "user", "content": "Where is my order?"},
+        {"role": "assistant", "content": "It ships tomorrow."},
+    ]
+    assert conversation.first_user_message == "Where is my order?"
+
+
+def test_conversation_gen_ai_output_single_message() -> None:
+    """Live traffic also carries ``gen_ai.output`` as a single message object."""
+    spans = [
+        {
+            "parent_id": None,
+            "type": "Trace",
+            "input": None,
+            "output": None,
+            "attributes": {
+                "gen_ai": {
+                    "input": {"messages": [{"role": "user", "content": "hi"}]},
+                    "output": {"role": "assistant", "content": "hello"},
+                }
+            },
+        }
+    ]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.messages == [
+        {"role": "user", "content": "hi"},
+        {"role": "assistant", "content": "hello"},
+    ]
+
+
+def test_conversation_top_level_wins_over_gen_ai() -> None:
+    spans = [
+        {
+            "parent_id": None,
+            "type": "Trace",
+            "input": {"messages": [{"role": "user", "content": "top-level"}]},
+            "attributes": {
+                "gen_ai": {"input": {"messages": [{"role": "user", "content": "gen_ai"}]}}
+            },
+        }
+    ]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.first_user_message == "top-level"
+
+
+def test_messages_from_prompt_and_completion() -> None:
+    """Completion-model spans: ``gen_ai.input.prompt`` / ``gen_ai.output.completion``."""
+    assert _messages_from_value({"prompt": "translate this"}) == [
+        {"role": "user", "content": "translate this"}
+    ]
+    assert _messages_from_value({"completion": "voila"}, default_role="assistant") == [
+        {"role": "assistant", "content": "voila"}
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Credentials
 # ---------------------------------------------------------------------------

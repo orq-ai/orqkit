@@ -79,7 +79,11 @@ def _resolve_orq_credentials(api_key: str | None, base_url: str | None) -> tuple
 
 
 def _content_to_text(content: Any) -> str:
-    """Flatten a message content field (string or list of typed parts) to text."""
+    """Flatten a message content field (string or list of typed parts) to text.
+
+    Parts with a non-text ``type`` (``tool_call``, ``blob``, ``uri``, ...) are
+    skipped so tool payloads and base64 blobs never leak into the transcript.
+    """
     if isinstance(content, str):
         return content
     if isinstance(content, list):
@@ -88,6 +92,8 @@ def _content_to_text(content: Any) -> str:
             if isinstance(part, str):
                 parts.append(part)
             elif isinstance(part, dict):
+                if part.get("type") not in (None, "text"):
+                    continue
                 text = part.get("text") or part.get("content")
                 if isinstance(text, str):
                     parts.append(text)
@@ -103,7 +109,10 @@ def _normalize_message(raw: Any) -> dict[str, str] | None:
     role = raw.get("role")
     if not isinstance(role, str):
         return None
+    # Classic messages carry `content`; OTel gen_ai messages carry `parts`.
     content = _content_to_text(raw.get("content"))
+    if not content:
+        content = _content_to_text(raw.get("parts"))
     if not content:
         return None
     return {"role": role, "content": content}
@@ -126,12 +135,35 @@ def _messages_from_value(value: Any, *, default_role: str = "user") -> list[dict
         single = _normalize_message(value)
         if single:
             return [single]
+        # gen_ai.input.prompt / gen_ai.output.completion (Completion models).
+        for key in ("prompt", "completion"):
+            text = value.get(key)
+            if isinstance(text, str) and text.strip():
+                return [{"role": default_role, "content": text}]
         return []
     if isinstance(value, list):
         return [m for m in (_normalize_message(i) for i in value) if m]
     if isinstance(value, str) and value.strip():
         return [{"role": default_role, "content": value}]
     return []
+
+
+def _span_io(span: dict[str, Any], field: str) -> Any:
+    """A span's input/output: top-level field, else ``attributes.gen_ai.<field>``.
+
+    On real ``/v2/traces/{id}/v3spans`` payloads top-level ``input``/``output``
+    are null — the conversation lives under the OTel ``gen_ai`` attributes.
+    """
+    value = span.get(field)
+    if value is not None:
+        return value
+    attributes = span.get("attributes")
+    if not isinstance(attributes, dict):
+        return None
+    gen_ai = attributes.get("gen_ai")
+    if not isinstance(gen_ai, dict):
+        return None
+    return gen_ai.get(field)
 
 
 def _conversation_from_spans(trace_id: str, spans: list[dict[str, Any]]) -> TraceConversation | None:
@@ -145,8 +177,8 @@ def _conversation_from_spans(trace_id: str, spans: list[dict[str, Any]]) -> Trac
         key=lambda s: (bool(s.get("parent_id")), s.get("type") != "Trace"),
     )
     for span in ordered:
-        messages = _messages_from_value(span.get("input"), default_role="user")
-        output_messages = _messages_from_value(span.get("output"), default_role="assistant")
+        messages = _messages_from_value(_span_io(span, "input"), default_role="user")
+        output_messages = _messages_from_value(_span_io(span, "output"), default_role="assistant")
         for msg in output_messages:
             if msg not in messages:
                 messages.append(msg)
