@@ -14,6 +14,10 @@ Key public classes and functions re-exported for convenience:
     )
 """
 
+from evaluatorq.redteam.adaptive.blackbox_classifier import (
+    BlackboxAgentCapabilities,
+    classify_agent_capabilities_blackbox,
+)
 from evaluatorq.redteam.adaptive.capability_classifier import AgentCapabilities, classify_agent_capabilities
 from evaluatorq.redteam.adaptive.evaluator import OWASPEvaluator, evaluate_attack
 from evaluatorq.redteam.adaptive.orchestrator import MultiTurnOrchestrator
@@ -34,9 +38,11 @@ from evaluatorq.redteam.adaptive.strategy_registry import (
 __all__ = [
     'STRATEGY_REGISTRY',
     'AgentCapabilities',
+    'BlackboxAgentCapabilities',
     'MultiTurnOrchestrator',
     'OWASPEvaluator',
     'classify_agent_capabilities',
+    'classify_agent_capabilities_blackbox',
     'cleanup_memory_entities',
     'create_dynamic_evaluator',
     'create_dynamic_redteam_job',
