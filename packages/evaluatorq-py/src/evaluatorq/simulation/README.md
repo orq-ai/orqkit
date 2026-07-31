@@ -11,7 +11,7 @@ for real users?"*.
 
 ## What it does
 
-1. Builds **datapoints** from personas × scenarios (or takes them inline / from an Orq dataset).
+1. Builds **datapoints** from personas × scenarios (or takes them inline, from an Orq dataset, or from Orq production traces).
 2. For each datapoint, runs a turn-by-turn conversation between the user-simulator and your agent.
 3. The judge scores each run: goal achieved, criteria met, rules broken, termination reason.
 4. Returns `SimulationResult` objects and (by default) uploads an Experiment to Orq.
@@ -92,6 +92,36 @@ warnings instead.
 Set `dataset_id="..."` to pull simulation datapoints from a named Orq dataset
 instead of inline personas/scenarios. Each row's `inputs` must already match a
 simulation input shape (`datapoint`, or `persona` + `scenario`).
+
+## Traces as input
+
+Production traces from Orq's observability product can seed simulations
+(requires `ORQ_API_KEY`). Two modes:
+
+- **Direct** — one datapoint per fetched trace: an LLM infers the persona and
+  scenario from the transcript; the first message is the real user's opening
+  message, verbatim.
+- **Extension** — an LLM distills the fetched traffic into a distribution
+  profile (topic mix, tones, technical levels), then generates *new*
+  distribution-matched datapoints through the standard generators.
+
+```python
+from evaluatorq.simulation import (
+    datapoints_from_traces, extend_from_traces, fetch_trace_conversations, simulate,
+)
+
+conversations = await fetch_trace_conversations(limit=20)
+datapoints = await datapoints_from_traces(conversations)          # direct
+datapoints += await extend_from_traces(conversations, num_datapoints=10)  # extension
+results = await simulate(evaluation_name="from-traces", datapoints=datapoints, target=...)
+```
+
+On the CLI:
+
+```bash
+eq sim from-traces --limit 20 --lookback-hours 24 --extend 10 --output dp.jsonl
+eq sim simulate --datapoints dp.jsonl --target agent:my-agent
+```
 
 ## Tracing & PII
 
