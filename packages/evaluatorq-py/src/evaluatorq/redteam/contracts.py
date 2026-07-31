@@ -1498,6 +1498,13 @@ class RedTeamReport(BaseModel):
     duration_seconds: float | None = None
     pipeline_warnings: list[str] = Field(default_factory=list)
     experiment_url: str | None = None
+    uploaded_count: int | None = Field(
+        default=None, description='Cleaned result rows sent to the Orq platform'
+    )
+    rows_created: int | None = Field(
+        default=None,
+        description='Rows the Orq platform actually registered; a value below uploaded_count explains a smaller Explorer sample count',
+    )
 
     @field_validator('pipeline', mode='before')
     @classmethod

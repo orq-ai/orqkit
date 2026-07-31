@@ -153,8 +153,10 @@ async def _send_cleaned_results(
     empty job results so the experiment shows one clean row per datapoint
     without duplication.
 
-    If *report* is provided, ``report.experiment_url`` is set to the URL
-    returned by the platform on a successful upload.
+    If *report* is provided, the upload diagnostics are persisted on it:
+    ``experiment_url``, ``uploaded_count`` (cleaned rows sent), and
+    ``rows_created`` (rows the platform actually registered) — so a local
+    JSON is enough to diagnose an Explorer sample-count mismatch.
     """
     api_key = os.environ.get('ORQ_API_KEY')
     if not api_key:
@@ -178,9 +180,11 @@ async def _send_cleaned_results(
         logger.debug('No cleaned results to send to Orq platform')
         return
 
-    logger.debug(f'Sending {len(cleaned)} cleaned results to Orq platform (stripped from {len(results)} raw)')
+    logger.info(
+        f'Uploading {len(cleaned)} cleaned result(s) to Orq platform ({len(results)} raw report rows)'
+    )
     try:
-        experiment_url = await send_results_to_orq(
+        response = await send_results_to_orq(
             api_key=api_key,
             evaluation_name=name,
             evaluation_description=description,
@@ -189,8 +193,19 @@ async def _send_cleaned_results(
             start_time=start_time,
             end_time=datetime.now(tz=timezone.utc),
         )
-        if report is not None and experiment_url:
-            report.experiment_url = experiment_url
+        if report is not None:
+            report.uploaded_count = len(cleaned)
+        if response is None:
+            return
+        # send_results_to_orq already warns when rows_created < uploaded.
+        logger.info(
+            f'Orq registered {response.rows_created}/{len(cleaned)} uploaded row(s)'
+            + (f' — {response.experiment_url}' if response.experiment_url else '')
+        )
+        if report is not None:
+            report.rows_created = response.rows_created
+            if response.experiment_url:
+                report.experiment_url = response.experiment_url
     except Exception as e:
         logger.error(f'Failed to upload {len(cleaned)} results to Orq platform: {e}. Results have been saved locally.')
 
