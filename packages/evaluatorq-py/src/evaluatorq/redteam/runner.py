@@ -177,12 +177,27 @@ async def _send_cleaned_results(
         cleaned.append(clean)
 
     if not cleaned:
-        logger.debug('No cleaned results to send to Orq platform')
+        if report is not None:
+            report.uploaded_count = 0
+        if results:
+            # The worst-case "0 samples in Explorer" mismatch: rows existed
+            # locally but every job output was None, so nothing is uploaded
+            # and no experiment will exist. Surface it loudly, not at DEBUG.
+            logger.warning(
+                f'All {len(results)} result row(s) had no real output — nothing uploaded '
+                f'to Orq; the experiment will not exist in the Explorer.'
+            )
+        else:
+            logger.debug('No cleaned results to send to Orq platform')
         return
 
     logger.info(
         f'Uploading {len(cleaned)} cleaned result(s) to Orq platform ({len(results)} raw report rows)'
     )
+    if report is not None:
+        # Recorded before the attempt so even an exception path leaves the
+        # attempt count in the persisted JSON.
+        report.uploaded_count = len(cleaned)
     try:
         response = await send_results_to_orq(
             api_key=api_key,
@@ -193,8 +208,6 @@ async def _send_cleaned_results(
             start_time=start_time,
             end_time=datetime.now(tz=timezone.utc),
         )
-        if report is not None:
-            report.uploaded_count = len(cleaned)
         if response is None:
             return
         # send_results_to_orq already warns when rows_created < uploaded.
