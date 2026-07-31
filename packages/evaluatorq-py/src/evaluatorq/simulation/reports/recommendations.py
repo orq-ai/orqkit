@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 # Metric thresholds on the judge's 0-1 scales. A conversation-average beyond
 # these marks the result as remediable.
-# ponytail: fixed thresholds; make them parameters if teams need tuning.
+# Fixed thresholds; make them parameters if teams need tuning.
 FACTUAL_ACCURACY_BELOW = 0.5
 HALLUCINATION_RISK_ABOVE = 0.5
 TONE_APPROPRIATENESS_BELOW = 0.5
