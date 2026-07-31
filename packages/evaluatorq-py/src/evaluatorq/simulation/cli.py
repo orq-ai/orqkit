@@ -210,6 +210,37 @@ def _clean_cli_error_types() -> tuple[type[Exception], ...]:
 
 
 # ---------------------------------------------------------------------------
+# Remediation suggestions
+# ---------------------------------------------------------------------------
+
+
+def _maybe_generate_recommendations(results: list[Any], model: str) -> list[Any] | None:
+    """Generate LLM remediation suggestions for flagged failures.
+
+    Failures here must not fail the run — the simulation results already
+    exist; suggestions are best-effort garnish. Warn and return ``None``.
+    """
+    from evaluatorq.common.llm_client import resolve_llm_client
+    from evaluatorq.simulation.reports.recommendations import generate_recommendations
+
+    async def _gen() -> list[Any]:
+        resolved = resolve_llm_client()
+        try:
+            return await generate_recommendations(results, resolved.client, model)
+        finally:
+            if resolved.owned:
+                await resolved.client.close()
+
+    try:
+        recs = asyncio.run(_gen())
+    except Exception as exc:
+        typer.echo(f"Warning: remediation suggestion generation failed ({exc}); continuing without.", err=True)
+        return None
+    typer.echo(f"Generated remediation suggestions for {len(recs)} conversation(s).", err=True)
+    return recs or None
+
+
+# ---------------------------------------------------------------------------
 # Evaluator resolution
 # ---------------------------------------------------------------------------
 
@@ -356,6 +387,17 @@ def simulate(
         bool,
         typer.Option("--no-save", help="Skip writing to .evaluatorq/sim-runs/."),
     ] = False,
+    recommendations: Annotated[  # noqa: FBT002
+        bool,
+        typer.Option(
+            "--recommendations",
+            help=(
+                "Generate LLM remediation suggestions for failures with a "
+                "concrete cause (broken rules/criteria, poor quality metrics). "
+                "Extra LLM cost; uses --sim-model."
+            ),
+        ),
+    ] = False,
     verbose: Annotated[
         int,
         typer.Option(
@@ -443,6 +485,9 @@ def simulate(
         evaluator_names=evaluator_names or DEFAULT_EVALUATOR_NAMES,
         results=results,
     )
+
+    if recommendations:
+        run.recommendations = _maybe_generate_recommendations(results, sim_model)
 
     if report_output is not None:
         _write_report(run, report_output)
@@ -585,6 +630,17 @@ def run(
         bool,
         typer.Option("--no-save", help="Skip writing to .evaluatorq/sim-runs/."),
     ] = False,
+    recommendations: Annotated[  # noqa: FBT002
+        bool,
+        typer.Option(
+            "--recommendations",
+            help=(
+                "Generate LLM remediation suggestions for failures with a "
+                "concrete cause (broken rules/criteria, poor quality metrics). "
+                "Extra LLM cost; uses --sim-model."
+            ),
+        ),
+    ] = False,
     save_datapoints: Annotated[
         Path | None,
         typer.Option(
@@ -684,6 +740,9 @@ def run(
         evaluator_names=evaluator_names or DEFAULT_EVALUATOR_NAMES,
         results=results,
     )
+
+    if recommendations:
+        run.recommendations = _maybe_generate_recommendations(results, sim_model)
 
     if report_output is not None:
         _write_report(run, report_output)

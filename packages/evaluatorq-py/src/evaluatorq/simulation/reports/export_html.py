@@ -55,7 +55,7 @@ from evaluatorq.simulation.reports.sections import build_report_sections
 
 if TYPE_CHECKING:
     from evaluatorq.contracts import ReportSection
-    from evaluatorq.simulation.types import SimulationResult
+    from evaluatorq.simulation.types import SimulationRecommendation, SimulationResult
 
 # Heatmap colour direction:
 # ``ORQ_SCALE_GOOD_BAD`` is green at 0.0 -> red at 1.0 (i.e. good == low).
@@ -534,10 +534,36 @@ def _render_individual_results_html(section: ReportSection) -> str:
     return ''.join(parts)
 
 
+def _render_recommendations_html(section: ReportSection) -> str:
+    rows = section.data.get('rows', [])
+    if not rows:
+        return ''
+    parts = [
+        f'<section class="report-card"><h2>{_esc(section.title)}</h2>',
+        (
+            '<p>LLM-generated fixes for conversations the judge flagged with a '
+            'concrete, remediable issue. Benign failures (e.g. plain max-turns) '
+            'are not analyzed.</p>'
+        ),
+    ]
+    for r in rows:
+        datapoint = f' · datapoint <code>{_esc(str(r["datapoint_id"]))}</code>' if r.get('datapoint_id') else ''
+        flagged = ''.join(_status_badge(t, 'fail') for t in r.get('triggers', []))
+        fixes = ''.join(f'<li>{_esc(s)}</li>' for s in r.get('suggestions', []))
+        parts.append(
+            f'<div class="recommendation-entry"><h3><a href="#{r["anchor"]}">#{r["index"]}</a> '
+            f'{_esc(r["persona"])} / {_esc(r["scenario"])}{datapoint}</h3>'
+            f'<div>{flagged}</div><ul>{fixes}</ul></div>'
+        )
+    parts.append('</section>')
+    return ''.join(parts)
+
+
 _SECTION_RENDERERS = {
     'summary': _render_summary_html,
     'overview': _render_overview_html,
     'failures_first': _render_failures_first_html,
+    'recommendations': _render_recommendations_html,
     'persona_scenario_heatmap': _render_persona_scenario_heatmap_html,
     'score_distribution': _render_score_distribution_html,
     'turn_quality_timeline': _render_turn_quality_timeline_html,
@@ -563,9 +589,15 @@ def export_html(
     *,
     target: str = 'agent',
     run_date: datetime | None = None,
+    recommendations: list[SimulationRecommendation] | None = None,
 ) -> str:
-    """Render a list of simulation results as a self-contained HTML document."""
-    sections = build_report_sections(results)
+    """Render a list of simulation results as a self-contained HTML document.
+
+    ``recommendations`` are pre-generated remediation suggestions
+    (``SimulationRun.recommendations``); rendered as their own section when
+    non-empty.
+    """
+    sections = build_report_sections(results, recommendations=recommendations)
     summary_data = next((s.data for s in sections if s.kind == 'summary'), {})
 
     head = (

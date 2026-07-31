@@ -870,6 +870,7 @@ ReportSectionKind = Literal[
     'turn_metrics',
     'evaluator_scores',
     'errors',
+    'recommendations',
     # Red-team-specific
     'focus_areas',
     'vulnerability_breakdown',
