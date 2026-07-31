@@ -17,7 +17,7 @@ from evaluatorq.simulation.traces import (
     extend_from_traces,
     fetch_trace_conversations,
 )
-from evaluatorq.simulation.types import Persona, Scenario
+from evaluatorq.simulation.types import CommunicationStyle, Persona, Scenario
 
 
 def _make_persona(name: str = "Test Persona") -> Persona:
@@ -27,7 +27,7 @@ def _make_persona(name: str = "Test Persona") -> Persona:
         assertiveness=0.5,
         politeness=0.5,
         technical_level=0.5,
-        communication_style="casual",
+        communication_style=CommunicationStyle.casual,
         background="A test user.",
     )
 
