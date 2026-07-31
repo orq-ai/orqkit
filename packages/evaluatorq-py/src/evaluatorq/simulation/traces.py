@@ -41,6 +41,10 @@ _MAX_PROFILE_CONVERSATIONS = 30
 _SPAN_FETCH_CONCURRENCY = 5
 # The traces list endpoint caps `limit` at 200 per page.
 _API_PAGE_LIMIT = 200
+# Defensive bound on pagination requests, independent of the API contract:
+# without it, a page of rows that all lack a usable `trace_id` (schema drift,
+# partial outage) would never grow `rows` and loop forever.
+_MAX_PAGES = 20
 
 
 class TraceConversation(BaseModel):
@@ -105,8 +109,13 @@ def _normalize_message(raw: Any) -> dict[str, str] | None:
     return {"role": role, "content": content}
 
 
-def _messages_from_value(value: Any) -> list[dict[str, str]]:
-    """Extract chat messages from a span ``input``/``output``-shaped value."""
+def _messages_from_value(value: Any, *, default_role: str = "user") -> list[dict[str, str]]:
+    """Extract chat messages from a span ``input``/``output``-shaped value.
+
+    ``default_role`` is the role assigned to bare-string values, which carry no
+    role of their own: a span's plain-string ``input`` is the user's prompt,
+    but a plain-string ``output`` is the assistant's reply.
+    """
     if isinstance(value, dict):
         for key in ("messages", "input", "choices"):
             inner = value.get(key)
@@ -121,7 +130,7 @@ def _messages_from_value(value: Any) -> list[dict[str, str]]:
     if isinstance(value, list):
         return [m for m in (_normalize_message(i) for i in value) if m]
     if isinstance(value, str) and value.strip():
-        return [{"role": "user", "content": value}]
+        return [{"role": default_role, "content": value}]
     return []
 
 
@@ -136,8 +145,8 @@ def _conversation_from_spans(trace_id: str, spans: list[dict[str, Any]]) -> Trac
         key=lambda s: (bool(s.get("parent_id")), s.get("type") != "Trace"),
     )
     for span in ordered:
-        messages = _messages_from_value(span.get("input"))
-        output_messages = _messages_from_value(span.get("output"))
+        messages = _messages_from_value(span.get("input"), default_role="user")
+        output_messages = _messages_from_value(span.get("output"), default_role="assistant")
         for msg in output_messages:
             if msg not in messages:
                 messages.append(msg)
@@ -171,7 +180,7 @@ async def fetch_trace_conversations(
     try:
         rows: list[dict[str, Any]] = []
         page = 1
-        while len(rows) < limit:
+        while len(rows) < limit and page <= _MAX_PAGES:
             try:
                 response = await client.post(
                     f"{host}/v2/traces/v3oql",
@@ -194,6 +203,13 @@ async def fetch_trace_conversations(
             if not data or not payload.get("has_more"):
                 break
             page += 1
+        if len(rows) < limit and page > _MAX_PAGES:
+            logger.warning(
+                "Stopped paginating traces after %d page(s) with %d/%d row(s) collected",
+                _MAX_PAGES,
+                len(rows),
+                limit,
+            )
 
         semaphore = asyncio.Semaphore(_SPAN_FETCH_CONCURRENCY)
 

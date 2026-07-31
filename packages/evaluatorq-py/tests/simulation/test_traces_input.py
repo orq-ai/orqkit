@@ -68,6 +68,12 @@ def test_messages_from_string_input() -> None:
     assert _messages_from_value("plain question") == [{"role": "user", "content": "plain question"}]
 
 
+def test_messages_from_string_output_uses_default_role() -> None:
+    assert _messages_from_value("the answer", default_role="assistant") == [
+        {"role": "assistant", "content": "the answer"}
+    ]
+
+
 def test_messages_from_content_parts() -> None:
     value = [{"role": "user", "content": [{"type": "text", "text": "part one"}, "part two"]}]
     assert _messages_from_value(value) == [{"role": "user", "content": "part one\npart two"}]
@@ -104,6 +110,34 @@ def test_conversation_prefers_root_span() -> None:
 
 def test_conversation_none_when_no_messages() -> None:
     assert _conversation_from_spans("t1", [{"parent_id": None, "input": {}, "output": {}}]) is None
+
+
+def test_conversation_string_output_is_assistant_not_user() -> None:
+    """A plain-string span output is the assistant's reply — it must never be
+    mistaken for the user's opening message (regression: role mislabeling)."""
+    spans = [
+        {
+            "parent_id": None,
+            "type": "Trace",
+            "input": "what is my balance?",
+            "output": "Your balance is $40.",
+        }
+    ]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.messages == [
+        {"role": "user", "content": "what is my balance?"},
+        {"role": "assistant", "content": "Your balance is $40."},
+    ]
+    assert conversation.first_user_message == "what is my balance?"
+
+
+def test_conversation_output_only_yields_no_user_message() -> None:
+    """Empty input + string output must not produce a fake first user message."""
+    spans = [{"parent_id": None, "type": "Trace", "input": {}, "output": "assistant text"}]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.first_user_message is None
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +198,29 @@ async def test_fetch_trace_conversations() -> None:
     assert len(conversations) == 1
     assert conversations[0].trace_id == "t1"
     assert conversations[0].first_user_message == "hello"
+
+
+@pytest.mark.asyncio
+async def test_fetch_pagination_terminates_on_unusable_pages() -> None:
+    """Pages with rows lacking trace_id must not loop forever (hard page cap)."""
+    from evaluatorq.simulation.traces import _MAX_PAGES
+
+    requests_made = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests_made["n"] += 1
+        # Non-empty page, has_more forever, but no usable trace_id anywhere.
+        return httpx.Response(
+            200, json={"object": "list", "data": [{"foo": "bar"}], "has_more": True}
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        conversations = await fetch_trace_conversations(
+            limit=5, api_key="test-key", http_client=client
+        )
+
+    assert conversations == []
+    assert requests_made["n"] == _MAX_PAGES
 
 
 @pytest.mark.asyncio
