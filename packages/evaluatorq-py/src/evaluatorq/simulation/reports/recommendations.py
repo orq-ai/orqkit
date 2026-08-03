@@ -61,10 +61,18 @@ def find_triggers(result: SimulationResult) -> list[tuple[str, str]]:
     if _is_errored(result):
         return []
 
-    triggers: list[tuple[str, str]] = [('rule_broken', rule) for rule in result.rules_broken]
-    triggers.extend(
-        ('criterion_failed', str(row['description'])) for row in _criteria_rows(result) if not row['passed']
-    )
+    # Broken rules arrive as internal criteria ids (e.g. 'criteria_4'); resolve
+    # them to their human description, and drop ones already reported as a
+    # failed criterion so the same issue is not flagged twice.
+    rows = _criteria_rows(result)
+    id_to_desc = {str(row['id']): str(row['description']) for row in rows}
+    failed_descs = [str(row['description']) for row in rows if not row['passed']]
+    triggers: list[tuple[str, str]] = [
+        ('rule_broken', desc)
+        for rule in result.rules_broken
+        if (desc := id_to_desc.get(rule, rule)) not in failed_descs
+    ]
+    triggers.extend(('criterion_failed', desc) for desc in failed_descs)
 
     checks = (
         ('low_factual_accuracy', 'factual_accuracy', lambda v: v < FACTUAL_ACCURACY_BELOW),

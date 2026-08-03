@@ -570,16 +570,6 @@ def _render_individual_results_html(section: ReportSection) -> str:
     return ''.join(parts)
 
 
-def _pretty_trigger(trigger: str) -> str:
-    """Humanize a 'kind: detail' trigger label for report display."""
-    kind, _, detail = trigger.partition(':')
-    label = {'rule_broken': 'Rule broken', 'criterion_failed': 'Criterion failed'}.get(
-        kind.strip(), kind.strip().replace('_', ' ').capitalize()
-    )
-    detail = detail.strip()
-    return f'{label}: {detail}' if detail else label
-
-
 def _render_recommendations_html(section: ReportSection) -> str:
     rows = section.data.get('rows', [])
     if not rows:
@@ -594,7 +584,7 @@ def _render_recommendations_html(section: ReportSection) -> str:
     ]
     for r in rows:
         datapoint = f' · datapoint <code>{_esc(str(r["datapoint_id"]))}</code>' if r.get('datapoint_id') else ''
-        flagged = ''.join(_status_badge(_pretty_trigger(t), 'fail') for t in r.get('triggers', []))
+        flagged = ''.join(_status_badge(t, 'fail') for t in r.get('triggers', []))
         fixes = ''.join(f'<li>{_esc(s)}</li>' for s in r.get('suggestions', []))
         parts.append(
             f'<div class="recommendation-entry"><h3><a href="#{r["anchor"]}">#{r["index"]}</a> '

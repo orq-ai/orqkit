@@ -205,7 +205,7 @@ def test_markdown_renders_recommendations():
     md = export_markdown([_make_result()], recommendations=[_sample_recommendation()])
     assert 'Remediation Suggestions' in md
     assert 'Add a guardrail blocking internal identifiers' in md
-    assert 'rule_broken: leaked internal data' in md
+    assert 'Rule broken: leaked internal data' in md
 
 
 def test_html_renders_recommendations():
@@ -217,3 +217,19 @@ def test_html_renders_recommendations():
 def test_html_omits_recommendations_section_when_absent():
     html = export_html([_make_result()])
     assert 'Remediation Suggestions' not in html
+
+
+def test_find_triggers_resolves_rule_ids_and_dedupes():
+    """Broken-rule ids resolve to the criterion description, and a rule that
+    is also a failed criterion is reported once, not twice."""
+    from evaluatorq.simulation.reports.recommendations import find_triggers
+
+    r = _make_result()
+    r.rules_broken = ['criteria_0']
+    r.metadata['criteria_meta'] = [
+        {'id': 'criteria_0', 'description': 'No internal identifiers leak.', 'type': 'must_not_happen', 'passed': False},
+    ]
+    triggers = find_triggers(r)
+    descs = [evidence for _, evidence in triggers]
+    assert descs.count('No internal identifiers leak.') == 1
+    assert 'criteria_0' not in descs

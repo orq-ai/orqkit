@@ -453,6 +453,20 @@ def _build_turn_quality_timeline_section(results: list[SimulationResult]) -> Rep
     )
 
 
+def _pretty_trigger(trigger: str) -> str:
+    """Humanize a 'kind: detail' trigger label for report display."""
+    kind, _, detail = trigger.partition(':')
+    label = {
+        'rule_broken': 'Rule broken',
+        'criterion_failed': 'Criterion failed',
+        'low_factual_accuracy': 'Low factual accuracy',
+        'high_hallucination_risk': 'High hallucination risk',
+        'poor_tone': 'Poor tone',
+    }.get(kind.strip(), kind.strip().replace('_', ' ').capitalize())
+    detail = detail.strip()
+    return f'{label}: {detail}' if detail else label
+
+
 def _build_recommendations_section(
     recommendations: list[SimulationRecommendation],
 ) -> ReportSection:
@@ -462,7 +476,7 @@ def _build_recommendations_section(
             'datapoint_id': rec.datapoint_id,
             'persona': rec.persona,
             'scenario': rec.scenario,
-            'triggers': list(rec.triggers),
+            'triggers': [_pretty_trigger(t) for t in rec.triggers],
             'suggestions': list(rec.suggestions),
             'anchor': f'conv-{rec.result_index + 1}',
         }
