@@ -238,6 +238,53 @@ def test_messages_from_prompt_and_completion() -> None:
     ]
 
 
+def test_messages_from_json_encoded_strings() -> None:
+    """Live ``gen_ai`` attributes often carry input/output JSON-encoded as a
+    string; the quotes and escapes must not leak into message content."""
+    # JSON-encoded bare string (live gen_ai.input shape).
+    assert _messages_from_value('"Hi! Just saying hello."') == [
+        {"role": "user", "content": "Hi! Just saying hello."}
+    ]
+    # JSON-encoded message object (live gen_ai.output shape).
+    assert _messages_from_value(
+        '{"role":"assistant","content":"Hi! How can I help you?","refusal":null}',
+        default_role="assistant",
+    ) == [{"role": "assistant", "content": "Hi! How can I help you?"}]
+    # Escapes decode to real newlines.
+    assert _messages_from_value('"line one\\nline two"') == [
+        {"role": "user", "content": "line one\nline two"}
+    ]
+    # Plain text that merely resembles prose stays verbatim.
+    assert _messages_from_value('hello "world"') == [{"role": "user", "content": 'hello "world"'}]
+    # Malformed JSON falls back to verbatim text.
+    assert _messages_from_value('{not json') == [{"role": "user", "content": "{not json"}]
+
+
+def test_conversation_from_json_encoded_gen_ai() -> None:
+    """End-to-end: a span whose gen_ai input/output are JSON-encoded strings."""
+    spans = [
+        {
+            "parent_id": None,
+            "type": "trace",
+            "input": None,
+            "output": None,
+            "attributes": {
+                "gen_ai": {
+                    "input": '"Where is my order?"',
+                    "output": '{"role":"assistant","content":"It ships tomorrow."}',
+                }
+            },
+        }
+    ]
+    conversation = _conversation_from_spans("t1", spans)
+    assert conversation is not None
+    assert conversation.messages == [
+        {"role": "user", "content": "Where is my order?"},
+        {"role": "assistant", "content": "It ships tomorrow."},
+    ]
+    assert conversation.first_user_message == "Where is my order?"
+
+
 # ---------------------------------------------------------------------------
 # Credentials
 # ---------------------------------------------------------------------------
