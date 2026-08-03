@@ -1542,3 +1542,73 @@ def test_export_rejects_unknown_format(tmp_path):
     runner = CliRunner()
     res = runner.invoke(app, ["export", "-i", str(src), "-o", str(tmp_path / "y"), "--format", "pdf"])
     assert res.exit_code != 0
+
+
+def test_run_recommendations_flag_attaches_to_saved_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """eq sim run --recommendations generates suggestions and stores them on the run report."""
+    monkeypatch.chdir(tmp_path)
+    report = tmp_path / "report.json"
+    fake_recs = [
+        {
+            "result_index": 0,
+            "datapoint_id": "dp-1",
+            "persona": "P",
+            "scenario": "S",
+            "triggers": ["Criterion failed: x"],
+            "suggestions": ["Fix x."],
+        }
+    ]
+
+    with (
+        patch("evaluatorq.simulation.cli._resolve_target") as mock_target,
+        patch("evaluatorq.simulation.cli._run_impl", new_callable=AsyncMock) as mock_impl,
+        patch("evaluatorq.simulation.cli._maybe_generate_recommendations") as mock_recs,
+    ):
+        mock_target.return_value = MagicMock()
+        mock_impl.return_value = [_make_result()]
+        from evaluatorq.simulation.types import SimulationRecommendation
+
+        mock_recs.return_value = [SimulationRecommendation.model_validate(r) for r in fake_recs]
+
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--agent-description", "bot",
+                "--openai-model", "gpt-4o",
+                "--report-output", str(report),
+                "--recommendations",
+                "--no-save",
+            ],
+            env={"OPENAI_API_KEY": "test-key"},
+        )
+
+    assert result.exit_code == 0, result.output
+    mock_recs.assert_called_once()
+    saved = json.loads(report.read_text())
+    assert saved["recommendations"][0]["suggestions"] == ["Fix x."]
+
+
+def test_run_without_recommendations_flag_skips_generation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    with (
+        patch("evaluatorq.simulation.cli._resolve_target") as mock_target,
+        patch("evaluatorq.simulation.cli._run_impl", new_callable=AsyncMock) as mock_impl,
+        patch("evaluatorq.simulation.cli._maybe_generate_recommendations") as mock_recs,
+    ):
+        mock_target.return_value = MagicMock()
+        mock_impl.return_value = [_make_result()]
+
+        result = runner.invoke(
+            app,
+            ["run", "--agent-description", "bot", "--openai-model", "gpt-4o", "--no-save"],
+            env={"OPENAI_API_KEY": "test-key"},
+        )
+
+    assert result.exit_code == 0, result.output
+    mock_recs.assert_not_called()
