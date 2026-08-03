@@ -284,7 +284,7 @@ async def test_whole_group_unanswered_sets_classification_failed() -> None:
     classification_failed=True so the planner stays optimistic (fail-safe)."""
 
     class _LastGroupFails(AgentTarget):
-        """Raises on the final probe turn — the single multi_agent probe."""
+        """Raises on the single multi_agent probe (matched by content, not position)."""
 
         def __init__(self) -> None:
             super().__init__()
@@ -292,7 +292,7 @@ async def test_whole_group_unanswered_sets_classification_failed() -> None:
 
         async def respond(self, messages: list[Message]) -> AgentResponse:
             self.n += 1
-            if self.n >= _N_PROBE_TURNS:  # the last (multi_agent) turn
+            if 'sub-agent' in (messages[-1].content or ''):
                 raise RuntimeError('group down')
             return AgentResponse(text='ok')
 
@@ -402,3 +402,24 @@ def test_returns_agent_capabilities_subtype_that_serializes() -> None:
     assert dumped['is_multi_agent'] is True
     assert dumped['classification_failed'] is False
     assert caps.has_any([AgentCapability.MEMORY_READ])
+
+
+@pytest.mark.asyncio
+async def test_memory_recall_probe_is_sent_in_fresh_conversation() -> None:
+    """The recall probe must NOT see the accumulated transcript: in context,
+    every stateless LLM 'recalls' the code and classifies as memory-capable."""
+    target = _ScriptedTarget(_BLAND_REPLIES)
+    client = _judge()
+
+    await classify_agent_capabilities_blackbox(target, client, model='m')
+
+    recall_text = PROBES['memory'][1]
+    recall_calls = [c for c in target.calls if recall_text in (c[-1].content or '')]
+    assert len(recall_calls) == 1
+    # Fresh conversation: the recall call contains ONLY the recall question.
+    assert len(recall_calls[0]) == 1
+    # The write probe ran first and did not include the recall.
+    assert PROBES['memory'][0] in (target.calls[0][-1].content or '')
+    # The judge transcript marks the context break for the recall turn.
+    prompt = client.chat.completions.parse.call_args.kwargs['messages'][0]['content']
+    assert '[new conversation, no prior context]' in prompt

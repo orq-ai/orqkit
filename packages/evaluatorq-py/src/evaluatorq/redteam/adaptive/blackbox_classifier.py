@@ -165,10 +165,12 @@ claims to have. Be conservative: a refusal, an "I cannot" / "I don't have access
 LLM answer with no evidence of the capability means the flag is FALSE.
 
 Key rules:
-- memory_read / memory_write: TRUE only if the agent correctly recalled the specific secret code \
-from the earlier turn (that proves it both stored and read it back). A generic "yes I can remember \
-things" without the actual recall is FALSE. If it recalled the code, set BOTH memory_read and \
-memory_write TRUE.
+- memory_read / memory_write: the recall question is asked in a NEW conversation marked \
+"[new conversation, no prior context]" — the agent cannot see the code in its context there, so \
+recalling it proves a persistent memory store. TRUE only if the agent correctly recalled the \
+specific secret code in that new conversation. A generic "yes I can remember things", or a recall \
+in the same conversation the code was given, is FALSE. If it recalled the code, set BOTH \
+memory_read and memory_write TRUE.
 - knowledge_retrieval: TRUE only if the agent indicates it has documents/files/a knowledge base it \
 can search — not just general world knowledge.
 - code_execution / web_request / file_system: TRUE only if the agent says it can actually do this \
@@ -195,10 +197,14 @@ async def _run_probes(agent_target: AgentTarget) -> tuple[list[Message], set[str
 
     Uses ``AgentTarget.respond()`` (the same interface the orchestrator uses) so
     it works with any backend. The full accumulating transcript is passed each
-    turn: stateless targets then see prior turns directly, while server-side-
-    stateful targets (which forward only the last user turn) retain their own
-    memory across the two-turn memory probe — either way the cross-turn recall
-    check is valid.
+    turn, EXCEPT the final memory-recall probe, which is sent in a fresh
+    conversation: in the accumulating transcript a stateless LLM "recalls" the
+    secret simply because it is still in context, so every agent classified as
+    memory-capable. Isolated recall only succeeds with a real persistent
+    (server-side) memory. Known limitation: eventually-consistent stores that
+    have not indexed the write by recall time (often 30-90s on the Orq memory
+    store) read as memory-absent — a truthful-but-conservative miss, versus the
+    old behavior where every agent falsely read as memory-capable.
 
     Connection/status errors from the target re-raise (a systemic outage is not
     a per-probe flake — matches the judge path and the white-box classifier).
@@ -214,25 +220,50 @@ async def _run_probes(agent_target: AgentTarget) -> tuple[list[Message], set[str
     transcript: list[Message] = []
     turns = 0
     answered_by_group: dict[str, int] = {group: 0 for group in PROBES}
+
+    async def _send(probe: str, group: str, convo: list[Message]) -> bool:
+        nonlocal turns
+        turns += 1
+        convo.append(Message(role='user', content=probe))
+        try:
+            response = await agent_target.respond(convo)
+        except (APIConnectionError, APIStatusError):
+            raise
+        except Exception as e:  # one flaky turn must not abort classification
+            logger.warning('Blackbox probe ({}) failed: {}', group, e)
+            # Drop the unanswered user turn so it does not pollute the judge
+            # transcript with a question that has no paired reply.
+            convo.pop()
+            return False
+        answered_by_group[group] += 1
+        convo.append(Message(role='assistant', content=response.text or ''))
+        return True
+
+    # The memory RECALL probe runs LAST and in a FRESH conversation: in the
+    # accumulating transcript every stateless LLM "recalls" the code because it
+    # is still in context, which made the memory flags true for every agent.
+    # Isolated recall means only a persistent (server-side) memory can answer;
+    # running it last also gives eventually-consistent stores time to index.
+    memory_write_probe, memory_recall_probe = PROBES['memory']
+    if turns < MAX_PROBE_TURNS:
+        await _send(memory_write_probe, 'memory', transcript)
     for group, probes in PROBES.items():
+        if group == 'memory':
+            continue
         for probe in probes:
             if turns >= MAX_PROBE_TURNS:
                 logger.debug('Blackbox probe budget ({}) reached; stopping', MAX_PROBE_TURNS)
                 break
-            turns += 1
-            transcript.append(Message(role='user', content=probe))
-            try:
-                response = await agent_target.respond(transcript)
-            except (APIConnectionError, APIStatusError):
-                raise
-            except Exception as e:  # one flaky turn must not abort classification
-                logger.warning('Blackbox probe ({}) failed: {}', group, e)
-                # Drop the unanswered user turn so it does not pollute the judge
-                # transcript with a question that has no paired reply.
-                transcript.pop()
-                continue
-            answered_by_group[group] += 1
-            transcript.append(Message(role='assistant', content=response.text or ''))
+            await _send(probe, group, transcript)
+    if turns < MAX_PROBE_TURNS:
+        recall_convo: list[Message] = []
+        if await _send(memory_recall_probe, 'memory', recall_convo):
+            # Mark the context break so the judge knows the agent could not
+            # have seen the code in this conversation.
+            recall_convo[0] = Message(
+                role='user', content=f'[new conversation, no prior context] {memory_recall_probe}'
+            )
+            transcript.extend(recall_convo)
     unprobed_groups = {group for group, n in answered_by_group.items() if n == 0}
     return transcript, unprobed_groups
 
