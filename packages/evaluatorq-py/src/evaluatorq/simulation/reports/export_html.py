@@ -271,6 +271,9 @@ def _render_persona_scenario_heatmap_html(section: ReportSection) -> str:
     personas, scenarios = d['personas'], d['scenarios']
     if not personas or not scenarios:
         return ''
+    # A 1x1 grid is one colored cell restating the headline success rate.
+    if len(personas) < 2 and len(scenarios) < 2:
+        return ''
     lookup = {(c['persona'], c['scenario']): c for c in d['cells']}
     # cells[row=scenario][col=persona] = success-rate (good=high -> green-high scale)
     cells = [[lookup.get((p, s), {}).get('success_rate', -1.0) for p in personas] for s in scenarios]
@@ -290,7 +293,7 @@ def _render_score_distribution_html(section: ReportSection) -> str:
     # A histogram of one or two values renders as a single squished bar that
     # reads as broken — state the scores directly instead.
     if len(scores) < 3:
-        if not scores:
+        if len(scores) < 2:
             return ''
         listed = ', '.join(f'{v:.2f}' for v in scores)
         return (
@@ -322,6 +325,9 @@ def _render_persona_breakdown_html(section: ReportSection) -> str:
     rows = section.data.get('rows', [])
     if not rows:
         return f'<section class="report-card"><h2>{_esc(section.title)}</h2><p>No persona data.</p></section>'
+    # A single conversation has no cohorts to break down.
+    if sum(r.get('conversations', 0) for r in rows) < 2:
+        return ''
     table_rows = [
         [
             _esc(r['persona']),
@@ -344,6 +350,9 @@ def _render_scenario_breakdown_html(section: ReportSection) -> str:
     rows = section.data.get('rows', [])
     if not rows:
         return f'<section class="report-card"><h2>{_esc(section.title)}</h2><p>No scenario data.</p></section>'
+    # A single conversation has no cohorts to break down.
+    if sum(r.get('conversations', 0) for r in rows) < 2:
+        return ''
     table_rows = [
         [
             _esc(r['scenario']),
