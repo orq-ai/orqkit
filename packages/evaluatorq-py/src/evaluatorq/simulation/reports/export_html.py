@@ -180,18 +180,22 @@ def _render_overview_html(section: ReportSection) -> str:
     def _persona_item(p: dict[str, Any]) -> str:
         traits = p.get('traits')
         background = p.get('background')
-        parts = [f'<li>{_esc(p["name"])} <span class="intro-count">· {p["conversations"]} conv.</span>']
+        parts = [
+            (
+                f'<li><h4 class="intro-name">{_esc(p["name"])} '
+                f'<span class="intro-count">· {p["conversations"]} conv.</span></h4>'
+            )
+        ]
         if isinstance(traits, dict):
-            trait_parts = [
-                f'patience {traits.get("patience", "?")}',
-                f'assertiveness {traits.get("assertiveness", "?")}',
-                f'politeness {traits.get("politeness", "?")}',
-                f'technical {traits.get("technical_level", "?")}',
+            trait_rows = [
+                ['Patience', str(traits.get('patience', '?'))],
+                ['Assertiveness', str(traits.get('assertiveness', '?'))],
+                ['Politeness', str(traits.get('politeness', '?'))],
+                ['Technical level', str(traits.get('technical_level', '?'))],
             ]
             if traits.get('communication_style'):
-                trait_parts.append(_esc(str(traits['communication_style'])))
-            trait_line = ' · '.join(trait_parts)
-            parts.append(f'<div class="intro-meta">{trait_line}</div>')
+                trait_rows.append(['Style', _esc(str(traits['communication_style']))])
+            parts.append(f'<div class="intro-traits">{_html_table(["Trait", "Value"], trait_rows)}</div>')
         if background:
             parts.append(f'<div class="intro-meta">{_esc(str(background))}</div>')
         parts.append('</li>')
@@ -207,13 +211,13 @@ def _render_overview_html(section: ReportSection) -> str:
             f'{"✗ must not" if c["type"] == "must_not_happen" else "✓ must"}: {_esc(c["description"])}</span>'
             for c in s.get('criteria', [])
         )
-        parts = [f'<li>{_esc(s["name"])}']
+        parts = [f'<li><h4 class="intro-name">{_esc(s["name"])}</h4>']
         if goal:
             parts.append(f'<div class="intro-meta"><strong>Goal:</strong> {_esc(str(goal))}</div>')
         if context:
             parts.append(f'<div class="intro-meta"><strong>Context:</strong> {_esc(str(context))}</div>')
         if tags:
-            parts.append(f'<div>{tags}</div>')
+            parts.append(f'<div class="intro-criteria">{tags}</div>')
         parts.append('</li>')
         return ''.join(parts)
 
@@ -235,15 +239,19 @@ def _render_failures_first_html(section: ReportSection) -> str:
     for r in rows:
         badges = ''.join(_status_badge(v, 'fail') for v in r['violated']) or '-'
         safety = _status_badge('SAFETY', 'fail') if r['has_safety'] else ''
+        reason = str(r.get('reason', ''))
+        if len(reason) > 220:
+            reason = reason[:220] + '…'
         trs.append(
             f'<tr><td><a href="#{r["anchor"]}">#{r["index"]}</a></td>'
             f'<td>{_esc(r["persona"])}</td><td>{_esc(r["scenario"])}</td>'
             f'<td>{badges} {safety}</td><td>{r["score"]:.2f}</td>'
-            f'<td>{_esc(r["terminated_by"])}</td></tr>'
+            f'<td>{_esc(r["terminated_by"])}</td>'
+            f'<td class="failure-reason">{_esc(reason)}</td></tr>'
         )
     table = (
         '<table><thead><tr><th>#</th><th>Persona</th><th>Scenario</th>'
-        '<th>Violated criteria</th><th>Score</th><th>Ended</th></tr></thead>'
+        '<th>Violated criteria</th><th>Score</th><th>Ended</th><th>Why</th></tr></thead>'
         f'<tbody>{"".join(trs)}</tbody></table>'
     )
     # Long failure lists get a scroll container with a sticky header so the
@@ -278,7 +286,19 @@ def _render_persona_scenario_heatmap_html(section: ReportSection) -> str:
 
 
 def _render_score_distribution_html(section: ReportSection) -> str:
-    hist = _render_histogram(values=section.data.get('scores', []), bins=10, title=section.title)
+    scores = section.data.get('scores', [])
+    # A histogram of one or two values renders as a single squished bar that
+    # reads as broken — state the scores directly instead.
+    if len(scores) < 3:
+        if not scores:
+            return ''
+        listed = ', '.join(f'{v:.2f}' for v in scores)
+        return (
+            f'<section class="report-card"><h2>{_esc(section.title)}</h2>'
+            f'<p>Only {len(scores)} conversation(s) — goal score(s): <strong>{listed}</strong>. '
+            'A distribution needs more runs.</p></section>'
+        )
+    hist = _render_histogram(values=scores, bins=10, title=section.title)
     return f'<section class="report-card">{hist}</section>' if hist else ''
 
 
@@ -289,6 +309,10 @@ def _render_turn_quality_timeline_html(section: ReportSection) -> str:
         return ''
     series = [(_pretty_evaluator(name), vals) for name, vals in d['series'].items() if any(v is not None for v in vals)]
     if not series:
+        return ''
+    # A timeline needs at least two turns; the per-turn averages already appear
+    # in Turn Metrics, so a single-point line chart adds nothing but confusion.
+    if len(turns) < 2:
         return ''
     chart = _render_line_chart(x_labels=[str(t) for t in turns], series=series, title=section.title)
     return f'<section class="report-card">{chart}</section>'
@@ -363,7 +387,9 @@ def _render_turn_metrics_html(section: ReportSection) -> str:
     # One bar per conversation reads well for small runs, but grows unbounded
     # and duplicates the distribution table at scale — so past a threshold show
     # the compact turn-count distribution instead.
-    if per_conv and len(per_conv) <= _MAX_PER_CONV_BARS:
+    # A one-conversation bar chart is a single full-width bar — skip it; the
+    # turn count is already in the conversation header.
+    if len(per_conv) >= 2 and len(per_conv) <= _MAX_PER_CONV_BARS:
         parts.extend((
             _svg_bar(
                 rows=[(c['label'], float(c['turns'])) for c in per_conv],
@@ -401,7 +427,8 @@ def _render_turn_metrics_html(section: ReportSection) -> str:
 
 def _render_failure_mode_html(section: ReportSection) -> str:
     rows = section.data.get('rows', [])
-    if not rows:
+    # One failure mode = one full-width bar restating the Failures table — skip.
+    if len(rows) < 2:
         return ''
     bar = _svg_bar(
         rows=[(label, float(count)) for label, count in rows],
@@ -487,7 +514,7 @@ def _render_individual_results_html(section: ReportSection) -> str:
         title = (
             f'#{entry["index"] + 1}: {_esc(entry["persona"])} / '
             f'{_esc(entry["scenario"])} {badge}'
-            f' ({entry["turn_count"]} turns, '
+            f' ({entry["turn_count"]} turn{"s" if entry["turn_count"] != 1 else ""}, '
             f'score {entry["goal_completion_score"]:.2f})'
         )
 
@@ -534,6 +561,16 @@ def _render_individual_results_html(section: ReportSection) -> str:
     return ''.join(parts)
 
 
+def _pretty_trigger(trigger: str) -> str:
+    """Humanize a 'kind: detail' trigger label for report display."""
+    kind, _, detail = trigger.partition(':')
+    label = {'rule_broken': 'Rule broken', 'criterion_failed': 'Criterion failed'}.get(
+        kind.strip(), kind.strip().replace('_', ' ').capitalize()
+    )
+    detail = detail.strip()
+    return f'{label}: {detail}' if detail else label
+
+
 def _render_recommendations_html(section: ReportSection) -> str:
     rows = section.data.get('rows', [])
     if not rows:
@@ -548,12 +585,13 @@ def _render_recommendations_html(section: ReportSection) -> str:
     ]
     for r in rows:
         datapoint = f' · datapoint <code>{_esc(str(r["datapoint_id"]))}</code>' if r.get('datapoint_id') else ''
-        flagged = ''.join(_status_badge(t, 'fail') for t in r.get('triggers', []))
+        flagged = ''.join(_status_badge(_pretty_trigger(t), 'fail') for t in r.get('triggers', []))
         fixes = ''.join(f'<li>{_esc(s)}</li>' for s in r.get('suggestions', []))
         parts.append(
             f'<div class="recommendation-entry"><h3><a href="#{r["anchor"]}">#{r["index"]}</a> '
             f'{_esc(r["persona"])} / {_esc(r["scenario"])}{datapoint}</h3>'
-            f'<div>{flagged}</div><ul>{fixes}</ul></div>'
+            f'<p class="rec-flagged"><strong>Triggered by:</strong> {flagged}</p>'
+            f'<ol class="rec-fixes">{fixes}</ol></div>'
         )
     parts.append('</section>')
     return ''.join(parts)

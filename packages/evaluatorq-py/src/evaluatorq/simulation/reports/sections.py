@@ -195,6 +195,7 @@ def _build_failures_first_section(results: list[SimulationResult]) -> ReportSect
             'has_safety': any(c['safety'] for c in rows_c),
             'terminated_by': r.terminated_by.value,
             'score': r.goal_completion_score,
+            'reason': r.reason or '',
             'anchor': f'conv-{idx + 1}',
         })
     return ReportSection(kind='failures_first', title='Failures', data={'rows': rows})
