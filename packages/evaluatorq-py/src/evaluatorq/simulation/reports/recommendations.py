@@ -82,7 +82,10 @@ def find_triggers(result: SimulationResult) -> list[tuple[str, str]]:
     for trigger, field_name, is_bad in checks:
         avg = _avg_metric(result, field_name)
         if avg is not None and is_bad(avg):
-            triggers.append((trigger, f'{field_name} averaged {avg:.2f} across {result.turn_count} turns'))
+            plural = 's' if result.turn_count != 1 else ''
+            triggers.append(
+                (trigger, f'{field_name} averaged {avg:.2f} across {result.turn_count} turn{plural}')
+            )
     return triggers
 
 
