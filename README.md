@@ -23,12 +23,13 @@ Tools from [Orq AI](https://orq.ai) for building robust AI evaluation pipelines,
 
 ## 📦 Packages
 
+> **📦➡️ Python `evaluatorq` has moved.** It now lives in its own repository: [github.com/orq-ai/evaluatorq](https://github.com/orq-ai/evaluatorq) · [docs](https://orq-ai.github.io/evaluatorq/) · [![PyPI](https://img.shields.io/pypi/v/evaluatorq)](https://pypi.org/project/evaluatorq/)
+
 This monorepo contains the following open-source packages:
 
 | Package                                                 | Description                                                                                  | Docs                                           | Version                                                                                                               |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | [`@orq-ai/evaluatorq`](./packages/evaluatorq)           | Core evaluation framework with Effect-based architecture for running parallel AI evaluations | [README](./packages/evaluatorq/README.md)      | [![npm](https://img.shields.io/npm/v/@orq-ai/evaluatorq)](https://www.npmjs.com/package/@orq-ai/evaluatorq)           |
-| [`evaluatorq`](./packages/evaluatorq-py)                | Python evaluation framework for running parallel AI evaluations                              | [README](./packages/evaluatorq-py/README.md)   | [![PyPI](https://img.shields.io/pypi/v/evaluatorq)](https://pypi.org/project/evaluatorq/)                             |
 | [`@orq-ai/evaluators`](./packages/evaluators)           | Reusable evaluators for AI evaluation frameworks                                             | [README](./packages/evaluators/README.md)      | [![npm](https://img.shields.io/npm/v/@orq-ai/evaluators)](https://www.npmjs.com/package/@orq-ai/evaluators)           |
 | [`@orq-ai/cli`](./packages/cli)                         | Command-line interface for discovering and running evaluation files                          | [README](./packages/cli/README.md)             | [![npm](https://img.shields.io/npm/v/@orq-ai/cli)](https://www.npmjs.com/package/@orq-ai/cli)                         |
 | [`@orq-ai/vercel-provider`](./packages/vercel-provider) | Vercel AI SDK provider for seamless integration with Orq AI platform                         | [README](./packages/vercel-provider/README.md) | [![npm](https://img.shields.io/npm/v/@orq-ai/vercel-provider)](https://www.npmjs.com/package/@orq-ai/vercel-provider) |
