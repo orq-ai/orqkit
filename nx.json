@@ -40,9 +40,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "bun test"
-        ]
+        "commands": ["bun test"]
       }
     }
   },
