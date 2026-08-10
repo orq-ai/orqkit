@@ -41,7 +41,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "if [ -f {projectRoot}/tsconfig.spec.json ]; then bun test; elif [ -f {projectRoot}/pyproject.toml ]; then uv run pytest; fi"
+          "bun test"
         ]
       }
     }
