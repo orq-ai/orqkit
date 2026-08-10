@@ -6,11 +6,7 @@
       "default",
       "!{projectRoot}/**/*.spec.ts",
       "!{projectRoot}/**/*.test.ts",
-      "!{projectRoot}/**/*_test.py",
-      "!{projectRoot}/**/*.md",
-      "!{projectRoot}/.venv/**/*",
-      "!{projectRoot}/**/__pycache__/**/*",
-      "!{projectRoot}/**/*.egg-info/**/*"
+      "!{projectRoot}/**/*.md"
     ],
     "sharedGlobals": []
   },
@@ -36,14 +32,6 @@
         "command": "npm publish --access public --tag ${NPM_TAG:-latest}",
         "cwd": "{projectRoot}"
       }
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "if [ -f {projectRoot}/tsconfig.spec.json ]; then bun test; elif [ -f {projectRoot}/pyproject.toml ]; then uv run pytest; fi"
-        ]
-      }
     }
   },
   "plugins": [
@@ -59,12 +47,6 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
-    },
-    {
-      "plugin": "@nxlv/python",
-      "options": {
-        "packageManager": "uv"
       }
     }
   ]
