@@ -9,6 +9,7 @@ import OpenAI from "openai";
 
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
+import { inConversation } from "../conversation.js";
 import {
   buildCriteriaMeta,
   buildCriteriaResults,
@@ -30,6 +31,7 @@ import type {
   Persona,
   Scenario,
   SimulationResult,
+  TargetCallback,
   TokenUsage,
   TurnMetrics,
 } from "../types.js";
@@ -50,7 +52,7 @@ export interface TargetAgent {
 
 export interface SimulationRunnerConfig {
   targetAgent?: TargetAgent;
-  targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
+  targetCallback?: TargetCallback;
   model?: string;
   maxTurns?: number;
   /** Pre-configured client to reuse. The runner does not close it. */
@@ -105,6 +107,26 @@ export function errorResult(
       persona: persona?.name ?? "unknown",
       scenario: scenario?.name ?? "unknown",
       error: reason,
+    },
+  };
+}
+
+/** The same result, marked as having hit the row's time limit. */
+export function timedOutResult(
+  result: SimulationResult,
+  timeoutMs: number,
+): SimulationResult {
+  const reason = `Simulation timed out after ${timeoutMs}ms`;
+  return {
+    ...result,
+    terminated_by: "timeout",
+    reason,
+    metadata: {
+      ...result.metadata,
+      // failureReason prefers metadata.error, which may still say
+      // "Simulation cancelled" from the aborted run.
+      error: reason,
+      timeout: timeoutMs,
     },
   };
 }
@@ -166,9 +188,7 @@ function maxTurnsResult(
 
 export class SimulationRunner {
   private readonly targetAgent?: TargetAgent;
-  private readonly targetCallback?: (
-    messages: ChatMessage[],
-  ) => string | Promise<string>;
+  private readonly targetCallback?: TargetCallback;
   private readonly model: string;
   private readonly maxTurns: number;
   private sharedClient: OpenAI | null = null;
@@ -220,6 +240,7 @@ export class SimulationRunner {
     let firstMessage: string | undefined = params.firstMessage;
     let storedSystemPrompt: string | undefined;
     const signal = params.signal;
+    const conversation = {};
 
     // Resolve datapoint
     if (params.datapoint) {
@@ -343,7 +364,8 @@ export class SimulationRunner {
                   "orq.simulation.scenario": scenario?.name,
                   "orq.simulation.model": this.model,
                 },
-                async () => userSimulator.generateFirstMessage(),
+                async () =>
+                  userSimulator.generateFirstMessage(undefined, signal),
               );
           messages.push({ role: "user", content: firstMsg });
 
@@ -372,6 +394,7 @@ export class SimulationRunner {
                     recordLLMInput(targetSpan, targetMessages);
                     const response = await this.getTargetResponse(
                       targetMessages,
+                      conversation,
                       signal,
                     );
                     recordLLMOutput(targetSpan, response);
@@ -606,17 +629,19 @@ export class SimulationRunner {
 
   private async getTargetResponse(
     messages: ChatMessage[],
+    conversation: object,
     signal: AbortSignal | undefined,
   ): Promise<string> {
-    const call = async (): Promise<string> => {
-      if (this.targetAgent) {
-        return this.targetAgent.respond(messages);
-      }
-      if (this.targetCallback) {
-        return this.targetCallback(messages);
-      }
-      throw new Error("No target agent or callback configured");
-    };
+    const call = (): Promise<string> =>
+      inConversation(conversation, async () => {
+        if (this.targetAgent) {
+          return this.targetAgent.respond(messages);
+        }
+        if (this.targetCallback) {
+          return this.targetCallback(messages);
+        }
+        throw new Error("No target agent or callback configured");
+      });
     if (!signal) {
       return call();
     }
@@ -639,18 +664,25 @@ export class SimulationRunner {
     }
   }
 
-  /** Run one datapoint with a timeout. Never throws. */
+  /**
+   * Run one datapoint with a timeout. Never throws. `elapsedMs` is time this row
+   * already spent, which counts against the limit.
+   */
   async runWithTimeout(
     datapoint: Datapoint,
     maxTurns: number | undefined,
     timeoutMs: number,
+    elapsedMs = 0,
   ): Promise<SimulationResult> {
     if (timeoutMs <= 0) {
       return this.run({ datapoint, maxTurns });
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.max(0, timeoutMs - elapsedMs),
+    );
 
     return new Promise<SimulationResult>((resolve) => {
       // run() never throws — it catches all errors internally and returns
@@ -660,18 +692,7 @@ export class SimulationRunner {
         (result) => {
           clearTimeout(timer);
           if (controller.signal.aborted) {
-            resolve({
-              ...result,
-              terminated_by: "timeout" as const,
-              reason: `Simulation timed out after ${timeoutMs}ms`,
-              metadata: {
-                ...(result.metadata as Record<string, unknown>),
-                // failureReason prefers metadata.error, which still says
-                // "Simulation cancelled" from the aborted run.
-                error: `Simulation timed out after ${timeoutMs}ms`,
-                timeout: timeoutMs,
-              },
-            });
+            resolve(timedOutResult(result, timeoutMs));
           } else {
             resolve(result);
           }

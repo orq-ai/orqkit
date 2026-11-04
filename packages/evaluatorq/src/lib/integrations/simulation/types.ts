@@ -170,6 +170,11 @@ export interface ChatMessage {
   content: string;
 }
 
+/** The agent under test: takes the conversation so far, returns its reply. */
+export type TargetCallback = (
+  messages: ChatMessage[],
+) => string | Promise<string>;
+
 // ---------------------------------------------------------------------------
 // Token usage
 // ---------------------------------------------------------------------------

@@ -133,7 +133,10 @@ export class CriteriaTracker {
   }
 }
 
-/** Map each criterion description to whether it passed. */
+/**
+ * Map each criterion description to whether it passed. Criteria sharing a
+ * description share one entry, which passes only if all of them did.
+ */
 export function buildCriteriaResults(
   scenario: Scenario | undefined,
   rulesBroken: string[],
@@ -141,7 +144,9 @@ export function buildCriteriaResults(
   const broken = new Set(rulesBroken);
   const results: Record<string, boolean> = {};
   (scenario?.criteria ?? []).forEach((criterion, i) => {
-    results[criterion.description] = !broken.has(criterionIdFor(i));
+    results[criterion.description] =
+      (results[criterion.description] ?? true) &&
+      !broken.has(criterionIdFor(i));
   });
   return results;
 }

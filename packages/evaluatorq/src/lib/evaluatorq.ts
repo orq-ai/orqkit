@@ -3,6 +3,7 @@ import { Effect, pipe } from "effect";
 import type { Orq } from "@orq-ai/node";
 
 import { processDataPointEffect } from "./effects.js";
+import { configuredOrqHost } from "./orq-host.js";
 import {
   ProgressService,
   ProgressServiceLive,
@@ -34,7 +35,7 @@ import type {
 async function setupOrqClient(apiKey: string) {
   try {
     const client = await import("@orq-ai/node");
-    const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
+    const serverURL = configuredOrqHost() ?? "https://my.orq.ai";
 
     return new client.Orq({ apiKey, serverURL });
   } catch (error: unknown) {

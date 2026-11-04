@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 
+import { resolveLLMMaxTokens } from "../../../../src/lib/integrations/simulation/defaults.js";
 import {
   criteriaMetScorer,
   failureReason,
@@ -266,7 +267,7 @@ describe("SimulationRunner judge requests", () => {
     await result;
 
     expect(requests.judge[0]?.tool_choice).toBe("required");
-    expect(requests.judge[0]?.max_output_tokens).toBe(4096);
+    expect(requests.judge[0]?.max_output_tokens).toBe(10000);
     expect(requests.judge[0]?.temperature).toBe(0);
     expect(requests.judge[0]?.tools?.map((tool) => tool.name)).toEqual([
       "continue_conversation",
@@ -350,6 +351,56 @@ describe("SimulationRunner judge requests", () => {
     expect(failureReason(r)).toContain("content_filter");
   });
 
+  test("EVALUATORQ_LLM_MAX_TOKENS sets the agent budget", async () => {
+    process.env.EVALUATORQ_LLM_MAX_TOKENS = "1234";
+    try {
+      const { result, requests } = runWith({
+        judge: () => finishTurn([notOccurred("criteria_0")]),
+      });
+      await result;
+      expect(requests.judge[0]?.max_output_tokens).toBe(1234);
+    } finally {
+      delete process.env.EVALUATORQ_LLM_MAX_TOKENS;
+    }
+  });
+
+  test.each(["lots", "1e4", "0", "-5", "1.5", ""])(
+    "EVALUATORQ_LLM_MAX_TOKENS=%j warns and uses the default",
+    async (raw) => {
+      process.env.EVALUATORQ_LLM_MAX_TOKENS = raw;
+      const warn = spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        const { result, requests } = runWith({
+          judge: () => finishTurn([notOccurred("criteria_0")]),
+        });
+        const r = await result;
+
+        expect(r.terminated_by).toBe("judge");
+        expect(requests.judge[0]?.max_output_tokens).toBe(10_000);
+        const warnings = warn.mock.calls.filter((call) =>
+          String(call[0]).includes("EVALUATORQ_LLM_MAX_TOKENS"),
+        );
+        expect(warnings).toHaveLength(1);
+      } finally {
+        warn.mockRestore();
+        delete process.env.EVALUATORQ_LLM_MAX_TOKENS;
+      }
+    },
+  );
+
+  test("a bad output budget warns once, however many calls read it", () => {
+    process.env.EVALUATORQ_LLM_MAX_TOKENS = "warn-me-once";
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      expect(resolveLLMMaxTokens()).toBe(10_000);
+      expect(resolveLLMMaxTokens()).toBe(10_000);
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+      delete process.env.EVALUATORQ_LLM_MAX_TOKENS;
+    }
+  });
+
   test("a truncated simulator turn fails the run", async () => {
     const targetSaw: string[] = [];
     const { client } = makeFakeClient({
@@ -369,6 +420,7 @@ describe("SimulationRunner judge requests", () => {
 
     expect(r.terminated_by).toBe("error");
     expect(failureReason(r)).toContain("truncated");
+    expect(failureReason(r)).toContain("10000");
     expect(targetSaw).toEqual(["I want a refund"]);
   });
 

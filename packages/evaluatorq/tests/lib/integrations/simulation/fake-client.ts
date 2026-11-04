@@ -31,7 +31,8 @@ export interface FakeScript {
   ) => Record<string, unknown>;
   userSimulator?: (
     request: Request,
-  ) => string | { content: string; finishReason?: string };
+    options?: { signal?: AbortSignal },
+  ) => string | { content: string; finishReason?: string } | Promise<string>;
   firstMessage?: (
     request: Request,
     options?: { timeout?: number },
@@ -144,7 +145,10 @@ export function makeFakeClient(script: FakeScript = {}): {
     return script.judgeResponse ? script.judgeResponse(reply) : reply;
   };
 
-  const create = async (request: Request, options?: { timeout?: number }) => {
+  const create = async (
+    request: Request,
+    options?: { timeout?: number; signal?: AbortSignal },
+  ) => {
     // What the router answers for the default model.
     if (request.tools) {
       throw new OpenAI.APIError(
@@ -175,7 +179,8 @@ export function makeFakeClient(script: FakeScript = {}): {
     }
 
     requests.userSimulator.push(request);
-    const reply = script.userSimulator?.(request) ?? "Please continue.";
+    const reply =
+      (await script.userSimulator?.(request, options)) ?? "Please continue.";
     return typeof reply === "string"
       ? completion({ content: reply })
       : completion({ content: reply.content }, reply.finishReason);

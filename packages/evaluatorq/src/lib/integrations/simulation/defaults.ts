@@ -2,28 +2,45 @@
  * Shared defaults for the simulation integration.
  */
 
+import { configuredOrqHost } from "../../orq-host.js";
+
 /** Model used for the user simulator, judge and generators. */
 export const DEFAULT_SIMULATION_MODEL = "openai/gpt-6-luna";
+
+const DEFAULT_LLM_MAX_TOKENS = 10_000;
+
+const warnedLLMMaxTokens = new Set<string>();
+
+/**
+ * Output tokens for one simulator or judge call. Reasoning models spend these
+ * before they answer, so a small budget ends the call with no answer at all.
+ */
+export function resolveLLMMaxTokens(): number {
+  const raw = process.env.EVALUATORQ_LLM_MAX_TOKENS;
+  if (raw === undefined) {
+    return DEFAULT_LLM_MAX_TOKENS;
+  }
+  const value = /^\d+$/.test(raw.trim()) ? Number(raw) : 0;
+  if (Number.isSafeInteger(value) && value >= 1) {
+    return value;
+  }
+  if (!warnedLLMMaxTokens.has(raw)) {
+    warnedLLMMaxTokens.add(raw);
+    console.warn(
+      `EVALUATORQ_LLM_MAX_TOKENS must be a positive integer, got "${raw}"; using ${DEFAULT_LLM_MAX_TOKENS}.`,
+    );
+  }
+  return DEFAULT_LLM_MAX_TOKENS;
+}
 
 const DEFAULT_ORQ_BASE_URL = "https://my.orq.ai";
 const ROUTER_PATH = "/v3/router";
 
 let warnedRouterBaseUrl = false;
 
-function stripRouterPath(url: string): string {
-  const trimmed = url.replace(/\/+$/, "");
-  return trimmed.endsWith(ROUTER_PATH)
-    ? trimmed.slice(0, -ROUTER_PATH.length)
-    : trimmed;
-}
-
 /** The Orq host, for calls outside the router. */
 export function resolveOrqHost(): string {
-  return stripRouterPath(
-    process.env.ORQ_BASE_URL ||
-      process.env.ROUTER_BASE_URL ||
-      DEFAULT_ORQ_BASE_URL,
-  );
+  return configuredOrqHost() ?? DEFAULT_ORQ_BASE_URL;
 }
 
 /**
@@ -33,9 +50,8 @@ export function resolveOrqHost(): string {
  * ignoring it would silently move staging users onto production.
  */
 export function resolveRouterBaseUrl(): string {
-  const orqBaseUrl = process.env.ORQ_BASE_URL;
-  if (orqBaseUrl) {
-    return `${stripRouterPath(orqBaseUrl)}${ROUTER_PATH}`;
+  if (process.env.ORQ_BASE_URL) {
+    return `${configuredOrqHost()}${ROUTER_PATH}`;
   }
 
   const routerBaseUrl = process.env.ROUTER_BASE_URL;

@@ -25,6 +25,15 @@ export class SimulationGenerationError extends Error {
   }
 }
 
+/** Output tokens for a list of `count` items, so a longer list is not cut off. */
+export function tokenBudgetForItems(
+  count: number,
+  perItem: number,
+  minimum: number,
+): number {
+  return Math.max(minimum, perItem * count);
+}
+
 export interface JsonListRequest {
   client: OpenAI;
   model: string;

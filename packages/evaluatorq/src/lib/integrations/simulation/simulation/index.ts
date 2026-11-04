@@ -32,11 +32,11 @@ import {
   withSimulationSpan,
 } from "../tracing.js";
 import type {
-  ChatMessage,
   Datapoint,
   Persona,
   Scenario,
   SimulationResult,
+  TargetCallback,
 } from "../types.js";
 
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ import type {
 export interface SimulateParams {
   evaluationName: string;
   agentKey?: string;
-  targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
+  targetCallback?: TargetCallback;
   personas?: Persona[];
   scenarios?: Scenario[];
   datapoints?: Datapoint[];
@@ -173,14 +173,6 @@ async function _simulateCore(
     throw new Error("Either targetCallback or agentKey is required");
   }
 
-  // The upload only reads ORQ_BASE_URL, so a staging run would land in production.
-  const routerOnly = !process.env.ORQ_BASE_URL && process.env.ROUTER_BASE_URL;
-  if (uploadResults && routerOnly) {
-    console.warn(
-      "simulate: not uploading results because only ROUTER_BASE_URL is set. Set ORQ_BASE_URL to the host instead.",
-    );
-  }
-
   const stampScores = (result: SimulationResult): void => {
     const scores: Record<string, number> = {};
     for (const { name, fn } of scorers) {
@@ -196,22 +188,23 @@ async function _simulateCore(
     (input): DataPoint => ({ inputs: input as unknown as DataPoint["inputs"] }),
   );
 
+  // Before the job exists: evaluatorq() records a throwing job as a row error, so
+  // a bad maxTurns, model or agentKey has to surface here to keep its own message.
+  const runner = new SimulationRunner({
+    targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
+    model,
+    maxTurns,
+    client,
+  });
+
   const job: Job = async (data) => {
-    // A row gets its own runner because fromOrqAgent finds a conversation by
-    // its first message, which rows can share.
-    const runner = new SimulationRunner({
-      targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
-      model,
-      maxTurns,
-      client,
-    });
     const result = await runSimulationInput(
       data.inputs as unknown as SimulationInput,
       runner,
       maxTurns,
       () => firstMessages as FirstMessageGenerator,
       timeoutPerSimulation,
-    ).finally(() => runner.close());
+    );
     stampScores(result);
     resultsByRow.set(data, result);
     return {
@@ -223,7 +216,7 @@ async function _simulateCore(
 
   // These never set `pass`: evaluatorq() exits the process when a pass is false,
   // and a low simulation score must not end the caller's process.
-  const evaluators: Evaluator[] = scorers.map(({ name, fn }) => ({
+  const evaluators: Evaluator[] = scorers.map(({ name }) => ({
     name,
     scorer: async ({ data }) => {
       const result = resultsByRow.get(data);
@@ -231,21 +224,29 @@ async function _simulateCore(
         throw new Error(`simulate: no result to score with ${name}`);
       }
       const explanation = unverifiedReason(result);
-      return { value: fn(result), ...(explanation && { explanation }) };
+      const scores = result.metadata.evaluator_scores as Record<string, number>;
+      return {
+        value: scores[name] as number,
+        ...(explanation && { explanation }),
+      };
     },
   }));
 
-  await evaluatorq(evaluationName, {
-    data: rows,
-    jobs: [job],
-    evaluators,
-    parallelism,
-    print: false,
-    description,
-    path,
-    sendResults: uploadResults && !routerOnly,
-    manageTracing: false,
-  });
+  try {
+    await evaluatorq(evaluationName, {
+      data: rows,
+      jobs: [job],
+      evaluators,
+      parallelism,
+      print: false,
+      description,
+      path,
+      sendResults: uploadResults,
+      manageTracing: false,
+    });
+  } finally {
+    await runner.close();
+  }
 
   const results = rows.map((row, i) => {
     const result = resultsByRow.get(row);
@@ -287,7 +288,7 @@ export interface GenerateAndSimulateParams {
   evaluationName: string;
   agentKey?: string;
   agentDescription: string;
-  targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
+  targetCallback?: TargetCallback;
   numPersonas?: number;
   numScenarios?: number;
   maxTurns?: number;

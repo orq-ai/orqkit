@@ -18,12 +18,16 @@ import { delimit } from "../utils/sanitize.js";
 import {
   requestJsonList,
   SimulationGenerationError,
+  tokenBudgetForItems,
 } from "./structured-call.js";
 
 // Temperature settings for different generation modes
 const TEMPERATURE_CREATIVE = 0.8;
 const TEMPERATURE_BALANCED = 0.7;
 const TEMPERATURE_EDGE_CASE = 0.9;
+
+const scenarioTokenBudget = (numScenarios: number) =>
+  tokenBudgetForItems(numScenarios, 500, 6000);
 
 const EMOTIONS: StartingEmotion[] = [
   "neutral",
@@ -375,7 +379,7 @@ Return ONLY a JSON array, no other text.`;
           system: SCENARIO_GENERATOR_PROMPT,
           user: userPrompt,
           temperature: TEMPERATURE_CREATIVE,
-          maxTokens: 6000,
+          maxTokens: scenarioTokenBudget(numScenarios),
           purpose: "scenario_generation",
         });
         if (scenarios.length < numScenarios) {
@@ -450,7 +454,7 @@ Return ONLY a JSON array, no other text.`;
           system: SCENARIO_GENERATOR_PROMPT,
           user: userPrompt,
           temperature: TEMPERATURE_BALANCED,
-          maxTokens: 6000,
+          maxTokens: scenarioTokenBudget(numScenarios),
           purpose: "scenario_generation_coverage",
         });
 
@@ -578,7 +582,7 @@ Return ONLY a JSON array, no other text.`;
           system: SCENARIO_GENERATOR_PROMPT,
           user: userPrompt,
           temperature: TEMPERATURE_EDGE_CASE,
-          maxTokens: 4000,
+          maxTokens: scenarioTokenBudget(numEdgeCases),
           purpose: "scenario_edge_cases",
           forceEdgeCase: true,
         });
@@ -627,7 +631,7 @@ Return ONLY a JSON array, no other text.`;
           system: BOUNDARY_SCENARIO_PROMPT,
           user: userPrompt,
           temperature: TEMPERATURE_EDGE_CASE,
-          maxTokens: 4000,
+          maxTokens: scenarioTokenBudget(numScenarios),
           purpose: "scenario_boundary",
           forceEdgeCase: true,
         });
@@ -699,7 +703,7 @@ Return ONLY a JSON array, no other text.`;
           system: SECURITY_SCENARIO_PROMPT,
           user: userPrompt,
           temperature: TEMPERATURE_EDGE_CASE,
-          maxTokens: 6000,
+          maxTokens: scenarioTokenBudget(numScenarios),
           purpose: "scenario_security",
           forceEdgeCase: true,
         });

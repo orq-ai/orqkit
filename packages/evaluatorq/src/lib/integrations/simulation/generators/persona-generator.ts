@@ -13,11 +13,15 @@ import { delimit } from "../utils/sanitize.js";
 import {
   requestJsonList,
   SimulationGenerationError,
+  tokenBudgetForItems,
 } from "./structured-call.js";
 
 // Temperature settings for different generation modes
 const TEMPERATURE_CREATIVE = 0.8;
 const TEMPERATURE_BALANCED = 0.7;
+
+const personaTokenBudget = (numPersonas: number) =>
+  tokenBudgetForItems(numPersonas, 600, 4000);
 
 const VALID_STYLES = new Set<string>(["formal", "casual", "terse", "verbose"]);
 
@@ -238,7 +242,7 @@ Return ONLY a JSON array, no other text.`;
             system: PERSONA_GENERATOR_PROMPT,
             user: userPrompt,
             temperature: TEMPERATURE_CREATIVE,
-            maxTokens: 4000,
+            maxTokens: personaTokenBudget(numPersonas),
             purpose: "persona_generation",
             listKey: "personas",
             itemSchema: PERSONA_ITEM_SCHEMA,
@@ -385,7 +389,7 @@ Return ONLY a JSON array, no other text.`;
             system: PERSONA_GENERATOR_PROMPT,
             user: userPrompt,
             temperature: TEMPERATURE_BALANCED,
-            maxTokens: 4000,
+            maxTokens: personaTokenBudget(numPersonas),
             purpose: "persona_generation_coverage",
             listKey: "personas",
             itemSchema: PERSONA_ITEM_SCHEMA,

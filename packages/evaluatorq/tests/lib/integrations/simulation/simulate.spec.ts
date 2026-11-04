@@ -1,6 +1,16 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 
+import { SimulationRunner } from "../../../../src/lib/integrations/simulation/runner/simulation.js";
 import { simulate } from "../../../../src/lib/integrations/simulation/simulation/index.js";
+import type { TargetCallback } from "../../../../src/lib/integrations/simulation/types.js";
 import { finishTurn, makeFakeClient } from "./fake-client.js";
 
 const persona = {
@@ -50,6 +60,78 @@ describe("simulate", () => {
       process.env.ORQ_API_KEY = originalKey;
     }
     globalThis.fetch = originalFetch;
+  });
+
+  test("a bad maxTurns rejects with its own message before any row runs", async () => {
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
+    let targetCalls = 0;
+
+    await expect(
+      simulate({
+        evaluationName: "bad-config",
+        client,
+        maxTurns: 0,
+        datapoints: [datapoint("a")],
+        uploadResults: false,
+        targetCallback: () => {
+          targetCalls++;
+          return "reply";
+        },
+      }),
+    ).rejects.toThrow("maxTurns must be >= 1");
+    expect(targetCalls).toBe(0);
+  });
+
+  test("closes its runner after the run", async () => {
+    const close = spyOn(SimulationRunner.prototype, "close");
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
+
+    try {
+      await simulate({
+        evaluationName: "closes",
+        client,
+        datapoints: [datapoint("a")],
+        uploadResults: false,
+        targetCallback: () => "reply",
+      });
+
+      expect(close).toHaveBeenCalledTimes(1);
+    } finally {
+      close.mockRestore();
+    }
+  });
+
+  test("a blank agentKey rejects with its own message", async () => {
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
+
+    await expect(
+      simulate({
+        evaluationName: "bad-agent",
+        client,
+        agentKey: "  ",
+        datapoints: [datapoint("a")],
+        uploadResults: false,
+      }),
+    ).rejects.toThrow("agentKey must be a non-empty string");
+  });
+
+  test("a persona no prompt can be built from fails only its own row", async () => {
+    const { client } = makeFakeClient({
+      judge: () => finishTurn([]),
+    });
+    const { background: _dropped, ...withoutBackground } = persona;
+
+    const results = await simulate({
+      evaluationName: "bad-persona",
+      client,
+      personas: [withoutBackground as typeof persona, persona],
+      scenarios: [noCriteria],
+      uploadResults: false,
+      targetCallback: () => "reply",
+    });
+
+    expect(results.map((r) => r.terminated_by)).toEqual(["error", "judge"]);
+    expect(results[0]?.reason).toContain("First message failed");
   });
 
   test("returns results in input order whatever order they finish in", async () => {
@@ -219,7 +301,7 @@ describe("simulate", () => {
     expect(String(init.body)).toContain("criteria_verified=false");
   });
 
-  test("does not upload to production when only ROUTER_BASE_URL is set", async () => {
+  test("uploads to the host of a ROUTER_BASE_URL set on its own", async () => {
     const originalBase = process.env.ORQ_BASE_URL;
     delete process.env.ORQ_BASE_URL;
     process.env.ROUTER_BASE_URL = "https://staging.example/v3/router";
@@ -244,7 +326,32 @@ describe("simulate", () => {
       }
     }
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    const [url] = fetchSpy.mock.calls[0] as unknown as [string];
+    expect(url).toBe(
+      "https://staging.example/v2/spreadsheets/evaluations/receive",
+    );
+  });
+
+  test("scores an unverified row once, so it warns once", async () => {
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
+
+    try {
+      await simulate({
+        evaluationName: "one-score",
+        client,
+        datapoints: [datapoint("a")],
+        uploadResults: false,
+        targetCallback: async () => "reply",
+      });
+
+      const warnings = warn.mock.calls.filter((call) =>
+        String(call[0]).startsWith("criteria_met:"),
+      );
+      expect(warnings).toHaveLength(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   test("honours timeoutPerSimulation", async () => {
@@ -260,6 +367,52 @@ describe("simulate", () => {
     });
 
     expect(result?.terminated_by).toBe("timeout");
+  });
+
+  test("a generated first message stops at the row's limit", async () => {
+    const { client } = makeFakeClient({
+      userSimulator: (_request, options) =>
+        new Promise<string>((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () =>
+            reject(new Error("aborted")),
+          );
+        }),
+    });
+
+    const [result] = await simulate({
+      evaluationName: "first-message-limit",
+      client,
+      uploadResults: false,
+      timeoutPerSimulation: 20,
+      datapoints: [datapoint("")],
+      targetCallback: () => "reply",
+    });
+
+    expect(result?.terminated_by).toBe("timeout");
+  }, 2_000);
+
+  test("calls a target with the messages and nothing else", async () => {
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
+    const argumentCounts: number[] = [];
+
+    await simulate({
+      evaluationName: "target-arguments",
+      client,
+      uploadResults: false,
+      datapoints: [datapoint("a")],
+      targetCallback: (...args: unknown[]) => {
+        argumentCounts.push(args.length);
+        return "reply";
+      },
+    });
+
+    expect(argumentCounts).toEqual([1]);
+  });
+
+  test("a target callback can be called with messages alone", async () => {
+    const target: TargetCallback = async () => "reply";
+
+    expect(await target([])).toBe("reply");
   });
 
   test("uploadResults: false skips the upload", async () => {

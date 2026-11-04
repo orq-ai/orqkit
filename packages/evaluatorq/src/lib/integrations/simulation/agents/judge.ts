@@ -273,7 +273,6 @@ export class JudgeAgent extends BaseAgent {
 
     const result = await this.callLLM(evalMessages, {
       temperature: 0.0,
-      maxTokens: 4096,
       tools: JUDGE_TOOLS,
       toolChoice: "required",
       useResponsesApi: true,

@@ -91,6 +91,7 @@ export type {
   Scenario,
   SimulationResult,
   StartingEmotion,
+  TargetCallback,
   TerminatedBy,
   TokenUsage,
   TurnMetrics,

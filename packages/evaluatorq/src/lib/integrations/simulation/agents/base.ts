@@ -7,7 +7,11 @@
 
 import OpenAI from "openai";
 
-import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import {
+  DEFAULT_SIMULATION_MODEL,
+  resolveLLMMaxTokens,
+  resolveRouterBaseUrl,
+} from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -289,7 +293,7 @@ export abstract class BaseAgent {
     },
   ): Promise<LLMResult> {
     const temperature = options?.temperature ?? 0.7;
-    const maxTokens = options?.maxTokens ?? 2048;
+    const maxTokens = options?.maxTokens ?? resolveLLMMaxTokens();
     const timeoutS = options?.timeout ?? DEFAULT_TIMEOUT_S;
 
     return withLLMSpan(
@@ -386,7 +390,7 @@ export abstract class BaseAgent {
 
               if (choice.finish_reason === "length") {
                 throw new Error(
-                  `${this.name}: response truncated at max_output_tokens=${options?.maxTokens ?? "default"}`,
+                  `${this.name}: response truncated at max_output_tokens=${maxTokens}`,
                 );
               }
 

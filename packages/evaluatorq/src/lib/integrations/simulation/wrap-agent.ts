@@ -17,7 +17,7 @@ import {
   type SimulationInput,
 } from "./runner/run-input.js";
 import { SimulationRunner } from "./runner/simulation.js";
-import type { ChatMessage, Datapoint, Persona, Scenario } from "./types.js";
+import type { Datapoint, Persona, Scenario, TargetCallback } from "./types.js";
 
 /**
  * Options for creating a simulation job.
@@ -25,9 +25,9 @@ import type { ChatMessage, Datapoint, Persona, Scenario } from "./types.js";
 export interface SimulationJobOptions {
   /** Display name for this job in results. Defaults to "simulation". */
   name?: string;
-  /** Target agent callback — receives messages and returns a response string. */
-  targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
-  /** Orq deployment key — used if targetCallback is not provided. */
+  /** Target agent callback: receives messages and returns a response string. */
+  targetCallback?: TargetCallback;
+  /** Orq agent key, used if targetCallback is not provided. */
   agentKey?: string;
   /** Maximum conversation turns per simulation. Defaults to 10. */
   maxTurns?: number;
@@ -99,6 +99,19 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     timeoutPerSimulation,
   } = options;
 
+  if (!targetCallback && !agentKey) {
+    throw new Error(
+      "wrapSimulationAgent requires either targetCallback or agentKey",
+    );
+  }
+
+  const runner = new SimulationRunner({
+    targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
+    model,
+    maxTurns,
+    client,
+  });
+
   let firstMessages: FirstMessageGenerator | undefined;
   const getFirstMessages = () => {
     firstMessages ??= new FirstMessageGenerator({ model, client });
@@ -106,22 +119,7 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
   };
 
   return async (data: DataPoint, _row: number) => {
-    if (!targetCallback && !agentKey) {
-      throw new Error(
-        "wrapSimulationAgent requires either targetCallback or agentKey",
-      );
-    }
-
     const input = extractSingleInput(data.inputs);
-
-    // A row gets its own runner because fromOrqAgent finds a conversation by
-    // its first message, which rows can share.
-    const runner = new SimulationRunner({
-      targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
-      model,
-      maxTurns,
-      client,
-    });
 
     const result = await runSimulationInput(
       input,
@@ -129,7 +127,7 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
       maxTurns,
       getFirstMessages,
       timeoutPerSimulation,
-    ).finally(() => runner.close());
+    );
 
     return {
       name,

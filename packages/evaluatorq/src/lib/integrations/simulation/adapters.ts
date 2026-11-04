@@ -5,8 +5,7 @@
  * so users don't need to wire the plumbing themselves.
  */
 
-import { randomUUID } from "node:crypto";
-
+import { currentConversation } from "./conversation.js";
 import { resolveOrqHost } from "./defaults.js";
 import type { ChatMessage } from "./types.js";
 
@@ -77,14 +76,21 @@ export function fromOrqAgent(
   // biome-ignore lint/suspicious/noExplicitAny: cached client type depends on dynamic import
   let cachedClient: any = null;
 
-  // Multi-turn continuity: the agent stream API maintains conversation state
-  // via task_id. On the first turn, we start a new conversation. On subsequent
-  // turns, we pass the task_id from the previous response to continue the
-  // conversation. Use first message content to identify conversations.
-  const conversationTasks = new Map<string, string>();
-  // Unique per adapter instance — used as map key prefix to prevent cross-simulation
-  // key collisions when two simulations share the same opening message content.
-  const adapterInstanceId = randomUUID();
+  // The agent stream API keeps conversation state under a task id. Rows can share
+  // an opener and overlap, so the runner's conversation tells them apart, and its
+  // task id goes when the conversation does. A caller outside the runner gets one
+  // conversation per opener.
+  const conversationTasks = new WeakMap<object, string>();
+  const openerConversations = new Map<string, object>();
+  const conversationForOpener = (opener: string): object => {
+    const known = openerConversations.get(opener);
+    if (known) {
+      return known;
+    }
+    const conversation = {};
+    openerConversations.set(opener, conversation);
+    return conversation;
+  };
 
   return async (messages: ChatMessage[]): Promise<string> => {
     const apiKey = process.env.ORQ_API_KEY;
@@ -106,11 +112,17 @@ export function fromOrqAgent(
       );
     }
 
-    // Check if this is a continuation of an existing conversation
-    // Key prefixed with adapterInstanceId to prevent collisions across simulations
-    // with identical opening messages.
-    const conversationKey = `${adapterInstanceId}:${firstUserMessage.content}`;
-    const existingTaskId = conversationTasks.get(conversationKey);
+    const conversation =
+      currentConversation() ?? conversationForOpener(firstUserMessage.content);
+    const isFirstTurn = !messages.some((m) => m.role === "assistant");
+    const existingTaskId = isFirstTurn
+      ? undefined
+      : conversationTasks.get(conversation);
+    if (!isFirstTurn && !existingTaskId) {
+      throw new Error(
+        `Agent "${agentKey}" has no task id for this conversation, so this turn cannot continue it.`,
+      );
+    }
 
     // Send only the latest user message; prior turns are reconstructed
     // server-side from the task_id.
@@ -165,9 +177,11 @@ export function fromOrqAgent(
       );
     }
 
-    // Store task ID for conversation continuation
-    if (taskId) {
-      conversationTasks.set(conversationKey, taskId);
+    const nextTaskId = taskId ?? existingTaskId;
+    if (nextTaskId) {
+      conversationTasks.set(conversation, nextTaskId);
+    } else {
+      conversationTasks.delete(conversation);
     }
 
     return lastMessage;
@@ -188,7 +202,7 @@ export function fromOrqAgent(
  * const client = new OpenAI();
  * const callback = fromChatCompletions(async (messages) => {
  *   const res = await client.chat.completions.create({
- *     model: "gpt-4o",
+ *     model: "your-model",
  *     messages,
  *   });
  *   return res.choices[0]?.message.content ?? "";

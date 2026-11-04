@@ -90,6 +90,21 @@ describe("buildCriteriaResults", () => {
       "insults the user": false,
     });
   });
+
+  test("a later pass cannot hide a failure under the same description", () => {
+    const duplicated = {
+      name: "Refund",
+      goal: "Get a refund",
+      criteria: [
+        { description: "same words", type: "must_happen" as const },
+        { description: "same words", type: "must_not_happen" as const },
+      ],
+    };
+
+    expect(buildCriteriaResults(duplicated, ["criteria_0"])).toEqual({
+      "same words": false,
+    });
+  });
 });
 
 describe("buildCriteriaMeta", () => {

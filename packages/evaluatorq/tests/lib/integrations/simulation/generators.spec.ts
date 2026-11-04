@@ -187,6 +187,60 @@ describe("PersonaGenerator traits", () => {
   });
 });
 
+describe("generator token budgets", () => {
+  const description = { agentDescription: "A support bot" };
+  const budget = async (
+    call: (client: OpenAI) => Promise<unknown>,
+  ): Promise<number | null | undefined> => {
+    const { client, requests } = makeFakeClient();
+    await call(client).catch(() => undefined);
+    return requests.generator[0]?.max_tokens;
+  };
+  const scenarios = (client: OpenAI) => new ScenarioGenerator({ client });
+  const personas = (client: OpenAI) => new PersonaGenerator({ client });
+
+  test.each([
+    ["generate", 1, 4000],
+    ["generate", 20, 12000],
+    ["generateWithCoverage", 1, 4000],
+    ["generateWithCoverage", 20, 12000],
+  ] as const)("personas %s n=%d asks for %d", async (method, count, want) => {
+    const got = await budget((client) =>
+      personas(client)[method]({ ...description, numPersonas: count }),
+    );
+    expect(got).toBe(want);
+  });
+
+  test.each([
+    ["generate", 1, 6000],
+    ["generate", 20, 10000],
+    ["generateWithCoverage", 1, 6000],
+    ["generateWithCoverage", 20, 10000],
+    ["generateBoundaryScenarios", 1, 6000],
+    ["generateBoundaryScenarios", 20, 10000],
+    ["generateSecurityScenarios", 1, 6000],
+    ["generateSecurityScenarios", 20, 10000],
+  ] as const)("scenarios %s n=%d asks for %d", async (method, count, want) => {
+    const got = await budget((client) =>
+      scenarios(client)[method]({ ...description, numScenarios: count }),
+    );
+    expect(got).toBe(want);
+  });
+
+  test.each([
+    [1, 6000],
+    [20, 10000],
+  ])("scenarios generateEdgeCases n=%d asks for %d", async (count, want) => {
+    const got = await budget((client) =>
+      scenarios(client).generateEdgeCases({
+        ...description,
+        numEdgeCases: count,
+      }),
+    );
+    expect(got).toBe(want);
+  });
+});
+
 describe("ScenarioGenerator criteria", () => {
   const generate = (criteria: unknown) => {
     const { client } = makeFakeClient({

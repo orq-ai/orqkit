@@ -242,15 +242,21 @@ describe("wrapSimulationAgent", () => {
     ).toThrow("no longer takes 'evaluators'");
   });
 
-  test("8. no targetCallback and no agentKey → throws", async () => {
-    const job = wrapSimulationAgent({});
-
-    const data: DataPoint = {
-      inputs: { persona: samplePersona, scenario: sampleScenario },
-    };
-
-    await expect(job(data, 0)).rejects.toThrow(
+  test("8. no targetCallback and no agentKey → throws at construction", () => {
+    expect(() => wrapSimulationAgent({})).toThrow(
       "wrapSimulationAgent requires either targetCallback or agentKey",
+    );
+  });
+
+  test("8b. a bad maxTurns → throws at construction", () => {
+    expect(() =>
+      wrapSimulationAgent({ targetCallback: callback, maxTurns: 0 }),
+    ).toThrow("maxTurns must be >= 1");
+  });
+
+  test("8c. a blank agentKey → throws at construction", () => {
+    expect(() => wrapSimulationAgent({ agentKey: "  " })).toThrow(
+      "agentKey must be a non-empty string",
     );
   });
 
