@@ -23,7 +23,7 @@ export function unverifiedReason(result: SimulationResult): string | null {
     return `terminated_by=${result.terminated_by}`;
   }
   if (result.criteria_verified === false) {
-    return "criteria_verified=False";
+    return "criteria_verified=false";
   }
   return null;
 }
@@ -127,7 +127,7 @@ export const turnEfficiencyScorer: SimulationScorer = (result) => {
     return 0.7;
   }
 
-  return Math.max(0.3, 1.0 - (totalTurns - 6) * 0.1);
+  return Math.max(0.3, Math.round((13 - totalTurns) * 10) / 100);
 };
 
 /**

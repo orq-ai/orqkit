@@ -86,4 +86,12 @@ describe("extractJsonFromResponse", () => {
       text: 'say "hello"',
     });
   });
+
+  test("skips an invalid bracket pair for a later valid one", () => {
+    expect(extractJsonFromResponse("Note {x}: [1, 2]")).toBe("[1, 2]");
+  });
+
+  test("returns the invalid candidate when no pair is valid", () => {
+    expect(extractJsonFromResponse("Note {x} and more")).toBe("{x}");
+  });
 });

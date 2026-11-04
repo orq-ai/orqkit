@@ -354,6 +354,9 @@ export async function evaluatorq(
                                 return {
                                   jobName: result.name,
                                   output: result.output,
+                                  ...(result.error && {
+                                    error: new Error(result.error),
+                                  }),
                                   evaluatorScores,
                                 };
                               },
@@ -558,6 +561,7 @@ export const evaluatorqEffect = (
     print = true,
     description,
     path,
+    sendResults = true,
   } = params;
 
   const startTime = new Date();
@@ -616,6 +620,7 @@ export const evaluatorqEffect = (
           apiKey,
           startTime,
           path,
+          sendResults,
         ),
       );
     });
@@ -634,6 +639,7 @@ export const evaluatorqEffect = (
     undefined,
     startTime,
     path,
+    sendResults,
   );
 };
 
@@ -650,6 +656,7 @@ const runEvaluationEffect = (
   apiKey: string | undefined,
   startTime: Date,
   path: string | undefined,
+  sendResults: boolean,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
   // Use API key from parameter or environment
   const orqApiKey = apiKey || process.env.ORQ_API_KEY;
@@ -694,7 +701,7 @@ const runEvaluationEffect = (
         )
       : Effect.tap(() => Effect.void),
     // Send results to Orq when API key is available
-    orqApiKey
+    orqApiKey && sendResults
       ? Effect.tap((results) =>
           sendResultsToOrqEffect(
             orqApiKey,

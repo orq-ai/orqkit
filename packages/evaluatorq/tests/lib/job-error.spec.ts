@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 
 import { evaluatorq } from "../../src/lib/evaluatorq.js";
 
@@ -51,4 +52,23 @@ describe("Job error", () => {
 
     expect(results[0]?.jobResults?.[0]?.error).toBeUndefined();
   });
+
+  test("is kept on the dataset path too", async () => {
+    const fixture = fileURLToPath(
+      new URL("./fixtures/dataset-job-error-run.ts", import.meta.url),
+    );
+    const proc = Bun.spawn(["bun", fixture], {
+      env: {
+        ...process.env,
+        ORQ_API_KEY: "test-key",
+        ORQ_DISABLE_TRACING: "1",
+      },
+      stdout: "pipe",
+      stderr: "ignore",
+    });
+    const stdout = await new Response(proc.stdout).text();
+    await proc.exited;
+
+    expect(stdout).toContain('{"output":"partial","error":"run failed"}');
+  }, 15_000);
 });

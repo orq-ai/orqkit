@@ -15,6 +15,8 @@ import {
 } from "../tracing.js";
 import { extractJsonFromResponse } from "../utils/extract-json.js";
 
+const TIMEOUT_MS = 300_000;
+
 /** Raised when a generator cannot produce usable output. */
 export class SimulationGenerationError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -103,7 +105,7 @@ export async function requestJsonList(
               },
             },
           },
-          { headers: traceHeaders },
+          { headers: traceHeaders, timeout: TIMEOUT_MS },
         );
       } catch (err) {
         if (!(err instanceof OpenAI.APIError) || err.status !== 400) {
@@ -114,6 +116,7 @@ export async function requestJsonList(
         );
         res = await client.chat.completions.create(params, {
           headers: traceHeaders,
+          timeout: TIMEOUT_MS,
         });
       }
 

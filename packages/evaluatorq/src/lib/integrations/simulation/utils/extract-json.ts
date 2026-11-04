@@ -61,13 +61,15 @@ export function extractJsonFromResponse(content: string): string {
         ["{", "}"],
       ];
 
+  let invalid: string | undefined;
   for (const [open, close] of pairs) {
     const json = extractBalanced(content, open, close);
-    if (json) return json;
+    if (json && isValidJson(json)) return json;
+    invalid ??= json ?? undefined;
   }
 
   // Fallback: return trimmed content as-is
-  return content.trim();
+  return invalid ?? content.trim();
 }
 
 /**

@@ -18,7 +18,7 @@ export const SIMULATION_TIMEOUT_MS = 300_000;
 /** One conversation, either ready to run or still needing a first message. */
 export type SimulationInput =
   | { datapoint: Datapoint }
-  | { persona: Persona; scenario: Scenario };
+  | { persona: Persona; scenario: Scenario; firstMessage?: string };
 
 /**
  * Run one conversation. Never throws: a failed first message fails this row
@@ -29,27 +29,26 @@ export async function runSimulationInput(
   runner: SimulationRunner,
   maxTurns: number,
   getFirstMessages: () => FirstMessageGenerator,
+  timeoutMs: number = SIMULATION_TIMEOUT_MS,
 ): Promise<SimulationResult> {
   if ("datapoint" in input) {
-    return runner.runWithTimeout(
-      input.datapoint,
-      maxTurns,
-      SIMULATION_TIMEOUT_MS,
-    );
+    return runner.runWithTimeout(input.datapoint, maxTurns, timeoutMs);
   }
 
   const { persona, scenario } = input;
-  let firstMessage: string;
-  try {
-    firstMessage = await getFirstMessages().generate(persona, scenario);
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err);
-    return errorResult(`First message failed: ${reason}`, persona, scenario);
+  let firstMessage = input.firstMessage;
+  if (!firstMessage) {
+    try {
+      firstMessage = await getFirstMessages().generate(persona, scenario);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      return errorResult(`First message failed: ${reason}`, persona, scenario);
+    }
   }
 
   return runner.runWithTimeout(
     generateDatapoint(persona, scenario, firstMessage),
     maxTurns,
-    SIMULATION_TIMEOUT_MS,
+    timeoutMs,
   );
 }

@@ -6,6 +6,7 @@
 
 import OpenAI from "openai";
 
+import { isRetryableStatus } from "../agents/base.js";
 import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
 import {
   getTraceContextHeaders,
@@ -23,6 +24,27 @@ import { SimulationGenerationError } from "./structured-call.js";
 
 // Temperature setting for message generation
 const TEMPERATURE_FIRST_MESSAGE = 0.8;
+
+const MAX_OUTPUT_TOKENS = 500;
+
+const TIMEOUT_MS = 60_000;
+
+// Attempts for a reply with no usable text.
+const CONTENT_ATTEMPTS = 3;
+
+/**
+ * True when one pair can be dropped: unusable output or a transient provider
+ * failure. Auth and request errors would hit every pair, so they abort the batch.
+ */
+export function isRecoverableFirstMessageFailure(err: unknown): boolean {
+  if (err instanceof SimulationGenerationError) {
+    return true;
+  }
+  if (!(err instanceof OpenAI.APIError)) {
+    return false;
+  }
+  return err.status === undefined || isRetryableStatus(err.status);
+}
 
 const FIRST_MESSAGE_PROMPT = `You are generating the authentic first message a user would type to a support agent.
 
@@ -116,8 +138,9 @@ export class FirstMessageGenerator {
    * @param persona - User persona
    * @param scenario - Scenario context
    * @returns Generated first message string
-   * @throws {SimulationGenerationError} If the LLM returns no message. There is
-   *   no canned fallback: the caller fails that datapoint instead.
+   * @throws {SimulationGenerationError} If the LLM returns no usable message
+   *   after retrying, or truncates it. There is no canned fallback: the caller
+   *   fails that datapoint instead.
    */
   async generate(persona: Persona, scenario: Scenario): Promise<string> {
     return withSimulationSpan(
@@ -147,51 +170,64 @@ Keep it natural - this is how they would actually open a conversation.`;
             { role: "user", content: userPrompt },
           ];
 
-        const response = await withLLMSpan(
-          {
-            model: this.model,
-            temperature: TEMPERATURE_FIRST_MESSAGE,
-            maxTokens: 500,
-            purpose: "first_message",
-          },
-          async (llmSpan) => {
-            recordLLMInput(
-              llmSpan,
-              llmMessages.map((m) => ({
-                role: m.role,
-                content: typeof m.content === "string" ? m.content : "",
-              })),
+        for (let attempt = 1; attempt <= CONTENT_ATTEMPTS; attempt++) {
+          const response = await withLLMSpan(
+            {
+              model: this.model,
+              temperature: TEMPERATURE_FIRST_MESSAGE,
+              maxTokens: MAX_OUTPUT_TOKENS,
+              purpose: "first_message",
+            },
+            async (llmSpan) => {
+              recordLLMInput(
+                llmSpan,
+                llmMessages.map((m) => ({
+                  role: m.role,
+                  content: typeof m.content === "string" ? m.content : "",
+                })),
+              );
+
+              const traceHeaders = await getTraceContextHeaders();
+              const res = await this.client.chat.completions.create(
+                {
+                  model: this.model,
+                  messages: llmMessages,
+                  temperature: TEMPERATURE_FIRST_MESSAGE,
+                  max_tokens: MAX_OUTPUT_TOKENS,
+                },
+                { headers: traceHeaders, timeout: TIMEOUT_MS },
+              );
+
+              recordLLMResponse(llmSpan, res);
+              return res;
+            },
+          );
+
+          const choice = response.choices[0];
+          if (choice?.finish_reason === "length") {
+            // The same limit would truncate again, so this is not retried.
+            throw new SimulationGenerationError(
+              `FirstMessageGenerator: response truncated at max_tokens=${MAX_OUTPUT_TOKENS}`,
             );
+          }
 
-            const traceHeaders = await getTraceContextHeaders();
-            const res = await this.client.chat.completions.create(
-              {
-                model: this.model,
-                messages: llmMessages,
-                temperature: TEMPERATURE_FIRST_MESSAGE,
-                max_tokens: 500,
-              },
-              { headers: traceHeaders },
+          const message = (choice?.message.content ?? "")
+            .trim()
+            .replace(/^["']|["']$/g, "");
+          if (message) {
+            console.debug(
+              `Generated first message: ${message.substring(0, 100)}...`,
             );
-
-            recordLLMResponse(llmSpan, res);
-            return res;
-          },
-        );
-
-        const message = (response.choices[0]?.message.content ?? "")
-          .trim()
-          .replace(/^["']|["']$/g, "");
-        if (!message) {
-          throw new SimulationGenerationError(
-            `FirstMessageGenerator: empty message for persona '${persona.name}' and scenario '${scenario.name}'`,
+            return message;
+          }
+          console.warn(
+            `FirstMessageGenerator: empty message on attempt ${attempt} of ${CONTENT_ATTEMPTS}`,
           );
         }
 
-        console.debug(
-          `Generated first message: ${message.substring(0, 100)}...`,
+        throw new SimulationGenerationError(
+          `FirstMessageGenerator: empty message for persona '${persona.name}' and scenario '${scenario.name}'`,
         );
-        return message;
       },
     );
   }

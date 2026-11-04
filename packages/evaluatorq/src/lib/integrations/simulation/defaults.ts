@@ -10,6 +10,22 @@ const ROUTER_PATH = "/v3/router";
 
 let warnedRouterBaseUrl = false;
 
+function stripRouterPath(url: string): string {
+  const trimmed = url.replace(/\/+$/, "");
+  return trimmed.endsWith(ROUTER_PATH)
+    ? trimmed.slice(0, -ROUTER_PATH.length)
+    : trimmed;
+}
+
+/** The Orq host, for calls outside the router. */
+export function resolveOrqHost(): string {
+  return stripRouterPath(
+    process.env.ORQ_BASE_URL ||
+      process.env.ROUTER_BASE_URL ||
+      DEFAULT_ORQ_BASE_URL,
+  );
+}
+
 /**
  * Resolve the router URL.
  *
@@ -19,11 +35,7 @@ let warnedRouterBaseUrl = false;
 export function resolveRouterBaseUrl(): string {
   const orqBaseUrl = process.env.ORQ_BASE_URL;
   if (orqBaseUrl) {
-    const trimmed = orqBaseUrl.replace(/\/+$/, "");
-    const host = trimmed.endsWith(ROUTER_PATH)
-      ? trimmed.slice(0, -ROUTER_PATH.length)
-      : trimmed;
-    return `${host}${ROUTER_PATH}`;
+    return `${stripRouterPath(orqBaseUrl)}${ROUTER_PATH}`;
   }
 
   const routerBaseUrl = process.env.ROUTER_BASE_URL;

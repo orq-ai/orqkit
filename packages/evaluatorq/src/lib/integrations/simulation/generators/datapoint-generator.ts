@@ -4,13 +4,19 @@
  * Combines personas and scenarios into complete datapoints with first messages.
  */
 
+import type OpenAI from "openai";
+
 import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import { applyRandomPerturbation } from "../quality/message-perturbation.js";
 import type { Datapoint, Persona, Scenario } from "../types.js";
 import { generateDatapoint } from "../utils/prompt-builders.js";
-import { FirstMessageGenerator } from "./first-message-generator.js";
+import {
+  FirstMessageGenerator,
+  isRecoverableFirstMessageFailure,
+} from "./first-message-generator.js";
 import { PersonaGenerator } from "./persona-generator.js";
 import { ScenarioGenerator } from "./scenario-generator.js";
+import { SimulationGenerationError } from "./structured-call.js";
 
 // Default rate limit settings
 const DEFAULT_RATE_LIMIT_DELAY = 100; // 100ms delay between API calls
@@ -61,6 +67,7 @@ export interface DatapointGeneratorConfig {
   model?: string;
   rateLimitDelay?: number;
   maxConcurrentCalls?: number;
+  client?: OpenAI;
 }
 
 /**
@@ -83,11 +90,10 @@ export class DatapointGenerator {
     this.semaphore = new Semaphore(
       config?.maxConcurrentCalls ?? DEFAULT_MAX_CONCURRENT_CALLS,
     );
-    this.personaGenerator = new PersonaGenerator({ model: this.model });
-    this.scenarioGenerator = new ScenarioGenerator({ model: this.model });
-    this.firstMessageGenerator = new FirstMessageGenerator({
-      model: this.model,
-    });
+    const shared = { model: this.model, client: config?.client };
+    this.personaGenerator = new PersonaGenerator(shared);
+    this.scenarioGenerator = new ScenarioGenerator(shared);
+    this.firstMessageGenerator = new FirstMessageGenerator(shared);
   }
 
   /**
@@ -240,8 +246,33 @@ export class DatapointGenerator {
     };
 
     // Generate all datapoints with bounded concurrency
-    const tasks = combinations.map(([p, s]) => generateSingle(p, s));
-    const datapoints = await Promise.all(tasks);
+    const settled = await Promise.allSettled(
+      combinations.map(([p, s]) => generateSingle(p, s)),
+    );
+
+    const datapoints: Datapoint[] = [];
+    let lastFailure: unknown;
+    settled.forEach((outcome, i) => {
+      if (outcome.status === "fulfilled") {
+        datapoints.push(outcome.value);
+        return;
+      }
+      if (!isRecoverableFirstMessageFailure(outcome.reason)) {
+        throw outcome.reason;
+      }
+      lastFailure = outcome.reason;
+      const [persona, scenario] = combinations[i] as [Persona, Scenario];
+      console.warn(
+        `DatapointGenerator: dropping pair ${persona.name} x ${scenario.name}: ${String(outcome.reason)}`,
+      );
+    });
+
+    if (datapoints.length === 0 && combinations.length > 0) {
+      throw new SimulationGenerationError(
+        "DatapointGenerator: no first message could be generated",
+        { cause: lastFailure },
+      );
+    }
 
     console.log(`Generated ${datapoints.length} datapoints`);
     return datapoints;

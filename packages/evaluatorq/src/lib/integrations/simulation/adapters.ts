@@ -7,6 +7,7 @@
 
 import { randomUUID } from "node:crypto";
 
+import { resolveOrqHost } from "./defaults.js";
 import type { ChatMessage } from "./types.js";
 
 /**
@@ -95,8 +96,7 @@ export function fromOrqAgent(
 
     if (!cachedClient) {
       const { Orq } = await import("@orq-ai/node");
-      const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
-      cachedClient = new Orq({ apiKey, serverURL });
+      cachedClient = new Orq({ apiKey, serverURL: resolveOrqHost() });
     }
 
     const firstUserMessage = messages.find((m) => m.role === "user");
@@ -149,10 +149,12 @@ export function fromOrqAgent(
       const data = (event as Record<string, unknown>).data as
         | Record<string, unknown>
         | undefined;
+      const innerData = data?.data as Record<string, unknown> | undefined;
+      if (data?.type === "agents.execution_started") {
+        taskId = innerData?.agentTaskId as string | undefined;
+      }
       if (data?.type === "event.agents.inactive") {
-        const innerData = data.data as Record<string, unknown> | undefined;
         lastMessage = (innerData?.lastMessage as string) ?? "";
-        taskId = (innerData?.taskId as string) ?? undefined;
       }
     }
 

@@ -9,6 +9,7 @@ import type OpenAI from "openai";
 import type { DataPoint, Job, Output } from "../../types.js";
 import { fromOrqAgent } from "./adapters.js";
 import { toOpenResponses } from "./convert.js";
+import { DEFAULT_SIMULATION_MODEL } from "./defaults.js";
 import { failureReason } from "./evaluators/index.js";
 import { FirstMessageGenerator } from "./generators/first-message-generator.js";
 import {
@@ -34,15 +35,20 @@ export interface SimulationJobOptions {
   model?: string;
   /** Pre-configured client for the user simulator, judge and first messages. */
   client?: OpenAI;
+  /** Limit per conversation in milliseconds. Defaults to 300_000. */
+  timeoutPerSimulation?: number;
 }
 
 /**
  * Creates an evaluatorq Job that runs one simulated conversation per row.
  *
  * Each DataPoint should have inputs containing simulation data:
- * - `persona` (Persona object) and `scenario` (Scenario object), or
+ * - `persona` (Persona object) and `scenario` (Scenario object), with an optional
+ *   `first_message` to use instead of generating one, or
  * - `datapoint` (full Datapoint object), or
  * - `datapoints`, or `personas` and `scenarios`, holding exactly one entry
+ *
+ * `persona`, `scenario`, `datapoint` and `datapoints` may also be JSON strings.
  *
  * The job:
  * 1. Extracts one persona/scenario/datapoint from data.inputs
@@ -90,10 +96,9 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
     maxTurns = 10,
     model,
     client,
+    timeoutPerSimulation,
   } = options;
 
-  // One of each per job, so rows share a client instead of opening their own.
-  let runner: SimulationRunner | undefined;
   let firstMessages: FirstMessageGenerator | undefined;
   const getFirstMessages = () => {
     firstMessages ??= new FirstMessageGenerator({ model, client });
@@ -109,7 +114,9 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
 
     const input = extractSingleInput(data.inputs);
 
-    runner ??= new SimulationRunner({
+    // A row gets its own runner because fromOrqAgent finds a conversation by
+    // its first message, which rows can share.
+    const runner = new SimulationRunner({
       targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
       model,
       maxTurns,
@@ -121,11 +128,15 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
       runner,
       maxTurns,
       getFirstMessages,
-    );
+      timeoutPerSimulation,
+    ).finally(() => runner.close());
 
     return {
       name,
-      output: toOpenResponses(result, runner.modelName) as unknown as Output,
+      output: toOpenResponses(
+        result,
+        model ?? DEFAULT_SIMULATION_MODEL,
+      ) as unknown as Output,
       error: failureReason(result) ?? undefined,
     };
   };
@@ -133,19 +144,33 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
 
 /** Pull exactly one conversation out of a row's inputs. */
 function extractSingleInput(inputs: DataPoint["inputs"]): SimulationInput {
+  const firstMessage =
+    typeof inputs.first_message === "string" && inputs.first_message.trim()
+      ? inputs.first_message
+      : undefined;
+
   if (inputs.datapoint) {
-    validateDatapoint(inputs.datapoint, "datapoint");
-    return { datapoint: inputs.datapoint as unknown as Datapoint };
+    const datapoint = parseJsonOrValue(inputs.datapoint);
+    validateDatapoint(datapoint, "datapoint");
+    return { datapoint: datapoint as Datapoint };
   }
 
   if (inputs.datapoints) {
-    const datapoints = requireSingle(inputs.datapoints, "datapoints");
-    validateDatapoint(datapoints, "datapoints[]");
-    return { datapoint: datapoints as Datapoint };
+    const datapoint = parseJsonOrValue(
+      requireSingle(parseJsonOrValue(inputs.datapoints), "datapoints"),
+    );
+    validateDatapoint(datapoint, "datapoints[]");
+    return { datapoint: datapoint as Datapoint };
   }
 
   if (inputs.persona && inputs.scenario) {
-    return singlePair(inputs.persona, inputs.scenario, "persona", "scenario");
+    return singlePair(
+      parseJsonOrValue(inputs.persona),
+      parseJsonOrValue(inputs.scenario),
+      "persona",
+      "scenario",
+      firstMessage,
+    );
   }
 
   if (inputs.personas && inputs.scenarios) {
@@ -154,6 +179,7 @@ function extractSingleInput(inputs: DataPoint["inputs"]): SimulationInput {
       requireSingle(inputs.scenarios, "scenarios"),
       "personas[]",
       "scenarios[]",
+      firstMessage,
     );
   }
 
@@ -162,15 +188,32 @@ function extractSingleInput(inputs: DataPoint["inputs"]): SimulationInput {
   );
 }
 
+/** Dataset columns can hold objects as JSON strings. */
+function parseJsonOrValue(raw: unknown): unknown {
+  if (typeof raw !== "string") {
+    return raw;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
 function singlePair(
   persona: unknown,
   scenario: unknown,
   personaLabel: string,
   scenarioLabel: string,
+  firstMessage: string | undefined,
 ): SimulationInput {
   validateShape(persona, personaLabel, ["name"]);
   validateShape(scenario, scenarioLabel, ["name", "goal"]);
-  return { persona: persona as Persona, scenario: scenario as Scenario };
+  return {
+    persona: persona as Persona,
+    scenario: scenario as Scenario,
+    firstMessage,
+  };
 }
 
 function requireSingle(value: unknown, label: string): unknown {
@@ -187,6 +230,9 @@ function requireSingle(value: unknown, label: string): unknown {
 
 function validateDatapoint(value: unknown, label: string): void {
   validateShape(value, label, ["persona", "scenario", "first_message"]);
+  const { persona, scenario } = value as Datapoint;
+  validateShape(persona, `${label}.persona`, ["name"]);
+  validateShape(scenario, `${label}.scenario`, ["name", "goal"]);
 }
 
 /** Lightweight runtime check that an object has the expected keys. */

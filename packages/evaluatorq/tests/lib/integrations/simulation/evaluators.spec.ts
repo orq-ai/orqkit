@@ -133,7 +133,7 @@ describe("unverifiedReason", () => {
       "terminated_by=error",
     );
     expect(unverifiedReason(makeResult({ criteria_verified: false }))).toBe(
-      "criteria_verified=False",
+      "criteria_verified=false",
     );
     expect(unverifiedReason(makeResult())).toBeNull();
   });
@@ -187,6 +187,17 @@ describe("turnEfficiencyScorer", () => {
     expect(
       turnEfficiencyScorer(makeResult({ goal_achieved: true, turn_count: 5 })),
     ).toBe(0.7);
+  });
+
+  test("decays from the last cliff, so a longer run never scores higher", () => {
+    const score = (turn_count: number) =>
+      turnEfficiencyScorer(makeResult({ goal_achieved: true, turn_count }));
+
+    expect(score(6)).toBe(0.7);
+    expect(score(7)).toBe(0.6);
+    expect(score(8)).toBe(0.5);
+    expect(score(9)).toBe(0.4);
+    expect(score(10)).toBe(0.3);
   });
 
   test("degrades for many turns but floors at 0.3", () => {

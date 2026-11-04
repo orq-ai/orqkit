@@ -33,6 +33,121 @@ const sampleDatapoint = {
 const callback = async () => "response";
 
 describe("wrapSimulationAgent", () => {
+  test("uses a first_message given next to persona + scenario", async () => {
+    const { client, requests } = makeFakeClient();
+    const seen: string[] = [];
+    const job = wrapSimulationAgent({
+      targetCallback: async (messages) => {
+        seen.push(messages[0]?.content ?? "");
+        return "reply";
+      },
+      client,
+      maxTurns: 1,
+    });
+
+    await job(
+      {
+        inputs: {
+          persona: samplePersona,
+          scenario: sampleScenario,
+          first_message: "from the dataset",
+        },
+      } as unknown as DataPoint,
+      0,
+    );
+
+    expect(seen).toEqual(["from the dataset"]);
+    expect(requests.firstMessage).toHaveLength(0);
+  });
+
+  test("generates a first message when the given one is blank", async () => {
+    const { client, requests } = makeFakeClient();
+    const job = wrapSimulationAgent({
+      targetCallback: callback,
+      client,
+      maxTurns: 1,
+    });
+
+    await job(
+      {
+        inputs: {
+          persona: samplePersona,
+          scenario: sampleScenario,
+          first_message: "   ",
+        },
+      } as unknown as DataPoint,
+      0,
+    );
+
+    expect(requests.firstMessage).toHaveLength(1);
+  });
+
+  test.each([
+    ["a scenario that is a string", { scenario: "not an object" }],
+    ["a persona that is a string", { persona: "not an object" }],
+    ["a scenario without a goal", { scenario: { name: "S" } }],
+  ])("rejects a datapoint with %s", async (_label, bad) => {
+    const { client } = makeFakeClient();
+    const job = wrapSimulationAgent({
+      targetCallback: callback,
+      client,
+      maxTurns: 1,
+    });
+
+    await expect(
+      job(
+        {
+          inputs: { datapoint: { ...sampleDatapoint, ...bad } },
+        } as unknown as DataPoint,
+        0,
+      ),
+    ).rejects.toThrow("datapoint");
+  });
+
+  test("honours timeoutPerSimulation", async () => {
+    const { client } = makeFakeClient();
+    const job = wrapSimulationAgent({
+      targetCallback: () => new Promise<string>(() => {}),
+      client,
+      timeoutPerSimulation: 5,
+    });
+
+    const pair = await job(
+      { inputs: { datapoint: sampleDatapoint } } as unknown as DataPoint,
+      0,
+    );
+
+    expect(pair.error).toContain("timed out");
+  });
+
+  test("decodes inputs stored as JSON strings", async () => {
+    const { client } = makeFakeClient();
+    const job = wrapSimulationAgent({
+      targetCallback: callback,
+      client,
+      maxTurns: 1,
+    });
+
+    const pair = await job(
+      {
+        inputs: {
+          persona: JSON.stringify(samplePersona),
+          scenario: JSON.stringify(sampleScenario),
+        },
+      } as unknown as DataPoint,
+      0,
+    );
+    const single = await job(
+      {
+        inputs: { datapoint: JSON.stringify(sampleDatapoint) },
+      } as unknown as DataPoint,
+      0,
+    );
+
+    expect(pair.error).toBeUndefined();
+    expect(single.error).toBeUndefined();
+  });
+
   test("1. persona + scenario → generates a first message and runs", async () => {
     const { client, requests } = makeFakeClient({
       firstMessage: () => "generated opener",

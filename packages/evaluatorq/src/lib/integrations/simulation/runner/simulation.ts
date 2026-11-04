@@ -194,11 +194,6 @@ export class SimulationRunner {
     this.injectedClient = config.client;
   }
 
-  /** Model used for the user simulator and judge. */
-  get modelName(): string {
-    return this.model;
-  }
-
   private getSharedClient(): OpenAI {
     if (this.injectedClient) {
       return this.injectedClient;
@@ -249,7 +244,17 @@ export class SimulationRunner {
     // Declare usage helper references — initialized inside try after agents are created
     let getTotalUsage: (() => TokenUsage) | undefined;
 
-    const tracker = new CriteriaTracker(scenario);
+    let tracker: CriteriaTracker;
+    try {
+      tracker = new CriteriaTracker(scenario);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      return errorResult(
+        `Invalid scenario criteria: ${reason}`,
+        persona,
+        scenario,
+      );
+    }
 
     try {
       return await withSimulationSpan(
@@ -365,8 +370,10 @@ export class SimulationRunner {
                   undefined,
                   async (targetSpan) => {
                     recordLLMInput(targetSpan, targetMessages);
-                    const response =
-                      await this.getTargetResponse(targetMessages);
+                    const response = await this.getTargetResponse(
+                      targetMessages,
+                      signal,
+                    );
                     recordLLMOutput(targetSpan, response);
                     return response;
                   },
@@ -503,8 +510,9 @@ export class SimulationRunner {
       result.turn_count = messages.filter((m) => m.role === "assistant").length;
       result.turn_metrics = turnMetricsList;
       result.token_usage = usage;
-      // A must_happen that has not occurred yet could still have, so an aborted
-      // run only reports what is certain and marks the rest as not audited.
+      // A must_happen that has not occurred yet might still have occurred later,
+      // so an aborted run only reports what is certain and marks the rest as not
+      // audited.
       result.rules_broken = tracker.confirmedBrokenIds;
       result.criteria_verified = tracker.verified;
       const audited = tracker.auditedIds;
@@ -596,14 +604,39 @@ export class SimulationRunner {
 
   // ---- private helpers ----
 
-  private async getTargetResponse(messages: ChatMessage[]): Promise<string> {
-    if (this.targetAgent) {
-      return this.targetAgent.respond(messages);
+  private async getTargetResponse(
+    messages: ChatMessage[],
+    signal: AbortSignal | undefined,
+  ): Promise<string> {
+    const call = async (): Promise<string> => {
+      if (this.targetAgent) {
+        return this.targetAgent.respond(messages);
+      }
+      if (this.targetCallback) {
+        return this.targetCallback(messages);
+      }
+      throw new Error("No target agent or callback configured");
+    };
+    if (!signal) {
+      return call();
     }
-    if (this.targetCallback) {
-      return this.targetCallback(messages);
+
+    // A callback takes no signal and cannot be stopped, so stop waiting for it.
+    // It may keep running after this returns.
+    let onAbort: () => void = () => {};
+    const aborted = new Promise<never>((_, reject) => {
+      onAbort = () => reject(new Error("Simulation cancelled"));
+      if (signal.aborted) {
+        onAbort();
+      } else {
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
+    });
+    try {
+      return await Promise.race([call(), aborted]);
+    } finally {
+      signal.removeEventListener("abort", onAbort);
     }
-    throw new Error("No target agent or callback configured");
   }
 
   /** Run one datapoint with a timeout. Never throws. */

@@ -9,7 +9,12 @@ export interface JudgeRequest {
   temperature?: number;
   max_output_tokens?: number;
   tool_choice?: string;
-  tools?: { type: string; name: string; strict?: boolean }[];
+  tools?: {
+    type: string;
+    name: string;
+    strict?: boolean;
+    parameters?: { properties?: Record<string, unknown> };
+  }[];
 }
 
 export interface JudgeTurn {
@@ -20,10 +25,22 @@ export interface JudgeTurn {
 export interface FakeScript {
   /** Reply for the nth judge call. Throw to fail the call, null for no tool call. */
   judge?: (call: number, request: JudgeRequest) => JudgeTurn | null;
-  userSimulator?: (request: Request) => string;
-  firstMessage?: (request: Request) => string;
+  /** Rewrite the Responses API reply built from the judge's turn. */
+  judgeResponse?: (
+    reply: Record<string, unknown> & { output: unknown[] },
+  ) => Record<string, unknown>;
+  userSimulator?: (
+    request: Request,
+  ) => string | { content: string; finishReason?: string };
+  firstMessage?: (
+    request: Request,
+    options?: { timeout?: number },
+  ) => string | { content: string; finishReason?: string };
   /** Reply for generator calls, which are the ones sending response_format. */
-  generator?: (request: Request) => { content: string; finishReason?: string };
+  generator?: (
+    request: Request,
+    options?: { timeout?: number },
+  ) => { content: string; finishReason?: string };
 }
 
 export interface FakeRequests {
@@ -106,7 +123,7 @@ export function makeFakeClient(script: FakeScript = {}): {
     const turn = script.judge
       ? script.judge(call, request)
       : finishTurn([], {});
-    return {
+    const reply = {
       id: "fake",
       created_at: 0,
       model: request.model,
@@ -124,9 +141,10 @@ export function makeFakeClient(script: FakeScript = {}): {
         : [],
       usage: { input_tokens: 3, output_tokens: 2, total_tokens: 5 },
     };
+    return script.judgeResponse ? script.judgeResponse(reply) : reply;
   };
 
-  const create = async (request: Request) => {
+  const create = async (request: Request, options?: { timeout?: number }) => {
     // What the router answers for the default model.
     if (request.tools) {
       throw new OpenAI.APIError(
@@ -139,7 +157,7 @@ export function makeFakeClient(script: FakeScript = {}): {
 
     if (request.response_format) {
       requests.generator.push(request);
-      const reply = script.generator?.(request) ?? { content: "[]" };
+      const reply = script.generator?.(request, options) ?? { content: "[]" };
       return completion({ content: reply.content }, reply.finishReason);
     }
 
@@ -149,15 +167,18 @@ export function makeFakeClient(script: FakeScript = {}): {
       system.includes("authentic first message")
     ) {
       requests.firstMessage.push(request);
-      return completion({
-        content: script.firstMessage?.(request) ?? "Hi, I need help.",
-      });
+      const reply =
+        script.firstMessage?.(request, options) ?? "Hi, I need help.";
+      return typeof reply === "string"
+        ? completion({ content: reply })
+        : completion({ content: reply.content }, reply.finishReason);
     }
 
     requests.userSimulator.push(request);
-    return completion({
-      content: script.userSimulator?.(request) ?? "Please continue.",
-    });
+    const reply = script.userSimulator?.(request) ?? "Please continue.";
+    return typeof reply === "string"
+      ? completion({ content: reply })
+      : completion({ content: reply.content }, reply.finishReason);
   };
 
   return {

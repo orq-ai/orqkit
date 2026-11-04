@@ -45,21 +45,11 @@ export interface AgentConfig {
 /**
  * Determines whether an HTTP status code is retryable.
  */
-function isRetryableStatus(status: number | undefined): boolean {
+export function isRetryableStatus(status: number | undefined): boolean {
   if (status === undefined) return false;
   return status === 429 || status >= 500;
 }
 
-/**
- * Abstract base class for simulation agents.
- *
- * Provides common LLM interaction functionality with exponential-backoff
- * retry logic and cumulative token-usage tracking.
- *
- * **Client injection**: pass an existing `OpenAI` client via `config.client`
- * to share a single HTTP connection across multiple agents. The agent will
- * NOT close an injected client -- the caller is responsible for its lifecycle.
- */
 /**
  * Send a chat request through the Responses API and return it in chat shape.
  *
@@ -91,6 +81,23 @@ async function createViaResponses(
     requestOptions,
   );
 
+  // These arrive as a 200, so the status check is what stops a partial output
+  // from being read as the judge's decision.
+  if (response.status === "failed") {
+    throw new Error(
+      `Responses API call failed: ${response.error?.message ?? "no error details"}`,
+    );
+  }
+  const incompleteReason = response.incomplete_details?.reason;
+  if (
+    (response.status === "incomplete" || incompleteReason) &&
+    incompleteReason !== "max_output_tokens"
+  ) {
+    throw new Error(
+      `Responses API call incomplete: ${incompleteReason ?? "no reason given"}`,
+    );
+  }
+
   const toolCalls = response.output.flatMap((item) =>
     item.type === "function_call"
       ? [
@@ -103,13 +110,6 @@ async function createViaResponses(
       : [],
   );
 
-  let finishReason: "length" | "tool_calls" | "stop" = "stop";
-  if (response.incomplete_details?.reason === "max_output_tokens") {
-    finishReason = "length";
-  } else if (toolCalls.length > 0) {
-    finishReason = "tool_calls";
-  }
-
   return {
     id: response.id,
     object: "chat.completion",
@@ -119,7 +119,11 @@ async function createViaResponses(
       {
         index: 0,
         logprobs: null,
-        finish_reason: finishReason,
+        finish_reason: incompleteReason
+          ? "length"
+          : toolCalls.length > 0
+            ? "tool_calls"
+            : "stop",
         message: {
           role: "assistant",
           content: response.output_text || null,
@@ -139,6 +143,16 @@ async function createViaResponses(
   };
 }
 
+/**
+ * Abstract base class for simulation agents.
+ *
+ * Provides common LLM interaction functionality with exponential-backoff
+ * retry logic and cumulative token-usage tracking.
+ *
+ * **Client injection**: pass an existing `OpenAI` client via `config.client`
+ * to share a single HTTP connection across multiple agents. The agent will
+ * NOT close an injected client -- the caller is responsible for its lifecycle.
+ */
 export abstract class BaseAgent {
   protected model: string;
   protected client: OpenAI;
@@ -368,6 +382,12 @@ export abstract class BaseAgent {
                 this.usage.completion_tokens +=
                   response.usage.completion_tokens;
                 this.usage.total_tokens += response.usage.total_tokens;
+              }
+
+              if (choice.finish_reason === "length") {
+                throw new Error(
+                  `${this.name}: response truncated at max_output_tokens=${options?.maxTokens ?? "default"}`,
+                );
               }
 
               const result: LLMResult = {

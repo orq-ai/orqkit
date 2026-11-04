@@ -195,6 +195,71 @@ describe("simulate", () => {
     });
 
     expect(fetchSpy).toHaveBeenCalled();
+    const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    const body = String(init.body);
+    expect(body).toContain("upload");
+    expect(body).toContain("goal_achieved");
+    expect(body).toContain("criteria_met");
+  });
+
+  test("uploads why an unverified score cannot be trusted", async () => {
+    process.env.ORQ_API_KEY = "test-key";
+    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+    const { client } = makeFakeClient({ judge: () => null });
+
+    await simulate({
+      evaluationName: "unverified",
+      client,
+      datapoints: [datapoint("a")],
+      targetCallback: async () => "reply",
+    });
+
+    const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(String(init.body)).toContain("criteria_verified=false");
+  });
+
+  test("does not upload to production when only ROUTER_BASE_URL is set", async () => {
+    const originalBase = process.env.ORQ_BASE_URL;
+    delete process.env.ORQ_BASE_URL;
+    process.env.ROUTER_BASE_URL = "https://staging.example/v3/router";
+    process.env.ORQ_API_KEY = "test-key";
+    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+    const { client } = makeFakeClient({
+      judge: () => finishTurn(audited(true)),
+    });
+
+    try {
+      await simulate({
+        evaluationName: "router-only",
+        client,
+        datapoints: [datapoint("a")],
+        targetCallback: async () => "reply",
+      });
+    } finally {
+      delete process.env.ROUTER_BASE_URL;
+      if (originalBase !== undefined) {
+        process.env.ORQ_BASE_URL = originalBase;
+      }
+    }
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("honours timeoutPerSimulation", async () => {
+    const { client } = makeFakeClient();
+
+    const [result] = await simulate({
+      evaluationName: "timeout",
+      client,
+      uploadResults: false,
+      timeoutPerSimulation: 5,
+      datapoints: [datapoint("a")],
+      targetCallback: () => new Promise<string>(() => {}),
+    });
+
+    expect(result?.terminated_by).toBe("timeout");
   });
 
   test("uploadResults: false skips the upload", async () => {

@@ -25,14 +25,14 @@ const TEMPERATURE_CREATIVE = 0.8;
 const TEMPERATURE_BALANCED = 0.7;
 const TEMPERATURE_EDGE_CASE = 0.9;
 
-const VALID_EMOTIONS = new Set<string>([
+const EMOTIONS: StartingEmotion[] = [
   "neutral",
   "frustrated",
   "confused",
   "happy",
   "urgent",
-]);
-const VALID_STRATEGIES = new Set<string>([
+];
+const STRATEGIES: ConversationStrategy[] = [
   "cooperative",
   "topic_switching",
   "contradictory",
@@ -40,7 +40,9 @@ const VALID_STRATEGIES = new Set<string>([
   "evasive",
   "repetitive",
   "ambiguous",
-]);
+];
+const VALID_EMOTIONS = new Set<string>(EMOTIONS);
+const VALID_STRATEGIES = new Set<string>(STRATEGIES);
 const VALID_CRITERION_TYPES = new Set<string>([
   "must_happen",
   "must_not_happen",
@@ -52,7 +54,7 @@ const SCENARIO_ITEM_SCHEMA = {
     name: { type: "string" },
     goal: { type: "string" },
     context: { type: "string" },
-    starting_emotion: { type: "string" },
+    starting_emotion: { type: "string", enum: EMOTIONS },
     criteria: {
       type: "array",
       items: {
@@ -66,9 +68,9 @@ const SCENARIO_ITEM_SCHEMA = {
       },
     },
     is_edge_case: { type: "boolean" },
-    conversation_strategy: { type: "string" },
+    conversation_strategy: { type: "string", enum: STRATEGIES },
   },
-  required: ["name", "goal"],
+  required: ["name", "goal", "criteria"],
 };
 
 const SCENARIO_GENERATOR_PROMPT = `You are an expert test scenario designer for AI agent evaluation. Create realistic, testable scenarios that thoroughly evaluate agent capabilities.
@@ -221,32 +223,51 @@ function parseScenarios(
       continue;
     }
 
-    const rawCriteria = Array.isArray(sDict.criteria)
-      ? (sDict.criteria as Record<string, unknown>[])
-      : [];
-    const criteria: Criterion[] = rawCriteria
-      .filter((c) => VALID_CRITERION_TYPES.has(String(c?.type ?? "")))
-      .map((c) => ({
-        description: String(c.description ?? ""),
-        type: c.type as "must_happen" | "must_not_happen",
-        evaluator: (c.evaluator as string | null) ?? null,
-      }));
+    const rawCriteria = sDict.criteria ?? [];
+    // One bad criterion drops the scenario: keeping the rest would test less
+    // than the model wrote and score higher for it.
+    const criteriaValid =
+      Array.isArray(rawCriteria) &&
+      rawCriteria.every(
+        (c) =>
+          VALID_CRITERION_TYPES.has(String(c?.type ?? "")) &&
+          typeof c.description === "string" &&
+          c.description.trim(),
+      );
+    if (!criteriaValid) {
+      console.warn(
+        `${label}: dropping scenario '${sDict.name}' with an invalid criterion`,
+      );
+      continue;
+    }
+    const criteria: Criterion[] = (
+      rawCriteria as Record<string, unknown>[]
+    ).map((c) => ({
+      description: c.description as string,
+      type: c.type as "must_happen" | "must_not_happen",
+      evaluator: (c.evaluator as string | null) ?? null,
+    }));
 
-    const rawEmotion = String(sDict.starting_emotion ?? "neutral");
-    const rawStrategy = String(sDict.conversation_strategy ?? "cooperative");
+    const emotion = sDict.starting_emotion ?? undefined;
+    const strategy = sDict.conversation_strategy ?? undefined;
+    if (
+      (emotion !== undefined && !VALID_EMOTIONS.has(String(emotion))) ||
+      (strategy !== undefined && !VALID_STRATEGIES.has(String(strategy)))
+    ) {
+      console.warn(
+        `${label}: dropping scenario '${sDict.name}' with an unknown emotion or strategy (starting_emotion=${emotion}, conversation_strategy=${strategy})`,
+      );
+      continue;
+    }
 
     scenarios.push({
       name: sDict.name,
       goal: sDict.goal,
       context: String(sDict.context ?? ""),
-      starting_emotion: VALID_EMOTIONS.has(rawEmotion)
-        ? (rawEmotion as StartingEmotion)
-        : "neutral",
+      starting_emotion: emotion as StartingEmotion | undefined,
       criteria,
       is_edge_case: Boolean(sDict.is_edge_case ?? false),
-      conversation_strategy: VALID_STRATEGIES.has(rawStrategy)
-        ? (rawStrategy as ConversationStrategy)
-        : "cooperative",
+      conversation_strategy: strategy as ConversationStrategy | undefined,
     });
   }
   if (scenarios.length === 0) {

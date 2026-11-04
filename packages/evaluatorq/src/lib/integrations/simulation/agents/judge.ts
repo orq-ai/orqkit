@@ -417,9 +417,8 @@ export class JudgeAgent extends BaseAgent {
       const index = Number(verdict.criterion_id.slice(CRITERION_PREFIX.length));
       if (verdicts.has(index)) {
         console.warn(
-          `JudgeAgent: dropping duplicate verdict for ${verdict.criterion_id}`,
+          `JudgeAgent: duplicate verdict for ${verdict.criterion_id}, keeping the last`,
         );
-        continue;
       }
       verdicts.set(index, verdict);
     }

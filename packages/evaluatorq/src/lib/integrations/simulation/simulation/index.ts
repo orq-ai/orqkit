@@ -13,13 +13,19 @@ import type { DataPoint, Evaluator, Job, Output } from "../../../types.js";
 import { fromOrqAgent } from "../adapters.js";
 import { toOpenResponses } from "../convert.js";
 import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
-import { failureReason, getEvaluator } from "../evaluators/index.js";
+import {
+  failureReason,
+  getEvaluator,
+  unverifiedReason,
+} from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
+import { PersonaGenerator } from "../generators/persona-generator.js";
+import { ScenarioGenerator } from "../generators/scenario-generator.js";
 import {
   runSimulationInput,
   type SimulationInput,
 } from "../runner/run-input.js";
-import { errorResult, SimulationRunner } from "../runner/simulation.js";
+import { SimulationRunner } from "../runner/simulation.js";
 import {
   recordTokenUsage,
   setSpanAttrs,
@@ -48,6 +54,8 @@ export interface SimulateParams {
   model?: string;
   evaluators?: string[];
   parallelism?: number;
+  /** Limit per conversation in milliseconds. Defaults to 300_000. */
+  timeoutPerSimulation?: number;
   /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
   uploadResults?: boolean;
   /** Optional description for the evaluation run. */
@@ -104,6 +112,7 @@ async function _simulateCore(
   const {
     evaluationName,
     targetCallback,
+    agentKey,
     datapoints,
     personas,
     scenarios,
@@ -112,6 +121,7 @@ async function _simulateCore(
     evaluators: evaluatorNames,
     parallelism = 5,
     uploadResults = true,
+    timeoutPerSimulation,
     description,
     path,
     client,
@@ -159,22 +169,17 @@ async function _simulateCore(
     "orq.simulation.datapoints_count": inputs.length,
   });
 
-  // Bridge agentKey to invoke() if no callback is provided
-  let resolvedCallback = targetCallback;
-  if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqAgent(params.agentKey);
-  }
-
-  if (!resolvedCallback) {
+  if (!targetCallback && !agentKey) {
     throw new Error("Either targetCallback or agentKey is required");
   }
 
-  const runner = new SimulationRunner({
-    targetCallback: resolvedCallback,
-    model,
-    maxTurns,
-    client,
-  });
+  // The upload only reads ORQ_BASE_URL, so a staging run would land in production.
+  const routerOnly = !process.env.ORQ_BASE_URL && process.env.ROUTER_BASE_URL;
+  if (uploadResults && routerOnly) {
+    console.warn(
+      "simulate: not uploading results because only ROUTER_BASE_URL is set. Set ORQ_BASE_URL to the host instead.",
+    );
+  }
 
   const stampScores = (result: SimulationResult): void => {
     const scores: Record<string, number> = {};
@@ -192,12 +197,21 @@ async function _simulateCore(
   );
 
   const job: Job = async (data) => {
+    // A row gets its own runner because fromOrqAgent finds a conversation by
+    // its first message, which rows can share.
+    const runner = new SimulationRunner({
+      targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
+      model,
+      maxTurns,
+      client,
+    });
     const result = await runSimulationInput(
       data.inputs as unknown as SimulationInput,
       runner,
       maxTurns,
       () => firstMessages as FirstMessageGenerator,
-    );
+      timeoutPerSimulation,
+    ).finally(() => runner.close());
     stampScores(result);
     resultsByRow.set(data, result);
     return {
@@ -209,78 +223,60 @@ async function _simulateCore(
 
   // These never set `pass`: evaluatorq() exits the process when a pass is false,
   // and a low simulation score must not end the caller's process.
-  const evaluators: Evaluator[] = scorers.map(({ name }) => ({
+  const evaluators: Evaluator[] = scorers.map(({ name, fn }) => ({
     name,
     scorer: async ({ data }) => {
-      const scores = resultsByRow.get(data)?.metadata.evaluator_scores as
-        | Record<string, number>
-        | undefined;
-      return { value: scores?.[name] ?? 0 };
+      const result = resultsByRow.get(data);
+      if (!result) {
+        throw new Error(`simulate: no result to score with ${name}`);
+      }
+      const explanation = unverifiedReason(result);
+      return { value: fn(result), ...(explanation && { explanation }) };
     },
   }));
 
-  try {
-    await evaluatorq(evaluationName, {
-      data: rows,
-      jobs: [job],
-      evaluators,
-      parallelism,
-      print: false,
-      description,
-      path,
-      sendResults: uploadResults,
-      manageTracing: false,
-    });
+  await evaluatorq(evaluationName, {
+    data: rows,
+    jobs: [job],
+    evaluators,
+    parallelism,
+    print: false,
+    description,
+    path,
+    sendResults: uploadResults && !routerOnly,
+    manageTracing: false,
+  });
 
-    const results = rows.map((row, i) => {
-      const result = resultsByRow.get(row);
-      if (result) {
-        return result;
-      }
-      console.warn(`simulate: row ${i} produced no result`);
-      const input = inputs[i] as SimulationInput;
-      const missing =
-        "datapoint" in input
-          ? errorResult(
-              "Simulation produced no result",
-              input.datapoint.persona,
-              input.datapoint.scenario,
-            )
-          : errorResult(
-              "Simulation produced no result",
-              input.persona,
-              input.scenario,
-            );
-      stampScores(missing);
-      return missing;
-    });
+  const results = rows.map((row, i) => {
+    const result = resultsByRow.get(row);
+    if (result) {
+      return result;
+    }
+    throw new Error(`simulate: row ${i} produced no result`);
+  });
 
-    // Record aggregate token usage on the pipeline span
-    const totalUsage = results.reduce(
-      (acc, r) => ({
-        prompt: acc.prompt + (r.token_usage?.prompt_tokens ?? 0),
-        completion: acc.completion + (r.token_usage?.completion_tokens ?? 0),
-        total: acc.total + (r.token_usage?.total_tokens ?? 0),
-      }),
-      { prompt: 0, completion: 0, total: 0 },
-    );
-    recordTokenUsage(pipelineSpan, {
-      promptTokens: totalUsage.prompt,
-      completionTokens: totalUsage.completion,
-      totalTokens: totalUsage.total,
-    });
+  // Record aggregate token usage on the pipeline span
+  const totalUsage = results.reduce(
+    (acc, r) => ({
+      prompt: acc.prompt + (r.token_usage?.prompt_tokens ?? 0),
+      completion: acc.completion + (r.token_usage?.completion_tokens ?? 0),
+      total: acc.total + (r.token_usage?.total_tokens ?? 0),
+    }),
+    { prompt: 0, completion: 0, total: 0 },
+  );
+  recordTokenUsage(pipelineSpan, {
+    promptTokens: totalUsage.prompt,
+    completionTokens: totalUsage.completion,
+    totalTokens: totalUsage.total,
+  });
 
-    setSpanAttrs(pipelineSpan, {
-      "orq.simulation.results_count": results.length,
-      "orq.simulation.goal_achieved_count": results.filter(
-        (r) => r.goal_achieved,
-      ).length,
-    });
+  setSpanAttrs(pipelineSpan, {
+    "orq.simulation.results_count": results.length,
+    "orq.simulation.goal_achieved_count": results.filter((r) => r.goal_achieved)
+      .length,
+  });
 
-    return results;
-  } finally {
-    await runner.close();
-  }
+  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -298,6 +294,8 @@ export interface GenerateAndSimulateParams {
   model?: string;
   evaluators?: string[];
   parallelism?: number;
+  /** Limit per conversation in milliseconds. Defaults to 300_000. */
+  timeoutPerSimulation?: number;
   /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
   uploadResults?: boolean;
   /** Optional description for the evaluation run. */
@@ -323,6 +321,7 @@ export async function generateAndSimulate(
     evaluationName,
     agentDescription,
     targetCallback,
+    agentKey,
     numPersonas = 5,
     numScenarios = 5,
     maxTurns = 10,
@@ -330,51 +329,15 @@ export async function generateAndSimulate(
     evaluators,
     parallelism = 5,
     uploadResults,
+    timeoutPerSimulation,
     description,
     path,
     client,
   } = params;
 
-  // Bridge agentKey to invoke() if no callback is provided
-  let resolvedCallback = targetCallback;
-  if (!resolvedCallback && params.agentKey) {
-    resolvedCallback = fromOrqAgent(params.agentKey);
-  }
-
-  if (!resolvedCallback) {
+  if (!targetCallback && !agentKey) {
     throw new Error(
       "Either targetCallback or agentKey is required for generateAndSimulate",
-    );
-  }
-
-  // Dynamic import to avoid hard dependency on generators module
-  let PersonaGenerator: new (config?: {
-    model?: string;
-    client?: OpenAI;
-  }) => {
-    generate(params: {
-      agentDescription: string;
-      numPersonas: number;
-    }): Promise<Persona[]>;
-  };
-  let ScenarioGenerator: new (config?: {
-    model?: string;
-    client?: OpenAI;
-  }) => {
-    generate(params: {
-      agentDescription: string;
-      numScenarios: number;
-    }): Promise<Scenario[]>;
-  };
-
-  try {
-    const generators = await import("../generators/index.js");
-    PersonaGenerator = generators.PersonaGenerator;
-    ScenarioGenerator = generators.ScenarioGenerator;
-  } catch (err) {
-    throw new Error(
-      "Generators module not available. Install generators or provide pre-built datapoints using simulate() instead.",
-      { cause: err },
     );
   }
 
@@ -409,7 +372,8 @@ export async function generateAndSimulate(
         return _simulateCore(
           {
             evaluationName,
-            targetCallback: resolvedCallback,
+            targetCallback,
+            agentKey,
             personas,
             scenarios,
             maxTurns,
@@ -417,6 +381,7 @@ export async function generateAndSimulate(
             evaluators,
             parallelism,
             uploadResults,
+            timeoutPerSimulation,
             description,
             path,
             client,

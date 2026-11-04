@@ -35,12 +35,31 @@ const PERSONA_ITEM_SCHEMA = {
     },
     background: { type: "string" },
   },
-  required: ["name", "background"],
+  required: [
+    "name",
+    "patience",
+    "assertiveness",
+    "politeness",
+    "technical_level",
+    "communication_style",
+    "background",
+  ],
 };
 
-/** Clamp a number to [0, 1]. */
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value));
+const TRAITS = [
+  "patience",
+  "assertiveness",
+  "politeness",
+  "technical_level",
+] as const;
+
+/** A trait clamped to [0, 1], or null if absent or not numeric. */
+function parseTrait(value: unknown): number | null {
+  const trait =
+    typeof value === "string" && value.trim() ? Number(value) : value;
+  return typeof trait === "number" && Number.isFinite(trait)
+    ? Math.max(0, Math.min(1, trait))
+    : null;
 }
 
 const PERSONA_GENERATOR_PROMPT = `You are an expert persona designer for AI agent testing. Create realistic, memorable user personas that feel like real people, not stereotypes.
@@ -142,17 +161,30 @@ export class PersonaGenerator {
         console.warn("PersonaGenerator: dropping persona without a name");
         continue;
       }
-      const rawStyle = String(p.communication_style ?? "casual");
+      const [patience, assertiveness, politeness, technicalLevel] = TRAITS.map(
+        (trait) => parseTrait(p[trait]),
+      );
+      if (
+        patience == null ||
+        assertiveness == null ||
+        politeness == null ||
+        technicalLevel == null ||
+        !VALID_STYLES.has(String(p.communication_style)) ||
+        typeof p.background !== "string"
+      ) {
+        console.warn(
+          `PersonaGenerator: dropping persona '${p.name}' with a missing or invalid field`,
+        );
+        continue;
+      }
       personas.push({
         name: p.name,
-        patience: clamp01(Number(p.patience ?? 0.5)),
-        assertiveness: clamp01(Number(p.assertiveness ?? 0.5)),
-        politeness: clamp01(Number(p.politeness ?? 0.5)),
-        technical_level: clamp01(Number(p.technical_level ?? 0.5)),
-        communication_style: VALID_STYLES.has(rawStyle)
-          ? (rawStyle as CommunicationStyle)
-          : "casual",
-        background: String(p.background ?? ""),
+        patience,
+        assertiveness,
+        politeness,
+        technical_level: technicalLevel,
+        communication_style: p.communication_style as CommunicationStyle,
+        background: p.background,
       });
     }
     if (personas.length === 0) {

@@ -168,8 +168,8 @@ describe("SimulationRunner criteria", () => {
     expect(criteriaMetScorer(r)).toBe(0);
   });
 
-  test("a duplicate verdict keeps the first entry", async () => {
-    const { result } = runWith({
+  test("a duplicate verdict keeps the last entry", async () => {
+    const lastOccurred = runWith({
       judge: () =>
         finishTurn([
           notOccurred("criteria_0"),
@@ -177,8 +177,49 @@ describe("SimulationRunner criteria", () => {
           notOccurred("criteria_1"),
         ]),
     });
+    const lastNotOccurred = runWith({
+      judge: () =>
+        finishTurn([
+          occurred("criteria_0"),
+          notOccurred("criteria_0"),
+          notOccurred("criteria_1"),
+        ]),
+    });
 
-    expect((await result).rules_broken).toEqual(["criteria_0"]);
+    expect((await lastOccurred.result).rules_broken).toEqual([]);
+    expect((await lastNotOccurred.result).rules_broken).toEqual(["criteria_0"]);
+  });
+
+  test("a criterion the judge skipped is not met, and is marked unaudited", async () => {
+    const { result } = runWith({
+      judge: () => finishTurn([occurred("criteria_0")]),
+    });
+
+    const r = await result;
+    expect(r.criteria_verified).toBe(true);
+    expect(r.metadata.criteria_meta).toMatchObject([
+      { passed: true, audited: true },
+      { passed: true, audited: false },
+    ]);
+    expect(criteriaMetScorer(r)).toBe(0.5);
+  });
+
+  test("malformed criteria fail the run instead of rejecting", async () => {
+    const { client } = makeFakeClient();
+    const runner = new SimulationRunner({
+      targetCallback: async () => "reply",
+      client,
+    });
+
+    const r = await runner.run({
+      datapoint: {
+        ...datapoint,
+        scenario: { ...scenario, criteria: "x" as unknown as [] },
+      },
+    });
+
+    expect(r.terminated_by).toBe("error");
+    expect(criteriaMetScorer(r)).toBe(0);
   });
 });
 
@@ -200,6 +241,20 @@ describe("SimulationRunner timeout", () => {
     expect(failureReason(r)).toBe("Simulation timed out after 5ms");
     expect(criteriaMetScorer(r)).toBe(0);
   });
+
+  test("fires on a target that never answers", async () => {
+    const { client } = makeFakeClient();
+    const runner = new SimulationRunner({
+      targetCallback: () => new Promise<string>(() => {}),
+      client,
+      maxTurns: 5,
+    });
+
+    const r = await runner.runWithTimeout(datapoint, 5, 5);
+
+    expect(r.terminated_by).toBe("timeout");
+    expect(failureReason(r)).toBe("Simulation timed out after 5ms");
+  });
 });
 
 describe("SimulationRunner judge requests", () => {
@@ -220,6 +275,101 @@ describe("SimulationRunner judge requests", () => {
     expect(
       requests.judge[0]?.tools?.every((tool) => tool.strict === false),
     ).toBe(true);
+  });
+
+  test("sends the verdict schema on both judge tools", async () => {
+    const { result, requests } = runWith({
+      judge: () =>
+        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+    await result;
+
+    for (const tool of requests.judge[0]?.tools ?? []) {
+      expect(tool.parameters?.properties).toHaveProperty("criteria_verdicts");
+    }
+  });
+
+  test("finds the tool call behind a reasoning item", async () => {
+    const { result } = runWith({
+      judge: () =>
+        finishTurn([occurred("criteria_0"), notOccurred("criteria_1")]),
+      judgeResponse: (reply) => ({
+        ...reply,
+        output: [{ type: "reasoning", summary: [] }, ...reply.output],
+      }),
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("judge");
+    expect(criteriaMetScorer(r)).toBe(1);
+  });
+
+  test("a failed Responses call fails the run", async () => {
+    const { result } = runWith({
+      judgeResponse: (reply) => ({
+        ...reply,
+        status: "failed",
+        error: { code: "server_error", message: "provider fell over" },
+        output: [],
+      }),
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("error");
+    expect(failureReason(r)).toContain("provider fell over");
+  });
+
+  test("a truncated Responses call fails the run", async () => {
+    const { result } = runWith({
+      judgeResponse: (reply) => ({
+        ...reply,
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output: [],
+      }),
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("error");
+    expect(failureReason(r)).toContain("max_output_tokens");
+    expect(r.token_usage?.total_tokens).toBe(5);
+  });
+
+  test("a Responses call stopped by a content filter fails the run", async () => {
+    const { result } = runWith({
+      judgeResponse: (reply) => ({
+        ...reply,
+        status: "incomplete",
+        incomplete_details: { reason: "content_filter" },
+        output: [],
+      }),
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("error");
+    expect(failureReason(r)).toContain("content_filter");
+  });
+
+  test("a truncated simulator turn fails the run", async () => {
+    const targetSaw: string[] = [];
+    const { client } = makeFakeClient({
+      judge: () => continueTurn([notOccurred("criteria_0")]),
+      userSimulator: () => ({ content: "half a sent", finishReason: "length" }),
+    });
+    const runner = new SimulationRunner({
+      targetCallback: async (messages) => {
+        targetSaw.push(messages.at(-1)?.content ?? "");
+        return "reply";
+      },
+      client,
+      maxTurns: 3,
+    });
+
+    const r = await runner.run({ datapoint });
+
+    expect(r.terminated_by).toBe("error");
+    expect(failureReason(r)).toContain("truncated");
+    expect(targetSaw).toEqual(["I want a refund"]);
   });
 
   test("counts judge tokens reported by the Responses API", async () => {
