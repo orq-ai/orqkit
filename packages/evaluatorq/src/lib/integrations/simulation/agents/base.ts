@@ -7,11 +7,8 @@
 
 import OpenAI from "openai";
 
-import {
-  DEFAULT_SIMULATION_MODEL,
-  resolveLLMMaxTokens,
-  resolveRouterBaseUrl,
-} from "../defaults.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL, resolveLLMMaxTokens } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -19,6 +16,7 @@ import {
   withLLMSpan,
 } from "../tracing.js";
 import type { ChatMessage, TokenUsage } from "../types.js";
+import { isSchemaRejection } from "../utils/strict-schema.js";
 
 // Retry configuration
 const MAX_RETRY_ATTEMPTS = 5;
@@ -58,32 +56,44 @@ export function isRetryableStatus(status: number | undefined): boolean {
  * Send a chat request through the Responses API and return it in chat shape.
  *
  * The judge needs this: a model that reasons by default answers function tools
- * on chat completions with a 400.
+ * on chat completions with a 400. A 400 rejecting the strict schema retries once
+ * without strict, for models that reject it.
  */
 async function createViaResponses(
   client: OpenAI,
   params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
   requestOptions: OpenAI.RequestOptions,
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
-  const response = await client.responses.create(
-    {
-      model: params.model,
-      input: params.messages as OpenAI.Responses.ResponseInput,
-      temperature: params.temperature,
-      max_output_tokens: params.max_tokens,
-      tools: params.tools?.map((tool) => ({
-        type: "function" as const,
-        name: tool.function.name,
-        description: tool.function.description,
-        parameters: tool.function.parameters ?? null,
-        // Responses defaults to strict, which the judge's optional fields fail.
-        strict: false,
-      })),
-      tool_choice:
-        params.tool_choice as OpenAI.Responses.ResponseCreateParams["tool_choice"],
-    },
-    requestOptions,
-  );
+  const tools = params.tools?.map((tool) => ({
+    type: "function" as const,
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters ?? null,
+    strict: tool.function.strict ?? false,
+  }));
+  const send = (sentTools: typeof tools) =>
+    client.responses.create(
+      {
+        model: params.model,
+        input: params.messages as OpenAI.Responses.ResponseInput,
+        temperature: params.temperature,
+        max_output_tokens: params.max_tokens,
+        tools: sentTools,
+        tool_choice:
+          params.tool_choice as OpenAI.Responses.ResponseCreateParams["tool_choice"],
+      },
+      requestOptions,
+    );
+
+  const response = await send(tools).catch((err: unknown) => {
+    if (!tools || !isSchemaRejection(err)) {
+      throw err;
+    }
+    console.warn(
+      `Model ${params.model} rejected strict tools, retrying without strict: ${(err as Error).message}`,
+    );
+    return send(tools.map((tool) => ({ ...tool, strict: false })));
+  });
 
   // These arrive as a 200, so the status check is what stops a partial output
   // from being read as the judge's decision.
@@ -166,22 +176,8 @@ export abstract class BaseAgent {
   constructor(config?: AgentConfig) {
     this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
 
-    if (config?.client) {
-      this.client = config.client;
-      this.clientOwned = false;
-    } else {
-      const resolvedApiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!resolvedApiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey in AgentConfig.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: resolveRouterBaseUrl(),
-        apiKey: resolvedApiKey,
-      });
-      this.clientOwned = true;
-    }
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
+    this.clientOwned = !config?.client;
 
     this.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   }

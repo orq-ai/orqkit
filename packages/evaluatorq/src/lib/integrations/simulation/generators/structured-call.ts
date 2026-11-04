@@ -1,11 +1,12 @@
 /**
  * Shared LLM call for generators that return a JSON list.
  *
- * Asks for a JSON schema response and raises instead of returning an empty
- * list, so a failed generation cannot pass as a run with nothing to test.
+ * Asks for a strict JSON schema response and raises instead of returning an
+ * empty list, so a failed generation cannot pass as a run with nothing to test.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { z } from "zod/v4";
 
 import {
   getTraceContextHeaders,
@@ -14,6 +15,7 @@ import {
   withLLMSpan,
 } from "../tracing.js";
 import { extractJsonFromResponse } from "../utils/extract-json.js";
+import { isSchemaRejection, toStrictSchema } from "../utils/strict-schema.js";
 
 const TIMEOUT_MS = 300_000;
 
@@ -44,7 +46,7 @@ export interface JsonListRequest {
   purpose: string;
   /** Key the schema wraps the list under, since schemas need an object root. */
   listKey: string;
-  itemSchema: Record<string, unknown>;
+  itemSchema: z.ZodObject;
   /** Used in error messages, e.g. "PersonaGenerator". */
   label: string;
 }
@@ -52,8 +54,9 @@ export interface JsonListRequest {
 /**
  * Request a JSON list from the LLM.
  *
- * A 400 retries once without response_format, for models that reject it. The
- * prompts still ask for JSON, so the plain response is parsed the same way.
+ * A 400 rejecting the schema steps down from strict to the same schema without
+ * strict, then to no response_format. The prompts still ask for JSON, and each
+ * generator checks every item by hand, because the last step enforces nothing.
  * A truncated response is never retried: the same limit would truncate again.
  */
 export async function requestJsonList(
@@ -94,40 +97,37 @@ export async function requestJsonList(
           max_tokens: maxTokens,
         };
 
-      let res: OpenAI.Chat.Completions.ChatCompletion;
-      try {
-        res = await client.chat.completions.create(
-          {
-            ...params,
-            response_format: {
-              type: "json_schema",
-              json_schema: {
-                name: listKey,
-                strict: false,
-                schema: {
-                  type: "object",
-                  properties: {
-                    [listKey]: { type: "array", items: itemSchema },
-                  },
-                  required: [listKey],
-                },
-              },
-            },
-          },
+      const schema = toStrictSchema(
+        z.object({ [listKey]: z.array(itemSchema) }),
+      );
+      const send = (
+        response_format?: OpenAI.ResponseFormatJSONSchema,
+      ): Promise<OpenAI.Chat.Completions.ChatCompletion> =>
+        client.chat.completions.create(
+          response_format ? { ...params, response_format } : params,
           { headers: traceHeaders, timeout: TIMEOUT_MS },
         );
-      } catch (err) {
-        if (!(err instanceof OpenAI.APIError) || err.status !== 400) {
-          throw err;
-        }
-        console.warn(
-          `${label}: model rejected response_format, retrying without it: ${err.message}`,
-        );
-        res = await client.chat.completions.create(params, {
-          headers: traceHeaders,
-          timeout: TIMEOUT_MS,
-        });
-      }
+      const withSchema = (
+        strict: boolean,
+      ): OpenAI.ResponseFormatJSONSchema => ({
+        type: "json_schema",
+        json_schema: { name: listKey, strict, schema },
+      });
+      const stepDown =
+        (next: string) =>
+        (err: unknown): undefined => {
+          if (!isSchemaRejection(err)) {
+            throw err;
+          }
+          console.warn(
+            `${label}: model rejected response_format, retrying ${next}: ${(err as Error).message}`,
+          );
+        };
+
+      const res =
+        (await send(withSchema(true)).catch(stepDown("without strict"))) ??
+        (await send(withSchema(false)).catch(stepDown("without a schema"))) ??
+        (await send());
 
       recordLLMResponse(llmSpan, res);
       return res;
@@ -139,6 +139,11 @@ export async function requestJsonList(
     throw new SimulationGenerationError(
       `${label}: response truncated at max_tokens=${maxTokens}`,
     );
+  }
+
+  const refusal = choice?.message.refusal;
+  if (refusal) {
+    throw new SimulationGenerationError(`${label}: model refused: ${refusal}`);
   }
 
   const content = choice?.message.content;

@@ -266,15 +266,6 @@ export interface Judgment {
 }
 
 // ---------------------------------------------------------------------------
-// Message
-// ---------------------------------------------------------------------------
-
-export interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
-
-// ---------------------------------------------------------------------------
 // TurnMetrics
 // ---------------------------------------------------------------------------
 
@@ -295,7 +286,7 @@ export interface TurnMetrics {
 export type TerminatedBy = "judge" | "max_turns" | "error" | "timeout";
 
 export interface SimulationResult {
-  messages: Message[];
+  messages: ChatMessage[];
   terminated_by: TerminatedBy;
   reason: string;
   goal_achieved: boolean;

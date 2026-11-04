@@ -4,9 +4,11 @@
  * Generates test scenarios from agent descriptions and optional context.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { z } from "zod/v4";
 
-import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import { withSimulationSpan } from "../tracing.js";
 import type {
   ConversationStrategy,
@@ -29,14 +31,14 @@ const TEMPERATURE_EDGE_CASE = 0.9;
 const scenarioTokenBudget = (numScenarios: number) =>
   tokenBudgetForItems(numScenarios, 500, 6000);
 
-const EMOTIONS: StartingEmotion[] = [
+const EMOTIONS = [
   "neutral",
   "frustrated",
   "confused",
   "happy",
   "urgent",
-];
-const STRATEGIES: ConversationStrategy[] = [
+] as const satisfies readonly StartingEmotion[];
+const STRATEGIES = [
   "cooperative",
   "topic_switching",
   "contradictory",
@@ -44,38 +46,30 @@ const STRATEGIES: ConversationStrategy[] = [
   "evasive",
   "repetitive",
   "ambiguous",
-];
-const VALID_EMOTIONS = new Set<string>(EMOTIONS);
-const VALID_STRATEGIES = new Set<string>(STRATEGIES);
-const VALID_CRITERION_TYPES = new Set<string>([
+] as const satisfies readonly ConversationStrategy[];
+const CRITERION_TYPES = [
   "must_happen",
   "must_not_happen",
-]);
+] as const satisfies readonly Criterion["type"][];
+const VALID_EMOTIONS = new Set<string>(EMOTIONS);
+const VALID_STRATEGIES = new Set<string>(STRATEGIES);
+const VALID_CRITERION_TYPES = new Set<string>(CRITERION_TYPES);
 
-const SCENARIO_ITEM_SCHEMA = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    goal: { type: "string" },
-    context: { type: "string" },
-    starting_emotion: { type: "string", enum: EMOTIONS },
-    criteria: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          description: { type: "string" },
-          type: { type: "string", enum: ["must_happen", "must_not_happen"] },
-          evaluator: { type: ["string", "null"] },
-        },
-        required: ["description", "type"],
-      },
-    },
-    is_edge_case: { type: "boolean" },
-    conversation_strategy: { type: "string", enum: STRATEGIES },
-  },
-  required: ["name", "goal", "criteria"],
-};
+const SCENARIO_ITEM_SCHEMA = z.object({
+  name: z.string(),
+  goal: z.string(),
+  context: z.string(),
+  starting_emotion: z.enum(EMOTIONS),
+  criteria: z.array(
+    z.object({
+      description: z.string(),
+      type: z.enum(CRITERION_TYPES),
+      evaluator: z.string().nullable(),
+    }),
+  ),
+  is_edge_case: z.boolean(),
+  conversation_strategy: z.enum(STRATEGIES).nullable(),
+});
 
 const SCENARIO_GENERATOR_PROMPT = `You are an expert test scenario designer for AI agent evaluation. Create realistic, testable scenarios that thoroughly evaluate agent capabilities.
 
@@ -249,7 +243,7 @@ function parseScenarios(
     ).map((c) => ({
       description: c.description as string,
       type: c.type as "must_happen" | "must_not_happen",
-      evaluator: (c.evaluator as string | null) ?? null,
+      evaluator: typeof c.evaluator === "string" ? c.evaluator : null,
     }));
 
     const emotion = sDict.starting_emotion ?? undefined;
@@ -294,20 +288,7 @@ export class ScenarioGenerator {
 
   constructor(config?: ScenarioGeneratorConfig) {
     this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    if (config?.client) {
-      this.client = config.client;
-    } else {
-      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: resolveRouterBaseUrl(),
-        apiKey,
-      });
-    }
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
   }
 
   private async requestScenarios(params: {

@@ -4,9 +4,11 @@
  * Generates user personas from agent descriptions and optional context.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { z } from "zod/v4";
 
-import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import { withSimulationSpan } from "../tracing.js";
 import type { CommunicationStyle, Persona } from "../types.js";
 import { delimit } from "../utils/sanitize.js";
@@ -23,32 +25,23 @@ const TEMPERATURE_BALANCED = 0.7;
 const personaTokenBudget = (numPersonas: number) =>
   tokenBudgetForItems(numPersonas, 600, 4000);
 
-const VALID_STYLES = new Set<string>(["formal", "casual", "terse", "verbose"]);
+const STYLES = [
+  "formal",
+  "casual",
+  "terse",
+  "verbose",
+] as const satisfies readonly CommunicationStyle[];
+const VALID_STYLES = new Set<string>(STYLES);
 
-const PERSONA_ITEM_SCHEMA = {
-  type: "object",
-  properties: {
-    name: { type: "string" },
-    patience: { type: "number" },
-    assertiveness: { type: "number" },
-    politeness: { type: "number" },
-    technical_level: { type: "number" },
-    communication_style: {
-      type: "string",
-      enum: ["formal", "casual", "terse", "verbose"],
-    },
-    background: { type: "string" },
-  },
-  required: [
-    "name",
-    "patience",
-    "assertiveness",
-    "politeness",
-    "technical_level",
-    "communication_style",
-    "background",
-  ],
-};
+const PERSONA_ITEM_SCHEMA = z.object({
+  name: z.string(),
+  patience: z.number(),
+  assertiveness: z.number(),
+  politeness: z.number(),
+  technical_level: z.number(),
+  communication_style: z.enum(STYLES),
+  background: z.string(),
+});
 
 const TRAITS = [
   "patience",
@@ -137,20 +130,7 @@ export class PersonaGenerator {
 
   constructor(config?: PersonaGeneratorConfig) {
     this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    if (config?.client) {
-      this.client = config.client;
-    } else {
-      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: resolveRouterBaseUrl(),
-        apiKey,
-      });
-    }
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
   }
 
   /**

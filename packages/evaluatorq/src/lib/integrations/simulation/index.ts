@@ -65,8 +65,7 @@ export type {
 // --- Runner (advanced usage) ---
 export { SimulationRunner } from "./runner/simulation.js";
 // --- Schemas ---
-// Zod schemas are NOT re-exported here to avoid requiring zod at import time.
-// Import from "@orq-ai/evaluatorq/simulation/schemas" instead.
+// Zod schemas have their own entry point: "@orq-ai/evaluatorq/simulation/schemas".
 export type {
   GenerateAndSimulateParams,
   SimulateParams,
@@ -76,6 +75,7 @@ export { generateAndSimulate, simulate } from "./simulation/index.js";
 // --- Types ---
 export type {
   ChatMessage,
+  ChatMessage as SimulationMessage,
   CommunicationStyle,
   ConversationStrategy,
   CriteriaMeta,
@@ -86,7 +86,6 @@ export type {
   EmotionalArc,
   InputFormat,
   Judgment,
-  Message as SimulationMessage,
   Persona,
   Scenario,
   SimulationResult,

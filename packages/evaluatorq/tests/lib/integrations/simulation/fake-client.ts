@@ -1,4 +1,33 @@
+import { expect } from "bun:test";
+
 import OpenAI from "openai";
+
+/**
+ * What strict mode demands of a schema: closed objects, every property required,
+ * and null spelled as a type. The `nullable` keyword looks valid, but models
+ * ignore it and invent a value instead of answering null.
+ */
+export function expectStrictSchema(schema: unknown): void {
+  if (Array.isArray(schema)) {
+    for (const item of schema) expectStrictSchema(item);
+    return;
+  }
+  if (typeof schema !== "object" || schema === null) return;
+
+  const node = schema as Record<string, unknown>;
+  expect(node).not.toHaveProperty("nullable");
+  expect(node).not.toHaveProperty("$schema");
+  if (node.type === "object") {
+    const keys = Object.keys(node.properties as object).sort();
+    expect([...(node.required as string[])].sort()).toEqual(keys);
+    expect(node.additionalProperties).toBe(false);
+    for (const value of Object.values(node.properties as object)) {
+      expectStrictSchema(value);
+    }
+  }
+  expectStrictSchema(node.items);
+  expectStrictSchema(node.anyOf);
+}
 
 type Request = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
 
@@ -13,7 +42,7 @@ export interface JudgeRequest {
     type: string;
     name: string;
     strict?: boolean;
-    parameters?: { properties?: Record<string, unknown> };
+    parameters?: { properties?: Record<string, unknown>; required?: string[] };
   }[];
 }
 

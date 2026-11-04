@@ -274,7 +274,7 @@ describe("SimulationRunner judge requests", () => {
       "finish_conversation",
     ]);
     expect(
-      requests.judge[0]?.tools?.every((tool) => tool.strict === false),
+      requests.judge[0]?.tools?.every((tool) => tool.strict === true),
     ).toBe(true);
   });
 

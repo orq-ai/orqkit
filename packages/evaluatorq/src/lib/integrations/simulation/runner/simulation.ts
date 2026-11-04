@@ -5,17 +5,18 @@
  * and judge agent.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
 
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
+import { createRouterClient } from "../client.js";
 import { inConversation } from "../conversation.js";
 import {
   buildCriteriaMeta,
   buildCriteriaResults,
   CriteriaTracker,
 } from "../criteria.js";
-import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import {
   recordLLMInput,
   recordLLMOutput,
@@ -27,7 +28,6 @@ import type {
   ChatMessage,
   Datapoint,
   Judgment,
-  Message,
   Persona,
   Scenario,
   SimulationResult,
@@ -138,7 +138,9 @@ export function timedOutResult(
  * target's replies must reach it as user turns. Without the swap the model
  * sees itself as the support agent and answers as one.
  */
-export function invertRolesForSimulator(messages: Message[]): ChatMessage[] {
+export function invertRolesForSimulator(
+  messages: ChatMessage[],
+): ChatMessage[] {
   return messages.map((m) => {
     if (m.role === "user") return { role: "assistant", content: m.content };
     if (m.role === "assistant") return { role: "user", content: m.content };
@@ -148,7 +150,7 @@ export function invertRolesForSimulator(messages: Message[]): ChatMessage[] {
 
 function maxTurnsResult(
   maxTurns: number,
-  messages: Message[],
+  messages: ChatMessage[],
   turnMetrics: TurnMetrics[],
   tokenUsage: TokenUsage,
   tracker: CriteriaTracker,
@@ -218,18 +220,7 @@ export class SimulationRunner {
     if (this.injectedClient) {
       return this.injectedClient;
     }
-    if (!this.sharedClient) {
-      const apiKey = process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass a pre-configured client.",
-        );
-      }
-      this.sharedClient = new OpenAI({
-        apiKey,
-        baseURL: resolveRouterBaseUrl(),
-      });
-    }
+    this.sharedClient ??= createRouterClient();
     return this.sharedClient;
   }
 
@@ -259,7 +250,7 @@ export class SimulationRunner {
 
     const maxTurns = params.maxTurns ?? this.maxTurns;
 
-    const messages: Message[] = [];
+    const messages: ChatMessage[] = [];
     const turnMetricsList: TurnMetrics[] = [];
 
     // Declare usage helper references — initialized inside try after agents are created

@@ -6,6 +6,7 @@
  */
 
 import type OpenAI from "openai";
+import { z } from "zod/v4";
 
 import { criterionIdFor } from "../criteria.js";
 import type {
@@ -15,126 +16,118 @@ import type {
   Judgment,
 } from "../types.js";
 import { delimit } from "../utils/sanitize.js";
+import { toStrictSchema } from "../utils/strict-schema.js";
 import type { AgentConfig, LLMResult } from "./base.js";
 import { BaseAgent } from "./base.js";
 
 // ---------------------------------------------------------------------------
-// Quality score property definitions (shared by both judge tools)
+// Fields shared by both judge tools
 // ---------------------------------------------------------------------------
 
-const QUALITY_SCORE_PROPERTIES = {
-  response_quality: {
-    type: "number" as const,
-    description:
-      "Quality of the agent's last response: helpful, accurate, complete (0.0=poor, 1.0=excellent)",
-  },
-  hallucination_risk: {
-    type: "number" as const,
-    description:
-      "Risk that the agent fabricated information not grounded in the conversation (0.0=none, 1.0=high risk)",
-  },
-  tone_appropriateness: {
-    type: "number" as const,
-    description:
-      "How appropriate the agent's tone was for the situation (0.0=inappropriate, 1.0=perfect)",
-  },
-  factual_accuracy: {
-    type: "number" as const,
-    description:
-      "Accuracy of the agent's response against the provided ground truth (0.0=completely wrong, 1.0=fully correct). Only score this if ground truth is provided.",
-  },
+const QUALITY_SCORES = {
+  response_quality: z
+    .number()
+    .nullable()
+    .describe(
+      "Quality of the agent's last response: helpful, accurate, complete (0.0=poor, 1.0=excellent). Null if not scored.",
+    ),
+  hallucination_risk: z
+    .number()
+    .nullable()
+    .describe(
+      "Risk that the agent fabricated information not grounded in the conversation (0.0=none, 1.0=high risk). Null if not scored.",
+    ),
+  tone_appropriateness: z
+    .number()
+    .nullable()
+    .describe(
+      "How appropriate the agent's tone was for the situation (0.0=inappropriate, 1.0=perfect). Null if not scored.",
+    ),
+  factual_accuracy: z
+    .number()
+    .nullable()
+    .describe(
+      "Accuracy of the agent's response against the provided ground truth (0.0=completely wrong, 1.0=fully correct). Null if no ground truth is provided.",
+    ),
 };
 
-const CRITERIA_VERDICTS_PROPERTY = {
-  type: "array" as const,
-  description:
-    "Occurrence audit. One entry for every criterion listed under EVALUATION CRITERIA, no omissions. Skip any criterion listed as ALREADY CONFIRMED in the final user message; those are settled and re-reporting them changes nothing. Send [] when that leaves nothing to report. Report only what literally happened in the conversation so far; do NOT judge whether that is good or bad.",
-  items: {
-    type: "object" as const,
-    properties: {
-      criterion_id: {
-        type: "string" as const,
-        description: "The criterion ID, copied exactly as listed",
-      },
-      occurred: {
-        type: "boolean" as const,
-        description:
+const CRITERIA_VERDICTS = z
+  .array(
+    z.object({
+      criterion_id: z
+        .string()
+        .describe("The criterion ID, copied exactly as listed"),
+      occurred: z
+        .boolean()
+        .describe(
           "Whether the described event has happened in the conversation so far",
-      },
-      evidence: {
-        type: "string" as const,
-        description: "Short quote from the conversation when occurred is true",
-      },
-    },
-    required: ["criterion_id", "occurred"],
-  },
-};
+        ),
+      evidence: z
+        .string()
+        .nullable()
+        .describe(
+          "Short quote from the conversation when occurred is true, otherwise null",
+        ),
+    }),
+  )
+  .describe(
+    "Occurrence audit. One entry for every criterion listed under EVALUATION CRITERIA, no omissions. Skip any criterion listed as ALREADY CONFIRMED in the final user message; those are settled and re-reporting them changes nothing. Send [] when that leaves nothing to report. Report only what literally happened in the conversation so far; do NOT judge whether that is good or bad.",
+  );
 
 // ---------------------------------------------------------------------------
 // Judge tools for structured decision making
 // ---------------------------------------------------------------------------
 
+const judgeTool = (
+  name: string,
+  description: string,
+  parameters: z.ZodObject,
+): OpenAI.Chat.Completions.ChatCompletionTool => ({
+  type: "function",
+  function: {
+    name,
+    description,
+    strict: true,
+    parameters: toStrictSchema(parameters),
+  },
+});
+
 export const JUDGE_TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "continue_conversation",
-      description:
-        "Allow the conversation to continue. Use when the goal is not yet achieved and no must_not_happen criterion has occurred.",
-      parameters: {
-        type: "object",
-        properties: {
-          reason: {
-            type: "string",
-            description:
-              "Brief explanation of why the conversation should continue",
-          },
-          goal_completion_score: {
-            type: "number",
-            description:
-              "How much of the goal is achieved SO FAR, from 0.0 (none) to 1.0 (fully). Assess every turn: if the run hits max turns this is the final score.",
-          },
-          criteria_verdicts: CRITERIA_VERDICTS_PROPERTY,
-          ...QUALITY_SCORE_PROPERTIES,
-        },
-        required: ["reason", "criteria_verdicts"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "finish_conversation",
-      description:
-        "Terminate the conversation. Use when the goal is achieved OR a must_not_happen criterion has occurred.",
-      parameters: {
-        type: "object",
-        properties: {
-          reason: {
-            type: "string",
-            description: "Explanation of why the conversation should end",
-          },
-          goal_achieved: {
-            type: "boolean",
-            description: "Whether the user's goal was successfully achieved",
-          },
-          goal_completion_score: {
-            type: "number",
-            description:
-              "How much of the goal was achieved, from 0.0 (none) to 1.0 (fully achieved). Use intermediate values for partial completion.",
-          },
-          criteria_verdicts: CRITERIA_VERDICTS_PROPERTY,
-          ...QUALITY_SCORE_PROPERTIES,
-        },
-        required: [
-          "reason",
-          "goal_achieved",
-          "goal_completion_score",
-          "criteria_verdicts",
-        ],
-      },
-    },
-  },
+  judgeTool(
+    "continue_conversation",
+    "Allow the conversation to continue. Use when the goal is not yet achieved and no must_not_happen criterion has occurred.",
+    z.object({
+      reason: z
+        .string()
+        .describe("Brief explanation of why the conversation should continue"),
+      goal_completion_score: z
+        .number()
+        .describe(
+          "How much of the goal is achieved SO FAR, from 0.0 (none) to 1.0 (fully). Assess every turn: if the run hits max turns this is the final score.",
+        ),
+      criteria_verdicts: CRITERIA_VERDICTS,
+      ...QUALITY_SCORES,
+    }),
+  ),
+  judgeTool(
+    "finish_conversation",
+    "Terminate the conversation. Use when the goal is achieved OR a must_not_happen criterion has occurred.",
+    z.object({
+      reason: z
+        .string()
+        .describe("Explanation of why the conversation should end"),
+      goal_achieved: z
+        .boolean()
+        .describe("Whether the user's goal was successfully achieved"),
+      goal_completion_score: z
+        .number()
+        .describe(
+          "How much of the goal was achieved, from 0.0 (none) to 1.0 (fully achieved). Use intermediate values for partial completion.",
+        ),
+      criteria_verdicts: CRITERIA_VERDICTS,
+      ...QUALITY_SCORES,
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -165,14 +158,14 @@ Decision rules:
 CRITERIA AUDIT (required in every tool call):
 - Send exactly one criteria_verdicts entry for every criterion ID, except those listed as ALREADY CONFIRMED in the final user message.
 - Report OCCURRENCE only: occurred=true if the described event happened in the conversation so far, occurred=false if it has not. Answer identically for must_happen and must_not_happen; pass or fail is computed elsewhere.
-- Quote the conversation in \`evidence\` when occurred=true.
+- Quote the conversation in \`evidence\` when occurred=true, otherwise use null.
 - Judge the literal transcript. Do not credit intent or plans.
 
 For EVERY evaluation (continue or finish), also assess the agent's LAST response:
 - response_quality: How helpful, accurate, and complete was the response? (0.0=poor, 1.0=excellent)
 - hallucination_risk: Did the agent make up information not grounded in the conversation? (0.0=none, 1.0=high risk)
 - tone_appropriateness: Was the agent's tone appropriate for the situation? (0.0=inappropriate, 1.0=perfect)
-- factual_accuracy: If GROUND TRUTH is provided below, score how accurate the agent's response is against it (0.0=wrong, 1.0=correct). Skip if no ground truth.
+- factual_accuracy: If GROUND TRUTH is provided below, score how accurate the agent's response is against it (0.0=wrong, 1.0=correct). Use null if no ground truth.
 
 You MUST call one of the provided tools to make your decision.`;
 
@@ -335,7 +328,7 @@ export class JudgeAgent extends BaseAgent {
     }
 
     // Extract quality scores (shared by both tools)
-    const qualityScores = JudgeAgent.extractQualityScores(args);
+    const qualityScores = this.extractQualityScores(args);
 
     if (functionName === "continue_conversation") {
       const verdicts = this.parseVerdicts(args.criteria_verdicts);
@@ -488,18 +481,21 @@ export class JudgeAgent extends BaseAgent {
   /**
    * Extract and clamp quality scores from tool call arguments.
    */
-  private static extractQualityScores(
+  private extractQualityScores(
     args: Record<string, unknown>,
   ): Partial<Pick<Judgment, QualityScoreField>> {
     const scores: Partial<Pick<Judgment, QualityScoreField>> = {};
 
     for (const field of QUALITY_SCORE_FIELDS) {
+      // With no ground truth there is nothing to measure this against.
+      if (field === "factual_accuracy" && !this.groundTruth) continue;
       const raw = args[field];
-      if (raw !== undefined && raw !== null) {
-        const num = Number(raw);
-        if (!Number.isNaN(num)) {
-          scores[field] = clamp(num);
-        }
+      const num =
+        typeof raw === "string" && !raw.trim()
+          ? Number.NaN
+          : toNumber(raw, Number.NaN);
+      if (!Number.isNaN(num)) {
+        scores[field] = clamp(num);
       }
     }
 

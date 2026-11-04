@@ -9,7 +9,8 @@ import {
   ScenarioGenerator,
   SimulationGenerationError,
 } from "../../../../src/lib/integrations/simulation/generators/index.js";
-import { makeFakeClient } from "./fake-client.js";
+import { isSchemaRejection } from "../../../../src/lib/integrations/simulation/utils/strict-schema.js";
+import { expectStrictSchema, makeFakeClient } from "./fake-client.js";
 
 const validPersona = {
   name: "Dana",
@@ -39,6 +40,17 @@ function personaGenerator(content: string, finishReason?: string) {
   });
   return new PersonaGenerator({ client });
 }
+
+type SchemaNode = {
+  enum?: string[];
+  anyOf?: { type: string }[];
+  required?: string[];
+  items?: SchemaNode;
+  properties?: Record<string, SchemaNode>;
+};
+
+const REJECTED_SCHEMA =
+  "Invalid schema for response_format 'personas': In context=(), 'additionalProperties' is required to be supplied and to be false.";
 
 const generateOne = (generator: PersonaGenerator) =>
   generator.generate({ agentDescription: "A support bot", numPersonas: 1 });
@@ -82,20 +94,27 @@ describe("PersonaGenerator", () => {
     );
   });
 
-  test("retries once without response_format on a 400", async () => {
-    const seen: unknown[] = [];
+  const rejectingClient = (
+    rejects: (
+      format: { json_schema?: { strict?: boolean } } | undefined,
+    ) => boolean,
+  ) => {
+    const seen: (
+      | { json_schema?: { strict?: boolean; schema?: unknown } }
+      | undefined
+    )[] = [];
     const timeouts: unknown[] = [];
     const create = async (
-      request: { response_format?: unknown },
+      request: { response_format?: { json_schema?: { strict?: boolean } } },
       options: { timeout?: number },
     ) => {
       seen.push(request.response_format);
       timeouts.push(options.timeout);
-      if (request.response_format) {
+      if (rejects(request.response_format)) {
         throw new OpenAI.APIError(
           400,
-          { message: "unsupported" },
-          "unsupported",
+          { message: REJECTED_SCHEMA },
+          REJECTED_SCHEMA,
           {},
         );
       }
@@ -109,13 +128,163 @@ describe("PersonaGenerator", () => {
       };
     };
     const client = { chat: { completions: { create } } } as unknown as OpenAI;
+    return { client, seen, timeouts };
+  };
+
+  test("stops at the strict schema when the model accepts it", async () => {
+    const { client, seen } = rejectingClient(() => false);
+
+    await generateOne(new PersonaGenerator({ client }));
+
+    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([true]);
+  });
+
+  test("a 400 on strict retries with the same schema, not strict", async () => {
+    const { client, seen } = rejectingClient(
+      (format) => format?.json_schema?.strict === true,
+    );
 
     const personas = await generateOne(new PersonaGenerator({ client }));
 
     expect(personas).toHaveLength(1);
+    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([
+      true,
+      false,
+    ]);
+    expect(seen[1]?.json_schema?.schema).toEqual(seen[0]?.json_schema?.schema);
+  });
+
+  test("a 400 on any schema retries without response_format", async () => {
+    const { client, seen, timeouts } = rejectingClient(
+      (format) => format !== undefined,
+    );
+
+    const personas = await generateOne(new PersonaGenerator({ client }));
+
+    expect(personas).toHaveLength(1);
+    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([
+      true,
+      false,
+      undefined,
+    ]);
+    expect(seen[2]).toBeUndefined();
+    expect(timeouts).toEqual([300_000, 300_000, 300_000]);
+  });
+
+  test("a 400 with no response_format raises", async () => {
+    const { client, seen } = rejectingClient(() => true);
+
+    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
+      "Invalid schema",
+    );
+    expect(seen).toHaveLength(3);
+  });
+
+  test("a 400 that does not name the schema raises without a retry", async () => {
+    const seen: unknown[] = [];
+    const message = "This model's maximum context length is 8192 tokens";
+    const create = async (request: { response_format?: unknown }) => {
+      seen.push(request.response_format);
+      throw new OpenAI.APIError(400, { message }, message, {});
+    };
+    const client = { chat: { completions: { create } } } as unknown as OpenAI;
+
+    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
+      "maximum context length",
+    );
+    expect(seen).toHaveLength(1);
+  });
+
+  test("a step down names the reason in a warning", async () => {
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    const { client } = rejectingClient(
+      (format) => format?.json_schema?.strict === true,
+    );
+
+    await generateOne(new PersonaGenerator({ client }));
+
+    expect(String(warn.mock.calls[0]?.[0])).toContain(
+      "retrying without strict",
+    );
+    expect(String(warn.mock.calls[0]?.[0])).toContain("Invalid schema");
+    warn.mockRestore();
+  });
+
+  test("an error other than a 400 on the second step raises", async () => {
+    const seen: unknown[] = [];
+    const create = async (request: {
+      response_format?: { json_schema?: { strict?: boolean } };
+    }) => {
+      seen.push(request.response_format);
+      if (request.response_format?.json_schema?.strict) {
+        throw new OpenAI.APIError(
+          400,
+          { message: REJECTED_SCHEMA },
+          REJECTED_SCHEMA,
+          {},
+        );
+      }
+      throw new OpenAI.APIError(500, { message: "boom" }, "boom", {});
+    };
+    const client = { chat: { completions: { create } } } as unknown as OpenAI;
+
+    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
+      "boom",
+    );
     expect(seen).toHaveLength(2);
-    expect(seen[1]).toBeUndefined();
-    expect(timeouts).toEqual([300_000, 300_000]);
+  });
+
+  test("a refusal is reported as a refusal, not as an empty response", async () => {
+    const create = async () => ({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { content: null, refusal: "I cannot write these" },
+        },
+      ],
+    });
+    const client = { chat: { completions: { create } } } as unknown as OpenAI;
+
+    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
+      "model refused: I cannot write these",
+    );
+  });
+
+  test("an error other than a 400 raises without a retry", async () => {
+    const seen: unknown[] = [];
+    const create = async (request: { response_format?: unknown }) => {
+      seen.push(request.response_format);
+      throw new OpenAI.APIError(500, { message: "boom" }, "boom", {});
+    };
+    const client = { chat: { completions: { create } } } as unknown as OpenAI;
+
+    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
+      "boom",
+    );
+    expect(seen).toHaveLength(1);
+  });
+
+  test("asks for a strict schema every model can enforce", async () => {
+    const { client, requests } = makeFakeClient({
+      generator: () => ({ content: JSON.stringify([validPersona]) }),
+    });
+    await generateOne(new PersonaGenerator({ client }));
+
+    const format = requests.generator[0]?.response_format as {
+      json_schema: { name: string; strict: boolean; schema: unknown };
+    };
+    expect(format.json_schema.name).toBe("personas");
+    expect(format.json_schema.strict).toBe(true);
+    expectStrictSchema(format.json_schema.schema);
+
+    const item = (format.json_schema.schema as SchemaNode).properties?.personas
+      ?.items;
+    expect(item?.properties?.communication_style?.enum).toEqual([
+      "formal",
+      "casual",
+      "terse",
+      "verbose",
+    ]);
   });
 });
 
@@ -319,8 +488,68 @@ describe("ScenarioGenerator criteria", () => {
     });
 
     expect(JSON.stringify(requests.generator[0]?.response_format)).toContain(
-      '"required":["name","goal","criteria"]',
+      '"required":["name","goal","context","starting_emotion","criteria","is_edge_case","conversation_strategy"]',
     );
+  });
+
+  test("asks for a strict schema every model can enforce", async () => {
+    const { client, requests } = makeFakeClient({
+      generator: () => ({
+        content: JSON.stringify([{ name: "S", goal: "G", criteria: [] }]),
+      }),
+    });
+    await new ScenarioGenerator({ client }).generate({
+      agentDescription: "A support bot",
+      numScenarios: 1,
+    });
+
+    const format = requests.generator[0]?.response_format as {
+      json_schema: { name: string; strict: boolean; schema: unknown };
+    };
+    expect(format.json_schema.name).toBe("scenarios");
+    expect(format.json_schema.strict).toBe(true);
+    expectStrictSchema(format.json_schema.schema);
+
+    const item = (format.json_schema.schema as SchemaNode).properties?.scenarios
+      ?.items;
+    const criterion = item?.properties?.criteria?.items;
+    expect(item?.required).toContain("criteria");
+    expect(criterion?.properties?.type?.enum).toEqual([
+      "must_happen",
+      "must_not_happen",
+    ]);
+    expect(
+      criterion?.properties?.evaluator?.anyOf?.map((option) => option.type),
+    ).toEqual(["string", "null"]);
+  });
+
+  test("reads a null strategy and evaluator as unset", async () => {
+    const [scenario] = await generateWith({
+      context: "Bought headphones",
+      starting_emotion: "neutral",
+      is_edge_case: false,
+      conversation_strategy: null,
+      criteria: [
+        {
+          description: "offers a refund",
+          type: "must_happen",
+          evaluator: null,
+        },
+      ],
+    });
+
+    expect(scenario?.conversation_strategy).toBeUndefined();
+    expect(scenario?.criteria?.[0]?.evaluator).toBeNull();
+  });
+
+  test("reads an evaluator that is not a string as unset", async () => {
+    const [scenario] = await generateWith({
+      criteria: [
+        { description: "offers a refund", type: "must_happen", evaluator: 5 },
+      ],
+    });
+
+    expect(scenario?.criteria?.[0]?.evaluator).toBeNull();
   });
 
   test("gives the model the allowed emotions and strategies", async () => {
@@ -339,7 +568,7 @@ describe("ScenarioGenerator criteria", () => {
       '"starting_emotion":{"type":"string","enum":["neutral","frustrated","confused","happy","urgent"]}',
     );
     expect(schema).toContain(
-      '"conversation_strategy":{"type":"string","enum":["cooperative","topic_switching","contradictory","multi_intent","evasive","repetitive","ambiguous"]}',
+      '"conversation_strategy":{"anyOf":[{"type":"string","enum":["cooperative","topic_switching","contradictory","multi_intent","evasive","repetitive","ambiguous"]},{"type":"null"}]}',
     );
   });
 
@@ -499,5 +728,37 @@ describe("DatapointGenerator.generateFromCombinations", () => {
     await expect(
       generator.generateFromCombinations([persona], scenarios),
     ).rejects.toThrow("bad key");
+  });
+});
+
+describe("isSchemaRejection", () => {
+  const apiError = (status: number, message: string) =>
+    new OpenAI.APIError(status, { message }, message, {});
+
+  test.each([
+    "Invalid schema for response_format 'item': In context=(), 'additionalProperties' is required to be supplied and to be false.",
+    "[openai] Invalid schema for function 'finish': In context=(), 'additionalProperties' is required to be supplied and to be false.",
+    "[anthropic] tools.0.custom: For 'object' type, 'additionalProperties' must be explicitly set to false",
+    "response_format is not supported by this model",
+    "This model does not support structured outputs",
+    "'strict' is not a permitted parameter",
+    "Schema keyword 'minimum' is not supported",
+    "anyOf is not allowed at this location",
+  ])("a 400 saying %s is a rejection", (message) => {
+    expect(isSchemaRejection(apiError(400, message))).toBe(true);
+  });
+
+  test.each([
+    "This model's maximum context length is 8192 tokens",
+    "Unsupported value: 'temperature' does not support 0.2",
+    "unsupported",
+    "Model x is restricted for this workspace",
+  ])("a 400 saying %s is not", (message) => {
+    expect(isSchemaRejection(apiError(400, message))).toBe(false);
+  });
+
+  test("other statuses and errors are not", () => {
+    expect(isSchemaRejection(apiError(500, "Invalid schema"))).toBe(false);
+    expect(isSchemaRejection(new Error("Invalid schema"))).toBe(false);
   });
 });

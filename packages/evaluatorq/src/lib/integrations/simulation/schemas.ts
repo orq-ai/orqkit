@@ -1,9 +1,5 @@
 /**
  * Zod schemas for optional runtime validation of simulation types.
- *
- * Separated from types.ts so that importing the simulation module
- * does not require zod to be installed. Only users who explicitly
- * import these schemas need zod as a dependency.
  */
 
 import { z } from "zod";

@@ -7,7 +7,8 @@
 import OpenAI from "openai";
 
 import { isRetryableStatus } from "../agents/base.js";
-import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -113,20 +114,7 @@ export class FirstMessageGenerator {
 
   constructor(config?: FirstMessageGeneratorConfig) {
     this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    if (config?.client) {
-      this.client = config.client;
-    } else {
-      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: resolveRouterBaseUrl(),
-        apiKey,
-      });
-    }
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
   }
 
   /**
