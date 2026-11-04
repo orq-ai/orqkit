@@ -5,13 +5,21 @@
  * either standalone or within the evaluatorq framework.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
 
+import { evaluatorq } from "../../../evaluatorq.js";
 import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
+import type { DataPoint, Evaluator, Job, Output } from "../../../types.js";
 import { fromOrqAgent } from "../adapters.js";
-import { getEvaluator } from "../evaluators/index.js";
+import { toOpenResponses } from "../convert.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import { failureReason, getEvaluator } from "../evaluators/index.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
-import { SimulationRunner } from "../runner/simulation.js";
+import {
+  runSimulationInput,
+  type SimulationInput,
+} from "../runner/run-input.js";
+import { errorResult, SimulationRunner } from "../runner/simulation.js";
 import {
   recordTokenUsage,
   setSpanAttrs,
@@ -24,7 +32,6 @@ import type {
   Scenario,
   SimulationResult,
 } from "../types.js";
-import { generateDatapoint } from "../utils/prompt-builders.js";
 
 // ---------------------------------------------------------------------------
 // simulate
@@ -41,10 +48,22 @@ export interface SimulateParams {
   model?: string;
   evaluators?: string[];
   parallelism?: number;
+  /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
+  uploadResults?: boolean;
+  /** Optional description for the evaluation run. */
+  description?: string;
+  /** Optional path (e.g. "MyProject/MyFolder") to place the run on the Orq platform. */
+  path?: string;
+  /** Pre-configured client for the user simulator, judge and first messages. */
+  client?: OpenAI;
 }
 
 /**
  * High-level function to run agent simulations.
+ *
+ * Runs through evaluatorq(), so a simulation gets the same run and upload as any
+ * other evaluation. Results come back in input order, and a failed conversation
+ * becomes an error result for that row.
  *
  * Handles:
  * - Creating persona x scenario combinations
@@ -83,16 +102,20 @@ async function _simulateCore(
   pipelineSpan: import("@opentelemetry/api").Span | undefined,
 ): Promise<SimulationResult[]> {
   const {
+    evaluationName,
     targetCallback,
+    datapoints,
     personas,
     scenarios,
     maxTurns = 10,
-    model = "azure/gpt-4o-mini",
+    model = DEFAULT_SIMULATION_MODEL,
     evaluators: evaluatorNames,
     parallelism = 5,
+    uploadResults = true,
+    description,
+    path,
+    client,
   } = params;
-
-  let { datapoints } = params;
 
   // Validate evaluator names early — throw on unknown names
   const resolvedEvaluatorNames = evaluatorNames ?? [
@@ -104,8 +127,12 @@ async function _simulateCore(
     fn: getEvaluator(name),
   }));
 
-  // Build datapoints from personas x scenarios if not provided
-  if (!datapoints) {
+  let inputs: SimulationInput[];
+  let firstMessages: FirstMessageGenerator | undefined;
+
+  if (datapoints) {
+    inputs = datapoints.map((datapoint) => ({ datapoint }));
+  } else {
     if (!personas || !scenarios) {
       throw new Error(
         "Either provide 'datapoints' or both 'personas' and 'scenarios'",
@@ -116,49 +143,20 @@ async function _simulateCore(
         "'personas' and 'scenarios' arrays must both be non-empty",
       );
     }
-
-    const apiKey = process.env.ORQ_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "ORQ_API_KEY environment variable is not set. Set it before calling simulate().",
-      );
-    }
-    // Create a shared HTTP client so the generator doesn't leak its own pool
-    const sharedClient = new OpenAI({
-      apiKey,
-      baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
-    });
-    // Generate first messages for each combination (with bounded concurrency)
-    const firstMsgGen = new FirstMessageGenerator({
-      model,
-      client: sharedClient,
-    });
-    const pairs = personas.flatMap((persona) =>
+    firstMessages = new FirstMessageGenerator({ model, client });
+    inputs = personas.flatMap((persona) =>
       scenarios.map((scenario) => ({ persona, scenario })),
     );
-    const FIRST_MSG_CONCURRENCY = 5;
-    const generatedDatapoints: Datapoint[] = [];
-    for (let i = 0; i < pairs.length; i += FIRST_MSG_CONCURRENCY) {
-      const batch = pairs.slice(i, i + FIRST_MSG_CONCURRENCY);
-      const batchResults = await Promise.all(
-        batch.map(async ({ persona, scenario }) => {
-          const firstMessage = await firstMsgGen.generate(persona, scenario);
-          return generateDatapoint(persona, scenario, firstMessage);
-        }),
-      );
-      generatedDatapoints.push(...batchResults);
-    }
-    datapoints = generatedDatapoints;
   }
 
-  if (!datapoints || datapoints.length === 0) {
+  if (inputs.length === 0) {
     throw new Error(
       "No datapoints to simulate — persona or scenario generation may have failed",
     );
   }
 
   setSpanAttrs(pipelineSpan, {
-    "orq.simulation.datapoints_count": datapoints.length,
+    "orq.simulation.datapoints_count": inputs.length,
   });
 
   // Bridge agentKey to invoke() if no callback is provided
@@ -171,29 +169,91 @@ async function _simulateCore(
     throw new Error("Either targetCallback or agentKey is required");
   }
 
-  // Create simulation runner
   const runner = new SimulationRunner({
     targetCallback: resolvedCallback,
     model,
     maxTurns,
+    client,
   });
 
-  try {
-    // Run simulations
-    const results = await runner.runBatch({
-      datapoints,
+  const stampScores = (result: SimulationResult): void => {
+    const scores: Record<string, number> = {};
+    for (const { name, fn } of scorers) {
+      scores[name] = fn(result);
+    }
+    (result.metadata as Record<string, unknown>).evaluator_scores = scores;
+  };
+
+  // evaluatorq() hands the same DataPoint object to the job and its evaluators,
+  // so the full result can be looked up by row without going through the output.
+  const resultsByRow = new Map<DataPoint, SimulationResult>();
+  const rows = inputs.map(
+    (input): DataPoint => ({ inputs: input as unknown as DataPoint["inputs"] }),
+  );
+
+  const job: Job = async (data) => {
+    const result = await runSimulationInput(
+      data.inputs as unknown as SimulationInput,
+      runner,
       maxTurns,
-      maxConcurrency: parallelism,
+      () => firstMessages as FirstMessageGenerator,
+    );
+    stampScores(result);
+    resultsByRow.set(data, result);
+    return {
+      name: evaluationName,
+      output: toOpenResponses(result, model) as unknown as Output,
+      error: failureReason(result) ?? undefined,
+    };
+  };
+
+  // These never set `pass`: evaluatorq() exits the process when a pass is false,
+  // and a low simulation score must not end the caller's process.
+  const evaluators: Evaluator[] = scorers.map(({ name }) => ({
+    name,
+    scorer: async ({ data }) => {
+      const scores = resultsByRow.get(data)?.metadata.evaluator_scores as
+        | Record<string, number>
+        | undefined;
+      return { value: scores?.[name] ?? 0 };
+    },
+  }));
+
+  try {
+    await evaluatorq(evaluationName, {
+      data: rows,
+      jobs: [job],
+      evaluators,
+      parallelism,
+      print: false,
+      description,
+      path,
+      sendResults: uploadResults,
+      manageTracing: false,
     });
 
-    // Apply evaluators to results
-    for (const result of results) {
-      const scores: Record<string, number> = {};
-      for (const { name, fn } of scorers) {
-        scores[name] = fn(result);
+    const results = rows.map((row, i) => {
+      const result = resultsByRow.get(row);
+      if (result) {
+        return result;
       }
-      (result.metadata as Record<string, unknown>).evaluator_scores = scores;
-    }
+      console.warn(`simulate: row ${i} produced no result`);
+      const input = inputs[i] as SimulationInput;
+      const missing =
+        "datapoint" in input
+          ? errorResult(
+              "Simulation produced no result",
+              input.datapoint.persona,
+              input.datapoint.scenario,
+            )
+          : errorResult(
+              "Simulation produced no result",
+              input.persona,
+              input.scenario,
+            );
+      stampScores(missing);
+      return missing;
+    });
 
     // Record aggregate token usage on the pipeline span
     const totalUsage = results.reduce(
@@ -238,6 +298,14 @@ export interface GenerateAndSimulateParams {
   model?: string;
   evaluators?: string[];
   parallelism?: number;
+  /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
+  uploadResults?: boolean;
+  /** Optional description for the evaluation run. */
+  description?: string;
+  /** Optional path (e.g. "MyProject/MyFolder") to place the run on the Orq platform. */
+  path?: string;
+  /** Pre-configured client for generation, the user simulator and the judge. */
+  client?: OpenAI;
 }
 
 /**
@@ -258,9 +326,13 @@ export async function generateAndSimulate(
     numPersonas = 5,
     numScenarios = 5,
     maxTurns = 10,
-    model = "azure/gpt-4o-mini",
+    model = DEFAULT_SIMULATION_MODEL,
     evaluators,
     parallelism = 5,
+    uploadResults,
+    description,
+    path,
+    client,
   } = params;
 
   // Bridge agentKey to invoke() if no callback is provided
@@ -278,6 +350,7 @@ export async function generateAndSimulate(
   // Dynamic import to avoid hard dependency on generators module
   let PersonaGenerator: new (config?: {
     model?: string;
+    client?: OpenAI;
   }) => {
     generate(params: {
       agentDescription: string;
@@ -286,6 +359,7 @@ export async function generateAndSimulate(
   };
   let ScenarioGenerator: new (config?: {
     model?: string;
+    client?: OpenAI;
   }) => {
     generate(params: {
       agentDescription: string;
@@ -317,8 +391,8 @@ export async function generateAndSimulate(
       },
       async (pipelineSpan) => {
         // Generate personas and scenarios in parallel (under the pipeline span)
-        const personaGen = new PersonaGenerator({ model });
-        const scenarioGen = new ScenarioGenerator({ model });
+        const personaGen = new PersonaGenerator({ model, client });
+        const scenarioGen = new ScenarioGenerator({ model, client });
 
         const [personas, scenarios] = await Promise.all([
           personaGen.generate({
@@ -342,6 +416,10 @@ export async function generateAndSimulate(
             model,
             evaluators,
             parallelism,
+            uploadResults,
+            description,
+            path,
+            client,
           },
           pipelineSpan,
         );

@@ -13,3 +13,4 @@ export type { PersonaGeneratorConfig } from "./persona-generator.js";
 export { PersonaGenerator } from "./persona-generator.js";
 export type { ScenarioGeneratorConfig } from "./scenario-generator.js";
 export { ScenarioGenerator } from "./scenario-generator.js";
+export { SimulationGenerationError } from "./structured-call.js";

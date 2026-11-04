@@ -5,13 +5,49 @@
  * compatible with evaluatorq integration.
  */
 
-import type { SimulationResult } from "../types.js";
+import type { CriteriaMeta, SimulationResult } from "../types.js";
 
 // ---------------------------------------------------------------------------
 // Scorer type
 // ---------------------------------------------------------------------------
 
 export type SimulationScorer = (result: SimulationResult) => number;
+
+// ---------------------------------------------------------------------------
+// Run status helpers
+// ---------------------------------------------------------------------------
+
+/** Why this run's criteria cannot be trusted, or null if they can. */
+export function unverifiedReason(result: SimulationResult): string | null {
+  if (result.terminated_by === "error" || result.terminated_by === "timeout") {
+    return `terminated_by=${result.terminated_by}`;
+  }
+  if (result.criteria_verified === false) {
+    return "criteria_verified=False";
+  }
+  return null;
+}
+
+/** Failure message for a run that ended in error or timeout, otherwise null. */
+export function failureReason(result: SimulationResult): string | null {
+  if (result.terminated_by !== "error" && result.terminated_by !== "timeout") {
+    return null;
+  }
+  const metadataError = result.metadata?.error;
+  return (
+    (typeof metadataError === "string" && metadataError) ||
+    result.reason ||
+    `simulation terminated by ${result.terminated_by}`
+  );
+}
+
+function isCriteriaMeta(value: unknown): value is CriteriaMeta {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as CriteriaMeta).passed === "boolean"
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Individual scorers
@@ -29,9 +65,31 @@ export const goalAchievedScorer: SimulationScorer = (result) => {
  * Evaluate how many criteria were met.
  * Returns a value between 0 and 1 based on the ratio of met criteria.
  *
- * Uses the criteria_results from metadata if available; otherwise returns 1.0.
+ * Scores 0.0 when the run cannot vouch for its criteria: it errored, timed out
+ * or the judge never audited them. A criterion that passed only because it was
+ * never audited does not count as met. No criteria at all scores 1.0.
  */
 export const criteriaMetScorer: SimulationScorer = (result) => {
+  const reason = unverifiedReason(result);
+  if (reason) {
+    console.warn(`criteria_met: scoring 0.0, run is unverified (${reason})`);
+    return 0.0;
+  }
+
+  const rawMeta = result.metadata?.criteria_meta;
+  if (rawMeta !== undefined && rawMeta !== null) {
+    if (!Array.isArray(rawMeta) || !rawMeta.every(isCriteriaMeta)) {
+      console.warn("criteria_met: scoring 0.0, criteria_meta is malformed");
+      return 0.0;
+    }
+    if (rawMeta.length > 0) {
+      const metCount = rawMeta.filter(
+        (entry) => entry.passed && entry.audited !== false,
+      ).length;
+      return metCount / rawMeta.length;
+    }
+  }
+
   const criteriaResults = result.criteria_results ?? {};
   const keys = Object.keys(criteriaResults);
 

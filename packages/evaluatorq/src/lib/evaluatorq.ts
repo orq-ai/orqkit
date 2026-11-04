@@ -180,6 +180,8 @@ export async function evaluatorq(
     print = true,
     description,
     path,
+    sendResults = true,
+    manageTracing = true,
   } = params;
 
   // Initialize tracing if OTEL is configured
@@ -199,7 +201,8 @@ export async function evaluatorq(
   let orqClient: Orq | undefined;
   const orqApiKey = process.env.ORQ_API_KEY;
 
-  if (orqApiKey) {
+  // Only dataset fetching needs the SDK, uploads go over plain fetch.
+  if (orqApiKey && "datasetId" in data) {
     orqClient = await setupOrqClient(orqApiKey);
   }
 
@@ -413,7 +416,7 @@ export async function evaluatorq(
         ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
-      orqApiKey
+      orqApiKey && sendResults
         ? Effect.tap((results) =>
             sendResultsToOrqEffect(
               orqApiKey,
@@ -437,7 +440,7 @@ export async function evaluatorq(
     const streamingResults = await Effect.runPromise(streamingProgram);
 
     // Shutdown tracing gracefully for streaming case
-    if (tracingEnabled) {
+    if (tracingEnabled && manageTracing) {
       await flushTracing();
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await shutdownTracing();
@@ -497,7 +500,7 @@ export async function evaluatorq(
         ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
-      orqApiKey
+      orqApiKey && sendResults
         ? Effect.tap((results) =>
             sendResultsToOrqEffect(
               orqApiKey,
@@ -525,7 +528,7 @@ export async function evaluatorq(
   const results = await executeEvaluation();
 
   // Shutdown tracing gracefully - flush and shutdown before checking failures
-  if (tracingEnabled) {
+  if (tracingEnabled && manageTracing) {
     // Force flush all pending spans
     await flushTracing();
     // Give additional time for network operations

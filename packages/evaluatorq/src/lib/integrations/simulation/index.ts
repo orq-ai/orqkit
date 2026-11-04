@@ -24,12 +24,22 @@ export { JudgeAgent } from "./agents/judge.js";
 export { UserSimulatorAgent } from "./agents/user-simulator.js";
 // --- Conversion ---
 export { toOpenResponses } from "./convert.js";
+// --- Criteria (advanced usage) ---
+export {
+  buildCriteriaMeta,
+  buildCriteriaResults,
+  CriteriaTracker,
+  criterionIdFor,
+} from "./criteria.js";
+export { DEFAULT_SIMULATION_MODEL } from "./defaults.js";
 export type { SimulationScorer } from "./evaluators/index.js";
 // --- Evaluators ---
 export {
+  failureReason,
   getAllEvaluators,
   getEvaluator,
   SIMULATION_EVALUATORS,
+  unverifiedReason,
 } from "./evaluators/index.js";
 // --- Generators (advanced usage) ---
 export {
@@ -37,6 +47,7 @@ export {
   FirstMessageGenerator,
   PersonaGenerator,
   ScenarioGenerator,
+  SimulationGenerationError,
 } from "./generators/index.js";
 export type { PerturbationType } from "./quality/message-perturbation.js";
 // --- Quality (advanced usage) ---
@@ -67,7 +78,9 @@ export type {
   ChatMessage,
   CommunicationStyle,
   ConversationStrategy,
+  CriteriaMeta,
   Criterion,
+  CriterionVerdict,
   CulturalContext,
   Datapoint,
   EmotionalArc,

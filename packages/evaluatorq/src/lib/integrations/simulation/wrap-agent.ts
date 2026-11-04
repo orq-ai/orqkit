@@ -4,17 +4,19 @@
  * Follows the same pattern as wrapAISdkAgent() and wrapLangChainAgent().
  */
 
+import type OpenAI from "openai";
+
 import type { DataPoint, Job, Output } from "../../types.js";
 import { fromOrqAgent } from "./adapters.js";
 import { toOpenResponses } from "./convert.js";
-import { simulate } from "./simulation/index.js";
-import type {
-  ChatMessage,
-  Datapoint,
-  Persona,
-  Scenario,
-  SimulationResult,
-} from "./types.js";
+import { failureReason } from "./evaluators/index.js";
+import { FirstMessageGenerator } from "./generators/first-message-generator.js";
+import {
+  runSimulationInput,
+  type SimulationInput,
+} from "./runner/run-input.js";
+import { SimulationRunner } from "./runner/simulation.js";
+import type { ChatMessage, Datapoint, Persona, Scenario } from "./types.js";
 
 /**
  * Options for creating a simulation job.
@@ -28,25 +30,26 @@ export interface SimulationJobOptions {
   agentKey?: string;
   /** Maximum conversation turns per simulation. Defaults to 10. */
   maxTurns?: number;
-  /** Model used for user simulator and judge agents. Defaults to "azure/gpt-4o-mini". */
+  /** Model used for user simulator and judge agents. Defaults to DEFAULT_SIMULATION_MODEL. */
   model?: string;
-  /** Built-in evaluator names to apply to results. Defaults to ["goal_achieved", "criteria_met"]. */
-  evaluators?: string[];
+  /** Pre-configured client for the user simulator, judge and first messages. */
+  client?: OpenAI;
 }
 
 /**
- * Creates an evaluatorq Job that runs agent simulations.
+ * Creates an evaluatorq Job that runs one simulated conversation per row.
  *
  * Each DataPoint should have inputs containing simulation data:
  * - `persona` (Persona object) and `scenario` (Scenario object), or
  * - `datapoint` (full Datapoint object), or
- * - `personas` (Persona[]) and `scenarios` (Scenario[]) for batch generation
+ * - `datapoints`, or `personas` and `scenarios`, holding exactly one entry
  *
  * The job:
- * 1. Extracts persona/scenario/datapoint from data.inputs
- * 2. Runs simulate() with the target agent
- * 3. Converts the first result to OpenResponses format
- * 4. Returns { name, output: ResponseResource }
+ * 1. Extracts one persona/scenario/datapoint from data.inputs
+ * 2. Runs the conversation against the target agent
+ * 3. Returns { name, output: ResponseResource }, plus `error` if the run failed
+ *
+ * Score results with the `evaluators` option of evaluatorq(), not here.
  *
  * @example
  * ```typescript
@@ -74,103 +77,116 @@ export interface SimulationJobOptions {
  * ```
  */
 export function wrapSimulationAgent(options: SimulationJobOptions): Job {
+  if ("evaluators" in options) {
+    throw new Error(
+      "wrapSimulationAgent no longer takes 'evaluators'. Pass scorers to the 'evaluators' option of evaluatorq() instead.",
+    );
+  }
+
   const {
     name = "simulation",
     targetCallback,
     agentKey,
     maxTurns = 10,
     model,
-    evaluators,
+    client,
   } = options;
 
-  return async (data: DataPoint, _row: number) => {
-    // Resolve the target callback
-    let resolvedCallback = targetCallback;
-    if (!resolvedCallback && agentKey) {
-      resolvedCallback = fromOrqAgent(agentKey);
-    }
+  // One of each per job, so rows share a client instead of opening their own.
+  let runner: SimulationRunner | undefined;
+  let firstMessages: FirstMessageGenerator | undefined;
+  const getFirstMessages = () => {
+    firstMessages ??= new FirstMessageGenerator({ model, client });
+    return firstMessages;
+  };
 
-    if (!resolvedCallback) {
+  return async (data: DataPoint, _row: number) => {
+    if (!targetCallback && !agentKey) {
       throw new Error(
         "wrapSimulationAgent requires either targetCallback or agentKey",
       );
     }
 
-    // Extract simulation inputs from DataPoint
-    const inputs = data.inputs;
+    const input = extractSingleInput(data.inputs);
 
-    let datapoints: Datapoint[] | undefined;
-    let personas: Persona[] | undefined;
-    let scenarios: Scenario[] | undefined;
-
-    if (inputs.datapoint) {
-      const dp = inputs.datapoint;
-      validateShape(dp, "datapoint", ["persona", "scenario", "first_message"]);
-      datapoints = [dp as Datapoint];
-    } else if (inputs.datapoints) {
-      const dps = inputs.datapoints;
-      if (!Array.isArray(dps)) {
-        throw new Error("Expected 'datapoints' to be an array");
-      }
-      for (const dp of dps) {
-        validateShape(dp, "datapoints[]", [
-          "persona",
-          "scenario",
-          "first_message",
-        ]);
-      }
-      datapoints = dps as Datapoint[];
-    } else if (inputs.persona && inputs.scenario) {
-      validateShape(inputs.persona, "persona", ["name"]);
-      validateShape(inputs.scenario, "scenario", ["name", "goal"]);
-      personas = [inputs.persona as Persona];
-      scenarios = [inputs.scenario as Scenario];
-    } else if (inputs.personas && inputs.scenarios) {
-      if (!Array.isArray(inputs.personas) || !Array.isArray(inputs.scenarios)) {
-        throw new Error("Expected 'personas' and 'scenarios' to be arrays");
-      }
-      for (const p of inputs.personas) validateShape(p, "personas[]", ["name"]);
-      for (const s of inputs.scenarios)
-        validateShape(s, "scenarios[]", ["name", "goal"]);
-      personas = inputs.personas as Persona[];
-      scenarios = inputs.scenarios as Scenario[];
-    } else {
-      throw new Error(
-        "Expected data.inputs to contain 'persona' + 'scenario', 'datapoint', 'datapoints', or 'personas' + 'scenarios'",
-      );
-    }
-
-    // Run simulation
-    const results: SimulationResult[] = await simulate({
-      evaluationName: name,
-      targetCallback: resolvedCallback,
-      datapoints,
-      personas,
-      scenarios,
-      maxTurns,
+    runner ??= new SimulationRunner({
+      targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
       model,
-      evaluators,
+      maxTurns,
+      client,
     });
 
-    // Convert first result to OpenResponses format
-    const result = results[0];
-    if (!result) {
-      throw new Error("Simulation produced no results");
-    }
-    if (results.length > 1) {
-      console.warn(
-        `wrapSimulationAgent: ${results.length} simulations ran but only the first result is returned. ` +
-          "Use simulate() directly to collect all results.",
-      );
-    }
-
-    const openResponsesOutput = toOpenResponses(result, model);
+    const result = await runSimulationInput(
+      input,
+      runner,
+      maxTurns,
+      getFirstMessages,
+    );
 
     return {
       name,
-      output: openResponsesOutput as unknown as Output,
+      output: toOpenResponses(result, runner.modelName) as unknown as Output,
+      error: failureReason(result) ?? undefined,
     };
   };
+}
+
+/** Pull exactly one conversation out of a row's inputs. */
+function extractSingleInput(inputs: DataPoint["inputs"]): SimulationInput {
+  if (inputs.datapoint) {
+    validateDatapoint(inputs.datapoint, "datapoint");
+    return { datapoint: inputs.datapoint as unknown as Datapoint };
+  }
+
+  if (inputs.datapoints) {
+    const datapoints = requireSingle(inputs.datapoints, "datapoints");
+    validateDatapoint(datapoints, "datapoints[]");
+    return { datapoint: datapoints as Datapoint };
+  }
+
+  if (inputs.persona && inputs.scenario) {
+    return singlePair(inputs.persona, inputs.scenario, "persona", "scenario");
+  }
+
+  if (inputs.personas && inputs.scenarios) {
+    return singlePair(
+      requireSingle(inputs.personas, "personas"),
+      requireSingle(inputs.scenarios, "scenarios"),
+      "personas[]",
+      "scenarios[]",
+    );
+  }
+
+  throw new Error(
+    "Expected data.inputs to contain 'persona' + 'scenario', 'datapoint', 'datapoints', or 'personas' + 'scenarios'",
+  );
+}
+
+function singlePair(
+  persona: unknown,
+  scenario: unknown,
+  personaLabel: string,
+  scenarioLabel: string,
+): SimulationInput {
+  validateShape(persona, personaLabel, ["name"]);
+  validateShape(scenario, scenarioLabel, ["name", "goal"]);
+  return { persona: persona as Persona, scenario: scenario as Scenario };
+}
+
+function requireSingle(value: unknown, label: string): unknown {
+  if (!Array.isArray(value)) {
+    throw new Error(`Expected '${label}' to be an array`);
+  }
+  if (value.length !== 1) {
+    throw new Error(
+      `'${label}' must encode exactly one datapoint, got ${value.length}. Use one row per conversation.`,
+    );
+  }
+  return value[0];
+}
+
+function validateDatapoint(value: unknown, label: string): void {
+  validateShape(value, label, ["persona", "scenario", "first_message"]);
 }
 
 /** Lightweight runtime check that an object has the expected keys. */

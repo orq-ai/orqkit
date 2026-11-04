@@ -6,6 +6,7 @@
 
 import OpenAI from "openai";
 
+import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -18,6 +19,7 @@ import {
   buildPersonaSystemPrompt,
   buildScenarioUserContext,
 } from "../utils/prompt-builders.js";
+import { SimulationGenerationError } from "./structured-call.js";
 
 // Temperature setting for message generation
 const TEMPERATURE_FIRST_MESSAGE = 0.8;
@@ -88,7 +90,7 @@ export class FirstMessageGenerator {
   private client: OpenAI;
 
   constructor(config?: FirstMessageGeneratorConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
     if (config?.client) {
       this.client = config.client;
     } else {
@@ -99,7 +101,7 @@ export class FirstMessageGenerator {
         );
       }
       this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v3/router",
+        baseURL: resolveRouterBaseUrl(),
         apiKey,
       });
     }
@@ -114,6 +116,8 @@ export class FirstMessageGenerator {
    * @param persona - User persona
    * @param scenario - Scenario context
    * @returns Generated first message string
+   * @throws {SimulationGenerationError} If the LLM returns no message. There is
+   *   no canned fallback: the caller fails that datapoint instead.
    */
   async generate(persona: Persona, scenario: Scenario): Promise<string> {
     return withSimulationSpan(
@@ -137,70 +141,57 @@ Generate the FIRST message this user would send to start the conversation.
 The message should immediately convey their goal and emotional state.
 Keep it natural - this is how they would actually open a conversation.`;
 
-        try {
-          const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: FIRST_MESSAGE_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
+        const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+          [
+            { role: "system", content: FIRST_MESSAGE_PROMPT },
+            { role: "user", content: userPrompt },
+          ];
 
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_FIRST_MESSAGE,
-              maxTokens: 500,
-              purpose: "first_message",
-            },
-            async (llmSpan) => {
-              recordLLMInput(
-                llmSpan,
-                llmMessages.map((m) => ({
-                  role: m.role,
-                  content: typeof m.content === "string" ? m.content : "",
-                })),
-              );
+        const response = await withLLMSpan(
+          {
+            model: this.model,
+            temperature: TEMPERATURE_FIRST_MESSAGE,
+            maxTokens: 500,
+            purpose: "first_message",
+          },
+          async (llmSpan) => {
+            recordLLMInput(
+              llmSpan,
+              llmMessages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === "string" ? m.content : "",
+              })),
+            );
 
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: llmMessages,
-                  temperature: TEMPERATURE_FIRST_MESSAGE,
-                  max_tokens: 500,
-                },
-                { headers: traceHeaders },
-              );
+            const traceHeaders = await getTraceContextHeaders();
+            const res = await this.client.chat.completions.create(
+              {
+                model: this.model,
+                messages: llmMessages,
+                temperature: TEMPERATURE_FIRST_MESSAGE,
+                max_tokens: 500,
+              },
+              { headers: traceHeaders },
+            );
 
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
+            recordLLMResponse(llmSpan, res);
+            return res;
+          },
+        );
+
+        const message = (response.choices[0]?.message.content ?? "")
+          .trim()
+          .replace(/^["']|["']$/g, "");
+        if (!message) {
+          throw new SimulationGenerationError(
+            `FirstMessageGenerator: empty message for persona '${persona.name}' and scenario '${scenario.name}'`,
           );
-
-          let message = response.choices[0]?.message.content ?? "";
-          message = message.trim().replace(/^["']|["']$/g, "");
-
-          console.debug(
-            `Generated first message: ${message.substring(0, 100)}...`,
-          );
-          return message;
-        } catch (e) {
-          // Re-throw auth errors — a bad API key should fail fast, not silently
-          // produce meaningless results for the entire simulation run.
-          if (
-            e instanceof Error &&
-            "status" in e &&
-            ((e as { status: number }).status === 401 ||
-              (e as { status: number }).status === 403)
-          ) {
-            throw e;
-          }
-          console.warn(
-            `FirstMessageGenerator: API call failed, using generic fallback. Error: ${e}`,
-          );
-          // Fallback to a generic message based on scenario (no persona traits applied)
-          _span?.setAttribute("orq.simulation.first_message_fallback", true);
-          return `Hi, I need help with: ${scenario.goal}`;
         }
+
+        console.debug(
+          `Generated first message: ${message.substring(0, 100)}...`,
+        );
+        return message;
       },
     );
   }

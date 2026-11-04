@@ -10,6 +10,12 @@ import OpenAI from "openai";
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
 import {
+  buildCriteriaMeta,
+  buildCriteriaResults,
+  CriteriaTracker,
+} from "../criteria.js";
+import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import {
   recordLLMInput,
   recordLLMOutput,
   recordTokenUsage,
@@ -47,6 +53,8 @@ export interface SimulationRunnerConfig {
   targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
   model?: string;
   maxTurns?: number;
+  /** Pre-configured client to reuse. The runner does not close it. */
+  client?: OpenAI;
 }
 
 export interface RunParams {
@@ -78,7 +86,7 @@ const ZERO_USAGE: TokenUsage = {
   total_tokens: 0,
 };
 
-function errorResult(
+export function errorResult(
   reason: string,
   persona?: Persona,
   scenario?: Scenario,
@@ -101,26 +109,54 @@ function errorResult(
   };
 }
 
+/**
+ * Swap user and assistant for the user simulator's LLM call.
+ *
+ * The simulator speaks as the assistant role in its own conversation, so the
+ * target's replies must reach it as user turns. Without the swap the model
+ * sees itself as the support agent and answers as one.
+ */
+export function invertRolesForSimulator(messages: Message[]): ChatMessage[] {
+  return messages.map((m) => {
+    if (m.role === "user") return { role: "assistant", content: m.content };
+    if (m.role === "assistant") return { role: "user", content: m.content };
+    return { role: m.role, content: m.content };
+  });
+}
+
 function maxTurnsResult(
   maxTurns: number,
   messages: Message[],
   turnMetrics: TurnMetrics[],
   tokenUsage: TokenUsage,
+  tracker: CriteriaTracker,
   persona?: Persona,
   scenario?: Scenario,
   lastJudgment?: Judgment,
 ): SimulationResult {
+  const rulesBroken = tracker.resolve(lastJudgment?.rules_broken ?? []);
   return {
     messages,
     terminated_by: "max_turns",
     reason: `Maximum turns (${maxTurns}) reached`,
     goal_achieved: lastJudgment?.goal_achieved ?? false,
     goal_completion_score: lastJudgment?.goal_completion_score ?? 0,
-    rules_broken: lastJudgment?.rules_broken ?? [],
+    rules_broken: rulesBroken,
     turn_count: maxTurns,
     turn_metrics: turnMetrics,
     token_usage: tokenUsage,
-    metadata: { persona: persona?.name, scenario: scenario?.name },
+    criteria_results: buildCriteriaResults(scenario, rulesBroken),
+    criteria_verified: tracker.verified,
+    metadata: {
+      persona: persona?.name,
+      scenario: scenario?.name,
+      criteria_meta: buildCriteriaMeta(
+        scenario,
+        rulesBroken,
+        tracker.verified ? tracker.auditedIds : null,
+        tracker.verified ? tracker.evidence : null,
+      ),
+    },
   };
 }
 
@@ -136,6 +172,7 @@ export class SimulationRunner {
   private readonly model: string;
   private readonly maxTurns: number;
   private sharedClient: OpenAI | null = null;
+  private readonly injectedClient?: OpenAI;
 
   constructor(config: SimulationRunnerConfig) {
     if (!config.targetAgent && !config.targetCallback) {
@@ -145,7 +182,7 @@ export class SimulationRunner {
     if (maxTurns < 1) {
       throw new Error(`maxTurns must be >= 1, got ${maxTurns}`);
     }
-    const model = config.model ?? "azure/gpt-4o-mini";
+    const model = config.model ?? DEFAULT_SIMULATION_MODEL;
     if (!model.trim()) {
       throw new Error("model must be a non-empty string");
     }
@@ -154,9 +191,18 @@ export class SimulationRunner {
     this.targetCallback = config.targetCallback;
     this.model = model;
     this.maxTurns = maxTurns;
+    this.injectedClient = config.client;
+  }
+
+  /** Model used for the user simulator and judge. */
+  get modelName(): string {
+    return this.model;
   }
 
   private getSharedClient(): OpenAI {
+    if (this.injectedClient) {
+      return this.injectedClient;
+    }
     if (!this.sharedClient) {
       const apiKey = process.env.ORQ_API_KEY;
       if (!apiKey) {
@@ -166,7 +212,7 @@ export class SimulationRunner {
       }
       this.sharedClient = new OpenAI({
         apiKey,
-        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
+        baseURL: resolveRouterBaseUrl(),
       });
     }
     return this.sharedClient;
@@ -202,6 +248,8 @@ export class SimulationRunner {
 
     // Declare usage helper references — initialized inside try after agents are created
     let getTotalUsage: (() => TokenUsage) | undefined;
+
+    const tracker = new CriteriaTracker(scenario);
 
     try {
       return await withSimulationSpan(
@@ -345,6 +393,8 @@ export class SimulationRunner {
                   buildTurnMetrics(turn + 1, judgment, usageBefore),
                 );
                 lastJudgment = judgment;
+                tracker.observe(judgment.criteria_verdicts);
+                judge.markSettled(tracker.settledIds);
 
                 setSpanAttrs(turnSpan, {
                   "orq.simulation.goal_achieved": judgment.goal_achieved,
@@ -361,10 +411,7 @@ export class SimulationRunner {
                     undefined,
                     async () =>
                       userSimulator.respondAsync(
-                        messages.map((m) => ({
-                          role: m.role,
-                          content: m.content,
-                        })),
+                        invertRolesForSimulator(messages),
                         { signal, llmPurpose: "user_simulator" },
                       ),
                   );
@@ -387,23 +434,29 @@ export class SimulationRunner {
                 "orq.simulation.turn_count": turn + 1,
               });
 
+              const rulesBroken = tracker.resolve(lastJudgment.rules_broken);
+
               return {
                 messages,
                 terminated_by: "judge",
                 reason: lastJudgment.reason,
                 goal_achieved: lastJudgment.goal_achieved,
                 goal_completion_score: lastJudgment.goal_completion_score,
-                rules_broken: lastJudgment.rules_broken,
+                rules_broken: rulesBroken,
                 turn_count: turn + 1,
                 turn_metrics: turnMetricsList,
                 token_usage: finalUsage,
-                criteria_results: this.buildCriteriaResults(
-                  scenario as Scenario,
-                  lastJudgment,
-                ),
+                criteria_results: buildCriteriaResults(scenario, rulesBroken),
+                criteria_verified: tracker.verified,
                 metadata: {
                   persona: persona?.name,
                   scenario: scenario?.name,
+                  criteria_meta: buildCriteriaMeta(
+                    scenario,
+                    rulesBroken,
+                    tracker.verified ? tracker.auditedIds : null,
+                    tracker.verified ? tracker.evidence : null,
+                  ),
                 },
               };
             }
@@ -428,6 +481,7 @@ export class SimulationRunner {
             messages,
             turnMetricsList,
             finalUsage,
+            tracker,
             persona,
             scenario,
             lastJudgment,
@@ -449,6 +503,24 @@ export class SimulationRunner {
       result.turn_count = messages.filter((m) => m.role === "assistant").length;
       result.turn_metrics = turnMetricsList;
       result.token_usage = usage;
+      // A must_happen that has not occurred yet could still have, so an aborted
+      // run only reports what is certain and marks the rest as not audited.
+      result.rules_broken = tracker.confirmedBrokenIds;
+      result.criteria_verified = tracker.verified;
+      const audited = tracker.auditedIds;
+      for (const id of tracker.unconfirmedIds) {
+        audited.delete(id);
+      }
+      result.criteria_results = buildCriteriaResults(
+        scenario,
+        result.rules_broken,
+      );
+      result.metadata.criteria_meta = buildCriteriaMeta(
+        scenario,
+        result.rules_broken,
+        audited,
+        tracker.evidence,
+      );
       return result;
     }
   }
@@ -534,28 +606,8 @@ export class SimulationRunner {
     throw new Error("No target agent or callback configured");
   }
 
-  /**
-   * Build criteria_results map from the judge's final judgment.
-   * Maps each criterion description to whether it was satisfied.
-   */
-  private buildCriteriaResults(
-    scenario: Scenario,
-    judgment: Judgment,
-  ): Record<string, boolean> {
-    const results: Record<string, boolean> = {};
-    const criteria = scenario.criteria ?? [];
-    const rulesBroken = new Set(judgment.rules_broken);
-
-    for (const criterion of criteria) {
-      // A criterion is satisfied if it's NOT listed in rules_broken.
-      // This applies to both types: must_happen (it happened) and must_not_happen (it didn't happen).
-      results[criterion.description] = !rulesBroken.has(criterion.description);
-    }
-
-    return results;
-  }
-
-  private async runWithTimeout(
+  /** Run one datapoint with a timeout. Never throws. */
+  async runWithTimeout(
     datapoint: Datapoint,
     maxTurns: number | undefined,
     timeoutMs: number,
@@ -581,6 +633,9 @@ export class SimulationRunner {
               reason: `Simulation timed out after ${timeoutMs}ms`,
               metadata: {
                 ...(result.metadata as Record<string, unknown>),
+                // failureReason prefers metadata.error, which still says
+                // "Simulation cancelled" from the aborted run.
+                error: `Simulation timed out after ${timeoutMs}ms`,
                 timeout: timeoutMs,
               },
             });

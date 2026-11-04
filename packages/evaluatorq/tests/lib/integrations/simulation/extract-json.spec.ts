@@ -32,12 +32,33 @@ describe("extractJsonFromResponse", () => {
     });
   });
 
-  test("extracts first balanced structure when multiple exist", () => {
-    // extractBalanced finds arrays before objects, and finds the first match
-    // So "[1,2]" inside a string value is found before the outer object
+  test("returns the outer object, not an array inside one of its strings", () => {
     const input = 'Some text {"text": "array [1,2] and {obj}"} more text';
-    // The extractor finds [1,2] first (array search runs before object search)
-    expect(extractJsonFromResponse(input)).toBe("[1,2]");
+    expect(extractJsonFromResponse(input)).toBe(
+      '{"text": "array [1,2] and {obj}"}',
+    );
+  });
+
+  test("returns the outer object, not an array nested in it", () => {
+    const input = 'Result: {"personas": [{"name": "a"}]}';
+    expect(JSON.parse(extractJsonFromResponse(input))).toEqual({
+      personas: [{ name: "a" }],
+    });
+  });
+
+  test("prefers a json block over an earlier illustrative block", () => {
+    const input = '```python\nprint("hi")\n```\n```json\n{"a": 1}\n```';
+    expect(extractJsonFromResponse(input)).toBe('{"a": 1}');
+  });
+
+  test("falls through an invalid json block to the next valid one", () => {
+    const input = '```json\n{not json}\n```\n```json\n{"a": 1}\n```';
+    expect(extractJsonFromResponse(input)).toBe('{"a": 1}');
+  });
+
+  test("a backslash outside a string does not swallow the next quote", () => {
+    const input = 'path C:\\"x\\ then {"a": "b"}';
+    expect(JSON.parse(extractJsonFromResponse(input))).toEqual({ a: "b" });
   });
 
   test("handles nested objects/arrays", () => {

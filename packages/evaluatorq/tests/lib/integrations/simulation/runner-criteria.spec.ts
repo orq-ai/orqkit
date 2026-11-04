@@ -1,0 +1,295 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  criteriaMetScorer,
+  failureReason,
+} from "../../../../src/lib/integrations/simulation/evaluators/index.js";
+import { SimulationRunner } from "../../../../src/lib/integrations/simulation/runner/simulation.js";
+import type {
+  Datapoint,
+  Scenario,
+} from "../../../../src/lib/integrations/simulation/types.js";
+import {
+  continueTurn,
+  type FakeScript,
+  finishTurn,
+  makeFakeClient,
+} from "./fake-client.js";
+
+const scenario: Scenario = {
+  name: "Refund",
+  goal: "Get a refund",
+  criteria: [
+    { description: "offers a refund", type: "must_happen" },
+    { description: "insults the user", type: "must_not_happen" },
+  ],
+};
+
+const datapoint: Datapoint = {
+  id: "dp",
+  persona: {
+    name: "Test User",
+    patience: 0.5,
+    assertiveness: 0.5,
+    politeness: 0.5,
+    technical_level: 0.5,
+    communication_style: "casual",
+    background: "bg",
+  },
+  scenario,
+  user_system_prompt: "You are a simulated user.",
+  first_message: "I want a refund",
+};
+
+const occurred = (id: string) => ({
+  criterion_id: id,
+  occurred: true,
+  evidence: "quote",
+});
+const notOccurred = (id: string) => ({ criterion_id: id, occurred: false });
+
+function runWith(script: FakeScript, maxTurns = 5) {
+  const { client, requests } = makeFakeClient(script);
+  const runner = new SimulationRunner({
+    targetCallback: async () => "target reply",
+    client,
+    maxTurns,
+  });
+  return { result: runner.run({ datapoint }), requests };
+}
+
+describe("SimulationRunner criteria", () => {
+  test("a must_happen seen on an earlier turn still passes at the end", async () => {
+    const { result } = runWith({
+      judge: (call) =>
+        call === 0
+          ? continueTurn([occurred("criteria_0"), notOccurred("criteria_1")])
+          : finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("judge");
+    expect(r.rules_broken).toEqual([]);
+    expect(r.criteria_verified).toBe(true);
+    expect(r.criteria_results).toEqual({
+      "offers a refund": true,
+      "insults the user": true,
+    });
+    expect(criteriaMetScorer(r)).toBe(1);
+  });
+
+  test("a must_happen that never occurred fails even when the goal is met", async () => {
+    const { result } = runWith({
+      judge: () =>
+        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+
+    const r = await result;
+    expect(r.goal_achieved).toBe(true);
+    expect(r.rules_broken).toEqual(["criteria_0"]);
+    expect(criteriaMetScorer(r)).toBe(0.5);
+  });
+
+  test("a must_not_happen that occurred stays broken after later clean turns", async () => {
+    const { result } = runWith({
+      judge: (call) =>
+        call === 0
+          ? continueTurn([occurred("criteria_0"), occurred("criteria_1")])
+          : finishTurn([notOccurred("criteria_1")]),
+    });
+
+    const r = await result;
+    expect(r.rules_broken).toEqual(["criteria_1"]);
+    expect(r.criteria_results?.["insults the user"]).toBe(false);
+  });
+
+  test("max_turns results carry criteria data and the last goal score", async () => {
+    const { result } = runWith(
+      {
+        judge: () =>
+          continueTurn([occurred("criteria_0"), notOccurred("criteria_1")], {
+            goal_completion_score: 0.4,
+          }),
+      },
+      2,
+    );
+
+    const r = await result;
+    expect(r.terminated_by).toBe("max_turns");
+    expect(r.goal_completion_score).toBe(0.4);
+    expect(r.criteria_verified).toBe(true);
+    expect(r.criteria_results).toEqual({
+      "offers a refund": true,
+      "insults the user": true,
+    });
+    expect(r.metadata.criteria_meta).toHaveLength(2);
+  });
+
+  test("an error reports only confirmed breaks and scores 0", async () => {
+    const { result } = runWith({
+      judge: (call) => {
+        if (call === 0) {
+          return continueTurn([
+            notOccurred("criteria_0"),
+            occurred("criteria_1"),
+          ]);
+        }
+        throw new Error("judge exploded");
+      },
+    });
+
+    const r = await result;
+    expect(r.terminated_by).toBe("error");
+    expect(r.rules_broken).toEqual(["criteria_1"]);
+    expect(r.criteria_verified).toBe(true);
+    expect(criteriaMetScorer(r)).toBe(0);
+  });
+
+  test("a judge that never calls a tool leaves the run unverified", async () => {
+    const { result } = runWith({ judge: () => null });
+
+    const r = await result;
+    expect(r.criteria_verified).toBe(false);
+    expect(criteriaMetScorer(r)).toBe(0);
+  });
+
+  test("verdicts that all fail validation leave the run unverified", async () => {
+    const { result } = runWith({
+      judge: () =>
+        finishTurn([
+          occurred("criteria_7"),
+          occurred("criteria_00"),
+          { criterion_id: "criteria_0", occurred: "yes" },
+        ]),
+    });
+
+    const r = await result;
+    expect(r.criteria_verified).toBe(false);
+    expect(criteriaMetScorer(r)).toBe(0);
+  });
+
+  test("a duplicate verdict keeps the first entry", async () => {
+    const { result } = runWith({
+      judge: () =>
+        finishTurn([
+          notOccurred("criteria_0"),
+          occurred("criteria_0"),
+          notOccurred("criteria_1"),
+        ]),
+    });
+
+    expect((await result).rules_broken).toEqual(["criteria_0"]);
+  });
+});
+
+describe("SimulationRunner timeout", () => {
+  test("reports the timeout rather than the cancellation", async () => {
+    const { client } = makeFakeClient();
+    const runner = new SimulationRunner({
+      targetCallback: async () => {
+        await Bun.sleep(30);
+        return "late reply";
+      },
+      client,
+      maxTurns: 5,
+    });
+
+    const r = await runner.runWithTimeout(datapoint, 5, 5);
+
+    expect(r.terminated_by).toBe("timeout");
+    expect(failureReason(r)).toBe("Simulation timed out after 5ms");
+    expect(criteriaMetScorer(r)).toBe(0);
+  });
+});
+
+describe("SimulationRunner judge requests", () => {
+  test("forces a tool call with room for a full audit", async () => {
+    const { result, requests } = runWith({
+      judge: () =>
+        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+    await result;
+
+    expect(requests.judge[0]?.tool_choice).toBe("required");
+    expect(requests.judge[0]?.max_output_tokens).toBe(4096);
+    expect(requests.judge[0]?.temperature).toBe(0);
+    expect(requests.judge[0]?.tools?.map((tool) => tool.name)).toEqual([
+      "continue_conversation",
+      "finish_conversation",
+    ]);
+    expect(
+      requests.judge[0]?.tools?.every((tool) => tool.strict === false),
+    ).toBe(true);
+  });
+
+  test("counts judge tokens reported by the Responses API", async () => {
+    const { result } = runWith({
+      judge: () =>
+        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+
+    const r = await result;
+    expect(r.token_usage).toEqual({
+      prompt_tokens: 3,
+      completion_tokens: 2,
+      total_tokens: 5,
+    });
+  });
+
+  test("lists settled ids in the final message and keeps the system prompt static", async () => {
+    const { result, requests } = runWith({
+      judge: (call) =>
+        call === 0
+          ? continueTurn([occurred("criteria_0"), notOccurred("criteria_1")])
+          : finishTurn([notOccurred("criteria_1")]),
+    });
+    await result;
+
+    const [first, second] = requests.judge;
+    expect(first?.input.at(-1)?.content).not.toContain("ALREADY CONFIRMED");
+    expect(second?.input.at(-1)?.content).toContain(
+      "ALREADY CONFIRMED (occurrence is settled, do not re-report these in criteria_verdicts): criteria_0",
+    );
+    expect(second?.input[0]?.content ?? "").toBe(
+      first?.input[0]?.content ?? "",
+    );
+  });
+
+  test("lists criteria by id with their type", async () => {
+    const { result, requests } = runWith({
+      judge: () =>
+        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+    await result;
+
+    const system = requests.judge[0]?.input[0]?.content as string;
+    expect(system).toContain(
+      "criteria_0: <data>offers a refund</data> (must_happen)",
+    );
+    expect(system).toContain(
+      "criteria_1: <data>insults the user</data> (must_not_happen)",
+    );
+  });
+});
+
+describe("SimulationRunner user simulator requests", () => {
+  test("sees the target's reply as a user turn", async () => {
+    const { result, requests } = runWith({
+      judge: (call) =>
+        call === 0
+          ? continueTurn([notOccurred("criteria_0"), notOccurred("criteria_1")])
+          : finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
+    });
+    await result;
+
+    const messages = requests.userSimulator[0]?.messages ?? [];
+    expect(messages.at(-1)).toMatchObject({
+      role: "user",
+      content: "target reply",
+    });
+    expect(messages.at(-2)).toMatchObject({
+      role: "assistant",
+      content: "I want a refund",
+    });
+  });
+});

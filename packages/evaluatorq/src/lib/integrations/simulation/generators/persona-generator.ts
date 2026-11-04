@@ -6,22 +6,37 @@
 
 import OpenAI from "openai";
 
-import {
-  getTraceContextHeaders,
-  recordLLMInput,
-  recordLLMResponse,
-  withLLMSpan,
-  withSimulationSpan,
-} from "../tracing.js";
+import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
+import { withSimulationSpan } from "../tracing.js";
 import type { CommunicationStyle, Persona } from "../types.js";
-import { extractJsonFromResponse } from "../utils/extract-json.js";
 import { delimit } from "../utils/sanitize.js";
+import {
+  requestJsonList,
+  SimulationGenerationError,
+} from "./structured-call.js";
 
 // Temperature settings for different generation modes
 const TEMPERATURE_CREATIVE = 0.8;
 const TEMPERATURE_BALANCED = 0.7;
 
 const VALID_STYLES = new Set<string>(["formal", "casual", "terse", "verbose"]);
+
+const PERSONA_ITEM_SCHEMA = {
+  type: "object",
+  properties: {
+    name: { type: "string" },
+    patience: { type: "number" },
+    assertiveness: { type: "number" },
+    politeness: { type: "number" },
+    technical_level: { type: "number" },
+    communication_style: {
+      type: "string",
+      enum: ["formal", "casual", "terse", "verbose"],
+    },
+    background: { type: "string" },
+  },
+  required: ["name", "background"],
+};
 
 /** Clamp a number to [0, 1]. */
 function clamp01(value: number): number {
@@ -98,7 +113,7 @@ export class PersonaGenerator {
   private client: OpenAI;
 
   constructor(config?: PersonaGeneratorConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
     if (config?.client) {
       this.client = config.client;
     } else {
@@ -109,49 +124,41 @@ export class PersonaGenerator {
         );
       }
       this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v3/router",
+        baseURL: resolveRouterBaseUrl(),
         apiKey,
       });
     }
   }
 
   /**
-   * Parse LLM response content into Persona objects.
+   * Convert raw LLM items into Persona objects, dropping unusable ones.
+   *
+   * @throws {SimulationGenerationError} If no usable persona remains
    */
-  private static parsePersonas(content: string): Persona[] {
-    const extracted = extractJsonFromResponse(content);
-    let personaDicts: unknown[];
-    try {
-      const parsed: unknown = JSON.parse(extracted);
-      if (!Array.isArray(parsed)) {
-        console.warn("Failed to parse personas: expected JSON array");
-        return [];
-      }
-      personaDicts = parsed;
-    } catch {
-      console.warn("Failed to parse personas JSON response");
-      return [];
-    }
-
+  private static parsePersonas(items: Record<string, unknown>[]): Persona[] {
     const personas: Persona[] = [];
-    for (const pDict of personaDicts) {
-      try {
-        const p = pDict as Record<string, unknown>;
-        const rawStyle = String(p.communication_style ?? "casual");
-        personas.push({
-          name: String(p.name ?? ""),
-          patience: clamp01(Number(p.patience ?? 0.5)),
-          assertiveness: clamp01(Number(p.assertiveness ?? 0.5)),
-          politeness: clamp01(Number(p.politeness ?? 0.5)),
-          technical_level: clamp01(Number(p.technical_level ?? 0.5)),
-          communication_style: VALID_STYLES.has(rawStyle)
-            ? (rawStyle as CommunicationStyle)
-            : "casual",
-          background: String(p.background ?? ""),
-        });
-      } catch (e) {
-        console.warn(`Failed to parse persona: ${e}`);
+    for (const p of items) {
+      if (typeof p.name !== "string" || !p.name.trim()) {
+        console.warn("PersonaGenerator: dropping persona without a name");
+        continue;
       }
+      const rawStyle = String(p.communication_style ?? "casual");
+      personas.push({
+        name: p.name,
+        patience: clamp01(Number(p.patience ?? 0.5)),
+        assertiveness: clamp01(Number(p.assertiveness ?? 0.5)),
+        politeness: clamp01(Number(p.politeness ?? 0.5)),
+        technical_level: clamp01(Number(p.technical_level ?? 0.5)),
+        communication_style: VALID_STYLES.has(rawStyle)
+          ? (rawStyle as CommunicationStyle)
+          : "casual",
+        background: String(p.background ?? ""),
+      });
+    }
+    if (personas.length === 0) {
+      throw new SimulationGenerationError(
+        "PersonaGenerator: LLM returned no usable personas",
+      );
     }
     return personas;
   }
@@ -192,46 +199,20 @@ Generate ${numPersonas} diverse personas for testing this agent.
 
 Return ONLY a JSON array, no other text.`;
 
-        const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-          [
-            { role: "system", content: PERSONA_GENERATOR_PROMPT },
-            { role: "user", content: userPrompt },
-          ];
-
-        const response = await withLLMSpan(
-          {
+        const personas = PersonaGenerator.parsePersonas(
+          await requestJsonList({
+            client: this.client,
             model: this.model,
+            system: PERSONA_GENERATOR_PROMPT,
+            user: userPrompt,
             temperature: TEMPERATURE_CREATIVE,
             maxTokens: 4000,
             purpose: "persona_generation",
-          },
-          async (llmSpan) => {
-            recordLLMInput(
-              llmSpan,
-              llmMessages.map((m) => ({
-                role: m.role,
-                content: typeof m.content === "string" ? m.content : "",
-              })),
-            );
-
-            const traceHeaders = await getTraceContextHeaders();
-            const res = await this.client.chat.completions.create(
-              {
-                model: this.model,
-                messages: llmMessages,
-                temperature: TEMPERATURE_CREATIVE,
-                max_tokens: 4000,
-              },
-              { headers: traceHeaders },
-            );
-
-            recordLLMResponse(llmSpan, res);
-            return res;
-          },
+            listKey: "personas",
+            itemSchema: PERSONA_ITEM_SCHEMA,
+            label: "PersonaGenerator",
+          }),
         );
-
-        const content = response.choices[0]?.message.content ?? "[]";
-        const personas = PersonaGenerator.parsePersonas(content);
 
         if (personas.length < numPersonas) {
           console.warn(
@@ -365,46 +346,20 @@ IMPORTANT:
 
 Return ONLY a JSON array, no other text.`;
 
-        const covMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-          [
-            { role: "system", content: PERSONA_GENERATOR_PROMPT },
-            { role: "user", content: userPrompt },
-          ];
-
-        const response = await withLLMSpan(
-          {
+        let personas = PersonaGenerator.parsePersonas(
+          await requestJsonList({
+            client: this.client,
             model: this.model,
+            system: PERSONA_GENERATOR_PROMPT,
+            user: userPrompt,
             temperature: TEMPERATURE_BALANCED,
             maxTokens: 4000,
             purpose: "persona_generation_coverage",
-          },
-          async (llmSpan) => {
-            recordLLMInput(
-              llmSpan,
-              covMessages.map((m) => ({
-                role: m.role,
-                content: typeof m.content === "string" ? m.content : "",
-              })),
-            );
-
-            const traceHeaders = await getTraceContextHeaders();
-            const res = await this.client.chat.completions.create(
-              {
-                model: this.model,
-                messages: covMessages,
-                temperature: TEMPERATURE_BALANCED,
-                max_tokens: 4000,
-              },
-              { headers: traceHeaders },
-            );
-
-            recordLLMResponse(llmSpan, res);
-            return res;
-          },
+            listKey: "personas",
+            itemSchema: PERSONA_ITEM_SCHEMA,
+            label: "PersonaGenerator",
+          }),
         );
-
-        const content = response.choices[0]?.message.content ?? "[]";
-        let personas = PersonaGenerator.parsePersonas(content);
 
         // Validate coverage and fill gaps if needed
         personas = this.ensureStyleCoverage(personas, styles);

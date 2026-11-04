@@ -27,14 +27,32 @@ describe("JUDGE_TOOLS", () => {
     expect(tool.function.name).toBe("finish_conversation");
   });
 
-  test("finish_conversation requires goal_achieved, rules_broken, goal_completion_score", () => {
+  test("finish_conversation requires goal_achieved, criteria_verdicts, goal_completion_score", () => {
     const tool = JUDGE_TOOLS[1];
     const required = (tool.function.parameters as { required?: string[] })
       .required;
     expect(required).toContain("goal_achieved");
-    expect(required).toContain("rules_broken");
+    expect(required).toContain("criteria_verdicts");
     expect(required).toContain("goal_completion_score");
     expect(required).toContain("reason");
+  });
+
+  test("continue_conversation requires criteria_verdicts and offers a progress score", () => {
+    const parameters = JUDGE_TOOLS[0].function.parameters as {
+      required?: string[];
+      properties: Record<string, unknown>;
+    };
+    expect(parameters.required).toContain("criteria_verdicts");
+    expect(parameters.properties).toHaveProperty("goal_completion_score");
+  });
+
+  test("neither tool lets the judge report pass or fail", () => {
+    for (const tool of JUDGE_TOOLS) {
+      const props = (
+        tool.function.parameters as { properties: Record<string, unknown> }
+      ).properties;
+      expect(props).not.toHaveProperty("rules_broken");
+    }
   });
 
   test("both tools have quality score properties", () => {

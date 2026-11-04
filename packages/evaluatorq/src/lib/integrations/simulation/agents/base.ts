@@ -7,6 +7,7 @@
 
 import OpenAI from "openai";
 
+import { DEFAULT_SIMULATION_MODEL, resolveRouterBaseUrl } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -33,7 +34,7 @@ export interface LLMResult {
  * Configuration options for constructing an agent.
  */
 export interface AgentConfig {
-  /** Model identifier (default: "azure/gpt-4o-mini"). */
+  /** Model identifier (default: DEFAULT_SIMULATION_MODEL). */
   model?: string;
   /** Pre-existing OpenAI client to reuse. The agent will NOT close an injected client. */
   client?: OpenAI;
@@ -59,6 +60,85 @@ function isRetryableStatus(status: number | undefined): boolean {
  * to share a single HTTP connection across multiple agents. The agent will
  * NOT close an injected client -- the caller is responsible for its lifecycle.
  */
+/**
+ * Send a chat request through the Responses API and return it in chat shape.
+ *
+ * The judge needs this: a model that reasons by default answers function tools
+ * on chat completions with a 400.
+ */
+async function createViaResponses(
+  client: OpenAI,
+  params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
+  requestOptions: OpenAI.RequestOptions,
+): Promise<OpenAI.Chat.Completions.ChatCompletion> {
+  const response = await client.responses.create(
+    {
+      model: params.model,
+      input: params.messages as OpenAI.Responses.ResponseInput,
+      temperature: params.temperature,
+      max_output_tokens: params.max_tokens,
+      tools: params.tools?.map((tool) => ({
+        type: "function" as const,
+        name: tool.function.name,
+        description: tool.function.description,
+        parameters: tool.function.parameters ?? null,
+        // Responses defaults to strict, which the judge's optional fields fail.
+        strict: false,
+      })),
+      tool_choice:
+        params.tool_choice as OpenAI.Responses.ResponseCreateParams["tool_choice"],
+    },
+    requestOptions,
+  );
+
+  const toolCalls = response.output.flatMap((item) =>
+    item.type === "function_call"
+      ? [
+          {
+            id: item.call_id,
+            type: "function" as const,
+            function: { name: item.name, arguments: item.arguments },
+          },
+        ]
+      : [],
+  );
+
+  let finishReason: "length" | "tool_calls" | "stop" = "stop";
+  if (response.incomplete_details?.reason === "max_output_tokens") {
+    finishReason = "length";
+  } else if (toolCalls.length > 0) {
+    finishReason = "tool_calls";
+  }
+
+  return {
+    id: response.id,
+    object: "chat.completion",
+    created: response.created_at,
+    model: response.model,
+    choices: [
+      {
+        index: 0,
+        logprobs: null,
+        finish_reason: finishReason,
+        message: {
+          role: "assistant",
+          content: response.output_text || null,
+          refusal: null,
+          ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+        },
+      },
+    ],
+    usage: response.usage && {
+      prompt_tokens: response.usage.input_tokens,
+      completion_tokens: response.usage.output_tokens,
+      total_tokens: response.usage.total_tokens,
+      prompt_tokens_details: {
+        cached_tokens: response.usage.input_tokens_details?.cached_tokens,
+      },
+    },
+  };
+}
+
 export abstract class BaseAgent {
   protected model: string;
   protected client: OpenAI;
@@ -66,7 +146,7 @@ export abstract class BaseAgent {
   private usage: TokenUsage;
 
   constructor(config?: AgentConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
 
     if (config?.client) {
       this.client = config.client;
@@ -79,7 +159,7 @@ export abstract class BaseAgent {
         );
       }
       this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
+        baseURL: resolveRouterBaseUrl(),
         apiKey: resolvedApiKey,
       });
       this.clientOwned = true;
@@ -185,6 +265,9 @@ export abstract class BaseAgent {
       maxTokens?: number;
       timeout?: number;
       tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
+      toolChoice?: "auto" | "required";
+      /** Send through the Responses API instead of chat completions. */
+      useResponsesApi?: boolean;
       /** External abort signal — aborts in-flight LLM requests immediately. */
       signal?: AbortSignal;
       /** Semantic purpose for OTel span (e.g. "judge", "user_simulator"). */
@@ -253,16 +336,19 @@ export abstract class BaseAgent {
 
               if (options?.tools && options.tools.length > 0) {
                 params.tools = options.tools;
-                params.tool_choice = "auto";
+                params.tool_choice = options.toolChoice ?? "auto";
               }
 
-              const response = await this.client.chat.completions.create(
-                params,
-                {
-                  signal: controller.signal,
-                  headers: traceHeaders,
-                },
-              );
+              const requestOptions = {
+                signal: controller.signal,
+                headers: traceHeaders,
+              };
+              const response = options?.useResponsesApi
+                ? await createViaResponses(this.client, params, requestOptions)
+                : await this.client.chat.completions.create(
+                    params,
+                    requestOptions,
+                  );
 
               clearTimeout(timer);
 
