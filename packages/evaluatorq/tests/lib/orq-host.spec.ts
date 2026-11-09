@@ -42,9 +42,53 @@ describe("configuredOrqHost", () => {
     ["https://a.example", "https://a.example"],
     ["https://a.example/", "https://a.example"],
     ["https://a.example/v3/router/", "https://a.example"],
+    ["https://a.example/v2/router", "https://a.example"],
+    ["https://gw.example/orq", "https://gw.example/orq"],
+    ["https://gw.example/orq/", "https://gw.example/orq"],
+    ["https://gw.example/orq/v3/router", "https://gw.example/orq"],
   ])("ORQ_BASE_URL %s gives %s", (value, want) => {
     process.env.ORQ_BASE_URL = value;
     expect(configuredOrqHost()).toBe(want);
+  });
+
+  test.each(["my.orq.ai", "not a url", "localhost:3000", "ftp://a.example"])(
+    "ORQ_BASE_URL %s raises by name",
+    (value) => {
+      process.env.ORQ_BASE_URL = value;
+      expect(() => configuredOrqHost()).toThrow("ORQ_BASE_URL");
+    },
+  );
+
+  test.each([
+    ["ORQ_BASE_URL", "http://plain-orq.example"],
+    ["ROUTER_BASE_URL", "http://plain-router.example/v3/router"],
+  ])("%s on plain http warns once about the key", (name, value) => {
+    process.env[name] = value;
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      configuredOrqHost();
+      configuredOrqHost();
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[0])).toContain(name);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  test.each([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://[::1]:3000",
+    "https://secure.example",
+  ])("ORQ_BASE_URL %s does not warn", (value) => {
+    process.env.ORQ_BASE_URL = value;
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      configuredOrqHost();
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   test.each([
