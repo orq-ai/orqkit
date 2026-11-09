@@ -7,6 +7,8 @@
 
 import OpenAI from "openai";
 
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL, resolveLLMMaxTokens } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -14,6 +16,7 @@ import {
   withLLMSpan,
 } from "../tracing.js";
 import type { ChatMessage, TokenUsage } from "../types.js";
+import { isSchemaRejection } from "../utils/strict-schema.js";
 
 // Retry configuration
 const MAX_RETRY_ATTEMPTS = 5;
@@ -33,7 +36,7 @@ export interface LLMResult {
  * Configuration options for constructing an agent.
  */
 export interface AgentConfig {
-  /** Model identifier (default: "azure/gpt-4o-mini"). */
+  /** Model identifier (default: DEFAULT_SIMULATION_MODEL). */
   model?: string;
   /** Pre-existing OpenAI client to reuse. The agent will NOT close an injected client. */
   client?: OpenAI;
@@ -44,9 +47,114 @@ export interface AgentConfig {
 /**
  * Determines whether an HTTP status code is retryable.
  */
-function isRetryableStatus(status: number | undefined): boolean {
+export function isRetryableStatus(status: number | undefined): boolean {
   if (status === undefined) return false;
   return status === 429 || status >= 500;
+}
+
+/**
+ * Send a chat request through the Responses API and return it in chat shape.
+ *
+ * The judge needs this: a model that reasons by default answers function tools
+ * on chat completions with a 400. A 400 rejecting the strict schema retries once
+ * without strict, for models that reject it.
+ */
+async function createViaResponses(
+  client: OpenAI,
+  params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
+  requestOptions: OpenAI.RequestOptions,
+): Promise<OpenAI.Chat.Completions.ChatCompletion> {
+  const tools = params.tools?.map((tool) => ({
+    type: "function" as const,
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters ?? null,
+    strict: tool.function.strict ?? false,
+  }));
+  const send = (sentTools: typeof tools) =>
+    client.responses.create(
+      {
+        model: params.model,
+        input: params.messages as OpenAI.Responses.ResponseInput,
+        temperature: params.temperature,
+        max_output_tokens: params.max_tokens,
+        tools: sentTools,
+        tool_choice:
+          params.tool_choice as OpenAI.Responses.ResponseCreateParams["tool_choice"],
+      },
+      requestOptions,
+    );
+
+  const response = await send(tools).catch((err: unknown) => {
+    if (!tools || !isSchemaRejection(err)) {
+      throw err;
+    }
+    console.warn(
+      `Model ${params.model} rejected strict tools, retrying without strict: ${(err as Error).message}`,
+    );
+    return send(tools.map((tool) => ({ ...tool, strict: false })));
+  });
+
+  // These arrive as a 200, so the status check is what stops a partial output
+  // from being read as the judge's decision.
+  if (response.status === "failed") {
+    throw new Error(
+      `Responses API call failed: ${response.error?.message ?? "no error details"}`,
+    );
+  }
+  const incompleteReason = response.incomplete_details?.reason;
+  if (
+    (response.status === "incomplete" || incompleteReason) &&
+    incompleteReason !== "max_output_tokens"
+  ) {
+    throw new Error(
+      `Responses API call incomplete: ${incompleteReason ?? "no reason given"}`,
+    );
+  }
+
+  const toolCalls = response.output.flatMap((item) =>
+    item.type === "function_call"
+      ? [
+          {
+            id: item.call_id,
+            type: "function" as const,
+            function: { name: item.name, arguments: item.arguments },
+          },
+        ]
+      : [],
+  );
+
+  return {
+    id: response.id,
+    object: "chat.completion",
+    created: response.created_at,
+    model: response.model,
+    choices: [
+      {
+        index: 0,
+        logprobs: null,
+        finish_reason: incompleteReason
+          ? "length"
+          : toolCalls.length > 0
+            ? "tool_calls"
+            : "stop",
+        message: {
+          role: "assistant",
+          content: response.output_text || null,
+          refusal: null,
+          ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+        },
+      },
+    ],
+    usage: response.usage && {
+      prompt_tokens: response.usage.input_tokens,
+      completion_tokens: response.usage.output_tokens,
+      total_tokens: response.usage.total_tokens,
+      prompt_tokens_details: {
+        cached_tokens: response.usage.input_tokens_details?.cached_tokens,
+      },
+    },
+  };
 }
 
 /**
@@ -66,24 +174,10 @@ export abstract class BaseAgent {
   private usage: TokenUsage;
 
   constructor(config?: AgentConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
 
-    if (config?.client) {
-      this.client = config.client;
-      this.clientOwned = false;
-    } else {
-      const resolvedApiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!resolvedApiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey in AgentConfig.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
-        apiKey: resolvedApiKey,
-      });
-      this.clientOwned = true;
-    }
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
+    this.clientOwned = !config?.client;
 
     this.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   }
@@ -185,6 +279,9 @@ export abstract class BaseAgent {
       maxTokens?: number;
       timeout?: number;
       tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
+      toolChoice?: "auto" | "required";
+      /** Send through the Responses API instead of chat completions. */
+      useResponsesApi?: boolean;
       /** External abort signal — aborts in-flight LLM requests immediately. */
       signal?: AbortSignal;
       /** Semantic purpose for OTel span (e.g. "judge", "user_simulator"). */
@@ -192,7 +289,7 @@ export abstract class BaseAgent {
     },
   ): Promise<LLMResult> {
     const temperature = options?.temperature ?? 0.7;
-    const maxTokens = options?.maxTokens ?? 2048;
+    const maxTokens = options?.maxTokens ?? resolveLLMMaxTokens();
     const timeoutS = options?.timeout ?? DEFAULT_TIMEOUT_S;
 
     return withLLMSpan(
@@ -253,16 +350,19 @@ export abstract class BaseAgent {
 
               if (options?.tools && options.tools.length > 0) {
                 params.tools = options.tools;
-                params.tool_choice = "auto";
+                params.tool_choice = options.toolChoice ?? "auto";
               }
 
-              const response = await this.client.chat.completions.create(
-                params,
-                {
-                  signal: controller.signal,
-                  headers: traceHeaders,
-                },
-              );
+              const requestOptions = {
+                signal: controller.signal,
+                headers: traceHeaders,
+              };
+              const response = options?.useResponsesApi
+                ? await createViaResponses(this.client, params, requestOptions)
+                : await this.client.chat.completions.create(
+                    params,
+                    requestOptions,
+                  );
 
               clearTimeout(timer);
 
@@ -282,6 +382,12 @@ export abstract class BaseAgent {
                 this.usage.completion_tokens +=
                   response.usage.completion_tokens;
                 this.usage.total_tokens += response.usage.total_tokens;
+              }
+
+              if (choice.finish_reason === "length") {
+                throw new Error(
+                  `${this.name}: response truncated at max_output_tokens=${maxTokens}`,
+                );
               }
 
               const result: LLMResult = {

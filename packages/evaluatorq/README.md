@@ -385,8 +385,10 @@ Complete examples are available in the examples folder:
 
 ### Environment Variables
 
-- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results). Also enables automatic OTEL tracing to Orq.
-- `ORQ_BASE_URL`: Base URL for Orq platform (default: `https://my.orq.ai`)
+- `ORQ_API_KEY`: API key for Orq platform integration (required for dataset access and sending results). Also enables automatic OTEL tracing to Orq. When it is set, `simulate()` uploads each run as an experiment and starts tracing; pass `uploadResults: false` to skip the upload.
+- `ORQ_BASE_URL`: Base URL for Orq platform (default: `https://my.orq.ai`). Must be a full `http` or `https` URL: an invalid value raises, and tracing turns off with a warning. A plain `http` host other than localhost warns, because the API key is sent to it.
+- `ROUTER_BASE_URL`: Deprecated way to set the same host, used when `ORQ_BASE_URL` is not set. Validated the same way.
+- `EVALUATORQ_LLM_MAX_TOKENS`: Output token budget for each simulator and judge call (default: `10000`). An invalid value warns and uses the default.
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: Custom OpenTelemetry collector endpoint (overrides default Orq endpoint)
 - `OTEL_EXPORTER_OTLP_HEADERS`: Headers for OTEL exporter (format: `key1=value1,key2=value2`)
 - `ORQ_DEBUG`: Enable debug logging for tracing setup

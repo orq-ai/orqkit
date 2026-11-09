@@ -6,102 +6,128 @@
  */
 
 import type OpenAI from "openai";
+import { z } from "zod/v4";
 
-import type { ChatMessage, Criterion, Judgment } from "../types.js";
+import { criterionIdFor } from "../criteria.js";
+import type {
+  ChatMessage,
+  Criterion,
+  CriterionVerdict,
+  Judgment,
+} from "../types.js";
 import { delimit } from "../utils/sanitize.js";
+import { toStrictSchema } from "../utils/strict-schema.js";
 import type { AgentConfig, LLMResult } from "./base.js";
 import { BaseAgent } from "./base.js";
 
 // ---------------------------------------------------------------------------
-// Quality score property definitions (shared by both judge tools)
+// Fields shared by both judge tools
 // ---------------------------------------------------------------------------
 
-const QUALITY_SCORE_PROPERTIES = {
-  response_quality: {
-    type: "number" as const,
-    description:
-      "Quality of the agent's last response: helpful, accurate, complete (0.0=poor, 1.0=excellent)",
-  },
-  hallucination_risk: {
-    type: "number" as const,
-    description:
-      "Risk that the agent fabricated information not grounded in the conversation (0.0=none, 1.0=high risk)",
-  },
-  tone_appropriateness: {
-    type: "number" as const,
-    description:
-      "How appropriate the agent's tone was for the situation (0.0=inappropriate, 1.0=perfect)",
-  },
-  factual_accuracy: {
-    type: "number" as const,
-    description:
-      "Accuracy of the agent's response against the provided ground truth (0.0=completely wrong, 1.0=fully correct). Only score this if ground truth is provided.",
-  },
+const QUALITY_SCORES = {
+  response_quality: z
+    .number()
+    .nullable()
+    .describe(
+      "Quality of the agent's last response: helpful, accurate, complete (0.0=poor, 1.0=excellent). Null if not scored.",
+    ),
+  hallucination_risk: z
+    .number()
+    .nullable()
+    .describe(
+      "Risk that the agent fabricated information not grounded in the conversation (0.0=none, 1.0=high risk). Null if not scored.",
+    ),
+  tone_appropriateness: z
+    .number()
+    .nullable()
+    .describe(
+      "How appropriate the agent's tone was for the situation (0.0=inappropriate, 1.0=perfect). Null if not scored.",
+    ),
+  factual_accuracy: z
+    .number()
+    .nullable()
+    .describe(
+      "Accuracy of the agent's response against the provided ground truth (0.0=completely wrong, 1.0=fully correct). Null if no ground truth is provided.",
+    ),
 };
+
+const CRITERIA_VERDICTS = z
+  .array(
+    z.object({
+      criterion_id: z
+        .string()
+        .describe("The criterion ID, copied exactly as listed"),
+      occurred: z
+        .boolean()
+        .describe(
+          "Whether the described event has happened in the conversation so far",
+        ),
+      evidence: z
+        .string()
+        .nullable()
+        .describe(
+          "Short quote from the conversation when occurred is true, otherwise null",
+        ),
+    }),
+  )
+  .describe(
+    "Occurrence audit. One entry for every criterion listed under EVALUATION CRITERIA, no omissions. Skip any criterion listed as ALREADY CONFIRMED in the final user message; those are settled and re-reporting them changes nothing. Send [] when that leaves nothing to report. Report only what literally happened in the conversation so far; do NOT judge whether that is good or bad.",
+  );
 
 // ---------------------------------------------------------------------------
 // Judge tools for structured decision making
 // ---------------------------------------------------------------------------
 
+const judgeTool = (
+  name: string,
+  description: string,
+  parameters: z.ZodObject,
+): OpenAI.Chat.Completions.ChatCompletionTool => ({
+  type: "function",
+  function: {
+    name,
+    description,
+    strict: true,
+    parameters: toStrictSchema(parameters),
+  },
+});
+
 export const JUDGE_TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "continue_conversation",
-      description:
-        "Allow the conversation to continue. Use when the goal is not yet achieved and no rules are broken.",
-      parameters: {
-        type: "object",
-        properties: {
-          reason: {
-            type: "string",
-            description:
-              "Brief explanation of why the conversation should continue",
-          },
-          ...QUALITY_SCORE_PROPERTIES,
-        },
-        required: ["reason"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "finish_conversation",
-      description:
-        "Terminate the conversation. Use when the goal is achieved OR a rule is broken.",
-      parameters: {
-        type: "object",
-        properties: {
-          reason: {
-            type: "string",
-            description: "Explanation of why the conversation should end",
-          },
-          goal_achieved: {
-            type: "boolean",
-            description: "Whether the user's goal was successfully achieved",
-          },
-          rules_broken: {
-            type: "array",
-            items: { type: "string" },
-            description: "List of criteria that were violated (empty if none)",
-          },
-          goal_completion_score: {
-            type: "number",
-            description:
-              "How much of the goal was achieved, from 0.0 (none) to 1.0 (fully achieved). Use intermediate values for partial completion.",
-          },
-          ...QUALITY_SCORE_PROPERTIES,
-        },
-        required: [
-          "reason",
-          "goal_achieved",
-          "rules_broken",
-          "goal_completion_score",
-        ],
-      },
-    },
-  },
+  judgeTool(
+    "continue_conversation",
+    "Allow the conversation to continue. Use when the goal is not yet achieved and no must_not_happen criterion has occurred.",
+    z.object({
+      reason: z
+        .string()
+        .describe("Brief explanation of why the conversation should continue"),
+      goal_completion_score: z
+        .number()
+        .describe(
+          "How much of the goal is achieved SO FAR, from 0.0 (none) to 1.0 (fully). Assess every turn: if the run hits max turns this is the final score.",
+        ),
+      criteria_verdicts: CRITERIA_VERDICTS,
+      ...QUALITY_SCORES,
+    }),
+  ),
+  judgeTool(
+    "finish_conversation",
+    "Terminate the conversation. Use when the goal is achieved OR a must_not_happen criterion has occurred.",
+    z.object({
+      reason: z
+        .string()
+        .describe("Explanation of why the conversation should end"),
+      goal_achieved: z
+        .boolean()
+        .describe("Whether the user's goal was successfully achieved"),
+      goal_completion_score: z
+        .number()
+        .describe(
+          "How much of the goal was achieved, from 0.0 (none) to 1.0 (fully achieved). Use intermediate values for partial completion.",
+        ),
+      criteria_verdicts: CRITERIA_VERDICTS,
+      ...QUALITY_SCORES,
+    }),
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -113,26 +139,38 @@ export const DEFAULT_JUDGE_PROMPT = `You are a conversation judge. Your role is 
 You will be given:
 1. The conversation history
 2. The user's goal
-3. Criteria that should or should not be satisfied
+3. Criteria that should or should not happen
+
+Each criterion has a unique ID (e.g., "criteria_0", "criteria_1"). When reporting criteria_verdicts, copy the criterion ID exactly as listed in \`criterion_id\`. Never paraphrase the description, renumber the IDs, or invent one that is not listed.
 
 Your task:
 - Evaluate whether the conversation should continue or end
 - Determine if the user's goal has been achieved
-- Check if any rules/criteria have been violated
+- Report which criteria have occurred
 
 Decision rules:
 1. FINISH if the user's goal is clearly achieved
-2. FINISH if any "must_not_happen" criteria are violated
-3. CONTINUE if the goal is not yet achieved and no rules are broken
+2. FINISH if any "must_not_happen" criterion has occurred
+3. CONTINUE if the goal is not yet achieved and no "must_not_happen" criterion has occurred
 4. CONTINUE if progress is being made toward the goal
+5. An unmet "must_happen" criterion is NOT a reason to end early, it may still happen later
+
+CRITERIA AUDIT (required in every tool call):
+- Send exactly one criteria_verdicts entry for every criterion ID, except those listed as ALREADY CONFIRMED in the final user message.
+- Report OCCURRENCE only: occurred=true if the described event happened in the conversation so far, occurred=false if it has not. Answer identically for must_happen and must_not_happen; pass or fail is computed elsewhere.
+- Quote the conversation in \`evidence\` when occurred=true, otherwise use null.
+- Judge the literal transcript. Do not credit intent or plans.
 
 For EVERY evaluation (continue or finish), also assess the agent's LAST response:
 - response_quality: How helpful, accurate, and complete was the response? (0.0=poor, 1.0=excellent)
 - hallucination_risk: Did the agent make up information not grounded in the conversation? (0.0=none, 1.0=high risk)
 - tone_appropriateness: Was the agent's tone appropriate for the situation? (0.0=inappropriate, 1.0=perfect)
-- factual_accuracy: If GROUND TRUTH is provided below, score how accurate the agent's response is against it (0.0=wrong, 1.0=correct). Skip if no ground truth.
+- factual_accuracy: If GROUND TRUTH is provided below, score how accurate the agent's response is against it (0.0=wrong, 1.0=correct). Use null if no ground truth.
 
 You MUST call one of the provided tools to make your decision.`;
+
+const CRITERION_PREFIX = "criteria_";
+const CRITERION_ID_PATTERN = /^criteria_\d+$/;
 
 // ---------------------------------------------------------------------------
 // JudgeAgent configuration
@@ -171,6 +209,7 @@ export class JudgeAgent extends BaseAgent {
   private goal: string;
   private criteria: Criterion[];
   private groundTruth: string;
+  private settledIds = new Set<string>();
 
   constructor(config?: JudgeAgentConfig) {
     super(config);
@@ -195,6 +234,15 @@ export class JudgeAgent extends BaseAgent {
   }
 
   /**
+   * Record criteria whose occurrence is final, so the judge stops re-reporting
+   * them. They go in the final user message to keep the system prompt static
+   * and cacheable.
+   */
+  markSettled(ids: Iterable<string>): void {
+    this.settledIds = new Set(ids);
+  }
+
+  /**
    * Evaluate a conversation and decide next action.
    *
    * @param messages - Conversation history to evaluate
@@ -204,18 +252,23 @@ export class JudgeAgent extends BaseAgent {
     messages: ChatMessage[],
     options?: { signal?: AbortSignal },
   ): Promise<Judgment> {
+    let instruction =
+      "Evaluate the conversation above. Should it continue or end? Use the appropriate tool.";
+    if (this.settledIds.size > 0) {
+      const settled = [...this.settledIds].sort().join(", ");
+      instruction += `\n\nALREADY CONFIRMED (occurrence is settled, do not re-report these in criteria_verdicts): ${settled}`;
+    }
+
     const evalMessages: ChatMessage[] = [
       ...messages,
-      {
-        role: "user",
-        content:
-          "Evaluate the conversation above. Should it continue or end? Use the appropriate tool.",
-      },
+      { role: "user", content: instruction },
     ];
 
     const result = await this.callLLM(evalMessages, {
       temperature: 0.0,
       tools: JUDGE_TOOLS,
+      toolChoice: "required",
+      useResponsesApi: true,
       signal: options?.signal,
       llmPurpose: "judge",
     });
@@ -275,15 +328,17 @@ export class JudgeAgent extends BaseAgent {
     }
 
     // Extract quality scores (shared by both tools)
-    const qualityScores = JudgeAgent.extractQualityScores(args);
+    const qualityScores = this.extractQualityScores(args);
 
     if (functionName === "continue_conversation") {
+      const verdicts = this.parseVerdicts(args.criteria_verdicts);
       return {
         should_terminate: false,
         reason: typeof args.reason === "string" ? args.reason : "",
         goal_achieved: false,
-        rules_broken: [],
-        goal_completion_score: 0.0,
+        rules_broken: this.violatedIds(verdicts),
+        goal_completion_score: clamp(toNumber(args.goal_completion_score, 0.0)),
+        criteria_verdicts: verdicts,
         ...qualityScores,
       };
     }
@@ -297,16 +352,15 @@ export class JudgeAgent extends BaseAgent {
       const defaultScore = goalAchieved ? 1.0 : 0.0;
       const goalCompletionScore = clamp(toNumber(rawScore, defaultScore));
 
-      const rulesBroken = Array.isArray(args.rules_broken)
-        ? (args.rules_broken as unknown[]).map(String)
-        : [];
+      const verdicts = this.parseVerdicts(args.criteria_verdicts);
 
       return {
         should_terminate: true,
         reason: typeof args.reason === "string" ? args.reason : "",
         goal_achieved: goalAchieved,
-        rules_broken: rulesBroken,
+        rules_broken: this.violatedIds(verdicts),
         goal_completion_score: goalCompletionScore,
+        criteria_verdicts: verdicts,
         ...qualityScores,
       };
     }
@@ -325,20 +379,123 @@ export class JudgeAgent extends BaseAgent {
   }
 
   /**
+   * Validate the judge's occurrence audit.
+   *
+   * Null means unknown and an empty list means nothing to report. A non-empty
+   * payload that loses every entry returns null, because a broken audit must
+   * not count as verified.
+   */
+  private parseVerdicts(raw: unknown): CriterionVerdict[] | null {
+    if (raw === undefined || raw === null) {
+      this.warnIfUnreported(null);
+      return null;
+    }
+    if (!Array.isArray(raw)) {
+      console.warn(
+        `JudgeAgent: criteria_verdicts is not a list: ${JSON.stringify(raw).slice(0, 200)}`,
+      );
+      return null;
+    }
+
+    const verdicts = new Map<number, CriterionVerdict>();
+    for (const entry of raw as unknown[]) {
+      const verdict = this.parseVerdict(entry);
+      if (!verdict) {
+        console.warn(
+          `JudgeAgent: dropping invalid verdict: ${JSON.stringify(entry)?.slice(0, 200)}`,
+        );
+        continue;
+      }
+      const index = Number(verdict.criterion_id.slice(CRITERION_PREFIX.length));
+      if (verdicts.has(index)) {
+        console.warn(
+          `JudgeAgent: duplicate verdict for ${verdict.criterion_id}, keeping the last`,
+        );
+      }
+      verdicts.set(index, verdict);
+    }
+
+    if (raw.length > 0 && verdicts.size === 0) {
+      console.warn("JudgeAgent: no usable entries in criteria_verdicts");
+      return null;
+    }
+
+    const parsed = [...verdicts.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, verdict]) => verdict);
+    if (parsed.length === 0) {
+      this.warnIfUnreported(parsed);
+    }
+    return parsed;
+  }
+
+  private parseVerdict(entry: unknown): CriterionVerdict | null {
+    if (typeof entry !== "object" || entry === null) {
+      return null;
+    }
+    const {
+      criterion_id: id,
+      occurred,
+      evidence,
+    } = entry as Record<string, unknown>;
+    if (typeof id !== "string" || typeof occurred !== "boolean") {
+      return null;
+    }
+    if (!CRITERION_ID_PATTERN.test(id)) {
+      return null;
+    }
+    const index = Number(id.slice(CRITERION_PREFIX.length));
+    if (index >= this.criteria.length || criterionIdFor(index) !== id) {
+      return null;
+    }
+    return {
+      criterion_id: id,
+      occurred,
+      evidence: typeof evidence === "string" ? evidence : "",
+    };
+  }
+
+  private warnIfUnreported(verdicts: CriterionVerdict[] | null): void {
+    const unsettled = this.criteria.length - this.settledIds.size;
+    if (unsettled > 0) {
+      console.warn(
+        `JudgeAgent: ${unsettled} unsettled criteria but ${verdicts ? "an empty" : "no"} criteria_verdicts`,
+      );
+    }
+  }
+
+  /** must_not_happen criteria the judge just reported as having occurred. */
+  private violatedIds(verdicts: CriterionVerdict[] | null): string[] {
+    return (verdicts ?? [])
+      .filter((verdict) => {
+        const index = Number(
+          verdict.criterion_id.slice(CRITERION_PREFIX.length),
+        );
+        return (
+          verdict.occurred && this.criteria[index]?.type === "must_not_happen"
+        );
+      })
+      .map((verdict) => verdict.criterion_id);
+  }
+
+  /**
    * Extract and clamp quality scores from tool call arguments.
    */
-  private static extractQualityScores(
+  private extractQualityScores(
     args: Record<string, unknown>,
   ): Partial<Pick<Judgment, QualityScoreField>> {
     const scores: Partial<Pick<Judgment, QualityScoreField>> = {};
 
     for (const field of QUALITY_SCORE_FIELDS) {
+      // With no ground truth there is nothing to measure this against.
+      if (field === "factual_accuracy" && !this.groundTruth) continue;
       const raw = args[field];
-      if (raw !== undefined && raw !== null) {
-        const num = Number(raw);
-        if (!Number.isNaN(num)) {
-          scores[field] = clamp(num);
-        }
+      const num =
+        typeof raw === "string" && !raw.trim()
+          ? Number.NaN
+          : toNumber(raw, Number.NaN);
+      if (!Number.isNaN(num)) {
+        scores[field] = clamp(num);
       }
     }
 
@@ -353,13 +510,15 @@ export class JudgeAgent extends BaseAgent {
       return "No specific criteria defined.";
     }
 
-    const mustHappen = this.criteria
-      .filter((c) => c.type === "must_happen")
-      .map((c) => delimit(c.description));
+    const lines = (type: Criterion["type"]): string[] =>
+      this.criteria.flatMap((c, i) =>
+        c.type === type
+          ? [`${criterionIdFor(i)}: ${delimit(c.description)} (${c.type})`]
+          : [],
+      );
 
-    const mustNot = this.criteria
-      .filter((c) => c.type === "must_not_happen")
-      .map((c) => delimit(c.description));
+    const mustHappen = lines("must_happen");
+    const mustNot = lines("must_not_happen");
 
     let text = "";
     if (mustHappen.length > 0) {

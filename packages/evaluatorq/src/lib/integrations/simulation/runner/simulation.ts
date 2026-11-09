@@ -5,10 +5,18 @@
  * and judge agent.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
 
 import { JudgeAgent } from "../agents/judge.js";
 import { UserSimulatorAgent } from "../agents/user-simulator.js";
+import { createRouterClient } from "../client.js";
+import { inConversation } from "../conversation.js";
+import {
+  buildCriteriaMeta,
+  buildCriteriaResults,
+  CriteriaTracker,
+} from "../criteria.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import {
   recordLLMInput,
   recordLLMOutput,
@@ -20,10 +28,10 @@ import type {
   ChatMessage,
   Datapoint,
   Judgment,
-  Message,
   Persona,
   Scenario,
   SimulationResult,
+  TargetCallback,
   TokenUsage,
   TurnMetrics,
 } from "../types.js";
@@ -44,9 +52,11 @@ export interface TargetAgent {
 
 export interface SimulationRunnerConfig {
   targetAgent?: TargetAgent;
-  targetCallback?: (messages: ChatMessage[]) => string | Promise<string>;
+  targetCallback?: TargetCallback;
   model?: string;
   maxTurns?: number;
+  /** Pre-configured client to reuse. The runner does not close it. */
+  client?: OpenAI;
 }
 
 export interface RunParams {
@@ -78,7 +88,7 @@ const ZERO_USAGE: TokenUsage = {
   total_tokens: 0,
 };
 
-function errorResult(
+export function errorResult(
   reason: string,
   persona?: Persona,
   scenario?: Scenario,
@@ -101,26 +111,76 @@ function errorResult(
   };
 }
 
+/** The same result, marked as having hit the row's time limit. */
+export function timedOutResult(
+  result: SimulationResult,
+  timeoutMs: number,
+): SimulationResult {
+  const reason = `Simulation timed out after ${timeoutMs}ms`;
+  return {
+    ...result,
+    terminated_by: "timeout",
+    reason,
+    metadata: {
+      ...result.metadata,
+      // failureReason prefers metadata.error, which may still say
+      // "Simulation cancelled" from the aborted run.
+      error: reason,
+      timeout: timeoutMs,
+    },
+  };
+}
+
+/**
+ * Swap user and assistant for the user simulator's LLM call.
+ *
+ * The simulator speaks as the assistant role in its own conversation, so the
+ * target's replies must reach it as user turns. Without the swap the model
+ * sees itself as the support agent and answers as one.
+ */
+export function invertRolesForSimulator(
+  messages: ChatMessage[],
+): ChatMessage[] {
+  return messages.map((m) => {
+    if (m.role === "user") return { role: "assistant", content: m.content };
+    if (m.role === "assistant") return { role: "user", content: m.content };
+    return { role: m.role, content: m.content };
+  });
+}
+
 function maxTurnsResult(
   maxTurns: number,
-  messages: Message[],
+  messages: ChatMessage[],
   turnMetrics: TurnMetrics[],
   tokenUsage: TokenUsage,
+  tracker: CriteriaTracker,
   persona?: Persona,
   scenario?: Scenario,
   lastJudgment?: Judgment,
 ): SimulationResult {
+  const rulesBroken = tracker.resolve(lastJudgment?.rules_broken ?? []);
   return {
     messages,
     terminated_by: "max_turns",
     reason: `Maximum turns (${maxTurns}) reached`,
     goal_achieved: lastJudgment?.goal_achieved ?? false,
     goal_completion_score: lastJudgment?.goal_completion_score ?? 0,
-    rules_broken: lastJudgment?.rules_broken ?? [],
+    rules_broken: rulesBroken,
     turn_count: maxTurns,
     turn_metrics: turnMetrics,
     token_usage: tokenUsage,
-    metadata: { persona: persona?.name, scenario: scenario?.name },
+    criteria_results: buildCriteriaResults(scenario, rulesBroken),
+    criteria_verified: tracker.verified,
+    metadata: {
+      persona: persona?.name,
+      scenario: scenario?.name,
+      criteria_meta: buildCriteriaMeta(
+        scenario,
+        rulesBroken,
+        tracker.verified ? tracker.auditedIds : null,
+        tracker.verified ? tracker.evidence : null,
+      ),
+    },
   };
 }
 
@@ -130,12 +190,11 @@ function maxTurnsResult(
 
 export class SimulationRunner {
   private readonly targetAgent?: TargetAgent;
-  private readonly targetCallback?: (
-    messages: ChatMessage[],
-  ) => string | Promise<string>;
+  private readonly targetCallback?: TargetCallback;
   private readonly model: string;
   private readonly maxTurns: number;
   private sharedClient: OpenAI | null = null;
+  private readonly injectedClient?: OpenAI;
 
   constructor(config: SimulationRunnerConfig) {
     if (!config.targetAgent && !config.targetCallback) {
@@ -145,7 +204,7 @@ export class SimulationRunner {
     if (maxTurns < 1) {
       throw new Error(`maxTurns must be >= 1, got ${maxTurns}`);
     }
-    const model = config.model ?? "azure/gpt-4o-mini";
+    const model = config.model ?? DEFAULT_SIMULATION_MODEL;
     if (!model.trim()) {
       throw new Error("model must be a non-empty string");
     }
@@ -154,21 +213,14 @@ export class SimulationRunner {
     this.targetCallback = config.targetCallback;
     this.model = model;
     this.maxTurns = maxTurns;
+    this.injectedClient = config.client;
   }
 
   private getSharedClient(): OpenAI {
-    if (!this.sharedClient) {
-      const apiKey = process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass a pre-configured client.",
-        );
-      }
-      this.sharedClient = new OpenAI({
-        apiKey,
-        baseURL: process.env.ROUTER_BASE_URL ?? "https://api.orq.ai/v3/router",
-      });
+    if (this.injectedClient) {
+      return this.injectedClient;
     }
+    this.sharedClient ??= createRouterClient();
     return this.sharedClient;
   }
 
@@ -179,6 +231,7 @@ export class SimulationRunner {
     let firstMessage: string | undefined = params.firstMessage;
     let storedSystemPrompt: string | undefined;
     const signal = params.signal;
+    const conversation = {};
 
     // Resolve datapoint
     if (params.datapoint) {
@@ -197,11 +250,23 @@ export class SimulationRunner {
 
     const maxTurns = params.maxTurns ?? this.maxTurns;
 
-    const messages: Message[] = [];
+    const messages: ChatMessage[] = [];
     const turnMetricsList: TurnMetrics[] = [];
 
     // Declare usage helper references — initialized inside try after agents are created
     let getTotalUsage: (() => TokenUsage) | undefined;
+
+    let tracker: CriteriaTracker;
+    try {
+      tracker = new CriteriaTracker(scenario);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      return errorResult(
+        `Invalid scenario criteria: ${reason}`,
+        persona,
+        scenario,
+      );
+    }
 
     try {
       return await withSimulationSpan(
@@ -290,7 +355,8 @@ export class SimulationRunner {
                   "orq.simulation.scenario": scenario?.name,
                   "orq.simulation.model": this.model,
                 },
-                async () => userSimulator.generateFirstMessage(),
+                async () =>
+                  userSimulator.generateFirstMessage(undefined, signal),
               );
           messages.push({ role: "user", content: firstMsg });
 
@@ -317,8 +383,11 @@ export class SimulationRunner {
                   undefined,
                   async (targetSpan) => {
                     recordLLMInput(targetSpan, targetMessages);
-                    const response =
-                      await this.getTargetResponse(targetMessages);
+                    const response = await this.getTargetResponse(
+                      targetMessages,
+                      conversation,
+                      signal,
+                    );
                     recordLLMOutput(targetSpan, response);
                     return response;
                   },
@@ -345,6 +414,8 @@ export class SimulationRunner {
                   buildTurnMetrics(turn + 1, judgment, usageBefore),
                 );
                 lastJudgment = judgment;
+                tracker.observe(judgment.criteria_verdicts);
+                judge.markSettled(tracker.settledIds);
 
                 setSpanAttrs(turnSpan, {
                   "orq.simulation.goal_achieved": judgment.goal_achieved,
@@ -361,10 +432,7 @@ export class SimulationRunner {
                     undefined,
                     async () =>
                       userSimulator.respondAsync(
-                        messages.map((m) => ({
-                          role: m.role,
-                          content: m.content,
-                        })),
+                        invertRolesForSimulator(messages),
                         { signal, llmPurpose: "user_simulator" },
                       ),
                   );
@@ -387,23 +455,29 @@ export class SimulationRunner {
                 "orq.simulation.turn_count": turn + 1,
               });
 
+              const rulesBroken = tracker.resolve(lastJudgment.rules_broken);
+
               return {
                 messages,
                 terminated_by: "judge",
                 reason: lastJudgment.reason,
                 goal_achieved: lastJudgment.goal_achieved,
                 goal_completion_score: lastJudgment.goal_completion_score,
-                rules_broken: lastJudgment.rules_broken,
+                rules_broken: rulesBroken,
                 turn_count: turn + 1,
                 turn_metrics: turnMetricsList,
                 token_usage: finalUsage,
-                criteria_results: this.buildCriteriaResults(
-                  scenario as Scenario,
-                  lastJudgment,
-                ),
+                criteria_results: buildCriteriaResults(scenario, rulesBroken),
+                criteria_verified: tracker.verified,
                 metadata: {
                   persona: persona?.name,
                   scenario: scenario?.name,
+                  criteria_meta: buildCriteriaMeta(
+                    scenario,
+                    rulesBroken,
+                    tracker.verified ? tracker.auditedIds : null,
+                    tracker.verified ? tracker.evidence : null,
+                  ),
                 },
               };
             }
@@ -428,6 +502,7 @@ export class SimulationRunner {
             messages,
             turnMetricsList,
             finalUsage,
+            tracker,
             persona,
             scenario,
             lastJudgment,
@@ -449,6 +524,25 @@ export class SimulationRunner {
       result.turn_count = messages.filter((m) => m.role === "assistant").length;
       result.turn_metrics = turnMetricsList;
       result.token_usage = usage;
+      // A must_happen that has not occurred yet might still have occurred later,
+      // so an aborted run only reports what is certain and marks the rest as not
+      // audited.
+      result.rules_broken = tracker.confirmedBrokenIds;
+      result.criteria_verified = tracker.verified;
+      const audited = tracker.auditedIds;
+      for (const id of tracker.unconfirmedIds) {
+        audited.delete(id);
+      }
+      result.criteria_results = buildCriteriaResults(
+        scenario,
+        result.rules_broken,
+      );
+      result.metadata.criteria_meta = buildCriteriaMeta(
+        scenario,
+        result.rules_broken,
+        audited,
+        tracker.evidence,
+      );
       return result;
     }
   }
@@ -524,48 +618,62 @@ export class SimulationRunner {
 
   // ---- private helpers ----
 
-  private async getTargetResponse(messages: ChatMessage[]): Promise<string> {
-    if (this.targetAgent) {
-      return this.targetAgent.respond(messages);
+  private async getTargetResponse(
+    messages: ChatMessage[],
+    conversation: object,
+    signal: AbortSignal | undefined,
+  ): Promise<string> {
+    const call = (): Promise<string> =>
+      inConversation(conversation, async () => {
+        if (this.targetAgent) {
+          return this.targetAgent.respond(messages);
+        }
+        if (this.targetCallback) {
+          return this.targetCallback(messages);
+        }
+        throw new Error("No target agent or callback configured");
+      });
+    if (!signal) {
+      return call();
     }
-    if (this.targetCallback) {
-      return this.targetCallback(messages);
+
+    // A callback takes no signal and cannot be stopped, so stop waiting for it.
+    // It may keep running after this returns.
+    let onAbort: () => void = () => {};
+    const aborted = new Promise<never>((_, reject) => {
+      onAbort = () => reject(new Error("Simulation cancelled"));
+      if (signal.aborted) {
+        onAbort();
+      } else {
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
+    });
+    try {
+      return await Promise.race([call(), aborted]);
+    } finally {
+      signal.removeEventListener("abort", onAbort);
     }
-    throw new Error("No target agent or callback configured");
   }
 
   /**
-   * Build criteria_results map from the judge's final judgment.
-   * Maps each criterion description to whether it was satisfied.
+   * Run one datapoint with a timeout. Never throws. `elapsedMs` is time this row
+   * already spent, which counts against the limit.
    */
-  private buildCriteriaResults(
-    scenario: Scenario,
-    judgment: Judgment,
-  ): Record<string, boolean> {
-    const results: Record<string, boolean> = {};
-    const criteria = scenario.criteria ?? [];
-    const rulesBroken = new Set(judgment.rules_broken);
-
-    for (const criterion of criteria) {
-      // A criterion is satisfied if it's NOT listed in rules_broken.
-      // This applies to both types: must_happen (it happened) and must_not_happen (it didn't happen).
-      results[criterion.description] = !rulesBroken.has(criterion.description);
-    }
-
-    return results;
-  }
-
-  private async runWithTimeout(
+  async runWithTimeout(
     datapoint: Datapoint,
     maxTurns: number | undefined,
     timeoutMs: number,
+    elapsedMs = 0,
   ): Promise<SimulationResult> {
     if (timeoutMs <= 0) {
       return this.run({ datapoint, maxTurns });
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.max(0, timeoutMs - elapsedMs),
+    );
 
     return new Promise<SimulationResult>((resolve) => {
       // run() never throws — it catches all errors internally and returns
@@ -575,15 +683,7 @@ export class SimulationRunner {
         (result) => {
           clearTimeout(timer);
           if (controller.signal.aborted) {
-            resolve({
-              ...result,
-              terminated_by: "timeout" as const,
-              reason: `Simulation timed out after ${timeoutMs}ms`,
-              metadata: {
-                ...(result.metadata as Record<string, unknown>),
-                timeout: timeoutMs,
-              },
-            });
+            resolve(timedOutResult(result, timeoutMs));
           } else {
             resolve(result);
           }

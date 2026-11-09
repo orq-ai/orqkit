@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { configuredOrqHost } from "./orq-host.js";
 import type { DataPoint, EvaluatorqResult, Output } from "./types.js";
 
 // Same structure as EvaluatorqResult but with Error objects converted to strings for JSON serialization
@@ -129,7 +130,7 @@ export const sendResultsToOrqEffect = (
     yield* _(
       Effect.tryPromise({
         try: async () => {
-          const baseUrl = process.env.ORQ_BASE_URL || "https://api.orq.ai";
+          const baseUrl = configuredOrqHost() ?? "https://api.orq.ai";
 
           const response = await fetch(
             `${baseUrl}/v2/spreadsheets/evaluations/receive`,

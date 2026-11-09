@@ -177,6 +177,7 @@ export function processJobEffect(
                 return {
                   jobName: result.name,
                   output: result.output,
+                  ...(result.error && { error: new Error(result.error) }),
                   evaluatorScores,
                 };
               }
@@ -184,6 +185,7 @@ export function processJobEffect(
               return {
                 jobName: result.name,
                 output: result.output,
+                ...(result.error && { error: new Error(result.error) }),
                 evaluatorScores: [],
               };
             },

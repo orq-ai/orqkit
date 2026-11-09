@@ -9,8 +9,10 @@
  * - ORQ_DISABLE_TRACING=1 or ORQ_DISABLE_TRACING=true
  *
  * When ORQ_API_KEY is provided:
- * - Uses ORQ_BASE_URL to derive the OTEL endpoint (my.*.orq.ai -> api.*.orq.ai/v2/otel)
- * - Falls back to https://api.orq.ai/v2/otel if ORQ_BASE_URL is not set
+ * - Uses ORQ_BASE_URL, or else the deprecated ROUTER_BASE_URL, to derive the OTEL
+ *   endpoint (my.*.orq.ai -> api.*.orq.ai/v2/otel)
+ * - Falls back to https://api.orq.ai/v2/otel if neither is set
+ * - Turns tracing off with a warning if the set one is not a valid URL
  * - Authorization header is automatically added with the API key
  *
  * Set ORQ_DEBUG=1 to enable debug logging for tracing setup.
@@ -18,6 +20,8 @@
 
 import type { Tracer } from "@opentelemetry/api";
 import type { NodeSDK } from "@opentelemetry/sdk-node";
+
+import { configuredOrqHost } from "../orq-host.js";
 
 let sdk: NodeSDK | null = null;
 let tracer: Tracer | null = null;
@@ -49,32 +53,36 @@ export function isTracingEnabled(): boolean {
  *
  * Priority:
  * 1. OTEL_EXPORTER_OTLP_ENDPOINT - explicit endpoint override
- * 2. ORQ_BASE_URL - derive API endpoint from base URL (e.g., my.orq.ai -> api.orq.ai)
+ * 2. ORQ_BASE_URL or ROUTER_BASE_URL - derive API endpoint from the host (e.g., my.orq.ai -> api.orq.ai)
  * 3. Default to production api.orq.ai when only ORQ_API_KEY is set
  */
-function getOtlpEndpoint(): string | undefined {
+export function getOtlpEndpoint(): string | undefined {
   // Explicit endpoint takes precedence
   if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
     return process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
   }
 
-  // If ORQ_API_KEY is set, derive endpoint from ORQ_BASE_URL or use default
+  // If ORQ_API_KEY is set, derive endpoint from the configured host or use default
   if (process.env.ORQ_API_KEY) {
-    const baseUrl = process.env.ORQ_BASE_URL;
-    if (baseUrl) {
+    try {
+      const baseUrl = configuredOrqHost();
+      if (!baseUrl) {
+        return "https://api.orq.ai/v2/otel";
+      }
       // Transform my.*.orq.ai -> api.*.orq.ai/v2/otel
       // e.g., https://my.staging.orq.ai -> https://api.staging.orq.ai/v2/otel
       // e.g., https://my.orq.ai -> https://api.orq.ai/v2/otel
-      try {
-        const url = new URL(baseUrl);
-        const host = url.host.replace(/^my\./, "api.");
-        return `${url.protocol}//${host}/v2/otel`;
-      } catch {
-        // Invalid URL, fall through to default
-      }
+      const url = new URL(baseUrl);
+      const host = url.host.replace(/^my\./, "api.");
+      const prefix = url.pathname.replace(/\/+$/, "");
+      return `${url.protocol}//${host}${prefix}/v2/otel`;
+    } catch {
+      // Falling back to production here would send a staging user's key there.
+      console.warn(
+        "Tracing is off: ORQ_BASE_URL or ROUTER_BASE_URL is not a valid URL.",
+      );
+      return undefined;
     }
-    // Default to production endpoint
-    return "https://api.orq.ai/v2/otel";
   }
 
   return undefined;
@@ -168,8 +176,8 @@ export async function initTracingIfNeeded(): Promise<boolean> {
     if (process.env.ORQ_DEBUG) {
       const source = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
         ? "OTEL_EXPORTER_OTLP_ENDPOINT"
-        : process.env.ORQ_BASE_URL
-          ? "ORQ_BASE_URL (derived)"
+        : process.env.ORQ_BASE_URL || process.env.ROUTER_BASE_URL
+          ? "ORQ_BASE_URL or ROUTER_BASE_URL (derived)"
           : "default (ORQ_API_KEY)";
       console.debug(`[evaluatorq] OTEL tracing enabled`);
       console.debug(`[evaluatorq] OTEL endpoint: ${tracesEndpoint}`);

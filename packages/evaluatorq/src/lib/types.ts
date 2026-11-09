@@ -75,6 +75,8 @@ export type Job = (
 ) => Promise<{
   name: string;
   output: Output;
+  /** Set when the job produced output for a failed run. Evaluators still run. */
+  error?: string;
 }>;
 
 /**
@@ -88,6 +90,8 @@ export type Job = (
  * @param print - Whether to print the results in a table format to the console. Defaults to true.
  * @param description - Optional description for the evaluation run.
  * @param path - Optional path (e.g. "MyProject/MyFolder") to place the experiment in a specific project and folder on the Orq platform.
+ * @param sendResults - Whether to upload results when ORQ_API_KEY is set. Defaults to true.
+ * @param manageTracing - Whether to flush and shut down tracing when the run ends. Set to false when the caller owns the tracing lifecycle. Defaults to true.
  */
 export interface EvaluatorParams {
   data:
@@ -102,6 +106,8 @@ export interface EvaluatorParams {
   print?: boolean;
   description?: string;
   path?: string;
+  sendResults?: boolean;
+  manageTracing?: boolean;
 }
 
 export type Evaluator = {
