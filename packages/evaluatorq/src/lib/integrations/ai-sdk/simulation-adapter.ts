@@ -5,9 +5,10 @@
  * the simulation framework's `simulate()` and `wrapSimulationAgent()`.
  */
 
-import type { Agent, ModelMessage, ToolSet } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { ChatMessage } from "../simulation/types.js";
+import type { AISdkAgent, AISdkTools } from "./types.js";
 
 /**
  * Options for the AI SDK simulation adapter.
@@ -47,8 +48,8 @@ export interface AISdkSimulationAdapterOptions {
  * });
  * ```
  */
-export function fromAISdkAgent<TOOLS extends ToolSet>(
-  agent: Agent<never, TOOLS, never>,
+export function fromAISdkAgent<TOOLS extends AISdkTools>(
+  agent: AISdkAgent<TOOLS>,
   options: AISdkSimulationAdapterOptions = {},
 ): (messages: ChatMessage[]) => Promise<string> {
   const { instructions } = options;

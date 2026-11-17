@@ -1,4 +1,4 @@
-import type { Agent, StepResult, ToolSet } from "ai";
+import type { StepResult, ToolSet } from "ai";
 
 import {
   generateItemId,
@@ -14,7 +14,7 @@ import type {
   ResponseResource,
   Usage,
 } from "../openresponses/index.js";
-import type { StepData } from "./types.js";
+import type { AISdkAgent, AISdkTools, StepData } from "./types.js";
 
 /**
  * Type alias for a step from an Agent result.
@@ -31,8 +31,8 @@ type AgentStep = StepResult<ToolSet> & StepData;
  * - All function calls made during the conversation
  * - All function call outputs returned
  */
-export function buildInputFromSteps<TOOLS extends ToolSet>(
-  result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
+export function buildInputFromSteps<TOOLS extends AISdkTools>(
+  result: Awaited<ReturnType<AISdkAgent<TOOLS>["generate"]>>,
   prompt: string | undefined,
 ): unknown[] {
   const input: unknown[] = [];
@@ -116,9 +116,9 @@ export function buildInputFromSteps<TOOLS extends ToolSet>(
 /**
  * Converts Vercel AI SDK agent result to OpenResponses format.
  */
-export function convertToOpenResponses<TOOLS extends ToolSet>(
-  result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
-  agent: Agent<never, TOOLS, never>,
+export function convertToOpenResponses<TOOLS extends AISdkTools>(
+  result: Awaited<ReturnType<AISdkAgent<TOOLS>["generate"]>>,
+  agent: AISdkAgent<TOOLS>,
 ): ResponseResource {
   return buildOpenResponsesFromSteps(result, agent);
 }
@@ -219,9 +219,9 @@ function buildInputFromRequestBody(
  * Builds OpenResponses format from AI SDK agent result steps.
  * Extracts input messages from the request body when available.
  */
-export function buildOpenResponsesFromSteps<TOOLS extends ToolSet>(
-  result: Awaited<ReturnType<Agent<never, TOOLS, never>["generate"]>>,
-  agent: Agent<never, TOOLS, never>,
+export function buildOpenResponsesFromSteps<TOOLS extends AISdkTools>(
+  result: Awaited<ReturnType<AISdkAgent<TOOLS>["generate"]>>,
+  agent: AISdkAgent<TOOLS>,
   _prompt?: string,
 ): ResponseResource {
   const now = Math.floor(Date.now() / 1000);
