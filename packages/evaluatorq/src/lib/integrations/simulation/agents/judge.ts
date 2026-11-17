@@ -337,7 +337,7 @@ export class JudgeAgent extends BaseAgent {
         reason: typeof args.reason === "string" ? args.reason : "",
         goal_achieved: false,
         rules_broken: this.violatedIds(verdicts),
-        goal_completion_score: clamp(toNumber(args.goal_completion_score, 0.0)),
+        goal_completion_score: goalScore(args.goal_completion_score, 0.0),
         criteria_verdicts: verdicts,
         ...qualityScores,
       };
@@ -347,10 +347,11 @@ export class JudgeAgent extends BaseAgent {
       const goalAchieved =
         typeof args.goal_achieved === "boolean" ? args.goal_achieved : false;
 
-      // Clamp goal_completion_score to [0.0, 1.0]
-      const rawScore = args.goal_completion_score;
-      const defaultScore = goalAchieved ? 1.0 : 0.0;
-      const goalCompletionScore = clamp(toNumber(rawScore, defaultScore));
+      // An achieved finish with no score means 1.0, as in Python.
+      const goalCompletionScore = goalScore(
+        args.goal_completion_score,
+        goalAchieved ? 1.0 : 0.0,
+      );
 
       const verdicts = this.parseVerdicts(args.criteria_verdicts);
 
@@ -490,12 +491,9 @@ export class JudgeAgent extends BaseAgent {
       // With no ground truth there is nothing to measure this against.
       if (field === "factual_accuracy" && !this.groundTruth) continue;
       const raw = args[field];
-      const num =
-        typeof raw === "string" && !raw.trim()
-          ? Number.NaN
-          : toNumber(raw, Number.NaN);
-      if (!Number.isNaN(num)) {
-        scores[field] = clamp(num);
+      const num = unitInterval(raw);
+      if (num !== null) {
+        scores[field] = num;
       }
     }
 
@@ -541,12 +539,24 @@ function clamp(value: number): number {
   return Math.max(0.0, Math.min(1.0, value));
 }
 
-/** Safely convert an unknown value to a number, falling back to a default. */
-function toNumber(value: unknown, fallback: number): number {
-  if (typeof value === "number" && !Number.isNaN(value)) return value;
-  if (typeof value === "string") {
-    const n = Number(value);
-    if (!Number.isNaN(n)) return n;
-  }
-  return fallback;
+const DECIMAL = /^\s*[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?\s*$/;
+
+/** A finite number or plain decimal string, clamped to 0..1; null for anything else. */
+function unitInterval(value: unknown): number | null {
+  let n: number;
+  if (typeof value === "number") n = value;
+  else if (typeof value === "string" && DECIMAL.test(value)) n = Number(value);
+  else return null;
+  return Number.isFinite(n) ? clamp(n) : null;
+}
+
+/** Missing or null takes the fallback; an unusable value scores 0 with a warning. */
+function goalScore(value: unknown, fallback: number): number {
+  if (value === undefined || value === null) return fallback;
+  const score = unitInterval(value);
+  if (score !== null) return score;
+  console.warn(
+    `JudgeAgent: unusable goal_completion_score ${JSON.stringify(value)}; scoring this turn 0.0.`,
+  );
+  return 0.0;
 }

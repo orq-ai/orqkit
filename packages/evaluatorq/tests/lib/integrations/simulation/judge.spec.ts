@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 
 import OpenAI from "openai";
 
@@ -319,6 +319,74 @@ describe("JudgeAgent with strict answers", () => {
     );
 
     expect(judgment.goal_completion_score).toBe(0);
+  });
+
+  test.each([["high"], [true], ["Infinity"], ["0x1"], [""]])(
+    "a goal score of %p scores 0 on both tools, achieved or not",
+    async (raw) => {
+      const warn = spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        for (const turn of [
+          () =>
+            finishTurn(
+              [{ criterion_id: "criteria_0", occurred: true, evidence: "q" }],
+              { goal_achieved: true, goal_completion_score: raw },
+            ),
+          () =>
+            finishTurn(
+              [{ criterion_id: "criteria_0", occurred: true, evidence: "q" }],
+              { goal_achieved: false, goal_completion_score: raw },
+            ),
+          () =>
+            continueTurn(
+              [{ criterion_id: "criteria_0", occurred: false, evidence: null }],
+              { goal_completion_score: raw },
+            ),
+        ]) {
+          const { client } = makeFakeClient({ judge: turn });
+          const judgment = await new JudgeAgent({ client, criteria }).evaluate(
+            messages,
+          );
+          expect(judgment.goal_completion_score).toBe(0);
+        }
+        expect(warn).toHaveBeenCalledTimes(3);
+      } finally {
+        warn.mockRestore();
+      }
+    },
+  );
+
+  test.each([
+    [7, 1],
+    ["0.4", 0.4],
+    [" 5e-1 ", 0.5],
+    [-2, 0],
+  ])("a numeric goal score %p is clamped to %p", async (raw, expected) => {
+    const { client } = makeFakeClient({
+      judge: () =>
+        continueTurn(
+          [{ criterion_id: "criteria_0", occurred: false, evidence: null }],
+          { goal_completion_score: raw },
+        ),
+    });
+    const judgment = await new JudgeAgent({ client, criteria }).evaluate(
+      messages,
+    );
+    expect(judgment.goal_completion_score).toBe(expected);
+  });
+
+  test("an achieved finish with no score is a full score", async () => {
+    const { client } = makeFakeClient({
+      judge: () =>
+        finishTurn(
+          [{ criterion_id: "criteria_0", occurred: true, evidence: "q" }],
+          { goal_achieved: true, goal_completion_score: null },
+        ),
+    });
+    const judgment = await new JudgeAgent({ client, criteria }).evaluate(
+      messages,
+    );
+    expect(judgment.goal_completion_score).toBe(1);
   });
 
   test("a quality score sent as a numeric string is read", async () => {
