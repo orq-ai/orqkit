@@ -43,7 +43,10 @@ export const MAX_INPUT_CHAR_BUDGET = MAX_TRACE_INPUT_CHARS,
 const nonnegative = signalInteger.refine((value) => value >= 0),
   optionalInt = nonnegative.nullable().default(null),
   optionalString = z.string().nullable().default(null),
-  strings = z.array(z.string()).readonly().default([]);
+  strings = z
+    .array(z.string())
+    .readonly()
+    .default(() => []);
 function openModel<S extends z.ZodRawShape>(shape: S) {
   return z.preprocess((value) => {
     if (value === null || typeof value !== "object" || Array.isArray(value))
@@ -86,7 +89,7 @@ export const TraceRecordSchema = openModel({
   toolDefinitionTokens: nonnegative.default(0),
   totalTokens: optionalInt,
   durationMs: optionalInt,
-  captureMetadata: signalDictionary.default({}),
+  captureMetadata: signalDictionary.default(() => ({})),
 });
 export type TraceRecordFields = z.infer<typeof TraceRecordSchema>;
 export class TraceRecord implements TraceRecordFields {
@@ -146,10 +149,13 @@ export type DimensionAnswer = z.infer<typeof DimensionAnswerSchema>;
 export const TraceClassificationSchema = signalModel({
   traceId: z.string(),
   spanId: z.string(),
-  answers: z.array(DimensionAnswerSchema).readonly().default([]),
+  answers: z
+    .array(DimensionAnswerSchema)
+    .readonly()
+    .default(() => []),
   matched: signalBoolean.default(false),
   error: optionalString,
-  rawResult: signalDictionary.default({}),
+  rawResult: signalDictionary.default(() => ({})),
 });
 export type TraceClassification = z.infer<typeof TraceClassificationSchema>;
 const recordModel = TraceRecordSchema.transform(
@@ -162,8 +168,11 @@ const recordModel = TraceRecordSchema.transform(
     );
 export const SnapshotSchema = signalModel({
   traces: z.array(recordModel).readonly(),
-  documents: z.array(documentModel).readonly().default([]),
-  captureMetadata: signalDictionary.default({}),
+  documents: z
+    .array(documentModel)
+    .readonly()
+    .default(() => []),
+  captureMetadata: signalDictionary.default(() => ({})),
 });
 export type SnapshotFields = z.infer<typeof SnapshotSchema>;
 export class Snapshot implements SnapshotFields {
@@ -244,7 +253,7 @@ export const FacetCatalogueSchema = signalModel({
   agentName: strings,
   toolName: strings,
   truncatedFacets: frozenSet(z.enum(FACET_NAMES)),
-  valueCounts: signalRecord(signalRecord(signalInteger)).default({}),
+  valueCounts: signalRecord(signalRecord(signalInteger)).default(() => ({})),
 });
 export type FacetCatalogue = z.infer<typeof FacetCatalogueSchema>;
 export const NumericFiltersSchema = signalModel({

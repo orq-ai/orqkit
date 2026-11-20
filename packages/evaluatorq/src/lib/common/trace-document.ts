@@ -142,7 +142,10 @@ const metadataShape = {
   product: z.string().default(""),
   traceType: z.string().default(""),
   agentName: z.string().default(""),
-  toolNames: z.array(z.string()).readonly().default([]),
+  toolNames: z
+    .array(z.string())
+    .readonly()
+    .default(() => []),
   toolDefinitionCount: signalInteger.refine((value) => value >= 0).default(0),
   toolDefinitionTokens: signalInteger.refine((value) => value >= 0).default(0),
   totalTokens: signalInteger
@@ -153,7 +156,7 @@ const metadataShape = {
     .refine((value) => value >= 0)
     .nullable()
     .default(null),
-  captureMetadata: signalDictionary.default({}),
+  captureMetadata: signalDictionary.default(() => ({})),
   signals: SignalReportSchema.transform((value) => new SignalReport(value))
     .nullable()
     .default(null),
