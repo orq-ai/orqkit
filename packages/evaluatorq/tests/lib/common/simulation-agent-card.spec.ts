@@ -26,7 +26,9 @@ beforeEach(async () => {
   await writeFile(process.env.EVALUATORQ_DASHBOARD_SETTINGS, "{}");
 });
 afterEach(async () => {
-  process.env = original;
+  for (const key of Object.keys(process.env))
+    if (!Object.hasOwn(original, key)) delete process.env[key];
+  Object.assign(process.env, original);
   await rm(directory, { recursive: true, force: true });
 });
 const native = (value: unknown): Parameters<typeof simulationAgentCard>[0] =>
