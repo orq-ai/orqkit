@@ -2,7 +2,7 @@
  * Shared defaults for the simulation integration.
  */
 
-import { configuredOrqHost } from "../../orq-host.js";
+import { configuredOrqHost, parseHostUrl } from "../../orq-host.js";
 
 /** Model used for the user simulator, judge and generators. */
 export const DEFAULT_SIMULATION_MODEL = "openai/gpt-6-luna";
@@ -50,18 +50,18 @@ export function resolveOrqHost(): string {
  * ignoring it would silently move staging users onto production.
  */
 export function resolveRouterBaseUrl(): string {
+  const routerBaseUrl = process.env.ROUTER_BASE_URL;
+  if (routerBaseUrl && !warnedRouterBaseUrl) {
+    warnedRouterBaseUrl = true;
+    console.warn(
+      "ROUTER_BASE_URL is deprecated; set ORQ_BASE_URL instead. ORQ_BASE_URL takes precedence when both are set.",
+    );
+  }
   if (process.env.ORQ_BASE_URL) {
     return `${configuredOrqHost()}${ROUTER_PATH}`;
   }
-
-  const routerBaseUrl = process.env.ROUTER_BASE_URL;
   if (routerBaseUrl) {
-    if (!warnedRouterBaseUrl) {
-      warnedRouterBaseUrl = true;
-      console.warn(
-        "ROUTER_BASE_URL is deprecated, set ORQ_BASE_URL to the host instead.",
-      );
-    }
+    parseHostUrl("ROUTER_BASE_URL", routerBaseUrl);
     return routerBaseUrl;
   }
 

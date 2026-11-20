@@ -1,7 +1,7 @@
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const warnedPlainHttp = new Set<string>();
 
-function parseHostUrl(name: string, value: string): URL {
+export function parseHostUrl(name: string, value: string): URL {
   const invalid = new Error(`${name} is not a valid URL: "${value}"`);
   let url: URL;
   try {
