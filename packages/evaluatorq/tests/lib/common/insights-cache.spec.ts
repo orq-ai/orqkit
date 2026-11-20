@@ -1,5 +1,11 @@
 import { expect, test } from "bun:test";
-import { readFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -73,4 +79,33 @@ test("cache keys, persistence and disabled mode", async () => {
   disabled.putSummary("t", "s", "m", "h", summary);
   expect(disabled.getSummary("t", "s", "m", "h")).toBeNull();
   disabled.close();
+});
+
+test("cache creates private transcript files and preserves unrelated parent permissions", async () => {
+  const root = mkdtempSync(join(tmpdir(), "insights-private-"));
+  const path = join(root, "private", "insights.sqlite");
+  const parentMode = statSync(root).mode & 0o777;
+  const cache = await InsightsCache.open({ path });
+  try {
+    if (process.platform !== "win32") {
+      expect(statSync(join(root, "private")).mode & 0o777).toBe(0o700);
+      expect(statSync(path).mode & 0o777).toBe(0o600);
+      expect(statSync(root).mode & 0o777).toBe(parentMode);
+    }
+  } finally {
+    cache.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("SQLite memory caches do not create a literal file", async () => {
+  expect(existsSync(":memory:")).toBe(false);
+  const cache = await InsightsCache.open({ path: ":memory:" });
+  try {
+    cache.putVectors("m", { test: [1, 2] });
+    expect(cache.getVectors("m", ["test"])).toEqual({ test: [1, 2] });
+    expect(existsSync(":memory:")).toBe(false);
+  } finally {
+    cache.close();
+  }
 });
