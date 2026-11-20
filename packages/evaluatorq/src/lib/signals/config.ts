@@ -115,7 +115,7 @@ export const TagThresholdsSchema = signalModel(
   {
     ruleVersion: z.string(),
     thresholds: signalRecord(signalFloat),
-    percentiles: percentileTables.default({}),
+    percentiles: percentileTables.default(() => ({})),
   },
   true,
 );
@@ -176,7 +176,9 @@ const percentiles = signalRecord(
 export const SignalsConfigSchema = signalModel(
   {
     errorDetection: z.enum(["status", "status_and_content"]).default("status"),
-    errorPatterns: z.array(z.string()).default([...DEFAULT_ERROR_PATTERNS]),
+    errorPatterns: z
+      .array(z.string())
+      .default(() => [...DEFAULT_ERROR_PATTERNS]),
     canonicalisation: z.enum(["sorted_keys", "exact"]).default("sorted_keys"),
     retryDefinition: z
       .enum(["consecutive_same_tool", "same_tool_args_within_n"])
@@ -188,10 +190,10 @@ export const SignalsConfigSchema = signalModel(
         z.array(z.string()).transform((values) => new Set(values)),
       )
       .default(() => new Set(DEFAULT_EMPTY_VALUES)),
-    emptyLiterals: z.array(z.string()).default([]),
+    emptyLiterals: z.array(z.string()).default(() => []),
     toolRoles: signalRecord(ToolRoleSchema).default(defaultToolRoles),
     alertThresholds: signalRecord(signalFloat).default(defaultAlertThresholds),
-    tagPercentiles: percentiles.default({}),
+    tagPercentiles: percentiles.default(() => ({})),
     tagThresholds: TagThresholdsSchema.nullable().default(null),
     classifier: ClassifierConfigSchema.default(() =>
       ClassifierConfigSchema.parse({}),

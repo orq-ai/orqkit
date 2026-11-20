@@ -357,7 +357,7 @@ export const CompiledPlanSchema = signalModel(
           .nullable(),
       )
       .readonly()
-      .default([]),
+      .default(() => []),
   },
   true,
 );

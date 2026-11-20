@@ -10,7 +10,7 @@ const text = z.string().nullable().default(null),
   integer = z.number().int().nullable().default(null),
   number = z.number().nullable().default(null);
 const usage = savedUsage.nullable().default(null),
-  strings = z.array(z.string()).default([]);
+  strings = z.array(z.string()).default(() => []);
 const errorFields = {
   error: text,
   errorType: text,
@@ -20,7 +20,7 @@ const errorFields = {
 };
 const evaluatedFields = {
   input: RedTeamInputSchema,
-  messages: z.array(CanonicalMessageSchema).default([]),
+  messages: z.array(CanonicalMessageSchema).default(() => []),
   response: text,
   ...errorFields,
 };
@@ -52,7 +52,7 @@ export const DynamicAttackResultRowSchema = savedKeys(
     strategy: AttackStrategySchema.nullable().default(null),
     objective: text,
     ...errorFields,
-    conversation: z.array(CanonicalMessageSchema).default([]),
+    conversation: z.array(CanonicalMessageSchema).default(() => []),
     finalResponse: z.string().default(""),
     turns: z.number().int().default(1),
     objectiveAchieved: z.boolean().nullable().default(null),
@@ -95,7 +95,9 @@ export type ErrorTypeDetails = z.infer<typeof ErrorTypeDetailsSchema>;
 export const DynamicErrorAnalysisRowSchema = savedKeys(
   z.object({
     errorRate: z.number().default(0),
-    byErrorType: z.record(z.string(), ErrorTypeDetailsSchema).default({}),
+    byErrorType: z
+      .record(z.string(), ErrorTypeDetailsSchema)
+      .default(() => ({})),
   }),
 );
 export type DynamicErrorAnalysisRow = z.infer<
@@ -125,7 +127,7 @@ export type DynamicRunMetadata = z.infer<typeof DynamicRunMetadataSchema>;
 export const StrategySelectionRowSchema = z
   .object({
     count: z.number().int().default(0),
-    strategies: z.array(AttackStrategySchema).default([]),
+    strategies: z.array(AttackStrategySchema).default(() => []),
   })
   .passthrough();
 export type StrategySelectionRow = z.infer<typeof StrategySelectionRowSchema>;
@@ -150,10 +152,10 @@ export const DynamicSummaryReportRowSchema = savedKeys(
     resistanceRate: z.number().default(0),
     errors: z.number().int().default(0),
     errorAnalysis: DynamicErrorAnalysisRowSchema.prefault({}),
-    tokenUsageBySource: z.record(z.string(), savedUsage).default({}),
+    tokenUsageBySource: z.record(z.string(), savedUsage).default(() => ({})),
     byCategory: z
       .record(z.string(), DynamicCategorySummaryRowSchema)
-      .default({}),
+      .default(() => ({})),
   }),
 );
 export type DynamicSummaryReportRow = z.infer<
@@ -179,7 +181,7 @@ export const ReportSnapshotSchema = savedKeys(
     categoriesTested: z.array(z.string()),
     resistanceRate: z.number().min(0).max(1).nullable().default(null),
     vulnerabilitiesFound: z.number().int(),
-    topTechniques: z.record(z.string(), z.number().int()).default({}),
+    topTechniques: z.record(z.string(), z.number().int()).default(() => ({})),
   }),
 );
 export type ReportSnapshot = z.infer<typeof ReportSnapshotSchema>;

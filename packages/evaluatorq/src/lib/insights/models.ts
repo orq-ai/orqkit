@@ -162,9 +162,9 @@ export const TraceSummarySchema = signalModel({
   request: z.string().nullable(),
   task: z.string().nullable(),
   topic: z.string().nullable(),
-  assistantErrors: z.array(z.string()).default([]),
+  assistantErrors: z.array(z.string()).default(() => []),
   sentimentExplanation: z.string().nullable(),
-  languages: z.array(z.string()).default([]),
+  languages: z.array(z.string()).default(() => []),
 });
 export type TraceSummary = z.infer<typeof TraceSummarySchema>;
 export function realAssistantErrors(summary: TraceSummary): string[] {
@@ -342,9 +342,9 @@ export const ClusterAssignmentSchema = signalModel({
 });
 export type ClusterAssignment = z.infer<typeof ClusterAssignmentSchema>;
 export const ToolStatsSchema = signalModel({
-  tools: signalRecord(signalInteger).default({}),
-  skills: signalRecord(signalInteger).default({}),
-  commands: signalRecord(signalInteger).default({}),
+  tools: signalRecord(signalInteger).default(() => ({})),
+  skills: signalRecord(signalInteger).default(() => ({})),
+  commands: signalRecord(signalInteger).default(() => ({})),
 });
 export type ToolStats = z.infer<typeof ToolStatsSchema>;
 const traceTime = z
@@ -406,7 +406,7 @@ export const DimensionResultSchema = signalModel({
   nNoise: signalInteger.default(0),
   nNoSignal: signalInteger.default(0),
   nFailed: signalInteger.default(0),
-  warnings: z.array(z.string()).default([]),
+  warnings: z.array(z.string()).default(() => []),
 });
 export type DimensionResult = z.infer<typeof DimensionResultSchema>;
 export const LabelResultSchema = signalModel({
@@ -474,7 +474,7 @@ export const InsightsConfigSchema = signalModel({
   priorityDimension: dimensionName.default("intent"),
   cache: signalBoolean.default(true),
   codingAnalysis: signalBoolean.default(false),
-  codingLabels: z.array(labelSpecValue).default([]),
+  codingLabels: z.array(labelSpecValue).default(() => []),
   signals: SignalsConfigSchema.nullable().default(null),
 }).superRefine((config, ctx) => {
   const labels = config.labels.map((x) => x.name),
@@ -567,9 +567,9 @@ const SavedStageRecordSchema = z.unknown().transform((value, ctx) => {
   return result.data;
 });
 export const InsightsStageHistorySchema = signalModel({
-  plannedStages: z.array(z.string()).default([]),
-  stageLabels: signalRecord(z.string()).default({}),
-  stages: z.array(SavedStageRecordSchema).default([]),
+  plannedStages: z.array(z.string()).default(() => []),
+  stageLabels: signalRecord(z.string()).default(() => ({})),
+  stages: z.array(SavedStageRecordSchema).default(() => []),
 });
 export type InsightsStageHistory = z.infer<typeof InsightsStageHistorySchema>;
 const codingKinds: Readonly<Record<string, "noul" | "choice" | "score">> = {
@@ -610,7 +610,7 @@ export const InsightsRunSchema = signalModel({
   priorityReason: z.string().nullable(),
   counts: signalRecord(signalInteger),
   warnings: z.array(z.string()),
-  costByStage: signalRecord(SavedUsageSchema.nullable()).default({}),
+  costByStage: signalRecord(SavedUsageSchema.nullable()).default(() => ({})),
   stageHistory: InsightsStageHistorySchema.nullable().default(null),
 }).superRefine((run, ctx) => {
   if (run.schemaVersion !== 1) {

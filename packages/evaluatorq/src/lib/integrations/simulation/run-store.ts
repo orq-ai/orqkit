@@ -69,11 +69,11 @@ const AgentInfoSchema = z.object({
   description: nullableString,
   model: nullableString,
   version: nullableString,
-  tools: z.array(z.string()).default([]),
-  skills: z.array(z.string()).default([]),
-  knowledgeBases: z.array(z.string()).default([]),
-  memoryStores: z.array(z.string()).default([]),
-  subAgents: z.array(z.string()).default([]),
+  tools: z.array(z.string()).default(() => []),
+  skills: z.array(z.string()).default(() => []),
+  knowledgeBases: z.array(z.string()).default(() => []),
+  memoryStores: z.array(z.string()).default(() => []),
+  subAgents: z.array(z.string()).default(() => []),
   agentType: nullableString,
   engine: nullableString,
   workspaceId: nullableString,
@@ -182,14 +182,14 @@ const ResultSchema = z.object({
   turn_count: z.number().int(),
   token_usage: z.unknown(),
   turn_metrics: z.array(z.unknown()),
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.unknown()).default(() => ({})),
   criteria_results: z.record(z.boolean()).nullish(),
   criteria_verified: z.boolean().nullish(),
   total_turns: z.number().int().nullish(),
   token_usage_known: z.boolean().default(true),
   thread_id: z.string().nullish(),
-  response_traces: z.array(z.unknown()).default([]),
-  evaluator_details: z.record(z.unknown()).default({}),
+  response_traces: z.array(z.unknown()).default(() => []),
+  evaluator_details: z.record(z.unknown()).default(() => ({})),
   usage: UsageSchema.nullish(),
 });
 export type StoredSimulationResult = Omit<SimulationResult, "messages"> & {
@@ -257,7 +257,7 @@ const RunSchema = z.object({
   runId: nullableString,
   experimentUrl: nullableString,
   recommendations: z.array(z.unknown()).nullable().default(null),
-  appliedSuggestions: z.array(z.string()).default([]),
+  appliedSuggestions: z.array(z.string()).default(() => []),
 });
 const RUN_KEYS = Object.keys(RunSchema.shape);
 export interface SimulationRunInput {

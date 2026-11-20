@@ -29,7 +29,10 @@ const text = z.string(),
   optionalText = text.nullable().default(null),
   nonnegative = signalInteger.refine((value) => value >= 0),
   bound = nonnegative.nullable().default(null),
-  strings = z.array(text).readonly().default([]),
+  strings = z
+    .array(text)
+    .readonly()
+    .default(() => []),
   unit = signalFloat.refine(
     (value) => Number.isFinite(value) && value >= 0 && value <= 1,
   );
@@ -170,7 +173,10 @@ export const ExportTraceSchema = signalModel(
     timestamp: dateTime.pipe(z.string()),
     agentName: optionalText,
     toolNames: strings,
-    answers: z.array(ExportAnswerSchema).readonly().default([]),
+    answers: z
+      .array(ExportAnswerSchema)
+      .readonly()
+      .default(() => []),
     matched: signalBoolean,
     error: optionalText,
   },

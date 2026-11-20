@@ -6,7 +6,7 @@ const ConfigSchema = z
     turnEfficiencyCliffs: z
       .array(z.tuple([z.number().int().positive(), unit]))
       .nonempty()
-      .default([
+      .default((): [number, number][] => [
         [2, 1],
         [4, 0.9],
         [6, 0.7],
