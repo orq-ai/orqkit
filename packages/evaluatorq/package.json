@@ -120,6 +120,30 @@
       "types": "./dist/lib/local-sessions/index.d.ts",
       "import": "./dist/lib/local-sessions/index.js",
       "default": "./dist/lib/local-sessions/index.js"
+    },
+    "./openai-agents": {
+      "development": "./src/lib/integrations/openai-agents/index.ts",
+      "types": "./dist/lib/integrations/openai-agents/index.d.ts",
+      "import": "./dist/lib/integrations/openai-agents/index.js",
+      "default": "./dist/lib/integrations/openai-agents/index.js"
+    },
+    "./crewai": {
+      "development": "./src/lib/integrations/python-frameworks/index.ts",
+      "types": "./dist/lib/integrations/python-frameworks/index.d.ts",
+      "import": "./dist/lib/integrations/python-frameworks/index.js",
+      "default": "./dist/lib/integrations/python-frameworks/index.js"
+    },
+    "./pydantic-ai": {
+      "development": "./src/lib/integrations/python-frameworks/index.ts",
+      "types": "./dist/lib/integrations/python-frameworks/index.d.ts",
+      "import": "./dist/lib/integrations/python-frameworks/index.js",
+      "default": "./dist/lib/integrations/python-frameworks/index.js"
+    },
+    "./contracts": {
+      "development": "./src/lib/contracts.ts",
+      "types": "./dist/lib/contracts.d.ts",
+      "import": "./dist/lib/contracts.js",
+      "default": "./dist/lib/contracts.js"
     }
   },
   "peerDependencies": {
@@ -135,7 +159,8 @@
     "@opentelemetry/resources": "^2.0.0",
     "@opentelemetry/semantic-conventions": "^1.28.0",
     "vega": "^6.0.0",
-    "vega-lite": "^6.4.0"
+    "vega-lite": "^6.4.0",
+    "@openai/agents": ">=0.22.0"
   },
   "peerDependenciesMeta": {
     "@orq-ai/node": {
@@ -175,6 +200,9 @@
       "optional": true
     },
     "vega-lite": {
+      "optional": true
+    },
+    "@openai/agents": {
       "optional": true
     }
   },
