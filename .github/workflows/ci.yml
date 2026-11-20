@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, "aminaakhmedova/res-599-*"]
 
 # For PRs, cancel previous runs. For main branch, queue them.
 concurrency:
