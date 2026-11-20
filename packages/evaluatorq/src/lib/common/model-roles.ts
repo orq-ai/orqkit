@@ -14,14 +14,14 @@ import {
 } from "../contracts.js";
 import { envText } from "./env-config.js";
 
-const BUILTIN: Record<Role, string> = {
+export const BUILTIN: Readonly<Record<Role, string>> = {
   fast: DEFAULT_FAST_MODEL,
   smart: DEFAULT_SMART_MODEL,
   classifier: DEFAULT_CLASSIFIER_MODEL,
   embedding: DEFAULT_EMBEDDING_MODEL,
 };
 
-const ROLE_ENV: Record<Role, string> = {
+export const ROLE_ENV: Readonly<Record<Role, string>> = {
   fast: "EVALUATORQ_FAST_MODEL",
   smart: "EVALUATORQ_SMART_MODEL",
   classifier: "EVALUATORQ_CLASSIFIER_MODEL",
