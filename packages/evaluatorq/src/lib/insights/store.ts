@@ -51,15 +51,10 @@ export async function saveRun(
   try {
     const file = await open(temporary, "wx");
     try {
-      const json = JSON.stringify(
-        parsed,
-        function (this: Record<string, unknown>, key, serialized) {
-          const original = this[key];
-          return original instanceof Set ? [...original] : serialized;
-        },
-        2,
+      await file.writeFile(
+        `${JSON.stringify(parsed, (_key, value) => (value instanceof Set ? [...value] : value), 2)}\n`,
+        "utf8",
       );
-      await file.writeFile(`${json}\n`, "utf8");
       await file.sync();
     } finally {
       await file.close();

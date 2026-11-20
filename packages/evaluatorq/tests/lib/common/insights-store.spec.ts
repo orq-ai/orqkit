@@ -3,6 +3,8 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
+import { toPythonKeys } from "../../../src/lib/common/python-json.js";
+import { vlAvailable } from "../../../src/lib/common/reports/vega.js";
 import { InsightsRunSchema } from "../../../src/lib/insights/models.js";
 import {
   insightsRunSlug,
@@ -53,5 +55,34 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
     expect(insightsRunSlug("Test Topic")).toBe("test-topic");
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("chart loading cannot change saved Set fields into strings", async () => {
+  expect(await vlAvailable()).toBe(true);
+  const root = await mkdtemp(join(tmpdir(), "insights-chart-save-"));
+  try {
+    const base = await loadRun(
+      new URL(
+        "../fixtures/insights-run-file-python-golden.json",
+        import.meta.url,
+      ).pathname,
+    );
+    const run = InsightsRunSchema.parse({
+      ...base,
+      config: { ...base.config, signals: { emptyValues: new Set(["", "[]"]) } },
+    });
+    const path = await saveRun(run, root);
+    const raw = JSON.parse(await readFile(path, "utf8"));
+    expect(raw.config.signals.empty_values).toEqual(["", "[]"]);
+    expect((await loadRun(path)).config.signals?.emptyValues).toEqual(
+      new Set(["", "[]"]),
+    );
+    expect(toPythonKeys(new Set(["a"]), "SignalsConfig")).toEqual(["a"]);
+    expect(toPythonKeys({ nested: [new Set(["b"])] }, "SignalsConfig")).toEqual(
+      { nested: [["b"]] },
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "fast_model": "openai/gpt-5-mini",
+  "smart_model": null,
+  "classifier_model": null,
+  "embedding_model": null,
+  "model_overrides": {
+    "finder.compiler": "x/y"
+  },
+  "window_days": 14,
+  "limit": 500,
+  "parallelism": 100,
+  "trace_input_chars": 500000,
+  "filter_selection": "llm",
+  "ask_ai_mode": "immediate",
+  "orq_auth_method": "cli_profile",
+  "orq_api_key_ciphertext": null,
+  "orq_oauth_server": null,
+  "orq_profile": "work \u00e9",
+  "orq_profile_host": null,
+  "orq_credential_fingerprint": null,
+  "orq_workspace": null,
+  "orq_project_id": null,
+  "orq_project_name": null,
+  "explorer_columns": [
+    "trace",
+    "cost"
+  ],
+  "compression_inspector_enabled": true
+}

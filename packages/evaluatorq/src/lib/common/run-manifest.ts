@@ -1,15 +1,5 @@
-import { randomBytes } from "node:crypto";
-import {
-  mkdir,
-  readdir,
-  readFile,
-  realpath,
-  rename,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { readdir, readFile, realpath, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import {
@@ -17,12 +7,15 @@ import {
   type ManifestSurface,
   RUN_SUMMARY_VERSION,
   type RunManifest,
+  RunManifestObject,
   RunManifestSchema,
   type RunSummary,
   type StageRecord,
   StageRecordSchema,
 } from "../contracts.js";
 import { withFileLock } from "./file-lock.js";
+import { writePrivateAtomic } from "./private-files.js";
+import { camelToSnake } from "./python-json.js";
 
 export const MANIFESTS_DIR_NAME = ".manifests";
 
@@ -58,23 +51,75 @@ async function withManifestLock<T>(
   }
 }
 
+const pythonDateTime = (value: Date | null): string | null => {
+  if (value === null) {
+    return null;
+  }
+  const iso = value.toISOString();
+  const millis = value.getUTCMilliseconds();
+  return millis === 0
+    ? `${iso.slice(0, 19)}Z`
+    : `${iso.slice(0, 19)}.${String(millis * 1000).padStart(6, "0")}Z`;
+};
+
+/** Python's `model_dump_json(indent=2)` shape: snake_case keys, microsecond UTC datetimes. */
+export function manifestJson(manifest: RunManifest): string {
+  const summary =
+    manifest.summary === null
+      ? null
+      : Object.fromEntries(
+          Object.entries(manifest.summary)
+            .filter(([, value]) => value !== undefined)
+            .map(([key, value]) => [camelToSnake(key), value]),
+        );
+  return JSON.stringify(
+    {
+      run_id: manifest.runId,
+      surface: manifest.surface,
+      run_name: manifest.runName,
+      status: manifest.status,
+      stage: manifest.stage,
+      stages: manifest.stages.map((record) => ({
+        name: record.name,
+        target: record.target,
+        status: record.status,
+        started_at: pythonDateTime(record.startedAt),
+        ended_at: pythonDateTime(record.endedAt),
+        completed: record.completed,
+        total: record.total,
+      })),
+      planned_stages: manifest.plannedStages,
+      stage_labels: manifest.stageLabels,
+      started_at: pythonDateTime(manifest.startedAt),
+      updated_at: pythonDateTime(manifest.updatedAt),
+      ended_at: pythonDateTime(manifest.endedAt),
+      error: manifest.error,
+      report_path: manifest.reportPath,
+      parallelism: manifest.parallelism,
+      summary,
+      summary_version: manifest.summaryVersion,
+    },
+    null,
+    2,
+  );
+}
+
 // The temp file and rename keep a mid-write kill from leaving truncated JSON,
 // since surfacing crashed runs is the whole point of the manifest.
 async function writeAtomic(
   manifest: RunManifest,
   path: string,
 ): Promise<boolean> {
-  const temporary = `${path}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`;
   try {
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(temporary, JSON.stringify(manifest, null, 2), "utf8");
-    await rename(temporary, path);
+    await writePrivateAtomic(path, manifestJson(manifest), {
+      mode: 0o666,
+      privateDirectory: false,
+    });
     return true;
   } catch (error) {
     console.warn(
       `Failed to write run manifest ${path}: ${error}; later transitions will retry`,
     );
-    await rm(temporary, { force: true }).catch(() => undefined);
     return false;
   }
 }
@@ -191,7 +236,7 @@ export class ManifestWriter {
         const merged: Record<string, unknown> = structuredClone(onDisk);
         const local = this.manifest as Record<string, unknown>;
         const base = this.persisted as Record<string, unknown>;
-        for (const field of Object.keys(RunManifestSchema.shape)) {
+        for (const field of Object.keys(RunManifestObject.shape)) {
           if (!isDeepStrictEqual(local[field], base[field])) {
             merged[field] = local[field];
           }

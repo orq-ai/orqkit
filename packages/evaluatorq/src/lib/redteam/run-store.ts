@@ -2,13 +2,50 @@ import { mkdir, open, rm } from "node:fs/promises";
 import { join } from "node:path";
 
 import { writePrivateAtomic } from "../common/private-files.js";
-import { REPLAY_VERSION } from "../common/replay.js";
+import {
+  camelToSnake,
+  isPlain,
+  pythonJsonDumps,
+  toPythonKeys,
+} from "../common/python-json.js";
+import { REPLAY_VERSION, REPLAY_VERSION_KEY } from "../common/replay.js";
 import { getStoreDir } from "../common/run-store-dir.js";
 import type { SaveMode } from "./contracts.js";
 import { DATAPOINTS_KEY, RUN_CONFIG_KEY } from "./replay.js";
 import type { RedTeamReport } from "./reports/models.js";
 
 export const getRedteamRunsDir = (): string => getStoreDir("runs");
+export function pythonDatapointInputs(inputs: unknown): unknown {
+  if (!isPlain(inputs)) return inputs;
+  return Object.fromEntries(
+    Object.entries(inputs).map(([key, value]) => [
+      camelToSnake(key),
+      key === "strategy" && isPlain(value)
+        ? toPythonKeys(value, "AttackStrategy")
+        : value,
+    ]),
+  );
+}
+function pythonStageData(filename: string, data: unknown): unknown {
+  if (!Array.isArray(data)) return data;
+  if (filename.startsWith("01_")) return data.map(pythonDatapointInputs);
+  return (toPythonKeys(data, "DataPointResult") as unknown[]).map((row) =>
+    isPlain(row) && isPlain(row.dataPoint)
+      ? {
+          ...row,
+          dataPoint: {
+            ...row.dataPoint,
+            inputs: pythonDatapointInputs(row.dataPoint.inputs),
+          },
+        }
+      : row,
+  );
+}
+/** datetime.now(timezone.utc).isoformat(): microseconds and "+00:00". */
+const pythonUtcNow = (): string =>
+  new Date().toISOString().replace(/\.(\d{3})Z$/, ".$1000+00:00");
+export const pythonReport = (report: RedTeamReport): Record<string, unknown> =>
+  toPythonKeys(report.toJSON(), "RedTeamReport") as Record<string, unknown>;
 export async function saveRedteamStage(
   outputDir: string | null,
   filename: string,
@@ -17,7 +54,10 @@ export async function saveRedteamStage(
   if (outputDir == null) return;
   await writePrivateAtomic(
     join(outputDir, filename),
-    JSON.stringify({ savedAt: new Date().toISOString(), data }, null, 2),
+    pythonJsonDumps({
+      saved_at: pythonUtcNow(),
+      data: pythonStageData(filename, data),
+    }),
     { privateDirectory: false },
   );
 }
@@ -29,11 +69,7 @@ export async function saveRedteamReport(
   if (outputDir == null) return;
   await writePrivateAtomic(
     join(outputDir, filename),
-    JSON.stringify(
-      { ...report.toJSON(), savedAt: new Date().toISOString() },
-      null,
-      2,
-    ),
+    pythonJsonDumps({ ...pythonReport(report), saved_at: pythonUtcNow() }),
     { privateDirectory: false },
   );
 }
@@ -64,16 +100,21 @@ export async function autoSaveRedteamRun(
       .replaceAll(":", "")
       .replace("T", "_");
     const payload: Record<string, unknown> = {
-      ...report.toJSON(),
-      runName: name,
-      savedAt: new Date().toISOString(),
+      ...pythonReport(report),
+      run_name: name,
+      saved_at: pythonUtcNow(),
     };
     if (options.datapoints?.length) {
-      payload[DATAPOINTS_KEY] = options.datapoints;
-      payload[RUN_CONFIG_KEY] = options.runConfig ?? {};
-      payload.replayVersion = REPLAY_VERSION;
+      payload[DATAPOINTS_KEY] = options.datapoints.map(pythonDatapointInputs);
+      payload[RUN_CONFIG_KEY] = Object.fromEntries(
+        Object.entries(options.runConfig ?? {}).map(([key, value]) => [
+          camelToSnake(key),
+          value,
+        ]),
+      );
+      payload[REPLAY_VERSION_KEY] = REPLAY_VERSION;
     }
-    const text = JSON.stringify(payload, null, 2);
+    const text = pythonJsonDumps(payload);
     for (let index = 0; index < 1000; index++) {
       const path = join(
         directory,
