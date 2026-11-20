@@ -326,10 +326,21 @@ describe("simulate", () => {
       }
     }
 
-    const [url] = fetchSpy.mock.calls[0] as unknown as [string];
+    const [url] = fetchSpy.mock.calls.find((call) =>
+      String((call as unknown as [string])[0]).endsWith(
+        "/v2/spreadsheets/evaluations/receive",
+      ),
+    ) as unknown as [string];
     expect(url).toBe(
       "https://staging.example/v2/spreadsheets/evaluations/receive",
     );
+    expect(
+      fetchSpy.mock.calls.every((call) =>
+        String((call as unknown as [string])[0]).startsWith(
+          "https://staging.example/",
+        ),
+      ),
+    ).toBe(true);
   });
 
   test("scores an unverified row once, so it warns once", async () => {
