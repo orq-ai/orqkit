@@ -65,7 +65,7 @@ const attachment = (body: string, type: string, filename: string) =>
   new Response(body, {
     headers: {
       "content-type": type,
-      "content-disposition": `attachment; filename="${filename}"`,
+      "content-disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
     },
   });
 

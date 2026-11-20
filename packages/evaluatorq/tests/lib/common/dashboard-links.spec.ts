@@ -85,6 +85,24 @@ const calls = async (): Promise<unknown[]> =>
     .map((line) => JSON.parse(line));
 
 describe("credential scope matches pinned Python", () => {
+  test("proxy-only environment credentials do not start the CLI without a platform host", async () => {
+    process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+    process.env.ORQ_API_KEY = "test-key";
+    await fakeCli([{}]);
+    await expect(
+      scopeCliJson(["projects", "list"], { profile: null, timeoutMs: 1000 }),
+    ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+    expect(await readFile(join(directory, "state.json"), "utf8")).toBe("0");
+    await scopeCliJson(["projects", "list"], {
+      profile: null,
+      server: "https://explicit.example",
+      timeoutMs: 1000,
+    });
+    expect(await calls()).toMatchObject([
+      { env: { ORQ_SERVER: "https://explicit.example" } },
+    ]);
+  });
+
   for (const row of goldens.scenarios)
     test(row.name, async () => {
       Object.assign(process.env, row.env);

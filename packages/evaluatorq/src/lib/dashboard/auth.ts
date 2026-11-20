@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
 import { buildCliOauthClients, oauthSubject } from "../common/cli-oauth.js";
-import { DEFAULT_ORQ_BASE_URL, envRaw, envText } from "../common/env-config.js";
+import { envText } from "../common/env-config.js";
 import { resolveLlmClient } from "../common/llm-client.js";
 import {
   listOrqProfiles,
   type OrqProfile,
+  orqServerUrl,
   resolveOrqClient,
 } from "../common/orq-client.js";
 import { pythonJson } from "../formats/json.js";
@@ -55,7 +56,7 @@ export async function resolveDashboardAuth(
     return new DashboardAuth(
       method,
       envText("ORQ_API_KEY") ?? null,
-      envRaw("ORQ_BASE_URL", DEFAULT_ORQ_BASE_URL),
+      orqServerUrl(),
     );
   if (method === "cli_profile") {
     const name = settings.orqProfile;
@@ -74,7 +75,7 @@ export async function resolveDashboardAuth(
     return new DashboardAuth(
       method,
       profile.apiKey,
-      profile.server || DEFAULT_ORQ_BASE_URL,
+      profile.server || orqServerUrl(),
       profile,
     );
   }
@@ -91,14 +92,14 @@ export async function resolveDashboardAuth(
     return new DashboardAuth(
       method,
       key,
-      settings.orqProfileHost || DEFAULT_ORQ_BASE_URL,
+      settings.orqProfileHost || orqServerUrl(),
     );
   }
   if (method === "cli_oauth")
     return new DashboardAuth(
       method,
       null,
-      settings.orqOauthServer || DEFAULT_ORQ_BASE_URL,
+      settings.orqOauthServer || orqServerUrl(),
     );
   throw new Error(
     "Unknown dashboard authentication method. Choose one in Settings.",

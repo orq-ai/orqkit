@@ -115,3 +115,33 @@ test("preview forms carry process token and reject stale or cross-site requests"
   form.delete("csrf");
   expect(requestRejected({ headers: new Headers() }, form)).not.toBeNull();
 });
+
+test("local agent cards render without an inferred platform host", async () => {
+  const names = ["ORQ_BASE_URL", "ROUTER_BASE_URL"];
+  const saved = new Map(names.map((name) => [name, process.env[name]]));
+  delete process.env.ORQ_BASE_URL;
+  process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+  try {
+    const html = await redteamAgentCard(
+      { target_kind: "agent", id: "a", workspace_id: "workspace" },
+      "fixture",
+      {},
+    );
+    expect(html).toContain("fixture");
+    expect(html).not.toContain("Open in Studio");
+    const explicit = await redteamAgentCard(
+      { target_kind: "agent", id: "a" },
+      "fixture",
+      {},
+      "https://staging.example/workspace/experiments/e",
+    );
+    expect(explicit).toContain(
+      'href="https://staging.example/workspace/agents/a"',
+    );
+  } finally {
+    for (const [name, value] of saved) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+});

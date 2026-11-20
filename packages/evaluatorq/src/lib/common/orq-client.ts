@@ -5,13 +5,14 @@ import { join } from "node:path";
 
 import type { Orq } from "@orq-ai/node";
 
+import { configuredOrqHost } from "../orq-host.js";
 import { DEFAULT_ORQ_BASE_URL, envRaw } from "./env-config.js";
 
 const INSTALL_HINT =
   "The @orq-ai/node package is not installed. Install it with: npm install @orq-ai/node (or: bun add @orq-ai/node)";
 
 export function orqServerUrl(): string {
-  return envRaw("ORQ_BASE_URL", DEFAULT_ORQ_BASE_URL);
+  return configuredOrqHost() ?? DEFAULT_ORQ_BASE_URL;
 }
 
 export async function resolveOrqClient(
