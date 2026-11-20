@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { performance } from "node:perf_hooks";
 
-import { DEFAULT_ORQ_BASE_URL, envRaw } from "../common/env-config.js";
+import { orqServerUrl } from "../common/orq-client.js";
 import { codepointCompare, pythonCasefold } from "../common/sanitize.js";
 
 export interface OrqProject {
@@ -92,7 +92,7 @@ export async function scopeCliJson(
     drop(["ORQ_WORKSPACE", "ORQ_WORKSPACE_SLUG", "ORQ_PROJECT"]);
     if (!options.useCliSession) {
       command.push("--profile", "");
-      env.ORQ_SERVER = envRaw("ORQ_BASE_URL", DEFAULT_ORQ_BASE_URL);
+      env.ORQ_SERVER = options.server || orqServerUrl();
     }
   }
   if (options.server) command.push("--server", options.server);

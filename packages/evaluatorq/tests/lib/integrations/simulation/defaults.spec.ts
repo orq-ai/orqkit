@@ -63,3 +63,32 @@ describe("resolveRouterBaseUrl", () => {
     expect(resolveRouterBaseUrl()).toBe("https://b.example/custom");
   });
 });
+
+test("a fresh process warns once specifically when both base variables are set", () => {
+  const module = new URL(
+    "../../../../src/lib/integrations/simulation/defaults.ts",
+    import.meta.url,
+  ).href;
+  const result = Bun.spawnSync(
+    [
+      process.execPath,
+      "--eval",
+      `import {resolveRouterBaseUrl} from ${JSON.stringify(module)};resolveRouterBaseUrl();resolveRouterBaseUrl();`,
+    ],
+    {
+      env: {
+        ...process.env,
+        ORQ_BASE_URL: "https://platform.example",
+        ROUTER_BASE_URL: "https://proxy.example/v3/router",
+      },
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+  );
+  expect(result.exitCode).toBe(0);
+  const stderr = new TextDecoder().decode(result.stderr);
+  expect(
+    stderr.split("ROUTER_BASE_URL is ignored because ORQ_BASE_URL is also set")
+      .length - 1,
+  ).toBe(1);
+});
