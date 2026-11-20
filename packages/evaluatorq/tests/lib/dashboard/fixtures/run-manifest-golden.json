@@ -1,0 +1,53 @@
+{
+  "run_id": "py-golden",
+  "surface": "redteam",
+  "run_name": "golden run é",
+  "status": "completed",
+  "stage": "Scoring",
+  "stages": [
+    {
+      "name": "Attacking",
+      "target": "agent-a",
+      "status": "completed",
+      "started_at": "2026-11-17T10:04:01.250000Z",
+      "ended_at": "2026-11-17T10:04:02Z",
+      "completed": 4,
+      "total": 4
+    },
+    {
+      "name": "Scoring",
+      "target": null,
+      "status": "completed",
+      "started_at": "2026-11-17T10:04:02Z",
+      "ended_at": "2026-11-17T10:04:03.007000Z",
+      "completed": null,
+      "total": null
+    }
+  ],
+  "planned_stages": [
+    "Attacking",
+    "Scoring"
+  ],
+  "stage_labels": {
+    "Attacking": "Attack",
+    "my_key": "Kept"
+  },
+  "started_at": "2026-11-17T10:04:00.001000Z",
+  "updated_at": "2026-11-17T10:04:03.007000Z",
+  "ended_at": "2026-11-17T10:04:03.007000Z",
+  "error": null,
+  "report_path": "/runs/r.json",
+  "parallelism": 8,
+  "summary": {
+    "total_results": 4,
+    "pipeline": "static",
+    "vulnerability_rate": 0.25,
+    "tested_agents": [
+      "agent-a"
+    ],
+    "scorer_averages": {
+      "a_b": 0.5
+    }
+  },
+  "summary_version": 1
+}

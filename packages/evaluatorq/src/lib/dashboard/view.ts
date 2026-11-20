@@ -251,7 +251,7 @@ function statTile(label: string, value: string, unit = "", sub = ""): string {
   );
 }
 
-function panel(
+export function panel(
   title: string,
   sub: string,
   inner: string,

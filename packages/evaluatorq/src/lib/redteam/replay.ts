@@ -5,7 +5,7 @@ import type { DataPoint } from "../types.js";
 import { Pipeline, PipelineSchema } from "./contracts.js";
 
 export const DATAPOINTS_KEY = "datapoints";
-export const RUN_CONFIG_KEY = "runConfig";
+export const RUN_CONFIG_KEY = "run_config";
 export interface RedTeamReplay {
   readonly datapoints: DataPoint[];
   readonly pipeline: Pipeline;
@@ -85,7 +85,7 @@ export async function loadRedteamReplay(
       ),
     ),
   ];
-  const storedConfig = savedField(payload, RUN_CONFIG_KEY, "run_config"),
+  const storedConfig = savedField(payload, RUN_CONFIG_KEY, "runConfig"),
     config = record(storedConfig) ? storedConfig : {};
   const maxTurns = savedField(config, "maxTurns", "max_turns"),
     instructions = savedField(

@@ -228,8 +228,8 @@ it("saves concurrent same-second runs without overwriting and restores all repla
       expect(replay.maxBacktracks).toBe(2);
       expect((await stat(path as string)).mode & 0o777).toBe(0o600);
       const payload = JSON.parse(await readFile(path as string, "utf8"));
-      expect(payload.runConfig.maxTurns).toBe(7);
-      expect(payload.run_config).toBeUndefined();
+      expect(payload.run_config.max_turns).toBe(7);
+      expect(payload.runConfig).toBeUndefined();
     }
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -244,7 +244,7 @@ it("keeps stage envelopes separate from flat summaries and final index", async (
       await readFile(join(directory, "01.json"), "utf8"),
     );
     expect(stage.data).toEqual([{ id: 1 }]);
-    expect(stage.savedAt).toBeString();
+    expect(stage.saved_at).toBeString();
     const saved = await persistAndIndexRedteamRun({
       report,
       save: "final",
@@ -262,7 +262,7 @@ it("keeps stage envelopes separate from flat summaries and final index", async (
     );
     expect(final.pipeline).toBe("dynamic");
     expect(final.data).toBeUndefined();
-    expect(final.savedAt).toBeString();
+    expect(final.saved_at).toBeString();
     const none = await persistAndIndexRedteamRun({
       report,
       save: "none",

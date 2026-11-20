@@ -190,8 +190,12 @@ beforeEach(() => {
   mode = "legacy";
   requests = [];
   warn = spyOn(console, "warn").mockImplementation(() => {});
+  delete process.env.ORQ_DEBUG;
 });
-afterEach(() => warn.mockRestore());
+afterEach(() => {
+  warn.mockRestore();
+  delete process.env.ORQ_DEBUG;
+});
 test("real SDK captures legacy agent responses and preserves full messages and microseconds", async () => {
   const source = new OrqTraceSource(client());
   try {
@@ -207,6 +211,9 @@ test("real SDK captures legacy agent responses and preserves full messages and m
       "/v2/projects",
       "/v3/traces/query",
     ]);
+    expect(warn).not.toHaveBeenCalled();
+    process.env.ORQ_DEBUG = "1";
+    await source.loadAsync(options());
     expect(warn).toHaveBeenCalled();
   } finally {
     source.close();
@@ -270,6 +277,7 @@ test("capture registration stays bounded across source lifecycles", async () => 
   }
 });
 test("SDK validation recovery rejects missing identities and mismatched span details", async () => {
+  process.env.ORQ_DEBUG = "1";
   const source = new OrqTraceSource(client());
   try {
     mode = "bad-query";

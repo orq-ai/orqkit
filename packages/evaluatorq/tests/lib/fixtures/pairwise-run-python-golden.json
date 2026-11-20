@@ -1,0 +1,236 @@
+{
+  "judging": "pairwise",
+  "run_name": "py pairwise",
+  "created_at": "2026-11-17T10:00:00Z",
+  "label_a": "Old",
+  "label_b": "New",
+  "judges": [
+    "judge_one",
+    "judge-two"
+  ],
+  "criteria": "helpful",
+  "swap": true,
+  "entries": [
+    {
+      "question": "q0",
+      "response_a": "a",
+      "response_b": "b",
+      "comparison": {
+        "winner": "A",
+        "votes": [
+          {
+            "model": "judge_one",
+            "vote": "A",
+            "flipped": false,
+            "completed": true,
+            "replacement": false,
+            "explanation": "x",
+            "observations": [
+              {
+                "ordering": "ab",
+                "repetition": 0,
+                "verdict": "A",
+                "explanation": null,
+                "raw_output": {
+                  "Raw_Key": 1,
+                  "camelKey": 2
+                }
+              }
+            ],
+            "repetition_failures": 1
+          },
+          {
+            "model": "judge-two",
+            "vote": "A",
+            "flipped": true,
+            "completed": true,
+            "replacement": false,
+            "explanation": "",
+            "observations": [],
+            "repetition_failures": 0
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 5,
+          "output_tokens": 3,
+          "total_tokens": 8,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 2,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 1,
+          "priced_calls": 0,
+          "prompt_tokens": 5,
+          "completion_tokens": 3,
+          "cost_usd": null
+        },
+        "judge_latency_ms": 12.5,
+        "trace_id": "t1"
+      },
+      "metrics_a": {
+        "usage": {
+          "input_tokens": 1,
+          "output_tokens": 0,
+          "total_tokens": 1,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "prompt_tokens": 1,
+          "completion_tokens": 0,
+          "cost_usd": null
+        },
+        "latency_ms": 3.0
+      },
+      "metrics_b": null
+    },
+    {
+      "question": "q1",
+      "response_a": "a",
+      "response_b": "b",
+      "comparison": {
+        "winner": "B",
+        "votes": [
+          {
+            "model": "judge_one",
+            "vote": "B",
+            "flipped": false,
+            "completed": true,
+            "replacement": false,
+            "explanation": "x",
+            "observations": [
+              {
+                "ordering": "ab",
+                "repetition": 0,
+                "verdict": "B",
+                "explanation": null,
+                "raw_output": {
+                  "Raw_Key": 1,
+                  "camelKey": 2
+                }
+              }
+            ],
+            "repetition_failures": 1
+          },
+          {
+            "model": "judge-two",
+            "vote": "B",
+            "flipped": true,
+            "completed": true,
+            "replacement": false,
+            "explanation": "",
+            "observations": [],
+            "repetition_failures": 0
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 5,
+          "output_tokens": 3,
+          "total_tokens": 8,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 2,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 1,
+          "priced_calls": 0,
+          "prompt_tokens": 5,
+          "completion_tokens": 3,
+          "cost_usd": null
+        },
+        "judge_latency_ms": 12.5,
+        "trace_id": "t1"
+      },
+      "metrics_a": {
+        "usage": {
+          "input_tokens": 1,
+          "output_tokens": 0,
+          "total_tokens": 1,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "prompt_tokens": 1,
+          "completion_tokens": 0,
+          "cost_usd": null
+        },
+        "latency_ms": 3.0
+      },
+      "metrics_b": null
+    }
+  ],
+  "report": {
+    "comparisons": 2,
+    "a_win_rate": 0.5,
+    "b_win_rate": 0.5,
+    "tie_rate": 0.0,
+    "inconclusive_rate": 0.0,
+    "mean_agreement": 1.0,
+    "per_judge": [
+      {
+        "model": "judge_one",
+        "a_rate": 0.5,
+        "b_rate": 0.5,
+        "position_bias": 0.0,
+        "tie_rate": 0.0,
+        "sigma": 1.0,
+        "consistency": null,
+        "consistency_raw": null
+      },
+      {
+        "model": "judge-two",
+        "a_rate": 0.5,
+        "b_rate": 0.5,
+        "position_bias": 1.0,
+        "tie_rate": 0.0,
+        "sigma": 1.0,
+        "consistency": null,
+        "consistency_raw": null
+      }
+    ],
+    "bt_sigma": {
+      "p_a_beats_b": 0.5,
+      "skill_gap": 0.0,
+      "judge_sigmas": {
+        "judge-two": 1.0,
+        "judge_one": 1.0
+      },
+      "repetition_consistency": {},
+      "repetition_consistency_raw": {},
+      "winners": [
+        "A",
+        "B"
+      ],
+      "a_win_rate": 0.5,
+      "b_win_rate": 0.5,
+      "tie_rate": 0.0,
+      "inconclusive_rate": 0.0,
+      "converged": true,
+      "fit_warnings": [
+        "judge(s) judge-two, judge_one have fewer than 3 observations; their sigma estimates are weakly supported",
+        "judge 'judge-two' has only 2 decisive vote(s); its sigma is mostly prior, not evidence",
+        "judge 'judge_one' has only 2 decisive vote(s); its sigma is mostly prior, not evidence",
+        "run contains 2 distinct question/response pairs; judge sigma measures global agreement across tasks, not isolated judge variance"
+      ]
+    }
+  }
+}

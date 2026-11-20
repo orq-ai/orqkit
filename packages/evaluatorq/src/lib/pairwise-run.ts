@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 
 import { z } from "zod";
 
+import { fromPythonKeys, toPythonKeys } from "./common/python-json.js";
 import { getStoreDir } from "./common/run-store-dir.js";
 import { UsageSchema } from "./contracts.js";
 import {
@@ -165,7 +166,7 @@ export class PairwiseRun implements PairwiseRunData {
       buildReport(this.comparisons(), aggregation),
       this.entries,
     );
-    const payload = JSON.stringify(this, null, 2);
+    const payload = JSON.stringify(toPythonKeys(this, "PairwiseRun"), null, 2);
     if (path) {
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, payload, "utf-8");
@@ -208,7 +209,12 @@ export class PairwiseRun implements PairwiseRunData {
   }
 
   static async load(path: string): Promise<PairwiseRun> {
-    return new PairwiseRun(JSON.parse(await readFile(path, "utf-8")));
+    return new PairwiseRun(
+      fromPythonKeys(
+        JSON.parse(await readFile(path, "utf-8")),
+        "PairwiseRun",
+      ) as z.input<typeof PairwiseRunSchema>,
+    );
   }
 }
 

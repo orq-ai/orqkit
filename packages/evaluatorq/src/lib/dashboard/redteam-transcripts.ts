@@ -246,7 +246,7 @@ export function renderDisagreement(options: {
       const vulnerability = a.attack.vulnerability
         ? fmtVulnerability(a.attack.vulnerability)
         : fmtCategory(a.attack.category);
-      return `<details class="rt-dis-item" open><summary class="rt-dis-item-summary">#${start + i + 1} ${esc(a.attack.id)} - ${esc(vulnerability)} / ${esc(a.attack.attackTechnique)}</summary><div class="rt-dis-item-body"><div class="rt-dis-col">${renderAgentSide(a, agentA)}</div><div class="rt-dis-col">${renderAgentSide(b, agentB)}</div></div></details>`;
+      return `<details class="rt-dis-item" open><summary class="rt-dis-item-summary">#${start + i + 1} ${esc(a.attack.id)} \u2014 ${esc(vulnerability)} / ${esc(a.attack.attackTechnique)}</summary><div class="rt-dis-item-body"><div class="rt-dis-col">${renderAgentSide(a, agentA)}</div><div class="rt-dis-col">${renderAgentSide(b, agentB)}</div></div></details>`;
     })
     .join("");
   return `<div class="rt-disagreement" id="${esc(containerId)}">${controls}${pagination}<div class="rt-dis-items">${items}</div></div>`;

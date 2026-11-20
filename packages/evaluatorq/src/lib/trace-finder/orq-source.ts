@@ -402,9 +402,10 @@ export class OrqTraceSource {
               `SDK returned an invalid trace payload for ${path}`,
               { cause: error },
             );
-          console.warn(
-            `SDK model validation rejected the trace response for ${path}; using its validated raw v3 payload`,
-          );
+          if (process.env.ORQ_DEBUG)
+            console.warn(
+              `SDK model validation rejected the trace response for ${path}; using its validated raw v3 payload`,
+            );
           return [raw as T, raw] as const;
         }
         const raw = this.capture.pop(path);
