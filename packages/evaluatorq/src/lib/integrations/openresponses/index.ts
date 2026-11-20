@@ -302,6 +302,20 @@ export function extractText(output: unknown): string {
   return textContent?.text ?? "";
 }
 
+export { buildSimulationClient } from "./client.js";
+export {
+  appendAssistantTurn,
+  appendUserFollowup,
+  assistantInputItem,
+  buildOpenResponsesRequest,
+  loadOpenResponsesDataset,
+  messagesFromOpenResponsesInput,
+  orchestratorResultToOpenResponsesInput,
+  redteamSampleFromOpenResponses,
+  systemInputItem,
+  turnsToOpenResponsesInput,
+  userInputItem,
+} from "./dataset.js";
 export {
   recordOpenResponsesRequest,
   recordOpenResponsesResponse,

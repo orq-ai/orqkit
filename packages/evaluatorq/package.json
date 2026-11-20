@@ -107,6 +107,18 @@
       "types": "./dist/lib/trace-finder/index.d.ts",
       "import": "./dist/lib/trace-finder/index.js",
       "default": "./dist/lib/trace-finder/index.js"
+    },
+    "./insights": {
+      "development": "./src/lib/insights/index.ts",
+      "types": "./dist/lib/insights/index.d.ts",
+      "import": "./dist/lib/insights/index.js",
+      "default": "./dist/lib/insights/index.js"
+    },
+    "./local-sessions": {
+      "development": "./src/lib/local-sessions/index.ts",
+      "types": "./dist/lib/local-sessions/index.d.ts",
+      "import": "./dist/lib/local-sessions/index.js",
+      "default": "./dist/lib/local-sessions/index.js"
     }
   },
   "peerDependencies": {
@@ -173,6 +185,7 @@
     "ora": "^8.2.0",
     "strip-ansi": "^7.1.0",
     "tslib": "^2.8.0",
+    "umap-js": "^1.4.0",
     "zod": "^3.25.28"
   },
   "devDependencies": {

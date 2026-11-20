@@ -416,3 +416,30 @@ test("candidate confirmation sends exact scoped OQL through the real Orq SDK", a
     backend.stop(true);
   }
 });
+
+test("Insights query refuses to broaden when the facet catalogue fails", async () => {
+  const { InsightsPopulation } = await import(
+    "../../../src/lib/insights/models.js"
+  );
+  const { resolveQueryPopulation } = await import(
+    "../../../src/lib/insights/population.js"
+  );
+  const { UsageLedger } = await import("../../../src/lib/insights/usage.js");
+  script = [compiled];
+  const usage = new UsageLedger();
+  const result = await resolveQueryPopulation(
+    new InsightsPopulation({ query: "failed traces" }),
+    {
+      ...options(),
+      now: new Date(now),
+      usage,
+    },
+  );
+  expect(result.echo.mode).toBe("query");
+  expect(result.echo.emptyMatch).toBe(true);
+  expect(typeof result.echo.filterSelectionError).toBe("string");
+  expect(result.traces).toEqual([]);
+  expect(result.compiled?.[0]?.name).toBe("Frustration");
+  expect(usage.totals().population?.calls).toBe(1);
+  expect(requests).toHaveLength(1);
+});
