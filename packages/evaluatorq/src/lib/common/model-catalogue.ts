@@ -289,10 +289,19 @@ async function loadCatalogue(
   client: unknown,
   strict = false,
 ): Promise<Catalogue> {
-  const host =
-    client !== null && client !== undefined
-      ? resolveResultsBaseUrl(client as never)
-      : orqBaseUrl();
+  let host: string;
+  try {
+    host =
+      client !== null && client !== undefined
+        ? resolveResultsBaseUrl(client as never)
+        : orqBaseUrl();
+  } catch (error) {
+    if (strict) throw error;
+    console.warn(
+      `Orq model catalogue unavailable: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return new Map();
+  }
   const oauthFetch = oauthFetchOf(client);
   const apiKey = oauthFetch ? undefined : clientApiKey(client);
   const cacheKey = JSON.stringify([host, credentialId(oauthFetch, apiKey)]);

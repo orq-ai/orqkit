@@ -21,7 +21,7 @@ import {
   renderApplyPanel,
   renderRecApplyButton,
 } from "./apply-ui.js";
-import { orqStudioUrl } from "./orq-links.js";
+import { orqStudioUrl, parseExperimentUrl } from "./orq-links.js";
 import { fmtVulnerability } from "./redteam-charts.js";
 import { renderAttackFragment } from "./redteam-transcripts.js";
 import {
@@ -453,13 +453,27 @@ export async function redteamAgentCard(
     model = ctx.model || stats.model || "",
     version = ctx.version || "",
     description = ctx.description || "";
-  const studio = await orqStudioUrl({
-    targetKind: typeof ctx.target_kind === "string" ? ctx.target_kind : null,
-    entityId: typeof ctx.id === "string" ? ctx.id : null,
-    workspaceId: typeof ctx.workspace_id === "string" ? ctx.workspace_id : null,
-    experimentUrl,
-    baseUrl: orqBaseUrl(),
-  });
+  let [baseUrl] = parseExperimentUrl(experimentUrl);
+  if (!baseUrl) {
+    try {
+      baseUrl = orqBaseUrl();
+    } catch (error) {
+      console.warn(
+        `Orq Studio link unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  const studio = baseUrl
+    ? await orqStudioUrl({
+        targetKind:
+          typeof ctx.target_kind === "string" ? ctx.target_kind : null,
+        entityId: typeof ctx.id === "string" ? ctx.id : null,
+        workspaceId:
+          typeof ctx.workspace_id === "string" ? ctx.workspace_id : null,
+        experimentUrl,
+        baseUrl,
+      })
+    : null;
   const studioHtml = studio
     ? `<a class="rt-agent-card-studio" href="${esc(studio)}" target="_blank" rel="noopener">Open in Studio</a>`
     : "";
