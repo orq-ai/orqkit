@@ -31,7 +31,7 @@ import {
 const A_COLOR = COLORS.blue_400;
 const B_COLOR = COLORS.purple_400;
 
-function rate(value: number | null | undefined): string {
+export function rate(value: number | null | undefined): string {
   return value === null || value === undefined
     ? "-"
     : `${pythonFixed(value * 100, 0)}%`;
@@ -99,7 +99,7 @@ function renderConsensusHtml(section: ReportSection): string {
   );
 }
 
-function biasCell(row: JudgeRow, swapObserved: boolean): string {
+export function biasCell(row: JudgeRow, swapObserved: boolean): string {
   const bias = row.positionBias;
   if (bias === null) {
     // When no judge completed a pair that is a run-level fact, not this judge's fault.
@@ -117,7 +117,7 @@ function biasCell(row: JudgeRow, swapObserved: boolean): string {
   );
 }
 
-function consistencyCell(value: number | null): string {
+export function consistencyCell(value: number | null): string {
   if (value === null) {
     const reason =
       "This judge never completed two decisive passes of the same ordering, " +
@@ -320,7 +320,7 @@ function observationHtml(observation: ClassifyObservationView): string {
   return `<div class="pw-classify__observation">${facts.join(" · ")}${probabilities}</div>`;
 }
 
-function classifyDetails(vote: VoteCell): string {
+export function classifyDetails(vote: VoteCell): string {
   if (vote.classifyObservations.length === 0) {
     return "";
   }

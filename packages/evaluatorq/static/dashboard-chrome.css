@@ -3821,17 +3821,17 @@ body:has(.finder-command) .finder-status.done, body:has(.finder-command) .finder
 @media (max-width:850px) { .insights-dimensions,.insights-map-layout { grid-template-columns:1fr; }.insights-map-chart,.insights-map-fullscreen-viewer:not(:fullscreen):not(.is-expanded) .insights-map-chart { height:360px; } }
 @media (max-width:550px) { .insights-overview-columns,.insights-overview-row { grid-template-columns:minmax(120px,1fr) 90px 20px; gap:8px; padding-left:9px; padding-right:9px; }.insights-overview-columns span:nth-child(2) { display:none; }.insights-overview-row { grid-template-areas:'name status arrow' 'stages stages stages'; }.insights-overview-name { grid-area:name; }.insights-overview-stage-wrap,.insights-overview-no-stages { grid-area:stages; margin:3px 0 2px; }.insights-overview-stage-wrap > span:first-child { display:inline; }.insights-overview-status { grid-area:status; }.insights-overview-arrow { grid-area:arrow; }.insights-overview-head { align-items:start; }.insights-header h2 { font-size:19px; }.insights-group-label { min-width:100%; }.insights-models { margin-left:0; } }
 @media (max-width:600px) {
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-shell { flex-direction:column; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-sidebar,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-sidebar { position:static; width:auto; height:auto; padding:8px 12px 0; overflow:visible; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-brand,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-brand { justify-content:flex-start; padding:4px 6px 8px; }
-  html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-brand .brand-name { display:inline; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-nav { flex-direction:row; overflow-x:auto; padding-bottom:8px; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .nav-item,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .nav-item { flex:none; justify-content:flex-start; padding:7px 9px; white-space:nowrap; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .nav-item.active { order:-1; }
-  html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .nav-item span { display:inline; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .sidebar-toggle { display:none; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-content { padding:16px; }
-  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap)) .app-topbar { padding:0 16px; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-shell { flex-direction:column; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-sidebar,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-sidebar { position:static; width:auto; height:auto; padding:8px 12px 0; overflow:visible; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-brand,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-brand { justify-content:flex-start; padding:4px 6px 8px; }
+  html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-brand .brand-name { display:inline; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-nav { flex-direction:row; overflow-x:auto; padding-bottom:8px; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .nav-item,html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .nav-item { flex:none; justify-content:flex-start; padding:7px 9px; white-space:nowrap; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .nav-item.active { order:-1; }
+  html.sidebar-collapsed body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .nav-item span { display:inline; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .sidebar-toggle { display:none; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-content { padding:16px; }
+  body.eq-dashboard:has(:is(.insights-layout,.dash-wrap,.report-aligned)) .app-topbar { padding:0 16px; }
 }
 
 .compression-inspector { min-width:0; max-width:1440px; margin:0 auto; }
