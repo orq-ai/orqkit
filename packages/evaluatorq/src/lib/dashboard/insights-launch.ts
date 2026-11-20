@@ -47,6 +47,7 @@ import {
 import {
   isUploadedSource,
   MAX_FINDER_EXPORT_BYTES,
+  MAX_INSIGHTS_UPLOAD_BYTES,
   readUploadedSource,
   uploadSizeError,
 } from "./insights-uploads.js";
@@ -768,9 +769,30 @@ export class InsightsLaunchSpec {
     let snapshot: Snapshot;
     try {
       const runsDir = getInsightsRunsDir();
-      const raw = (await isUploadedSource(runsDir, path))
-        ? (await readUploadedSource(runsDir, path, "snapshot")).toString("utf8")
-        : await readFile(path, "utf8");
+      let raw: string;
+      if (await isUploadedSource(runsDir, path)) {
+        raw = (await readUploadedSource(runsDir, path, "snapshot")).toString(
+          "utf8",
+        );
+      } else {
+        const file = await open(
+          path,
+          constants.O_RDONLY | constants.O_NONBLOCK,
+        );
+        try {
+          const info = await file.stat();
+          if (!info.isFile())
+            throw new Error("Snapshot must be a regular file");
+          if (info.size > MAX_INSIGHTS_UPLOAD_BYTES)
+            throw new Error("Snapshot exceeds the 100 MB size limit");
+          const contents = await readBounded(file, info.size);
+          if (contents.length > info.size)
+            throw new Error("Snapshot changed size while reading");
+          raw = contents.toString("utf8");
+        } finally {
+          await file.close();
+        }
+      }
       snapshot = new Snapshot(JSON.parse(raw));
     } catch (error) {
       throw new Error(

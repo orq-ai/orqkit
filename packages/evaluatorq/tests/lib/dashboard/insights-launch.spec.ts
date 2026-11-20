@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import {
   chmodSync,
+  closeSync,
   existsSync,
+  ftruncateSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   rmSync,
   statSync,
@@ -487,4 +490,27 @@ test("snapshot cleanup refuses paths outside its private temporary directory", a
   expect(existsSync(foreign)).toBe(true);
   await cleanupSnapshot(path);
   expect(existsSync(directory)).toBe(false);
+});
+
+test("local snapshot validation rejects devices, directories and oversized files before reading", async () => {
+  await expect(
+    InsightsLaunchSpec.create({ source: "snapshot", snapshotPath: root }),
+  ).rejects.toThrow("regular file");
+  if (process.platform !== "win32")
+    await expect(
+      InsightsLaunchSpec.create({
+        source: "snapshot",
+        snapshotPath: "/dev/zero",
+      }),
+    ).rejects.toThrow("regular file");
+  const path = join(root, "oversized.json");
+  const file = openSync(path, "w");
+  try {
+    ftruncateSync(file, 100 * 1024 * 1024 + 1);
+  } finally {
+    closeSync(file);
+  }
+  await expect(
+    InsightsLaunchSpec.create({ source: "snapshot", snapshotPath: path }),
+  ).rejects.toThrow("100 MB size limit");
 });

@@ -28,27 +28,11 @@ const isMissing = (error: unknown): boolean =>
 const manifestsDir = (runsDir: string): string =>
   join(runsDir, MANIFESTS_DIR_NAME);
 
-// Several processes write one run's manifest, but bookkeeping must never break a
-// run: a lock that cannot be taken is logged and the write goes ahead without it.
 async function withManifestLock<T>(
   path: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  let entered = false;
-  try {
-    return await withFileLock(`${path}.lock`, () => {
-      entered = true;
-      return fn();
-    });
-  } catch (error) {
-    if (entered) {
-      throw error;
-    }
-    console.warn(
-      `Could not lock manifest ${path}: ${error}; writing without it`,
-    );
-    return fn();
-  }
+  return withFileLock(`${path}.lock`, fn);
 }
 
 const pythonDateTime = (value: Date | null): string | null => {

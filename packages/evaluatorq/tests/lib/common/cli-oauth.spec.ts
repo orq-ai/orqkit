@@ -1,5 +1,8 @@
 // Ported from res-697 tests/common/test_cli_oauth.py.
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import {
   buildCliOauthClients,
@@ -376,4 +379,30 @@ describe("CLI OAuth Orq client", () => {
     expect(embeddings.data[0]?.embedding).toEqual([0.1, 0.2]);
     expect(response.usage.input_tokens).toBe(1);
   });
+});
+
+it("terminates a CLI process that ignores SIGTERM within its explicit budget", async () => {
+  const result = await original.runAsync(
+    [
+      process.execPath,
+      "-e",
+      "process.on('SIGTERM',()=>{});setInterval(()=>{},1000)",
+    ],
+    { env: { PATH: process.env.PATH ?? "" }, timeoutMs: 60 },
+  );
+  expect(result.returncode).not.toBe(0);
+});
+it("finds executable PATH entries without invoking which or falling back to cwd", async () => {
+  const root = await mkdtemp(join(tmpdir(), "cli-path-"));
+  try {
+    const path = join(root, "orq");
+    await writeFile(path, "#!/bin/sh\nexit 0\n");
+    await chmod(path, 0o700);
+    process.env.PATH = root;
+    expect(original.which("orq")).toBe(path);
+    process.env.PATH = "";
+    expect(original.which("orq")).toBeNull();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

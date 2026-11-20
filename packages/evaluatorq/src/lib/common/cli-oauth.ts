@@ -1,4 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
+import { accessSync, constants, statSync } from "node:fs";
+import { delimiter, extname, resolve } from "node:path";
 
 import { DEFAULT_ORQ_BASE_URL } from "./env-config.js";
 
@@ -29,9 +31,27 @@ export interface RunOptions {
 }
 
 function which(binary: string): string | null {
-  const found = spawnSync("/usr/bin/which", [binary], { encoding: "utf8" });
-  const path = found.status === 0 ? found.stdout.trim() : "";
-  return path || null;
+  const windows = process.platform === "win32";
+  const suffixes =
+    windows && !extname(binary)
+      ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";")
+      : [""];
+  for (const directory of (process.env.PATH ?? process.env.Path ?? "").split(
+    delimiter,
+  )) {
+    if (!directory) continue;
+    for (const suffix of suffixes) {
+      const candidate = resolve(
+        directory.replace(/^"(.*)"$/, "$1"),
+        `${binary}${suffix}`,
+      );
+      try {
+        accessSync(candidate, windows ? constants.F_OK : constants.X_OK);
+        if (statSync(candidate).isFile()) return candidate;
+      } catch {}
+    }
+  }
+  return null;
 }
 
 function runAsync(
@@ -42,6 +62,8 @@ function runAsync(
     const [bin, ...args] = command as [string, ...string[]];
     const child = spawn(bin, args, {
       env: options.env,
+      timeout: options.timeoutMs ?? 300_000,
+      killSignal: "SIGKILL",
       stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     const out: Buffer[] = [];

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import {
   mkdtempSync,
   readFileSync,
@@ -28,6 +28,7 @@ import {
   isContentFilterError,
   regenerateOnContentFilter,
 } from "../../../src/lib/common/content-filter.js";
+import * as fileLocks from "../../../src/lib/common/file-lock.js";
 import { withFileLock } from "../../../src/lib/common/file-lock.js";
 import {
   composeRunHooks,
@@ -862,4 +863,24 @@ describe("replay", () => {
       "is not valid JSON",
     );
   });
+});
+
+test("a manifest lock failure never writes without exclusive ownership", async () => {
+  const runsDir = scratch();
+  const lock = spyOn(fileLocks, "withFileLock").mockRejectedValue(
+    new fileLocks.FileLockTimeoutError("held by another owner"),
+  );
+  try {
+    await expect(
+      startManifest({
+        runId: "blocked",
+        surface: "sim",
+        runName: "blocked",
+        runsDir,
+      }),
+    ).rejects.toThrow("held by another owner");
+    expect(await listManifests(runsDir)).toEqual([]);
+  } finally {
+    lock.mockRestore();
+  }
 });
