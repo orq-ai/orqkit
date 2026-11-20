@@ -8,7 +8,7 @@ import {
 } from "../../../src/lib/dashboard/shell.js";
 import golden from "./fixtures/shell-golden.json" with { type: "json" };
 
-// Golden HTML from Python shell.py with no saved settings; two report CSS comments are normalized to the TS wording (no em dashes).
+// Golden HTML comes from Python shell.py; CSS fingerprints reflect TS comment normalization and the malformed comment correction.
 const saved = process.env.EVALUATORQ_DASHBOARD_SETTINGS;
 beforeAll(() => {
   process.env.EVALUATORQ_DASHBOARD_SETTINGS = "/nonexistent/s.json";
@@ -18,7 +18,7 @@ afterAll(() => {
   else process.env.EVALUATORQ_DASHBOARD_SETTINGS = saved;
 });
 
-it("serves the same stylesheet as Python", () => {
+it("serves the checked dashboard stylesheet", () => {
   expect(createHash("sha256").update(dashboardCss()).digest("hex")).toBe(
     golden.css_sha,
   );
