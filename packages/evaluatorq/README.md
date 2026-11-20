@@ -787,3 +787,52 @@ bunx nx build evaluatorq
 # Run type checking
 bunx nx typecheck evaluatorq
 ```
+
+
+## Framework targets
+
+`OpenAIAgentTarget` runs a native JavaScript OpenAI Agents SDK agent. Install `@openai/agents` version 0.22.0 or newer alongside evaluatorq. With `ORQ_API_KEY` set, the default runner uses the Orq router. You can supply your own SDK `Runner` through `runner` instead. Pass application context data in `runOptions.context`; SDK `RunContext`, session, conversation and previous-response objects cannot be shared across target calls.
+
+```typescript
+import { Agent } from "@openai/agents";
+import { OpenAIAgentTarget } from "@orq-ai/evaluatorq/openai-agents";
+
+const target = new OpenAIAgentTarget(new Agent({
+  name: "Support",
+  model: "openai/gpt-6-luna",
+  instructions: "Answer customer questions briefly.",
+  modelSettings: { maxTokens: 2048 },
+}));
+try {
+  const response = await target.respond([{ role: "user", content: "Hello." }]);
+  console.log(response.text);
+} finally {
+  await target.close();
+}
+```
+
+`CrewAITarget` and `PydanticAITarget` run the existing Python evaluatorq integrations in local worker processes. Install `evaluatorq[crewai]` or `evaluatorq[pydantic-ai]` in the Python environment selected by `pythonExecutable`. CrewAI requires Python 3.11 or newer. A `factory` names a zero-argument Python function that returns a native `crewai.Crew` or `pydantic_ai.Agent`, as shown in the [Python factories example](examples/framework_targets.py). A CrewAI task must reference `{conversation}`, or the `inputKey` you choose.
+
+```typescript
+import { CrewAITarget } from "@orq-ai/evaluatorq/crewai";
+import { PydanticAITarget } from "@orq-ai/evaluatorq/pydantic-ai";
+
+const options = { pythonExecutable: "/path/to/python/project/.venv/bin/python" };
+const crew = new CrewAITarget({
+  ...options,
+  factory: "/path/to/framework_targets.py:make_crew",
+});
+const pydantic = new PydanticAITarget({
+  ...options,
+  factory: "/path/to/framework_targets.py:make_pydantic_agent",
+});
+try {
+  console.log((await crew.respond([{ role: "user", content: "Hello." }])).text);
+  console.log((await pydantic.respond([{ role: "user", content: "Hello." }])).text);
+} finally {
+  await crew.close();
+  await pydantic.close();
+}
+```
+
+Pass any of these targets to `simulate({ target, ... })` or `redTeam(target, options)`. The `@orq-ai/evaluatorq/contracts` entry exports shared `AgentTarget`, `AgentResponse`, `Message` types and `LLMCallConfig` for custom targets and explicit model budgets. Each `newInstance()` creates independent conversation state. PydanticAI retains its native message history; CrewAI receives the full transcript on each turn. The bridge preserves native Python output and usage, including tool records where the Python integration exposes them. Missing packages and failed workers raise errors; they do not produce a successful reply. Call `close()` when you finish to release worker processes.
