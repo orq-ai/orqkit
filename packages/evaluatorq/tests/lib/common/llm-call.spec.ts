@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 import {
   executeChatCompletion,
   isBadRequest,
+  LlmTimeoutError,
   type NamedSchema,
 } from "../../../src/lib/common/llm-call.js";
 import {
@@ -17,6 +18,8 @@ import {
   registerModel,
   resetCatalogueCache,
 } from "../../../src/lib/common/model-catalogue.js";
+import { withRetry } from "../../../src/lib/common/retry.js";
+import { withRunLifecycle } from "../../../src/lib/common/run-lifecycle.js";
 import {
   generateStructured,
   resetStructuredWarnings,
@@ -346,4 +349,37 @@ describe("tracing without a tracer", () => {
     ).rejects.toThrow("boom");
     expect(runs).toBe(1);
   });
+});
+
+test("internal request deadlines retry, but global cancellation does not", async () => {
+  let attempts = 0;
+  expect(
+    await withRetry(
+      async () => {
+        if (++attempts === 1) throw new LlmTimeoutError("internal deadline");
+        return "ok";
+      },
+      { maxAttempts: 2, minWaitMs: 0, maxWaitMs: 0 },
+    ),
+  ).toBe("ok");
+  expect(attempts).toBe(2);
+  attempts = 0;
+  const abort = new AbortController();
+  const reason = new LlmTimeoutError("sibling deadline");
+  await expect(
+    withRunLifecycle(
+      undefined,
+      () =>
+        withRetry(
+          async () => {
+            attempts++;
+            abort.abort(reason);
+            throw reason;
+          },
+          { maxAttempts: 3, minWaitMs: 0, maxWaitMs: 0 },
+        ),
+      abort.signal,
+    ),
+  ).rejects.toBe(reason);
+  expect(attempts).toBe(1);
 });
