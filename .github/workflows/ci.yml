@@ -24,7 +24,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: "1.4.4"
 
       - uses: actions/cache@v4
         id: cache-node-modules
@@ -58,5 +58,5 @@ jobs:
           echo "BASE: ${{ steps.setSHAs.outputs.base }}"
           echo "HEAD: ${{ steps.setSHAs.outputs.head }}"
 
-      - name: Run affected typecheck and build
-        run: bun nx affected --target=typecheck,build,test --base=${{ steps.setSHAs.outputs.base }} --parallel=3
+      - name: Run affected typecheck, build and tests
+        run: bun nx affected --target=typecheck,build,test --base=${{ steps.setSHAs.outputs.base }} --parallel=1 --outputStyle=stream
