@@ -574,3 +574,27 @@ export async function resolvePopulation(
   }
   return result;
 }
+
+/** Describe measured rendered character sizes without presenting estimates as tokenizer counts. */
+export async function describeProjectionCoverage(
+  coverage: Readonly<Record<string, unknown>>,
+): Promise<string> {
+  const num = (key: string, fallback = 0) =>
+    Math.trunc(Number(coverage[key] ?? fallback));
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const traces = num("n_traces");
+  const affected = num("n_projection_truncated");
+  const inputCap = Object.hasOwn(coverage, "trace_input_chars")
+    ? num("trace_input_chars")
+    : await effectiveTraceInputChars();
+  const per = (key: string) => Math.floor(num(key) / Math.max(traces, 1));
+  const detail =
+    coverage.classifier_state_format === "jev"
+      ? `${fmt(num("n_omitted_messages"))} of ${fmt(num("n_source_messages"))} source messages were omitted from the Jev classifier state.`
+      : "The non-Jev classifier receives a readable transcript shortened as needed to fit its questions.";
+  return (
+    `${fmt(affected)} of ${fmt(traces)} traces hit a summary or classifier input cap of ${fmt(inputCap)} characters. ` +
+    `Average rendered inputs: summary ${fmt(per("summary_input_chars"))} characters; classifier request ${fmt(per("classifier_request_chars"))} ` +
+    `(state ${fmt(per("classifier_state_chars"))}, questions ${fmt(per("classifier_question_chars"))}). ${detail}`
+  );
+}
