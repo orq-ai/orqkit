@@ -37,6 +37,7 @@ const DEFAULT_ORQ_BASE_URL = "https://my.orq.ai";
 const ROUTER_PATH = "/v3/router";
 
 let warnedRouterBaseUrl = false;
+let warnedRouterOverride = false;
 
 /** The Orq host, for calls outside the router. */
 export function resolveOrqHost(): string {
@@ -51,14 +52,18 @@ export function resolveOrqHost(): string {
  */
 export function resolveRouterBaseUrl(): string {
   const routerBaseUrl = process.env.ROUTER_BASE_URL;
+  if (process.env.ORQ_BASE_URL) {
+    if (routerBaseUrl && !warnedRouterOverride) {
+      warnedRouterOverride = true;
+      console.warn(
+        "ROUTER_BASE_URL is ignored because ORQ_BASE_URL is also set. Remove ROUTER_BASE_URL to avoid ambiguity.",
+      );
+    }
+    return `${configuredOrqHost()}${ROUTER_PATH}`;
+  }
   if (routerBaseUrl && !warnedRouterBaseUrl) {
     warnedRouterBaseUrl = true;
-    console.warn(
-      "ROUTER_BASE_URL is deprecated; set ORQ_BASE_URL instead. ORQ_BASE_URL takes precedence when both are set.",
-    );
-  }
-  if (process.env.ORQ_BASE_URL) {
-    return `${configuredOrqHost()}${ROUTER_PATH}`;
+    console.warn("ROUTER_BASE_URL is deprecated; set ORQ_BASE_URL instead.");
   }
   if (routerBaseUrl) {
     parseHostUrl("ROUTER_BASE_URL", routerBaseUrl);

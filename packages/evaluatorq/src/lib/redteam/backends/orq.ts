@@ -5,8 +5,9 @@ import type { RetryConfig } from "@orq-ai/node/lib/retries.js";
 import type { RequestOptions } from "@orq-ai/node/lib/sdks.js";
 import type { AgentResponseRequest } from "@orq-ai/node/models/components/agentresponserequest.js";
 
-import { DEFAULT_ORQ_BASE_URL, envRaw } from "../../common/env-config.js";
+import { envRaw } from "../../common/env-config.js";
 import { getField } from "../../common/fields.js";
+import { orqServerUrl } from "../../common/orq-client.js";
 import { extractStatusCode } from "../../common/target-call.js";
 import {
   pipelineMetadataParam,
@@ -84,9 +85,7 @@ async function createOrqClient(options: OrqBackendOptions): Promise<Orq> {
   }
   return new sdk.Orq({
     apiKey,
-    serverURL: envRaw("ORQ_BASE_URL", DEFAULT_ORQ_BASE_URL)
-      .replace(/\/+$/, "")
-      .replace(/\/v3\/router$/, ""),
+    serverURL: orqServerUrl(),
     timeoutMs: options.timeoutMs || PIPELINE_CONFIG.targetAgentTimeoutMs,
     retryConfig: orqRetryConfig(
       options.retryCount ?? PIPELINE_CONFIG.retryCount,
