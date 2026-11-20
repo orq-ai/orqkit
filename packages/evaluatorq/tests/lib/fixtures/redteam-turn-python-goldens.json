@@ -1,0 +1,1784 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "turns": [],
+      "messages": [],
+      "withoutErrors": []
+    },
+    {
+      "turns": [
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hi",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hello",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "withoutErrors": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hi",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hello",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Use lookup",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Checking",
+                "annotations": [],
+                "logprobs": []
+              },
+              {
+                "type": "function_call",
+                "id": "fc_one",
+                "call_id": "call",
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}",
+                "status": "completed",
+                "result": "found"
+              },
+              {
+                "type": "output_text",
+                "text": "Done",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": 0.01,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.01
+            },
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "withoutErrors": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hi",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hello",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Use lookup",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Checking",
+                "annotations": [],
+                "logprobs": []
+              },
+              {
+                "type": "function_call",
+                "id": "fc_one",
+                "call_id": "call",
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}",
+                "status": "completed",
+                "result": "found"
+              },
+              {
+                "type": "output_text",
+                "text": "Done",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": 0.01,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.01
+            },
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Continue",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "reasoning",
+                "text": "hidden",
+                "id": null
+              },
+              {
+                "type": "function_call",
+                "id": "fc_two",
+                "call_id": "pending",
+                "name": "approve",
+                "arguments": "{}",
+                "status": "completed",
+                "result": null
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "withoutErrors": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hi",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hello",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Use lookup",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Checking",
+                "annotations": [],
+                "logprobs": []
+              },
+              {
+                "type": "function_call",
+                "id": "fc_one",
+                "call_id": "call",
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}",
+                "status": "completed",
+                "result": "found"
+              },
+              {
+                "type": "output_text",
+                "text": "Done",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": 0.01,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.01
+            },
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Continue",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "reasoning",
+                "text": "hidden",
+                "id": null
+              },
+              {
+                "type": "function_call",
+                "id": "fc_two",
+                "call_id": "pending",
+                "name": "approve",
+                "arguments": "{}",
+                "status": "completed",
+                "result": null
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Empty",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "reasoning",
+                "text": "hidden",
+                "id": null
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Empty",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "[The agent sent no reply]",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "withoutErrors": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Empty",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "[The agent sent no reply]",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ]
+    },
+    {
+      "turns": [
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hi",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Hello",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Use lookup",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Checking",
+                "annotations": [],
+                "logprobs": []
+              },
+              {
+                "type": "function_call",
+                "id": "fc_one",
+                "call_id": "call",
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}",
+                "status": "completed",
+                "result": "found"
+              },
+              {
+                "type": "output_text",
+                "text": "Done",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": 0.01,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.01
+            },
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Continue",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "reasoning",
+                "text": "hidden",
+                "id": null
+              },
+              {
+                "type": "function_call",
+                "id": "fc_two",
+                "call_id": "pending",
+                "name": "approve",
+                "arguments": "{}",
+                "status": "completed",
+                "result": null
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Empty",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "reasoning",
+                "text": "hidden",
+                "id": null
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          }
+        },
+        {
+          "attacker": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Error",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": null
+          },
+          "target": {
+            "output": [
+              {
+                "type": "output_text",
+                "text": "Unavailable",
+                "annotations": [],
+                "logprobs": []
+              }
+            ],
+            "usage": null,
+            "model": null,
+            "response_id": null,
+            "trace_id": null,
+            "span_id": null,
+            "finish_reason": null,
+            "refusal": null,
+            "error": {
+              "message": "down",
+              "error_type": "server_error",
+              "code": "503"
+            }
+          }
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Empty",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "[The agent sent no reply]",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Error",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Unavailable",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "withoutErrors": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Use lookup",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call",
+              "type": "function",
+              "function": {
+                "name": "lookup",
+                "arguments": "{\"q\":\"hi\"}"
+              },
+              "item_id": "fc_one",
+              "incomplete": false
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "tool",
+          "content": "found",
+          "tool_calls": null,
+          "tool_call_id": "call",
+          "name": "lookup"
+        },
+        {
+          "role": "assistant",
+          "content": "Done",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Continue",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "pending",
+              "type": "function",
+              "function": {
+                "name": "approve",
+                "arguments": "{}"
+              },
+              "item_id": "fc_two",
+              "incomplete": true
+            }
+          ],
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "user",
+          "content": "Empty",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        },
+        {
+          "role": "assistant",
+          "content": "[The agent sent no reply]",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ]
+    }
+  ],
+  "legacy": {
+    "value": {
+      "attacker": {
+        "generated_prompt": "Old prompt",
+        "truncated": true,
+        "finish_reason": "length",
+        "usage": {
+          "prompt_tokens": 2,
+          "completion_tokens": 1
+        }
+      },
+      "target": {
+        "text": "Legacy reply",
+        "trace_id": "trace",
+        "span_id": "span",
+        "response_id": "reply",
+        "model": "echo"
+      }
+    },
+    "expected": {
+      "attacker": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "Old prompt",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": {
+          "input_tokens": 2,
+          "output_tokens": 1,
+          "total_tokens": 0,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "prompt_tokens": 2,
+          "completion_tokens": 1,
+          "cost_usd": null
+        },
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": "length",
+        "refusal": null,
+        "error": null
+      },
+      "target": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "Legacy reply",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": null,
+        "model": "echo",
+        "response_id": "reply",
+        "trace_id": "trace",
+        "span_id": "span",
+        "finish_reason": null,
+        "refusal": null,
+        "error": null
+      }
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "Old prompt",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+      },
+      {
+        "role": "assistant",
+        "content": "Legacy reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+      }
+    ]
+  },
+  "responses": [
+    {
+      "value": {},
+      "expected": {
+        "output": [],
+        "usage": null,
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": null,
+        "refusal": null,
+        "error": null
+      }
+    },
+    {
+      "value": {
+        "text": "hi",
+        "usage": {}
+      },
+      "expected": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "hi",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "total_tokens": 0,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "cost_usd": null
+        },
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": null,
+        "refusal": null,
+        "error": null
+      }
+    },
+    {
+      "value": {
+        "text": "hi",
+        "usage": {
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cached_tokens": 1,
+          "cost_usd": 0.02
+        }
+      },
+      "expected": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "hi",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 0,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": 0.02,
+          "calls": 0,
+          "priced_calls": 0,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.02
+        },
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": null,
+        "refusal": null,
+        "error": null
+      }
+    },
+    {
+      "value": {
+        "text": "hi",
+        "usage": null
+      },
+      "expected": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "hi",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": null,
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": null,
+        "refusal": null,
+        "error": null
+      }
+    },
+    {
+      "value": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "reply"
+          }
+        ],
+        "finish_reason": "stop",
+        "trace_id": "trace",
+        "span_id": "span",
+        "response_id": "response"
+      },
+      "expected": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "reply",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": null,
+        "model": null,
+        "response_id": "response",
+        "trace_id": "trace",
+        "span_id": "span",
+        "finish_reason": "stop",
+        "refusal": null,
+        "error": null
+      }
+    },
+    {
+      "value": {
+        "text": "error",
+        "error": {
+          "message": "bad",
+          "error_type": "target_error",
+          "code": "failed"
+        }
+      },
+      "expected": {
+        "output": [
+          {
+            "type": "output_text",
+            "text": "error",
+            "annotations": [],
+            "logprobs": []
+          }
+        ],
+        "usage": null,
+        "model": null,
+        "response_id": null,
+        "trace_id": null,
+        "span_id": null,
+        "finish_reason": null,
+        "refusal": null,
+        "error": {
+          "message": "bad",
+          "error_type": "target_error",
+          "code": "failed"
+        }
+      }
+    }
+  ]
+}

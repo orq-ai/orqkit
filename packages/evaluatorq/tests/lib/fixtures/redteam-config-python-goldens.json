@@ -1,0 +1,832 @@
+{
+  "source": "a59c3a86",
+  "evaluators": [
+    {
+      "value": {},
+      "error": false,
+      "expected": {
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1,
+        "judges": [
+          "openai/gpt-6-sol"
+        ],
+        "repetitions": 1,
+        "replacementJudges": [],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": 0.8,
+        "strictPanel": false
+      },
+      "model": "openai/gpt-6-sol",
+      "fieldsSet": [],
+      "call": {
+        "model": "openai/gpt-6-sol",
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1
+      }
+    },
+    {
+      "value": {
+        "model": "one"
+      },
+      "error": false,
+      "expected": {
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1,
+        "judges": [
+          "one"
+        ],
+        "repetitions": 1,
+        "replacementJudges": [],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": 0.8,
+        "strictPanel": false
+      },
+      "model": "one",
+      "fieldsSet": [
+        "judges",
+        "model"
+      ],
+      "call": {
+        "model": "one",
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1
+      }
+    },
+    {
+      "value": {
+        "judges": [
+          "a",
+          "b"
+        ],
+        "model": "b"
+      },
+      "error": false,
+      "expected": {
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1,
+        "judges": [
+          "b",
+          "a"
+        ],
+        "repetitions": 1,
+        "replacementJudges": [],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": 0.8,
+        "strictPanel": false
+      },
+      "model": "b",
+      "fieldsSet": [
+        "judges",
+        "model"
+      ],
+      "call": {
+        "model": "b",
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1
+      }
+    },
+    {
+      "value": {
+        "judges": [
+          "a",
+          "",
+          "a"
+        ]
+      },
+      "error": false,
+      "expected": {
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1,
+        "judges": [
+          "a"
+        ],
+        "repetitions": 1,
+        "replacementJudges": [],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": 0.8,
+        "strictPanel": false
+      },
+      "model": "a",
+      "fieldsSet": [
+        "judges"
+      ],
+      "call": {
+        "model": "a",
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1
+      }
+    },
+    {
+      "value": {
+        "judges": [
+          "a",
+          "a"
+        ],
+        "strict_panel": true
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "model": "a",
+        "judges": [
+          "a",
+          "a"
+        ],
+        "strict_panel": true
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "judges": []
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "judges": [
+          ""
+        ]
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "judges": [
+          "a"
+        ],
+        "min_successful_judges": 2
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "model": null,
+        "judges": [
+          "b"
+        ]
+      },
+      "error": false,
+      "expected": {
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1,
+        "judges": [
+          "b"
+        ],
+        "repetitions": 1,
+        "replacementJudges": [],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": 0.8,
+        "strictPanel": false
+      },
+      "model": "b",
+      "fieldsSet": [
+        "judges",
+        "model"
+      ],
+      "call": {
+        "model": "b",
+        "api": "responses",
+        "temperature": null,
+        "maxTokens": 10000,
+        "timeoutMs": 90000,
+        "extraKwargs": {},
+        "extraBody": {},
+        "reasoningEffort": null,
+        "retryCount": 1
+      }
+    },
+    {
+      "value": {
+        "model": "a",
+        "api": "chat_completions",
+        "temperature": 0.2,
+        "max_tokens": 2000,
+        "timeout_ms": 4000,
+        "extra_kwargs": {
+          "seed": 3
+        },
+        "extra_body": {
+          "nested_field": {
+            "keep_key": true
+          }
+        },
+        "reasoning_effort": "high",
+        "retry_count": 0,
+        "repetitions": 2,
+        "replacement_judges": [
+          "c"
+        ],
+        "min_evaluation_coverage": null
+      },
+      "error": false,
+      "expected": {
+        "api": "chat_completions",
+        "temperature": 0.2,
+        "maxTokens": 2000,
+        "timeoutMs": 4000,
+        "extraKwargs": {
+          "seed": 3
+        },
+        "extraBody": {
+          "nested_field": {
+            "keep_key": true
+          }
+        },
+        "reasoningEffort": "high",
+        "retryCount": 0,
+        "judges": [
+          "a"
+        ],
+        "repetitions": 2,
+        "replacementJudges": [
+          "c"
+        ],
+        "minSuccessfulJudges": 1,
+        "minEvaluationCoverage": null,
+        "strictPanel": false
+      },
+      "model": "a",
+      "fieldsSet": [
+        "api",
+        "extraBody",
+        "extraKwargs",
+        "judges",
+        "maxTokens",
+        "minEvaluationCoverage",
+        "model",
+        "reasoningEffort",
+        "repetitions",
+        "replacementJudges",
+        "retryCount",
+        "temperature",
+        "timeoutMs"
+      ],
+      "call": {
+        "model": "a",
+        "api": "chat_completions",
+        "temperature": 0.2,
+        "maxTokens": 2000,
+        "timeoutMs": 4000,
+        "extraKwargs": {
+          "seed": 3
+        },
+        "extraBody": {
+          "nested_field": {
+            "keep_key": true
+          }
+        },
+        "reasoningEffort": "high",
+        "retryCount": 0
+      }
+    },
+    {
+      "value": {
+        "model": "a",
+        "retry_count": -1
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "model": "a",
+        "min_evaluation_coverage": 1.1
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "model": "a",
+        "unknown": true
+      },
+      "error": true
+    }
+  ],
+  "pipelines": [
+    {
+      "value": {},
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "model"
+      ],
+      "retryAttempts": 4
+    },
+    {
+      "value": {
+        "attacker": {}
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "model"
+      ],
+      "retryAttempts": 4
+    },
+    {
+      "value": {
+        "attacker": {
+          "temperature": 0.4
+        }
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": 0.4,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "model",
+        "temperature"
+      ],
+      "retryAttempts": 4
+    },
+    {
+      "value": {
+        "attacker": {
+          "model": "explicit",
+          "max_tokens": 123
+        }
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "explicit",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 123,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "maxTokens",
+        "model"
+      ],
+      "retryAttempts": 4
+    },
+    {
+      "value": {
+        "evaluator": {
+          "model": "judge"
+        }
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "judge"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "model"
+      ],
+      "retryAttempts": 4
+    },
+    {
+      "value": {
+        "retry_count": 0,
+        "max_backtracks": 10
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 0,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 10,
+        "cleanupTimeoutMs": 60000,
+        "targetAgentTimeoutMs": 240000,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": 5
+      },
+      "attackerFieldsSet": [
+        "model"
+      ],
+      "retryAttempts": 1
+    },
+    {
+      "value": {
+        "retry_count": 11
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "max_target_retries": -1
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "max_probe_turns": 0
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "max_consecutive_adversarial_timeouts": 0
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "model": "unsupported"
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "backend": {}
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "cleanup_timeout_ms": 0,
+        "target_agent_timeout_ms": -1,
+        "max_tool_continuations": -1
+      },
+      "error": false,
+      "expected": {
+        "attacker": {
+          "model": "openai/gpt-6-sol",
+          "api": "chat_completions",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1
+        },
+        "evaluator": {
+          "api": "responses",
+          "temperature": null,
+          "maxTokens": 10000,
+          "timeoutMs": 90000,
+          "extraKwargs": {},
+          "extraBody": {},
+          "reasoningEffort": null,
+          "retryCount": 1,
+          "judges": [
+            "openai/gpt-6-sol"
+          ],
+          "repetitions": 1,
+          "replacementJudges": [],
+          "minSuccessfulJudges": 1,
+          "minEvaluationCoverage": 0.8,
+          "strictPanel": false
+        },
+        "retryCount": 3,
+        "retryOnCodes": [
+          429,
+          500,
+          502,
+          503,
+          504
+        ],
+        "maxContentFilterRetries": 2,
+        "maxConsecutiveAdversarialTimeouts": 2,
+        "maxObjectivesPerLlmCall": 8,
+        "maxProbeTurns": 8,
+        "maxBacktracks": 0,
+        "cleanupTimeoutMs": 0,
+        "targetAgentTimeoutMs": -1,
+        "maxTargetRetries": 2,
+        "targetReasoningEffort": null,
+        "maxToolContinuations": -1
+      },
+      "attackerFieldsSet": [
+        "model"
+      ],
+      "retryAttempts": 4
+    }
+  ],
+  "recommendations": {
+    "maxSuggestions": 5,
+    "maxTokens": 1500,
+    "maxAreas": 5,
+    "maxAttacks": 10,
+    "maxAttackChars": 200000,
+    "maxExplanationChars": 300,
+    "condenseAboveChars": 1000,
+    "condenseMaxTokens": 10000,
+    "maxAreaPromptChars": 400000
+  }
+}

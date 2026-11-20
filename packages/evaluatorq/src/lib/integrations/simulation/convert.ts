@@ -1,3 +1,10 @@
+import { jsonWithFallback, wireArguments } from "../../common/messages.js";
+import {
+  RESPONSES_ASSISTANT_TURN_ORDER_KEY,
+  RESPONSES_ITEM_ORDER_KEY,
+} from "../../common/output-adapters.js";
+import { responsesFunctionCallItemId } from "../openresponses/input-items.js";
+
 /**
  * Conversion functions from SimulationResult to OpenResponses format.
  */
@@ -34,8 +41,10 @@ export function toOpenResponses(
 
   const inputItems: ItemField[] = [];
   const outputItems: ItemField[] = [];
+  const itemOrder: ("input" | "output")[] = [];
+  const assistantTurnOrder: (number | null)[] = [];
 
-  for (const msg of result.messages) {
+  for (const [messageIndex, msg] of result.messages.entries()) {
     if (msg.role === "user" || msg.role === "system") {
       const inputMessage: Message = {
         type: "message",
@@ -45,22 +54,49 @@ export function toOpenResponses(
         content: [{ type: "input_text", text: msg.content }],
       };
       inputItems.push(inputMessage);
+      itemOrder.push("input");
     } else if (msg.role === "assistant") {
-      const outputMessage: Message = {
-        type: "message",
-        id: generateItemId("msg"),
-        role: "assistant",
+      if (msg.content || !msg.tool_calls?.length) {
+        const outputMessage: Message = {
+          type: "message",
+          id: generateItemId("msg"),
+          role: "assistant",
+          status: "completed",
+          content: [
+            {
+              type: "output_text",
+              text: msg.content,
+              annotations: [],
+              logprobs: [],
+            },
+          ],
+        };
+        outputItems.push(outputMessage);
+        assistantTurnOrder.push(messageIndex);
+        itemOrder.push("output");
+      }
+      for (const call of msg.tool_calls ?? []) {
+        outputItems.push({
+          type: "function_call",
+          id: responsesFunctionCallItemId(call.item_id) ?? generateItemId("fc"),
+          call_id: call.id,
+          name: call.function.name,
+          arguments: wireArguments(call.function.arguments),
+          status: call.incomplete ? "incomplete" : "completed",
+        });
+        assistantTurnOrder.push(messageIndex);
+        itemOrder.push("output");
+      }
+    } else if (msg.role === "tool") {
+      outputItems.push({
+        type: "function_call_output",
+        id: generateItemId("fco"),
+        call_id: msg.tool_call_id ?? "",
+        output: msg.content,
         status: "completed",
-        content: [
-          {
-            type: "output_text",
-            text: msg.content,
-            annotations: [],
-            logprobs: [],
-          },
-        ],
-      };
-      outputItems.push(outputMessage);
+      });
+      itemOrder.push("output");
+      assistantTurnOrder.push(null);
     }
   }
 
@@ -116,6 +152,7 @@ export function toOpenResponses(
     reasoning: null,
     user: null,
     usage: usageData,
+    token_usage_known: result.token_usage_known ?? true,
     max_output_tokens: null,
     max_tool_calls: null,
     store: false,
@@ -132,12 +169,16 @@ export function toOpenResponses(
       ...(result.criteria_results && {
         criteria_results: result.criteria_results,
       }),
-      ...(result.criteria_verified !== undefined && {
-        criteria_verified: result.criteria_verified,
-      }),
-      ...(result.metadata?.criteria_meta !== undefined && {
-        criteria_meta: result.metadata.criteria_meta,
-      }),
+      criteria_verified: result.criteria_verified ?? null,
+      criteria_meta: jsonable(result.metadata.criteria_meta, "criteria_meta"),
+      criteria_errors: jsonable(
+        result.metadata.criteria_errors,
+        "criteria_errors",
+      ),
+      scorer_errors: jsonable(result.metadata.scorer_errors, "scorer_errors"),
+      datapoint_id: jsonable(result.metadata.datapoint_id, "datapoint_id"),
+      [RESPONSES_ITEM_ORDER_KEY]: itemOrder,
+      [RESPONSES_ASSISTANT_TURN_ORDER_KEY]: assistantTurnOrder,
       ...(result.turn_metrics.length > 0 && {
         turn_metrics: result.turn_metrics,
       }),
@@ -145,4 +186,15 @@ export function toOpenResponses(
     safety_identifier: null,
     prompt_cache_key: null,
   } as ResponseResource;
+}
+
+function jsonable(value: unknown, key: string): unknown {
+  try {
+    return JSON.parse(jsonWithFallback(value));
+  } catch {
+    console.warn(
+      `simulation metadata key '${key}' is not serializable; publishing text`,
+    );
+    return String(value);
+  }
 }

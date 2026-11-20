@@ -5,6 +5,11 @@ export {
   buildOpenResponsesFromSteps,
   convertToOpenResponses,
 } from "./convert.js";
+export {
+  type AISdkHttpTargetOptions,
+  type AISdkMessageFormat,
+  VercelAISdkTarget,
+} from "./http-target.js";
 export type { AISdkSimulationAdapterOptions } from "./simulation-adapter.js";
 export { fromAISdkAgent } from "./simulation-adapter.js";
 export type { AgentJobOptions, StepData } from "./types.js";

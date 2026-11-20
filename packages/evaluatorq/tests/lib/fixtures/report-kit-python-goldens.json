@@ -1,0 +1,3419 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "kind": "shortModel",
+      "args": [
+        ""
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "shortModel",
+      "args": [
+        "model"
+      ],
+      "expected": "model"
+    },
+    {
+      "kind": "shortModel",
+      "args": [
+        "provider/model"
+      ],
+      "expected": "model"
+    },
+    {
+      "kind": "shortModel",
+      "args": [
+        "a/b/c"
+      ],
+      "expected": "c"
+    },
+    {
+      "kind": "shortModel",
+      "args": [
+        "trailing/"
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        0
+      ],
+      "expected": [
+        "P3",
+        "Medium priority",
+        "var(--amber-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        0.5
+      ],
+      "expected": [
+        "P3",
+        "Medium priority",
+        "var(--amber-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        0.99
+      ],
+      "expected": [
+        "P3",
+        "Medium priority",
+        "var(--amber-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        1
+      ],
+      "expected": [
+        "P2",
+        "High priority",
+        "var(--orange-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        1.99
+      ],
+      "expected": [
+        "P2",
+        "High priority",
+        "var(--orange-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        2
+      ],
+      "expected": [
+        "P1",
+        "Critical priority",
+        "var(--red-600)"
+      ]
+    },
+    {
+      "kind": "focusTier",
+      "args": [
+        4
+      ],
+      "expected": [
+        "P1",
+        "Critical priority",
+        "var(--red-600)"
+      ]
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        "red"
+      ],
+      "expected": "<span class=\"rk-tag\" style=\"color:var(--red-600);border-color:var(--red-600)\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        "green"
+      ],
+      "expected": "<span class=\"rk-tag\" style=\"color:var(--green-600);border-color:var(--green-600)\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        "amber"
+      ],
+      "expected": "<span class=\"rk-tag\" style=\"color:var(--amber-600);border-color:var(--amber-600)\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        "teal"
+      ],
+      "expected": "<span class=\"rk-tag\" style=\"color:var(--teal-600);border-color:var(--teal-600)\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        "unknown"
+      ],
+      "expected": "<span class=\"rk-tag\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "tag",
+      "args": [
+        "x<&",
+        null
+      ],
+      "expected": "<span class=\"rk-tag\">x&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "danger",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-100);color:var(--red-700)\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "danger",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-100);color:var(--red-700)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-vulnerable)\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "danger-solid",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-700);color:#fff\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "danger-solid",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-700);color:#fff\"><span class=\"rk-pill-dot\" style=\"background:#fff\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "warn",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--amber-100);color:var(--red-700)\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "warn",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--amber-100);color:var(--red-700)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-error)\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "good",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--green-100);color:var(--teal-600)\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "good",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--green-100);color:var(--teal-600)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-resistant)\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "neutral",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "neutral",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\"><span class=\"rk-pill-dot\" style=\"background:var(--text-muted)\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "unknown",
+          "dot": false
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\">Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "pill",
+      "args": [
+        "Text<&",
+        {
+          "tone": "unknown",
+          "dot": true
+        }
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\"><span class=\"rk-pill-dot\" style=\"background:var(--text-muted)\"></span>Text&lt;&amp;</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        "critical"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-700);color:#fff\">Critical</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        "HIGH"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--amber-100);color:var(--red-700)\">High</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        "Medium"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\">Medium</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        "low"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--green-100);color:var(--teal-600)\">Low</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        "unknown"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\">Unknown</span>"
+    },
+    {
+      "kind": "severityPill",
+      "args": [
+        ""
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\"></span>"
+    },
+    {
+      "kind": "outcomePill",
+      "args": [
+        "vulnerable"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--red-100);color:var(--red-700)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-vulnerable)\"></span>Vulnerable</span>"
+    },
+    {
+      "kind": "outcomePill",
+      "args": [
+        "RESISTANT"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--green-100);color:var(--teal-600)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-resistant)\"></span>Resistant</span>"
+    },
+    {
+      "kind": "outcomePill",
+      "args": [
+        "error"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--amber-100);color:var(--red-700)\"><span class=\"rk-pill-dot\" style=\"background:var(--outcome-error)\"></span>Error</span>"
+    },
+    {
+      "kind": "outcomePill",
+      "args": [
+        "unknown"
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\"><span class=\"rk-pill-dot\" style=\"background:var(--text-muted)\"></span>unknown</span>"
+    },
+    {
+      "kind": "outcomePill",
+      "args": [
+        ""
+      ],
+      "expected": "<span class=\"rk-pill\" style=\"background:var(--sunken);color:var(--text-muted)\"><span class=\"rk-pill-dot\" style=\"background:var(--text-muted)\"></span></span>"
+    },
+    {
+      "kind": "callout",
+      "args": [
+        "<strong>body</strong>",
+        {
+          "confidence": "HIGH",
+          "label": "Label <&"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Label &lt;&amp;</span><span class=\"es-confidence\" style=\"border-color:#025558;color:#025558\">HIGH CONFIDENCE</span></div><p class=\"es-body\"><strong>body</strong></p></div>"
+    },
+    {
+      "kind": "callout",
+      "args": [
+        "<strong>body</strong>",
+        {
+          "confidence": "medium",
+          "label": "Label <&"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Label &lt;&amp;</span><span class=\"es-confidence\" style=\"border-color:var(--orange-700);color:var(--orange-700)\">MEDIUM CONFIDENCE</span></div><p class=\"es-body\"><strong>body</strong></p></div>"
+    },
+    {
+      "kind": "callout",
+      "args": [
+        "<strong>body</strong>",
+        {
+          "confidence": "LOW",
+          "label": "Label <&"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Label &lt;&amp;</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\"><strong>body</strong></p></div>"
+    },
+    {
+      "kind": "callout",
+      "args": [
+        "<strong>body</strong>",
+        {
+          "confidence": "other",
+          "label": "Label <&"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Label &lt;&amp;</span><span class=\"es-confidence\" style=\"border-color:#025558;color:#025558\">OTHER CONFIDENCE</span></div><p class=\"es-body\"><strong>body</strong></p></div>"
+    },
+    {
+      "kind": "callout",
+      "args": [
+        "<strong>body</strong>",
+        {
+          "confidence": null,
+          "label": "Label <&"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Label &lt;&amp;</span></div><p class=\"es-body\"><strong>body</strong></p></div>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        -1,
+        {
+          "radius": 20,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"46\" height=\"46\" viewBox=\"0 0 46 46\" class=\"rk-dial\"><circle cx=\"23.0\" cy=\"23.0\" r=\"20\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"23.0\" cy=\"23.0\" r=\"20\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"0.0 125.7\" transform=\"rotate(-90 23.0 23.0)\"></circle><text x=\"23.0\" y=\"23.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0,
+        {
+          "radius": 21,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" class=\"rk-dial\"><circle cx=\"24.0\" cy=\"24.0\" r=\"21\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"24.0\" cy=\"24.0\" r=\"21\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"0.0 131.9\" transform=\"rotate(-90 24.0 24.0)\"></circle><text x=\"24.0\" y=\"24.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"24.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0.125,
+        {
+          "radius": 22,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"50\" height=\"50\" viewBox=\"0 0 50 50\" class=\"rk-dial\"><circle cx=\"25.0\" cy=\"25.0\" r=\"22\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"25.0\" cy=\"25.0\" r=\"22\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"17.3 138.2\" transform=\"rotate(-90 25.0 25.0)\"></circle><text x=\"25.0\" y=\"25.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0.5,
+        {
+          "radius": 23,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"52\" height=\"52\" viewBox=\"0 0 52 52\" class=\"rk-dial\"><circle cx=\"26.0\" cy=\"26.0\" r=\"23\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"26.0\" cy=\"26.0\" r=\"23\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"72.3 144.5\" transform=\"rotate(-90 26.0 26.0)\"></circle><text x=\"26.0\" y=\"26.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"26.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        1,
+        {
+          "radius": 24,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"54\" height=\"54\" viewBox=\"0 0 54 54\" class=\"rk-dial\"><circle cx=\"27.0\" cy=\"27.0\" r=\"24\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"27.0\" cy=\"27.0\" r=\"24\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"150.8 150.8\" transform=\"rotate(-90 27.0 27.0)\"></circle><text x=\"27.0\" y=\"27.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        2,
+        {
+          "radius": 25,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"56\" height=\"56\" viewBox=\"0 0 56 56\" class=\"rk-dial\"><circle cx=\"28.0\" cy=\"28.0\" r=\"25\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"28.0\" cy=\"28.0\" r=\"25\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"157.1 157.1\" transform=\"rotate(-90 28.0 28.0)\"></circle><text x=\"28.0\" y=\"28.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"28.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        -1,
+        {
+          "radius": 26,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"58\" height=\"58\" viewBox=\"0 0 58 58\" class=\"rk-dial\"><circle cx=\"29.0\" cy=\"29.0\" r=\"26\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"29.0\" cy=\"29.0\" r=\"26\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"0.0 163.4\" transform=\"rotate(-90 29.0 29.0)\"></circle><text x=\"29.0\" y=\"29.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0,
+        {
+          "radius": 27,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" class=\"rk-dial\"><circle cx=\"30.0\" cy=\"30.0\" r=\"27\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"30.0\" cy=\"30.0\" r=\"27\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"0.0 169.6\" transform=\"rotate(-90 30.0 30.0)\"></circle><text x=\"30.0\" y=\"30.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"30.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0.125,
+        {
+          "radius": 28,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"62\" height=\"62\" viewBox=\"0 0 62 62\" class=\"rk-dial\"><circle cx=\"31.0\" cy=\"31.0\" r=\"28\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"31.0\" cy=\"31.0\" r=\"28\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"22.0 175.9\" transform=\"rotate(-90 31.0 31.0)\"></circle><text x=\"31.0\" y=\"31.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        0.5,
+        {
+          "radius": 29,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\" class=\"rk-dial\"><circle cx=\"32.0\" cy=\"32.0\" r=\"29\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"32.0\" cy=\"32.0\" r=\"29\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"91.1 182.2\" transform=\"rotate(-90 32.0 32.0)\"></circle><text x=\"32.0\" y=\"32.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"32.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        1,
+        {
+          "radius": 30,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": ""
+        }
+      ],
+      "expected": "<svg width=\"66\" height=\"66\" viewBox=\"0 0 66 66\" class=\"rk-dial\"><circle cx=\"33.0\" cy=\"33.0\" r=\"30\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"33.0\" cy=\"33.0\" r=\"30\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"188.5 188.5\" transform=\"rotate(-90 33.0 33.0)\"></circle><text x=\"33.0\" y=\"33.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;</text></svg>"
+    },
+    {
+      "kind": "dial",
+      "args": [
+        "value<&",
+        2,
+        {
+          "radius": 31,
+          "stroke": 3,
+          "color": "#123456",
+          "sub": "Sub<&"
+        }
+      ],
+      "expected": "<svg width=\"68\" height=\"68\" viewBox=\"0 0 68 68\" class=\"rk-dial\"><circle cx=\"34.0\" cy=\"34.0\" r=\"31\" fill=\"none\" stroke=\"var(--chart-track)\" stroke-width=\"3\"></circle><circle cx=\"34.0\" cy=\"34.0\" r=\"31\" fill=\"none\" stroke=\"#123456\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-dasharray=\"194.8 194.8\" transform=\"rotate(-90 34.0 34.0)\"></circle><text x=\"34.0\" y=\"34.0\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"14\" font-weight=\"600\" fill=\"var(--text-strong)\">value&lt;&amp;<tspan x=\"34.0\" dy=\"1.2em\" font-size=\"10\" font-weight=\"500\" fill=\"var(--text-faint)\">Sub&lt;&amp;</tspan></text></svg>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 0,
+            "errors": 0,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": []
+          },
+          "confidence": null
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 10,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.38878685119012457,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">No goal verdict is available because all <strong>10</strong> conversations errored.</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 2,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.8931472803237316,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.16261006851902804,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": null
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>8/10</strong> conversations completed and <strong>2</strong> errored; the rate and average score above use all 10 conversations. It performed best on <strong>p0 &times; s0</strong> (89%) and weakest on <strong>p1 &times; s1</strong> (16%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 0,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.7835654735595392,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.23578971762993717,
+                "n": 1
+              },
+              {
+                "persona": "p2",
+                "scenario": "s2",
+                "success_rate": 0.277656877698332,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. It performed best on <strong>p0 &times; s0</strong> (78%) and weakest on <strong>p1 &times; s1</strong> (24%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 1,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.7503847799533293,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.9626247590961761,
+                "n": 1
+              },
+              {
+                "persona": "p2",
+                "scenario": "s2",
+                "success_rate": 0.9205298543226905,
+                "n": 1
+              },
+              {
+                "persona": "p3",
+                "scenario": "s3",
+                "success_rate": 0.35098159158250575,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": null
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>9/10</strong> conversations completed and <strong>1</strong> errored; the rate and average score above use all 10 conversations. It performed best on <strong>p1 &times; s1</strong> (96%) and weakest on <strong>p3 &times; s3</strong> (35%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 2,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": []
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>8/10</strong> conversations completed and <strong>2</strong> errored; the rate and average score above use all 10 conversations.</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 0,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.7678080532823738,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": null
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>.</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 1,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.8252222941764871,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.9951879112792437,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>9/10</strong> conversations completed and <strong>1</strong> errored; the rate and average score above use all 10 conversations. It performed best on <strong>p1 &times; s1</strong> (100%) and weakest on <strong>p0 &times; s0</strong> (83%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 2,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.9516669947284847,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.20522287405869366,
+                "n": 1
+              },
+              {
+                "persona": "p2",
+                "scenario": "s2",
+                "success_rate": 0.3136812514888787,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": null
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>8/10</strong> conversations completed and <strong>2</strong> errored; the rate and average score above use all 10 conversations. It performed best on <strong>p0 &times; s0</strong> (95%) and weakest on <strong>p1 &times; s1</strong> (21%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 0,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.5442670399927454,
+                "n": 1
+              },
+              {
+                "persona": "p1",
+                "scenario": "s1",
+                "success_rate": 0.7294303127926431,
+                "n": 1
+              },
+              {
+                "persona": "p2",
+                "scenario": "s2",
+                "success_rate": 0.36981596741543354,
+                "n": 1
+              },
+              {
+                "persona": "p3",
+                "scenario": "s3",
+                "success_rate": 0.9131329324596655,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. It performed best on <strong>p3 &times; s3</strong> (91%) and weakest on <strong>p2 &times; s2</strong> (37%).</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 1,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": []
+          },
+          "confidence": null
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>9/10</strong> conversations completed and <strong>1</strong> errored; the rate and average score above use all 10 conversations.</p></div>"
+    },
+    {
+      "kind": "execSummary",
+      "args": [
+        {
+          "summary_data": {
+            "total_conversations": 10,
+            "errors": 2,
+            "success_rate": 0.6,
+            "avg_goal_completion_score": 0.65
+          },
+          "heatmap_data": {
+            "personas": [
+              "a",
+              "b"
+            ],
+            "scenarios": [
+              "x",
+              "y"
+            ],
+            "cells": [
+              {
+                "persona": "p0",
+                "scenario": "s0",
+                "success_rate": 0.3517093943284523,
+                "n": 1
+              }
+            ]
+          },
+          "confidence": "LOW"
+        }
+      ],
+      "expected": "<div class=\"exec-summary\"><div class=\"es-head\"><span class=\"es-label\">Executive summary</span><span class=\"es-confidence\" style=\"border-color:var(--red-700);color:var(--red-700)\">LOW CONFIDENCE</span></div><p class=\"es-body\">Across <strong>10</strong> conversations (2 personas &times; 2 scenarios), the agent achieved a <strong>60%</strong> goal-completion rate at an average score of <strong>0.65</strong>. <strong>8/10</strong> conversations completed and <strong>2</strong> errored; the rate and average score above use all 10 conversations.</p></div>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": null
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            4
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 28\" width=\"420\" height=\"28\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"46.8\" height=\"14\" rx=\"3\" fill=\"#f8caa4\"></rect><text x=\"184.8\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">4</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            3
+          ],
+          [
+            "label<&1",
+            0
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 56\" width=\"420\" height=\"56\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"35.1\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"173.1\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">3</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"0.0\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"138.0\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">0</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            2
+          ],
+          [
+            "label<&1",
+            9
+          ],
+          [
+            "label<&2",
+            1
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": null,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 84\" width=\"420\" height=\"84\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"52.0\" height=\"14\" rx=\"3\" fill=\"#f8c59b\"></rect><text x=\"190.0\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">2</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"234.0\" height=\"14\" rx=\"3\" fill=\"#df5325\"></rect><text x=\"372.0\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">9</text><text x=\"122\" y=\"70.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;2</text><rect x=\"130\" y=\"63.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"63.0\" width=\"26.0\" height=\"14\" rx=\"3\" fill=\"#f6dbc5\"></rect><text x=\"164.0\" y=\"70.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">1</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            6
+          ],
+          [
+            "label<&1",
+            5
+          ],
+          [
+            "label<&2",
+            3
+          ],
+          [
+            "label<&3",
+            3
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 112\" width=\"420\" height=\"112\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"70.2\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"208.2\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">6</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"58.5\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"196.5\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">5</text><text x=\"122\" y=\"70.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;2</text><rect x=\"130\" y=\"63.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"63.0\" width=\"35.1\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"173.1\" y=\"70.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">3</text><text x=\"122\" y=\"98.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;3</text><rect x=\"130\" y=\"91.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"91.0\" width=\"35.1\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"173.1\" y=\"98.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">3</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            2
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": null
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 28\" width=\"420\" height=\"28\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"234.0\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"372.0\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">2</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            3
+          ],
+          [
+            "label<&1",
+            9
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 56\" width=\"420\" height=\"56\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"35.1\" height=\"14\" rx=\"3\" fill=\"#f7d4b6\"></rect><text x=\"173.1\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">3</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"105.3\" height=\"14\" rx=\"3\" fill=\"#fe9947\"></rect><text x=\"243.3\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">9</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            1
+          ],
+          [
+            "label<&1",
+            6
+          ],
+          [
+            "label<&2",
+            7
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 84\" width=\"420\" height=\"84\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"11.7\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"149.7\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">1</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"70.2\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"208.2\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">6</text><text x=\"122\" y=\"70.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;2</text><rect x=\"130\" y=\"63.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"63.0\" width=\"81.9\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"219.9\" y=\"70.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">7</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            7
+          ],
+          [
+            "label<&1",
+            5
+          ],
+          [
+            "label<&2",
+            1
+          ],
+          [
+            "label<&3",
+            8
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": null,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 112\" width=\"420\" height=\"112\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"204.8\" height=\"14\" rx=\"3\" fill=\"#e76229\"></rect><text x=\"342.8\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">7</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"146.2\" height=\"14\" rx=\"3\" fill=\"#f78030\"></rect><text x=\"284.2\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">5</text><text x=\"122\" y=\"70.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;2</text><rect x=\"130\" y=\"63.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"63.0\" width=\"29.2\" height=\"14\" rx=\"3\" fill=\"#f6d8c0\"></rect><text x=\"167.2\" y=\"70.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">1</text><text x=\"122\" y=\"98.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;3</text><rect x=\"130\" y=\"91.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"91.0\" width=\"234.0\" height=\"14\" rx=\"3\" fill=\"#df5325\"></rect><text x=\"372.0\" y=\"98.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">8</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            8
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 28\" width=\"420\" height=\"28\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"93.6\" height=\"14\" rx=\"3\" fill=\"#fda359\"></rect><text x=\"231.6\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">8</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            4
+          ],
+          [
+            "label<&1",
+            6
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": null
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 56\" width=\"420\" height=\"56\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"156.0\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"294.0\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">4</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"234.0\" height=\"14\" rx=\"3\" fill=\"#112233\"></rect><text x=\"372.0\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">6</text></svg>"
+    },
+    {
+      "kind": "barRows",
+      "args": [
+        [
+          [
+            "label<&0",
+            6
+          ],
+          [
+            "label<&1",
+            4
+          ],
+          [
+            "label<&2",
+            3
+          ]
+        ],
+        {
+          "width": 420,
+          "label_w": 130,
+          "color": "#112233",
+          "max_value": 20,
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 420 84\" width=\"420\" height=\"84\" class=\"rk-bar-rows\"><text x=\"122\" y=\"14.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;0</text><rect x=\"130\" y=\"7.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"7.0\" width=\"70.2\" height=\"14\" rx=\"3\" fill=\"#fab67e\"></rect><text x=\"208.2\" y=\"14.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">6</text><text x=\"122\" y=\"42.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;1</text><rect x=\"130\" y=\"35.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"35.0\" width=\"46.8\" height=\"14\" rx=\"3\" fill=\"#f8caa4\"></rect><text x=\"184.8\" y=\"42.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">4</text><text x=\"122\" y=\"70.0\" text-anchor=\"end\" dominant-baseline=\"middle\" font-size=\"12\" fill=\"var(--text-body)\">label&lt;&amp;2</text><rect x=\"130\" y=\"63.0\" width=\"234\" height=\"14\" rx=\"3\" fill=\"var(--chart-track)\"></rect><rect x=\"130\" y=\"63.0\" width=\"35.1\" height=\"14\" rx=\"3\" fill=\"#f7d4b6\"></rect><text x=\"173.1\" y=\"70.0\" dominant-baseline=\"middle\" font-family=\"var(--font-sans)\" font-size=\"11\" font-weight=\"600\" fill=\"var(--text-strong)\">3</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [],
+        {
+          "bins": 2,
+          "mean_line": true
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.6610854904579702
+        ],
+        {
+          "bins": 3,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"197.3\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"10.0\" width=\"197.3\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"180.0\" width=\"197.3\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.16</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.16</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.03462831840979885,
+          0.4604521419124967
+        ],
+        {
+          "bins": 4,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"147.5\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"182.5\" y=\"180.0\" width=\"147.5\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"180.0\" width=\"147.5\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"481.5\" y=\"10.0\" width=\"147.5\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.03</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.46</text><line x1=\"331.0\" y1=\"10\" x2=\"331.0\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.5,
+          0.5,
+          0.5
+        ],
+        {
+          "bins": 5,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">3</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"117.6\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"152.6\" y=\"180.0\" width=\"117.6\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"272.2\" y=\"10.0\" width=\"117.6\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"391.8\" y=\"180.0\" width=\"117.6\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"511.4\" y=\"180.0\" width=\"117.6\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.00</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.00</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          -0.1697678742004547,
+          0.4732997709265414,
+          -0.7811119441089598,
+          -0.7973254430328949
+        ],
+        {
+          "bins": 6,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"97.7\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"132.7\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"95.0\" width=\"97.7\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"531.3\" y=\"95.0\" width=\"97.7\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.80</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.47</text><line x1=\"257.2\" y1=\"10\" x2=\"257.2\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.5389778650238686,
+          -0.9381763776603258,
+          0.30700348652229303,
+          -0.4947921404057609,
+          0.42874150034479075
+        ],
+        {
+          "bins": 7,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"95.0\" width=\"83.4\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"118.4\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"203.9\" y=\"95.0\" width=\"83.4\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"289.3\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"374.7\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"460.1\" y=\"95.0\" width=\"83.4\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"545.6\" y=\"10.0\" width=\"83.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.94</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.54</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [],
+        {
+          "bins": 8,
+          "mean_line": true
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.89295767936505
+        ],
+        {
+          "bins": 9,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"99.4\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"165.9\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"298.8\" y=\"10.0\" width=\"64.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"365.2\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"498.1\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"564.6\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.39</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.39</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          -0.6452366969324557,
+          -0.15170049733883872
+        ],
+        {
+          "bins": 10,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"92.8\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"152.6\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"212.4\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"272.2\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"391.8\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"451.6\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"511.4\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"571.2\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.65</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.15</text><line x1=\"331.0\" y1=\"10\" x2=\"331.0\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.5,
+          0.5,
+          0.5
+        ],
+        {
+          "bins": 2,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">3</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"297.0\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"10.0\" width=\"297.0\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.00</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.00</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.500361163645554,
+          -0.14539438996024234,
+          -0.6167243441249302,
+          0.26933006395855963
+        ],
+        {
+          "bins": 3,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"95.0\" width=\"197.3\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"95.0\" width=\"197.3\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"10.0\" width=\"197.3\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.62</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.50</text><line x1=\"363.2\" y1=\"10\" x2=\"363.2\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          -0.22989179253285696,
+          0.6837604398017922,
+          -0.07095798802463604,
+          0.1005976958194037,
+          -0.46411370249119543
+        ],
+        {
+          "bins": 4,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"147.5\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"182.5\" y=\"10.0\" width=\"147.5\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"180.0\" width=\"147.5\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"481.5\" y=\"95.0\" width=\"147.5\" height=\"85.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.46</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.68</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [],
+        {
+          "bins": 5,
+          "mean_line": true
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          -0.710078758872893
+        ],
+        {
+          "bins": 6,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"132.7\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"10.0\" width=\"97.7\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"531.3\" y=\"180.0\" width=\"97.7\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-1.21</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.21</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          -0.07631084700453905,
+          -0.4752466744612054
+        ],
+        {
+          "bins": 7,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"83.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"118.4\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"203.9\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"289.3\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"374.7\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"460.1\" y=\"180.0\" width=\"83.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"545.6\" y=\"10.0\" width=\"83.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.48</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.08</text><line x1=\"331.0\" y1=\"10\" x2=\"331.0\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.5,
+          0.5,
+          0.5
+        ],
+        {
+          "bins": 8,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">3</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">2</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"107.8\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"182.5\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"257.2\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"10.0\" width=\"72.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"406.8\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"481.5\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"556.2\" y=\"180.0\" width=\"72.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.00</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.00</text></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.16057049747628227,
+          0.27541624164976364,
+          -0.3143549578934697,
+          -0.4324790495300519
+        ],
+        {
+          "bins": 9,
+          "mean_line": true
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"64.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"99.4\" y=\"10.0\" width=\"64.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"165.9\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"232.3\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"298.8\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"365.2\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"431.7\" y=\"180.0\" width=\"64.4\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"498.1\" y=\"10.0\" width=\"64.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"564.6\" y=\"10.0\" width=\"64.4\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.43</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.28</text><line x1=\"331.7\" y1=\"10\" x2=\"331.7\" y2=\"180\" stroke=\"var(--orange-500)\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"></line></svg>"
+    },
+    {
+      "kind": "histogram",
+      "args": [
+        [
+          0.05871695053744075,
+          0.19926469144459857,
+          0.31710107223479334,
+          -0.22248671206773518,
+          0.8991041639730655
+        ],
+        {
+          "bins": 10,
+          "mean_line": false
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 640 200\" width=\"640\" height=\"200\" class=\"rk-histogram\"><line x1=\"32\" y1=\"10.0\" x2=\"630\" y2=\"10.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"13.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1</text><line x1=\"32\" y1=\"95.0\" x2=\"630\" y2=\"95.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"98.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><line x1=\"32\" y1=\"180.0\" x2=\"630\" y2=\"180.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"26\" y=\"183.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0</text><rect x=\"33.0\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"92.8\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"152.6\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"212.4\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"272.2\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"332.0\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"391.8\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"451.6\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"511.4\" y=\"180.0\" width=\"57.8\" height=\"0.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><rect x=\"571.2\" y=\"10.0\" width=\"57.8\" height=\"170.0\" rx=\"2\" fill=\"var(--chart-2)\"></rect><text x=\"32\" y=\"196\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">-0.22</text><text x=\"630\" y=\"196\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.90</text></svg>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [],
+        {}
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&"
+        ],
+        {
+          "first<&": [
+            0.417812994444077
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><circle cx=\"370.0\" cy=\"141.8\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B"
+        ],
+        {
+          "first<&": [
+            -0.13141107415264258,
+            null
+          ],
+          "second": [
+            0.11349469732768985,
+            null
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"36.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><text x=\"704.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">B</text><circle cx=\"36.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"36.0\" cy=\"207.5\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-2)\"></span>second</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B",
+          "C"
+        ],
+        {
+          "first<&": [
+            null,
+            1.2698732426261954,
+            -0.2808617042915386
+          ],
+          "second": [
+            null,
+            0.23297403189188187,
+            1.4184751757529535
+          ],
+          "third": [
+            null,
+            0.3998379916350739,
+            0.11990935024934407
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"36.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">B</text><text x=\"704.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">C</text><polyline points=\"370.0,16.0 704.0,232.0\" fill=\"none\" stroke=\"var(--chart-1)\" stroke-width=\"2\"></polyline><circle cx=\"370.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><polyline points=\"370.0,181.7 704.0,16.0\" fill=\"none\" stroke=\"var(--chart-2)\" stroke-width=\"2\"></polyline><circle cx=\"370.0\" cy=\"181.7\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><polyline points=\"370.0,145.6 704.0,206.1\" fill=\"none\" stroke=\"var(--chart-3)\" stroke-width=\"2\"></polyline><circle cx=\"370.0\" cy=\"145.6\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"206.1\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-2)\"></span>second</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-3)\"></span>third</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [],
+        {
+          "first<&": [],
+          "second": [],
+          "third": [],
+          "fourth": []
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text></svg><div class=\"rk-legend\"></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&"
+        ],
+        {
+          "first<&": [
+            0.060919256982300996
+          ],
+          "second": [
+            0.4240004840592862
+          ],
+          "third": [
+            0.7153573521495247
+          ],
+          "fourth": [
+            -0.2903844597436966
+          ],
+          "fifth": [
+            1.270073540408687
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><circle cx=\"370.0\" cy=\"218.8\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"370.0\" cy=\"140.4\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><circle cx=\"370.0\" cy=\"77.5\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><circle cx=\"370.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-4)\" stroke-width=\"1.5\"></circle><circle cx=\"370.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-2)\"></span>second</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-3)\"></span>third</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-4)\"></span>fourth</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>fifth</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B"
+        ],
+        {}
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B",
+          "C"
+        ],
+        {
+          "first<&": [
+            0.7073412985850434,
+            -0.024979477324271027,
+            null
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"36.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">B</text><text x=\"704.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">C</text><polyline points=\"36.0,79.2 370.0,232.0\" fill=\"none\" stroke=\"var(--chart-1)\" stroke-width=\"2\"></polyline><circle cx=\"36.0\" cy=\"79.2\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"370.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [],
+        {
+          "first<&": [],
+          "second": []
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text></svg><div class=\"rk-legend\"></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&"
+        ],
+        {
+          "first<&": [
+            null
+          ],
+          "second": [
+            null
+          ],
+          "third": [
+            null
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text></svg><div class=\"rk-legend\"></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B"
+        ],
+        {
+          "first<&": [
+            0.8292859597829592,
+            0.12497233553519799
+          ],
+          "second": [
+            1.1607139669147493,
+            0.6549930825900907
+          ],
+          "third": [
+            0.9680905570322578,
+            -0.2936585580687196
+          ],
+          "fourth": [
+            -0.1522234248720133,
+            -0.027145941921232708
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"36.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><text x=\"704.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">B</text><polyline points=\"36.0,52.9 704.0,205.0\" fill=\"none\" stroke=\"var(--chart-1)\" stroke-width=\"2\"></polyline><circle cx=\"36.0\" cy=\"52.9\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"205.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><polyline points=\"36.0,16.0 704.0,90.5\" fill=\"none\" stroke=\"var(--chart-2)\" stroke-width=\"2\"></polyline><circle cx=\"36.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"90.5\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><polyline points=\"36.0,22.9 704.0,232.0\" fill=\"none\" stroke=\"var(--chart-3)\" stroke-width=\"2\"></polyline><circle cx=\"36.0\" cy=\"22.9\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><polyline points=\"36.0,232.0 704.0,232.0\" fill=\"none\" stroke=\"var(--chart-4)\" stroke-width=\"2\"></polyline><circle cx=\"36.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-4)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-4)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-2)\"></span>second</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-3)\"></span>third</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-4)\"></span>fourth</span></div>"
+    },
+    {
+      "kind": "lineChart",
+      "args": [
+        [
+          "A<&",
+          "B",
+          "C"
+        ],
+        {
+          "first<&": [
+            0.2523549074477152,
+            null,
+            0.37978062970935605
+          ],
+          "second": [
+            1.3454371995893326,
+            null,
+            1.5005581308792884
+          ],
+          "third": [
+            0.6153782384493391,
+            null,
+            0.8934491164236675
+          ],
+          "fourth": [
+            1.682826063964458,
+            null,
+            1.6409689799246971
+          ],
+          "fifth": [
+            1.1183940942737651,
+            null,
+            -0.006911677768885516
+          ]
+        }
+      ],
+      "expected": "<svg viewBox=\"0 0 720 260\" width=\"720\" height=\"260\" class=\"rk-line-chart\" role=\"img\"><line x1=\"36\" y1=\"232.0\" x2=\"704\" y2=\"232.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"235.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.0</text><line x1=\"36\" y1=\"178.0\" x2=\"704\" y2=\"178.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"181.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.3</text><line x1=\"36\" y1=\"124.0\" x2=\"704\" y2=\"124.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"127.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.5</text><line x1=\"36\" y1=\"70.0\" x2=\"704\" y2=\"70.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"73.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">0.8</text><line x1=\"36\" y1=\"16.0\" x2=\"704\" y2=\"16.0\" stroke=\"var(--chart-grid)\" stroke-width=\"1\"></line><text x=\"30\" y=\"19.0\" text-anchor=\"end\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">1.0</text><text x=\"36.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">A&lt;&amp;</text><text x=\"370.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">B</text><text x=\"704.0\" y=\"248\" text-anchor=\"middle\" font-family=\"var(--font-sans)\" font-size=\"10\" fill=\"var(--text-faint)\">C</text><circle cx=\"36.0\" cy=\"177.5\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"150.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"36.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-2)\" stroke-width=\"1.5\"></circle><circle cx=\"36.0\" cy=\"99.1\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"39.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-3)\" stroke-width=\"1.5\"></circle><circle cx=\"36.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-4)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-4)\" stroke-width=\"1.5\"></circle><circle cx=\"36.0\" cy=\"16.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle><circle cx=\"704.0\" cy=\"232.0\" r=\"2.5\" fill=\"white\" stroke=\"var(--chart-1)\" stroke-width=\"1.5\"></circle></svg><div class=\"rk-legend\"><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>first&lt;&amp;</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-2)\"></span>second</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-3)\"></span>third</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-4)\"></span>fourth</span><span class=\"rk-legend-item\"><span class=\"rk-legend-swatch\" style=\"background:var(--chart-1)\"></span>fifth</span></div>"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        -1,
+        null
+      ],
+      "expected": "#df5325"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        -1,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f3f1ee"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0,
+        null
+      ],
+      "expected": "#df5325"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f3f1ee"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.125,
+        null
+      ],
+      "expected": "#e76229"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.125,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f6d8c0"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5,
+        null
+      ],
+      "expected": "#ff8f34"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#ff8f34"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.875,
+        null
+      ],
+      "expected": "#5e9a78"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.875,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#e76229"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        1,
+        null
+      ],
+      "expected": "#299d8f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        1,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#df5325"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        2,
+        null
+      ],
+      "expected": "#299d8f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        2,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#df5325"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.10862382031890672,
+        null
+      ],
+      "expected": "#e66028"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.10862382031890672,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f6dcc6"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.30773047041618506,
+        null
+      ],
+      "expected": "#f3782e"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.30773047041618506,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fab57c"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7708151844389786,
+        null
+      ],
+      "expected": "#8b9765"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7708151844389786,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#ee6f2c"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.811632979667884,
+        null
+      ],
+      "expected": "#7a986d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.811632979667884,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#eb6a2b"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.3313333348075448,
+        null
+      ],
+      "expected": "#f47b2f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.3313333348075448,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fbb073"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7448223528106485,
+        null
+      ],
+      "expected": "#969661"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7448223528106485,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#ef722d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.2013031928029173,
+        null
+      ],
+      "expected": "#ec6b2b"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.2013031928029173,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f8caa3"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.1877597731642473,
+        null
+      ],
+      "expected": "#eb6a2b"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.1877597731642473,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f8cca8"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.4321715197960211,
+        null
+      ],
+      "expected": "#fb8732"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.4321715197960211,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fd9c4d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.941348735220943,
+        null
+      ],
+      "expected": "#429b84"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.941348735220943,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#e35a27"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7212083293925184,
+        null
+      ],
+      "expected": "#a0955c"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7212083293925184,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f1742d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8868742462320556,
+        null
+      ],
+      "expected": "#599a7a"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8868742462320556,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#e66128"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.3270264674686121,
+        null
+      ],
+      "expected": "#f47a2f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.3270264674686121,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fbb174"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8987028748756054,
+        null
+      ],
+      "expected": "#549a7d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8987028748756054,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#e55f28"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.989730504176627,
+        null
+      ],
+      "expected": "#2d9d8d"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.989730504176627,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#e05425"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.06549570765422508,
+        null
+      ],
+      "expected": "#e35b27"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.06549570765422508,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f5e4d6"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.0659727985563916,
+        null
+      ],
+      "expected": "#e35b27"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.0659727985563916,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f5e4d5"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.12585018068905374,
+        null
+      ],
+      "expected": "#e76229"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.12585018068905374,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f6d8bf"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.19022958983425176,
+        null
+      ],
+      "expected": "#eb6a2b"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.19022958983425176,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f8cca7"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.4086205226071613,
+        null
+      ],
+      "expected": "#f98431"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.4086205226071613,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fda156"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7029914033177417,
+        null
+      ],
+      "expected": "#a89559"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.7029914033177417,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f2772e"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.035259197166751965,
+        null
+      ],
+      "expected": "#e15726"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.035259197166751965,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f4eae1"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5044227250744425,
+        null
+      ],
+      "expected": "#fd8f35"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5044227250744425,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#ff8e34"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.15186321840224415,
+        null
+      ],
+      "expected": "#e9652a"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.15186321840224415,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f7d3b6"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.0213082386039386,
+        null
+      ],
+      "expected": "#e05626"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.0213082386039386,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f4ede6"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.41571025351927193,
+        null
+      ],
+      "expected": "#fa8531"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.41571025351927193,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fda053"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.6568839988517781,
+        null
+      ],
+      "expected": "#bc9351"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.6568839988517781,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#f57c2f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8233945846322608,
+        null
+      ],
+      "expected": "#75986f"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8233945846322608,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#ea682a"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8092113354761764,
+        null
+      ],
+      "expected": "#7b986c"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.8092113354761764,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#eb6a2b"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5107671225371919,
+        null
+      ],
+      "expected": "#fa8f36"
+    },
+    {
+      "kind": "interpColor",
+      "args": [
+        0.5107671225371919,
+        [
+          [
+            0.0,
+            "#f3f1ee"
+          ],
+          [
+            0.5,
+            "#ff8f34"
+          ],
+          [
+            1.0,
+            "#df5325"
+          ]
+        ]
+      ],
+      "expected": "#fe8e34"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [],
+        {
+          "color_scale": null
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          }
+        ],
+        {
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#fda359;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          },
+          {
+            "persona": "a",
+            "scenario": "y",
+            "success_rate": null
+          }
+        ],
+        {
+          "color_scale": null
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#f98331;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 0 errored.\" aria-label=\"No completed conversations; 0 errored.\">n/a</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          },
+          {
+            "persona": "a",
+            "scenario": "y",
+            "success_rate": null
+          },
+          {
+            "persona": "b",
+            "scenario": "x",
+            "success_rate": 0.9,
+            "completed_conversations": 0,
+            "errored_conversations": 2
+          }
+        ],
+        {
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#fda359;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 0 errored.\" aria-label=\"No completed conversations; 0 errored.\">n/a</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 2 errored.\" aria-label=\"No completed conversations; 2 errored.\">n/a</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          },
+          {
+            "persona": "a",
+            "scenario": "y",
+            "success_rate": null
+          },
+          {
+            "persona": "b",
+            "scenario": "x",
+            "success_rate": 0.9,
+            "completed_conversations": 0,
+            "errored_conversations": 2
+          },
+          {
+            "persona": "b",
+            "scenario": "y",
+            "success_rate": 1
+          }
+        ],
+        {
+          "color_scale": null
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#f98331;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 0 errored.\" aria-label=\"No completed conversations; 0 errored.\">n/a</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 2 errored.\" aria-label=\"No completed conversations; 2 errored.\">n/a</td><td class=\"rk-heat-cell\" style=\"background:#299d8f;color:#fff\">100%</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [],
+        {
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          }
+        ],
+        {
+          "color_scale": null
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#f98331;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "heatmap",
+      "args": [
+        [
+          "a",
+          "b",
+          "missing"
+        ],
+        [
+          "x",
+          "y"
+        ],
+        [
+          {
+            "persona": "a",
+            "scenario": "x",
+            "success_rate": 0.4
+          },
+          {
+            "persona": "a",
+            "scenario": "y",
+            "success_rate": null
+          }
+        ],
+        {
+          "color_scale": [
+            [
+              0.0,
+              "#f3f1ee"
+            ],
+            [
+              0.5,
+              "#ff8f34"
+            ],
+            [
+              1.0,
+              "#df5325"
+            ]
+          ]
+        }
+      ],
+      "expected": "<table class=\"rk-heatmap\"><thead><tr><th></th><th class=\"rk-heat-col\">x</th><th class=\"rk-heat-col\">y</th></tr></thead><tbody><tr><th class=\"rk-heat-row\">a</th><td class=\"rk-heat-cell\" style=\"background:#fda359;color:var(--ink-900)\">40%</td><td class=\"rk-heat-cell rk-heat-no-verdict\" title=\"No completed conversations; 0 errored.\" aria-label=\"No completed conversations; 0 errored.\">n/a</td></tr><tr><th class=\"rk-heat-row\">b</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr><tr><th class=\"rk-heat-row\">missing</th><td class=\"rk-heat-cell rk-heat-empty\">-</td><td class=\"rk-heat-cell rk-heat-empty\">-</td></tr></tbody></table>"
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "Title <&",
+        "<b>body</b>",
+        {
+          "sub": null,
+          "info": null
+        }
+      ],
+      "expected": "<div class=\"rk-panel\"><div class=\"rk-panel-title\">Title &lt;&amp;</div><div class=\"rk-panel-body\"><b>body</b></div></div>"
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "Title <&",
+        "<b>body</b>",
+        {
+          "sub": null,
+          "info": "info<&"
+        }
+      ],
+      "expected": "<div class=\"rk-panel\"><div class=\"rk-panel-title\">Title &lt;&amp;<span class=\"rk-panel-info\" title=\"info&lt;&amp;\" role=\"img\" aria-label=\"info&lt;&amp;\">&#9432;</span></div><div class=\"rk-panel-body\"><b>body</b></div></div>"
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "Title <&",
+        "<b>body</b>",
+        {
+          "sub": "sub<&",
+          "info": null
+        }
+      ],
+      "expected": "<div class=\"rk-panel\"><div class=\"rk-panel-title\">Title &lt;&amp;</div><div class=\"rk-panel-sub\">sub&lt;&amp;</div><div class=\"rk-panel-body\"><b>body</b></div></div>"
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "Title <&",
+        "<b>body</b>",
+        {
+          "sub": "sub<&",
+          "info": "info<&"
+        }
+      ],
+      "expected": "<div class=\"rk-panel\"><div class=\"rk-panel-title\">Title &lt;&amp;<span class=\"rk-panel-info\" title=\"info&lt;&amp;\" role=\"img\" aria-label=\"info&lt;&amp;\">&#9432;</span></div><div class=\"rk-panel-sub\">sub&lt;&amp;</div><div class=\"rk-panel-body\"><b>body</b></div></div>"
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "",
+        "<b>body</b>",
+        {
+          "sub": null,
+          "info": null
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "",
+        "<b>body</b>",
+        {
+          "sub": null,
+          "info": "info<&"
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "",
+        "<b>body</b>",
+        {
+          "sub": "sub<&",
+          "info": null
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "panel",
+      "args": [
+        "",
+        "<b>body</b>",
+        {
+          "sub": "sub<&",
+          "info": "info<&"
+        }
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "metaGrid",
+      "args": [
+        []
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "metaGrid",
+      "args": [
+        [
+          [
+            "key",
+            null
+          ],
+          [
+            "empty",
+            ""
+          ]
+        ]
+      ],
+      "expected": ""
+    },
+    {
+      "kind": "metaGrid",
+      "args": [
+        [
+          [
+            "one",
+            "<&"
+          ],
+          [
+            "two",
+            "second"
+          ]
+        ]
+      ],
+      "expected": "<div class=\"rk-meta-grid\"><div class=\"rk-meta-item\"><div class=\"rk-meta-key\">one</div><div class=\"rk-meta-value\">&lt;&amp;</div></div><div class=\"rk-meta-item\"><div class=\"rk-meta-key\">two</div><div class=\"rk-meta-value\">second</div></div></div>"
+    }
+  ]
+}

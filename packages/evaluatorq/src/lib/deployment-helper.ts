@@ -1,5 +1,6 @@
 import type { Orq } from "@orq-ai/node";
 
+import { extractUsage, type Usage } from "./contracts.js";
 import { configuredOrqHost } from "./orq-host.js";
 
 /**
@@ -18,10 +19,7 @@ export interface DeploymentOptions {
     tags?: string[];
   };
   /** Chat messages for conversational deployments */
-  messages?: Array<{
-    role: "system" | "user" | "assistant";
-    content: string;
-  }>;
+  messages?: Parameters<Orq["deployments"]["invoke"]>[0]["messages"];
 }
 
 /**
@@ -32,6 +30,7 @@ export interface DeploymentResponse {
   content: string;
   /** The raw response from the API */
   raw: unknown;
+  usage: Usage | null;
 }
 
 // Cached client instance
@@ -154,6 +153,7 @@ export async function deployment(
   return {
     content,
     raw: completion,
+    usage: extractUsage(completion?.usage, 1),
   };
 }
 

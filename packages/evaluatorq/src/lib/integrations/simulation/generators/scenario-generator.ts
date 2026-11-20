@@ -5,17 +5,17 @@
  */
 
 import type OpenAI from "openai";
-import { z } from "zod/v4";
 
+import {
+  addUsage,
+  type LLMCallConfig,
+  type Usage,
+} from "../../../contracts.js";
 import { createRouterClient } from "../client.js";
-import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import { resolveSimLlmConfig, simRoleConfig } from "../config.js";
+import { ScenarioSchema } from "../contract-schemas.js";
 import { withSimulationSpan } from "../tracing.js";
-import type {
-  ConversationStrategy,
-  Criterion,
-  Scenario,
-  StartingEmotion,
-} from "../types.js";
+import type { Criterion, Scenario, StartingEmotion } from "../types.js";
 import { delimit } from "../utils/sanitize.js";
 import {
   requestJsonList,
@@ -31,45 +31,7 @@ const TEMPERATURE_EDGE_CASE = 0.9;
 const scenarioTokenBudget = (numScenarios: number) =>
   tokenBudgetForItems(numScenarios, 500, 6000);
 
-const EMOTIONS = [
-  "neutral",
-  "frustrated",
-  "confused",
-  "happy",
-  "urgent",
-] as const satisfies readonly StartingEmotion[];
-const STRATEGIES = [
-  "cooperative",
-  "topic_switching",
-  "contradictory",
-  "multi_intent",
-  "evasive",
-  "repetitive",
-  "ambiguous",
-] as const satisfies readonly ConversationStrategy[];
-const CRITERION_TYPES = [
-  "must_happen",
-  "must_not_happen",
-] as const satisfies readonly Criterion["type"][];
-const VALID_EMOTIONS = new Set<string>(EMOTIONS);
-const VALID_STRATEGIES = new Set<string>(STRATEGIES);
-const VALID_CRITERION_TYPES = new Set<string>(CRITERION_TYPES);
-
-const SCENARIO_ITEM_SCHEMA = z.object({
-  name: z.string(),
-  goal: z.string(),
-  context: z.string(),
-  starting_emotion: z.enum(EMOTIONS),
-  criteria: z.array(
-    z.object({
-      description: z.string(),
-      type: z.enum(CRITERION_TYPES),
-      evaluator: z.string().nullable(),
-    }),
-  ),
-  is_edge_case: z.boolean(),
-  conversation_strategy: z.enum(STRATEGIES).nullable(),
-});
+const SCENARIO_ITEM_SCHEMA = ScenarioSchema;
 
 const SCENARIO_GENERATOR_PROMPT = `You are an expert test scenario designer for AI agent evaluation. Create realistic, testable scenarios that thoroughly evaluate agent capabilities.
 
@@ -195,6 +157,7 @@ Return a JSON array of scenario objects.`;
  * Configuration for ScenarioGenerator.
  */
 export interface ScenarioGeneratorConfig {
+  llmConfig?: LLMCallConfig;
   model?: string;
   client?: OpenAI;
   apiKey?: string;
@@ -211,61 +174,22 @@ function parseScenarios(
 ): Scenario[] {
   const scenarios: Scenario[] = [];
   for (const sDict of scenarioDicts) {
-    if (
-      typeof sDict.name !== "string" ||
-      !sDict.name.trim() ||
-      typeof sDict.goal !== "string" ||
-      !sDict.goal.trim()
-    ) {
-      console.warn(`${label}: dropping scenario without a name or goal`);
+    const parsed = ScenarioSchema.safeParse(sDict);
+    if (!parsed.success) {
+      console.warn(`${label}: dropping invalid scenario`, parsed.error);
       continue;
     }
-
-    const rawCriteria = sDict.criteria ?? [];
-    // One bad criterion drops the scenario: keeping the rest would test less
-    // than the model wrote and score higher for it.
-    const criteriaValid =
-      Array.isArray(rawCriteria) &&
-      rawCriteria.every(
-        (c) =>
-          VALID_CRITERION_TYPES.has(String(c?.type ?? "")) &&
-          typeof c.description === "string" &&
-          c.description.trim(),
-      );
-    if (!criteriaValid) {
-      console.warn(
-        `${label}: dropping scenario '${sDict.name}' with an invalid criterion`,
-      );
-      continue;
-    }
-    const criteria: Criterion[] = (
-      rawCriteria as Record<string, unknown>[]
-    ).map((c) => ({
-      description: c.description as string,
-      type: c.type as "must_happen" | "must_not_happen",
-      evaluator: typeof c.evaluator === "string" ? c.evaluator : null,
-    }));
-
-    const emotion = sDict.starting_emotion ?? undefined;
-    const strategy = sDict.conversation_strategy ?? undefined;
-    if (
-      (emotion !== undefined && !VALID_EMOTIONS.has(String(emotion))) ||
-      (strategy !== undefined && !VALID_STRATEGIES.has(String(strategy)))
-    ) {
-      console.warn(
-        `${label}: dropping scenario '${sDict.name}' with an unknown emotion or strategy (starting_emotion=${emotion}, conversation_strategy=${strategy})`,
-      );
-      continue;
-    }
-
+    const data = parsed.data;
     scenarios.push({
-      name: sDict.name,
-      goal: sDict.goal,
-      context: String(sDict.context ?? ""),
-      starting_emotion: emotion as StartingEmotion | undefined,
-      criteria,
-      is_edge_case: Boolean(sDict.is_edge_case ?? false),
-      conversation_strategy: strategy as ConversationStrategy | undefined,
+      name: data.name,
+      goal: data.goal,
+      context: data.context ?? "",
+      criteria: data.criteria ?? [],
+      starting_emotion: data.starting_emotion ?? undefined,
+      is_edge_case: data.is_edge_case ?? false,
+      conversation_strategy: data.conversation_strategy ?? undefined,
+      ground_truth: data.ground_truth ?? undefined,
+      input_format: data.input_format ?? undefined,
     });
   }
   if (scenarios.length === 0) {
@@ -284,11 +208,28 @@ function parseScenarios(
  */
 export class ScenarioGenerator {
   private model: string;
+  private readonly llmConfig: LLMCallConfig;
+  private usage: Usage | null = null;
+
+  getUsage(): Usage | null {
+    return this.usage ? { ...this.usage } : null;
+  }
+  resetUsage(): void {
+    this.usage = null;
+  }
+  private accumulate(usage: Usage | null): void {
+    if (usage) this.usage = this.usage ? addUsage(this.usage, usage) : usage;
+  }
   private client: OpenAI;
 
   constructor(config?: ScenarioGeneratorConfig) {
-    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    this.client = config?.client ?? createRouterClient(config?.apiKey);
+    this.llmConfig = simRoleConfig(
+      resolveSimLlmConfig(config ?? {}, "ScenarioGenerator"),
+      "sim.generator",
+    );
+    this.model = this.llmConfig.model;
+    this.client =
+      (this.llmConfig.client as OpenAI) ?? createRouterClient(config?.apiKey);
   }
 
   private async requestScenarios(params: {
@@ -300,6 +241,8 @@ export class ScenarioGenerator {
     forceEdgeCase?: boolean;
   }): Promise<Scenario[]> {
     const items = await requestJsonList({
+      llmConfig: this.llmConfig,
+      onUsage: (usage) => this.accumulate(usage),
       client: this.client,
       model: this.model,
       system: params.system,
@@ -480,7 +423,7 @@ Return ONLY a JSON array, no other text.`;
             ...s,
             starting_emotion: emotion,
           };
-          console.debug(
+          console.error(
             `Adjusted scenario '${s.name}' to emotion '${emotion}' for coverage`,
           );
         }
@@ -512,7 +455,7 @@ Return ONLY a JSON array, no other text.`;
         ...s,
         criteria: newCriteria,
       };
-      console.debug("Added must_not_happen criterion for coverage");
+      console.error("Added must_not_happen criterion for coverage");
     }
 
     return scenarios;

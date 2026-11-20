@@ -5,26 +5,81 @@
  * either standalone or within the evaluatorq framework.
  */
 
+import { randomUUID } from "node:crypto";
+import { dirname, resolve } from "node:path";
+
 import type OpenAI from "openai";
 
+import { resolveLlmClient } from "../../../common/llm-client.js";
+import { llmConcurrencyLimit } from "../../../common/llm-limit.js";
+import { resolveDatapointParallelism } from "../../../common/parallelism.js";
+import { resolveRecommendations } from "../../../common/recommendations.js";
+import {
+  type ManifestWriter,
+  startManifest,
+} from "../../../common/run-manifest.js";
+import { sumStructuredUsage } from "../../../common/structured-output.js";
+import { extractStatusCode } from "../../../common/target-call.js";
+import {
+  buildThreadId,
+  conversationThread,
+  evaluatorqPipeline,
+  evaluatorqRunId,
+} from "../../../common/thread-context.js";
+import type { AgentTarget, LLMCallConfig, Usage } from "../../../contracts.js";
 import { evaluatorq } from "../../../evaluatorq.js";
 import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
 import type { DataPoint, Evaluator, Job, Output } from "../../../types.js";
-import { fromOrqAgent } from "../adapters.js";
+import { OrqResponsesTarget } from "../../openresponses/target.js";
+import { resolveSimulationTarget } from "../adapters.js";
+import { fetchAgentInfo } from "../agent-snapshot.js";
+import { resolveSimLlmConfig, simRoleConfig } from "../config.js";
 import { toOpenResponses } from "../convert.js";
-import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import { datapointsFromDataset } from "../datasets.js";
 import {
+  conversationQualityDetails,
   failureReason,
   getEvaluator,
+  type SimulationScoringConfig,
   unverifiedReason,
 } from "../evaluators/index.js";
+import {
+  SimulationCancelledError,
+  SimulationDroppedError,
+} from "../exceptions.js";
+import { datapointsFromExperiment } from "../experiments.js";
 import { FirstMessageGenerator } from "../generators/first-message-generator.js";
 import { PersonaGenerator } from "../generators/persona-generator.js";
 import { ScenarioGenerator } from "../generators/scenario-generator.js";
 import {
+  CompositeSimulationHooks,
+  DefaultHooks,
+  ManifestStageHooks,
+  SimStage,
+  type SimulationHooks,
+  type SimulationRunMeta,
+} from "../hooks.js";
+import { populateSimulationExecutiveSummary } from "../reports/executive-summary.js";
+import {
+  findSimulationTriggers,
+  generateSimulationRecommendations,
+  SimulationRecommendationConfig,
+} from "../reports/recommendations.js";
+import {
+  autoSaveSimulationRun,
+  buildSimulationRun,
+  getSimulationRunsDir,
+  loadSimulationReplay,
+  type SimulationRunInput,
+} from "../run-store.js";
+import {
   runSimulationInput,
   type SimulationInput,
 } from "../runner/run-input.js";
+import type {
+  SimulationRunnerConfig,
+  TargetAgent,
+} from "../runner/simulation.js";
 import { SimulationRunner } from "../runner/simulation.js";
 import {
   recordTokenUsage,
@@ -38,23 +93,61 @@ import type {
   SimulationResult,
   TargetCallback,
 } from "../types.js";
+import { usageDetails } from "../usage.js";
+import { generateDatapoint } from "../utils/prompt-builders.js";
 
 // ---------------------------------------------------------------------------
 // simulate
 // ---------------------------------------------------------------------------
 
 export interface SimulateParams {
-  evaluationName: string;
+  evaluatorNames?: string[];
+  experimentDescription?: string;
+  evaluationDescription?: string;
+  orqFolderPath?: string;
+  orqResultsPath?: string;
+  exitOnFailure?: boolean;
+  perSimulationTimeoutMs?: number;
+  evaluationName?: string;
+  runName?: string;
   agentKey?: string;
+  target?: string | TargetCallback | AgentTarget | TargetAgent;
+  targetAgent?: AgentTarget | TargetAgent;
+  llmConfig?: LLMCallConfig;
+  scoring?: SimulationScoringConfig;
+  generationClient?: OpenAI;
+  datapointParallelism?: number;
+  llmParallelism?: number;
+  targetAgentTimeoutMs?: number;
+  maxTargetRetries?: number;
+  targetReasoningEffort?: string;
+  memoryEntityId?: string;
+  maxToolResultChars?: number;
+  userSimulator?: SimulationRunnerConfig["userSimulator"];
+  judge?: SimulationRunnerConfig["judge"];
+  hooks?: SimulationHooks | SimulationHooks[];
+  raiseOnExecutionFailure?: boolean;
   targetCallback?: TargetCallback;
   personas?: Persona[];
   scenarios?: Scenario[];
   datapoints?: Datapoint[];
+  datasetId?: string;
+  experimentId?: string;
+  experimentRunId?: string;
+  previousRun?: string;
+  save?: boolean;
+  reportPath?: string;
+  report?: string;
+  executiveSummary?: boolean;
+  recommendations?:
+    | boolean
+    | import("../reports/recommendations.js").SimulationRecommendationConfig
+    | import("../reports/recommendations.js").SimulationRecommendationConfigInput;
   maxTurns?: number;
   model?: string;
   evaluators?: string[];
   parallelism?: number;
-  /** Limit per conversation in milliseconds. Defaults to 300_000. */
+  /** Limit per conversation in milliseconds. Unset leaves the run unbounded. */
   timeoutPerSimulation?: number;
   /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
   uploadResults?: boolean;
@@ -86,14 +179,21 @@ export async function simulate(
   await initTracingIfNeeded();
 
   try {
-    return await withSimulationSpan(
-      "orq.simulation.pipeline",
-      {
-        "orq.simulation.evaluation_name": params.evaluationName,
-        "orq.simulation.max_turns": params.maxTurns ?? 10,
-        "orq.simulation.parallelism": params.parallelism ?? 5,
-      },
-      (pipelineSpan) => _simulateCore(params, pipelineSpan),
+    return await llmConcurrencyLimit(params.llmParallelism, () =>
+      evaluatorqPipeline("simulation", () =>
+        withSimulationSpan(
+          "orq.simulation.pipeline",
+          {
+            "orq.simulation.evaluation_name": params.evaluationName,
+            "orq.simulation.max_turns": params.maxTurns ?? 10,
+            "orq.simulation.parallelism": params.parallelism ?? 5,
+          },
+          (pipelineSpan) =>
+            withSimulationSession(params, "simulate", (session) =>
+              _simulateCore(params, pipelineSpan, undefined, session),
+            ),
+        ),
+      ),
     );
   } finally {
     // Flush pending spans to ensure they're exported before the process exits
@@ -108,44 +208,173 @@ export async function simulate(
 async function _simulateCore(
   params: SimulateParams,
   pipelineSpan: import("@opentelemetry/api").Span | undefined,
+  generationUsage?: Usage | null,
+  session?: SimulationSession,
 ): Promise<SimulationResult[]> {
   const {
-    evaluationName,
+    evaluationName: suppliedName,
     targetCallback,
     agentKey,
     datapoints,
     personas,
     scenarios,
-    maxTurns = 10,
-    model = DEFAULT_SIMULATION_MODEL,
-    evaluators: evaluatorNames,
-    parallelism = 5,
+    maxTurns: suppliedMaxTurns,
+    model: suppliedModel,
+    evaluators: legacyEvaluators,
+    parallelism: legacyParallelism,
     uploadResults = true,
-    timeoutPerSimulation,
-    description,
-    path,
+    timeoutPerSimulation: legacyTimeout,
+    description: legacyDescription,
+    path: legacyPath,
     client,
   } = params;
 
-  // Validate evaluator names early — throw on unknown names
+  const description = resolveAlias(
+    "description/evaluationDescription",
+    resolveAlias(
+      "description",
+      legacyDescription,
+      "evaluationDescription",
+      params.evaluationDescription,
+    ),
+    "experimentDescription",
+    params.experimentDescription,
+  );
+  const path = resolveAlias(
+    "path/orqResultsPath",
+    resolveAlias("path", legacyPath, "orqResultsPath", params.orqResultsPath),
+    "orqFolderPath",
+    params.orqFolderPath,
+  );
+  const timeoutPerSimulation =
+    resolveAlias(
+      "timeoutPerSimulation",
+      legacyTimeout,
+      "perSimulationTimeoutMs",
+      params.perSimulationTimeoutMs,
+    ) ?? 0;
+  const raiseOnExecutionFailure =
+    resolveAlias(
+      "exitOnFailure",
+      params.exitOnFailure,
+      "raiseOnExecutionFailure",
+      params.raiseOnExecutionFailure,
+    ) ?? true;
+  if (
+    params.evaluatorNames !== undefined &&
+    legacyEvaluators !== undefined &&
+    JSON.stringify(params.evaluatorNames) !== JSON.stringify(legacyEvaluators)
+  )
+    throw new Error(
+      "evaluators and evaluatorNames must match when both are supplied",
+    );
+  const evaluatorNames = params.evaluatorNames ?? legacyEvaluators;
+  if (
+    params.runName !== undefined &&
+    suppliedName &&
+    suppliedName !== params.runName
+  )
+    throw new Error(
+      "runName and evaluationName must match when both are supplied",
+    );
+  const evaluationName = (params.runName ?? suppliedName) || "sim";
+  const llmConfig = resolveSimLlmConfig(
+    { llmConfig: params.llmConfig, model: suppliedModel, client },
+    "simulate",
+  );
+  const model = simRoleConfig(llmConfig, "sim.user").model;
+  const parallelism = resolveDatapointParallelism(
+    params.datapointParallelism,
+    legacyParallelism,
+    { caller: "simulate" },
+  );
+  if (!Number.isInteger(parallelism) || parallelism < 1)
+    throw new RangeError("datapointParallelism must be >= 1");
+  if (
+    (legacyTimeout !== undefined ||
+      params.perSimulationTimeoutMs !== undefined) &&
+    (!Number.isFinite(timeoutPerSimulation) || timeoutPerSimulation <= 0)
+  )
+    throw new RangeError("timeoutPerSimulation must be > 0");
+  const sources = [
+    params.previousRun !== undefined,
+    params.datasetId !== undefined,
+    params.experimentId !== undefined,
+    datapoints !== undefined,
+    personas !== undefined || scenarios !== undefined,
+  ];
+  if (sources.filter(Boolean).length > 1)
+    throw new Error(
+      "Pass exactly one of previousRun, datasetId, experimentId, datapoints or personas+scenarios",
+    );
+  if (params.experimentRunId !== undefined && params.experimentId === undefined)
+    throw new Error("experimentRunId requires experimentId");
+  const replay =
+    params.previousRun === undefined
+      ? null
+      : await loadSimulationReplay(params.previousRun);
+  const maxTurns = suppliedMaxTurns ?? replay?.maxTurns ?? 10;
+  setSpanAttrs(pipelineSpan, { "orq.simulation.max_turns": maxTurns });
+  const selected =
+    params.target ?? params.targetAgent ?? targetCallback ?? agentKey;
+  const { targetCallback: resolvedCallback, targetAgent: resolvedTarget } =
+    resolveSimulationTarget(params);
+  const hooks =
+    session?.hooks ??
+    new CompositeSimulationHooks(
+      params.hooks
+        ? Array.isArray(params.hooks)
+          ? params.hooks
+          : [params.hooks]
+        : [new DefaultHooks()],
+    );
+  let fatalError: unknown;
+  const abort = new AbortController();
+  const runId = session?.runId ?? randomUUID();
+
+  // Validate evaluator names early : throw on unknown names
   const resolvedEvaluatorNames = evaluatorNames ?? [
     "goal_achieved",
     "criteria_met",
   ];
+  if (new Set(resolvedEvaluatorNames).size !== resolvedEvaluatorNames.length)
+    throw new Error("duplicate evaluator names are not allowed");
   const scorers = resolvedEvaluatorNames.map((name) => ({
     name,
-    fn: getEvaluator(name),
+    fn: getEvaluator(name, params.scoring),
   }));
 
+  if (
+    !llmConfig.client &&
+    (!params.userSimulator || !params.judge) &&
+    !process.env.ORQ_API_KEY &&
+    !process.env.OPENAI_API_KEY
+  )
+    throw new Error(
+      "Set ORQ_API_KEY or OPENAI_API_KEY, or pass client/llmConfig.client for simulation",
+    );
   let inputs: SimulationInput[];
   let firstMessages: FirstMessageGenerator | undefined;
 
-  if (datapoints) {
+  if (replay) {
+    inputs = replay.datapoints.map((datapoint) => ({ datapoint }));
+  } else if (
+    params.datasetId !== undefined ||
+    params.experimentId !== undefined
+  ) {
+    const rows =
+      params.datasetId !== undefined
+        ? await datapointsFromDataset(params.datasetId)
+        : await datapointsFromExperiment(params.experimentId as string, {
+            runId: params.experimentRunId,
+          });
+    inputs = rows.map((datapoint) => ({ datapoint }));
+  } else if (datapoints) {
     inputs = datapoints.map((datapoint) => ({ datapoint }));
   } else {
     if (!personas || !scenarios) {
       throw new Error(
-        "Either provide 'datapoints' or both 'personas' and 'scenarios'",
+        "Either provide datasetId, experimentId, datapoints or both personas and scenarios",
       );
     }
     if (personas.length === 0 || scenarios.length === 0) {
@@ -153,7 +382,6 @@ async function _simulateCore(
         "'personas' and 'scenarios' arrays must both be non-empty",
       );
     }
-    firstMessages = new FirstMessageGenerator({ model, client });
     inputs = personas.flatMap((persona) =>
       scenarios.map((scenario) => ({ persona, scenario })),
     );
@@ -161,7 +389,7 @@ async function _simulateCore(
 
   if (inputs.length === 0) {
     throw new Error(
-      "No datapoints to simulate — persona or scenario generation may have failed",
+      "No datapoints to simulate : persona or scenario generation may have failed",
     );
   }
 
@@ -169,43 +397,99 @@ async function _simulateCore(
     "orq.simulation.datapoints_count": inputs.length,
   });
 
-  if (!targetCallback && !agentKey) {
-    throw new Error("Either targetCallback or agentKey is required");
+  if (!resolvedCallback && !resolvedTarget) {
+    throw new Error(
+      "Either target, targetCallback, targetAgent, or agentKey is required",
+    );
   }
-
-  const stampScores = (result: SimulationResult): void => {
-    const scores: Record<string, number> = {};
-    for (const { name, fn } of scorers) {
-      scores[name] = fn(result);
-    }
-    (result.metadata as Record<string, unknown>).evaluator_scores = scores;
-  };
 
   // evaluatorq() hands the same DataPoint object to the job and its evaluators,
   // so the full result can be looked up by row without going through the output.
   const resultsByRow = new Map<DataPoint, SimulationResult>();
+  const casesByRow = new Map<DataPoint, Datapoint>();
   const rows = inputs.map(
     (input): DataPoint => ({ inputs: input as unknown as DataPoint["inputs"] }),
   );
 
   // Before the job exists: evaluatorq() records a throwing job as a row error, so
   // a bad maxTurns, model or agentKey has to surface here to keep its own message.
-  const runner = new SimulationRunner({
-    targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
+  const meta: SimulationRunMeta = {
+    numDatapoints: inputs.length,
     model,
     maxTurns,
+    datapointParallelism: parallelism,
+    evaluationName,
+    evaluatorNames: resolvedEvaluatorNames,
+    target:
+      typeof selected === "string"
+        ? selected
+        : resolvedTarget
+          ? "agent"
+          : "callback",
+  };
+  if (!(await hooks.onConfirm(meta)))
+    throw new SimulationCancelledError("Simulation cancelled before execution");
+  const runner = new SimulationRunner({
+    targetCallback: resolvedCallback,
+    targetAgent: resolvedTarget,
+    llmConfig,
+    maxTurns,
     client,
+    userSimulator: params.userSimulator,
+    judge: params.judge,
+    hooks,
+    targetAgentTimeoutMs: params.targetAgentTimeoutMs,
+    maxTargetRetries: params.maxTargetRetries,
+    maxToolResultChars: params.maxToolResultChars,
+    signal: abort.signal,
+    onFatalError: (error) => {
+      fatalError ??= error;
+      abort.abort(error);
+    },
   });
 
-  const job: Job = async (data) => {
-    const result = await runSimulationInput(
-      data.inputs as unknown as SimulationInput,
-      runner,
-      maxTurns,
-      () => firstMessages as FirstMessageGenerator,
-      timeoutPerSimulation,
-    );
-    stampScores(result);
+  const job: Job = async (data, index) => {
+    if (fatalError) throw fatalError;
+    let result: SimulationResult;
+    try {
+      result = await conversationThread(buildThreadId(runId, index), () =>
+        runSimulationInput(
+          data.inputs as unknown as SimulationInput,
+          runner,
+          maxTurns,
+          () => {
+            firstMessages ??= new FirstMessageGenerator({
+              llmConfig,
+              client: params.generationClient ?? client,
+            });
+            return firstMessages;
+          },
+          timeoutPerSimulation,
+          abort.signal,
+        ),
+      );
+    } catch (error) {
+      if ([401, 403].includes(extractStatusCode(error) ?? 0)) {
+        fatalError ??= error;
+        abort.abort(error);
+      }
+      throw error;
+    }
+    result.thread_id = buildThreadId(runId, index);
+
+    const input = data.inputs as unknown as SimulationInput;
+    const opening = result.messages.find(
+      (message) => message.role === "user",
+    )?.content;
+    if (typeof opening === "string" && opening) {
+      const actual =
+        "datapoint" in input
+          ? { ...input.datapoint, first_message: opening }
+          : generateDatapoint(input.persona, input.scenario, opening);
+      if (typeof result.metadata.datapoint_id === "string")
+        actual.id = result.metadata.datapoint_id;
+      casesByRow.set(data, structuredClone(actual));
+    }
     resultsByRow.set(data, result);
     return {
       name: evaluationName,
@@ -216,7 +500,7 @@ async function _simulateCore(
 
   // These never set `pass`: evaluatorq() exits the process when a pass is false,
   // and a low simulation score must not end the caller's process.
-  const evaluators: Evaluator[] = scorers.map(({ name }) => ({
+  const evaluators: Evaluator[] = scorers.map(({ name, fn }) => ({
     name,
     scorer: async ({ data }) => {
       const result = resultsByRow.get(data);
@@ -224,16 +508,35 @@ async function _simulateCore(
         throw new Error(`simulate: no result to score with ${name}`);
       }
       const explanation = unverifiedReason(result);
-      const scores = result.metadata.evaluator_scores as Record<string, number>;
+      const value = fn(result);
+      const rawOutput =
+        name === "conversation_quality"
+          ? conversationQualityDetails(result, params.scoring).breakdown
+          : name === "criteria_met"
+            ? {
+                criteria:
+                  result.metadata.criteria_meta ?? result.criteria_results,
+                criteriaVerified: result.criteria_verified,
+                unverifiedReason: explanation,
+              }
+            : undefined;
       return {
-        value: scores[name] as number,
+        value,
+        ...(rawOutput ? { rawOutput } : {}),
         ...(explanation && { explanation }),
       };
     },
   }));
 
+  let experimentUrl: string | null = null;
+  await hooks.onRunStart(meta);
+  await hooks.onStageStart(SimStage.Simulate, {});
+  let primaryError: unknown;
+  let cleanupError: unknown;
+  let primaryFailed = false;
+  let cleanupFailed = false;
   try {
-    await evaluatorq(evaluationName, {
+    const eqResults = await evaluatorq(evaluationName, {
       data: rows,
       jobs: [job],
       evaluators,
@@ -242,19 +545,86 @@ async function _simulateCore(
       description,
       path,
       sendResults: uploadResults,
+      onResultsUploaded: (url) => {
+        experimentUrl = url;
+      },
       manageTracing: false,
     });
+    for (const row of eqResults) {
+      const result = resultsByRow.get(row.dataPoint);
+      if (!result) continue;
+      const scores: Record<string, number> = {};
+      const details: Record<string, unknown> = {};
+      for (const score of row.jobResults?.[0]?.evaluatorScores ?? []) {
+        if (typeof score.score.value === "number" && !score.error)
+          scores[score.evaluatorName] = score.score.value;
+        if (score.error) {
+          details[score.evaluatorName] = { error: score.error.message };
+          const errors = Array.isArray(result.metadata.scorer_errors)
+            ? result.metadata.scorer_errors
+            : [];
+          errors.push(`${score.evaluatorName}: ${score.error.message}`);
+          result.metadata.scorer_errors = errors;
+        } else if (score.score.rawOutput)
+          details[score.evaluatorName] = score.score.rawOutput;
+        await hooks.onEvaluatorComplete(
+          String(result.metadata.datapoint_id ?? ""),
+          score.evaluatorName,
+          score,
+        );
+      }
+      result.metadata.evaluator_scores = scores;
+      result.evaluator_details = details;
+    }
+    const completed = rows.flatMap((row) => {
+      const result = resultsByRow.get(row);
+      return result ? [result] : [];
+    });
+    const failed = completed.filter((result) => failureReason(result)).length;
+    if (
+      raiseOnExecutionFailure &&
+      (completed.length !== rows.length || failed > 0)
+    )
+      throw new SimulationDroppedError(
+        `Simulation execution failed: ${rows.length - completed.length} missing row(s), ${failed} failed row(s)`,
+        completed,
+      );
+  } catch (error) {
+    primaryError = error;
+    primaryFailed = true;
   } finally {
-    await runner.close();
+    const results = rows.flatMap((row) => {
+      const result = resultsByRow.get(row);
+      return result ? [result] : [];
+    });
+    for (const cleanup of [
+      () => runner.close(),
+      () => hooks.onRunComplete(results),
+      () => hooks.onStageEnd(SimStage.Simulate, { error: primaryError }),
+    ]) {
+      try {
+        await cleanup();
+      } catch (error) {
+        if (!cleanupFailed) cleanupError = error;
+        cleanupFailed = true;
+        console.warn("Simulation cleanup hook failed", error);
+      }
+    }
   }
 
-  const results = rows.map((row, i) => {
+  if (primaryFailed) throw primaryError;
+  if (cleanupFailed) throw cleanupError;
+
+  const partial = rows.flatMap((row) => {
     const result = resultsByRow.get(row);
-    if (result) {
-      return result;
-    }
-    throw new Error(`simulate: row ${i} produced no result`);
+    return result ? [result] : [];
   });
+
+  const results = partial;
+  generationUsage = sumStructuredUsage([
+    generationUsage,
+    firstMessages?.getUsage(),
+  ]);
 
   // Record aggregate token usage on the pipeline span
   const totalUsage = results.reduce(
@@ -263,7 +633,11 @@ async function _simulateCore(
       completion: acc.completion + (r.token_usage?.completion_tokens ?? 0),
       total: acc.total + (r.token_usage?.total_tokens ?? 0),
     }),
-    { prompt: 0, completion: 0, total: 0 },
+    {
+      prompt: generationUsage?.inputTokens ?? 0,
+      completion: generationUsage?.outputTokens ?? 0,
+      total: generationUsage?.totalTokens ?? 0,
+    },
   );
   recordTokenUsage(pipelineSpan, {
     promptTokens: totalUsage.prompt,
@@ -277,6 +651,148 @@ async function _simulateCore(
       .length,
   });
 
+  {
+    let savedPath: string | null = null;
+    let summary: import("../../../contracts.js").RunSummary = {
+      mode: session?.mode ?? "simulate",
+      totalResults: results.length,
+    };
+    try {
+      const deploymentKey =
+        typeof selected === "function" &&
+        "deploymentKey" in selected &&
+        typeof selected.deploymentKey === "string"
+          ? selected.deploymentKey
+          : null;
+      const stringTarget =
+        typeof selected === "string"
+          ? selected
+          : deploymentKey
+            ? `deployment:${deploymentKey}`
+            : null;
+      const modelTarget =
+        resolvedTarget instanceof OrqResponsesTarget
+          ? resolvedTarget.config.model
+          : null;
+      const kind: SimulationRunInput["targetKind"] = stringTarget?.startsWith(
+        "deployment:",
+      )
+        ? "orq_deployment"
+        : stringTarget !== null || modelTarget?.startsWith("agent/")
+          ? "orq_agent"
+          : modelTarget
+            ? "openai_model"
+            : "callback";
+      const target = stringTarget ?? modelTarget ?? "callback";
+      const recorded = rows.map((row) => casesByRow.get(row));
+      const completeCases = recorded.every(
+        (value): value is Datapoint => value !== undefined,
+      );
+      if (!completeCases)
+        console.warn(
+          "Some simulation cases have no recorded opening; saved results cannot be replayed.",
+        );
+      const run = buildSimulationRun({
+        runName: evaluationName,
+        mode: session?.mode ?? "simulate",
+        targetKind: kind,
+        target,
+        agentInfo:
+          kind === "orq_agent"
+            ? await fetchAgentInfo(target.replace(/^agent[:/]/, ""))
+            : null,
+        targetModel:
+          results
+            .map((result) => result.metadata.target_model)
+            .find((value): value is string => typeof value === "string") ??
+          modelTarget,
+        maxTurns,
+        runId,
+        experimentUrl,
+        evaluatorNames: resolvedEvaluatorNames,
+        results,
+        datapoints: completeCases ? recorded : null,
+        tokenUsageTotal: sumStructuredUsage([
+          generationUsage,
+          ...results.map((result) =>
+            usageDetails(result.token_usage, result.usage),
+          ),
+        ]),
+      });
+      const recommendationConfig = resolveRecommendations(
+        params.recommendations ?? true,
+        () => new SimulationRecommendationConfig(),
+      );
+      if (recommendationConfig !== null) {
+        try {
+          const config = new SimulationRecommendationConfig(
+            recommendationConfig,
+          );
+          if (
+            !params.save &&
+            run.results.some(
+              (result) => findSimulationTriggers(result, config).length,
+            )
+          )
+            console.warn(
+              "recommendations are enabled but the run is not saved; generated suggestions will be discarded",
+            );
+          const resolved = await resolveLlmClient(
+            llmConfig.client as OpenAI | undefined,
+            { maxRetries: 0 },
+          );
+          const recommendations = await generateSimulationRecommendations(
+            run.results,
+            resolved.client,
+            simRoleConfig(llmConfig, "sim.generator").model,
+            {
+              config,
+              llmConfig,
+              onUsage: (usage) => {
+                if (usage)
+                  run.tokenUsageTotal = sumStructuredUsage([
+                    run.tokenUsageTotal,
+                    usage,
+                  ]);
+              },
+            },
+          );
+          run.recommendations = recommendations.length ? recommendations : null;
+        } catch (error) {
+          console.warn(
+            "Failed to generate remediation suggestions; completed results remain available",
+            error,
+          );
+        }
+      }
+      try {
+        await populateSimulationExecutiveSummary(run, {
+          enabled: params.executiveSummary ?? true,
+          model: simRoleConfig(llmConfig, "sim.generator").model,
+          llmConfig,
+        });
+      } catch (error) {
+        console.warn(
+          "Failed to generate executive summary; completed results remain available",
+          error,
+        );
+      }
+      summary = run.manifestSummary();
+      const output = session?.reportPath;
+      if (!params.save) return results;
+      if (output) {
+        await run.save(output);
+        savedPath = output;
+      } else savedPath = await autoSaveSimulationRun(run);
+      console.debug(`Run saved: ${savedPath}`);
+    } catch (error) {
+      console.warn(
+        "Failed to prepare or save simulation run; completed results are still returned",
+        error,
+      );
+    }
+    if (params.save) await session?.writer?.complete(savedPath, summary);
+  }
   return results;
 }
 
@@ -284,27 +800,20 @@ async function _simulateCore(
 // generateAndSimulate
 // ---------------------------------------------------------------------------
 
-export interface GenerateAndSimulateParams {
-  evaluationName: string;
-  agentKey?: string;
+export interface GenerateAndSimulateParams
+  extends Omit<
+    SimulateParams,
+    | "personas"
+    | "scenarios"
+    | "datapoints"
+    | "datasetId"
+    | "experimentId"
+    | "experimentRunId"
+    | "previousRun"
+  > {
   agentDescription: string;
-  targetCallback?: TargetCallback;
   numPersonas?: number;
   numScenarios?: number;
-  maxTurns?: number;
-  model?: string;
-  evaluators?: string[];
-  parallelism?: number;
-  /** Limit per conversation in milliseconds. Defaults to 300_000. */
-  timeoutPerSimulation?: number;
-  /** Upload the run to the Orq platform when ORQ_API_KEY is set. Defaults to true. */
-  uploadResults?: boolean;
-  /** Optional description for the evaluation run. */
-  description?: string;
-  /** Optional path (e.g. "MyProject/MyFolder") to place the run on the Orq platform. */
-  path?: string;
-  /** Pre-configured client for generation, the user simulator and the judge. */
-  client?: OpenAI;
 }
 
 /**
@@ -326,9 +835,9 @@ export async function generateAndSimulate(
     numPersonas = 5,
     numScenarios = 5,
     maxTurns = 10,
-    model = DEFAULT_SIMULATION_MODEL,
+    model,
     evaluators,
-    parallelism = 5,
+    parallelism,
     uploadResults,
     timeoutPerSimulation,
     description,
@@ -336,60 +845,85 @@ export async function generateAndSimulate(
     client,
   } = params;
 
-  if (!targetCallback && !agentKey) {
+  if (!targetCallback && !agentKey && !params.target && !params.targetAgent) {
     throw new Error(
       "Either targetCallback or agentKey is required for generateAndSimulate",
     );
   }
 
   try {
-    return await withSimulationSpan(
-      "orq.simulation.pipeline",
-      {
-        "orq.simulation.evaluation_name": evaluationName,
-        "orq.simulation.mode": "generate_and_simulate",
-        "orq.simulation.num_personas": numPersonas,
-        "orq.simulation.num_scenarios": numScenarios,
-        "orq.simulation.max_turns": maxTurns,
-        "orq.simulation.parallelism": parallelism,
-      },
-      async (pipelineSpan) => {
-        // Generate personas and scenarios in parallel (under the pipeline span)
-        const personaGen = new PersonaGenerator({ model, client });
-        const scenarioGen = new ScenarioGenerator({ model, client });
-
-        const [personas, scenarios] = await Promise.all([
-          personaGen.generate({
-            agentDescription,
-            numPersonas,
-          }),
-          scenarioGen.generate({
-            agentDescription,
-            numScenarios,
-          }),
-        ]);
-
-        // Delegate to core logic (no duplicate pipeline span)
-        return _simulateCore(
+    return await llmConcurrencyLimit(params.llmParallelism, () =>
+      evaluatorqPipeline("simulation", () =>
+        withSimulationSpan(
+          "orq.simulation.pipeline",
           {
-            evaluationName,
-            targetCallback,
-            agentKey,
-            personas,
-            scenarios,
-            maxTurns,
-            model,
-            evaluators,
-            parallelism,
-            uploadResults,
-            timeoutPerSimulation,
-            description,
-            path,
-            client,
+            "orq.simulation.evaluation_name": evaluationName,
+            "orq.simulation.mode": "generate_and_simulate",
+            "orq.simulation.num_personas": numPersonas,
+            "orq.simulation.num_scenarios": numScenarios,
+            "orq.simulation.max_turns": maxTurns,
+            "orq.simulation.parallelism":
+              params.datapointParallelism ?? parallelism ?? 10,
           },
-          pipelineSpan,
-        );
-      },
+          async (pipelineSpan) => {
+            return withSimulationSession(params, "run", async (session) => {
+              await session.hooks.onStageStart(SimStage.Generate, {});
+              // Generate personas and scenarios in parallel (under the pipeline span)
+              const llmConfig = resolveSimLlmConfig(
+                params,
+                "generateAndSimulate",
+              );
+              const personaGen = new PersonaGenerator({
+                llmConfig,
+                client: params.generationClient ?? client,
+              });
+              const scenarioGen = new ScenarioGenerator({
+                llmConfig,
+                client: params.generationClient ?? client,
+              });
+
+              const [personas, scenarios] = await Promise.all([
+                personaGen.generate({
+                  agentDescription,
+                  numPersonas,
+                }),
+                scenarioGen.generate({
+                  agentDescription,
+                  numScenarios,
+                }),
+              ]);
+
+              await session.hooks.onStageEnd(SimStage.Generate, {});
+              // Delegate to core logic (no duplicate pipeline span)
+              return _simulateCore(
+                {
+                  ...params,
+                  evaluationName,
+                  targetCallback,
+                  agentKey,
+                  personas,
+                  scenarios,
+                  maxTurns,
+                  model,
+                  evaluators,
+                  parallelism,
+                  uploadResults,
+                  timeoutPerSimulation,
+                  description,
+                  path,
+                  client,
+                },
+                pipelineSpan,
+                sumStructuredUsage([
+                  personaGen.getUsage(),
+                  scenarioGen.getUsage(),
+                ]),
+                session,
+              );
+            });
+          },
+        ),
+      ),
     );
   } finally {
     await flushTracing();
@@ -402,3 +936,85 @@ export {
   getEvaluator,
   SIMULATION_EVALUATORS,
 } from "../evaluators/index.js";
+
+function resolveAlias<T>(
+  oldName: string,
+  oldValue: T | undefined,
+  newName: string,
+  newValue: T | undefined,
+): T | undefined {
+  if (oldValue !== undefined && newValue !== undefined && oldValue !== newValue)
+    throw new Error(
+      `${oldName} and ${newName} must match when both are supplied`,
+    );
+  return newValue ?? oldValue;
+}
+
+interface SimulationSession {
+  runId: string;
+  mode: "run" | "simulate";
+  hooks: CompositeSimulationHooks;
+  writer: ManifestWriter | null;
+  reportPath?: string;
+}
+async function withSimulationSession(
+  params: SimulateParams,
+  mode: "run" | "simulate",
+  work: (session: SimulationSession) => Promise<SimulationResult[]>,
+): Promise<SimulationResult[]> {
+  const reportPath = resolveAlias(
+    "report",
+    params.report,
+    "reportPath",
+    params.reportPath,
+  );
+  const runName =
+    resolveAlias(
+      "evaluationName",
+      params.evaluationName,
+      "runName",
+      params.runName,
+    ) || "sim";
+  const runId = randomUUID();
+  const writer = params.save
+    ? await startManifest({
+        runId,
+        surface: "sim",
+        runName,
+        runsDir: reportPath
+          ? dirname(resolve(reportPath))
+          : getSimulationRunsDir(),
+        plannedStages:
+          mode === "run"
+            ? [SimStage.Generate, SimStage.Simulate]
+            : [SimStage.Simulate],
+      })
+    : null;
+  const user = params.hooks
+    ? Array.isArray(params.hooks)
+      ? params.hooks
+      : [params.hooks]
+    : [new DefaultHooks()];
+  const hooks = new CompositeSimulationHooks([
+    ...(writer ? [new ManifestStageHooks(writer)] : []),
+    ...user,
+  ]);
+  try {
+    return await evaluatorqRunId(runId, () =>
+      work({
+        runId,
+        mode,
+        hooks,
+        writer,
+        reportPath: reportPath ? resolve(reportPath) : undefined,
+      }),
+    );
+  } catch (error) {
+    if (error instanceof SimulationCancelledError) await writer?.cancel();
+    else
+      await writer?.fail(
+        error instanceof Error ? error.message : String(error),
+      );
+    throw error;
+  }
+}

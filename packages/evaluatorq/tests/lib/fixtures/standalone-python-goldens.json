@@ -1,0 +1,311 @@
+{
+  "source": "a59c3a86",
+  "expanded": [
+    {
+      "input": "plain &amp; &#32;",
+      "expected": "plain &amp; &#32;"
+    },
+    {
+      "input": "<details><summary>one</summary><p>body</p></details>",
+      "expected": "<details open><summary>one</summary><p>body</p></details>"
+    },
+    {
+      "input": "<details class=\"export-evidence\"><summary>attack</summary>evidence</details>",
+      "expected": "<details class=\"export-evidence\"><summary>attack</summary>evidence</details>"
+    },
+    {
+      "input": "<details class=\"export-appendix-detail\">usage</details>",
+      "expected": "<details class=\"export-appendix-detail\">usage</details>"
+    },
+    {
+      "input": "<DETAILS data-x=\"a>b\"><SUMMARY>upper</SUMMARY></DETAILS>",
+      "expected": "<DETAILS data-x=\"a>b\" open><SUMMARY>upper</summary></details>"
+    },
+    {
+      "input": "<details class=\"foo export-evidence bar\">evidence</details>",
+      "expected": "<details class=\"foo export-evidence bar\">evidence</details>"
+    },
+    {
+      "input": "<details class=\"export&#45;evidence\">encoded</details>",
+      "expected": "<details class=\"export&#45;evidence\">encoded</details>"
+    },
+    {
+      "input": "<details class=\"foo&#32;export-evidence\">space</details>",
+      "expected": "<details class=\"foo&#32;export-evidence\">space</details>"
+    },
+    {
+      "input": "<details open>open</details>",
+      "expected": "<details open>open</details>"
+    },
+    {
+      "input": "<details OPEN=\"false\">boolean attr present</details>",
+      "expected": "<details OPEN=\"false\">boolean attr present</details>"
+    },
+    {
+      "input": "<details/><details />",
+      "expected": "<details/><details />"
+    },
+    {
+      "input": "<script>const text=\"<details>\";</script><details>x</details>",
+      "expected": "<script>const text=\"<details>\";</script><details open>x</details>"
+    },
+    {
+      "input": "<style>details:before{content:\"<details>\"}</style><details>x</details>",
+      "expected": "<style>details:before{content:\"<details>\"}</style><details open>x</details>"
+    },
+    {
+      "input": "<!-- <details> --><details>x</details>",
+      "expected": "<!-- <details> --><details open>x</details>"
+    },
+    {
+      "input": "<!DOCTYPE html><?processing x?><details>x</details>",
+      "expected": "<details open>x</details>"
+    },
+    {
+      "input": "<details><details class=\"export-evidence\">nested</details></details>",
+      "expected": "<details open><details class=\"export-evidence\">nested</details></details>"
+    },
+    {
+      "input": "<details class=export-evidence>bare</details>",
+      "expected": "<details class=export-evidence>bare</details>"
+    },
+    {
+      "input": "<details class=\"export-evidence\" class=\"other\">last wins</details>",
+      "expected": "<details class=\"export-evidence\" class=\"other\" open>last wins</details>"
+    },
+    {
+      "input": "<div title=\"<details>\">text</DIV >",
+      "expected": "<div title=\"<details>\">text</div>"
+    },
+    {
+      "input": "&lt;details&gt;<details><img src=\"x\"/></details>",
+      "expected": "&lt;details&gt;<details open><img src=\"x\"/></details>"
+    }
+  ],
+  "sections": [
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "",
+      "expected": "<nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#simtab-overview\">1. Overview</a><a href=\"#simtab-config\">2. Config · Appendix</a><a href=\"#simtab-usage\">3. Usage · Appendix</a><a href=\"#simtab-focus-areas\">4. Focus areas</a><a href=\"#simtab-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"simtab-overview\" aria-labelledby=\"simtab-overview-title\"><h2 class=\"export-section-title\" id=\"simtab-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Outcome shares use all conversations, including execution errors.</p><p>one</p></section><section class=\"export-section\" id=\"simtab-config\" aria-labelledby=\"simtab-config-title\"><h2 class=\"export-section-title\" id=\"simtab-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Configuration describes the saved run and its full configured population.</p><details>x</details></details></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details></section><section class=\"export-section\" id=\"simtab-focus-areas\" aria-labelledby=\"simtab-focus-areas-title\"><h2 class=\"export-section-title\" id=\"simtab-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>focus</p></section><section class=\"export-section\" id=\"simtab-title&lt;&amp;\" aria-labelledby=\"simtab-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p></section>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section>",
+      "expected": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#export-finding-1\">Finding 1</a><a href=\"#export-finding-2\">Finding 2</a><a href=\"#simtab-overview\">1. Overview</a><a href=\"#simtab-config\">2. Config · Appendix</a><a href=\"#simtab-usage\">3. Usage · Appendix</a><a href=\"#simtab-focus-areas\">4. Focus areas</a><a href=\"#simtab-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"simtab-overview\" aria-labelledby=\"simtab-overview-title\"><h2 class=\"export-section-title\" id=\"simtab-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Outcome shares use all conversations, including execution errors.</p><p>one</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-config\" aria-labelledby=\"simtab-config-title\"><h2 class=\"export-section-title\" id=\"simtab-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Configuration describes the saved run and its full configured population.</p><details>x</details></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-focus-areas\" aria-labelledby=\"simtab-focus-areas-title\"><h2 class=\"export-section-title\" id=\"simtab-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>focus</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-title&lt;&amp;\" aria-labelledby=\"simtab-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "",
+      "expected": "<nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#rttab-overview\">1. Overview</a><a href=\"#rttab-config\">2. Config · Appendix</a><a href=\"#rttab-usage\">3. Usage · Appendix</a><a href=\"#rttab-focus-areas\">4. Focus areas</a><a href=\"#rttab-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"rttab-overview\" aria-labelledby=\"rttab-overview-title\"><h2 class=\"export-section-title\" id=\"rttab-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Attack outcomes use the saved run totals; attacks without verdicts remain unknown.</p><p>one</p></section><section class=\"export-section\" id=\"rttab-config\" aria-labelledby=\"rttab-config-title\"><h2 class=\"export-section-title\" id=\"rttab-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Configuration describes the saved run and its tested agents.</p><details>x</details></details></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details></section><section class=\"export-section\" id=\"rttab-focus-areas\" aria-labelledby=\"rttab-focus-areas-title\"><h2 class=\"export-section-title\" id=\"rttab-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read each focus area with its confirmed and evaluated attack counts.</p><p>focus</p></section><section class=\"export-section\" id=\"rttab-title&lt;&amp;\" aria-labelledby=\"rttab-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section>",
+      "expected": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#export-finding-1\">Finding 1</a><a href=\"#export-finding-2\">Finding 2</a><a href=\"#rttab-overview\">1. Overview</a><a href=\"#rttab-config\">2. Config · Appendix</a><a href=\"#rttab-usage\">3. Usage · Appendix</a><a href=\"#rttab-focus-areas\">4. Focus areas</a><a href=\"#rttab-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"rttab-overview\" aria-labelledby=\"rttab-overview-title\"><h2 class=\"export-section-title\" id=\"rttab-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Attack outcomes use the saved run totals; attacks without verdicts remain unknown.</p><p>one</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-config\" aria-labelledby=\"rttab-config-title\"><h2 class=\"export-section-title\" id=\"rttab-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Configuration describes the saved run and its tested agents.</p><details>x</details></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-focus-areas\" aria-labelledby=\"rttab-focus-areas-title\"><h2 class=\"export-section-title\" id=\"rttab-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read each focus area with its confirmed and evaluated attack counts.</p><p>focus</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-title&lt;&amp;\" aria-labelledby=\"rttab-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "other<&",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "",
+      "expected": "<nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#other&lt;&amp;-overview\">1. Overview</a><a href=\"#other&lt;&amp;-config\">2. Config · Appendix</a><a href=\"#other&lt;&amp;-usage\">3. Usage · Appendix</a><a href=\"#other&lt;&amp;-focus-areas\">4. Focus areas</a><a href=\"#other&lt;&amp;-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"other&lt;&amp;-overview\" aria-labelledby=\"other&lt;&amp;-overview-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>one</p></section><section class=\"export-section\" id=\"other&lt;&amp;-config\" aria-labelledby=\"other&lt;&amp;-config-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><details>x</details></details></section><section class=\"export-section\" id=\"other&lt;&amp;-usage\" aria-labelledby=\"other&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details></section><section class=\"export-section\" id=\"other&lt;&amp;-focus-areas\" aria-labelledby=\"other&lt;&amp;-focus-areas-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>focus</p></section><section class=\"export-section\" id=\"other&lt;&amp;-title&lt;&amp;\" aria-labelledby=\"other&lt;&amp;-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p></section>"
+    },
+    {
+      "group": "other<&",
+      "items": [
+        [
+          "Overview",
+          "<p>one</p>"
+        ],
+        [
+          "Config",
+          "<details>x</details>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ],
+        [
+          "Focus areas",
+          "<p>focus</p>",
+          "extra"
+        ],
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "Title<&",
+          "<p>last</p>"
+        ]
+      ],
+      "brief": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section>",
+      "expected": "<section id=\"export-brief\"><div id=\"export-finding-1\"></div><div id=\"export-finding-2\"></div></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#export-finding-1\">Finding 1</a><a href=\"#export-finding-2\">Finding 2</a><a href=\"#other&lt;&amp;-overview\">1. Overview</a><a href=\"#other&lt;&amp;-config\">2. Config · Appendix</a><a href=\"#other&lt;&amp;-usage\">3. Usage · Appendix</a><a href=\"#other&lt;&amp;-focus-areas\">4. Focus areas</a><a href=\"#other&lt;&amp;-title&lt;&amp;\">5. Title&lt;&amp;</a></nav><section class=\"export-section\" id=\"other&lt;&amp;-overview\" aria-labelledby=\"other&lt;&amp;-overview-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-overview-title\">1. Overview</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>one</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"other&lt;&amp;-config\" aria-labelledby=\"other&lt;&amp;-config-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-config-title\">2. Config · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show config details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><details>x</details></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"other&lt;&amp;-usage\" aria-labelledby=\"other&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"other&lt;&amp;-focus-areas\" aria-labelledby=\"other&lt;&amp;-focus-areas-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-focus-areas-title\">4. Focus areas</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>focus</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"other&lt;&amp;-title&lt;&amp;\" aria-labelledby=\"other&lt;&amp;-title&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"other&lt;&amp;-title&lt;&amp;-title\">5. Title&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>last</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    }
+  ],
+  "documents": [
+    {
+      "body": "plain &amp; &#32;",
+      "expectedHash": "5f4296d2de7e6e50d4b636c8d2d6cca92187a6d0cbe490292dcffc79aadc2daf",
+      "expectedCharacters": 1696495
+    },
+    {
+      "body": "<details><summary>one</summary><p>body</p></details>",
+      "expectedHash": "8d10bdae278e042a261beb12b2016651447be7a88ebfaeca30ed9073ab285128",
+      "expectedCharacters": 1696535
+    },
+    {
+      "body": "<details class=\"export-evidence\"><summary>attack</summary>evidence</details>",
+      "expectedHash": "194325e8ab3354ab846516a560d7e23db4e3873aa51b1c72fc22199891aa4b61",
+      "expectedCharacters": 1696554
+    },
+    {
+      "body": "<details class=\"export-appendix-detail\">usage</details>",
+      "expectedHash": "930840109be90410a265f9af1ed497981d9426eaafdd9ece6e1551d0f2433681",
+      "expectedCharacters": 1696533
+    },
+    {
+      "body": "<DETAILS data-x=\"a>b\"><SUMMARY>upper</SUMMARY></DETAILS>",
+      "expectedHash": "c1e03c033c5fa9410281b67f9b3b4c6b6260e7c81797524e57d0022c7444456d",
+      "expectedCharacters": 1696539
+    },
+    {
+      "body": "<details class=\"foo export-evidence bar\">evidence</details>",
+      "expectedHash": "2eb053d7706a18e2607150b7dc282b2fb32a29d6f5ba3cdbf726897ce0eca3d7",
+      "expectedCharacters": 1696537
+    }
+  ]
+}

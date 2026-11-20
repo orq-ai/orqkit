@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { SimulationGenerationError } from "../../../../src/lib/integrations/simulation/generators/structured-call.js";
 import { wrapSimulationAgent } from "../../../../src/lib/integrations/simulation/wrap-agent.js";
 import type { DataPoint } from "../../../../src/lib/types.js";
 import { finishTurn, makeFakeClient } from "./fake-client.js";
@@ -244,7 +245,7 @@ describe("wrapSimulationAgent", () => {
 
   test("8. no targetCallback and no agentKey → throws at construction", () => {
     expect(() => wrapSimulationAgent({})).toThrow(
-      "wrapSimulationAgent requires either targetCallback or agentKey",
+      "Either target, targetCallback, targetAgent, or agentKey is required",
     );
   });
 
@@ -289,7 +290,9 @@ describe("wrapSimulationAgent", () => {
         },
         0,
       ),
-    ).rejects.toThrow("must encode exactly one datapoint, got 2");
+    ).rejects.toThrow(
+      "must encode exactly one persona-scenario pair, got 2 persona(s) x 1 scenario(s)",
+    );
   });
 
   test("12. maxTurns and model reach the run", async () => {
@@ -328,14 +331,14 @@ describe("wrapSimulationAgent", () => {
 
     const result = await job({ inputs: { datapoint: sampleDatapoint } }, 0);
 
-    expect(result.error).toBe("target is down");
+    expect(result.error).toContain("target is down");
     expect((result.output as Record<string, unknown>).object).toBe("response");
   });
 
   test("14. a failed first message fails only that row", async () => {
     const { client, requests } = makeFakeClient({
       firstMessage: () => {
-        throw new Error("generator down");
+        throw new SimulationGenerationError("generator down");
       },
     });
     const job = wrapSimulationAgent({ client, targetCallback: callback });

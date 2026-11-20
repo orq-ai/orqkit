@@ -4,6 +4,7 @@ import chalk from "chalk";
 import { Effect } from "effect";
 import stripAnsi from "strip-ansi";
 
+import { pythonFixed } from "./common/jury.js";
 import type { EvaluationResultCell, EvaluatorqResult } from "./types.js";
 
 function isEvaluationResultCell(value: unknown): value is EvaluationResultCell {
@@ -38,7 +39,7 @@ function countPassStats(results: EvaluatorqResult): {
   for (const result of results) {
     for (const job of result.jobResults ?? []) {
       for (const score of job.evaluatorScores ?? []) {
-        if (score.score.pass !== undefined) {
+        if (score.score.pass !== undefined && score.score.pass !== null) {
           totalWithPass++;
           if (score.score.pass === true) {
             totalPassed++;
@@ -244,7 +245,7 @@ export function calculateEvaluatorAverages(results: EvaluatorqResult): {
   // Store all scores per evaluator per job
   const scoresByEvaluatorAndJob = new Map<
     string,
-    Map<string, (number | boolean | string | Record<string, unknown>)[]>
+    Map<string, (number | boolean | string | Record<string, unknown> | null)[]>
   >();
 
   results.forEach((result) => {
@@ -289,23 +290,27 @@ export function calculateEvaluatorAverages(results: EvaluatorqResult): {
       if (scores.length === 0) {
         evaluatorAverages.set(jobName, { value: "-", color: chalk.gray });
       } else {
-        const firstScore = scores[0];
-
-        if (typeof firstScore === "number") {
-          // Calculate average for numeric scores
-          const numericScores = scores as number[];
-          const sum = numericScores.reduce((acc, score) => acc + score, 0);
-          const avg = sum / numericScores.length;
+        const scored = scores.filter((score) => score !== null);
+        const firstScore = scored[0];
+        const numeric = scored.filter(
+          (score): score is number => typeof score === "number",
+        );
+        if (!scored.length)
           evaluatorAverages.set(jobName, {
-            value: avg.toFixed(2),
-            color: chalk.yellow,
+            value: "[no basis]",
+            color: chalk.gray,
           });
-        } else if (typeof firstScore === "boolean") {
-          // Calculate pass rate for boolean scores
-          const passCount = scores.filter((score) => score === true).length;
-          const passRate = (passCount / scores.length) * 100;
+        else if (isEvaluationResultCell(firstScore))
           evaluatorAverages.set(jobName, {
-            value: `${passRate.toFixed(1)}%`,
+            value: "[structured]",
+            color: chalk.gray,
+          });
+        else if (typeof firstScore === "boolean") {
+          const passRate =
+            (scored.filter((score) => score === true).length / scored.length) *
+            100;
+          evaluatorAverages.set(jobName, {
+            value: `${pythonFixed(passRate, 1)}%`,
             color:
               passRate === 100
                 ? chalk.green
@@ -313,19 +318,21 @@ export function calculateEvaluatorAverages(results: EvaluatorqResult): {
                   ? chalk.yellow
                   : chalk.red,
           });
-        } else if (isEvaluationResultCell(firstScore)) {
-          // For structured data (e.g., BERT score, ROUGE_N), show placeholder
+        } else if (numeric.length) {
+          const average =
+            numeric.reduce((sum, score) => sum + score, 0) / numeric.length;
           evaluatorAverages.set(jobName, {
-            value: "[structured]",
+            value: pythonFixed(average, 2),
+            color: chalk.yellow,
+          });
+        } else
+          evaluatorAverages.set(jobName, {
+            value:
+              firstScore !== null && typeof firstScore === "object"
+                ? "[dict]"
+                : "[string]",
             color: chalk.gray,
           });
-        } else {
-          // For strings, we ignore as per requirements
-          evaluatorAverages.set(jobName, {
-            value: "[string]",
-            color: chalk.gray,
-          });
-        }
       }
     });
 

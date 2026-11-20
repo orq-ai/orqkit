@@ -1,0 +1,2157 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "index": 0,
+      "stats": {
+        "unknown": {
+          "display_name": "unknown",
+          "model": "",
+          "attacks": 1,
+          "evaluated": 1,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        }
+      },
+      "overview": "772adc31b3f75e9ed96dd2a5603a18eaed9e289cafbb9f01c147cd3db32df119",
+      "summary": "f57ddf2eb3eea6519a9cc42c81a06cbc29a0e86552462dee063919587ee01f1c",
+      "kpi": "7e2d67efc0374302fd67d8b9c3e6dcc8f93851fb7fa921c96bca74dad8730a00",
+      "hero": "8ca881dd1686093bbcdeea3b224f36b5c4461d051a41efa26d811517edc8c0ac",
+      "table": "c3f1b2dfe6e0fe4aeb8dbf9d45645a645f3bf06488f9fe2022b76b5d1c95f048",
+      "agentRows": [
+        "4e98b7325a0e1dd52e1d3a71646ccce8276107b7290d7c9c8340a14f65cc5dac"
+      ],
+      "pills": [
+        "ce196c2e97d680cebb30751c022bc5784241e3400d6d14118a1d3b28d9e2053d"
+      ]
+    },
+    {
+      "index": 1,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 5,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.4,
+          "resistance": 0.6
+        }
+      },
+      "overview": "bd7919140b9b52d6c0f856f837830082be511ebe051405e2a9893ad83717e55e",
+      "summary": "222ce42cff1b3619df3fbc3a760c3919d6919eaf6701efde644d5dbe8a9536e1",
+      "kpi": "f3514a44ade3c30d42dbb81cea62daf2ece9b0a99f54837b6a80cfbb25da9d95",
+      "hero": "34c7cb3b200d6c05474c8baa7dc0d027bf6bfff2bab207ea67dfdf9d38a6781a",
+      "table": "f1d21a0a699a045b7a566061acd7f151ad7194ceb974e0853a806d1262ca57ff",
+      "agentRows": [
+        "da363671386dc8ee8412638d62de528df935544c15bb4a8241f4074edee8da71"
+      ],
+      "pills": [
+        "5a8ee0d8dd00f9a3955b4861d737a42ba60a2698570bd8d3652a8ee78c37f6a7"
+      ]
+    },
+    {
+      "index": 2,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 1,
+          "evaluated": 1,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        }
+      },
+      "overview": "db256ac874c3c54fd9d85bad328b7c76778d733437975ffc68cc0202f1edc7f9",
+      "summary": "41f049e7bcb48c83123e1993d2327a226816a62a8c041bcdfec0462c2e683a36",
+      "kpi": "7696606b6eb95c731806811219ed368c09dc5ec001fa9a2c943e783fd2f9f4d0",
+      "hero": "f9b180897521c5d623f69ebbb17be5f13849f8da644f22639e4ebc1c94182fb8",
+      "table": "d13d47b7b92e3ddbe8341416ead27758df193ad9855e3036c15b3353052ac6ff",
+      "agentRows": [
+        "9306459c726eb1d19d547267e6d76168deb5020e866407efadb642106106737b"
+      ],
+      "pills": [
+        "1c10791237bca7c91b6f1467170d8fa632e45e8159386c2f252b59ae7bdc84a8"
+      ]
+    },
+    {
+      "index": 3,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 18,
+          "evaluated": 12,
+          "vulns": 8,
+          "critical": 0,
+          "errors": 5,
+          "asr": 0.6666666666666666,
+          "resistance": 0.33333333333333337
+        }
+      },
+      "overview": "47aa5a744604a7a40b4ac471aa557fca81e25e1b5425afaee46c1a91102f2ef6",
+      "summary": "6b1783387876977e8d8f9ace18a062d085b89531cd1705f149101c62a7a93019",
+      "kpi": "12cd81b48e92612ef42207777f136d16a90c4952a073b9912b34600be5e2ad04",
+      "hero": "5058309f79ef0a902094a48c7232fb29a0bc9ba526da080144ec33d5f8b50e38",
+      "table": "81ca7fbde4b96f95ca0fc043eb155947ded9b1b49012bd80bab37dc15c1f938a",
+      "agentRows": [
+        "a5713f18055ae65ae995948a58c26cc87692e6492291d298e63659117a12a126"
+      ],
+      "pills": [
+        "270de13454443b9f38e0870cfdad98864235b861bc0e78d31eb4a046b11f24cd"
+      ]
+    },
+    {
+      "index": 4,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 9,
+          "evaluated": 3,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "735056568dcf166cf1c30ed0e25364cf1d4cb8ee749a4f2fc326bb93d8068ac1",
+      "summary": "5de031df83a27c3d01361e17f9c260a23cd7a19dceb58f0142daa07dfe64295c",
+      "kpi": "301fc21a15744cda36f81a7b1b098f7acea6d89010182b62460c179fc74c1e55",
+      "hero": "0e57df972759b13d3e3b315189762f5e9c26a2c1555a463590589faa5d652a72",
+      "table": "85fd19127bbf87987a1bd16c4216a748dbdac2a99da06266b6e83f85b41126f2",
+      "agentRows": [
+        "8ad37536ff953893b77d9b1f56551d7e109cb3c4220b62b596b990cb96f8d4b4"
+      ],
+      "pills": [
+        "151dfc1b385f24b3b86c9cd428e7b634d87948625e46198f37e29a7258d993cd"
+      ]
+    },
+    {
+      "index": 5,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 4,
+          "evaluated": 4,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.25,
+          "resistance": 0.75
+        }
+      },
+      "overview": "8e83541dcb65a647f3dfa0d1a5ceabecc7b5fb325db12b336e7d7f0e07eb0b1f",
+      "summary": "6c6c14c1f63b7bf3fcf6e84c629077d4adc04b349670ac5e8a8331220fcf06aa",
+      "kpi": "cddd2813b3352610b090efe43b53a556c2fe7ae14250ebd085f41ac5238ae4aa",
+      "hero": "f9b180897521c5d623f69ebbb17be5f13849f8da644f22639e4ebc1c94182fb8",
+      "table": "31bf9f20950ddc2808d67a0ff5a9e1bb4f9a1e8ac3a4692bb09f903c48577cf1",
+      "agentRows": [
+        "2350515a1e6ff85364194c559de1d30b13149f25d00026653b8b3cbdb88888e4"
+      ],
+      "pills": [
+        "1c10791237bca7c91b6f1467170d8fa632e45e8159386c2f252b59ae7bdc84a8"
+      ]
+    },
+    {
+      "index": 6,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 12,
+          "evaluated": 10,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.6,
+          "resistance": 0.4
+        }
+      },
+      "overview": "add4880aeebb4aad352ebabd1d00a657e7231296e242fbce962ff813f876c48a",
+      "summary": "744aee860eebf483e66e2fe4f9c3876d420056b6977ce1e9720a144c243adb22",
+      "kpi": "c9aa8f6c886a262e14e76c09a5163183c67e4acc560007f1e9a72dc2065d15a0",
+      "hero": "e504c0be8831fd346e45029f3ef58a68fdb6ca6aa5abdc846745be69dc30d4c1",
+      "table": "ebf2e4ceec463d18eaec2940417804c6526998f82cf9008eb6506f989875db05",
+      "agentRows": [
+        "f84f1026896e6ad26f7a283e1f827b267fcf17a2dd2268df826f161ebca3d209"
+      ],
+      "pills": [
+        "e735f4ba8a7aa2cf83c6378ab0662d75aa420d026a8809cf40dcf01feefb101e"
+      ]
+    },
+    {
+      "index": 7,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 15,
+          "evaluated": 8,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.625,
+          "resistance": 0.375
+        }
+      },
+      "overview": "860c9c5c99ad506aa6177f9232f066586b7d9f3f46667c35219bf4430e00c075",
+      "summary": "62959c674665561747242a97bbf9e1fe8ea8c8348d868c07087b3c6771f66f8d",
+      "kpi": "02773554a3156fa3a488f246b12cd4ede7f885223eaaea93bc77af9bee0c5d99",
+      "hero": "f77fa2e5135b0d1ac028f8a1459f40e5e82cd8ee79619e8ad9c60da846f0cd68",
+      "table": "d61e48906231ffe4c0770d8904db37b9c827bfcc144666c07a4d556a79b1ab03",
+      "agentRows": [
+        "982064864b51ebb6a50747a5fa686e55878cdad92f4763cd80052388feb2d6c0"
+      ],
+      "pills": [
+        "9d0d6956f7361f3b9721aabdc26f82407831c66da2de7f21fceac7450ad3d850"
+      ]
+    },
+    {
+      "index": 8,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 2,
+          "evaluated": 2,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.5,
+          "resistance": 0.5
+        }
+      },
+      "overview": "9105ae3b5a174a5e0fbeb6636d0fd5f5fa8058ef28706c598761186e514ad2e8",
+      "summary": "948f0dbd2b120ba98d6bfdcaa57a8e0517820b8efe238eab05ab6421f337db9e",
+      "kpi": "8fb6e630efc5444410929efb1c763de79e563cf409b0f276d3b5c2596abc4036",
+      "hero": "f9b180897521c5d623f69ebbb17be5f13849f8da644f22639e4ebc1c94182fb8",
+      "table": "d6e361fdfe5462f62c34dc69e5d528f3c64300bbe6dc3b2e4bba263d850e1f4d",
+      "agentRows": [
+        "a257b0d78ac09b1dfd16142d5e8e298a4e79adf0b93bc660b75c4387295ae729"
+      ],
+      "pills": [
+        "1c10791237bca7c91b6f1467170d8fa632e45e8159386c2f252b59ae7bdc84a8"
+      ]
+    },
+    {
+      "index": 9,
+      "stats": {},
+      "overview": "0f11f2d484cc2feb77f292512fdebfeca106e34bffbf80b6a17dc3b040434148",
+      "summary": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kpi": "8e975a3858f753a469135e2148d011462478d3ba1ab40dd685f59aeaba48ca56",
+      "hero": "275495ff5e3d18cf0e261f17d0d808b84cf8c94c25298cc456ff330bf4cf1b89",
+      "table": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "agentRows": [],
+      "pills": []
+    },
+    {
+      "index": 10,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 16,
+          "evaluated": 14,
+          "vulns": 10,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.7142857142857143,
+          "resistance": 0.2857142857142857
+        }
+      },
+      "overview": "d3ba8255a70b09902d90594381cee6a551db54f9e5264f089d908c6a2d15bc38",
+      "summary": "c1a1285f09a88bebc0f52f3f949d95ab80b0ad3827fbd41204d05d8ef4ae89ee",
+      "kpi": "528205dd3d252bef89941fa5294635e17339e91567808740d8d2e0ca8fe0462e",
+      "hero": "5c7431673ed78bc34947efe1ec7d24f09c3aa2ff3a29b498008a5a808f03170e",
+      "table": "8e9f0ca0126e15fb9f5c14f89fc4d71b22e7b87783b5d2d084b05a31fa1f7e93",
+      "agentRows": [
+        "b52b72ee2debde4f8664eaccaf6905b3b71ea1593632774471feda2a864bbcbb"
+      ],
+      "pills": [
+        "1c0608ebe1813e46830ed8fdadb9b9dfb5ccff53434322a8a6c677dde6c49475"
+      ]
+    },
+    {
+      "index": 11,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 4,
+          "evaluated": 3,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.6666666666666666,
+          "resistance": 0.33333333333333337
+        }
+      },
+      "overview": "5fca640739f2bdef80ad69b92be539f9653135174d25ebc4670d6190b292db6c",
+      "summary": "992e038aa786463c77e8d4886cc9c38abaf2c087d1991e0ce2dbd9390e1d463b",
+      "kpi": "f882ac56bd05eab80d460430e6cd3af041a012e34f5d6093ff2028e6b85dc2e8",
+      "hero": "17477f7fa18c4c99f37f799c3206c3af34a9b8aadb09e7efff9415797aa32b28",
+      "table": "5c0e88f40cd1a94817c00d786881c21e2cd581248d0dd98341ce101ed0411656",
+      "agentRows": [
+        "fba14015c1e2650ac800bbec980f355c829928edb9d9109545a12dc3ce6ef51f"
+      ],
+      "pills": [
+        "1f59c307109ebf8e4e6e7c0b0236072c06aa345a3756c42836c654b9a3467d77"
+      ]
+    },
+    {
+      "index": 12,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 8,
+          "evaluated": 8,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.625,
+          "resistance": 0.375
+        }
+      },
+      "overview": "a884beb988cf00a38a17c82b67e5802e1555ccbcae861f275f598d5fd8413d05",
+      "summary": "7e639d3fb523fe5aa5ffd6d619dc3cc8ebdaf6afae3b5a4e6b1c5514180bc319",
+      "kpi": "8bac970a46e722a1c984068355a1b8aa52c8239d0ce5e29763ebd3483ae01418",
+      "hero": "4844be9cec9b41334eba79422f450d92941cfdfe962ff10b5640b93f5711736b",
+      "table": "48d1d6710bec4031e215b5014139eb273eb7d36f3e76590fbc5c8c9f5c471b55",
+      "agentRows": [
+        "ea61b15a326207010278ddfb5e925f4dc6063f03aeb57d8a4fd8b915c264e2b8"
+      ],
+      "pills": [
+        "141895d962ab8d0af1afe994fa8629fcf87784f5f8622b7ed01b89954030c11a"
+      ]
+    },
+    {
+      "index": 13,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 6,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "934c2f211c6923a204690d30ef0aa76ceb5214c734771258c21babe5507c988c",
+      "summary": "ec1b611b1a7e36b8ac9a99f39489392a29b874ff8dc38f5fa019a3f466a169d5",
+      "kpi": "dba427f439cea7bd9615c2d00ef7e902cb65e2adad944554f90a4dea5e8420b5",
+      "hero": "7c23787903748927a4a0f279ce72efd30758d1607ab89fa565bf16bc66d02915",
+      "table": "0f9d4ae53505e1c84568381dbebe0f395c71e02c12318dba7b872c95965378ff",
+      "agentRows": [
+        "d1982c2d8b8814ebfe14331bd10b9dbe882dbf531f6a1295b319e25ac0cfe3d7"
+      ],
+      "pills": [
+        "2ee1b944d80b2cab96b7bf351969391ad100cb18b58e99f42a2fdb6b7f64430c"
+      ]
+    },
+    {
+      "index": 14,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 9,
+          "evaluated": 5,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.8,
+          "resistance": 0.19999999999999996
+        }
+      },
+      "overview": "c677b4d4b6838d5bc612bfb0118dfe65b0e9d2813b1aa8f62b3c8671b63d7803",
+      "summary": "6ef0d38c41d4618e1840bd3ee14fa5d16d0d26951f7bf75f93c80b40c22c736d",
+      "kpi": "a5c19a1f84aa0f3d557d7ac97a2dd33ceb5cc637e68c255988dfb13f8ed69ab1",
+      "hero": "f83b71bb69640325aa95a58d8ee84802615ba1652c2ef917de85ceffa885e60b",
+      "table": "7922355a06d96aa9a3f49d73b2de458487e8631febda00a22c8f4e2da76c2135",
+      "agentRows": [
+        "8e50f89c48e5af6156ac0632fce13c7c553414b8a427574da5bcd1d7718e71f0"
+      ],
+      "pills": [
+        "a126b155e8be7bda419db02e1e66fdb3e1e7e410e147650f4b7d3da1ab242ed4"
+      ]
+    },
+    {
+      "index": 15,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 15,
+          "evaluated": 8,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.5,
+          "resistance": 0.5
+        }
+      },
+      "overview": "c151bf704929c98a3ccf8c34cb34588a58d7ed63ccb230ec755ec4a4c7bd510b",
+      "summary": "798dd83da4b51fb107aa7862aa583e499ea1463e880120810708e34c91b62648",
+      "kpi": "e610eb34d1c7deb4fecfd7967afe67473bdc590c64ab32dcc50f57a680f149b7",
+      "hero": "cb4c8647ffc9be207f01aada28e6f9183dcc9925b520c56ba06132f2d578e161",
+      "table": "7666d10b40bd018410e6ed8c85d74164cf80e1137654d62897bdda07610cda50",
+      "agentRows": [
+        "9e8ec40d0eb85249e2a00fc28eaa4405cfc00bf45abb4cfa0f8150370c89e140"
+      ],
+      "pills": [
+        "aa31c47ad472423df6a84c381764fabbddbc2614473771188780462416ebbda6"
+      ]
+    },
+    {
+      "index": 16,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 16,
+          "evaluated": 12,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.4166666666666667,
+          "resistance": 0.5833333333333333
+        }
+      },
+      "overview": "3a8137578d867102748c13eea4fe16ad46e3a25318cfdada210827f3b2c81ffd",
+      "summary": "399204fd6522e7a65651f2ef1b0983a3b0ca25129baf9877036086cd33fbc47b",
+      "kpi": "14d2983d8dd377562a7f29f3fc98fb7c7986f4dc3cb852334ba4ad73340678ff",
+      "hero": "b016c6a5d3a37b6250604b6fe2195f689082c6a28c508c07cb9504df0ca403a0",
+      "table": "019794b0b9865f762c6e890e04f9997e3265213d5aa724cb7b0e21dedbb3ed1f",
+      "agentRows": [
+        "85890f1c2aa1c3a941f1cc533bff8d7e53cfbd449f5a7d5db58bdcc1a906a49d"
+      ],
+      "pills": [
+        "d75f6371bdbcebad04003024b4001668bf666f4435cbdef48f96a92af8d06c0f"
+      ]
+    },
+    {
+      "index": 17,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 2,
+          "evaluated": 1,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "400321aece862c7216dd7bb0d31511e790eff475d472462e0698d7767eba5e4a",
+      "summary": "347527dec79379c2f51fc58adffae4f89b7e700532255e6ca9b7698491487bc2",
+      "kpi": "a2baee60769b528b3e5bd8ec7d0790d338ddead049894e71f6fce19db4565512",
+      "hero": "dd2e85417d28e3ef677998948b62d3bf77c30364521c3b01933ffa799b8fa48d",
+      "table": "5188dab21f6171025590234a4176c38fc1a624425d26b8e2b4b230d355cfe9b1",
+      "agentRows": [
+        "edab07f03e9544692593954a0f8192b6586cc231e7d0155e18ea04922688a5a9"
+      ],
+      "pills": [
+        "965078bc829a3da23609a3342c9226d5a1d93f867d85ae9a017b4c4d6f9d2fa9"
+      ]
+    },
+    {
+      "index": 18,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 7,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.7142857142857143,
+          "resistance": 0.2857142857142857
+        }
+      },
+      "overview": "a32b48294cb6a755e98f541127eaf52226e9887aeeb27cd22a16bbeefaf19606",
+      "summary": "44f9b3194451257423c28fcd4c3ca0d07510706c1d395c7636152197286a59e5",
+      "kpi": "f3cf2a42baad54ed9a01a0be08b24c5e716f4ebe2c97ad7809e18a2d86eba841",
+      "hero": "6b734619e2523e29fcff8826aebf0af145222838cec178bfebca954481e7b0c1",
+      "table": "c20ee61f83b41d5889089c310a68e92ff0d4af2ac284b567bd121195e6738268",
+      "agentRows": [
+        "76e0a9d0dd9a88e4ee8339f77803b5c35b8c2e4944abb8d6a944829a034d909c"
+      ],
+      "pills": [
+        "87d6e289b0e4b9047fae5267aa1862eabcfae7d2f9791221a9b74ab5b3cfecec"
+      ]
+    },
+    {
+      "index": 19,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 15,
+          "evaluated": 11,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.5454545454545454,
+          "resistance": 0.4545454545454546
+        }
+      },
+      "overview": "30c9032f4416157bf7891a6944b96f02737dbefa7730c7da622a054105a84933",
+      "summary": "8a97726d38b761a9d2666d8e9f1bbda4beb4a8d4199456c6022441616714a927",
+      "kpi": "cefa1660d2ceb22362a21eae80167c0492b2e61962673081d84f0a18b511576f",
+      "hero": "019d51ba1537ad9b0fa86168a22896157bb7cfda338cefdb7095284d3b5a3461",
+      "table": "0f501a2fb35c750581e833b636c48d1e56e93ceb42858ae25997445654af6889",
+      "agentRows": [
+        "b60b017e6673e5a74e1bc1dca70aac824c8a4f5e478305d27dfb9147c6ef86bb"
+      ],
+      "pills": [
+        "165cea2b0ee7794e658a939e39e2488482b657d5685f8a0773ae4554b6a98c3c"
+      ]
+    },
+    {
+      "index": 20,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 4,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.25,
+          "resistance": 0.75
+        }
+      },
+      "overview": "3be7447528b52ce03ba7dc027ab264bbef6ae2539e96dbb3d8b027537a7c37d9",
+      "summary": "11f20aae17c584ac6a86ad296d84f383dabf703ceb432dc6bf70d42886123e4c",
+      "kpi": "284d6595b612787b06c16ec305a2cf4eb5d9690f4208ff0cf4f7312e866e5610",
+      "hero": "d6f2048dd6b0d39a855a4563ce44c4ebcccc9fb88d84445cbeea49a310cddd27",
+      "table": "f015c77239093f40e41aba9da4843ebba9089289d24ee8a5e5a76697a45f779e",
+      "agentRows": [
+        "aa4c6aa0b0d92ecc3c4548ff1a86adc14ce75805134cbbac6781d9380b9f6f8e"
+      ],
+      "pills": [
+        "77d5598174fd66032a261493fee09cbe73235039692e6034f0394e93bfd874d9"
+      ]
+    },
+    {
+      "index": 21,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 13,
+          "evaluated": 7,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.5714285714285714,
+          "resistance": 0.4285714285714286
+        }
+      },
+      "overview": "9bcbce68ad3204692ff5c0a8ad7614a7c258b8ee2b6e13d5943fb353e264543c",
+      "summary": "d9a77a7d95bace17f41dbb25c01af1b0ee5b9c90004d6d78e3e216cf1f2dc37f",
+      "kpi": "51592af680f4ca02d57d1ac6ff6420beeacba691535d19da4323146cd97c76d4",
+      "hero": "38b5e65586b36bd0c68668b6a34c540c49ea021c4456071dd04600f0e7e29892",
+      "table": "345f25933eaa8592d4b5fc9524f1cb9838e6255aea30947f665ac39925860941",
+      "agentRows": [
+        "0a791954ee535978646b57daa4c68364ac2e20bbd51c733696d00c5a411e3fbd"
+      ],
+      "pills": [
+        "110dcd1bcbe5d79148fbf9cb7ee3e4606527880fea4be736b7930512fc6dfbc6"
+      ]
+    },
+    {
+      "index": 22,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 12,
+          "evaluated": 7,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.5714285714285714,
+          "resistance": 0.4285714285714286
+        }
+      },
+      "overview": "f52b1f9a0715c5f80223d5be3ae5f117651e4ed5ab35baee405070134e8dafd5",
+      "summary": "1f2c9ed09c04cb5de67842f2b3df417241ec6dc40d71773c9ac8b89fe1420806",
+      "kpi": "02bb466923f55ee75ff5dc86f8a24161fc8a8d0c0a281281b1fd198534c07d4a",
+      "hero": "2a920bddd8914d1341e403097a926c839471fd5dc6ac8c4a526e553d65dc2562",
+      "table": "7ef85c09d0384a9dc2778010d485dac8f36cbcc80b01f554295bac119e640e76",
+      "agentRows": [
+        "398e79d95c65f7fc968b83658cdf7ebedb712d002f5f90afe8db20f0a0aa352f"
+      ],
+      "pills": [
+        "1058a96002d10cfd0554b80d711c33bc22effc1de06808c9582c4669b99bdf47"
+      ]
+    },
+    {
+      "index": 23,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 13,
+          "evaluated": 8,
+          "vulns": 7,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.875,
+          "resistance": 0.125
+        }
+      },
+      "overview": "d6280097abca7a732c8e864319aa74061688496ef672e08db4120d9f4cbf4fbd",
+      "summary": "4a0c2e272c524040f514969cb6d633357497fc3f5c72582a19780e34ded47cc1",
+      "kpi": "879fdfe503a15f758e393b87c2d9bd886cb352e8e3650835aa9cfe937b4894c9",
+      "hero": "dd2b9fbee79f0abbaa674cdf37d11f73fcd32e623aef55ddc7bb98e0802ff13e",
+      "table": "71c153f4f05348fac40a4791c3b0b32612b12f5176eb6a2def1a1bd97942118a",
+      "agentRows": [
+        "91ebb915fd00cf89de62548739347f93e8c6ca6163db7f0a640bde5ef7e9bcb6"
+      ],
+      "pills": [
+        "1e549a165a982fdb01feabbee664317d2855f36693850a8e15a08085f080265e"
+      ]
+    },
+    {
+      "index": 24,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 4,
+          "evaluated": 3,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        }
+      },
+      "overview": "fc7acc7129f00520c6d5aef46cecb45d4bcb697b4f6603d3589790428a4c3560",
+      "summary": "6bb706a7c67e3ba8aaec397b6347a5d9d0f487a9c311084ea4fa6221bcc1c15c",
+      "kpi": "8798428673b463ea83e16630e82571aadd8be96d4e94482f185ecad380c1b2ff",
+      "hero": "9c8f7c6fde8fc1096bb23db514282a0bea43d057e4bd0f6d2bd969c1efdd76fb",
+      "table": "04f72586806f786ba429e4420579b1559bd37a1eda96c515b7d976e3e8513a0c",
+      "agentRows": [
+        "1ebaf04ad457a626f641bae418e3549a76ef60a969c9b966703a5368f212097c"
+      ],
+      "pills": [
+        "999f59360bb0a200a7a1242fe97e2f1e7b921aea1ab7cb6687096977c1b310ef"
+      ]
+    },
+    {
+      "index": 25,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 11,
+          "evaluated": 6,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "d94970d3964abc205b5285992791676f249a38205e96db4bd00071aa3ad4d116",
+      "summary": "9345a441fd4db2081fabded2a9727e4c3f472eb25d5278381824a81c49d39700",
+      "kpi": "a8dbbefcada137db1adadb0d4a7cbcb9824b4f5b6285368e8314b7145af52ef6",
+      "hero": "7e333d97b576b4f02f120d21438faa20ffc4e00de0cd081b9ca194b8f6417558",
+      "table": "f7eec6bcb64b97278bff0653afe25e43f46de23c339170a3d84bcdb7920db5ce",
+      "agentRows": [
+        "b263d7c0a1710a781abbdc2ec06be44769b770f044af812dbe40cb139c74e865"
+      ],
+      "pills": [
+        "806e9d94ab7a372385eb7440f94d02f072fee5021314b317b8241572995d95d5"
+      ]
+    },
+    {
+      "index": 26,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 17,
+          "evaluated": 10,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.3,
+          "resistance": 0.7
+        }
+      },
+      "overview": "10a2ce05460a6194067379ce606e4aa2d5021bef388905a3f399339091749020",
+      "summary": "6aab72a69e71574b58d24a6a0f08239d261b3e807f64e8056c35f7febdcb95b3",
+      "kpi": "336d94c493fcb6be63c175ec1f53b57e83facb669124b249dda14e347bd850a1",
+      "hero": "7ec3e6e1e22251a22a291c854c62a7d8ac0b8029128463fc0bc5c776c471e98c",
+      "table": "459c1e3e55ed6fcf278cf7e02a8b5a8b8bce6a01a9d52c836ac9445959a59114",
+      "agentRows": [
+        "7ada39693de33d8ce98fff1baee3f648d5aa3c075f23b6c222af682ce875233a"
+      ],
+      "pills": [
+        "bcfd4e9102fa62b974ea2f47af9b68d4707a044ef46a63415bed80bca07421b5"
+      ]
+    },
+    {
+      "index": 27,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 17,
+          "evaluated": 12,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.4166666666666667,
+          "resistance": 0.5833333333333333
+        }
+      },
+      "overview": "de0ecbf15228df457b24d72ec75cbed9ce2569d6aeb8a708907448c54f7f2696",
+      "summary": "e192a12e1e4f36074819a019ddf2c5b271db78e54de15da4b8c20f6bee098f16",
+      "kpi": "ceed89f64ebd0adf06fa8ab5b5b4fec788c4a71e0677c08a5546f6e4453f0d8d",
+      "hero": "c54a7d6b2b58f12d93ceba48d5cdf6e0787b5483f57112dd76c36039f7311832",
+      "table": "c012d62107a10c95b9f5f624eb1dbb104045659eadec32d904911e45c456aceb",
+      "agentRows": [
+        "7459f2f22ec2f8dced0702d351e2b2986fbce493e385d5c4067975e503b06c0b"
+      ],
+      "pills": [
+        "5bf9ab354f24736b5d29a2df6e880e9f877a3b9a77ab89919eb13a0614335d8b"
+      ]
+    },
+    {
+      "index": 28,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 4,
+          "evaluated": 3,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.6666666666666666,
+          "resistance": 0.33333333333333337
+        }
+      },
+      "overview": "75583941aacc21fbaf9a4f5f0d5afc4b36ca1c2951ef8dcbb411e3bff5491efc",
+      "summary": "b0f7d41419ad749678bda9c1f9dc2b8aa1ed12bc3b5fdc521679d844220649eb",
+      "kpi": "2a0b8beb892b07ad668ab986aa446857a0c405d92f0eeea69c99da20a63cd5de",
+      "hero": "98153396d63abf5337329dd3dbc2b2716743946d94348dd87a2f2e2b40a6fb2a",
+      "table": "5c0e88f40cd1a94817c00d786881c21e2cd581248d0dd98341ce101ed0411656",
+      "agentRows": [
+        "fba14015c1e2650ac800bbec980f355c829928edb9d9109545a12dc3ce6ef51f"
+      ],
+      "pills": [
+        "1f59c307109ebf8e4e6e7c0b0236072c06aa345a3756c42836c654b9a3467d77"
+      ]
+    },
+    {
+      "index": 29,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 14,
+          "evaluated": 6,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "48b5080c0bf3a97719b6a10f30018628766b5d918afeb5247198f38aea101c8b",
+      "summary": "67f3f67290c850d9db7745fb9a8351b4f412aa7fa3fbef6f102d26b1dbd696be",
+      "kpi": "30a5ad0414bd6aecd3dea64a38423ef7e87ffbd8771040fe033b048dc5b2b6b6",
+      "hero": "827e438a9ceed79aad057de55a0529c180b56112339fb46f4b127803bd89d501",
+      "table": "28f0869da904eadbbff817da0e0d9d3b0a679f25260ad1b529158d905a3ab198",
+      "agentRows": [
+        "3e196bc4a9cc3c6e40fe4a0e260c2f454afa5112dcfd476e06bec6ac135f2862"
+      ],
+      "pills": [
+        "f89467435f219a09b1c7b10b7d52302881bd39d8010684987cad24a770faec06"
+      ]
+    },
+    {
+      "index": 30,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 8,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.5,
+          "resistance": 0.5
+        }
+      },
+      "overview": "3d3fadab027ae6504ffe4176bae7fae5a697bc2278c2e33df2b97355241185db",
+      "summary": "3c36abef49cc316f99f4bebb42059b18c39c702a4422a6b78fe81bb9bcfba0e9",
+      "kpi": "3dd96ed9d3272775f4d61724f9783f900fbc0961462a34fa4cd8720ec465fa4f",
+      "hero": "ab437daa5786f39bbda5130b220d3fcdc3cc4f86d50f872c8d9798101aeeb302",
+      "table": "fc2afc65647bfdfdd1c56d86863a4ca204fb0a0ec178286ede287427790086d4",
+      "agentRows": [
+        "48dd80d41ab38a96486bde4b68e3675182d29bec1da5fb14a454a640e9ff870c"
+      ],
+      "pills": [
+        "34e728a6fcf75cf84def16a0a204abb95efcf258bc5890c4306db7326079a3bf"
+      ]
+    },
+    {
+      "index": 31,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 1,
+          "evaluated": 1,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "c1bbbb8429438a293b8397e4dac959ad2952b26a802f306d4090649d9c1c7eaa",
+      "summary": "c4fa1180981264796606ff35c74b73278fe972ce67767c9cae66bae3bcdf315f",
+      "kpi": "c7b23a1d41a6497a71f28e8423ec22f442c3575ce6afbf96030bcf94f969199b",
+      "hero": "445a8bb46b97ab296da3d5589244f79a9a341e757249db5924bce59158c280c4",
+      "table": "56ec26f5ba0ae5cb568f71648f0a40ff2fa42c2930e3646b6453cc87d11df37d",
+      "agentRows": [
+        "1bdcba2a6c5b4e7b5c17b62c7ade3636c77cf81e17be606511d11218e6f0202f"
+      ],
+      "pills": [
+        "4b70b8134f504224cfb289161bfe8016bf2a57cf3225767b98022a28af6743ed"
+      ]
+    },
+    {
+      "index": 32,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 18,
+          "evaluated": 13,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.3076923076923077,
+          "resistance": 0.6923076923076923
+        }
+      },
+      "overview": "f8c2050d6083087c736c77b8f3c62692768ff2bf3dbff5fce5e81eeee6f38df2",
+      "summary": "203bf2f7de4aafa53bbc015c72328291b495b70b10ff0f3a72907103e811af3c",
+      "kpi": "6afa10d4856bfd786b7f04fa9512d1390994de4d3b450ad379002dc9d5f1de2a",
+      "hero": "39b2a075beadbaa61dd598aa720f452f09ac8eae4a4938dc08cf76ad38cfbf4c",
+      "table": "2d3ab16278329b7938179d0b0e9236637ecc8689d0b6dec77a2ffc481422e24f",
+      "agentRows": [
+        "d7145cf55b69dd20fb3314e53b737cff8fb88dbed34acf50d21b4d39056dd175"
+      ],
+      "pills": [
+        "19043a99d3beeed784349967cea0943f0dcfabb628cfa973a496aeb70c155f73"
+      ]
+    },
+    {
+      "index": 33,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 3,
+          "evaluated": 2,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        }
+      },
+      "overview": "e8fae101e6fbe3b17bb834260708007bee36a5759ac6751acba0205d8686cd14",
+      "summary": "cc4b5fd8b95506807aa44628e50ce03e5fd2152e5fc05483fca5821c30f80b1e",
+      "kpi": "a1f84ec8708c145351d33ff57acfa44bb46e5d4791d9a815e7940bc6642b45a7",
+      "hero": "14fcc211f62a24c21ca56b6e587bd49caa1a6ae42e67befc62bf90ed3ea17564",
+      "table": "4b70abef91cbb200532855db470785a0e7e10f91063b3977798fa114aa647143",
+      "agentRows": [
+        "44be47d947e19cc357afa524054680b9866f043fa1c040566cefad341b0ed265"
+      ],
+      "pills": [
+        "03a05b27c15580a814f1cfc48788dd73d6232adf85f35b870c24d1a5e272f714"
+      ]
+    },
+    {
+      "index": 34,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 2,
+          "evaluated": 2,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "fc9e833da059c08848d9514b44dae7fbb559a18a88b40aaa53fb22de44d81e0c",
+      "summary": "982e5a370b857d3a30fbe081e67d42875e40ae75638ee1692b041dfc7eed183c",
+      "kpi": "654dd3f4b22d0b7dca9efc3a18830576e3ea67c297856c42b25c5103c32762a2",
+      "hero": "445a8bb46b97ab296da3d5589244f79a9a341e757249db5924bce59158c280c4",
+      "table": "8a0d525d803465e35a363247a7b54332359f19cadbfb407da917a24a0780ecbf",
+      "agentRows": [
+        "3e7c76848bbc2350d5231dc51d56e680fea1b70d1ef248f5b7656b50fd2629de"
+      ],
+      "pills": [
+        "4b70b8134f504224cfb289161bfe8016bf2a57cf3225767b98022a28af6743ed"
+      ]
+    },
+    {
+      "index": 35,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 15,
+          "evaluated": 12,
+          "vulns": 7,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.5833333333333334,
+          "resistance": 0.41666666666666663
+        }
+      },
+      "overview": "eea77b9f1748e7f530cc772cf8560b5cb58cebc20213c10332904f6c485f223f",
+      "summary": "228ee14842daab14ad76a52073fd9ba87f50560193b2c7fb8b737a9154837aa3",
+      "kpi": "fffc9a982dd3f9e40edb6772c8dcd565f373414bcfd1b8168a6432c3067da7bc",
+      "hero": "c7459d0b419675cee29d9a4be430d0258db1d51ef76b9ec3977bf1cfa15a529a",
+      "table": "8398189b63916ba34b45913bb5ec0a25ac46f57113d075e8460a42c292bb14b9",
+      "agentRows": [
+        "af20a782d78e44c8c3df290029054f2a4e937e8b606b634e81b2a625081161ce"
+      ],
+      "pills": [
+        "6217c34bb8cf6594e4a4093287fa5c2ec6c38741963f0fd0047318cf776745aa"
+      ]
+    },
+    {
+      "index": 36,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 8,
+          "evaluated": 6,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.6666666666666666,
+          "resistance": 0.33333333333333337
+        }
+      },
+      "overview": "409e57b3cf7e5002756d51742611485a76158232fde3633ef2a843bac75f6e43",
+      "summary": "70a2059ed08d429a4287e3c1b93fc204bab5663ae5d0e17d415b619a6f2f253a",
+      "kpi": "8bac970a46e722a1c984068355a1b8aa52c8239d0ce5e29763ebd3483ae01418",
+      "hero": "9a19e2979946009f70c05ea4cad32bad57f76c2a4f3556c73190c4fe8486b603",
+      "table": "4c1c0eae7727c1a283bd8ffcea2520e5204a28db296dd9ae5897bc5a8001c684",
+      "agentRows": [
+        "6587f9108e9dfd4ffd093c0e8a1b04ebc162b7e5a1f216e633e5228b00b2c39b"
+      ],
+      "pills": [
+        "3747943f28018c6f743718879a86c956a7ff6a410136bd28dbb967a0fe3df91e"
+      ]
+    },
+    {
+      "index": 37,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 1,
+          "evaluated": 1,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "c1bbbb8429438a293b8397e4dac959ad2952b26a802f306d4090649d9c1c7eaa",
+      "summary": "c4fa1180981264796606ff35c74b73278fe972ce67767c9cae66bae3bcdf315f",
+      "kpi": "c7b23a1d41a6497a71f28e8423ec22f442c3575ce6afbf96030bcf94f969199b",
+      "hero": "445a8bb46b97ab296da3d5589244f79a9a341e757249db5924bce59158c280c4",
+      "table": "56ec26f5ba0ae5cb568f71648f0a40ff2fa42c2930e3646b6453cc87d11df37d",
+      "agentRows": [
+        "1bdcba2a6c5b4e7b5c17b62c7ade3636c77cf81e17be606511d11218e6f0202f"
+      ],
+      "pills": [
+        "4b70b8134f504224cfb289161bfe8016bf2a57cf3225767b98022a28af6743ed"
+      ]
+    },
+    {
+      "index": 38,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 7,
+          "evaluated": 7,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.7142857142857143,
+          "resistance": 0.2857142857142857
+        }
+      },
+      "overview": "cc4661fe04c02472b60feead127a14897b1a032e0389bc15912a47dadf48ebf4",
+      "summary": "42207a1ab417de9e03f74aba247538b399d3529013c61c6fda03c07b09c0261a",
+      "kpi": "190f1c6500567c3b6cf4bc60bed89ec87c9a2a4690482eca86dd9d98e7186a1a",
+      "hero": "7dafca18e0dcbef211f72de6add95cf3e7fa33b79ae725b6793154a938cb3ac6",
+      "table": "be3f07c294b4a28c95e190b9edec8712034d2c270ff9b19508ecb276848ad1ee",
+      "agentRows": [
+        "8a923a1f59c3a083477541c2c5560446eaaec777f17809455ea78ee9863f6bb9"
+      ],
+      "pills": [
+        "141895d962ab8d0af1afe994fa8629fcf87784f5f8622b7ed01b89954030c11a"
+      ]
+    },
+    {
+      "index": 39,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 11,
+          "evaluated": 7,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.5714285714285714,
+          "resistance": 0.4285714285714286
+        }
+      },
+      "overview": "0deda0c6ce8de706ea833cd6d6dfc6bfb9b16d5823aec0b4cc426d49d95ea56f",
+      "summary": "7caa7b0b0aec40acce21795971aef49be77a4d3173a2edb179936ceb3ac3cb05",
+      "kpi": "2b524b079424a1b566be27ed0abe52f65a312db9748f51e6d4c068c410a83577",
+      "hero": "501667c4e7faabe632c132b90f74e882ec4586db75e164693d18b641d7940775",
+      "table": "ca105c6274573aa3544af53669740eb200195b37984753308a610c40d4d16318",
+      "agentRows": [
+        "4b9e79611fdcdc0bb53433d80ec16577cb56bbdc06cc1c06c5c2cc7b5b9eb347"
+      ],
+      "pills": [
+        "c674a30d6ba0093bdac1aa135e6987749965a7ee5fb518b673114c6357c4827c"
+      ]
+    },
+    {
+      "index": 40,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 14,
+          "evaluated": 10,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.4,
+          "resistance": 0.6
+        }
+      },
+      "overview": "d535e88abba44b7c46d905a28a998dd9a70926bbc8ec2865d3f35af2a849b3e0",
+      "summary": "073c897003163734556f0b8b03709a73e20e16ccbe78f4ca5ef6fbff5b4c4d2b",
+      "kpi": "0f85ebf94013e7d4f3db6b9c1c7bdd215cdcda090636805610a4a3d717830c8e",
+      "hero": "c1c1d0e1a7ec5c0337b4920ae7d037ab2bb607492a24dc430eac7085962bc97e",
+      "table": "e05d99adaed15cbb43e32108ce7c4b060f31112e57ccb436fbd851f3d723374b",
+      "agentRows": [
+        "a3a83d0b9a7dcce86997353a4dd37d159cbac7e69ee2f7113b2b83db5fc75b45"
+      ],
+      "pills": [
+        "b6a95fe6b6389d3b996aa766313b066fbe5e14d1d5c747342ee5f075d86b8949"
+      ]
+    },
+    {
+      "index": 41,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 4,
+          "evaluated": 4,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.75,
+          "resistance": 0.25
+        }
+      },
+      "overview": "035787280d1e79187b2e46b3d6fea3d333c247ee72bbe715c4d27087391e2057",
+      "summary": "0da079b37c2c6e3359287690db5f0b83aa14448d57008573ff69a6a44f8fe8ef",
+      "kpi": "e569c2bca9fc0d3b324d4c262eea839c7ab56d2f4fed923adb65e88acabea194",
+      "hero": "fe44844229fe02d0c108c8b1010fb5eda72a0bb99d883c7291deb47b66b332bb",
+      "table": "8af67638d058088a51e006c8bec0b065fd162761ad7a388b3ed12fd5f876b6e9",
+      "agentRows": [
+        "2ca7de5987339e4743d8090ba48f81e4c98c3ee15e0488fc5026dd7bcf441857"
+      ],
+      "pills": [
+        "c62a3b962796e7c29e20c6dbf64e0c05e8532281626b876f3e5546ea2f22db31"
+      ]
+    },
+    {
+      "index": 42,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 6,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "7a5b5db1cc746c04e2cbcaf2d0c7fec4f6ed040a5947d81d8e1c774b82a953e1",
+      "summary": "1521eda91345c67e49de2f69633e57e0e7c6a5afb60a31df216bdb1ae1e98a4f",
+      "kpi": "1b289b5626094e3a86db8cc6f07330bd6015b1c104413e4dea2eea64eb59f57b",
+      "hero": "9a05b162474d773fa36b255343fee5de8f8f583d243a0c345693e40ba87ae6e8",
+      "table": "0f9d4ae53505e1c84568381dbebe0f395c71e02c12318dba7b872c95965378ff",
+      "agentRows": [
+        "d1982c2d8b8814ebfe14331bd10b9dbe882dbf531f6a1295b319e25ac0cfe3d7"
+      ],
+      "pills": [
+        "2ee1b944d80b2cab96b7bf351969391ad100cb18b58e99f42a2fdb6b7f64430c"
+      ]
+    },
+    {
+      "index": 43,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 11,
+          "evaluated": 7,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.7142857142857143,
+          "resistance": 0.2857142857142857
+        }
+      },
+      "overview": "c57d43fc291d4be6e9548a0c9cac11743883ee5519308a00cde699a957187433",
+      "summary": "997ad980dde0ce8840d86e78b1d555c6ac021bb5464a0acb7b4925106f9c7143",
+      "kpi": "9bd5920eeb6c811e2cd8109ddf7321f1303b7b0413fb3612118d54075a1212b5",
+      "hero": "409d6b2d862dd3c1d41e2d9fd708ee7ff0fa796e2c8b4b191e5e5832a26fb43b",
+      "table": "686db4c6927166a9720cfe184fac3a7aefadb1e4f8f83ba63cee2b2ca91d120e",
+      "agentRows": [
+        "f135181963d1ea167a62959fbca382f3cc4a9914cfa008cbefc5e8b39c9d6d48"
+      ],
+      "pills": [
+        "0afe9ae055640ec98b802bf7c0c07e0520a031ad7d587d1c54b43c4fc05bae6b"
+      ]
+    },
+    {
+      "index": 44,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 5,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.6,
+          "resistance": 0.4
+        }
+      },
+      "overview": "e8a1a91f4e57b838ed89bc259f04cc726d65f6b3f431e9ce8d9657a30c000f72",
+      "summary": "c5d0bd222f05cc40a6f0cc26d53e229dac177193836f5a350f5d6d32d4fc26b5",
+      "kpi": "dbea131c28d88303b96b2d5165e4f1f47f1e4908d8c2742495d78bca0e9f13d0",
+      "hero": "da9fda0a7b62cb3dceb133dadf56f8c7b9bc5732f15e26f50f1d2ffd10178ac4",
+      "table": "b131a86358929c055a111d0aecf5f4a66a9414bf8aa666e48152e1d20c9e0dff",
+      "agentRows": [
+        "e25ea2a9c20eb38697f87fa27b5b9a80e63693d821066d1f0055cfb76a51ce0f"
+      ],
+      "pills": [
+        "69c5e13987713c7dffdf6adfbdad7809867fd3e0eeb604b545555100b0e2d185"
+      ]
+    },
+    {
+      "index": 45,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 1,
+          "evaluated": 1,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "c1bbbb8429438a293b8397e4dac959ad2952b26a802f306d4090649d9c1c7eaa",
+      "summary": "c4fa1180981264796606ff35c74b73278fe972ce67767c9cae66bae3bcdf315f",
+      "kpi": "c7b23a1d41a6497a71f28e8423ec22f442c3575ce6afbf96030bcf94f969199b",
+      "hero": "445a8bb46b97ab296da3d5589244f79a9a341e757249db5924bce59158c280c4",
+      "table": "56ec26f5ba0ae5cb568f71648f0a40ff2fa42c2930e3646b6453cc87d11df37d",
+      "agentRows": [
+        "1bdcba2a6c5b4e7b5c17b62c7ade3636c77cf81e17be606511d11218e6f0202f"
+      ],
+      "pills": [
+        "4b70b8134f504224cfb289161bfe8016bf2a57cf3225767b98022a28af6743ed"
+      ]
+    },
+    {
+      "index": 46,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 7,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.8571428571428571,
+          "resistance": 0.1428571428571429
+        }
+      },
+      "overview": "711139563f71eb0da2ed382d8c25e2b0027b0c5bb6807da91ad250f99a215d79",
+      "summary": "ef2b204ceea33e772e79790dbe6741a9111820be1754ec24c23946052cf94ea1",
+      "kpi": "ab177e1e006d42a23b0371ba25aff5a487d876ff39a7d9e72fbc329d09ff3f8b",
+      "hero": "489abb149d7bb8bbacc606bea406701e2d277d1df52af28ddb2a9803b98de749",
+      "table": "e654542063927cc08cf18d84f1e6e4c36f0c61ed75b92bfdddf594bee0661d6f",
+      "agentRows": [
+        "645ac2543c3e571638498e78621768ae6d14c6b732deb6a399e9f7e974c778da"
+      ],
+      "pills": [
+        "9ac82bca7b6a63f9744e54f7ce10d8e1d9819c7dda8d02e88a58fae5c1e65c76"
+      ]
+    },
+    {
+      "index": 47,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 4,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.5,
+          "resistance": 0.5
+        }
+      },
+      "overview": "1666d9e7de66f0133ab64cc8a5b420eaf61698d7e2c5bd32179797738ff37727",
+      "summary": "f065bedc73baead862dfc67ca7b503119c3cfe6df58ff15bf2a4b600b0b0dc1f",
+      "kpi": "0e50d8aafb12beffa9af75802bf8cf08d2d39e21425cbf8ad5a5901dbae566fd",
+      "hero": "57663a4ae937ecca6728739afdd0c5d4ea8d762b60b10edea0d4bddf5887973e",
+      "table": "d2a4367ee10e60db18aee3bd49a6b27ce29b1cde063cb23c9f18ed2e89c95c22",
+      "agentRows": [
+        "68a357ff42a13bc9e232e66ca888a496641ef3ccb727425b3794385acd2aeebb"
+      ],
+      "pills": [
+        "fb8e6ccdd9c56a5433c2273abc99b78b0a20944cff6a58ee3bf607ea5847903d"
+      ]
+    },
+    {
+      "index": 48,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 15,
+          "evaluated": 10,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 5,
+          "asr": 0.6,
+          "resistance": 0.4
+        }
+      },
+      "overview": "c613e70ee4457748afa09998a4ec7a835e47429fa71f2a33130a7264de7ec2f6",
+      "summary": "e449c5069f84916c60c62a2ecdb7a13a9fe9d5490dc35104f15597c318a85462",
+      "kpi": "76d2fccc1f7ba316c1439bacd6eddb663f5c2501b8105b2b1802a482ac9316cf",
+      "hero": "bcdb7f3d9947729220633d79bc0b9320e967d59ee8d5aa224a86e56ae1fdc6dc",
+      "table": "8ebdf16625548cb61eba0aabd53725fcba6fddd0499f08820e493c971a15c039",
+      "agentRows": [
+        "0740acc6924a7b4b36be9fa1736c94c94f25461cb6485d5292e23e28fc3c5d0a"
+      ],
+      "pills": [
+        "c63b1f5977b457ce6d26cf25a2e6b5754929a6ce714b07fcc35bd22bff44d60c"
+      ]
+    },
+    {
+      "index": 49,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.3333333333333333,
+          "resistance": 0.6666666666666667
+        }
+      },
+      "overview": "ecd109bb4ea68691068e32864e7e64d1af1c0ecca511e13a315299f84ee82b6a",
+      "summary": "bbf9e43b9f6cae982867e3f14ea09be3a0fa6bc5122d92baadc5859bb5742fc3",
+      "kpi": "65fa89b728be33a95ab3b583044e7ecc64c684ca703f2779aedcee22e3cc0205",
+      "hero": "880ab9880d6f0f8e49fa91e2a496ecd3c1c69bb48b27a4da634a5d4823cfc0eb",
+      "table": "cb0e9dfa85b679bce78e01722c7a19b281c16ccdafee976b17bef9ecfcf1fb53",
+      "agentRows": [
+        "0de6f179c630d78cb62252c451fcb6c69b5d1f22d84502a52b93751a710af74b"
+      ],
+      "pills": [
+        "288a24b04f46f6b38b117437fca2291b6f9f6281c22c2ad98278ac29a6252e17"
+      ]
+    },
+    {
+      "index": 50,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 4,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.75,
+          "resistance": 0.25
+        }
+      },
+      "overview": "7773c283567a0d65f0ba81864bcb1d6a5a51b566fe77cc692bfb8fd224231571",
+      "summary": "ae9d9585d0dbf3970b9b7b6f6734913012be43fc60a131690b71cd3209d8a516",
+      "kpi": "7045ab662cdfd19b9537a4f9507cfbfd19c68946633763942bd5c08f9d0a5876",
+      "hero": "c20ef6b81677100bfee8b90d461a0f5a179f4367dabece72415218a9a24b752d",
+      "table": "a3ee88667fd912427f80684b793ff8145017e1cc75cbf1c1b1703e2c3837ea54",
+      "agentRows": [
+        "68f7308e43cd588c9065d946705e93b12d9eaa4d9253225dd82dd1975d993823"
+      ],
+      "pills": [
+        "08d2892cd76f0ea1042a200effc434f45fd642cf7424c4c79e6863c146f14439"
+      ]
+    },
+    {
+      "index": 51,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 10,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.4,
+          "resistance": 0.6
+        }
+      },
+      "overview": "73737f9697dc397fa89d797acbd5ffdc5d5f9d503b101113400c77eb04d5f5bc",
+      "summary": "22747b9c2634bad4566dac982955f20e25b254fa6596890611d4e75465b9ffe9",
+      "kpi": "6ac0c1ee73751c2f90ad019149d481f984e021b35ebf5dfdec2541aee03b7fb8",
+      "hero": "e805b6b1c54bcb561bac009d51697c2de54dfc2b7d6473336a8b8a2158c0509d",
+      "table": "0b7f7a22de791a2cf112d49f662338d77d980fdbaaa807fe05ea8d5d219bc940",
+      "agentRows": [
+        "ebf8c2904bc9d0efc846420db577a84376c69458b38ee80cbef1a17a5f2a5d4d"
+      ],
+      "pills": [
+        "757ecd12b56a9771df03711c256407090f9f0f052b374097b03e788306320ebb"
+      ]
+    },
+    {
+      "index": 52,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 4,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.75,
+          "resistance": 0.25
+        }
+      },
+      "overview": "3042667ecdbd3e0f44f25f12029ede2c486ceda3cd032465c014362689ac8987",
+      "summary": "ab285aa77b9ea5dbdef89aaf2321d9df512a809e12973e40c40e1f37aa7446c6",
+      "kpi": "4f81a660fb9db2179da8fa8b65c49016a9971777ce5d02a33d48b5c67a0d0091",
+      "hero": "b43c7f6052ce5c3c49588c0f5c6486e2cc2b845c876c51033e1c63c18efbc709",
+      "table": "52930e6a132049df8560344076ee2d2f0d308ab63ca484c9f55da3cd377b7b38",
+      "agentRows": [
+        "0c2ec947ea4bab48f6f781db2e3e9128a22d3277ebe4c6ab77888ae9ea2d445f"
+      ],
+      "pills": [
+        "c685bd12593b96f03427903b2a32537b5a6e902afcef63df0b5d490cd854548f"
+      ]
+    },
+    {
+      "index": 53,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 17,
+          "evaluated": 11,
+          "vulns": 8,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.7272727272727273,
+          "resistance": 0.2727272727272727
+        }
+      },
+      "overview": "2abf1f5e38623bbfcd1384155727e3d6270552981cce68b4da814a7ad8e9590d",
+      "summary": "29efa52e9d3bc88150418abd6d6e7fdb92841d03eae46dabc0a713644b9aeea1",
+      "kpi": "19fb918706ba2c2a587f5a8f7e9d30c038579dcdbf8ebe6590f6a00d5ff45580",
+      "hero": "71ea428431f3611043d7470b89553ec7dd1fe2f2426a779c4132ed1173df47eb",
+      "table": "123d046044b4f4c468408494da46beb4faeede11a60c665a02f0d31568f2f7fe",
+      "agentRows": [
+        "30f17aff0d022b98e6f19e65007867cc85b86d063e8cd51c2aecfb4fb4fca5cf"
+      ],
+      "pills": [
+        "11e465d4c95688c22b1e0fe7c785c7119f7cc12224dfdb7d581551cf38e40e74"
+      ]
+    },
+    {
+      "index": 54,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 17,
+          "evaluated": 11,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.5454545454545454,
+          "resistance": 0.4545454545454546
+        }
+      },
+      "overview": "9e33f94ffe853d4260b6d63f3aad1804f9f8db395e85028d3718ed5a381332e8",
+      "summary": "c00a0864821440e10e32f11d4f5eef0b7d8a8ecbf8888aebf5bde85ea06915ec",
+      "kpi": "336d94c493fcb6be63c175ec1f53b57e83facb669124b249dda14e347bd850a1",
+      "hero": "734b06c0a552ab2972c98cd18edcf6424059162f7e436186ca49e0d87437b831",
+      "table": "44abde6131bb18dadca7930fe9f696190e1bab07eddfed94d9f672a316365865",
+      "agentRows": [
+        "a0b2f95f99f5e557eaa0e02b3cbe3f06ac89bef445fde353281105968023d4ba"
+      ],
+      "pills": [
+        "4fd83274d1e26f81dd1207c3165165b09220b78ccfd0998cfb30c71b4c686a00"
+      ]
+    },
+    {
+      "index": 55,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 16,
+          "evaluated": 10,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.4,
+          "resistance": 0.6
+        }
+      },
+      "overview": "6a42c945a3389a073c64d592fdfd2207f031de4678ad295dcf020eba7a8c73a4",
+      "summary": "3de957ae193c785bbefc4a4904d01c8646fd4e36198fc638a7ed6afab1be69f5",
+      "kpi": "14d2983d8dd377562a7f29f3fc98fb7c7986f4dc3cb852334ba4ad73340678ff",
+      "hero": "40ccd4866b9c32e3006084e30dbcaf72075ebee6fa7e22573d26aa67c29185ce",
+      "table": "fbc6f8443dd9708dd20b014d376b756c14cac6f3b44efc79d1f130f67a8c7fb9",
+      "agentRows": [
+        "796dffc8d27e891b42b3bb62234db0c6bf08bfe8efd265e50d4314f83a0fa8b3"
+      ],
+      "pills": [
+        "e2860c4ea86fb9bf6acadc4251e034863768d3798a64eb46ea51a0d29e6f12be"
+      ]
+    },
+    {
+      "index": 56,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 5,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.8,
+          "resistance": 0.19999999999999996
+        }
+      },
+      "overview": "8342e7c69d0f0642c851cb7ec3b885fced3e4870df311376b3424d46954f3cd3",
+      "summary": "11faf5fcf1f4cb35b42cffb1fc94dc72e7dbc6633020bc19f9f38d7b5b424f38",
+      "kpi": "eb5502c4cca8659b46de0e4e3c0cac694cfa6a945daf3e11d4433a690606037f",
+      "hero": "874fde0acdf743f2abc4b958e9a833124b61eefb14e22225f9e51bbae563439f",
+      "table": "d84553cc537c293cbd45bf0a1cc85e2fbe3007a85f80995153f1daf734c976d3",
+      "agentRows": [
+        "1faebf58675eb44dcd5d9d55b668b8ab466ad69f96868665358d8db5a316b0bd"
+      ],
+      "pills": [
+        "9fb321bac2479094a1a1ae161cf4076d421473bd8538a047528ec212cc9c176b"
+      ]
+    },
+    {
+      "index": 57,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 17,
+          "evaluated": 12,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 8,
+          "asr": 0.5,
+          "resistance": 0.5
+        }
+      },
+      "overview": "7ed81c12ba926a3a35844442be840e9a4f47bd9fb11adfbd521591d31b7b431a",
+      "summary": "2b1ebbb1ef664cb679edcacaeeef07b9e81d368a3aa77696984e0729003b6337",
+      "kpi": "aceae2382801d862d51e01ff77867d5f70104ed07c2098e4b1a62cdef8ea689d",
+      "hero": "fecf8079580c41f3850e1ac57fe4889ba0334ffb99b8bf3bce99ff021cfe3910",
+      "table": "f7346bdeb4e1db0d169d26315633cef3dc7468417b189dd46cafa5be2d15fed1",
+      "agentRows": [
+        "e38879dca01ced4f7a651998d8000c7a1a8f162b1f527b71991238c6d6686724"
+      ],
+      "pills": [
+        "e293756af5366b66d736c197cee404ce15639c26fdb2e1732d8f95d2f28d1a55"
+      ]
+    },
+    {
+      "index": 58,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 12,
+          "evaluated": 9,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.4444444444444444,
+          "resistance": 0.5555555555555556
+        }
+      },
+      "overview": "2c96725eda8237a947188549a1871aef0640e399a33ecc2e94f79a8a34956adf",
+      "summary": "7e73700a6420c51068933e220370f5138fb459c42ac68bceb8595b299b605a68",
+      "kpi": "6fd285a7413e091cce235e70812a095f697e7b73353049e2f7969e425cad2e0c",
+      "hero": "bd85fb5bcf7dedef6068e6170a77485d887b9d7febb4253963da1c889aa20470",
+      "table": "6920c2d082b1c04af9eb4adb98e9e94ccf55795f6932fac2c2eb4665d87f69d6",
+      "agentRows": [
+        "bdfde0de734f865dd919620c4503949b4d9f09f9a506cbaa574370b595597dc2"
+      ],
+      "pills": [
+        "9c148c5bf07776ab1febeee8039ae168a8341ce105a658b81d5881a64539cdf4"
+      ]
+    },
+    {
+      "index": 59,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 3,
+          "evaluated": 2,
+          "vulns": 2,
+          "critical": 0,
+          "errors": 1,
+          "asr": 1.0,
+          "resistance": 0.0
+        }
+      },
+      "overview": "9e2b3265bf9ae7bbf77f4ea2d92546b7eee48d8ee9f0486f057e050af20b0060",
+      "summary": "883c798081cac3468bc638bc42cc64327410fb5e084df774099546272a368ca9",
+      "kpi": "a508522f9a7575de1a17740efce268a528dca271c369bfbd16c5c65740d5adb2",
+      "hero": "14fcc211f62a24c21ca56b6e587bd49caa1a6ae42e67befc62bf90ed3ea17564",
+      "table": "4b70abef91cbb200532855db470785a0e7e10f91063b3977798fa114aa647143",
+      "agentRows": [
+        "44be47d947e19cc357afa524054680b9866f043fa1c040566cefad341b0ed265"
+      ],
+      "pills": [
+        "03a05b27c15580a814f1cfc48788dd73d6232adf85f35b870c24d1a5e272f714"
+      ]
+    },
+    {
+      "index": 60,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 3,
+          "evaluated": 2,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "afe494658e6460e8f01911e70d30c68634712e2ebfc93f5ed91c8149ee29b6bd",
+      "summary": "8520b7cda49d7d9ed81ce53eb6558827148d7d0c46ce9baf6af8fbe73af42743",
+      "kpi": "168250afa5ddce90cd586163031ab9820ef8effc596c303c3def738001f516cb",
+      "hero": "703130893f357d6ec22fce032efff9438f1e96980ae4fc492eb0814f8842de74",
+      "table": "c32ae9947c0039d5c93217f5d0f1357488241067ae64d6021181b5b239ce5db4",
+      "agentRows": [
+        "24051b78f4fc81cc954b49164716ed62dbfcf3e05bbe8df0405cf4b351892af5"
+      ],
+      "pills": [
+        "d86a1e9159c84aa0ad4f454933612c45231e0a124cbfadf98c8b0e1ea8f1b748"
+      ]
+    },
+    {
+      "index": 61,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 12,
+          "evaluated": 10,
+          "vulns": 6,
+          "critical": 0,
+          "errors": 4,
+          "asr": 0.6,
+          "resistance": 0.4
+        }
+      },
+      "overview": "dce8badbe9793c0d0b0c2d15dd996c63bb0016e84d91ef4b32dc5a1e942212ec",
+      "summary": "0eb2217a35b05c9e7ed8711596f095b954f33e039f3b16588255f73e297b8ba5",
+      "kpi": "1458f16fa911a7b9b09ee442eeb625bbd93d5cb1d31a1366a0c26667749a22a4",
+      "hero": "6744e9530636817fd5ebaf8405f84a6cf11e57005eba8c68d9ff17e233eb4bb0",
+      "table": "ebf2e4ceec463d18eaec2940417804c6526998f82cf9008eb6506f989875db05",
+      "agentRows": [
+        "f84f1026896e6ad26f7a283e1f827b267fcf17a2dd2268df826f161ebca3d209"
+      ],
+      "pills": [
+        "e735f4ba8a7aa2cf83c6378ab0662d75aa420d026a8809cf40dcf01feefb101e"
+      ]
+    },
+    {
+      "index": 62,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 12,
+          "evaluated": 9,
+          "vulns": 4,
+          "critical": 0,
+          "errors": 2,
+          "asr": 0.4444444444444444,
+          "resistance": 0.5555555555555556
+        }
+      },
+      "overview": "ab97c8cce588a2a95a105733ad930fbf86700dff5a6154cddc2924e9a880239d",
+      "summary": "c6d26d8b3be09180cf5533137613dbcf18624b864c7b453002311c0d1b4dc3a3",
+      "kpi": "1458f16fa911a7b9b09ee442eeb625bbd93d5cb1d31a1366a0c26667749a22a4",
+      "hero": "bd85fb5bcf7dedef6068e6170a77485d887b9d7febb4253963da1c889aa20470",
+      "table": "6920c2d082b1c04af9eb4adb98e9e94ccf55795f6932fac2c2eb4665d87f69d6",
+      "agentRows": [
+        "bdfde0de734f865dd919620c4503949b4d9f09f9a506cbaa574370b595597dc2"
+      ],
+      "pills": [
+        "9c148c5bf07776ab1febeee8039ae168a8341ce105a658b81d5881a64539cdf4"
+      ]
+    },
+    {
+      "index": 63,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 10,
+          "evaluated": 4,
+          "vulns": 1,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.25,
+          "resistance": 0.75
+        }
+      },
+      "overview": "0a7cd202775206bc1e843e97cf2eaffee9a2c25679028224dfc4b460ccf6b90f",
+      "summary": "565230eeca5df7e2324c7ffea016a5b225f4309df7fd7c61b652b930b2e56e32",
+      "kpi": "5e1c32657d19f2c71dccd598af9bb4dceb01ebc555545ffe1fcc2c82b823ee14",
+      "hero": "d6ab6c746da78b1a455ebc1e0f8e13113088934373077763388864f2f1102d13",
+      "table": "548f25525ac59ca97855402f78f5b07b8e246ff4ea62939d9bbbc438b88db9ff",
+      "agentRows": [
+        "98dd1eca456354fdc8b2d9f4399c8fb28ea4841bf2d64e075a46ffbc6172645b"
+      ],
+      "pills": [
+        "d0427268550dc0e06ef3c8be8940074ee9efae359a0a9320b399f6c3a884fe5f"
+      ]
+    },
+    {
+      "index": 64,
+      "stats": {
+        "synthetic-agent": {
+          "display_name": "synthetic-agent",
+          "model": "",
+          "attacks": 6,
+          "evaluated": 5,
+          "vulns": 3,
+          "critical": 0,
+          "errors": 3,
+          "asr": 0.6,
+          "resistance": 0.4
+        }
+      },
+      "overview": "33eaf95c8b322d5b3e5e03201dbfbdd05b218c14517e13b0d708c9eaadbba6cd",
+      "summary": "484b720d9ea1dd18f388dc5585f781d383fa5b065712626450fbe34d36fa1213",
+      "kpi": "0e50d8aafb12beffa9af75802bf8cf08d2d39e21425cbf8ad5a5901dbae566fd",
+      "hero": "b9b8e554cf93dad9a1b0609c1930fd9944ccfdad4c3b4fcf057a5ae59fb039b5",
+      "table": "85e13e2ac5a86ea559ad700bb65290e872bc1eaab2ed77bcd3c9f062715d75f3",
+      "agentRows": [
+        "4bc9e08fe1364955dccbfd81e2727341571cafd3ad9894c555700c642fb67069"
+      ],
+      "pills": [
+        "bd2144a352140040eae97bbf38bae1340606e8ea38da3668c4688189644e758d"
+      ]
+    },
+    {
+      "index": 65,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "a0dbe8993c6d96c90b1fc8d52ea2bcde7790b0262cb412795d1a638666d6a603",
+      "summary": "d867c0f18c2cdafcbd17e5b191b2c78da76a7b28bca7e5a0032de0427d54a1a8",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "314b2e55ba823115fb3a2c95201f91020d1c349d807813c614467d96d3795440",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    },
+    {
+      "index": 66,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 1,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 1,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "941bca9c1724645e761b2ed770481513973f373ed703ff96a45220e1c0ec3576",
+      "summary": "7238dbb2942a94984e9ae7a18cb10213191033117f94a0ee6095a210fa0ebf9a",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "314b2e55ba823115fb3a2c95201f91020d1c349d807813c614467d96d3795440",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    },
+    {
+      "index": 67,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "a0dbe8993c6d96c90b1fc8d52ea2bcde7790b0262cb412795d1a638666d6a603",
+      "summary": "d867c0f18c2cdafcbd17e5b191b2c78da76a7b28bca7e5a0032de0427d54a1a8",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "314b2e55ba823115fb3a2c95201f91020d1c349d807813c614467d96d3795440",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    },
+    {
+      "index": 68,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "a0dbe8993c6d96c90b1fc8d52ea2bcde7790b0262cb412795d1a638666d6a603",
+      "summary": "d867c0f18c2cdafcbd17e5b191b2c78da76a7b28bca7e5a0032de0427d54a1a8",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "314b2e55ba823115fb3a2c95201f91020d1c349d807813c614467d96d3795440",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    },
+    {
+      "index": 69,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "a0dbe8993c6d96c90b1fc8d52ea2bcde7790b0262cb412795d1a638666d6a603",
+      "summary": "d867c0f18c2cdafcbd17e5b191b2c78da76a7b28bca7e5a0032de0427d54a1a8",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "314b2e55ba823115fb3a2c95201f91020d1c349d807813c614467d96d3795440",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    },
+    {
+      "index": 70,
+      "stats": {
+        "a": {
+          "display_name": "a",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 5,
+          "vulns": 5,
+          "critical": 0,
+          "errors": 0,
+          "asr": 1.0,
+          "resistance": 0.0
+        },
+        "b": {
+          "display_name": "b",
+          "model": "",
+          "attacks": 5,
+          "evaluated": 3,
+          "vulns": 0,
+          "critical": 0,
+          "errors": 0,
+          "asr": 0.0,
+          "resistance": 1.0
+        }
+      },
+      "overview": "a0dbe8993c6d96c90b1fc8d52ea2bcde7790b0262cb412795d1a638666d6a603",
+      "summary": "d867c0f18c2cdafcbd17e5b191b2c78da76a7b28bca7e5a0032de0427d54a1a8",
+      "kpi": "9ae93682ecf00b262d23f191b5d765a9ae2b18bdd0d3dc19dfcc13ba950c27dc",
+      "hero": "34102fca8b885451213ce445e690c2fc37cde27b1fb76bfb2ef8b3d0851e4238",
+      "table": "726e9d4ebcfc8773d8e93791f5b8114fc8ddfd422a2db3829a0bbdd609facce0",
+      "agentRows": [
+        "f09430c723fd0d80aad43e81e623e9186914378ae1e89ae6c18395ed8a3144e8",
+        "d7490ab7957239df53608d8d75e53a766858b3246e0d65ac5fb7cba5ba6d61e9"
+      ],
+      "pills": [
+        "6533d7cb6a21473684308b6caa02493a5807b12893bcd9488ea9cb5ab9c0b870",
+        "08b8490268a31db9381f809b22888273cdef981c2ed7626617496136549f6aeb"
+      ]
+    }
+  ],
+  "summaries": [
+    {
+      "input": {},
+      "summary": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kpi": "8a0d58eb9a55a27e3cb3adf0b76f7bb01ca6be72da5a534808eb64962589257f"
+    },
+    {
+      "input": {
+        "total_attacks": 0
+      },
+      "summary": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kpi": "8a0d58eb9a55a27e3cb3adf0b76f7bb01ca6be72da5a534808eb64962589257f"
+    },
+    {
+      "input": {
+        "pre_execution_errors": 1
+      },
+      "summary": "e86956c2e5b1fce09801e803f86ea8b926e71bb54638c29a8fa013297f7551b9",
+      "kpi": "8a0d58eb9a55a27e3cb3adf0b76f7bb01ca6be72da5a534808eb64962589257f"
+    },
+    {
+      "input": {
+        "pre_execution_errors": 2,
+        "narrative": "<saved>"
+      },
+      "summary": "f5ad9caad4cdcc6692648b4e4fea4825c2a1a8785e8195cc81cc8bc49400dcd5",
+      "kpi": "8a0d58eb9a55a27e3cb3adf0b76f7bb01ca6be72da5a534808eb64962589257f"
+    },
+    {
+      "input": {
+        "total_attacks": 2,
+        "evaluated_attacks": 0,
+        "unevaluated_attacks": 2,
+        "resistance_rate": 1.0,
+        "vulnerability_rate": 0.0
+      },
+      "summary": "40fe4cbe13500eae83fc63d4cc58935489283710bc6e28d0796fcec892f24394",
+      "kpi": "654dd3f4b22d0b7dca9efc3a18830576e3ea67c297856c42b25c5103c32762a2"
+    },
+    {
+      "input": {
+        "total_attacks": 2,
+        "evaluated_attacks": null,
+        "unevaluated_attacks": null
+      },
+      "summary": "85afcb03b980bd4cfcc5f657317f2c8eac6dd2921bfb03006eeb02c24152c863",
+      "kpi": "0f71d4f6706e5a0ef0095e04df47ab169fb7f7eb9e9ee0f9f27310129e742fb7"
+    },
+    {
+      "input": {
+        "total_attacks": 2,
+        "evaluated_attacks": 1,
+        "unevaluated_attacks": null,
+        "narrative": "saved <summary>",
+        "resistance_rate": 1.0,
+        "vulnerability_rate": 0.0
+      },
+      "summary": "48e7dba53361b6c4286b7cd6f6b5aa61278e8661a6b8738d8fe81b6716585fa7",
+      "kpi": "72042236093fd72814936fc4be0730d8269c45a4f2b1c1d6922b52279d82d734"
+    },
+    {
+      "input": {
+        "total_attacks": 2,
+        "unevaluated_attacks": 1,
+        "resistance_rate": null,
+        "vulnerability_rate": null
+      },
+      "summary": "a8c155c2d7ef875b769a5b1c99bb61a91241541fd1168500ad57200c4cb06956",
+      "kpi": "888ba58e79b5dee5735951b1cef20aa91e0f2b410bfb337cab5b2bd2086988f7"
+    },
+    {
+      "input": {
+        "total_attacks": 2,
+        "evaluated_attacks": 1,
+        "total_errors": 2,
+        "pre_execution_errors": 1,
+        "confidence": "LOW",
+        "vulnerabilities_found": 1
+      },
+      "summary": "e19ad7dc328388a1f9cf84426c1bce360cdbeb42db7f70fe0f4375fd9367b11d",
+      "kpi": "7ae6f3c5d48155d466b3c3d7dd36bc7917d907916154701bdd6f40739cac5242"
+    }
+  ],
+  "names": [
+    {
+      "description": "",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Red teaming report"
+    },
+    {
+      "description": null,
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Red teaming report"
+    },
+    {
+      "description": "Sweep (agent:my-key) (dynamic)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Sweep"
+    },
+    {
+      "description": "Sweep (my-key) (2 targets)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Sweep"
+    },
+    {
+      "description": "Q3 (post-patch)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Q3 (post-patch)"
+    },
+    {
+      "description": "Sweep (Deployment:Other) (hybrid)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Sweep"
+    },
+    {
+      "description": "Title (3 target)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Title"
+    },
+    {
+      "description": "Title (001 targets)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Title"
+    },
+    {
+      "description": " (STATIC) ",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Red teaming report"
+    },
+    {
+      "description": "Text (😀)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Text (😀)"
+    },
+    {
+      "description": "Test (nested (inside)) (dynamic)",
+      "agents": [
+        "my-key",
+        "other"
+      ],
+      "expected": "Test (nested (inside))"
+    }
+  ]
+}

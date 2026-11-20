@@ -1,0 +1,305 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}."
+      },
+      "expected": {
+        "vulnerability": null,
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [
+          "role-play"
+        ],
+        "turnType": "single",
+        "severity": "medium",
+        "requiresTools": false,
+        "requiredCapabilities": [],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": null,
+        "isGenerated": false,
+        "decomposeToolChain": false
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "vulnerability": "goal_hijacking",
+        "severity": "critical",
+        "requires_tools": true,
+        "required_capabilities": [
+          "web_request"
+        ],
+        "is_generated": true,
+        "decompose_tool_chain": true
+      },
+      "expected": {
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [
+          "role-play"
+        ],
+        "turnType": "single",
+        "severity": "critical",
+        "requiresTools": true,
+        "requiredCapabilities": [
+          "web_request"
+        ],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": null,
+        "isGenerated": true,
+        "decomposeToolChain": true
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}."
+      },
+      "expected": {
+        "vulnerability": null,
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [],
+        "turnType": "single",
+        "severity": "medium",
+        "requiresTools": false,
+        "requiredCapabilities": [],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": null,
+        "isGenerated": false,
+        "decomposeToolChain": false
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "custom"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}."
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "unknown",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}."
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "vulnerability": "unknown"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "severity": "HIGH"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "requires_tools": "true",
+        "is_generated": 1,
+        "decompose_tool_chain": "off"
+      },
+      "expected": {
+        "vulnerability": null,
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [
+          "role-play"
+        ],
+        "turnType": "single",
+        "severity": "medium",
+        "requiresTools": true,
+        "requiredCapabilities": [],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": null,
+        "isGenerated": true,
+        "decomposeToolChain": false
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "requires_tools": "maybe"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "required_capabilities": [
+          "unknown"
+        ]
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "prompt_template": null
+      },
+      "expected": {
+        "vulnerability": null,
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [
+          "role-play"
+        ],
+        "turnType": "single",
+        "severity": "medium",
+        "requiresTools": false,
+        "requiredCapabilities": [],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": null,
+        "isGenerated": false,
+        "decomposeToolChain": false
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attack_technique": "indirect-injection",
+        "delivery_methods": [
+          "role-play"
+        ],
+        "turn_type": "single",
+        "objective_template": "Test {tool_name}.",
+        "prompt_template": "Reply {text}",
+        "extra": "ignored"
+      },
+      "expected": {
+        "vulnerability": null,
+        "category": "ASI01",
+        "name": "indirect_email",
+        "description": "A synthetic strategy.",
+        "attackTechnique": "indirect-injection",
+        "deliveryMethods": [
+          "role-play"
+        ],
+        "turnType": "single",
+        "severity": "medium",
+        "requiresTools": false,
+        "requiredCapabilities": [],
+        "objectiveTemplate": "Test {tool_name}.",
+        "promptTemplate": "Reply {text}",
+        "isGenerated": false,
+        "decomposeToolChain": false
+      },
+      "error": false
+    }
+  ]
+}

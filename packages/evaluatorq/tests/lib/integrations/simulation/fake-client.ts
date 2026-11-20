@@ -33,6 +33,8 @@ type Request = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
 
 /** The judge goes through the Responses API. */
 export interface JudgeRequest {
+  instructions?: string;
+  text?: { format?: { name?: string; strict?: boolean; schema?: unknown } };
   model: string;
   input: { role: string; content: string }[];
   temperature?: number;
@@ -52,6 +54,10 @@ export interface JudgeTurn {
 }
 
 export interface FakeScript {
+  analysis?: (
+    request: Request,
+    options?: { timeout?: number },
+  ) => string | { content: string; finishReason?: string };
   /** Reply for the nth judge call. Throw to fail the call, null for no tool call. */
   judge?: (call: number, request: JudgeRequest) => JudgeTurn | null;
   /** Rewrite the Responses API reply built from the judge's turn. */
@@ -74,6 +80,7 @@ export interface FakeScript {
 }
 
 export interface FakeRequests {
+  analysis: Request[];
   judge: JudgeRequest[];
   userSimulator: Request[];
   firstMessage: Request[];
@@ -141,34 +148,110 @@ export function makeFakeClient(script: FakeScript = {}): {
   requests: FakeRequests;
 } {
   const requests: FakeRequests = {
+    analysis: [],
     judge: [],
     userSimulator: [],
     firstMessage: [],
     generator: [],
   };
 
-  const createResponse = async (request: JudgeRequest) => {
+  const createResponse = async (
+    request: JudgeRequest & {
+      instructions?: string;
+      text?: { format?: Record<string, unknown> };
+    },
+    options?: { timeout?: number; signal?: AbortSignal },
+  ) => {
+    const decision = request.text?.format?.name === "JudgeDecision";
+    if (!request.tools?.length && !decision) {
+      const format = request.text?.format;
+      const messages = (request.input ?? []).map((item) => ({
+        ...item,
+        content: Array.isArray(item.content)
+          ? (item.content as { text?: string }[])
+              .map((part) => part.text ?? "")
+              .join("")
+          : item.content,
+      }));
+      if (request.instructions)
+        messages.unshift({ role: "system", content: request.instructions });
+      const chatRequest = {
+        model: request.model,
+        messages,
+        max_tokens: request.max_output_tokens,
+        temperature: request.temperature,
+        ...(format
+          ? {
+              response_format: {
+                type: "json_schema",
+                json_schema: {
+                  name: format.name,
+                  strict: format.strict,
+                  schema: format.schema,
+                },
+              },
+            }
+          : {}),
+      } as Request;
+      const response = await create(chatRequest, options);
+      const choice = response.choices[0];
+      return {
+        id: "fake",
+        created_at: 0,
+        model: request.model,
+        status: choice?.finish_reason === "length" ? "incomplete" : "completed",
+        incomplete_details:
+          choice?.finish_reason === "length"
+            ? { reason: "max_output_tokens" }
+            : null,
+        output_text: choice?.message.content ?? "",
+        output: [
+          {
+            type: "message",
+            role: "assistant",
+            content: [
+              { type: "output_text", text: choice?.message.content ?? "" },
+            ],
+          },
+        ],
+        usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+      };
+    }
     const call = requests.judge.length;
     requests.judge.push(request);
     const turn = script.judge
       ? script.judge(call, request)
       : finishTurn([], {});
+    const content = turn
+      ? JSON.stringify({
+          ...turn.args,
+          should_terminate: turn.tool === "finish_conversation",
+        })
+      : "no decision";
     const reply = {
       id: "fake",
       created_at: 0,
       model: request.model,
       status: "completed",
-      output_text: turn ? "" : "no decision",
-      output: turn
+      output_text: decision ? content : turn ? "" : "no decision",
+      output: decision
         ? [
             {
-              type: "function_call",
-              call_id: `call_${call}`,
-              name: turn.tool,
-              arguments: JSON.stringify(turn.args),
+              type: "message",
+              role: "assistant",
+              content: [{ type: "output_text", text: content }],
             },
           ]
-        : [],
+        : turn
+          ? [
+              {
+                type: "function_call",
+                call_id: `call_${call}`,
+                name: turn.tool,
+                arguments: JSON.stringify(turn.args),
+              },
+            ]
+          : [],
       usage: { input_tokens: 3, output_tokens: 2, total_tokens: 5 },
     };
     return script.judgeResponse ? script.judgeResponse(reply) : reply;
@@ -178,6 +261,25 @@ export function makeFakeClient(script: FakeScript = {}): {
     request: Request,
     options?: { timeout?: number; signal?: AbortSignal },
   ) => {
+    const analysisSchema =
+      request.response_format?.type === "json_schema" &&
+      request.response_format.json_schema.name === "SimulationSuggestions";
+    const summary = request.messages.some(
+      (message) =>
+        typeof message.content === "string" &&
+        message.content.includes("summarizing an agent simulation report"),
+    );
+    if (analysisSchema || summary) {
+      requests.analysis.push(request);
+      const reply =
+        script.analysis?.(request, options) ??
+        (analysisSchema
+          ? JSON.stringify({ suggestions: [] })
+          : "One simulation completed.");
+      return typeof reply === "string"
+        ? completion({ content: reply })
+        : completion({ content: reply.content }, reply.finishReason);
+    }
     // What the router answers for the default model.
     if (request.tools) {
       throw new OpenAI.APIError(

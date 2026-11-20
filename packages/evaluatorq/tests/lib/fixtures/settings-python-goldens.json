@@ -1,0 +1,2702 @@
+{
+  "source": "a59c3a86",
+  "models": [
+    {
+      "label": "0",
+      "raw": {},
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "1",
+      "raw": {
+        "orq_profile": " main "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "cli_profile",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": "main",
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "2",
+      "raw": {
+        "orq_auth_method": "environment",
+        "orq_profile": " main "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": "main",
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "3",
+      "raw": {
+        "compiler_model": " custom ",
+        "apply_model": "openai/gpt-5.6-luna",
+        "classifier_model": "typesafe/jev-latest"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "finder.compiler": "custom"
+        },
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "4",
+      "raw": {
+        "model_overrides": {
+          "finder.compiler": " model ",
+          "unknown.task": "other",
+          "apply": " "
+        }
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "finder.compiler": "model"
+        },
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "5",
+      "raw": {
+        "explorer_columns": [
+          "trace",
+          "unknown",
+          "tokens_in",
+          "trace"
+        ]
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": [
+          "trace",
+          "tokens_in",
+          "trace"
+        ],
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "6",
+      "raw": {
+        "fast_model": " ",
+        "smart_model": " custom ",
+        "orq_workspace": " w ",
+        "orq_api_key_ciphertext": " untouched "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": "custom",
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": " untouched ",
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": "w",
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "7",
+      "raw": {
+        "window_days": "7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "8",
+      "raw": {
+        "window_days": "7.0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "9",
+      "raw": {
+        "window_days": true
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 1,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "10",
+      "raw": {
+        "window_days": false
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "11",
+      "raw": {
+        "window_days": null
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "12",
+      "raw": {
+        "window_days": 7.1
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "13",
+      "raw": {
+        "window_days": "1_0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 10,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "14",
+      "raw": {
+        "window_days": "+7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "15",
+      "raw": {
+        "window_days": "1e1"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "16",
+      "raw": {
+        "window_days": "7.00"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "17",
+      "raw": {
+        "window_days": "01"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 1,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "18",
+      "raw": {
+        "window_days": " 7 "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "19",
+      "raw": {
+        "window_days": "1__0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "20",
+      "raw": {
+        "limit": "7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 7,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "21",
+      "raw": {
+        "limit": "7.0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 7,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "22",
+      "raw": {
+        "limit": true
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 1,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "23",
+      "raw": {
+        "limit": false
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "24",
+      "raw": {
+        "limit": null
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "25",
+      "raw": {
+        "limit": 7.1
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "26",
+      "raw": {
+        "limit": "1_0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 10,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "27",
+      "raw": {
+        "limit": "+7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 7,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "28",
+      "raw": {
+        "limit": "1e1"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "29",
+      "raw": {
+        "limit": "7.00"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 7,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "30",
+      "raw": {
+        "limit": "01"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 1,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "31",
+      "raw": {
+        "limit": " 7 "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 7,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "32",
+      "raw": {
+        "limit": "1__0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "33",
+      "raw": {
+        "parallelism": "7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "34",
+      "raw": {
+        "parallelism": "7.0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "35",
+      "raw": {
+        "parallelism": true
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 1,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "36",
+      "raw": {
+        "parallelism": false
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "37",
+      "raw": {
+        "parallelism": null
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "38",
+      "raw": {
+        "parallelism": 7.1
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "39",
+      "raw": {
+        "parallelism": "1_0"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 10,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "40",
+      "raw": {
+        "parallelism": "+7"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "41",
+      "raw": {
+        "parallelism": "1e1"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "42",
+      "raw": {
+        "parallelism": "7.00"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "43",
+      "raw": {
+        "parallelism": "01"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 1,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "44",
+      "raw": {
+        "parallelism": " 7 "
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "45",
+      "raw": {
+        "parallelism": "1__0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "46",
+      "raw": {
+        "trace_input_chars": "7"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "47",
+      "raw": {
+        "trace_input_chars": "7.0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "48",
+      "raw": {
+        "trace_input_chars": true
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "49",
+      "raw": {
+        "trace_input_chars": false
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "50",
+      "raw": {
+        "trace_input_chars": null
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "51",
+      "raw": {
+        "trace_input_chars": 7.1
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "52",
+      "raw": {
+        "trace_input_chars": "1_0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "53",
+      "raw": {
+        "trace_input_chars": "+7"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "54",
+      "raw": {
+        "trace_input_chars": "1e1"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "55",
+      "raw": {
+        "trace_input_chars": "7.00"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "56",
+      "raw": {
+        "trace_input_chars": "01"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "57",
+      "raw": {
+        "trace_input_chars": " 7 "
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "58",
+      "raw": {
+        "trace_input_chars": "1__0"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "59",
+      "raw": {
+        "schema_version": true
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "60",
+      "raw": {
+        "schema_version": "1"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "61",
+      "raw": {
+        "schema_version": 0
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "62",
+      "raw": {
+        "schema_version": 3
+      },
+      "expected": {
+        "schemaVersion": 3,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "63",
+      "raw": {
+        "compression_inspector_enabled": "false"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false
+    },
+    {
+      "label": "64",
+      "raw": {
+        "compression_inspector_enabled": 1
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": true
+      },
+      "error": false
+    },
+    {
+      "label": "65",
+      "raw": {
+        "compression_inspector_enabled": 2
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "66",
+      "raw": {
+        "orq_auth_method": "unknown"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "67",
+      "raw": {
+        "orq_profile": 9
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "68",
+      "raw": {
+        "orq_api_key_ciphertext": false
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "69",
+      "raw": {
+        "fast_model": 7
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "70",
+      "raw": {
+        "future_free": 1
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "71",
+      "raw": {
+        "explorer_columns": "trace"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "label": "72",
+      "raw": {
+        "model_overrides": {
+          "apply": null
+        }
+      },
+      "expected": null,
+      "error": true
+    }
+  ],
+  "loads": [
+    {
+      "label": "0",
+      "raw": {},
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "1",
+      "raw": {
+        "schema_version": 1,
+        "fast_model": "model",
+        "limit": "bad",
+        "window_days": 9
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": "model",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 9,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "2",
+      "raw": {
+        "schema_version": 7,
+        "future_free": {
+          "free_key": 1
+        },
+        "fast_model": "future-model"
+      },
+      "expected": {
+        "schemaVersion": 7,
+        "fastModel": "future-model",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "3",
+      "raw": {
+        "schema_version": 7,
+        "future_free": 1,
+        "orq_profile": 9,
+        "fast_model": "ignored"
+      },
+      "expected": {
+        "schemaVersion": 7,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "4",
+      "raw": {
+        "schema_version": true,
+        "fast_model": "ignored"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "5",
+      "raw": {
+        "schema_version": 0,
+        "fast_model": "ignored"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "6",
+      "raw": {
+        "schema_version": 1,
+        "orq_api_key_ciphertext": false,
+        "window_days": 8
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "7",
+      "raw": {
+        "compiler_model": "legacy",
+        "orq_profile": "legacy-profile"
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "finder.compiler": "legacy"
+        },
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "cli_profile",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": "legacy-profile",
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "8",
+      "raw": {
+        "compiler_model": 7
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "9",
+      "raw": {
+        "model_overrides": {
+          "apply": 1,
+          "free.task": 2
+        }
+      },
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "10",
+      "raw": [],
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "11",
+      "raw": null,
+      "expected": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    }
+  ],
+  "saves": [
+    {
+      "label": "new-defaults",
+      "initial": null,
+      "updates": null,
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "new-authored",
+      "initial": null,
+      "updates": null,
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": {
+        "window_days": 8,
+        "fast_model": "authored"
+      },
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": "authored",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 8,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "fastModel": "authored",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 8,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      }
+    },
+    {
+      "label": "legacy-migrate",
+      "initial": {
+        "compiler_model": "custom",
+        "orq_profile": "profile",
+        "future_key": {
+          "free_key": 1
+        }
+      },
+      "updates": {
+        "limit": 700
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "finder.compiler": "custom"
+        },
+        "windowDays": 7,
+        "limit": 700,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "cli_profile",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": "profile",
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "orqProfile": "profile",
+        "future_key": {
+          "free_key": 1
+        },
+        "schemaVersion": 1,
+        "modelOverrides": {
+          "finder.compiler": "custom"
+        },
+        "orqAuthMethod": "cli_profile",
+        "limit": 700
+      }
+    },
+    {
+      "label": "future-preserve",
+      "initial": {
+        "schema_version": 8,
+        "future_key": {
+          "CamelFree": 1
+        },
+        "model_overrides": {
+          "future.task": "future",
+          "apply": "old"
+        }
+      },
+      "updates": {
+        "window_days": 11
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 8,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "apply": "old"
+        },
+        "windowDays": 11,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 8,
+        "future_key": {
+          "CamelFree": 1
+        },
+        "modelOverrides": {
+          "future.task": "future",
+          "apply": "old"
+        },
+        "windowDays": 11
+      }
+    },
+    {
+      "label": "recover-retain-invalid",
+      "initial": {
+        "schema_version": 1,
+        "limit": "bad",
+        "fast_model": "kept"
+      },
+      "updates": {
+        "window_days": 12
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": "kept",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 12,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "limit": "bad",
+        "fastModel": "kept",
+        "windowDays": 12
+      }
+    },
+    {
+      "label": "auth-invalid-retain",
+      "initial": {
+        "schema_version": 8,
+        "orq_api_key_ciphertext": false,
+        "smart_model": "kept",
+        "future_free": 1
+      },
+      "updates": {
+        "window_days": 10
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 8,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 10,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 8,
+        "orqApiKeyCiphertext": false,
+        "smartModel": "kept",
+        "future_free": 1,
+        "windowDays": 10
+      }
+    },
+    {
+      "label": "direct-null-change",
+      "initial": {
+        "schema_version": 1
+      },
+      "updates": null,
+      "runtime": null,
+      "direct": {
+        "fast_model": "direct"
+      },
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": "direct",
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "fastModel": "direct"
+      }
+    },
+    {
+      "label": "runtime-not-persisted",
+      "initial": {
+        "schema_version": 1,
+        "window_days": 8,
+        "model_overrides": {
+          "apply": "saved"
+        }
+      },
+      "updates": {
+        "parallelism": 7
+      },
+      "runtime": {
+        "window_days": 22,
+        "model_overrides": {
+          "apply": "runtime"
+        }
+      },
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "apply": "runtime"
+        },
+        "windowDays": 22,
+        "limit": 500,
+        "parallelism": 7,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "windowDays": 8,
+        "modelOverrides": {
+          "apply": "saved"
+        },
+        "parallelism": 7
+      }
+    },
+    {
+      "label": "patch-overrides",
+      "initial": {
+        "schema_version": 3,
+        "model_overrides": {
+          "apply": "old",
+          "finder.compiler": "saved",
+          "future.task": "future"
+        }
+      },
+      "updates": {
+        "model_overrides": {
+          "apply": "new"
+        }
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 3,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {
+          "apply": "new"
+        },
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 3,
+        "modelOverrides": {
+          "apply": "new",
+          "future.task": "future"
+        }
+      }
+    },
+    {
+      "label": "copy-source",
+      "initial": {
+        "schema_version": 7,
+        "limit": "bad",
+        "future_free": {
+          "free_key": 1
+        }
+      },
+      "updates": {
+        "window_days": 13
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": true,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 7,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 13,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 7,
+        "limit": "bad",
+        "future_free": {
+          "free_key": 1
+        },
+        "windowDays": 13
+      }
+    },
+    {
+      "label": "explicit-default-reset",
+      "initial": {
+        "schema_version": 1,
+        "window_days": 30,
+        "limit": 900
+      },
+      "updates": null,
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": {
+        "window_days": 7
+      },
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "windowDays": 7,
+        "limit": 900
+      }
+    },
+    {
+      "label": "concurrent-preserve",
+      "initial": {
+        "schema_version": 1,
+        "window_days": 7,
+        "limit": 500
+      },
+      "updates": {
+        "window_days": 9
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": {
+        "schema_version": 1,
+        "window_days": 7,
+        "limit": 888,
+        "future_free": 1
+      },
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 9,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "windowDays": 9,
+        "limit": 888,
+        "future_free": 1
+      }
+    },
+    {
+      "label": "bad-root-refuse",
+      "initial": [],
+      "updates": null,
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": true,
+      "persisted": []
+    },
+    {
+      "label": "bad-version-refuse",
+      "initial": {
+        "schema_version": 0
+      },
+      "updates": {
+        "window_days": 9
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 9,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": true,
+      "persisted": {
+        "schemaVersion": 0
+      }
+    },
+    {
+      "label": "future-downgrade-refuse",
+      "initial": {
+        "schema_version": 7
+      },
+      "updates": null,
+      "runtime": null,
+      "direct": {
+        "schema_version": 1
+      },
+      "changed": null,
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": true,
+      "persisted": {
+        "schemaVersion": 7
+      }
+    },
+    {
+      "label": "unknown-field-refuse",
+      "initial": {
+        "schema_version": 1
+      },
+      "updates": null,
+      "runtime": null,
+      "direct": null,
+      "changed": [
+        "future_free"
+      ],
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 7,
+        "limit": 500,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": true,
+      "persisted": {
+        "schemaVersion": 1
+      }
+    },
+    {
+      "label": "targeted-change-only",
+      "initial": {
+        "schema_version": 1,
+        "limit": 700
+      },
+      "updates": {
+        "window_days": 9,
+        "limit": 800
+      },
+      "runtime": null,
+      "direct": null,
+      "changed": [
+        "window_days"
+      ],
+      "copyTo": false,
+      "fresh": null,
+      "concurrent": null,
+      "before": {
+        "schemaVersion": 1,
+        "fastModel": null,
+        "smartModel": null,
+        "classifierModel": null,
+        "embeddingModel": null,
+        "modelOverrides": {},
+        "windowDays": 9,
+        "limit": 800,
+        "parallelism": 100,
+        "traceInputChars": 500000,
+        "filterSelection": "llm+jev",
+        "askAiMode": "immediate",
+        "orqAuthMethod": "environment",
+        "orqApiKeyCiphertext": null,
+        "orqOauthServer": null,
+        "orqProfile": null,
+        "orqProfileHost": null,
+        "orqCredentialFingerprint": null,
+        "orqWorkspace": null,
+        "orqProjectId": null,
+        "orqProjectName": null,
+        "explorerColumns": null,
+        "compressionInspectorEnabled": false
+      },
+      "error": false,
+      "persisted": {
+        "schemaVersion": 1,
+        "limit": 700,
+        "windowDays": 9
+      }
+    }
+  ]
+}

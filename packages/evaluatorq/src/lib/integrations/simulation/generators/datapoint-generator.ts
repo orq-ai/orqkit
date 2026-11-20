@@ -6,7 +6,6 @@
 
 import type OpenAI from "openai";
 
-import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import { applyRandomPerturbation } from "../quality/message-perturbation.js";
 import type { Datapoint, Persona, Scenario } from "../types.js";
 import { generateDatapoint } from "../utils/prompt-builders.js";
@@ -64,6 +63,7 @@ function sleep(ms: number): Promise<void> {
  * Configuration for DatapointGenerator.
  */
 export interface DatapointGeneratorConfig {
+  llmConfig?: import("../../../contracts.js").LLMCallConfig;
   model?: string;
   rateLimitDelay?: number;
   maxConcurrentCalls?: number;
@@ -77,7 +77,6 @@ export interface DatapointGeneratorConfig {
  * to produce ready-to-use test datapoints.
  */
 export class DatapointGenerator {
-  private model: string;
   private rateLimitDelay: number;
   private semaphore: Semaphore;
   private personaGenerator: PersonaGenerator;
@@ -85,12 +84,15 @@ export class DatapointGenerator {
   private firstMessageGenerator: FirstMessageGenerator;
 
   constructor(config?: DatapointGeneratorConfig) {
-    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
     this.rateLimitDelay = config?.rateLimitDelay ?? DEFAULT_RATE_LIMIT_DELAY;
     this.semaphore = new Semaphore(
       config?.maxConcurrentCalls ?? DEFAULT_MAX_CONCURRENT_CALLS,
     );
-    const shared = { model: this.model, client: config?.client };
+    const shared = {
+      model: config?.model,
+      client: config?.client,
+      llmConfig: config?.llmConfig,
+    };
     this.personaGenerator = new PersonaGenerator(shared);
     this.scenarioGenerator = new ScenarioGenerator(shared);
     this.firstMessageGenerator = new FirstMessageGenerator(shared);

@@ -8,7 +8,10 @@
 export type { DatapointGeneratorConfig } from "./datapoint-generator.js";
 export { DatapointGenerator } from "./datapoint-generator.js";
 export type { FirstMessageGeneratorConfig } from "./first-message-generator.js";
-export { FirstMessageGenerator } from "./first-message-generator.js";
+export {
+  FirstMessageGenerationError,
+  FirstMessageGenerator,
+} from "./first-message-generator.js";
 export type { PersonaGeneratorConfig } from "./persona-generator.js";
 export { PersonaGenerator } from "./persona-generator.js";
 export type { ScenarioGeneratorConfig } from "./scenario-generator.js";

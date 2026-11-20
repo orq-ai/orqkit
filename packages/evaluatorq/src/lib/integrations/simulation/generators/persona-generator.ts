@@ -5,10 +5,15 @@
  */
 
 import type OpenAI from "openai";
-import { z } from "zod/v4";
 
+import {
+  addUsage,
+  type LLMCallConfig,
+  type Usage,
+} from "../../../contracts.js";
 import { createRouterClient } from "../client.js";
-import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import { resolveSimLlmConfig, simRoleConfig } from "../config.js";
+import { PersonaSchema } from "../contract-schemas.js";
 import { withSimulationSpan } from "../tracing.js";
 import type { CommunicationStyle, Persona } from "../types.js";
 import { delimit } from "../utils/sanitize.js";
@@ -25,39 +30,7 @@ const TEMPERATURE_BALANCED = 0.7;
 const personaTokenBudget = (numPersonas: number) =>
   tokenBudgetForItems(numPersonas, 600, 4000);
 
-const STYLES = [
-  "formal",
-  "casual",
-  "terse",
-  "verbose",
-] as const satisfies readonly CommunicationStyle[];
-const VALID_STYLES = new Set<string>(STYLES);
-
-const PERSONA_ITEM_SCHEMA = z.object({
-  name: z.string(),
-  patience: z.number(),
-  assertiveness: z.number(),
-  politeness: z.number(),
-  technical_level: z.number(),
-  communication_style: z.enum(STYLES),
-  background: z.string(),
-});
-
-const TRAITS = [
-  "patience",
-  "assertiveness",
-  "politeness",
-  "technical_level",
-] as const;
-
-/** A trait clamped to [0, 1], or null if absent or not numeric. */
-function parseTrait(value: unknown): number | null {
-  const trait =
-    typeof value === "string" && value.trim() ? Number(value) : value;
-  return typeof trait === "number" && Number.isFinite(trait)
-    ? Math.max(0, Math.min(1, trait))
-    : null;
-}
+const PERSONA_ITEM_SCHEMA = PersonaSchema;
 
 const PERSONA_GENERATOR_PROMPT = `You are an expert persona designer for AI agent testing. Create realistic, memorable user personas that feel like real people, not stereotypes.
 
@@ -113,6 +86,7 @@ Return a JSON array of persona objects.`;
  * Configuration for PersonaGenerator.
  */
 export interface PersonaGeneratorConfig {
+  llmConfig?: LLMCallConfig;
   model?: string;
   client?: OpenAI;
   apiKey?: string;
@@ -126,11 +100,28 @@ export interface PersonaGeneratorConfig {
  */
 export class PersonaGenerator {
   private model: string;
+  private readonly llmConfig: LLMCallConfig;
+  private usage: Usage | null = null;
+
+  getUsage(): Usage | null {
+    return this.usage ? { ...this.usage } : null;
+  }
+  resetUsage(): void {
+    this.usage = null;
+  }
+  private accumulate(usage: Usage | null): void {
+    if (usage) this.usage = this.usage ? addUsage(this.usage, usage) : usage;
+  }
   private client: OpenAI;
 
   constructor(config?: PersonaGeneratorConfig) {
-    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    this.client = config?.client ?? createRouterClient(config?.apiKey);
+    this.llmConfig = simRoleConfig(
+      resolveSimLlmConfig(config ?? {}, "PersonaGenerator"),
+      "sim.generator",
+    );
+    this.model = this.llmConfig.model;
+    this.client =
+      (this.llmConfig.client as OpenAI) ?? createRouterClient(config?.apiKey);
   }
 
   /**
@@ -140,35 +131,20 @@ export class PersonaGenerator {
    */
   private static parsePersonas(items: Record<string, unknown>[]): Persona[] {
     const personas: Persona[] = [];
-    for (const p of items) {
-      if (typeof p.name !== "string" || !p.name.trim()) {
-        console.warn("PersonaGenerator: dropping persona without a name");
-        continue;
-      }
-      const [patience, assertiveness, politeness, technicalLevel] = TRAITS.map(
-        (trait) => parseTrait(p[trait]),
-      );
-      if (
-        patience == null ||
-        assertiveness == null ||
-        politeness == null ||
-        technicalLevel == null ||
-        !VALID_STYLES.has(String(p.communication_style)) ||
-        typeof p.background !== "string"
-      ) {
+    for (const item of items) {
+      const parsed = PersonaSchema.safeParse(item);
+      if (!parsed.success) {
         console.warn(
-          `PersonaGenerator: dropping persona '${p.name}' with a missing or invalid field`,
+          "PersonaGenerator: dropping invalid persona",
+          parsed.error,
         );
         continue;
       }
+      const { emotional_arc, cultural_context, ...persona } = parsed.data;
       personas.push({
-        name: p.name,
-        patience,
-        assertiveness,
-        politeness,
-        technical_level: technicalLevel,
-        communication_style: p.communication_style as CommunicationStyle,
-        background: p.background,
+        ...persona,
+        ...(emotional_arc === null ? {} : { emotional_arc }),
+        ...(cultural_context === null ? {} : { cultural_context }),
       });
     }
     if (personas.length === 0) {
@@ -217,6 +193,8 @@ Return ONLY a JSON array, no other text.`;
 
         const personas = PersonaGenerator.parsePersonas(
           await requestJsonList({
+            llmConfig: this.llmConfig,
+            onUsage: (usage) => this.accumulate(usage),
             client: this.client,
             model: this.model,
             system: PERSONA_GENERATOR_PROMPT,
@@ -364,6 +342,8 @@ Return ONLY a JSON array, no other text.`;
 
         let personas = PersonaGenerator.parsePersonas(
           await requestJsonList({
+            llmConfig: this.llmConfig,
+            onUsage: (usage) => this.accumulate(usage),
             client: this.client,
             model: this.model,
             system: PERSONA_GENERATOR_PROMPT,
@@ -416,7 +396,7 @@ Return ONLY a JSON array, no other text.`;
             ...p,
             communication_style: style,
           };
-          console.debug(
+          console.error(
             `Adjusted persona '${p.name}' to style '${style}' for coverage`,
           );
         }
@@ -451,7 +431,7 @@ Return ONLY a JSON array, no other text.`;
     if (!hasHigh(techVals)) gaps.push("high technical_level (>0.8)");
 
     if (gaps.length > 0) {
-      console.debug(`Trait coverage gaps: ${gaps.join(", ")}`);
+      console.error(`Trait coverage gaps: ${gaps.join(", ")}`);
     }
   }
 }

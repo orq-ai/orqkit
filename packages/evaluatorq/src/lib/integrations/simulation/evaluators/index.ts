@@ -5,7 +5,13 @@
  * compatible with evaluatorq integration.
  */
 
-import type { CriteriaMeta, SimulationResult } from "../types.js";
+import { pyFixed, pyRound } from "../../../common/reports/number-format.js";
+import { parseCriteriaMeta } from "../criteria.js";
+import type { SimulationResult } from "../types.js";
+import {
+  DEFAULT_SCORING_CONFIG,
+  type SimulationScoringConfig,
+} from "./scoring-config.js";
 
 // ---------------------------------------------------------------------------
 // Scorer type
@@ -41,12 +47,19 @@ export function failureReason(result: SimulationResult): string | null {
   );
 }
 
-function isCriteriaMeta(value: unknown): value is CriteriaMeta {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as CriteriaMeta).passed === "boolean"
-  );
+export function readCriteriaMeta(result: Pick<SimulationResult, "metadata">) {
+  const parsed = parseCriteriaMeta(result.metadata.criteria_meta);
+  if (parsed.invalid.length) {
+    const existing = result.metadata.criteria_errors;
+    const errors = Array.isArray(existing) ? existing : [];
+    for (const entry of parsed.invalid) {
+      const message = `criteria_meta entry is invalid: ${JSON.stringify(entry)}`;
+      console.warn(message);
+      if (!errors.includes(message)) errors.push(message);
+    }
+    result.metadata.criteria_errors = errors;
+  }
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,7 +79,7 @@ export const goalAchievedScorer: SimulationScorer = (result) => {
  * Returns a value between 0 and 1 based on the ratio of met criteria.
  *
  * Scores 0.0 when the run cannot vouch for its criteria: it errored, timed out
- * or the judge never audited them. A criterion that passed only because it was
+ * or any criterion was never audited. A criterion that passed only because it was
  * never audited does not count as met. No criteria at all scores 1.0.
  */
 export const criteriaMetScorer: SimulationScorer = (result) => {
@@ -78,15 +91,16 @@ export const criteriaMetScorer: SimulationScorer = (result) => {
 
   const rawMeta = result.metadata?.criteria_meta;
   if (rawMeta !== undefined && rawMeta !== null) {
-    if (!Array.isArray(rawMeta) || !rawMeta.every(isCriteriaMeta)) {
+    const { valid, invalid } = readCriteriaMeta(result);
+    if (invalid.length) {
       console.warn("criteria_met: scoring 0.0, criteria_meta is malformed");
       return 0.0;
     }
-    if (rawMeta.length > 0) {
-      const metCount = rawMeta.filter(
+    if (valid.length > 0) {
+      const metCount = valid.filter(
         (entry) => entry.passed && entry.audited !== false,
       ).length;
-      return metCount / rawMeta.length;
+      return metCount / valid.length;
     }
   }
 
@@ -107,45 +121,73 @@ export const criteriaMetScorer: SimulationScorer = (result) => {
  * Evaluate conversation efficiency (fewer turns = better).
  * Returns a value between 0 and 1.
  */
-export const turnEfficiencyScorer: SimulationScorer = (result) => {
-  const totalTurns = result.turn_count;
-  const goalAchieved = result.goal_achieved;
+export function turnEfficiencyScorer(
+  result: SimulationResult,
+  config: SimulationScoringConfig = DEFAULT_SCORING_CONFIG,
+): number {
+  if (!result.goal_achieved) return 0;
+  for (const [turns, score] of config.turnEfficiencyCliffs)
+    if (result.turn_count <= turns) return score;
+  const [lastTurns, lastScore] = config.turnEfficiencyCliffs[
+    config.turnEfficiencyCliffs.length - 1
+  ] as readonly [number, number];
+  return Number(
+    pyFixed(
+      Math.max(
+        config.turnEfficiencyFloor,
+        lastScore -
+          (result.turn_count - lastTurns) * config.turnEfficiencyDecayPerTurn,
+      ),
+      4,
+    ),
+  );
+}
 
-  if (!goalAchieved) {
-    return 0.0;
-  }
+export interface ConversationQualityScore {
+  value: number;
+  breakdown: {
+    components: Record<string, number>;
+    weights: Record<string, number>;
+  };
+}
 
-  if (totalTurns <= 2) {
-    return 1.0;
-  }
+export function conversationQualityDetails(
+  result: SimulationResult,
+  config: SimulationScoringConfig = DEFAULT_SCORING_CONFIG,
+): ConversationQualityScore {
+  const goal = goalAchievedScorer(result);
+  const criteria = criteriaMetScorer(result);
+  const efficiency = turnEfficiencyScorer(result, config);
+  const value =
+    pyRound(
+      (goal * config.goalAchievedWeight +
+        criteria * config.criteriaMetWeight +
+        efficiency * config.turnEfficiencyWeight) *
+        100,
+    ) / 100;
+  return {
+    value,
+    breakdown: {
+      components: {
+        goalAchieved: goal,
+        criteriaMet: criteria,
+        turnEfficiency: efficiency,
+      },
+      weights: {
+        goalAchieved: config.goalAchievedWeight,
+        criteriaMet: config.criteriaMetWeight,
+        turnEfficiency: config.turnEfficiencyWeight,
+      },
+    },
+  };
+}
 
-  if (totalTurns <= 4) {
-    return 0.9;
-  }
-
-  if (totalTurns <= 6) {
-    return 0.7;
-  }
-
-  return Math.max(0.3, Math.round((13 - totalTurns) * 10) / 100);
-};
-
-/**
- * Evaluate overall conversation quality.
- *
- * Composite score based on:
- * - Goal achievement (40%)
- * - Criteria met (30%)
- * - Turn efficiency (30%)
- */
-export const conversationQualityScorer: SimulationScorer = (result) => {
-  const goalScore = goalAchievedScorer(result);
-  const criteriaScore = criteriaMetScorer(result);
-  const efficiencyScore = turnEfficiencyScorer(result);
-
-  const score = goalScore * 0.4 + criteriaScore * 0.3 + efficiencyScore * 0.3;
-  return Math.round(score * 100) / 100;
-};
+export function conversationQualityScorer(
+  result: SimulationResult,
+  config: SimulationScoringConfig = DEFAULT_SCORING_CONFIG,
+): number {
+  return conversationQualityDetails(result, config).value;
+}
 
 // ---------------------------------------------------------------------------
 // Registry
@@ -165,8 +207,11 @@ export const SIMULATION_EVALUATORS: Record<string, SimulationScorer> = {
  * @returns The scorer function
  * @throws Error if evaluator not found
  */
-export function getEvaluator(name: string): SimulationScorer {
-  const evaluator = SIMULATION_EVALUATORS[name];
+export function getEvaluator(
+  name: string,
+  config?: SimulationScoringConfig,
+): SimulationScorer {
+  const evaluator = getAllEvaluators(config)[name];
   if (!evaluator) {
     const available = Object.keys(SIMULATION_EVALUATORS).join(", ");
     throw new Error(`Unknown evaluator: ${name}. Available: ${available}`);
@@ -179,6 +224,24 @@ export function getEvaluator(name: string): SimulationScorer {
  *
  * @returns Record of evaluator name to scorer function
  */
-export function getAllEvaluators(): Record<string, SimulationScorer> {
-  return { ...SIMULATION_EVALUATORS };
+export function getAllEvaluators(
+  config?: SimulationScoringConfig,
+): Record<string, SimulationScorer> {
+  return {
+    ...SIMULATION_EVALUATORS,
+    ...(config
+      ? {
+          turn_efficiency: (result: SimulationResult) =>
+            turnEfficiencyScorer(result, config),
+          conversation_quality: (result: SimulationResult) =>
+            conversationQualityScorer(result, config),
+        }
+      : {}),
+  };
 }
+
+export type { SimulationScoringConfigInput } from "./scoring-config.js";
+export {
+  DEFAULT_SCORING_CONFIG,
+  SimulationScoringConfig,
+} from "./scoring-config.js";

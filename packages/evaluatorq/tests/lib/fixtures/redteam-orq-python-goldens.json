@@ -1,0 +1,414 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "label": "basic",
+      "responses": [
+        {
+          "task_id": "task-one",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [
+            {
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "First"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "limit": 5,
+      "calls": [
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "user",
+            "parts": [
+              {
+                "kind": "text",
+                "text": "latest"
+              }
+            ]
+          },
+          "background": false,
+          "retries": null,
+          "memory": {
+            "entity_id": "seed"
+          }
+        }
+      ],
+      "expected": {
+        "text": "First",
+        "usage": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 1,
+          "priced_calls": 0,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": null
+        },
+        "model": "echo",
+        "responseId": "task-one",
+        "traceId": "trace",
+        "spanId": "span",
+        "tools": []
+      },
+      "error": false
+    },
+    {
+      "label": "tool",
+      "responses": [
+        {
+          "task_id": "task-one",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [],
+          "pending_tool_calls": [
+            {
+              "id": "tool-one",
+              "name": "lookup",
+              "arguments": "{\"q\":\"hi\"}"
+            }
+          ]
+        },
+        {
+          "task_id": "task-two",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [
+            {
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Done"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "limit": 5,
+      "calls": [
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "user",
+            "parts": [
+              {
+                "kind": "text",
+                "text": "latest"
+              }
+            ]
+          },
+          "background": false,
+          "retries": null,
+          "memory": {
+            "entity_id": "seed"
+          }
+        },
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "tool",
+            "parts": [
+              {
+                "kind": "tool_result",
+                "tool_call_id": "tool-one",
+                "result": {
+                  "ok": false,
+                  "error": "Tool execution unavailable in red-teaming harness"
+                }
+              }
+            ]
+          },
+          "task_id": "task-one",
+          "background": false,
+          "retries": null
+        }
+      ],
+      "expected": {
+        "text": "Done",
+        "usage": {
+          "input_tokens": 6,
+          "output_tokens": 4,
+          "total_tokens": 10,
+          "cached_tokens": 2,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 2,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 2,
+          "priced_calls": 0,
+          "prompt_tokens": 6,
+          "completion_tokens": 4,
+          "cost_usd": null
+        },
+        "model": "echo",
+        "responseId": "task-two",
+        "traceId": "trace",
+        "spanId": "span",
+        "tools": [
+          {
+            "name": "lookup",
+            "arguments": {
+              "q": "hi"
+            },
+            "callId": "tool-one"
+          }
+        ]
+      },
+      "error": false
+    },
+    {
+      "label": "malformed",
+      "responses": [
+        {
+          "task_id": "task-one",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [],
+          "pending_tool_calls": [
+            {
+              "id": "bad",
+              "name": "broken",
+              "arguments": "not-json"
+            }
+          ]
+        },
+        {
+          "task_id": "task-one",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [
+            {
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "  "
+                },
+                {
+                  "kind": "text",
+                  "text": "Fallback"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "limit": 5,
+      "calls": [
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "user",
+            "parts": [
+              {
+                "kind": "text",
+                "text": "latest"
+              }
+            ]
+          },
+          "background": false,
+          "retries": null,
+          "memory": {
+            "entity_id": "seed"
+          }
+        },
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "tool",
+            "parts": [
+              {
+                "kind": "tool_result",
+                "tool_call_id": "bad",
+                "result": {
+                  "ok": false,
+                  "error": "Tool execution unavailable in red-teaming harness"
+                }
+              }
+            ]
+          },
+          "task_id": "task-one",
+          "background": false,
+          "retries": null
+        }
+      ],
+      "expected": {
+        "text": "Fallback",
+        "usage": {
+          "input_tokens": 6,
+          "output_tokens": 4,
+          "total_tokens": 10,
+          "cached_tokens": 2,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 2,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 2,
+          "priced_calls": 0,
+          "prompt_tokens": 6,
+          "completion_tokens": 4,
+          "cost_usd": null
+        },
+        "model": "echo",
+        "responseId": "task-one",
+        "traceId": "trace",
+        "spanId": "span",
+        "tools": [
+          {
+            "name": "broken",
+            "arguments": {
+              "raw": "not-json"
+            },
+            "callId": "bad"
+          }
+        ]
+      },
+      "error": false
+    },
+    {
+      "label": "limit",
+      "responses": [
+        {
+          "task_id": "task-one",
+          "model": "echo",
+          "usage": {
+            "prompt_tokens": 3,
+            "completion_tokens": 2,
+            "total_tokens": 5,
+            "prompt_tokens_details": {
+              "cached_tokens": 1
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "telemetry": {
+            "trace_id": "trace",
+            "span_id": "span"
+          },
+          "output": [],
+          "pending_tool_calls": [
+            {
+              "id": "tool-one",
+              "name": "lookup",
+              "arguments": "{\"q\":\"hi\"}"
+            }
+          ]
+        }
+      ],
+      "limit": 0,
+      "calls": [
+        {
+          "agent_key": "echo",
+          "message": {
+            "role": "user",
+            "parts": [
+              {
+                "kind": "text",
+                "text": "latest"
+              }
+            ]
+          },
+          "background": false,
+          "retries": null,
+          "memory": {
+            "entity_id": "seed"
+          }
+        }
+      ],
+      "expected": null,
+      "error": true
+    }
+  ]
+}

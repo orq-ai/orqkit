@@ -162,3 +162,29 @@ describe("calculateEvaluatorAverages", () => {
     expect(averages.get("check")?.get("job1")?.value).toBe("100.0%");
   });
 });
+
+describe("nullable and mixed score parity", () => {
+  for (const [values, expected] of [
+    [[null, null], "[no basis]"],
+    [[null, true], "100.0%"],
+    [[null, 0.4, "inconclusive", 0.8], "0.60"],
+    [["inconclusive", 0.5], "0.50"],
+    [[{ foo: 1 }], "[dict]"],
+  ] as const)
+    test(`matches Python formatting for ${JSON.stringify(values)}`, () => {
+      const rows = values.map((value) => ({
+        dataPoint: { inputs: {} },
+        jobResults: [
+          {
+            jobName: "target",
+            output: "text",
+            evaluatorScores: [{ evaluatorName: "judge", score: { value } }],
+          },
+        ],
+      }));
+      expect(
+        calculateEvaluatorAverages(rows).averages.get("judge")?.get("target")
+          ?.value,
+      ).toBe(expected);
+    });
+});

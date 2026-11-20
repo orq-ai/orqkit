@@ -46,28 +46,24 @@ describe("sendResultsToOrqEffect serialization", () => {
     ];
   }
 
-  function capturePayload(
+  async function capturePayload(
     results: EvaluatorqResult,
   ): Promise<Record<string, unknown>> {
-    return new Promise((resolve) => {
-      const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(
-        async (_url: string | URL | Request, init?: RequestInit) => {
-          const body = JSON.parse(init?.body as string);
-          resolve(body);
-          return new Response(
-            JSON.stringify({
-              sheet_id: "s1",
-              manifest_id: "m1",
-              experiment_name: "test",
-              rows_created: 1,
-            }),
-            { status: 200, headers: { "Content-Type": "application/json" } },
-          );
-        },
-      ) as unknown as typeof fetch;
-
-      Effect.runPromise(
+    const originalFetch = globalThis.fetch;
+    let payload: Record<string, unknown> = {};
+    globalThis.fetch = mock(
+      async (_url: string | URL | Request, init?: RequestInit) => {
+        payload = JSON.parse(init?.body as string);
+        return Response.json({
+          sheet_id: "s1",
+          manifest_id: "m1",
+          experiment_name: "test",
+          rows_created: 1,
+        });
+      },
+    ) as unknown as typeof fetch;
+    try {
+      await Effect.runPromise(
         sendResultsToOrqEffect(
           apiKey,
           evalName,
@@ -78,10 +74,11 @@ describe("sendResultsToOrqEffect serialization", () => {
           endTime,
           undefined,
         ),
-      ).finally(() => {
-        globalThis.fetch = originalFetch;
-      });
-    });
+      );
+      return payload;
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   }
 
   // Extract the first evaluator score entry from a captured payload
@@ -194,7 +191,14 @@ describe("evaluatorqEffect sendResults", () => {
 
   test("false skips the upload", async () => {
     process.env.ORQ_API_KEY = "test-key";
-    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    const fetchSpy = mock(async () =>
+      Response.json({
+        sheet_id: "s",
+        manifest_id: "m",
+        experiment_name: "test",
+        rows_created: 1,
+      }),
+    );
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
     await Effect.runPromise(
@@ -211,7 +215,14 @@ describe("evaluatorqEffect sendResults", () => {
 
   test("uploads by default", async () => {
     process.env.ORQ_API_KEY = "test-key";
-    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    const fetchSpy = mock(async () =>
+      Response.json({
+        sheet_id: "s",
+        manifest_id: "m",
+        experiment_name: "test",
+        rows_created: 1,
+      }),
+    );
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
     await Effect.runPromise(

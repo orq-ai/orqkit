@@ -88,7 +88,7 @@ export class UserSimulatorAgent extends BaseAgent {
     });
 
     return this.respondAsync(promptMessages, {
-      temperature: 0.8,
+      volatileTail: 1,
       llmPurpose: "first_message",
       signal,
     });

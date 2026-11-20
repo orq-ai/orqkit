@@ -3,6 +3,7 @@
  */
 
 import type { FirstMessageGenerator } from "../generators/first-message-generator.js";
+import { isRecoverableFirstMessageFailure } from "../generators/first-message-generator.js";
 import type {
   Datapoint,
   Persona,
@@ -23,18 +24,22 @@ const TIMED_OUT = Symbol("timed out");
 
 /** Stop waiting for `work` after `timeoutMs`. It cannot be cancelled, so it may keep running. */
 async function withinLimit<T>(
-  work: Promise<T>,
+  work: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
 ): Promise<T | typeof TIMED_OUT> {
   if (timeoutMs <= 0) {
-    return work;
+    return work(new AbortController().signal);
   }
+  const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<typeof TIMED_OUT>((resolve) => {
-    timer = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
+    timer = setTimeout(() => {
+      resolve(TIMED_OUT);
+      controller.abort();
+    }, timeoutMs);
   });
   try {
-    return await Promise.race([work, limit]);
+    return await Promise.race([work(controller.signal), limit]);
   } finally {
     clearTimeout(timer);
   }
@@ -55,6 +60,7 @@ export async function runSimulationInput(
   maxTurns: number,
   getFirstMessages: () => FirstMessageGenerator,
   timeoutMs: number = SIMULATION_TIMEOUT_MS,
+  signal?: AbortSignal,
 ): Promise<SimulationResult> {
   if ("datapoint" in input) {
     return runner.runWithTimeout(input.datapoint, maxTurns, timeoutMs);
@@ -66,7 +72,12 @@ export async function runSimulationInput(
   if (!firstMessage) {
     try {
       const generated = await withinLimit(
-        getFirstMessages().generate(persona, scenario),
+        (timeoutSignal) =>
+          getFirstMessages().generate(
+            persona,
+            scenario,
+            signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal,
+          ),
         timeoutMs,
       );
       if (generated === TIMED_OUT) {
@@ -74,6 +85,7 @@ export async function runSimulationInput(
       }
       firstMessage = generated;
     } catch (err) {
+      if (!isRecoverableFirstMessageFailure(err)) throw err;
       const reason = err instanceof Error ? err.message : String(err);
       return errorResult(`First message failed: ${reason}`, persona, scenario);
     }

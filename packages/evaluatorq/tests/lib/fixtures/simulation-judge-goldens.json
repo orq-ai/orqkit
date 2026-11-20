@@ -1,0 +1,597 @@
+[
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": null
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": "high"
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": -1
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": 3
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": "0.4"
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 0.4,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "goal_completion_score": true
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": false,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": false,
+      "reason": "done",
+      "goal_achieved": false,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": "yes",
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": 2,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "Failed to parse judgment decision - terminating for safety",
+      "goal_achieved": false,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": null,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": ["a", "b"],
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "[\"a\",\"b\"]",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    },
+    "difference": "Non-string list reason uses the established JSON text convention."
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": null
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": []
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_9",
+          "occurred": true
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": "true"
+        }
+      ]
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": ""
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": "inf"
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": true,
+      "reason": "done",
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "factual_accuracy": 0.4
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "done",
+      "goal_achieved": true,
+      "rules_broken": [],
+      "goal_completion_score": 1.0,
+      "criteria_verdicts": [
+        {
+          "criterion_id": "criteria_0",
+          "occurred": true,
+          "evidence": "refund"
+        }
+      ],
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": 0.4
+    }
+  },
+  {
+    "input": {},
+    "output": {
+      "should_terminate": true,
+      "reason": "Failed to parse judgment decision - terminating for safety",
+      "goal_achieved": false,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": null,
+    "output": {
+      "should_terminate": true,
+      "reason": "Failed to parse judgment decision - terminating for safety",
+      "goal_achieved": false,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  },
+  {
+    "input": {
+      "should_terminate": true,
+      "goal_achieved": "bad"
+    },
+    "output": {
+      "should_terminate": true,
+      "reason": "Failed to parse judgment decision - terminating for safety",
+      "goal_achieved": false,
+      "rules_broken": [],
+      "goal_completion_score": 0.0,
+      "criteria_verdicts": null,
+      "response_quality": null,
+      "hallucination_risk": null,
+      "tone_appropriateness": null,
+      "factual_accuracy": null
+    }
+  }
+]
