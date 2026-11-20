@@ -43,7 +43,9 @@ beforeEach(async () => {
   clearCliSlugCache();
 });
 afterEach(async () => {
-  process.env = original;
+  for (const key of Object.keys(process.env))
+    if (!Object.hasOwn(original, key)) delete process.env[key];
+  Object.assign(process.env, original);
   clearCliSlugCache();
   await rm(directory, { recursive: true, force: true });
 });
