@@ -676,7 +676,10 @@ export const InsightsLaunchSpecSchema = signalModel({
     .min(MIN_TRACE_INPUT_CHARS)
     .max(MAX_TRACE_INPUT_CHARS)
     .default(DEFAULT_TRACE_INPUT_CHARS),
-  labels: z.array(z.string()).max(presetNames.length).default([]),
+  labels: z
+    .array(z.string())
+    .max(presetNames.length)
+    .default(() => []),
   customLabels: z
     .array(
       z
@@ -686,9 +689,12 @@ export const InsightsLaunchSpecSchema = signalModel({
         ),
     )
     .max(10)
-    .default([]),
-  codingLabels: z.array(z.string()).max(CODING_PRESETS.size).default([]),
-  dimensions: z.array(z.enum(DIMENSIONS)).default(["intent"]),
+    .default(() => []),
+  codingLabels: z
+    .array(z.string())
+    .max(CODING_PRESETS.size)
+    .default(() => []),
+  dimensions: z.array(z.enum(DIMENSIONS)).default(() => ["intent" as const]),
   summaryModel: z.string().max(200).trim().default(""),
   classifierModel: z.string().max(200).trim().default(""),
   embeddingModel: z.string().max(200).trim().default(""),

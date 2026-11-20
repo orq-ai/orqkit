@@ -41,13 +41,13 @@ log("ARGV " + args.join(" "));
 if (args[0] === "--context") args = args.slice(2);
 const sub = args[0] ?? "";
 if (sub === "image") {
-  if (env.FAKE_IMAGE_ERROR) console.error(env.FAKE_IMAGE_ERROR);
+  if (env.FAKE_IMAGE_ERROR) process.stderr.write(env.FAKE_IMAGE_ERROR + "\\n");
   process.exit(Number(env.FAKE_IMAGE_EXIT || 0));
 }
 if (sub === "ps") process.exit(0);
 if (sub === "run") {
   if (env.FAKE_RUN_SLEEP) sleep(Number(env.FAKE_RUN_SLEEP));
-  if (env.FAKE_RUN_EXIT) { console.error("daemon down"); process.exit(Number(env.FAKE_RUN_EXIT)); }
+  if (env.FAKE_RUN_EXIT) { process.stderr.write("daemon down\\n"); process.exit(Number(env.FAKE_RUN_EXIT)); }
   log("CREATED");
   if (env.FAKE_RUN_STOPPED) fs.writeFileSync(env.FAKE_STOPPED, "");
   console.log("cid");

@@ -154,7 +154,7 @@ export const DockerOptionsSchema = z
       context: z.string().nullable().default(null),
       workdir: z.string().default("/work"),
       namePrefix: z.string().default("evq"),
-      runArgs: z.array(z.string()).default([]),
+      runArgs: z.array(z.string()).default(() => []),
       passEnv: z.array(z.string()).nullable().default(null),
       allowPrivilegeEscalation: z.boolean().default(false),
     }),
