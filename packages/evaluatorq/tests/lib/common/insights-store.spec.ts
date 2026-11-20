@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
@@ -31,6 +31,8 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
     );
     expect(new Set(paths).size).toBe(8);
     for (const path of paths) {
+      if (process.platform !== "win32")
+        expect((await stat(path)).mode & 0o777).toBe(0o600);
       const loaded = await loadRun(path);
       expect(loaded.runId).toBe(run.runId);
       expect(
