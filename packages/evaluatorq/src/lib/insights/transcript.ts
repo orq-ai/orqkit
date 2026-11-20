@@ -328,6 +328,17 @@ const risky =
 export function isRiskyCommand(command: string): boolean {
   return risky.test(command);
 }
+export function skillNames(call: Row, args: Row): string[] {
+  const matched = [
+    ...rawCallArguments(call).matchAll(/"skill"\s*:\s*"([^"]+)"/g),
+  ].map((match) => match[1] as string);
+  const names = matched.length
+    ? matched
+    : Object.hasOwn(args, "skill")
+      ? [args.skill]
+      : [];
+  return names.map((name) => scrubKnownSecrets(pythonString(name)));
+}
 export function toolStats(trace: TraceRecord | TraceDocument): {
   tools: Record<string, number>;
   skills: Record<string, number>;
@@ -346,16 +357,7 @@ export function toolStats(trace: TraceRecord | TraceDocument): {
       const name = callName(call),
         args = callArguments(call);
       if (name === "Skill") {
-        const matched = [
-            ...rawCallArguments(call).matchAll(/"skill"\s*:\s*"([^"]+)"/g),
-          ].map((match) => match[1] as string),
-          names = matched.length
-            ? matched
-            : Object.hasOwn(args, "skill")
-              ? [args.skill]
-              : [];
-        for (const name of names)
-          add(skills, scrubKnownSecrets(pythonString(name)));
+        for (const skill of skillNames(call, args)) add(skills, skill);
         continue;
       }
       add(tools, name);

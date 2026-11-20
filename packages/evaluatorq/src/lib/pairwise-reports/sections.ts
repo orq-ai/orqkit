@@ -261,7 +261,7 @@ function classifyObservations(
       ordering: observation.ordering,
       repetition: observation.repetition,
       choice,
-      confidence: raw.confidence,
+      confidence: raw.confidence ?? null,
       probabilities: displayed,
     });
   }

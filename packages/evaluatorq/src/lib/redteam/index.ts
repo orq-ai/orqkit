@@ -1,5 +1,6 @@
 export { classifyErrorType } from "../common/target-call.js";
 export * from "./adaptive/attack-generator.js";
+export * from "./adaptive/blackbox-classifier.js";
 export * from "./adaptive/capability-classifier.js";
 export * from "./adaptive/evaluator.js";
 export * from "./adaptive/objective-generator.js";
