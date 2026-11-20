@@ -14,6 +14,8 @@
       "!**/.nx",
       "!node_modules",
       "!**/*.generated.ts",
+      "!packages/evaluatorq/static/*.min.js",
+      "!packages/evaluatorq/tests/lib/dashboard/fixtures/integration/runs/unparseable.json",
       "!**/.claude",
       "!**/.taskmaster",
       "!**/.venv",
@@ -33,6 +35,31 @@
     "indentStyle": "space",
     "indentWidth": 2
   },
+  "overrides": [
+    {
+      "includes": ["packages/evaluatorq/tests/**/fixtures/**/*.json"],
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": [
+        "packages/evaluatorq/static/**",
+        "packages/evaluatorq/tests/lib/dashboard/js/minidom.cjs"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "recommended": false
+        }
+      },
+      "assist": {
+        "enabled": false
+      }
+    }
+  ],
   "linter": {
     "enabled": true,
     "rules": {
