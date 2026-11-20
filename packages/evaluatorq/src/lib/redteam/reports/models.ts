@@ -28,7 +28,7 @@ const nullableInt = z.number().int().nullable().default(null);
 const nullableNumber = z.number().nullable().default(null);
 const nullableBool = z.boolean().nullable().default(null);
 const metadata = z.record(z.string(), z.unknown()).nullable().default(null);
-const messages = z.array(CanonicalMessageSchema).default([]);
+const messages = z.array(CanonicalMessageSchema).default(() => []);
 const usage = savedUsage.nullable().default(null);
 const framework = z.preprocess(
   (value) => (value === "OWASP-AGENTIC" ? "OWASP-ASI" : value),
@@ -37,12 +37,12 @@ const framework = z.preprocess(
 const turn = savedAdapter((value) =>
   value instanceof Turn ? value : new Turn(value as Record<string, unknown>),
 );
-const turns = z.array(turn).default([]);
+const turns = z.array(turn).default(() => []);
 const runError = savedAdapter((value) => RunErrorSchema.parse(value));
 const responseTrace = savedKeys(
   z.object({ traceId: nullableString, spanId: nullableString }),
 );
-const responseTraces = z.array(responseTrace).default([]);
+const responseTraces = z.array(responseTrace).default(() => []);
 const unitRate = z.number().min(0).max(1);
 const nullableRate = unitRate.nullable().default(null);
 
@@ -126,7 +126,7 @@ export const JobOutputPayloadSchema = savedKeys(
       errorCode: nullableString,
       errorDetails: metadata,
       errorTurn: nullableInt,
-      truncatedTurns: z.array(z.number().int()).default([]),
+      truncatedTurns: z.array(z.number().int()).default(() => []),
       backtrackedTurns: turns,
       refusalJudgeFailures: z.number().int().default(0),
       finishReason: nullableString,
@@ -300,8 +300,10 @@ export const VulnerabilitySummarySchema = savedKeys(
     evaluatedAttacks: z.number().int().default(0),
     vulnerabilitiesFound: z.number().int(),
     resistanceRate: nullableRate,
-    strategiesUsed: z.array(z.string()).default([]),
-    frameworkCategories: z.record(z.string(), z.array(z.string())).default({}),
+    strategiesUsed: z.array(z.string()).default(() => []),
+    frameworkCategories: z
+      .record(z.string(), z.array(z.string()))
+      .default(() => ({})),
   }),
 );
 export type VulnerabilitySummary = z.infer<typeof VulnerabilitySummarySchema>;
@@ -319,7 +321,7 @@ export const CategorySummarySchema = savedKeys(
     vulnerabilityRate: nullableRate,
     resistanceRate: nullableRate,
     totalErrors: z.number().int().default(0),
-    strategiesUsed: z.array(z.string()).default([]),
+    strategiesUsed: z.array(z.string()).default(() => []),
   }),
 );
 export type CategorySummary = z.infer<typeof CategorySummarySchema>;
@@ -378,7 +380,7 @@ export const JuryHealthSchema = savedKeys(
     samplesWithAbstention: issueNumber,
     judgeFailureReasons: z
       .array(z.string())
-      .default([])
+      .default(() => [])
       .transform((reasons) =>
         [
           ...new Set(
@@ -483,22 +485,26 @@ export const ReportSummarySchema = savedKeys(
     resistanceRate: nullableRate,
     totalErrors: z.number().int().default(0),
     preExecutionErrors: z.number().int().default(0),
-    errorsByType: z.record(z.string(), z.number().int()).default({}),
+    errorsByType: z.record(z.string(), z.number().int()).default(() => ({})),
     tokenUsageTotal: usage,
-    tokenUsageBySource: z.record(z.string(), savedUsage).default({}),
+    tokenUsageBySource: z.record(z.string(), savedUsage).default(() => ({})),
     postProcessingTokenUsage: usage,
     byVulnerability: z
       .record(z.string(), VulnerabilitySummarySchema)
-      .default({}),
-    byCategory: z.record(z.string(), CategorySummarySchema).default({}),
-    byTechnique: z.record(z.string(), TechniqueSummarySchema).default({}),
-    bySeverity: z.record(z.string(), SeveritySummarySchema).default({}),
+      .default(() => ({})),
+    byCategory: z.record(z.string(), CategorySummarySchema).default(() => ({})),
+    byTechnique: z
+      .record(z.string(), TechniqueSummarySchema)
+      .default(() => ({})),
+    bySeverity: z.record(z.string(), SeveritySummarySchema).default(() => ({})),
     byDeliveryMethod: z
       .record(z.string(), DeliveryMethodSummarySchema)
-      .default({}),
-    byTurnType: z.record(z.string(), TurnTypeSummarySchema).default({}),
-    byDomain: z.record(z.string(), DomainSummarySchema).default({}),
-    byFramework: z.record(z.string(), FrameworkSummarySchema).default({}),
+      .default(() => ({})),
+    byTurnType: z.record(z.string(), TurnTypeSummarySchema).default(() => ({})),
+    byDomain: z.record(z.string(), DomainSummarySchema).default(() => ({})),
+    byFramework: z
+      .record(z.string(), FrameworkSummarySchema)
+      .default(() => ({})),
     juryReliability: JuryReliabilitySchema.nullable().default(null),
     juryHealth: JuryHealthSchema.transform((value) => new JuryHealth(value))
       .nullable()
@@ -617,10 +623,10 @@ export const RedTeamReportSchema = savedKeys(
     ),
     framework: framework.nullable().default(null),
     categoriesTested: z.array(z.string()),
-    testedAgents: z.array(z.string()).default([]),
+    testedAgents: z.array(z.string()).default(() => []),
     totalResults: z.number().int(),
-    errors: z.array(runError).default([]),
-    agentContexts: z.record(z.string(), savedContext).default({}),
+    errors: z.array(runError).default(() => []),
+    agentContexts: z.record(z.string(), savedContext).default(() => ({})),
     results: z.array(
       RedTeamResultSchema.transform((value) => new RedTeamResult(value)),
     ),
@@ -629,11 +635,11 @@ export const RedTeamReportSchema = savedKeys(
       .array(FocusAreaRecommendationSchema)
       .nullable()
       .default(null),
-    appliedRecommendations: z.array(z.string()).default([]),
+    appliedRecommendations: z.array(z.string()).default(() => []),
     executiveSummary: nullableString,
     tokenUsageSummary: usage,
     durationSeconds: nullableNumber,
-    pipelineWarnings: z.array(z.string()).default([]),
+    pipelineWarnings: z.array(z.string()).default(() => []),
     orqBaseUrl: nullableString,
     experimentUrl: nullableString,
     runId: nullableString,

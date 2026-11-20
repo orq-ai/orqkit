@@ -69,7 +69,7 @@ export const PairwiseVoteSchema = z.object({
   completed: z.boolean().default(true),
   replacement: z.boolean().default(false),
   explanation: z.string().default(""),
-  observations: z.array(RepetitionObservationSchema).default([]),
+  observations: z.array(RepetitionObservationSchema).default(() => []),
   repetitionFailures: z.number().int().nonnegative().default(0),
 });
 
@@ -78,7 +78,7 @@ export type PairwiseVoteInput = z.input<typeof PairwiseVoteSchema>;
 
 export const PairwiseComparisonSchema = z.object({
   winner: z.string(),
-  votes: z.array(PairwiseVoteSchema).default([]),
+  votes: z.array(PairwiseVoteSchema).default(() => []),
   tokenUsage: UsageSchema.nullable().default(null),
   judgeLatencyMs: z.number().finite().nonnegative().nullable().default(null),
   traceId: z.string().nullable().default(null),
@@ -103,16 +103,16 @@ export type JudgeStats = z.infer<typeof JudgeStatsSchema>;
 export const BTSigmaAggregationSchema = z.object({
   pABeatsB: z.number(),
   skillGap: z.number(),
-  judgeSigmas: z.record(z.number()).default({}),
-  repetitionConsistency: z.record(z.number()).default({}),
-  repetitionConsistencyRaw: z.record(z.number()).default({}),
-  winners: z.array(z.string()).default([]),
+  judgeSigmas: z.record(z.number()).default(() => ({})),
+  repetitionConsistency: z.record(z.number()).default(() => ({})),
+  repetitionConsistencyRaw: z.record(z.number()).default(() => ({})),
+  winners: z.array(z.string()).default(() => []),
   aWinRate: rate,
   bWinRate: rate,
   tieRate: z.number(),
   inconclusiveRate: z.number(),
   converged: z.boolean().default(true),
-  fitWarnings: z.array(z.string()).default([]),
+  fitWarnings: z.array(z.string()).default(() => []),
 });
 
 export type BTSigmaAggregation = z.infer<typeof BTSigmaAggregationSchema>;
@@ -124,7 +124,7 @@ export const PairwiseReportSchema = z.object({
   tieRate: z.number(),
   inconclusiveRate: z.number(),
   meanAgreement: rate,
-  perJudge: z.array(JudgeStatsSchema).default([]),
+  perJudge: z.array(JudgeStatsSchema).default(() => []),
   btSigma: BTSigmaAggregationSchema.nullable().default(null),
 });
 
