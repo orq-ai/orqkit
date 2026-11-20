@@ -24,7 +24,7 @@ const server = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
   async fetch(request) {
-    if (request.method === "GET") return Response.json({data:[]});
+    if (request.method === "GET") return Response.json({ data: [] });
     const body = (await request.json()) as Record<string, unknown>;
     requests.push(body);
     return Response.json({
