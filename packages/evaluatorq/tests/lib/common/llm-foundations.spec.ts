@@ -24,6 +24,10 @@ import {
   resolveResultsBaseUrl,
 } from "../../../src/lib/common/llm-client.js";
 import {
+  getModelInfo,
+  modelsByProvider,
+} from "../../../src/lib/common/model-catalogue.js";
+import {
   addCliModels,
   exportCliModels,
   loadModelSettings,
@@ -550,4 +554,48 @@ describe("model roles", () => {
     writeFileSync(broken, "{");
     expect(loadModelSettings(broken).roles).toEqual({});
   });
+});
+
+test("proxy routing requires an explicit host only for platform operations", async () => {
+  const names = ["ORQ_BASE_URL", "ROUTER_BASE_URL", "ORQ_API_KEY"];
+  const saved = new Map(names.map((name) => [name, process.env[name]]));
+  delete process.env.ORQ_BASE_URL;
+  process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+  process.env.ORQ_API_KEY = "test-key";
+  try {
+    const resolved = await resolveLlmClient();
+    expect(resolved.client.baseURL).toBe("https://proxy.example/custom");
+    expect(() => orqBaseUrl()).toThrow("set ORQ_BASE_URL explicitly");
+    expect(() => resolveResultsBaseUrl(resolved.client)).toThrow(
+      "set ORQ_BASE_URL explicitly",
+    );
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    const fetchStub = Object.assign(
+      async () => {
+        throw new Error("Unexpected platform request");
+      },
+      { preconnect: globalThis.fetch.preconnect },
+    );
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation(fetchStub);
+    try {
+      expect(await getModelInfo("fixture", resolved.client)).toBeNull();
+      expect(warn).toHaveBeenCalled();
+      await expect(
+        modelsByProvider(resolved.client, { strict: true }),
+      ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+      warn.mockRestore();
+    }
+    process.env.ORQ_BASE_URL = "https://platform.example/prefix";
+    expect(resolveResultsBaseUrl(resolved.client)).toBe(
+      "https://platform.example/prefix",
+    );
+  } finally {
+    for (const [name, value] of saved) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
 });
