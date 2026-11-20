@@ -270,7 +270,30 @@ export class ScenarioGenerator {
     context?: string;
     numScenarios?: number;
     edgeCasePercentage?: number;
+    seed?: string;
+    seeds?: string[];
+    generationInstructions?: string;
   }): Promise<Scenario[]> {
+    if (params.seeds?.length) {
+      const batches = await Promise.all(
+        params.seeds.map((seed) =>
+          this.generate({
+            ...params,
+            seeds: undefined,
+            seed,
+            numScenarios: 1,
+            edgeCasePercentage: 0,
+          }),
+        ),
+      );
+      return batches.map((batch, index) => {
+        if (!batch[0])
+          throw new SimulationGenerationError(
+            `Scenario generation returned nothing for seed: ${params.seeds?.[index]}`,
+          );
+        return batch[0];
+      });
+    }
     return withSimulationSpan(
       "orq.simulation.scenario_generation",
       {
@@ -282,6 +305,8 @@ export class ScenarioGenerator {
           agentDescription,
           context = "",
           numScenarios = 10,
+          seed = "",
+          generationInstructions = "",
           edgeCasePercentage = 0.3,
         } = params;
 
@@ -291,11 +316,17 @@ export class ScenarioGenerator {
 
 Additional Context: ${delimit(context || "None provided")}
 
-Generate ${numScenarios} diverse test scenarios for this agent.
+${
+  seed
+    ? `Generate ${numScenarios} scenario(s), each built around this situation: "${seed}".
+- Fill the goal, context, starting emotion, and clear success/failure criteria so each scenario is coherent and realistic for that situation`
+    : `Generate ${numScenarios} diverse test scenarios for this agent.
 - Include ${numEdgeCases} edge case scenarios
 - Cover different emotional states and urgency levels
 - Include both positive and potentially problematic interactions
-- Each scenario should have clear success/failure criteria
+- Each scenario should have clear success/failure criteria`
+}
+${generationInstructions ? `\nAdditional instructions from the caller (apply to every scenario, but keep each scenario valid and coherent):\n${generationInstructions}` : ""}
 
 Return ONLY a JSON array, no other text.`;
 

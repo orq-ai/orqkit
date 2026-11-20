@@ -33,6 +33,39 @@ export type { AgentConfig } from "./agents/base.js";
 export { BaseAgent } from "./agents/base.js";
 export { JudgeAgent } from "./agents/judge.js";
 export { UserSimulatorAgent } from "./agents/user-simulator.js";
+export {
+  executeSimRuns,
+  executeSimSchema,
+  executeSimValidate,
+  executeSimValidateDataset,
+  type SimIO,
+} from "./cli.js";
+export {
+  executeSimExport,
+  executeSimUploadDataset,
+  loadResultsForExport,
+  type SimDatasetsApi,
+  type SimExportArgs,
+  type SimExportIO,
+  type SimUploadArgs,
+  type SimUploadIO,
+} from "./cli-export.js";
+export {
+  executeSimFromTraces,
+  executeSimGenerate,
+  type SimFromTracesArgs,
+  type SimFromTracesIO,
+  type SimGenerateArgs,
+  type SimGenerateIO,
+  toOrqDatasetRows,
+} from "./cli-generate.js";
+export {
+  executeSimRun,
+  executeSimSimulate,
+  type SimRunArgs,
+  type SimRunIO,
+  type SimSimulateArgs,
+} from "./cli-run.js";
 // --- Conversion ---
 export { toOpenResponses } from "./convert.js";
 // --- Criteria (advanced usage) ---
