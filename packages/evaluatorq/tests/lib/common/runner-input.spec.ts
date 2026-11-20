@@ -32,7 +32,9 @@ beforeEach(() => {
 });
 afterEach(() => {
   for (const restore of restorers.reverse()) restore();
-  process.env = original;
+  for (const key of Object.keys(process.env))
+    if (!Object.hasOwn(original, key)) delete process.env[key];
+  Object.assign(process.env, original);
 });
 const job: Job = async () => ({ name: "generated", output: "must not run" });
 const native = (raw: Record<string, unknown>) =>
