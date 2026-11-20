@@ -2770,10 +2770,8 @@ html.sidebar-collapsed .sidebar-toggle .nav-icon { transform: rotate(180deg); }
 .rt-report .rt-attack-row[open] .rt-attack-row-chevron { transform: rotate(180deg); }
 .rt-report .rt-attack-row-body { padding: 14px; background: var(--surface-sunken); }
 
-/* Unify the shared report.css palette onto the brand semantic tokens within the
-   RT report only (flat export + sim keep report.css defaults). Custom props
-   cascade, so this one block repoints every --c-*/--orq-orange consumer —
-   KPI cards, badges, risk pills, status badges, verdict lines — to brand. */
+/* Map report.css colors to brand tokens inside redteam reports.
+   Flat exports and simulation reports keep their report.css defaults. */
 .rt-report {
     --c-fail: var(--outcome-vulnerable);
     --c-pass: var(--outcome-resistant);
