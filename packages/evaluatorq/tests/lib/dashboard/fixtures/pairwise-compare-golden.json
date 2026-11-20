@@ -1,0 +1,1114 @@
+{
+  "runs": {
+    "a1": {
+      "judging": "pairwise",
+      "run_name": "a <b>x</b>",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "a&b <i>",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q1",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q2",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "only-a",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "<script>q</script>",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "tie",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "b1": {
+      "judging": "pairwise",
+      "run_name": "b",
+      "created_at": "2026-11-17T09:02:30Z",
+      "label_a": "old",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q2",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q1",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "only-b",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "<script>q</script>",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "tie",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q9",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "inconclusive",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": null,
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": null,
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "ea": {
+      "judging": "pairwise",
+      "run_name": "empty a",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "old",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [],
+      "report": null
+    },
+    "eb": {
+      "judging": "pairwise",
+      "run_name": "empty b",
+      "created_at": "2026-11-17T09:03:30Z",
+      "label_a": "old",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [],
+      "report": null
+    },
+    "tieA": {
+      "judging": "pairwise",
+      "run_name": "t",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "tie",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "tieB": {
+      "judging": "pairwise",
+      "run_name": "u",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "tie",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "tie",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "tie",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "sameA": {
+      "judging": "pairwise",
+      "run_name": "s",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "same",
+      "label_b": "same",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "sameB": {
+      "judging": "pairwise",
+      "run_name": "s2",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "same",
+      "label_b": "same",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "clear": {
+      "judging": "pairwise",
+      "run_name": "clear",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "old",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q0",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q1",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q2",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q3",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q4",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q5",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q6",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q7",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q8",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "q9",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    },
+    "low": {
+      "judging": "pairwise",
+      "run_name": "low",
+      "created_at": "2026-11-17T09:01:30Z",
+      "label_a": "old",
+      "label_b": "new",
+      "judges": ["j1", "j2"],
+      "criteria": "c",
+      "swap": true,
+      "entries": [
+        {
+          "question": "q1",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "x1",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "x2",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "B",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "B",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        },
+        {
+          "question": "x3",
+          "response_a": "ra",
+          "response_b": "rb",
+          "comparison": {
+            "winner": "A",
+            "votes": [
+              {
+                "model": "j1",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              },
+              {
+                "model": "j2",
+                "vote": "A",
+                "flipped": false,
+                "completed": true,
+                "replacement": false,
+                "explanation": "x",
+                "observations": [],
+                "repetition_failures": 0
+              }
+            ],
+            "token_usage": null,
+            "judge_latency_ms": null,
+            "trace_id": null
+          },
+          "metrics_a": null,
+          "metrics_b": null
+        }
+      ],
+      "report": null
+    }
+  },
+  "cases": [
+    {
+      "a": "a1",
+      "b": "b1",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">a &lt;b&gt;x&lt;/b&gt; <span class=\"cmp-vs\">vs</span> b</h2><p class=\"report-hero-sub\">A: a &lt;b&gt;x&lt;/b&gt; \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: b \u00b7 2026-11-17 09:02</p></header><p class=\"cmp-note\">3 of 5 comparisons matched by question. 1 only in A, 2 only in B.</p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 a &lt;b&gt;x&lt;/b&gt;</div><div class=\"rk-panel-sub\">a&amp;b &lt;i&gt; vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call: a&amp;b &lt;i&gt;</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>a&amp;b &lt;i&gt; 67% \u00b7 new 33%</dd><dt>Decided</dt><dd>75%</dd><dt>Judge agreement (\u03ba)</dt><dd>1.00 (almost perfect)</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>33%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>6%\u201379%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 33% of 3 decided comparisons. 95% uncertainty range: 6% to 79%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:6.1%;width:73.1%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:33.3%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 b</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call: new</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 33% \u00b7 new 67%</dd><dt>Decided</dt><dd>60%</dd><dt>Judge agreement (\u03ba)</dt><dd>1.00 (almost perfect)</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>67%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>21%\u201394%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 67% of 3 decided comparisons. 95% uncertainty range: 21% to 94%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:20.8%;width:73.1%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:66.7%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">3 compared \u00b7 2 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=1#cmp-1\">#1</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=2#cmp-2\">#2</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q1</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">a&amp;b &lt;i&gt;</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span> <span class=\"tag pw-changed\">changed</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=2#cmp-2\">#2</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=1#cmp-1\">#1</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q2</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">old</span> <span class=\"tag pw-changed\">changed</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=4#cmp-4\">#4</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=4#cmp-4\">#4</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">&lt;script&gt;q&lt;/script&gt;</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-tie)\">tie</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-tie)\">tie</span></td></tr></tbody></table></div></div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">1</div><div class=\"kpi-label\">Only in run A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">2</div><div class=\"kpi-label\">Only in run B</div></div></div></div>"
+    },
+    {
+      "a": "ea",
+      "b": "eb",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">empty a <span class=\"cmp-vs\">vs</span> empty b</h2><p class=\"report-hero-sub\">A: empty a \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: empty b \u00b7 2026-11-17 09:03</p></header><p class=\"cmp-note\">0 of 0 comparisons matched by question.</p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 empty a</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">No decided comparisons</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>\u2014</dd><dt>Decided</dt><dd>\u2014</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 empty b</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">No decided comparisons</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>\u2014</dd><dt>Decided</dt><dd>\u2014</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-body\"><p class=\"pw-empty\">No question appears in both runs.</p></div></div></div>"
+    },
+    {
+      "a": "tieA",
+      "b": "tieB",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">t <span class=\"cmp-vs\">vs</span> u</h2><p class=\"report-hero-sub\">A: t \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: u \u00b7 2026-11-17 09:01</p></header><p class=\"cmp-note\">1 of 1 comparisons matched by question.</p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 t</div><div class=\"rk-panel-sub\">tie vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call: tie</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>tie 100% \u00b7 new 0%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>0%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>0%\u201379%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 0% of 1 decided comparisons. 95% uncertainty range: 0% to 79%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:0.0%;width:79.3%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:0.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 u</div><div class=\"rk-panel-sub\">tie vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">No decided comparisons</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>\u2014</dd><dt>Decided</dt><dd>0%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">1 compared \u00b7 1 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=1#cmp-1\">#1</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=1#cmp-1\">#1</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">tie (A)</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-tie)\">tie</span> <span class=\"tag pw-changed\">changed</span></td></tr></tbody></table></div></div></div>"
+    },
+    {
+      "a": "sameA",
+      "b": "sameB",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">s <span class=\"cmp-vs\">vs</span> s2</h2><p class=\"report-hero-sub\">A: s \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: s2 \u00b7 2026-11-17 09:01</p></header><p class=\"cmp-note\">1 of 1 comparisons matched by question.</p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 s</div><div class=\"rk-panel-sub\">same vs same</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call: same</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>same 100% \u00b7 same 0%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">same win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>0%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>0%\u201379%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"same won 0% of 1 decided comparisons. 95% uncertainty range: 0% to 79%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:0.0%;width:79.3%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:0.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 s2</div><div class=\"rk-panel-sub\">same vs same</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call: same</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>same 0% \u00b7 same 100%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">same win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>100%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>21%\u2013100%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"same won 100% of 1 decided comparisons. 95% uncertainty range: 21% to 100%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:20.7%;width:79.3%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:100.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">1 compared \u00b7 1 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=1#cmp-1\">#1</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=1#cmp-1\">#1</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">same (A)</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">same (B)</span> <span class=\"tag pw-changed\">changed</span></td></tr></tbody></table></div></div></div>"
+    },
+    {
+      "a": "clear",
+      "b": "low",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">clear <span class=\"cmp-vs\">vs</span> low</h2><p class=\"report-hero-sub\">A: clear \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: low \u00b7 2026-11-17 09:01</p></header><p class=\"cmp-note\">1 of 10 comparisons matched by question. 9 only in A, 3 only in B. <span class=\"cmp-warn\">low overlap (10%) \u2014 the two runs share few questions, so most comparisons can't be set against each other.</span></p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 clear</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u2713 Clear winner: new</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 0% \u00b7 new 100%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>100%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>72%\u2013100%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 100% of 10 decided comparisons. 95% uncertainty range: 72% to 100%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:72.2%;width:27.8%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:100.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 low</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 50% \u00b7 new 50%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>1.00 (almost perfect)</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>50%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>15%\u201385%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 50% of 4 decided comparisons. 95% uncertainty range: 15% to 85%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:15.0%;width:70.0%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:50.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">1 compared \u00b7 1 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=2#cmp-2\">#2</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=1#cmp-1\">#1</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q1</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">old</span> <span class=\"tag pw-changed\">changed</span></td></tr></tbody></table></div></div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">9</div><div class=\"kpi-label\">Only in run A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3</div><div class=\"kpi-label\">Only in run B</div></div></div></div>"
+    },
+    {
+      "a": "low",
+      "b": "clear",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">low <span class=\"cmp-vs\">vs</span> clear</h2><p class=\"report-hero-sub\">A: low \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: clear \u00b7 2026-11-17 09:01</p></header><p class=\"cmp-note\">1 of 10 comparisons matched by question. 3 only in A, 9 only in B. <span class=\"cmp-warn\">low overlap (10%) \u2014 the two runs share few questions, so most comparisons can't be set against each other.</span></p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 low</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u26a0 Too close to call</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 50% \u00b7 new 50%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>1.00 (almost perfect)</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>50%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>15%\u201385%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 50% of 4 decided comparisons. 95% uncertainty range: 15% to 85%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:15.0%;width:70.0%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:50.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 clear</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u2713 Clear winner: new</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 0% \u00b7 new 100%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>100%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>72%\u2013100%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 100% of 10 decided comparisons. 95% uncertainty range: 72% to 100%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:72.2%;width:27.8%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:100.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">1 compared \u00b7 1 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=1#cmp-1\">#1</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=2#cmp-2\">#2</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q1</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-a)\">old</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span> <span class=\"tag pw-changed\">changed</span></td></tr></tbody></table></div></div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3</div><div class=\"kpi-label\">Only in run A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">9</div><div class=\"kpi-label\">Only in run B</div></div></div></div>"
+    },
+    {
+      "a": "clear",
+      "b": "clear",
+      "html": "<div class=\"report-aligned pw-report pw-compare\"><header class=\"report-hero\"><p class=\"report-hero-kicker\">Pairwise \u00b7 Run comparison</p><h2 class=\"report-hero-title\">clear <span class=\"cmp-vs\">vs</span> clear</h2><p class=\"report-hero-sub\">A: clear \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: clear \u00b7 2026-11-17 09:01</p></header><p class=\"cmp-note\">10 of 10 comparisons matched by question.</p><div class=\"pw-cmp-cols\"><div class=\"rk-panel\"><div class=\"rk-panel-title\">A \u00b7 clear</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u2713 Clear winner: new</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 0% \u00b7 new 100%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>100%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>72%\u2013100%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 100% of 10 decided comparisons. 95% uncertainty range: 72% to 100%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:72.2%;width:27.8%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:100.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">B \u00b7 clear</div><div class=\"rk-panel-sub\">old vs new</div><div class=\"rk-panel-body\"><p class=\"pw-cmp-verdict\">\u2713 Clear winner: new</p><dl class=\"pw-cmp-facts\"><dt>Win rate</dt><dd>old 0% \u00b7 new 100%</dd><dt>Decided</dt><dd>100%</dd><dt>Judge agreement (\u03ba)</dt><dd>\u2014</dd></dl><div class=\"pw-cmp-run-ci\"><figure class=\"pw-ci-figure\" style=\"--c:var(--pw-b)\"><div class=\"pw-ci-head\"><figcaption class=\"pw-ci-title\">new win rate</figcaption><div class=\"pw-ci-readout\"><span><i class=\"pw-ci-key-dot\" aria-hidden=\"true\"></i>Observed <strong>100%</strong></span><span><i class=\"pw-ci-key-range\" aria-hidden=\"true\"></i>95% range <strong>72%\u2013100%</strong></span></div></div><div class=\"pw-ci\" role=\"img\" aria-label=\"new won 100% of 10 decided comparisons. 95% uncertainty range: 72% to 100%. 50% means equal wins.\"><div class=\"pw-ci-range\" style=\"left:72.2%;width:27.8%\"></div><div class=\"pw-ci-mid\"></div><div class=\"pw-ci-dot\" style=\"left:100.0%\"></div></div><div class=\"pw-ci-cap\"><span>0%</span><span>50% \u00b7 equal wins</span><span>100%</span></div></figure></div></div></div></div><div class=\"rk-panel\"><div class=\"rk-panel-title\">Matched comparisons</div><div class=\"rk-panel-sub\">10 compared \u00b7 0 changed</div><div class=\"rk-panel-body\"><table class=\"pw-cmp-table\"><thead><tr><th>#A</th><th>#B</th><th>Question</th><th>Winner in run A</th><th>Winner in run B</th></tr></thead><tbody><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=1#cmp-1\">#1</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=1#cmp-1\">#1</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q0</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=2#cmp-2\">#2</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=2#cmp-2\">#2</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q1</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=3#cmp-3\">#3</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=3#cmp-3\">#3</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q2</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=4#cmp-4\">#4</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=4#cmp-4\">#4</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q3</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=5#cmp-5\">#5</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=5#cmp-5\">#5</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q4</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=6#cmp-6\">#6</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=6#cmp-6\">#6</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q5</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=7#cmp-7\">#7</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=7#cmp-7\">#7</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q6</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=8#cmp-8\">#8</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=8#cmp-8\">#8</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q7</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=9#cmp-9\">#9</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=9#cmp-9\">#9</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q8</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr><tr><td data-label=\"#A\"><a href=\"/r/ra?cmp=10#cmp-10\">#10</a></td><td data-label=\"#B\"><a href=\"/r/rb?cmp=10#cmp-10\">#10</a></td><td class=\"pw-cmp-q\" data-label=\"Question\">q9</td><td data-label=\"Winner in run A\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td><td data-label=\"Winner in run B\"><span class=\"pw-vchip\" style=\"--c:var(--pw-b)\">new</span></td></tr></tbody></table></div></div></div>"
+    }
+  ]
+}

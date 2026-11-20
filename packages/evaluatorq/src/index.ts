@@ -1,3 +1,4 @@
+export * from "./lib/backends/index.js";
 export {
   type Aggregator,
   type AggregatorName,

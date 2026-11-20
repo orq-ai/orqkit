@@ -152,12 +152,13 @@ it("rejects untrusted hosts before routing or returning the readiness nonce", as
     roots: [],
     host: "127.0.0.1",
     port: 0,
+    readyNonce: "private-ready",
   });
   await once(server, "listening");
   const address = server.address();
   if (!address || typeof address === "string")
     throw new Error("Missing test address");
-  const request = (host: string, path = "/static/dashboard.css") =>
+  const request = (host: string, path = "/_dashboard-ready") =>
     new Promise<{ status: number; body: string }>((resolve, reject) => {
       const req = httpRequest(
         {
@@ -186,14 +187,17 @@ it("rejects untrusted hosts before routing or returning the readiness nonce", as
       `evil@localhost:${address.port}`,
       `localhost:${address.port + 1}`,
     ]) {
-      for (const path of ["/", "/static/dashboard.css"])
+      for (const path of ["/", "/_dashboard-ready"])
         expect((await request(host, path)).status).toBe(403);
     }
     for (const host of [
       `localhost:${address.port}`,
       `127.0.0.1:${address.port}`,
     ])
-      expect((await request(host)).status).toBe(200);
+      expect(await request(host)).toEqual({
+        status: 200,
+        body: "private-ready",
+      });
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>

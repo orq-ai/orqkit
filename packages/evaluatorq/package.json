@@ -121,6 +121,12 @@
       "import": "./dist/lib/local-sessions/index.js",
       "default": "./dist/lib/local-sessions/index.js"
     },
+    "./dashboard": {
+      "development": "./src/lib/dashboard/index.ts",
+      "types": "./dist/lib/dashboard/index.d.ts",
+      "import": "./dist/lib/dashboard/index.js",
+      "default": "./dist/lib/dashboard/index.js"
+    },
     "./openai-agents": {
       "development": "./src/lib/integrations/openai-agents/index.ts",
       "types": "./dist/lib/integrations/openai-agents/index.d.ts",
