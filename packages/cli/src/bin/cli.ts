@@ -165,5 +165,4 @@ program
   .option("--parallelism <count>", "Finder classifier concurrency", integer)
   .action(runDashboard);
 
-
 program.parse(process.argv);
