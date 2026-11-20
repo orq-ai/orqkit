@@ -1,0 +1,1314 @@
+{
+  "source": "a59c3a86",
+  "enums": {
+    "AttackTechnique": {
+      "INDIRECT_INJECTION": "indirect-injection",
+      "DIRECT_INJECTION": "direct-injection",
+      "DAN": "DAN",
+      "AUTODAN": "autodan",
+      "DEVELOPER_MODE": "developer-mode",
+      "CREDENTIAL_CACHING": "credential-caching",
+      "PRIVILEGE_ESCALATION": "privilege-escalation",
+      "CONFUSED_DEPUTY": "confused-deputy",
+      "EXCESSIVE_AGENCY": "excessive-agency",
+      "PLUGIN_ABUSE": "plugin-abuse",
+      "RCE_EXPLOIT": "rce-exploit",
+      "SUPPLY_CHAIN": "supply-chain",
+      "RESOURCE_EXHAUSTION": "resource-exhaustion",
+      "MESSAGE_SPOOFING": "message-spoofing",
+      "SOCIAL_ENGINEERING": "social-engineering",
+      "EMOTIONAL_MANIPULATION": "emotional-manipulation",
+      "PAYLOAD_SPLITTING": "payload-splitting",
+      "ALTERNATIVE_ENCODING": "alternative-encoding",
+      "UNICODE_OBFUSCATION": "unicode-obfuscation",
+      "MODEL_EXTRACTION": "model-extraction",
+      "PII_EXTRACTION": "pii-extraction",
+      "PII_INPUT": "pii-input",
+      "SYSTEM_PROMPT_EXTRACTION": "system-prompt-extraction",
+      "TOOL_ABUSE": "tool-abuse",
+      "CONTEXT_POISONING": "context-poisoning",
+      "CASCADE_TRIGGER": "cascade-trigger",
+      "BOUNDARY_VIOLATION": "boundary-violation"
+    },
+    "DeliveryMethod": {
+      "DAN": "DAN",
+      "ROLE_PLAY": "role-play",
+      "SKELETON_KEY": "skeleton-key",
+      "BASE64": "base64",
+      "LEETSPEAK": "leetspeak",
+      "MULTILINGUAL": "multilingual",
+      "CHARACTER_SPACING": "character-spacing",
+      "CRESCENDO": "crescendo",
+      "MANY_SHOT": "many-shot",
+      "AUTHORITY_IMPERSONATION": "authority-impersonation",
+      "REFUSAL_SUPPRESSION": "refusal-suppression",
+      "DIRECT_REQUEST": "direct-request",
+      "CODE_ELICITATION": "code-elicitation",
+      "CODE_ASSISTANCE": "code-assistance",
+      "TOOL_RESPONSE": "tool-response",
+      "WORD_SUBSTITUTION": "word-substitution"
+    },
+    "Severity": {
+      "LOW": "low",
+      "MEDIUM": "medium",
+      "HIGH": "high",
+      "CRITICAL": "critical"
+    },
+    "Framework": {
+      "OWASP_LLM": "OWASP-LLM",
+      "OWASP_ASI": "OWASP-ASI",
+      "OWASP_AGENTIC": "OWASP-AGENTIC",
+      "CONTENT": "CONTENT",
+      "LIABILITY": "LIABILITY",
+      "FAIRNESS": "FAIRNESS",
+      "GDPR": "GDPR",
+      "AI_ACT": "AI-ACT"
+    },
+    "VulnerabilityDomain": {
+      "AGENT": "agent",
+      "MODEL": "model",
+      "DATA": "data"
+    },
+    "Vulnerability": {
+      "GOAL_HIJACKING": "goal_hijacking",
+      "TOOL_MISUSE": "tool_misuse",
+      "IDENTITY_PRIVILEGE_ABUSE": "identity_privilege_abuse",
+      "SUPPLY_CHAIN": "supply_chain",
+      "CODE_EXECUTION": "code_execution",
+      "MEMORY_POISONING": "memory_poisoning",
+      "INTER_AGENT_COMMS": "inter_agent_comms",
+      "CASCADING_FAILURES": "cascading_failures",
+      "TRUST_EXPLOITATION": "trust_exploitation",
+      "ROGUE_AGENTS": "rogue_agents",
+      "EXCESSIVE_AGENCY": "excessive_agency",
+      "PROMPT_INJECTION": "prompt_injection",
+      "SENSITIVE_INFO_DISCLOSURE": "sensitive_info_disclosure",
+      "DATA_POISONING": "data_poisoning",
+      "IMPROPER_OUTPUT": "improper_output",
+      "SYSTEM_PROMPT_LEAKAGE": "system_prompt_leakage",
+      "VECTOR_EMBEDDING_WEAKNESS": "vector_embedding_weakness",
+      "MISINFORMATION": "misinformation"
+    }
+  },
+  "definitions": {
+    "goal_hijacking": {
+      "id": "goal_hijacking",
+      "name": "Agent Goal Hijacking",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "indirect-injection",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI01"
+        ]
+      }
+    },
+    "tool_misuse": {
+      "id": "tool_misuse",
+      "name": "Tool Misuse & Exploitation",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "tool-abuse",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI02"
+        ]
+      }
+    },
+    "identity_privilege_abuse": {
+      "id": "identity_privilege_abuse",
+      "name": "Identity & Privilege Abuse",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "privilege-escalation",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI03"
+        ]
+      }
+    },
+    "supply_chain": {
+      "id": "supply_chain",
+      "name": "Supply Chain Vulnerabilities",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "supply-chain",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI04"
+        ],
+        "OWASP-LLM": [
+          "LLM03"
+        ]
+      }
+    },
+    "code_execution": {
+      "id": "code_execution",
+      "name": "Unexpected Code Execution",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "rce-exploit",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI05"
+        ]
+      }
+    },
+    "memory_poisoning": {
+      "id": "memory_poisoning",
+      "name": "Memory & Context Poisoning",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "context-poisoning",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI06"
+        ]
+      }
+    },
+    "inter_agent_comms": {
+      "id": "inter_agent_comms",
+      "name": "Insecure Inter-Agent Communication",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "message-spoofing",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI07"
+        ]
+      }
+    },
+    "cascading_failures": {
+      "id": "cascading_failures",
+      "name": "Cascading Failures",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "cascade-trigger",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI08"
+        ]
+      }
+    },
+    "trust_exploitation": {
+      "id": "trust_exploitation",
+      "name": "Human-Agent Trust Exploitation",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "social-engineering",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI09"
+        ]
+      }
+    },
+    "rogue_agents": {
+      "id": "rogue_agents",
+      "name": "Rogue Agents",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "boundary-violation",
+      "frameworkMappings": {
+        "OWASP-ASI": [
+          "ASI10"
+        ]
+      }
+    },
+    "prompt_injection": {
+      "id": "prompt_injection",
+      "name": "Prompt Injection",
+      "domain": "model",
+      "description": "",
+      "defaultAttackTechnique": "direct-injection",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM01"
+        ]
+      }
+    },
+    "sensitive_info_disclosure": {
+      "id": "sensitive_info_disclosure",
+      "name": "Sensitive Information Disclosure",
+      "domain": "model",
+      "description": "",
+      "defaultAttackTechnique": "social-engineering",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM02"
+        ]
+      }
+    },
+    "data_poisoning": {
+      "id": "data_poisoning",
+      "name": "Data and Model Poisoning",
+      "domain": "data",
+      "description": "",
+      "defaultAttackTechnique": "context-poisoning",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM04"
+        ]
+      }
+    },
+    "improper_output": {
+      "id": "improper_output",
+      "name": "Improper Output Handling",
+      "domain": "model",
+      "description": "",
+      "defaultAttackTechnique": "direct-injection",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM05"
+        ]
+      }
+    },
+    "excessive_agency": {
+      "id": "excessive_agency",
+      "name": "Excessive Agency",
+      "domain": "agent",
+      "description": "",
+      "defaultAttackTechnique": "tool-abuse",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM06"
+        ]
+      }
+    },
+    "system_prompt_leakage": {
+      "id": "system_prompt_leakage",
+      "name": "System Prompt Leakage",
+      "domain": "model",
+      "description": "",
+      "defaultAttackTechnique": "social-engineering",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM07"
+        ]
+      }
+    },
+    "vector_embedding_weakness": {
+      "id": "vector_embedding_weakness",
+      "name": "Vector and Embedding Weaknesses",
+      "domain": "data",
+      "description": "",
+      "defaultAttackTechnique": "context-poisoning",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM08"
+        ]
+      }
+    },
+    "misinformation": {
+      "id": "misinformation",
+      "name": "Misinformation",
+      "domain": "model",
+      "description": "",
+      "defaultAttackTechnique": "social-engineering",
+      "frameworkMappings": {
+        "OWASP-LLM": [
+          "LLM09"
+        ]
+      }
+    }
+  },
+  "categories": {
+    "ASI01": "goal_hijacking",
+    "OWASP-ASI01": "goal_hijacking",
+    "ASI02": "tool_misuse",
+    "OWASP-ASI02": "tool_misuse",
+    "ASI03": "identity_privilege_abuse",
+    "OWASP-ASI03": "identity_privilege_abuse",
+    "ASI04": "supply_chain",
+    "OWASP-ASI04": "supply_chain",
+    "LLM03": "supply_chain",
+    "OWASP-LLM03": "supply_chain",
+    "ASI05": "code_execution",
+    "OWASP-ASI05": "code_execution",
+    "ASI06": "memory_poisoning",
+    "OWASP-ASI06": "memory_poisoning",
+    "ASI07": "inter_agent_comms",
+    "OWASP-ASI07": "inter_agent_comms",
+    "ASI08": "cascading_failures",
+    "OWASP-ASI08": "cascading_failures",
+    "ASI09": "trust_exploitation",
+    "OWASP-ASI09": "trust_exploitation",
+    "ASI10": "rogue_agents",
+    "OWASP-ASI10": "rogue_agents",
+    "LLM01": "prompt_injection",
+    "OWASP-LLM01": "prompt_injection",
+    "LLM02": "sensitive_info_disclosure",
+    "OWASP-LLM02": "sensitive_info_disclosure",
+    "LLM04": "data_poisoning",
+    "OWASP-LLM04": "data_poisoning",
+    "LLM05": "improper_output",
+    "OWASP-LLM05": "improper_output",
+    "LLM06": "excessive_agency",
+    "OWASP-LLM06": "excessive_agency",
+    "LLM07": "system_prompt_leakage",
+    "OWASP-LLM07": "system_prompt_leakage",
+    "LLM08": "vector_embedding_weakness",
+    "OWASP-LLM08": "vector_embedding_weakness",
+    "LLM09": "misinformation",
+    "OWASP-LLM09": "misinformation"
+  },
+  "frameworks": {
+    "OWASP-ASI": {
+      "ASI01": [
+        "goal_hijacking"
+      ],
+      "ASI02": [
+        "tool_misuse"
+      ],
+      "ASI03": [
+        "identity_privilege_abuse"
+      ],
+      "ASI04": [
+        "supply_chain"
+      ],
+      "ASI05": [
+        "code_execution"
+      ],
+      "ASI06": [
+        "memory_poisoning"
+      ],
+      "ASI07": [
+        "inter_agent_comms"
+      ],
+      "ASI08": [
+        "cascading_failures"
+      ],
+      "ASI09": [
+        "trust_exploitation"
+      ],
+      "ASI10": [
+        "rogue_agents"
+      ]
+    },
+    "OWASP-LLM": {
+      "LLM03": [
+        "supply_chain"
+      ],
+      "LLM01": [
+        "prompt_injection"
+      ],
+      "LLM02": [
+        "sensitive_info_disclosure"
+      ],
+      "LLM04": [
+        "data_poisoning"
+      ],
+      "LLM05": [
+        "improper_output"
+      ],
+      "LLM06": [
+        "excessive_agency"
+      ],
+      "LLM07": [
+        "system_prompt_leakage"
+      ],
+      "LLM08": [
+        "vector_embedding_weakness"
+      ],
+      "LLM09": [
+        "misinformation"
+      ]
+    }
+  },
+  "deliveryCategories": {
+    "DAN": "persona",
+    "role-play": "persona",
+    "skeleton-key": "persona",
+    "base64": "obfuscation",
+    "leetspeak": "obfuscation",
+    "multilingual": "obfuscation",
+    "character-spacing": "obfuscation",
+    "crescendo": "multi-turn",
+    "many-shot": "multi-turn",
+    "authority-impersonation": "social-engineering",
+    "refusal-suppression": "social-engineering",
+    "direct-request": "direct",
+    "code-elicitation": "direct",
+    "code-assistance": "direct",
+    "tool-response": "tool-agent",
+    "word-substitution": "tool-agent"
+  },
+  "categoryCases": [
+    {
+      "value": "ASI01",
+      "expected": "goal_hijacking",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI01",
+      "expected": "goal_hijacking",
+      "error": false
+    },
+    {
+      "value": "ASI02",
+      "expected": "tool_misuse",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI02",
+      "expected": "tool_misuse",
+      "error": false
+    },
+    {
+      "value": "ASI03",
+      "expected": "identity_privilege_abuse",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI03",
+      "expected": "identity_privilege_abuse",
+      "error": false
+    },
+    {
+      "value": "ASI04",
+      "expected": "supply_chain",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI04",
+      "expected": "supply_chain",
+      "error": false
+    },
+    {
+      "value": "LLM03",
+      "expected": "supply_chain",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM03",
+      "expected": "supply_chain",
+      "error": false
+    },
+    {
+      "value": "ASI05",
+      "expected": "code_execution",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI05",
+      "expected": "code_execution",
+      "error": false
+    },
+    {
+      "value": "ASI06",
+      "expected": "memory_poisoning",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI06",
+      "expected": "memory_poisoning",
+      "error": false
+    },
+    {
+      "value": "ASI07",
+      "expected": "inter_agent_comms",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI07",
+      "expected": "inter_agent_comms",
+      "error": false
+    },
+    {
+      "value": "ASI08",
+      "expected": "cascading_failures",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI08",
+      "expected": "cascading_failures",
+      "error": false
+    },
+    {
+      "value": "ASI09",
+      "expected": "trust_exploitation",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI09",
+      "expected": "trust_exploitation",
+      "error": false
+    },
+    {
+      "value": "ASI10",
+      "expected": "rogue_agents",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI10",
+      "expected": "rogue_agents",
+      "error": false
+    },
+    {
+      "value": "LLM01",
+      "expected": "prompt_injection",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM01",
+      "expected": "prompt_injection",
+      "error": false
+    },
+    {
+      "value": "LLM02",
+      "expected": "sensitive_info_disclosure",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM02",
+      "expected": "sensitive_info_disclosure",
+      "error": false
+    },
+    {
+      "value": "LLM04",
+      "expected": "data_poisoning",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM04",
+      "expected": "data_poisoning",
+      "error": false
+    },
+    {
+      "value": "LLM05",
+      "expected": "improper_output",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM05",
+      "expected": "improper_output",
+      "error": false
+    },
+    {
+      "value": "LLM06",
+      "expected": "excessive_agency",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM06",
+      "expected": "excessive_agency",
+      "error": false
+    },
+    {
+      "value": "LLM07",
+      "expected": "system_prompt_leakage",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM07",
+      "expected": "system_prompt_leakage",
+      "error": false
+    },
+    {
+      "value": "LLM08",
+      "expected": "vector_embedding_weakness",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM08",
+      "expected": "vector_embedding_weakness",
+      "error": false
+    },
+    {
+      "value": "LLM09",
+      "expected": "misinformation",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM09",
+      "expected": "misinformation",
+      "error": false
+    },
+    {
+      "value": "OWASP-OWASP-ASI01",
+      "expected": "goal_hijacking",
+      "error": false
+    },
+    {
+      "value": "asi01",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": " ASI01",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "ASI11",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "constructor",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "__proto__",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "",
+      "expected": null,
+      "error": true
+    }
+  ],
+  "resolutions": [
+    {
+      "values": [],
+      "expected": [],
+      "error": false
+    },
+    {
+      "values": [
+        "ASI01",
+        "goal_hijacking",
+        "LLM01",
+        "OWASP-ASI01"
+      ],
+      "expected": [
+        "goal_hijacking",
+        "prompt_injection"
+      ],
+      "error": false
+    },
+    {
+      "values": [
+        "goal_hijacking",
+        "tool_misuse",
+        "identity_privilege_abuse",
+        "supply_chain",
+        "code_execution",
+        "memory_poisoning",
+        "inter_agent_comms",
+        "cascading_failures",
+        "trust_exploitation",
+        "rogue_agents",
+        "excessive_agency",
+        "prompt_injection",
+        "sensitive_info_disclosure",
+        "data_poisoning",
+        "improper_output",
+        "system_prompt_leakage",
+        "vector_embedding_weakness",
+        "misinformation"
+      ],
+      "expected": [
+        "goal_hijacking",
+        "tool_misuse",
+        "identity_privilege_abuse",
+        "supply_chain",
+        "code_execution",
+        "memory_poisoning",
+        "inter_agent_comms",
+        "cascading_failures",
+        "trust_exploitation",
+        "rogue_agents",
+        "excessive_agency",
+        "prompt_injection",
+        "sensitive_info_disclosure",
+        "data_poisoning",
+        "improper_output",
+        "system_prompt_leakage",
+        "vector_embedding_weakness",
+        "misinformation"
+      ],
+      "error": false
+    },
+    {
+      "values": [
+        "unknown"
+      ],
+      "expected": null,
+      "error": true
+    },
+    {
+      "values": [
+        "ASI01",
+        "constructor"
+      ],
+      "expected": null,
+      "error": true
+    },
+    {
+      "values": [
+        "OWASP-OWASP-LLM01"
+      ],
+      "expected": [
+        "prompt_injection"
+      ],
+      "error": false
+    }
+  ],
+  "registrations": [
+    {
+      "value": "DAN",
+      "knownBefore": true,
+      "registered": "DAN",
+      "error": false,
+      "knownAfter": true,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "ROLE_PLAY",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "SKELETON_KEY",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "BASE64",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "LEETSPEAK",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "MULTILINGUAL",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "CHARACTER_SPACING",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "CRESCENDO",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "MANY_SHOT",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "AUTHORITY_IMPERSONATION",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "REFUSAL_SUPPRESSION",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "DIRECT_REQUEST",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "CODE_ELICITATION",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "CODE_ASSISTANCE",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "TOOL_RESPONSE",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "WORD_SUBSTITUTION",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "custom-test",
+      "knownBefore": false,
+      "registered": "custom-test",
+      "error": false,
+      "knownAfter": true,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution",
+        "custom-test"
+      ]
+    },
+    {
+      "value": "  ",
+      "knownBefore": false,
+      "registered": "  ",
+      "error": false,
+      "knownAfter": true,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution",
+        "  "
+      ]
+    },
+    {
+      "value": "",
+      "knownBefore": false,
+      "registered": null,
+      "error": true,
+      "knownAfter": false,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution"
+      ]
+    },
+    {
+      "value": "constructor",
+      "knownBefore": false,
+      "registered": "constructor",
+      "error": false,
+      "knownAfter": true,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution",
+        "constructor"
+      ]
+    },
+    {
+      "value": "__proto__",
+      "knownBefore": false,
+      "registered": "__proto__",
+      "error": false,
+      "knownAfter": true,
+      "available": [
+        "DAN",
+        "role-play",
+        "skeleton-key",
+        "base64",
+        "leetspeak",
+        "multilingual",
+        "character-spacing",
+        "crescendo",
+        "many-shot",
+        "authority-impersonation",
+        "refusal-suppression",
+        "direct-request",
+        "code-elicitation",
+        "code-assistance",
+        "tool-response",
+        "word-substitution",
+        "__proto__"
+      ]
+    }
+  ],
+  "methods": [
+    {
+      "values": [],
+      "expected": []
+    },
+    {
+      "values": [
+        "DAN",
+        "role-play",
+        "DAN",
+        "x",
+        "x",
+        "X"
+      ],
+      "expected": [
+        "DAN",
+        "role-play",
+        "x",
+        "X"
+      ]
+    },
+    {
+      "values": [
+        "ROLE_PLAY",
+        "role-play",
+        "Role-Play"
+      ],
+      "expected": [
+        "ROLE_PLAY",
+        "role-play",
+        "Role-Play"
+      ]
+    }
+  ]
+}

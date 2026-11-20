@@ -12,6 +12,37 @@ import {
 import { isSchemaRejection } from "../../../../src/lib/integrations/simulation/utils/strict-schema.js";
 import { expectStrictSchema, makeFakeClient } from "./fake-client.js";
 
+function makeListClient(script: Parameters<typeof makeFakeClient>[0] = {}) {
+  return makeFakeClient({
+    ...script,
+    ...(script.generator
+      ? {
+          generator: (request, options) => {
+            const reply = script.generator?.(request, options) as {
+              content: string;
+              finishReason?: string;
+            };
+            try {
+              const data: unknown = JSON.parse(reply.content);
+              if (Array.isArray(data)) {
+                const format = request.response_format as
+                  | { json_schema?: { name?: string } }
+                  | undefined;
+                return {
+                  ...reply,
+                  content: JSON.stringify({
+                    [format?.json_schema?.name ?? "items"]: data,
+                  }),
+                };
+              }
+            } catch {}
+            return reply;
+          },
+        }
+      : {}),
+  });
+}
+
 const validPersona = {
   name: "Dana",
   patience: 0.5,
@@ -35,7 +66,7 @@ const persona = {
 const scenario = { name: "Refund", goal: "Get a refund", criteria: [] };
 
 function personaGenerator(content: string, finishReason?: string) {
-  const { client } = makeFakeClient({
+  const { client } = makeListClient({
     generator: () => ({ content, finishReason }),
   });
   return new PersonaGenerator({ client });
@@ -43,264 +74,116 @@ function personaGenerator(content: string, finishReason?: string) {
 
 type SchemaNode = {
   enum?: string[];
-  anyOf?: { type: string }[];
+  type?: string;
+  anyOf?: SchemaNode[];
   required?: string[];
   items?: SchemaNode;
   properties?: Record<string, SchemaNode>;
 };
 
-const REJECTED_SCHEMA =
-  "Invalid schema for response_format 'personas': In context=(), 'additionalProperties' is required to be supplied and to be false.";
-
 const generateOne = (generator: PersonaGenerator) =>
   generator.generate({ agentDescription: "A support bot", numPersonas: 1 });
 
 describe("PersonaGenerator", () => {
-  test("parses a list wrapped in an object", async () => {
-    const personas = await generateOne(
-      personaGenerator(JSON.stringify({ personas: [validPersona] })),
-    );
-    expect(personas[0]?.name).toBe("Dana");
+  test("reads a Responses structured list and its usage", async () => {
+    const { client } = makeFakeClient({
+      generator: () => ({
+        content: JSON.stringify({ personas: [validPersona] }),
+      }),
+    });
+    const create = spyOn(client.responses, "create");
+    const generator = new PersonaGenerator({ client });
+    expect((await generateOne(generator))[0]?.name).toBe("Dana");
+    const body = create.mock.calls[0]?.[0] as unknown as Record<
+      string,
+      unknown
+    >;
+    expect(body.model).toBe("openai/gpt-6-luna");
+    expect(body.max_output_tokens).toBe(4000);
+    expect(body).not.toHaveProperty("temperature");
+    const format = (
+      body.text as { format: { strict: boolean; schema: unknown } }
+    ).format;
+    expect(format.strict).toBe(true);
+    expectStrictSchema(format.schema);
+    expect(generator.getUsage()?.totalTokens).toBe(2);
   });
-
-  test("parses a bare list inside a code fence", async () => {
-    const personas = await generateOne(
-      personaGenerator(`\`\`\`json\n${JSON.stringify([validPersona])}\n\`\`\``),
-    );
-    expect(personas[0]?.name).toBe("Dana");
-  });
-
-  test("raises on truncation instead of parsing a partial list", async () => {
+  test("rejects malformed Responses output without accepting a fenced bare list", async () => {
     await expect(
-      generateOne(personaGenerator('{"personas": [', "length")),
+      generateOne(personaGenerator("```json\n[]\n```")),
     ).rejects.toThrow(SimulationGenerationError);
   });
-
-  test("raises on empty content", async () => {
-    await expect(generateOne(personaGenerator("  "))).rejects.toThrow(
-      "empty response",
-    );
+  test("rejects truncated output and retains billed usage", async () => {
+    const generator = personaGenerator('{"personas": [', "length");
+    await expect(generateOne(generator)).rejects.toThrow("token limit");
+    expect(generator.getUsage()?.totalTokens).toBe(2);
   });
-
-  test("raises on content that is not JSON", async () => {
+  test("rejects invalid structured JSON", async () => {
     await expect(generateOne(personaGenerator("sorry, no"))).rejects.toThrow(
-      "not valid JSON",
+      "did not validate",
     );
   });
-
-  test("raises when every item is unusable", async () => {
-    await expect(generateOne(personaGenerator("[1, 2]"))).rejects.toThrow(
-      SimulationGenerationError,
-    );
-  });
-
-  const rejectingClient = (
-    rejects: (
-      format: { json_schema?: { strict?: boolean } } | undefined,
-    ) => boolean,
-  ) => {
-    const seen: (
-      | { json_schema?: { strict?: boolean; schema?: unknown } }
-      | undefined
-    )[] = [];
-    const timeouts: unknown[] = [];
-    const create = async (
-      request: { response_format?: { json_schema?: { strict?: boolean } } },
-      options: { timeout?: number },
-    ) => {
-      seen.push(request.response_format);
-      timeouts.push(options.timeout);
-      if (rejects(request.response_format)) {
+  test("a non-schema 400 aborts without a fallback", async () => {
+    const { client } = makeFakeClient({
+      generator: () => {
         throw new OpenAI.APIError(
           400,
-          { message: REJECTED_SCHEMA },
-          REJECTED_SCHEMA,
+          { message: "context too long" },
+          "context too long",
           {},
         );
-      }
-      return {
-        choices: [
-          {
-            finish_reason: "stop",
-            message: { content: JSON.stringify([validPersona]) },
-          },
-        ],
-      };
-    };
-    const client = { chat: { completions: { create } } } as unknown as OpenAI;
-    return { client, seen, timeouts };
-  };
-
-  test("stops at the strict schema when the model accepts it", async () => {
-    const { client, seen } = rejectingClient(() => false);
-
-    await generateOne(new PersonaGenerator({ client }));
-
-    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([true]);
-  });
-
-  test("a 400 on strict retries with the same schema, not strict", async () => {
-    const { client, seen } = rejectingClient(
-      (format) => format?.json_schema?.strict === true,
-    );
-
-    const personas = await generateOne(new PersonaGenerator({ client }));
-
-    expect(personas).toHaveLength(1);
-    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([
-      true,
-      false,
-    ]);
-    expect(seen[1]?.json_schema?.schema).toEqual(seen[0]?.json_schema?.schema);
-  });
-
-  test("a 400 on any schema retries without response_format", async () => {
-    const { client, seen, timeouts } = rejectingClient(
-      (format) => format !== undefined,
-    );
-
-    const personas = await generateOne(new PersonaGenerator({ client }));
-
-    expect(personas).toHaveLength(1);
-    expect(seen.map((format) => format?.json_schema?.strict)).toEqual([
-      true,
-      false,
-      undefined,
-    ]);
-    expect(seen[2]).toBeUndefined();
-    expect(timeouts).toEqual([300_000, 300_000, 300_000]);
-  });
-
-  test("a 400 with no response_format raises", async () => {
-    const { client, seen } = rejectingClient(() => true);
-
-    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
-      "Invalid schema",
-    );
-    expect(seen).toHaveLength(3);
-  });
-
-  test("a 400 that does not name the schema raises without a retry", async () => {
-    const seen: unknown[] = [];
-    const message = "This model's maximum context length is 8192 tokens";
-    const create = async (request: { response_format?: unknown }) => {
-      seen.push(request.response_format);
-      throw new OpenAI.APIError(400, { message }, message, {});
-    };
-    const client = { chat: { completions: { create } } } as unknown as OpenAI;
-
-    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
-      "maximum context length",
-    );
-    expect(seen).toHaveLength(1);
-  });
-
-  test("a step down names the reason in a warning", async () => {
-    const warn = spyOn(console, "warn").mockImplementation(() => {});
-    const { client } = rejectingClient(
-      (format) => format?.json_schema?.strict === true,
-    );
-
-    await generateOne(new PersonaGenerator({ client }));
-
-    expect(String(warn.mock.calls[0]?.[0])).toContain(
-      "retrying without strict",
-    );
-    expect(String(warn.mock.calls[0]?.[0])).toContain("Invalid schema");
-    warn.mockRestore();
-  });
-
-  test("an error other than a 400 on the second step raises", async () => {
-    const seen: unknown[] = [];
-    const create = async (request: {
-      response_format?: { json_schema?: { strict?: boolean } };
-    }) => {
-      seen.push(request.response_format);
-      if (request.response_format?.json_schema?.strict) {
-        throw new OpenAI.APIError(
-          400,
-          { message: REJECTED_SCHEMA },
-          REJECTED_SCHEMA,
-          {},
-        );
-      }
-      throw new OpenAI.APIError(500, { message: "boom" }, "boom", {});
-    };
-    const client = { chat: { completions: { create } } } as unknown as OpenAI;
-
-    await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
-      "boom",
-    );
-    expect(seen).toHaveLength(2);
-  });
-
-  test("a refusal is reported as a refusal, not as an empty response", async () => {
-    const create = async () => ({
-      choices: [
-        {
-          finish_reason: "stop",
-          message: { content: null, refusal: "I cannot write these" },
-        },
-      ],
+      },
     });
-    const client = { chat: { completions: { create } } } as unknown as OpenAI;
-
+    const create = spyOn(client.responses, "create");
     await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
-      "model refused: I cannot write these",
+      "context too long",
     );
+    expect(create).toHaveBeenCalledTimes(1);
   });
-
-  test("an error other than a 400 raises without a retry", async () => {
-    const seen: unknown[] = [];
-    const create = async (request: { response_format?: unknown }) => {
-      seen.push(request.response_format);
-      throw new OpenAI.APIError(500, { message: "boom" }, "boom", {});
-    };
-    const client = { chat: { completions: { create } } } as unknown as OpenAI;
-
+  test("an auth error aborts without a fallback", async () => {
+    const { client } = makeFakeClient({
+      generator: () => {
+        throw new OpenAI.APIError(401, { message: "bad key" }, "bad key", {});
+      },
+    });
+    const create = spyOn(client.responses, "create");
     await expect(generateOne(new PersonaGenerator({ client }))).rejects.toThrow(
-      "boom",
+      "bad key",
     );
-    expect(seen).toHaveLength(1);
+    expect(create).toHaveBeenCalledTimes(1);
   });
-
-  test("asks for a strict schema every model can enforce", async () => {
-    const { client, requests } = makeFakeClient({
+  test("a schema rejection falls back to the shared chat ladder", async () => {
+    const { client, requests } = makeListClient({
       generator: () => ({ content: JSON.stringify([validPersona]) }),
     });
-    await generateOne(new PersonaGenerator({ client }));
-
-    const format = requests.generator[0]?.response_format as {
-      json_schema: { name: string; strict: boolean; schema: unknown };
-    };
-    expect(format.json_schema.name).toBe("personas");
-    expect(format.json_schema.strict).toBe(true);
-    expectStrictSchema(format.json_schema.schema);
-
-    const item = (format.json_schema.schema as SchemaNode).properties?.personas
-      ?.items;
-    expect(item?.properties?.communication_style?.enum).toEqual([
-      "formal",
-      "casual",
-      "terse",
-      "verbose",
-    ]);
+    spyOn(client.responses, "create").mockRejectedValue(
+      new OpenAI.APIError(
+        400,
+        { message: "response_format unsupported" },
+        "response_format unsupported",
+        {},
+      ),
+    );
+    expect((await generateOne(new PersonaGenerator({ client })))[0]?.name).toBe(
+      "Dana",
+    );
+    expect(requests.generator).toHaveLength(1);
+    expect(requests.generator[0]?.response_format?.type).toBe("json_schema");
   });
 });
 
 describe("PersonaGenerator traits", () => {
-  test("drops a persona whose trait is not a number", async () => {
-    const generator = personaGenerator(
-      JSON.stringify([
-        { ...validPersona, name: "Bad", patience: "high" },
-        validPersona,
-      ]),
-    );
-
-    const personas = await generateOne(generator);
-
-    expect(personas.map((p) => p.name)).toEqual(["Dana"]);
-    expect(personas[0]?.patience).toBe(0.5);
+  test("rejects a structured list containing an invalid trait", async () => {
+    await expect(
+      generateOne(
+        personaGenerator(
+          JSON.stringify([
+            { ...validPersona, name: "Bad", patience: "high" },
+            validPersona,
+          ]),
+        ),
+      ),
+    ).rejects.toThrow(SimulationGenerationError);
   });
 
   test.each([
@@ -310,41 +193,41 @@ describe("PersonaGenerator traits", () => {
     ["a missing style", { communication_style: undefined }],
     ["an unknown style", { communication_style: "shouty" }],
     ["a missing background", { background: undefined }],
-  ])("drops a persona with %s", async (_label, bad) => {
-    const personas = await generateOne(
-      personaGenerator(
-        JSON.stringify([
-          { ...validPersona, name: "Bad", ...bad },
-          validPersona,
-        ]),
+  ])("rejects a persona with %s", async (_label, bad) => {
+    await expect(
+      generateOne(
+        personaGenerator(
+          JSON.stringify([
+            { ...validPersona, name: "Bad", ...bad },
+            validPersona,
+          ]),
+        ),
       ),
-    );
-
-    expect(personas.map((p) => p.name)).toEqual(["Dana"]);
+    ).rejects.toThrow(SimulationGenerationError);
   });
 
-  test("clamps a trait out of range", async () => {
+  test("preserves a numeric trait outside the conventional range, as Python does", async () => {
     const [persona] = await generateOne(
       personaGenerator(JSON.stringify([{ ...validPersona, patience: 7 }])),
     );
 
-    expect(persona?.patience).toBe(1);
+    expect(persona?.patience).toBe(7);
   });
 
   test("asks the model for every required field", async () => {
-    const { client, requests } = makeFakeClient({
+    const { client, requests } = makeListClient({
       generator: () => ({ content: JSON.stringify([validPersona]) }),
     });
     await generateOne(new PersonaGenerator({ client }));
 
     expect(JSON.stringify(requests.generator[0]?.response_format)).toContain(
-      '"required":["name","patience","assertiveness","politeness","technical_level","communication_style","background"]',
+      '"emotional_arc"',
     );
   });
 
-  test("bounds the call with a timeout", async () => {
+  test("uses the shared transport timeout instead of an SDK retry budget", async () => {
     let timeout: number | undefined;
-    const { client } = makeFakeClient({
+    const { client } = makeListClient({
       generator: (_request, options) => {
         timeout = options?.timeout;
         return { content: JSON.stringify([validPersona]) };
@@ -352,7 +235,7 @@ describe("PersonaGenerator traits", () => {
     });
     await generateOne(new PersonaGenerator({ client }));
 
-    expect(timeout).toBe(300_000);
+    expect(timeout).toBeUndefined();
   });
 });
 
@@ -412,7 +295,7 @@ describe("generator token budgets", () => {
 
 describe("ScenarioGenerator criteria", () => {
   const generate = (criteria: unknown) => {
-    const { client } = makeFakeClient({
+    const { client } = makeListClient({
       generator: () => ({
         content: JSON.stringify([{ name: "S", goal: "G", criteria }]),
       }),
@@ -432,11 +315,17 @@ describe("ScenarioGenerator criteria", () => {
 
   test.each([
     ["an unknown type", { description: "offers a refund", type: "should" }],
-    ["an empty description", { description: "  ", type: "must_happen" }],
   ])("drops a scenario with a criterion of %s", async (_label, bad) => {
     await expect(
       generate([{ description: "fine", type: "must_happen" }, bad]),
     ).rejects.toThrow(SimulationGenerationError);
+  });
+
+  test("preserves an empty criterion description, as Python does", async () => {
+    expect(
+      (await generate([{ description: "  ", type: "must_happen" }]))[0]
+        ?.criteria?.[0]?.description,
+    ).toBe("  ");
   });
 
   test.each([
@@ -452,7 +341,7 @@ describe("ScenarioGenerator criteria", () => {
   });
 
   const generateWith = (extra: Record<string, unknown>) => {
-    const { client } = makeFakeClient({
+    const { client } = makeListClient({
       generator: () => ({
         content: JSON.stringify([{ name: "S", goal: "G", ...extra }]),
       }),
@@ -477,7 +366,7 @@ describe("ScenarioGenerator criteria", () => {
   });
 
   test("asks the model for criteria", async () => {
-    const { client, requests } = makeFakeClient({
+    const { client, requests } = makeListClient({
       generator: () => ({
         content: JSON.stringify([{ name: "S", goal: "G", criteria: [] }]),
       }),
@@ -488,12 +377,12 @@ describe("ScenarioGenerator criteria", () => {
     });
 
     expect(JSON.stringify(requests.generator[0]?.response_format)).toContain(
-      '"required":["name","goal","context","starting_emotion","criteria","is_edge_case","conversation_strategy"]',
+      '"ground_truth"',
     );
   });
 
   test("asks for a strict schema every model can enforce", async () => {
-    const { client, requests } = makeFakeClient({
+    const { client, requests } = makeListClient({
       generator: () => ({
         content: JSON.stringify([{ name: "S", goal: "G", criteria: [] }]),
       }),
@@ -512,7 +401,9 @@ describe("ScenarioGenerator criteria", () => {
 
     const item = (format.json_schema.schema as SchemaNode).properties?.scenarios
       ?.items;
-    const criterion = item?.properties?.criteria?.items;
+    const criterion = item?.properties?.criteria?.anyOf?.find(
+      (node) => node.type === "array",
+    )?.items;
     expect(item?.required).toContain("criteria");
     expect(criterion?.properties?.type?.enum).toEqual([
       "must_happen",
@@ -542,50 +433,29 @@ describe("ScenarioGenerator criteria", () => {
     expect(scenario?.criteria?.[0]?.evaluator).toBeNull();
   });
 
-  test("reads an evaluator that is not a string as unset", async () => {
-    const [scenario] = await generateWith({
-      criteria: [
-        { description: "offers a refund", type: "must_happen", evaluator: 5 },
-      ],
-    });
-
-    expect(scenario?.criteria?.[0]?.evaluator).toBeNull();
-  });
-
-  test("gives the model the allowed emotions and strategies", async () => {
-    const { client, requests } = makeFakeClient({
-      generator: () => ({
-        content: JSON.stringify([{ name: "S", goal: "G", criteria: [] }]),
+  test("rejects an evaluator that is not a string", async () => {
+    await expect(
+      generateWith({
+        criteria: [
+          { description: "offers a refund", type: "must_happen", evaluator: 5 },
+        ],
       }),
-    });
-    await new ScenarioGenerator({ client }).generate({
-      agentDescription: "A support bot",
-      numScenarios: 1,
-    });
-
-    const schema = JSON.stringify(requests.generator[0]?.response_format);
-    expect(schema).toContain(
-      '"starting_emotion":{"type":"string","enum":["neutral","frustrated","confused","happy","urgent"]}',
-    );
-    expect(schema).toContain(
-      '"conversation_strategy":{"anyOf":[{"type":"string","enum":["cooperative","topic_switching","contradictory","multi_intent","evasive","repetitive","ambiguous"]},{"type":"null"}]}',
-    );
+    ).rejects.toThrow(SimulationGenerationError);
   });
 
-  test("names the rejected value when it drops a scenario", async () => {
-    const warn = spyOn(console, "warn").mockImplementation(() => {});
-    try {
-      await generateWith({ starting_emotion: "disappointed" }).catch(() => {});
-      expect(warn.mock.calls.flat().join(" ")).toContain("disappointed");
-    } finally {
-      warn.mockRestore();
-    }
+  test("carries ground truth and input format into generated scenarios", async () => {
+    const [scenario] = await generateWith({
+      ground_truth: "The refund is 10 EUR",
+      input_format: "form_data",
+    });
+    expect(scenario?.ground_truth).toBe("The refund is 10 EUR");
+    expect(scenario?.input_format).toBe("form_data");
   });
 });
 
 describe("ScenarioGenerator", () => {
   test("raises instead of returning a default scenario", async () => {
-    const { client } = makeFakeClient({
+    const { client } = makeListClient({
       generator: () => ({ content: "[]" }),
     });
 
@@ -599,9 +469,9 @@ describe("ScenarioGenerator", () => {
 });
 
 describe("FirstMessageGenerator", () => {
-  test("bounds the call with a timeout", async () => {
+  test("uses the shared transport timeout instead of an SDK retry budget", async () => {
     let timeout: number | undefined;
-    const { client } = makeFakeClient({
+    const { client } = makeListClient({
       firstMessage: (_request, options) => {
         timeout = options?.timeout;
         return "Hello";
@@ -609,11 +479,11 @@ describe("FirstMessageGenerator", () => {
     });
     await new FirstMessageGenerator({ client }).generate(persona, scenario);
 
-    expect(timeout).toBe(60_000);
+    expect(timeout).toBeUndefined();
   });
 
   test("raises instead of falling back to a generic opener", async () => {
-    const { client } = makeFakeClient({ firstMessage: () => "   " });
+    const { client } = makeListClient({ firstMessage: () => "   " });
 
     await expect(
       new FirstMessageGenerator({ client }).generate(persona, scenario),
@@ -622,7 +492,7 @@ describe("FirstMessageGenerator", () => {
 
   test("retries an empty reply", async () => {
     const replies = ["  ", "", "Hi there"];
-    const { client, requests } = makeFakeClient({
+    const { client, requests } = makeListClient({
       firstMessage: () => replies.shift() ?? "",
     });
 
@@ -636,7 +506,7 @@ describe("FirstMessageGenerator", () => {
   });
 
   test("gives up after three empty replies", async () => {
-    const { client, requests } = makeFakeClient({ firstMessage: () => "" });
+    const { client, requests } = makeListClient({ firstMessage: () => "" });
 
     await expect(
       new FirstMessageGenerator({ client }).generate(persona, scenario),
@@ -645,7 +515,7 @@ describe("FirstMessageGenerator", () => {
   });
 
   test("raises on truncation without retrying", async () => {
-    const { client, requests } = makeFakeClient({
+    const { client, requests } = makeListClient({
       firstMessage: () => ({ content: "Hi, I wan", finishReason: "length" }),
     });
 
@@ -662,13 +532,17 @@ describe("DatapointGenerator.generateFromCombinations", () => {
     { name: "B", goal: "Goal B", criteria: [] },
   ];
   const generatorWith = (firstMessage: (scenario: string) => string) => {
-    const { client } = makeFakeClient({
-      firstMessage: (request) =>
-        firstMessage(
-          String(request.messages[1]?.content).includes("Goal A") ? "A" : "B",
-        ),
+    const { client } = makeFakeClient();
+    const generator = new DatapointGenerator({ client, rateLimitDelay: 0 });
+    const first = (
+      generator as unknown as { firstMessageGenerator: FirstMessageGenerator }
+    ).firstMessageGenerator;
+    spyOn(first, "generate").mockImplementation(async (_persona, scenario) => {
+      const text = firstMessage(scenario.name);
+      if (!text) throw new SimulationGenerationError("empty message");
+      return text;
     });
-    return new DatapointGenerator({ client, rateLimitDelay: 0 });
+    return generator;
   };
 
   test("drops a pair with no usable first message and keeps the rest", async () => {

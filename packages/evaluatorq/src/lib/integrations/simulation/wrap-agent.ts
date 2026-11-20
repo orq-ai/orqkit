@@ -7,22 +7,26 @@
 import type OpenAI from "openai";
 
 import type { DataPoint, Job, Output } from "../../types.js";
-import { fromOrqAgent } from "./adapters.js";
+import {
+  resolveSimulationTarget,
+  type SimulationTargetOptions,
+} from "./adapters.js";
 import { toOpenResponses } from "./convert.js";
-import { DEFAULT_SIMULATION_MODEL } from "./defaults.js";
+import { extractSingleInput } from "./datapoint-io.js";
 import { failureReason } from "./evaluators/index.js";
 import { FirstMessageGenerator } from "./generators/first-message-generator.js";
-import {
-  runSimulationInput,
-  type SimulationInput,
-} from "./runner/run-input.js";
+import { runSimulationInput } from "./runner/run-input.js";
+import type { SimulationRunnerConfig } from "./runner/simulation.js";
 import { SimulationRunner } from "./runner/simulation.js";
-import type { Datapoint, Persona, Scenario, TargetCallback } from "./types.js";
+import { rememberSimulationResult } from "./scorer-adapter.js";
+import type { TargetCallback } from "./types.js";
 
 /**
  * Options for creating a simulation job.
  */
-export interface SimulationJobOptions {
+export interface SimulationJobOptions
+  extends SimulationTargetOptions,
+    Omit<SimulationRunnerConfig, "hooks" | "onFatalError"> {
   /** Display name for this job in results. Defaults to "simulation". */
   name?: string;
   /** Target agent callback: receives messages and returns a response string. */
@@ -35,8 +39,9 @@ export interface SimulationJobOptions {
   model?: string;
   /** Pre-configured client for the user simulator, judge and first messages. */
   client?: OpenAI;
-  /** Limit per conversation in milliseconds. Defaults to 300_000. */
+  /** Limit per conversation in milliseconds. Unset leaves the run unbounded. */
   timeoutPerSimulation?: number;
+  perSimulationTimeoutMs?: number;
 }
 
 /**
@@ -82,7 +87,11 @@ export interface SimulationJobOptions {
  * });
  * ```
  */
-export function wrapSimulationAgent(options: SimulationJobOptions): Job {
+export type SimulationJob = Job & { close(): Promise<void> };
+
+export function wrapSimulationAgent(
+  options: SimulationJobOptions,
+): SimulationJob {
   if ("evaluators" in options) {
     throw new Error(
       "wrapSimulationAgent no longer takes 'evaluators'. Pass scorers to the 'evaluators' option of evaluatorq() instead.",
@@ -91,22 +100,27 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
 
   const {
     name = "simulation",
-    targetCallback,
-    agentKey,
     maxTurns = 10,
     model,
     client,
     timeoutPerSimulation,
   } = options;
 
-  if (!targetCallback && !agentKey) {
+  if (
+    options.timeoutPerSimulation !== undefined &&
+    options.perSimulationTimeoutMs !== undefined &&
+    options.timeoutPerSimulation !== options.perSimulationTimeoutMs
+  )
     throw new Error(
-      "wrapSimulationAgent requires either targetCallback or agentKey",
+      "timeoutPerSimulation and perSimulationTimeoutMs must match",
     );
-  }
-
+  const timeout = options.perSimulationTimeoutMs ?? timeoutPerSimulation;
+  if (timeout !== undefined && (!Number.isFinite(timeout) || timeout <= 0))
+    throw new RangeError("perSimulationTimeoutMs must be > 0");
+  const target = resolveSimulationTarget(options);
   const runner = new SimulationRunner({
-    targetCallback: targetCallback ?? fromOrqAgent(agentKey as string),
+    ...options,
+    ...target,
     model,
     maxTurns,
     client,
@@ -114,137 +128,31 @@ export function wrapSimulationAgent(options: SimulationJobOptions): Job {
 
   let firstMessages: FirstMessageGenerator | undefined;
   const getFirstMessages = () => {
-    firstMessages ??= new FirstMessageGenerator({ model, client });
+    firstMessages ??= new FirstMessageGenerator({
+      model,
+      client,
+      llmConfig: options.llmConfig,
+    });
     return firstMessages;
   };
 
-  return async (data: DataPoint, _row: number) => {
-    const input = extractSingleInput(data.inputs);
+  const wrapped: Job = async (data: DataPoint, _row: number) => {
+    const input = extractSingleInput(data);
 
     const result = await runSimulationInput(
       input,
       runner,
       maxTurns,
       getFirstMessages,
-      timeoutPerSimulation,
+      timeout ?? 0,
     );
 
-    return {
-      name,
-      output: toOpenResponses(
-        result,
-        model ?? DEFAULT_SIMULATION_MODEL,
-      ) as unknown as Output,
-      error: failureReason(result) ?? undefined,
-    };
+    const output = toOpenResponses(
+      result,
+      runner.resolvedModel,
+    ) as unknown as Output;
+    rememberSimulationResult(output, result);
+    return { name, output, error: failureReason(result) ?? undefined };
   };
-}
-
-/** Pull exactly one conversation out of a row's inputs. */
-function extractSingleInput(inputs: DataPoint["inputs"]): SimulationInput {
-  const firstMessage =
-    typeof inputs.first_message === "string" && inputs.first_message.trim()
-      ? inputs.first_message
-      : undefined;
-
-  if (inputs.datapoint) {
-    const datapoint = parseJsonOrValue(inputs.datapoint);
-    validateDatapoint(datapoint, "datapoint");
-    return { datapoint: datapoint as Datapoint };
-  }
-
-  if (inputs.datapoints) {
-    const datapoint = parseJsonOrValue(
-      requireSingle(parseJsonOrValue(inputs.datapoints), "datapoints"),
-    );
-    validateDatapoint(datapoint, "datapoints[]");
-    return { datapoint: datapoint as Datapoint };
-  }
-
-  if (inputs.persona && inputs.scenario) {
-    return singlePair(
-      parseJsonOrValue(inputs.persona),
-      parseJsonOrValue(inputs.scenario),
-      "persona",
-      "scenario",
-      firstMessage,
-    );
-  }
-
-  if (inputs.personas && inputs.scenarios) {
-    return singlePair(
-      requireSingle(inputs.personas, "personas"),
-      requireSingle(inputs.scenarios, "scenarios"),
-      "personas[]",
-      "scenarios[]",
-      firstMessage,
-    );
-  }
-
-  throw new Error(
-    "Expected data.inputs to contain 'persona' + 'scenario', 'datapoint', 'datapoints', or 'personas' + 'scenarios'",
-  );
-}
-
-/** Dataset columns can hold objects as JSON strings. */
-function parseJsonOrValue(raw: unknown): unknown {
-  if (typeof raw !== "string") {
-    return raw;
-  }
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return raw;
-  }
-}
-
-function singlePair(
-  persona: unknown,
-  scenario: unknown,
-  personaLabel: string,
-  scenarioLabel: string,
-  firstMessage: string | undefined,
-): SimulationInput {
-  validateShape(persona, personaLabel, ["name"]);
-  validateShape(scenario, scenarioLabel, ["name", "goal"]);
-  return {
-    persona: persona as Persona,
-    scenario: scenario as Scenario,
-    firstMessage,
-  };
-}
-
-function requireSingle(value: unknown, label: string): unknown {
-  if (!Array.isArray(value)) {
-    throw new Error(`Expected '${label}' to be an array`);
-  }
-  if (value.length !== 1) {
-    throw new Error(
-      `'${label}' must encode exactly one datapoint, got ${value.length}. Use one row per conversation.`,
-    );
-  }
-  return value[0];
-}
-
-function validateDatapoint(value: unknown, label: string): void {
-  validateShape(value, label, ["persona", "scenario", "first_message"]);
-  const { persona, scenario } = value as Datapoint;
-  validateShape(persona, `${label}.persona`, ["name"]);
-  validateShape(scenario, `${label}.scenario`, ["name", "goal"]);
-}
-
-/** Lightweight runtime check that an object has the expected keys. */
-function validateShape(
-  value: unknown,
-  label: string,
-  requiredKeys: string[],
-): void {
-  if (typeof value !== "object" || value === null) {
-    throw new Error(`Expected '${label}' to be an object, got ${typeof value}`);
-  }
-  for (const key of requiredKeys) {
-    if (!(key in value)) {
-      throw new Error(`Invalid '${label}': missing required field '${key}'`);
-    }
-  }
+  return Object.assign(wrapped, { close: () => runner.close() });
 }

@@ -287,7 +287,7 @@ const CONSTRUCTOR_TYPE_MAP: Record<string, string> = {
 /**
  * Extract message type from message object or dict.
  */
-function getMessageType(msg: MessageInput): string {
+export function getMessageType(msg: MessageInput): string {
   // Handle BaseMessage from @langchain/core (has _getType() method)
   if (isBaseMessage(msg)) {
     return msg._getType();
@@ -337,7 +337,7 @@ function getMessageType(msg: MessageInput): string {
  * Extract message data from message object or dict.
  * Returns a LangChainMessage-compatible object for uniform processing.
  */
-function getMessageData(msg: MessageInput): LangChainMessage {
+export function getMessageData(msg: MessageInput): LangChainMessage {
   // Handle BaseMessage from @langchain/core
   if (isBaseMessage(msg)) {
     // BaseMessage properties map directly to LangChainMessage

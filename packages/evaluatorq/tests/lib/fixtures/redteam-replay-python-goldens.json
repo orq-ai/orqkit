@@ -1,0 +1,1482 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "label": "dynamic/['static']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "dynamic"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "dynamic/['dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "dynamic"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "dynamic/['static', 'dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "dynamic"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "dynamic/['static', None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "dynamic"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "dynamic/[None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "dynamic"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "static/['static']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "static"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "static/['dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "static"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "static/['static', 'dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "static"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "static/['static', None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "static"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "static/[None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "static"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "hybrid/['static']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "hybrid"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "hybrid/['dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "hybrid"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "hybrid/['static', 'dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "hybrid"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "hybrid/['static', None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "hybrid"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "hybrid/[None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "hybrid"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "unknown/['static']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "unknown"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "unknown/['dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "unknown"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "unknown/['static', 'dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "unknown"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "unknown/['static', None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "unknown"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "unknown/[None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": "unknown"
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "None/['static']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": null
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "static",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "None/['dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": null
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "None/['static', 'dynamic']",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "dynamic"
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": null
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "dynamic"
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "None/['static', None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {},
+            "hybrid_source": "static"
+          },
+          {
+            "id": "1",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": null
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {},
+              "hybrid_source": "static"
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "1",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "hybrid",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "None/[None]",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "0",
+            "category": "ASI01",
+            "strategy": {}
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "pipeline": null
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "0",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "base",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "a",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "b",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "c",
+            "category": "LLM01",
+            "messages": [
+              {
+                "role": "user",
+                "content": "attack"
+              }
+            ]
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        }
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "a",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "b",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "c",
+              "category": "LLM01",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "attack"
+                }
+              ]
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01",
+          "LLM01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": 7,
+        "attackerInstructions": "Synthetic steering",
+        "maxBacktracks": 2
+      }
+    },
+    {
+      "label": "no config",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "a",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "b",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "c",
+            "category": "LLM01",
+            "messages": [
+              {
+                "role": "user",
+                "content": "attack"
+              }
+            ]
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": []
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "a",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "b",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "c",
+              "category": "LLM01",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "attack"
+                }
+              ]
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01",
+          "LLM01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": null,
+        "attackerInstructions": null,
+        "maxBacktracks": null
+      }
+    },
+    {
+      "label": "wrong config types",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "a",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "b",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "c",
+            "category": "LLM01",
+            "messages": [
+              {
+                "role": "user",
+                "content": "attack"
+              }
+            ]
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": "3",
+          "attacker_instructions": 1,
+          "max_backtracks": 1.5
+        }
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "id": "a",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "b",
+              "category": "ASI01",
+              "strategy": {}
+            },
+            "expectedOutput": null
+          },
+          {
+            "inputs": {
+              "id": "c",
+              "category": "LLM01",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "attack"
+                }
+              ]
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [
+          "ASI01",
+          "LLM01"
+        ],
+        "runName": "Recorded run",
+        "maxTurns": null,
+        "attackerInstructions": null,
+        "maxBacktracks": null
+      }
+    },
+    {
+      "label": "simulation mode",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "a",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "b",
+            "category": "ASI01",
+            "strategy": {}
+          },
+          {
+            "id": "c",
+            "category": "LLM01",
+            "messages": [
+              {
+                "role": "user",
+                "content": "attack"
+              }
+            ]
+          }
+        ],
+        "run_name": "Recorded run",
+        "run_config": {
+          "max_turns": 7,
+          "attacker_instructions": "Synthetic steering",
+          "max_backtracks": 2
+        },
+        "mode": "simulate"
+      },
+      "error": "res1863-replay-fixture.json is an agent simulation run, not a red team run. Replay it with: eq sim simulate --from-run res1863-replay-fixture.json --target <target>"
+    },
+    {
+      "label": "simulation rows",
+      "payload": {
+        "datapoints": [
+          {
+            "persona": {},
+            "scenario": {}
+          }
+        ]
+      },
+      "error": "res1863-replay-fixture.json is an agent simulation run, not a red team run. Replay it with: eq sim simulate --from-run res1863-replay-fixture.json --target <target>"
+    },
+    {
+      "label": "non-object",
+      "payload": {
+        "datapoints": [
+          5
+        ]
+      },
+      "error": "Previous red team run res1863-replay-fixture.json: datapoint 0 is not an object."
+    },
+    {
+      "label": "no driving inputs",
+      "payload": {
+        "datapoints": [
+          {
+            "id": "bad",
+            "messages": []
+          }
+        ]
+      },
+      "error": "Previous red team run res1863-replay-fixture.json: datapoint 0 ('bad') has neither a 'strategy' (dynamic attack) nor 'messages' (static attack), so it cannot be replayed."
+    },
+    {
+      "label": "no rows",
+      "payload": {
+        "datapoints": []
+      },
+      "error": "res1863-replay-fixture.json records no red team datapoints, so it cannot be replayed. Replay needs the cases themselves, which only the auto-saved run in the runs directory carries - not a --save detail summary report, and not runs saved before replay support existed. Re-run the original configuration once to produce a replayable run."
+    },
+    {
+      "label": "null strategy",
+      "payload": {
+        "datapoints": [
+          {
+            "strategy": null
+          }
+        ]
+      },
+      "expected": {
+        "datapoints": [
+          {
+            "inputs": {
+              "strategy": null
+            },
+            "expectedOutput": null
+          }
+        ],
+        "pipeline": "dynamic",
+        "categories": [],
+        "runName": "res1863-replay-fixture",
+        "maxTurns": null,
+        "attackerInstructions": null,
+        "maxBacktracks": null
+      }
+    }
+  ]
+}

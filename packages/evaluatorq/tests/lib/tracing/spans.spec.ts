@@ -1,63 +1,118 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 
-import { setEvaluationAttributes } from "../../../src/lib/tracing/spans.js";
+import * as setup from "../../../src/lib/tracing/setup.js";
+import {
+  withEvaluationRunSpan,
+  withEvaluationSpan,
+  withJobSpan,
+} from "../../../src/lib/tracing/spans.js";
 
-function createMockSpan() {
-  const attributes: Record<string, unknown> = {};
-  return {
-    setAttribute: mock((key: string, value: unknown) => {
-      attributes[key] = value;
-    }),
-    attributes,
-  };
-}
+const fakeSpan = {
+  setAttribute: () => undefined,
+  setStatus: () => undefined,
+  recordException: () => undefined,
+  end: () => undefined,
+};
+const fakeTracer = {
+  startActiveSpan: (...args: unknown[]) =>
+    (args.at(-1) as (span: unknown) => unknown)(fakeSpan),
+};
 
-describe("setEvaluationAttributes", () => {
-  test("sets number score directly as string", () => {
-    const span = createMockSpan();
-    setEvaluationAttributes(span as never, 0.85, "good score", true);
-
-    expect(span.attributes["orq.score"]).toBe("0.85");
-    expect(span.attributes["orq.explanation"]).toBe("good score");
-    expect(span.attributes["orq.pass"]).toBe(true);
+describe("span helpers", () => {
+  afterEach(() => {
+    (
+      setup.getTracer as unknown as { mockRestore?: () => void }
+    ).mockRestore?.();
   });
 
-  test("sets boolean score as string", () => {
-    const span = createMockSpan();
-    setEvaluationAttributes(span as never, true);
-
-    expect(span.attributes["orq.score"]).toBe("true");
+  test.each([
+    ["run", withEvaluationRunSpan],
+    ["job", withJobSpan],
+    ["evaluation", withEvaluationSpan],
+  ] as const)("a throwing %s function runs once", async (_name, helper) => {
+    spyOn(setup, "getTracer").mockReturnValue(fakeTracer as never);
+    let calls = 0;
+    const run = helper as unknown as (
+      options: unknown,
+      fn: () => Promise<void>,
+    ) => Promise<void>;
+    await expect(
+      run({ runId: "r", rowIndex: 0, evaluatorName: "e" }, async () => {
+        calls += 1;
+        throw new Error("boom");
+      }),
+    ).rejects.toThrow("boom");
+    expect(calls).toBe(1);
   });
+});
 
-  test("sets string score directly", () => {
-    const span = createMockSpan();
-    setEvaluationAttributes(span as never, "excellent");
-
-    expect(span.attributes["orq.score"]).toBe("excellent");
-  });
-
-  test("JSON.stringifies object/EvaluationResultCell score", () => {
-    const span = createMockSpan();
-    const cell = {
-      type: "bert_score",
-      value: { precision: 0.9, recall: 0.8, f1: 0.85 },
+describe("typed evaluator result spans", () => {
+  test("keeps a bounded explanation attribute and the full verdict payload", async () => {
+    const { setEvaluationAttributes } = await import(
+      "../../../src/lib/tracing/spans.js"
+    );
+    const previous = process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT;
+    process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT = "true";
+    const attributes: Record<string, unknown> = {};
+    const span = {
+      setAttribute: (key: string, value: unknown) => {
+        attributes[key] = value;
+      },
     };
-    setEvaluationAttributes(span as never, cell);
-
-    expect(span.attributes["orq.score"]).toBe(JSON.stringify(cell));
+    try {
+      const explanation = "😀".repeat(600);
+      setEvaluationAttributes(span as never, false, explanation, false, {
+        evaluatorName: "judge",
+        evaluatorType: "llm_eval",
+        rawOutput: { provider_key: "retained" },
+      });
+      expect(Array.from(String(attributes["orq.explanation"]))).toHaveLength(
+        512,
+      );
+      expect(attributes["gen_ai.evaluation.explanation"]).toBe(
+        attributes["orq.explanation"],
+      );
+      expect(attributes["orq.span_type"]).toBe("span.evaluator");
+      expect(attributes["orq.evaluator.output_type"]).toBe("boolean");
+      expect(attributes["gen_ai.evaluation.score.value"]).toBe(0);
+      expect(attributes["gen_ai.evaluation.score.label"]).toBe("fail");
+      expect(JSON.parse(String(attributes["orq.evaluation.output"]))).toEqual({
+        passed: false,
+        value: false,
+        type: "llm_eval",
+        reason: explanation,
+        raw_output: { provider_key: "retained" },
+      });
+    } finally {
+      if (previous === undefined)
+        delete process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT;
+      else process.env.EVALUATORQ_CAPTURE_MESSAGE_CONTENT = previous;
+    }
   });
-
-  test("does not set optional attributes when undefined", () => {
-    const span = createMockSpan();
-    setEvaluationAttributes(span as never, 1.0);
-
-    expect(span.setAttribute).toHaveBeenCalledTimes(1);
-    expect(span.attributes["orq.explanation"]).toBeUndefined();
-    expect(span.attributes["orq.pass"]).toBeUndefined();
-  });
-
-  test("handles undefined span gracefully", () => {
-    // Should not throw
-    setEvaluationAttributes(undefined, 1.0, "test", true);
+  test("records numeric and inconclusive string scores without inventing pass labels", async () => {
+    const { setEvaluationAttributes } = await import(
+      "../../../src/lib/tracing/spans.js"
+    );
+    for (const score of [0.75, "inconclusive"]) {
+      const attributes: Record<string, unknown> = {};
+      setEvaluationAttributes(
+        {
+          setAttribute: (key: string, value: unknown) => {
+            attributes[key] = value;
+          },
+        } as never,
+        score,
+        undefined,
+        undefined,
+        { evaluatorType: "llm_eval" },
+      );
+      expect(attributes["orq.evaluator.output_type"]).toBe(
+        typeof score === "number" ? "number" : "string",
+      );
+      expect(attributes["gen_ai.evaluation.score.value"]).toBe(
+        typeof score === "number" ? score : undefined,
+      );
+      expect(attributes["gen_ai.evaluation.score.label"]).toBeUndefined();
+    }
   });
 });

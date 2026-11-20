@@ -160,7 +160,7 @@ describe("SimulationRunner criteria", () => {
         finishTurn([
           occurred("criteria_7"),
           occurred("criteria_00"),
-          { criterion_id: "criteria_0", occurred: "yes" },
+          { criterion_id: "criteria_0", occurred: "maybe" },
         ]),
     });
 
@@ -197,12 +197,12 @@ describe("SimulationRunner criteria", () => {
     });
 
     const r = await result;
-    expect(r.criteria_verified).toBe(true);
+    expect(r.criteria_verified).toBe(false);
     expect(r.metadata.criteria_meta).toMatchObject([
       { passed: true, audited: true },
       { passed: true, audited: false },
     ]);
-    expect(criteriaMetScorer(r)).toBe(0.5);
+    expect(criteriaMetScorer(r)).toBe(0);
   });
 
   test("malformed criteria fail the run instead of rejecting", async () => {
@@ -259,38 +259,20 @@ describe("SimulationRunner timeout", () => {
 });
 
 describe("SimulationRunner judge requests", () => {
-  test("forces a tool call with room for a full audit", async () => {
+  test("requests one structured decision with room for the audit", async () => {
     const { result, requests } = runWith({
       judge: () =>
         finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
     });
     await result;
-
-    expect(requests.judge[0]?.tool_choice).toBe("required");
     expect(requests.judge[0]?.max_output_tokens).toBe(10000);
-    expect(requests.judge[0]?.temperature).toBe(0);
-    expect(requests.judge[0]?.tools?.map((tool) => tool.name)).toEqual([
-      "continue_conversation",
-      "finish_conversation",
-    ]);
-    expect(
-      requests.judge[0]?.tools?.every((tool) => tool.strict === true),
-    ).toBe(true);
+    expect(requests.judge[0]?.temperature).toBeUndefined();
+    expect(requests.judge[0]?.tools).toBeUndefined();
+    expect(requests.judge[0]?.text?.format?.name).toBe("JudgeDecision");
+    expect(requests.judge[0]?.text?.format?.strict).toBe(true);
   });
 
-  test("sends the verdict schema on both judge tools", async () => {
-    const { result, requests } = runWith({
-      judge: () =>
-        finishTurn([notOccurred("criteria_0"), notOccurred("criteria_1")]),
-    });
-    await result;
-
-    for (const tool of requests.judge[0]?.tools ?? []) {
-      expect(tool.parameters?.properties).toHaveProperty("criteria_verdicts");
-    }
-  });
-
-  test("finds the tool call behind a reasoning item", async () => {
+  test("reads the decision behind a reasoning item", async () => {
     const { result } = runWith({
       judge: () =>
         finishTurn([occurred("criteria_0"), notOccurred("criteria_1")]),
@@ -464,7 +446,8 @@ describe("SimulationRunner judge requests", () => {
     });
     await result;
 
-    const system = requests.judge[0]?.input[0]?.content as string;
+    const system = (requests.judge[0] as unknown as { instructions: string })
+      .instructions;
     expect(system).toContain(
       "criteria_0: <data>offers a refund</data> (must_happen)",
     );

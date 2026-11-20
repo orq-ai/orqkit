@@ -1,0 +1,1 @@
+{"filters":["none","project: a, z; status: ok; tool name: search; project id: p; tokens min: 0; duration ms max: 1,234"],"rows":[["Question","Find help requests"],["Your filters","none"],["Filters from question","provider: openai; tokens min: 100; duration ms min: 20"],["Dimension: AI match","Is this a help request?\nIncluded when: Answer is yes"],["Traces","3"]]}

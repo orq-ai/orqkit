@@ -1,0 +1,7092 @@
+{
+  "source": "a59c3a86",
+  "scenarios": [
+    {
+      "name": "empty",
+      "responses": [
+        {
+          "data": []
+        },
+        {
+          "workspaces": []
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "sort-and-ignore",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "Zulu",
+              "workspace_id": "w"
+            },
+            null,
+            {
+              "project_id": "2",
+              "name": "Straße",
+              "workspace_id": "w"
+            },
+            {
+              "project_id": "3",
+              "name": "STRASSE",
+              "workspace_id": "w"
+            },
+            {
+              "project_id": "4",
+              "name": "ς",
+              "workspace_id": "w"
+            },
+            {
+              "project_id": "5",
+              "name": "σ",
+              "workspace_id": "w"
+            },
+            {
+              "project_id": "6",
+              "name": "Abc",
+              "workspace_id": "w"
+            },
+            {
+              "name": "missing"
+            }
+          ]
+        },
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "slug"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": "slug",
+        "workspaceId": "w",
+        "projects": [
+          {
+            "id": "6",
+            "name": "Abc",
+            "workspaceId": "w"
+          },
+          {
+            "id": "2",
+            "name": "Straße",
+            "workspaceId": "w"
+          },
+          {
+            "id": "3",
+            "name": "STRASSE",
+            "workspaceId": "w"
+          },
+          {
+            "id": "1",
+            "name": "Zulu",
+            "workspaceId": "w"
+          },
+          {
+            "id": "4",
+            "name": "ς",
+            "workspaceId": "w"
+          },
+          {
+            "id": "5",
+            "name": "σ",
+            "workspaceId": "w"
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "project-pages",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "B",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "2",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        },
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "slug"
+            }
+          ]
+        }
+      ],
+      "profile": "chosen",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "chosen",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "chosen",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "1",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "chosen",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": "slug",
+        "workspaceId": "w",
+        "projects": [
+          {
+            "id": "2",
+            "name": "A",
+            "workspaceId": "w"
+          },
+          {
+            "id": "1",
+            "name": "B",
+            "workspaceId": "w"
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "explicit-oauth-profile",
+      "responses": [
+        {
+          "data": []
+        },
+        {
+          "workspaces": []
+        }
+      ],
+      "profile": "",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "selected-cli-session",
+      "responses": [
+        {
+          "data": []
+        },
+        {
+          "workspaces": []
+        }
+      ],
+      "profile": null,
+      "session": true,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://server.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://server.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "multiple-workspaces",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w1"
+            },
+            {
+              "project_id": "2",
+              "name": "B",
+              "workspace_id": "w2"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "This credential returned projects from multiple workspaces."
+      }
+    },
+    {
+      "name": "bad-project-cursor",
+      "responses": [
+        {
+          "data": [
+            {
+              "name": "invalid"
+            }
+          ],
+          "has_more": true
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI returned an invalid project page cursor."
+      }
+    },
+    {
+      "name": "repeated-project-cursor",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "same",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "same",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "same",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI returned an invalid project page cursor."
+      }
+    },
+    {
+      "name": "too-many-project-pages",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "0",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "2",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "3",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "4",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "5",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "6",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "7",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "8",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "9",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "10",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "11",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "12",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "13",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "14",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "15",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "16",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "17",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "18",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "19",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "20",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "21",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "22",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "23",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "24",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "25",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "26",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "27",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "28",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "29",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "30",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "31",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "32",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "33",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "34",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "35",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "36",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "37",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "38",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "39",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "40",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "41",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "42",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "43",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "44",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "45",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "46",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "47",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "48",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "49",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "0",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "1",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "2",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "3",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "4",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "5",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "6",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "7",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "8",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "9",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "10",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "11",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "12",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "13",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "14",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "15",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "16",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "17",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "18",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "19",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "20",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "21",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "22",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "23",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "24",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "25",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "26",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "27",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "28",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "29",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "30",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "31",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "32",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "33",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "34",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "35",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "36",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "37",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "38",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "39",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "40",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "41",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "42",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "43",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "44",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "45",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "46",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "47",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "48",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI returned too many project pages to choose safely."
+      }
+    },
+    {
+      "name": "bad-project-list",
+      "responses": [
+        {
+          "data": {}
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI could not list projects for this credential."
+      }
+    },
+    {
+      "name": "invalid-json",
+      "responses": [
+        "invalid-json"
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI could not list projects for this credential."
+      }
+    },
+    {
+      "name": "failed-cli",
+      "responses": [
+        "failed"
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI could not list projects for this credential."
+      }
+    },
+    {
+      "name": "workspace-key-missing",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        },
+        {
+          "workspaces": [
+            {
+              "id": "other",
+              "key": "other"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": "fake-env-key",
+            "ORQ_BASE_URL": "https://env.example",
+            "ORQ_SERVER": "https://env.example",
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": "w",
+        "projects": [
+          {
+            "id": "1",
+            "name": "A",
+            "workspaceId": "w"
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "profile-workspace-fallback",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        },
+        {},
+        {
+          "data": [
+            {
+              "id": "x",
+              "key": "x"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "id": "w",
+              "key": "resolved"
+            }
+          ]
+        }
+      ],
+      "profile": "saved",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspaces",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspaces",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "x",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": "resolved",
+        "workspaceId": "w",
+        "projects": [
+          {
+            "id": "1",
+            "name": "A",
+            "workspaceId": "w"
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "profile-empty-no-projects",
+      "responses": [
+        {
+          "data": []
+        },
+        {},
+        {
+          "data": [
+            {
+              "id": "w",
+              "key": "visible"
+            }
+          ]
+        }
+      ],
+      "profile": "saved",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspaces",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "profile-bad-workspace-cursor",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        },
+        {},
+        {
+          "data": [
+            {
+              "name": "bad"
+            }
+          ],
+          "has_more": true
+        }
+      ],
+      "profile": "saved",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspaces",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI returned an invalid workspace page cursor."
+      }
+    },
+    {
+      "name": "profile-invalid-workspace-list",
+      "responses": [
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        },
+        {},
+        {}
+      ],
+      "profile": "saved",
+      "session": false,
+      "oauth": null,
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "saved",
+            "workspaces",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaceKey": null,
+        "workspaceId": null,
+        "projects": [],
+        "error": "The orq CLI could not list workspaces for this credential."
+      }
+    },
+    {
+      "name": "oauth-no-selection",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "Zoo"
+            },
+            {
+              "id": "w2",
+              "key": "abc"
+            },
+            {
+              "id": 0,
+              "key": "invalid"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w2",
+            "key": "abc"
+          },
+          {
+            "id": "w",
+            "key": "Zoo"
+          }
+        ],
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "oauth-unknown-selection",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "known"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "other",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w",
+            "key": "known"
+          }
+        ],
+        "projects": [],
+        "error": null
+      }
+    },
+    {
+      "name": "oauth-invalid-workspaces",
+      "responses": [
+        {}
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [],
+        "projects": [],
+        "error": "The orq CLI could not list workspaces for this session."
+      }
+    },
+    {
+      "name": "oauth-project-pages",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "known"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "B",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "2",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ]
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "known",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "1",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w",
+            "key": "known"
+          }
+        ],
+        "projects": [
+          {
+            "id": "2",
+            "name": "A",
+            "workspaceId": "w"
+          },
+          {
+            "id": "1",
+            "name": "B",
+            "workspaceId": "w"
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "oauth-bad-projects",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "known"
+            }
+          ]
+        },
+        {}
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "known",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w",
+            "key": "known"
+          }
+        ],
+        "projects": [],
+        "error": "The orq CLI could not list projects for this workspace."
+      }
+    },
+    {
+      "name": "oauth-cursor",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "known"
+            }
+          ]
+        },
+        {
+          "data": [],
+          "has_more": true
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "known",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w",
+            "key": "known"
+          }
+        ],
+        "projects": [],
+        "error": "The orq CLI returned an invalid project page cursor."
+      }
+    },
+    {
+      "name": "oauth-too-many-pages",
+      "responses": [
+        {
+          "workspaces": [
+            {
+              "id": "w",
+              "key": "known"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "project_id": "0",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "1",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "2",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "3",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "4",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "5",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "6",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "7",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "8",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "9",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "10",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "11",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "12",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "13",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "14",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "15",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "16",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "17",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "18",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "19",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "20",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "21",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "22",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "23",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "24",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "25",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "26",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "27",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "28",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "29",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "30",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "31",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "32",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "33",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "34",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "35",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "36",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "37",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "38",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "39",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "40",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "41",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "42",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "43",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "44",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "45",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "46",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "47",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "48",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        },
+        {
+          "data": [
+            {
+              "project_id": "49",
+              "name": "A",
+              "workspace_id": "w"
+            }
+          ],
+          "has_more": true
+        }
+      ],
+      "profile": null,
+      "session": false,
+      "oauth": "https://oauth.example",
+      "workspace": "known",
+      "env": {
+        "ORQ_API_KEY": "fake-env-key",
+        "ORQ_BASE_URL": "https://env.example",
+        "ORQ_SERVER": "https://server.example",
+        "ORQ_WORKSPACE": "env-work",
+        "ORQ_WORKSPACE_SLUG": "env-slug",
+        "ORQ_PROJECT": "env-project",
+        "ORQ_VERBOSE": "1",
+        "ORQ_JMESPATH": "data"
+      },
+      "calls": [
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "workspace",
+            "list",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "0",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "1",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "2",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "3",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "4",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "5",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "6",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "7",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "8",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "9",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "10",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "11",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "12",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "13",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "14",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "15",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "16",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "17",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "18",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "19",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "20",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "21",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "22",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "23",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "24",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "25",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "26",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "27",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "28",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "29",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "30",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "31",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "32",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "33",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "34",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "35",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "36",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "37",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "38",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "39",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "40",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "41",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "42",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "43",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "44",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "45",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "46",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "47",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        },
+        {
+          "args": [
+            "--profile",
+            "",
+            "--server",
+            "https://oauth.example",
+            "--workspace",
+            "known",
+            "projects",
+            "list",
+            "--limit",
+            "200",
+            "--starting-after",
+            "48",
+            "-o",
+            "json",
+            "--no-input"
+          ],
+          "env": {
+            "ORQ_API_KEY": null,
+            "ORQ_BASE_URL": null,
+            "ORQ_SERVER": null,
+            "ORQ_WORKSPACE": null,
+            "ORQ_WORKSPACE_SLUG": null,
+            "ORQ_PROJECT": null,
+            "ORQ_VERBOSE": null,
+            "ORQ_JMESPATH": null
+          }
+        }
+      ],
+      "expected": {
+        "workspaces": [
+          {
+            "id": "w",
+            "key": "known"
+          }
+        ],
+        "projects": [],
+        "error": "The orq CLI returned too many project pages."
+      }
+    }
+  ],
+  "links": [
+    {
+      "url": null,
+      "value": null,
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": null,
+      "value": "",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": null,
+      "value": "run:agent:1",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://fallback.example/env-slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": null,
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://fallback.example/env-slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": null,
+      "value": "ID._~-",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://fallback.example/env-slug/traces/(trace:ID._~-)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://fallback.example/env-slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": null,
+      "value": "bad\n",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://fallback.example/env-slug/traces/(trace:bad%0A)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": null,
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": "",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": "run:agent:1",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://fallback.example/env-slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://fallback.example/env-slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": "ID._~-",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://fallback.example/env-slug/traces/(trace:ID._~-)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://fallback.example/env-slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "",
+      "value": "bad\n",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://fallback.example/env-slug/traces/(trace:bad%0A)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": null,
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": "",
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": "run:agent:1",
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": "https://my.orq.ai/work/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://my.orq.ai/work/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://my.orq.ai/work/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": "https://my.orq.ai/work/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://my.orq.ai/work/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://my.orq.ai/work/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": "ID._~-",
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": "https://my.orq.ai/work/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://my.orq.ai/work/traces/(trace:ID._~-)",
+      "run": "https://my.orq.ai/work/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://my.orq.ai/work/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://my.orq.ai/work/experiments/id",
+      "value": "bad\n",
+      "parse": [
+        "https://my.orq.ai",
+        "work"
+      ],
+      "thread": "https://my.orq.ai/work/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://my.orq.ai/work/traces/(trace:bad%0A)",
+      "run": "https://my.orq.ai/work/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://my.orq.ai/work/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": null,
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": "",
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": "run:agent:1",
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": "https://self.example:8443/a/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://self.example:8443/a/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://self.example:8443/a/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": "https://self.example:8443/a/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://self.example:8443/a/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://self.example:8443/a/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": "ID._~-",
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": "https://self.example:8443/a/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://self.example:8443/a/traces/(trace:ID._~-)",
+      "run": "https://self.example:8443/a/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://self.example:8443/a/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "https://self.example:8443/a/experiments",
+      "value": "bad\n",
+      "parse": [
+        "https://self.example:8443",
+        "a"
+      ],
+      "thread": "https://self.example:8443/a/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://self.example:8443/a/traces/(trace:bad%0A)",
+      "run": "https://self.example:8443/a/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://self.example:8443/a/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": null,
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": "",
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": "run:agent:1",
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": "https://Host.Example:443/slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://Host.Example:443/slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://Host.Example:443/slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": "https://Host.Example:443/slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://Host.Example:443/slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://Host.Example:443/slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": "ID._~-",
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": "https://Host.Example:443/slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://Host.Example:443/slug/traces/(trace:ID._~-)",
+      "run": "https://Host.Example:443/slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://Host.Example:443/slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "HTTPS://Host.Example:443/slug/experiments/x?query#fragment",
+      "value": "bad\n",
+      "parse": [
+        "https://Host.Example:443",
+        "slug"
+      ],
+      "thread": "https://Host.Example:443/slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://Host.Example:443/slug/traces/(trace:bad%0A)",
+      "run": "https://Host.Example:443/slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://Host.Example:443/slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": null,
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": "",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": "run:agent:1",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://fallback.example/env-slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://fallback.example/env-slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": "ID._~-",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://fallback.example/env-slug/traces/(trace:ID._~-)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://fallback.example/env-slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/0f4d7853-e58f-4c46-9a60-7992b27e920a/experiments/x",
+      "value": "bad\n",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://fallback.example/env-slug/traces/(trace:bad%0A)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": null,
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": "",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": "run:agent:1",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://fallback.example/env-slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://fallback.example/env-slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": "ID._~-",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://fallback.example/env-slug/traces/(trace:ID._~-)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://fallback.example/env-slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host/slug/agents/id",
+      "value": "bad\n",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://fallback.example/env-slug/traces/(trace:bad%0A)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": null,
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": "",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": "run:agent:1",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://fallback.example/env-slug/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://fallback.example/env-slug/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": "ID._~-",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://fallback.example/env-slug/traces/(trace:ID._~-)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://fallback.example/env-slug/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "javascript:alert(1)",
+      "value": "bad\n",
+      "parse": [
+        null,
+        null
+      ],
+      "thread": "https://fallback.example/env-slug/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://fallback.example/env-slug/traces/(trace:bad%0A)",
+      "run": "https://fallback.example/env-slug/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://fallback.example/env-slug/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": null,
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": "",
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": "run:agent:1",
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": "ID._~-",
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces/(trace:ID._~-)",
+      "run": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host//слуг//experiments/id",
+      "value": "bad\n",
+      "parse": [
+        "https://host",
+        "слуг"
+      ],
+      "thread": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces/(trace:bad%0A)",
+      "run": "https://host/%D1%81%D0%BB%D1%83%D0%B3/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://host/слуг/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": null,
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": "",
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": "run:agent:1",
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": "https://host/a/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://host/a/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://host/a/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": "https://host/a/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://host/a/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://host/a/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": "ID._~-",
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": "https://host/a/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://host/a/traces/(trace:ID._~-)",
+      "run": "https://host/a/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://host/a/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "https://host/a/experiments/id/extra",
+      "value": "bad\n",
+      "parse": [
+        "https://host",
+        "a"
+      ],
+      "thread": "https://host/a/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://host/a/traces/(trace:bad%0A)",
+      "run": "https://host/a/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://host/a/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": null,
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": "",
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": "run:agent:1",
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": "http://localhost:3000/s/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "http://localhost:3000/s/traces/(trace:run%3Aagent%3A1)",
+      "run": "http://localhost:3000/s/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": "http://localhost:3000/s/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "http://localhost:3000/s/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "http://localhost:3000/s/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": "ID._~-",
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": "http://localhost:3000/s/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "http://localhost:3000/s/traces/(trace:ID._~-)",
+      "run": "http://localhost:3000/s/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "http://localhost:3000/s/traces/(trace:ID._~-//span:span-1)",
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "http://localhost:3000/s/experiments/x",
+      "value": "bad\n",
+      "parse": [
+        "http://localhost:3000",
+        "s"
+      ],
+      "thread": "http://localhost:3000/s/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "http://localhost:3000/s/traces/(trace:bad%0A)",
+      "run": "http://localhost:3000/s/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "http://localhost:3000/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": null,
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://user:pass@host/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": "",
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": null,
+      "single": null,
+      "run": null,
+      "span": null,
+      "studio": "https://user:pass@host/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": "run:agent:1",
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": "https://user:pass@host/s/traces?query=thread_id%3Ais%3Arun%3Aagent%3A1",
+      "single": "https://user:pass@host/s/traces/(trace:run%3Aagent%3A1)",
+      "run": "https://user:pass@host/s/traces?query=thread_id%3Acontains%3Arun%3Aagent%3A1",
+      "span": null,
+      "studio": "https://user:pass@host/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": "abc /?<>&\"'é",
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": "https://user:pass@host/s/traces?query=thread_id%3Ais%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "single": "https://user:pass@host/s/traces/(trace:abc%20%2F%3F%3C%3E%26%22%27%C3%A9)",
+      "run": "https://user:pass@host/s/traces?query=thread_id%3Acontains%3Aabc%20%2F%3F%3C%3E%26%22%27%C3%A9",
+      "span": null,
+      "studio": "https://user:pass@host/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": "ID._~-",
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": "https://user:pass@host/s/traces?query=thread_id%3Ais%3AID._~-",
+      "single": "https://user:pass@host/s/traces/(trace:ID._~-)",
+      "run": "https://user:pass@host/s/traces?query=thread_id%3Acontains%3AID._~-",
+      "span": "https://user:pass@host/s/traces/(trace:ID._~-//span:span-1)",
+      "studio": "https://user:pass@host/s/agents/entity"
+    },
+    {
+      "url": "https://user:pass@host/s/experiments/x",
+      "value": "bad\n",
+      "parse": [
+        "https://user:pass@host",
+        "s"
+      ],
+      "thread": "https://user:pass@host/s/traces?query=thread_id%3Ais%3Abad%0A",
+      "single": "https://user:pass@host/s/traces/(trace:bad%0A)",
+      "run": "https://user:pass@host/s/traces?query=thread_id%3Acontains%3Abad%0A",
+      "span": null,
+      "studio": "https://user:pass@host/s/agents/entity"
+    }
+  ],
+  "keys": [
+    {
+      "value": null,
+      "expected": false
+    },
+    {
+      "value": "",
+      "expected": false
+    },
+    {
+      "value": "slug",
+      "expected": true
+    },
+    {
+      "value": "0f4d7853-e58f-4c46-9a60-7992b27e920a",
+      "expected": false
+    },
+    {
+      "value": "0f4d7853e58f4c469a607992b27e920a",
+      "expected": false
+    },
+    {
+      "value": "{0f4d7853-e58f-4c46-9a60-7992b27e920a}",
+      "expected": false
+    },
+    {
+      "value": "urn:uuid:0f4d7853-e58f-4c46-9a60-7992b27e920a",
+      "expected": false
+    },
+    {
+      "value": "{{0f4d7853e58f4c469a607992b27e920a}}",
+      "expected": false
+    },
+    {
+      "value": "not-a-uuid",
+      "expected": true
+    },
+    {
+      "value": "слуг",
+      "expected": true
+    }
+  ],
+  "buttons": [
+    {
+      "url": null,
+      "options": {},
+      "expected": ""
+    },
+    {
+      "url": null,
+      "options": {
+        "onclick": "event.stopPropagation()"
+      },
+      "expected": ""
+    },
+    {
+      "url": null,
+      "options": {
+        "onclick": "alert(\"x\")",
+        "extra_attributes": {
+          "data-x": "<&\"",
+          "download": null
+        }
+      },
+      "expected": ""
+    },
+    {
+      "url": "",
+      "options": {},
+      "expected": ""
+    },
+    {
+      "url": "",
+      "options": {
+        "onclick": "event.stopPropagation()"
+      },
+      "expected": ""
+    },
+    {
+      "url": "",
+      "options": {
+        "onclick": "alert(\"x\")",
+        "extra_attributes": {
+          "data-x": "<&\"",
+          "download": null
+        }
+      },
+      "expected": ""
+    },
+    {
+      "url": "javascript:evil",
+      "options": {},
+      "expected": ""
+    },
+    {
+      "url": "javascript:evil",
+      "options": {
+        "onclick": "event.stopPropagation()"
+      },
+      "expected": ""
+    },
+    {
+      "url": "javascript:evil",
+      "options": {
+        "onclick": "alert(\"x\")",
+        "extra_attributes": {
+          "data-x": "<&\"",
+          "download": null
+        }
+      },
+      "expected": ""
+    },
+    {
+      "url": "https://host/a?x=1&y=\"quoted\"",
+      "options": {},
+      "expected": "<a class=\"btn-secondary trace-link\" href=\"https://host/a?x=1&amp;y=&quot;quoted&quot;\" target=\"_blank\" rel=\"noopener noreferrer\">&lt;Trace&gt; &amp; &quot;test&quot;</a>"
+    },
+    {
+      "url": "https://host/a?x=1&y=\"quoted\"",
+      "options": {
+        "onclick": "event.stopPropagation()"
+      },
+      "expected": "<a class=\"btn-secondary trace-link\" href=\"https://host/a?x=1&amp;y=&quot;quoted&quot;\" target=\"_blank\" rel=\"noopener noreferrer\" onclick=\"event.stopPropagation()\">&lt;Trace&gt; &amp; &quot;test&quot;</a>"
+    },
+    {
+      "url": "https://host/a?x=1&y=\"quoted\"",
+      "options": {
+        "onclick": "alert(\"x\")",
+        "extra_attributes": {
+          "data-x": "<&\"",
+          "download": null
+        }
+      },
+      "expected": "<a class=\"btn-secondary trace-link\" href=\"https://host/a?x=1&amp;y=&quot;quoted&quot;\" target=\"_blank\" rel=\"noopener noreferrer\" data-x=\"&lt;&amp;&quot;\" download onclick=\"alert(&quot;x&quot;)\">&lt;Trace&gt; &amp; &quot;test&quot;</a>"
+    }
+  ],
+  "origins": [
+    {
+      "host": null,
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": null,
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": null,
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://valid.example/",
+      "mode": "cli_profile",
+      "expected": "https://valid.example"
+    },
+    {
+      "host": "https://valid.example/",
+      "mode": "cli_oauth",
+      "expected": "https://valid.example"
+    },
+    {
+      "host": "https://valid.example/",
+      "mode": "environment",
+      "expected": "https://valid.example"
+    },
+    {
+      "host": " HTTPS://HOST:443/// ",
+      "mode": "cli_profile",
+      "expected": "HTTPS://HOST:443"
+    },
+    {
+      "host": " HTTPS://HOST:443/// ",
+      "mode": "cli_oauth",
+      "expected": "HTTPS://HOST:443"
+    },
+    {
+      "host": " HTTPS://HOST:443/// ",
+      "mode": "environment",
+      "expected": "HTTPS://HOST:443"
+    },
+    {
+      "host": "http://localhost:8080",
+      "mode": "cli_profile",
+      "expected": "http://localhost:8080"
+    },
+    {
+      "host": "http://localhost:8080",
+      "mode": "cli_oauth",
+      "expected": "http://localhost:8080"
+    },
+    {
+      "host": "http://localhost:8080",
+      "mode": "environment",
+      "expected": "http://localhost:8080"
+    },
+    {
+      "host": "https://host/path",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host/path",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host/path",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host?",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host?",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host?",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host#",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host#",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host#",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://user@host",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://user@host",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://user@host",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:0",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:0",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:0",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:99999",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:99999",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host:99999",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host\\evil",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host\\evil",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host\\evil",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host/ white",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host/ white",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://host/ white",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://hostevil",
+      "mode": "cli_profile",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://hostevil",
+      "mode": "cli_oauth",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "https://hostevil",
+      "mode": "environment",
+      "expected": "https://env.example"
+    },
+    {
+      "host": "http://[::1]:3000",
+      "mode": "cli_profile",
+      "expected": "http://[::1]:3000"
+    },
+    {
+      "host": "http://[::1]:3000",
+      "mode": "cli_oauth",
+      "expected": "http://[::1]:3000"
+    },
+    {
+      "host": "http://[::1]:3000",
+      "mode": "environment",
+      "expected": "http://[::1]:3000"
+    },
+    {
+      "host": "https://host:",
+      "mode": "cli_profile",
+      "expected": "https://host:"
+    },
+    {
+      "host": "https://host:",
+      "mode": "cli_oauth",
+      "expected": "https://host:"
+    },
+    {
+      "host": "https://host:",
+      "mode": "environment",
+      "expected": "https://host:"
+    }
+  ],
+  "classify": [
+    {
+      "url": null,
+      "expected": "Production"
+    },
+    {
+      "url": "",
+      "expected": "Production"
+    },
+    {
+      "url": "https://my.orq.ai",
+      "expected": "Production"
+    },
+    {
+      "url": "https://staging.orq.ai",
+      "expected": "Staging"
+    },
+    {
+      "url": "https://dev.orq.ai",
+      "expected": "Staging"
+    },
+    {
+      "url": "https://my.orq.ai.local",
+      "expected": "Production"
+    },
+    {
+      "url": "https://MY.ORQ.AI",
+      "expected": "Production"
+    },
+    {
+      "url": "https://onprem.example",
+      "expected": "On-prem"
+    }
+  ]
+}

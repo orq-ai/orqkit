@@ -1,0 +1,701 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "index": 0,
+      "input": null,
+      "experimentUrl": null,
+      "card": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bare": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "captured",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "augmented",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "fetched",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "stored",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "index": 0,
+      "input": null,
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bare": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "captured",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "augmented",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "fetched",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "stored",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "input": {},
+      "experimentUrl": null,
+      "card": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bare": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "captured",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "augmented",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "fetched",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "stored",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "input": {},
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bare": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "captured",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "augmented",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "fetched",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "source": "stored",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "input": {
+        "key": "agent <key>"
+      },
+      "experimentUrl": null,
+      "card": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c",
+      "bare": "762cba52f0420553bb54f4f944c7b2150475778e2f8803a31784723da5fc4786",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c"
+        },
+        {
+          "source": "captured",
+          "expected": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c"
+        },
+        {
+          "source": "augmented",
+          "expected": "622cbd7305a77e46fb9a9349af45f6920b311d7771f4e166deb0a95c22e10601"
+        },
+        {
+          "source": "fetched",
+          "expected": "98f6b51bcb27212309f29bb3c421682f2671305b87229ca84a76585ee2ef813b"
+        },
+        {
+          "source": "stored",
+          "expected": "286bbb7af7d678682d044188b3732ccca6fc94ebfcae35a018fdbee18bd7f0e7"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "input": {
+        "key": "agent <key>"
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c",
+      "bare": "762cba52f0420553bb54f4f944c7b2150475778e2f8803a31784723da5fc4786",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c"
+        },
+        {
+          "source": "captured",
+          "expected": "2aef52e4602ae450ccd5106b1a158adda188ed2bdd8c47726f398d47850d515c"
+        },
+        {
+          "source": "augmented",
+          "expected": "622cbd7305a77e46fb9a9349af45f6920b311d7771f4e166deb0a95c22e10601"
+        },
+        {
+          "source": "fetched",
+          "expected": "98f6b51bcb27212309f29bb3c421682f2671305b87229ca84a76585ee2ef813b"
+        },
+        {
+          "source": "stored",
+          "expected": "286bbb7af7d678682d044188b3732ccca6fc94ebfcae35a018fdbee18bd7f0e7"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "input": {
+        "key": "k",
+        "model": "provider/model",
+        "description": " First paragraph.\n\nSecond paragraph must stay out.",
+        "tools": [
+          "<tool>",
+          "another"
+        ],
+        "sub_agents": [
+          "<delegate>"
+        ],
+        "knowledge_bases": [
+          "KB"
+        ],
+        "memory_stores": [
+          "store"
+        ]
+      },
+      "experimentUrl": null,
+      "card": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3",
+      "bare": "8c91635092293c08502f8ccca27f77734496f9c7e01a9081ca8d62e013fc4196",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3"
+        },
+        {
+          "source": "captured",
+          "expected": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3"
+        },
+        {
+          "source": "augmented",
+          "expected": "43b62ee0508c51044f2d21f942722ad815b9ae668c1991da7bb15fd4abe1aa0a"
+        },
+        {
+          "source": "fetched",
+          "expected": "ef9b4610a7577a91392b4c0d4b171973543e7f91f7562ac872d475492c73d70c"
+        },
+        {
+          "source": "stored",
+          "expected": "09260c9531a660afbe5d73bc90a467169f1653414ffdf1fefcd78a4748520c39"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "input": {
+        "key": "k",
+        "model": "provider/model",
+        "description": " First paragraph.\n\nSecond paragraph must stay out.",
+        "tools": [
+          "<tool>",
+          "another"
+        ],
+        "sub_agents": [
+          "<delegate>"
+        ],
+        "knowledge_bases": [
+          "KB"
+        ],
+        "memory_stores": [
+          "store"
+        ]
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3",
+      "bare": "8c91635092293c08502f8ccca27f77734496f9c7e01a9081ca8d62e013fc4196",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3"
+        },
+        {
+          "source": "captured",
+          "expected": "d5ebfafad3f3920ec4f9bbbeac8872b28a661cc2feb15548fd412adf3ea0e1e3"
+        },
+        {
+          "source": "augmented",
+          "expected": "43b62ee0508c51044f2d21f942722ad815b9ae668c1991da7bb15fd4abe1aa0a"
+        },
+        {
+          "source": "fetched",
+          "expected": "ef9b4610a7577a91392b4c0d4b171973543e7f91f7562ac872d475492c73d70c"
+        },
+        {
+          "source": "stored",
+          "expected": "09260c9531a660afbe5d73bc90a467169f1653414ffdf1fefcd78a4748520c39"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "input": {
+        "key": "k",
+        "description": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 "
+      },
+      "experimentUrl": null,
+      "card": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb",
+      "bare": "76a06f3b2207bba7dd5a9d164be365f5b2f12bee73782030962cc10704cb0520",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb"
+        },
+        {
+          "source": "captured",
+          "expected": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb"
+        },
+        {
+          "source": "augmented",
+          "expected": "93b3c5ea0ee898904be39272611a9c954e05433dc1312b64df21629e5eb53092"
+        },
+        {
+          "source": "fetched",
+          "expected": "bf1b2ed6de9b41df3ed4e75d81f66fc06a080df82d2bc6f5eedbd287067b0c79"
+        },
+        {
+          "source": "stored",
+          "expected": "fe4fa2cac99ea8b78bad96bd5aa9c6867468792c523009b734d910fded5ab001"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "input": {
+        "key": "k",
+        "description": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 "
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb",
+      "bare": "76a06f3b2207bba7dd5a9d164be365f5b2f12bee73782030962cc10704cb0520",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb"
+        },
+        {
+          "source": "captured",
+          "expected": "83f1267e8d04717c98cf618863f02629ca90b303111fd15c8c86cdd51358b4bb"
+        },
+        {
+          "source": "augmented",
+          "expected": "93b3c5ea0ee898904be39272611a9c954e05433dc1312b64df21629e5eb53092"
+        },
+        {
+          "source": "fetched",
+          "expected": "bf1b2ed6de9b41df3ed4e75d81f66fc06a080df82d2bc6f5eedbd287067b0c79"
+        },
+        {
+          "source": "stored",
+          "expected": "fe4fa2cac99ea8b78bad96bd5aa9c6867468792c523009b734d910fded5ab001"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "input": {
+        "key": "k",
+        "id": "entity",
+        "workspace_key": "saved",
+        "base_url": "https://self.example/"
+      },
+      "experimentUrl": null,
+      "card": "45b9a49d45a41f47c51e0f2bb0da2b40600a1ee7b9eae2e94c411dcd4361655b",
+      "bare": "c69d1494929fcb514397440fa4eef44f96ea107c0c4f62f54db714b513e5a302",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "45b9a49d45a41f47c51e0f2bb0da2b40600a1ee7b9eae2e94c411dcd4361655b"
+        },
+        {
+          "source": "captured",
+          "expected": "45b9a49d45a41f47c51e0f2bb0da2b40600a1ee7b9eae2e94c411dcd4361655b"
+        },
+        {
+          "source": "augmented",
+          "expected": "0c567fdfda400cfb22d262bd8e6273335ab1d8a1c956931054df8214a6138b18"
+        },
+        {
+          "source": "fetched",
+          "expected": "eb04e4693511c5fd33f59b14db774db1ad96b934c021ed5bce33c0c5e1b8ed29"
+        },
+        {
+          "source": "stored",
+          "expected": "0c7a8e835a62659c9b279b3fba9745472f4417bf050480515dea5b8ee00469cb"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "input": {
+        "key": "k",
+        "id": "entity",
+        "workspace_key": "saved",
+        "base_url": "https://self.example/"
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f",
+      "bare": "596a430d91a150b0005ba5c15b141db52f92cbe513b1047928a5a3c7538f850d",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f"
+        },
+        {
+          "source": "captured",
+          "expected": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f"
+        },
+        {
+          "source": "augmented",
+          "expected": "9ffdeeef59a47ffb85c40b24a1203860970017c9877a4f195ae3aebad2f0ca6f"
+        },
+        {
+          "source": "fetched",
+          "expected": "dfc130e3ae44e30b8628e46b6c4e62c2bf2d162c2225c8fa1929d634259b88fc"
+        },
+        {
+          "source": "stored",
+          "expected": "d841cf45ea51fde47a0ee822dac06ed7eb97978389e7501a9a568d09adc366a1"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "input": {
+        "key": "k",
+        "id": "entity",
+        "workspace_key": "0f4d7853e58f4c469a607992b27e920a",
+        "url": "https://old/UUID/agents/entity"
+      },
+      "experimentUrl": null,
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "input": {
+        "key": "k",
+        "id": "entity",
+        "workspace_key": "0f4d7853e58f4c469a607992b27e920a",
+        "url": "https://old/UUID/agents/entity"
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f",
+      "bare": "596a430d91a150b0005ba5c15b141db52f92cbe513b1047928a5a3c7538f850d",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f"
+        },
+        {
+          "source": "captured",
+          "expected": "ea5f291fdadadfd8ea09afd7a7dd962ab89f9cd3558793313d65167aac35e16f"
+        },
+        {
+          "source": "augmented",
+          "expected": "9ffdeeef59a47ffb85c40b24a1203860970017c9877a4f195ae3aebad2f0ca6f"
+        },
+        {
+          "source": "fetched",
+          "expected": "dfc130e3ae44e30b8628e46b6c4e62c2bf2d162c2225c8fa1929d634259b88fc"
+        },
+        {
+          "source": "stored",
+          "expected": "d841cf45ea51fde47a0ee822dac06ed7eb97978389e7501a9a568d09adc366a1"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "input": {
+        "key": "k",
+        "description": " \n\t "
+      },
+      "experimentUrl": null,
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "input": {
+        "key": "k",
+        "description": " \n\t "
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "input": {
+        "key": "k",
+        "description": 42
+      },
+      "experimentUrl": null,
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "input": {
+        "key": "k",
+        "description": 42
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "input": {
+        "key": "k",
+        "id": "id",
+        "workspace_key": "captured",
+        "base_url": "javascript:bad"
+      },
+      "experimentUrl": null,
+      "card": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743",
+      "bare": "3c21cb942207b0f65a861b903d88c137b0a34ab65f3295eab9c900eafd2c0465",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "captured",
+          "expected": "779370f48dbda9a231fc1c4c86b13e4913c4c7e363a3262f1eb46f3a8f6fe743"
+        },
+        {
+          "source": "augmented",
+          "expected": "f1958aea20d9fcb765d8842ca80ffdf32c1d7f59787aff25ffbc69b1031b09ef"
+        },
+        {
+          "source": "fetched",
+          "expected": "3231a2a7e448c149ea33229d7d0362196681bc287b476c982a5cf36c8d9f72ae"
+        },
+        {
+          "source": "stored",
+          "expected": "0bd7750a7f5b511d358bb278d4e3fba9c6b649117daf5980cdb6d067a67f6987"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "input": {
+        "key": "k",
+        "id": "id",
+        "workspace_key": "captured",
+        "base_url": "javascript:bad"
+      },
+      "experimentUrl": "https://experiment.example/run-work/experiments/e",
+      "card": "4d807b75439d7e0559a3d8f397feb314de56139c584916b0311ce9acbc09c13d",
+      "bare": "03d1d44a08bbfb05ba702133e76ad9b70fe32cf3b1f8011355fb5335c889cf0c",
+      "sources": [
+        {
+          "source": "none",
+          "expected": "4d807b75439d7e0559a3d8f397feb314de56139c584916b0311ce9acbc09c13d"
+        },
+        {
+          "source": "captured",
+          "expected": "4d807b75439d7e0559a3d8f397feb314de56139c584916b0311ce9acbc09c13d"
+        },
+        {
+          "source": "augmented",
+          "expected": "3b37e781aed9985ba38cb0e090f18103bf962e140922d08e38d0e1135d8cf5e3"
+        },
+        {
+          "source": "fetched",
+          "expected": "a06f19c42a0bb998d8e657b9d85c9081b7a9cf3b923ebadd77b988cf98e36b1f"
+        },
+        {
+          "source": "stored",
+          "expected": "2806d4c7693b527e1b940e7ab6b49abadbaffead28241fe863b8aa8e8d7dcf2c"
+        }
+      ]
+    }
+  ],
+  "previews": [
+    {
+      "input": null,
+      "expected": null
+    },
+    {
+      "input": 42,
+      "expected": null
+    },
+    {
+      "input": "",
+      "expected": null
+    },
+    {
+      "input": "  first \n line \t here\n\nsecond",
+      "expected": "first line here"
+    },
+    {
+      "input": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "expected": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀..."
+    },
+    {
+      "input": " x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x  x ",
+      "expected": "x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x..."
+    },
+    {
+      "input": "before\r\n\r\nafter",
+      "expected": "before after"
+    }
+  ]
+}

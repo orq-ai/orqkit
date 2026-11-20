@@ -1,3 +1,5 @@
+import { CriteriaMetaSchema } from "./schemas.js";
+
 /**
  * Criteria tracking across a simulation.
  *
@@ -34,9 +36,13 @@ export class CriteriaTracker {
     }
   }
 
-  /** True when there is nothing to audit or at least one audit arrived. */
+  /** True when every criterion has received an audit. */
   get verified(): boolean {
-    return this.criteria.length === 0 || this.anyAudit;
+    return this.seen.size === this.criteria.length;
+  }
+
+  get hasAudit(): boolean {
+    return this.anyAudit;
   }
 
   get auditedIds(): Set<string> {
@@ -175,4 +181,20 @@ export function buildCriteriaMeta(
       evidence: evidence ? (evidence[id] ?? "") : null,
     };
   });
+}
+
+export function parseCriteriaMeta(raw: unknown): {
+  valid: CriteriaMeta[];
+  invalid: unknown[];
+} {
+  if (raw === undefined || raw === null) return { valid: [], invalid: [] };
+  if (!Array.isArray(raw)) return { valid: [], invalid: [raw] };
+  const valid: CriteriaMeta[] = [];
+  const invalid: unknown[] = [];
+  for (const entry of raw) {
+    const parsed = CriteriaMetaSchema.safeParse(entry);
+    if (parsed.success) valid.push(parsed.data);
+    else invalid.push(entry);
+  }
+  return { valid, invalid };
 }

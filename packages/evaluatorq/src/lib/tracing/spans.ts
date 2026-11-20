@@ -14,7 +14,16 @@ import type {
   SpanStatusCode as SpanStatusCodeType,
 } from "@opentelemetry/api";
 
+import { recordSpanPayload } from "../common/tracing.js";
 import { getTracer } from "./setup.js";
+
+async function loadOtelApi() {
+  try {
+    return await import("@opentelemetry/api");
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Execute a callback within a span, handling status and error recording.
@@ -61,6 +70,7 @@ export interface JobSpanOptions {
 export interface EvaluationSpanOptions {
   runId: string;
   evaluatorName: string;
+  evaluatorType?: string;
 }
 
 /**
@@ -76,30 +86,29 @@ export async function withEvaluationRunSpan<T>(
     return fn(undefined);
   }
 
-  try {
-    const { context, SpanStatusCode } = await import("@opentelemetry/api");
-
-    // Use parent context if provided, otherwise use active context
-    const parentCtx = options.parentContext || context.active();
-
-    return await tracer.startActiveSpan(
-      "orq.evaluation_run",
-      {
-        attributes: {
-          "orq.run_id": options.runId,
-          "orq.run_name": options.runName,
-          "orq.data_points_count": options.dataPointsCount,
-          "orq.jobs_count": options.jobsCount,
-          "orq.evaluators_count": options.evaluatorsCount,
-        },
-      },
-      parentCtx,
-      (span) => executeWithSpan(span, SpanStatusCode, fn),
-    );
-  } catch {
-    // OTEL not available, run without span
+  const otel = await loadOtelApi();
+  if (!otel) {
     return fn(undefined);
   }
+  const { context, SpanStatusCode } = otel;
+
+  // Use parent context if provided, otherwise use active context
+  const parentCtx = options.parentContext || context.active();
+
+  return await tracer.startActiveSpan(
+    "orq.evaluation_run",
+    {
+      attributes: {
+        "orq.run_id": options.runId,
+        "orq.run_name": options.runName,
+        "orq.data_points_count": options.dataPointsCount,
+        "orq.jobs_count": options.jobsCount,
+        "orq.evaluators_count": options.evaluatorsCount,
+      },
+    },
+    parentCtx,
+    (span) => executeWithSpan(span, SpanStatusCode, fn),
+  );
 }
 
 /**
@@ -115,28 +124,27 @@ export async function withJobSpan<T>(
     return fn(undefined);
   }
 
-  try {
-    const { context, SpanStatusCode } = await import("@opentelemetry/api");
-
-    // Use parent context if provided, otherwise use active context
-    const parentCtx = (options.parentContext as Context) || context.active();
-
-    return await tracer.startActiveSpan(
-      "orq.job",
-      {
-        attributes: {
-          "orq.run_id": options.runId,
-          "orq.row_index": options.rowIndex,
-          ...(options.jobName && { "orq.job_name": options.jobName }),
-        },
-      },
-      parentCtx,
-      (span) => executeWithSpan(span, SpanStatusCode, fn),
-    );
-  } catch {
-    // OTEL not available, run without span
+  const otel = await loadOtelApi();
+  if (!otel) {
     return fn(undefined);
   }
+  const { context, SpanStatusCode } = otel;
+
+  // Use parent context if provided, otherwise use active context
+  const parentCtx = (options.parentContext as Context) || context.active();
+
+  return await tracer.startActiveSpan(
+    "orq.job",
+    {
+      attributes: {
+        "orq.run_id": options.runId,
+        "orq.row_index": options.rowIndex,
+        ...(options.jobName && { "orq.job_name": options.jobName }),
+      },
+    },
+    parentCtx,
+    (span) => executeWithSpan(span, SpanStatusCode, fn),
+  );
 }
 
 /**
@@ -152,22 +160,37 @@ export async function withEvaluationSpan<T>(
     return fn(undefined);
   }
 
-  try {
-    const { SpanStatusCode } = await import("@opentelemetry/api");
-
-    return await tracer.startActiveSpan(
-      "orq.evaluation",
-      {
-        attributes: {
-          "orq.run_id": options.runId,
-          "orq.evaluator_name": options.evaluatorName,
-        },
-      },
-      (span) => executeWithSpan(span, SpanStatusCode, fn),
-    );
-  } catch {
-    // OTEL not available, run without span
+  const otel = await loadOtelApi();
+  if (!otel) {
     return fn(undefined);
+  }
+  const { SpanStatusCode } = otel;
+
+  return await tracer.startActiveSpan(
+    `orq.evaluation ${options.evaluatorName}`,
+    {
+      attributes: {
+        "orq.run_id": options.runId,
+        "orq.evaluator_name": options.evaluatorName,
+      },
+    },
+    (span) => {
+      setEvaluatorIdentity(span, options);
+      return executeWithSpan(span, SpanStatusCode, fn);
+    },
+  );
+}
+
+function setEvaluatorIdentity(
+  span: Span,
+  options: { evaluatorName?: string; evaluatorType?: string },
+): void {
+  if (options.evaluatorType === undefined) return;
+  span.setAttribute("orq.span_type", "span.evaluator");
+  span.setAttribute("orq.evaluator.type", options.evaluatorType);
+  if (options.evaluatorName !== undefined) {
+    span.setAttribute("gen_ai.evaluation.name", options.evaluatorName);
+    span.setAttribute("orq.evaluator.key", options.evaluatorName);
   }
 }
 
@@ -176,24 +199,64 @@ export async function withEvaluationSpan<T>(
  */
 export function setEvaluationAttributes(
   span: Span | undefined,
-  score: string | number | boolean | Record<string, unknown>,
-  explanation?: string,
+  score: string | number | boolean | Record<string, unknown> | null,
+  explanation?: string | null,
   pass?: boolean,
+  options: {
+    evaluatorName?: string;
+    evaluatorType?: string;
+    rawOutput?: Record<string, unknown> | null;
+  } = {},
 ): void {
   if (!span) return;
+  const fullExplanation = explanation;
+  if (explanation != null && Array.from(explanation).length > 512)
+    explanation = `${Array.from(explanation).slice(0, 511).join("")}…`;
 
-  span.setAttribute(
-    "orq.score",
-    typeof score === "object" && score !== null
-      ? JSON.stringify(score)
-      : String(score),
-  );
-  if (explanation !== undefined) {
+  if (score !== null) {
+    span.setAttribute(
+      "orq.score",
+      typeof score === "object" && score !== null
+        ? JSON.stringify(score)
+        : String(score),
+    );
+  }
+  if (explanation != null) {
     span.setAttribute("orq.explanation", explanation);
   }
   if (pass !== undefined) {
     span.setAttribute("orq.pass", pass);
   }
+  if (options.evaluatorType === undefined) return;
+  setEvaluatorIdentity(span, options);
+  span.setAttribute(
+    "orq.evaluator.output_type",
+    typeof score === "boolean"
+      ? "boolean"
+      : typeof score === "number"
+        ? "number"
+        : "string",
+  );
+  if (typeof score === "boolean" || typeof score === "number")
+    span.setAttribute("gen_ai.evaluation.score.value", Number(score));
+  if (explanation != null)
+    span.setAttribute("gen_ai.evaluation.explanation", explanation);
+  if (pass !== undefined) {
+    span.setAttribute("gen_ai.evaluation.passed", pass);
+    span.setAttribute("gen_ai.evaluation.score.label", pass ? "pass" : "fail");
+    span.setAttribute("orq.evaluator.score.label", pass ? "pass" : "fail");
+  }
+  recordSpanPayload(span, {
+    key: "orq.evaluation.output",
+    payload: {
+      passed: pass ?? null,
+      value: score,
+      type: options.evaluatorType,
+      ...(fullExplanation != null ? { reason: fullExplanation } : {}),
+    },
+    optionalFields:
+      options.rawOutput != null ? { raw_output: options.rawOutput } : undefined,
+  });
 }
 
 /**

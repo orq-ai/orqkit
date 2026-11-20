@@ -1,0 +1,501 @@
+{
+  "source": "a59c3a86",
+  "responses": [
+    {
+      "parser": "stream",
+      "raw": "",
+      "text": "",
+      "usage": null
+    },
+    {
+      "parser": "stream",
+      "raw": "0:\"Hello\"\n0:\" world\"\ne:{\"usage\":{\"promptTokens\":10,\"completionTokens\":5}}",
+      "text": "Hello world",
+      "usage": {
+        "input_tokens": 10,
+        "output_tokens": 5,
+        "total_tokens": 15,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": null,
+        "calls": 1,
+        "priced_calls": 0,
+        "prompt_tokens": 10,
+        "completion_tokens": 5,
+        "cost_usd": null
+      }
+    },
+    {
+      "parser": "stream",
+      "raw": "0:invalid\n0:\"\\n🙂\"\nd:{\"usage\":{\"promptTokens\":2,\"completionTokens\":3}}",
+      "text": "invalid\n🙂",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 3,
+        "total_tokens": 5,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": null,
+        "calls": 1,
+        "priced_calls": 0,
+        "prompt_tokens": 2,
+        "completion_tokens": 3,
+        "cost_usd": null
+      }
+    },
+    {
+      "parser": "stream",
+      "raw": "e:{\"usage\":{\"prompt_tokens\":4,\"completion_tokens\":1}}\ne:{\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0}}",
+      "text": "",
+      "usage": {
+        "input_tokens": 4,
+        "output_tokens": 1,
+        "total_tokens": 5,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": null,
+        "calls": 1,
+        "priced_calls": 0,
+        "prompt_tokens": 4,
+        "completion_tokens": 1,
+        "cost_usd": null
+      }
+    },
+    {
+      "parser": "stream",
+      "raw": "e:not json\nd:[]\n0:\"ok\"",
+      "text": "ok",
+      "usage": null
+    },
+    {
+      "parser": "stream",
+      "raw": "d:{\"usage\":{\"total_tokens\":9}}",
+      "text": "",
+      "usage": null
+    },
+    {
+      "parser": "stream",
+      "raw": "0:\"a\"\r\n0:\"b\"\r0:\"c\" 0:\"d\"",
+      "text": "abcd",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "oops",
+      "text": "oops",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "  {  ",
+      "text": "{",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "\"hello\"",
+      "text": "hello",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"message\": {\"content\": \"done\"}, \"usage\": {\"promptTokens\": 2, \"completionTokens\": 3, \"cost\": 0.01}}",
+      "text": "done",
+      "usage": {
+        "input_tokens": 2,
+        "output_tokens": 3,
+        "total_tokens": 5,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": 0.01,
+        "calls": 1,
+        "priced_calls": 1,
+        "prompt_tokens": 2,
+        "completion_tokens": 3,
+        "cost_usd": 0.01
+      }
+    },
+    {
+      "parser": "json",
+      "raw": "{\"message\":\"reply\"}",
+      "text": "reply",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"text\":\"text\"}",
+      "text": "text",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"content\":\"content\"}",
+      "text": "content",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"response\":\"response\"}",
+      "text": "response",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"output\":\"output\"}",
+      "text": "output",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"message\":{\"content\":null}}",
+      "text": "None",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"message\":{\"content\":false}}",
+      "text": "False",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"choices\":[{\"message\":{\"content\":\"openai\"}}],\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":2}}",
+      "text": "openai",
+      "usage": {
+        "input_tokens": 3,
+        "output_tokens": 2,
+        "total_tokens": 5,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": null,
+        "calls": 1,
+        "priced_calls": 0,
+        "prompt_tokens": 3,
+        "completion_tokens": 2,
+        "cost_usd": null
+      }
+    },
+    {
+      "parser": "json",
+      "raw": "{\"usage\":{\"inputTokens\":0,\"outputTokens\":0},\"unknown\":1}",
+      "text": "{\"usage\":{\"inputTokens\":0,\"outputTokens\":0},\"unknown\":1}",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "[]",
+      "text": "[]",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "null",
+      "text": "null",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"message\":{}}",
+      "text": "",
+      "usage": null
+    },
+    {
+      "parser": "json",
+      "raw": "{\"usage\":{\"input_tokens\":8,\"output_tokens\":4,\"cached_tokens\":2,\"total_cost\":0.03},\"output\":\"priced\"}",
+      "text": "priced",
+      "usage": {
+        "input_tokens": 8,
+        "output_tokens": 4,
+        "total_tokens": 12,
+        "cached_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_creation_1h_tokens": 0,
+        "cache_creation_5m_tokens": 0,
+        "reasoning_tokens": 0,
+        "input_cost": null,
+        "output_cost": null,
+        "total_cost": 0.03,
+        "calls": 1,
+        "priced_calls": 1,
+        "prompt_tokens": 8,
+        "completion_tokens": 4,
+        "cost_usd": 0.03
+      }
+    }
+  ],
+  "messages": [
+    {
+      "message": {
+        "role": "user",
+        "content": "Hi"
+      },
+      "version": "v4",
+      "expected": {
+        "role": "user",
+        "content": "Hi"
+      }
+    },
+    {
+      "message": {
+        "role": "user",
+        "content": "Hi"
+      },
+      "version": "v5",
+      "expected": {
+        "role": "user",
+        "content": "Hi"
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "content": null
+      },
+      "version": "v4",
+      "expected": {
+        "role": "assistant",
+        "content": ""
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "content": null
+      },
+      "version": "v5",
+      "expected": {
+        "role": "assistant",
+        "content": ""
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Searching",
+        "tool_calls": [
+          {
+            "id": "call",
+            "type": "function",
+            "function": {
+              "name": "lookup",
+              "arguments": "{\"q\":\"hello\"}"
+            }
+          }
+        ]
+      },
+      "version": "v4",
+      "expected": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Searching"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call",
+            "toolName": "lookup",
+            "args": {
+              "q": "hello"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Searching",
+        "tool_calls": [
+          {
+            "id": "call",
+            "type": "function",
+            "function": {
+              "name": "lookup",
+              "arguments": "{\"q\":\"hello\"}"
+            }
+          }
+        ]
+      },
+      "version": "v5",
+      "expected": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Searching"
+          },
+          {
+            "type": "tool-call",
+            "toolCallId": "call",
+            "toolName": "lookup",
+            "input": {
+              "q": "hello"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "bad",
+            "type": "function",
+            "function": {
+              "name": "lookup",
+              "arguments": "{broken"
+            }
+          }
+        ]
+      },
+      "version": "v4",
+      "expected": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool-call",
+            "toolCallId": "bad",
+            "toolName": "lookup",
+            "args": "{broken"
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "id": "bad",
+            "type": "function",
+            "function": {
+              "name": "lookup",
+              "arguments": "{broken"
+            }
+          }
+        ]
+      },
+      "version": "v5",
+      "expected": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool-call",
+            "toolCallId": "bad",
+            "toolName": "lookup",
+            "input": "{broken"
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "tool",
+        "name": "lookup",
+        "tool_call_id": "call",
+        "content": "result"
+      },
+      "version": "v4",
+      "expected": {
+        "role": "tool",
+        "content": [
+          {
+            "type": "tool-result",
+            "toolCallId": "call",
+            "toolName": "lookup",
+            "result": "result"
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "tool",
+        "name": "lookup",
+        "tool_call_id": "call",
+        "content": "result"
+      },
+      "version": "v5",
+      "expected": {
+        "role": "tool",
+        "content": [
+          {
+            "type": "tool-result",
+            "toolCallId": "call",
+            "toolName": "lookup",
+            "output": {
+              "type": "text",
+              "value": "result"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "tool",
+        "content": null
+      },
+      "version": "v4",
+      "expected": {
+        "role": "tool",
+        "content": [
+          {
+            "type": "tool-result",
+            "toolCallId": "",
+            "toolName": "",
+            "result": ""
+          }
+        ]
+      }
+    },
+    {
+      "message": {
+        "role": "tool",
+        "content": null
+      },
+      "version": "v5",
+      "expected": {
+        "role": "tool",
+        "content": [
+          {
+            "type": "tool-result",
+            "toolCallId": "",
+            "toolName": "",
+            "output": {
+              "type": "text",
+              "value": ""
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

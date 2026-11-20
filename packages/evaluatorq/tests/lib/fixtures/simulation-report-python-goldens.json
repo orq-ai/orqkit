@@ -1,0 +1,3145 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "name": "empty",
+      "results": [],
+      "options": {
+        "executiveSummary": null,
+        "recommendations": null,
+        "runTokenUsageTotal": null
+      },
+      "sections": [
+        {
+          "kind": "summary",
+          "title": "Executive Summary",
+          "data": {
+            "total_conversations": 0,
+            "goals_achieved": 0,
+            "goals_failed": 0,
+            "errors": 0,
+            "success_rate": 0.0,
+            "avg_goal_completion_score": 0.0,
+            "avg_turn_count": 0.0,
+            "total_tokens": 0,
+            "confidence": "LOW",
+            "confidence_note": "only 0/0 goals achieved",
+            "verdict": "fail",
+            "narrative": null
+          }
+        },
+        {
+          "kind": "overview",
+          "title": "Overview",
+          "data": {
+            "total_conversations": 0,
+            "personas": [],
+            "scenarios": []
+          }
+        },
+        {
+          "kind": "failures_first",
+          "title": "Failures",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "failure_mode",
+          "title": "Failure Modes",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "persona_scenario_heatmap",
+          "title": "Persona x Scenario Success",
+          "data": {
+            "personas": [],
+            "scenarios": [],
+            "cells": []
+          }
+        },
+        {
+          "kind": "score_distribution",
+          "title": "Goal Score Distribution",
+          "data": {
+            "scores": [],
+            "measured_scores": [],
+            "completed_conversations": 0,
+            "errored_conversations": 0,
+            "total_conversations": 0
+          }
+        },
+        {
+          "kind": "turn_quality_timeline",
+          "title": "Turn Quality Timeline",
+          "data": {
+            "turns": [],
+            "series": {}
+          }
+        },
+        {
+          "kind": "persona_breakdown",
+          "title": "Per-Persona Breakdown",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "scenario_breakdown",
+          "title": "Per-Scenario Breakdown",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "judge_verdicts",
+          "title": "Judge Verdicts",
+          "data": {
+            "terminated_by": {},
+            "rules_broken": {},
+            "total_rules_broken_instances": 0
+          }
+        },
+        {
+          "kind": "turn_metrics",
+          "title": "Turn Metrics",
+          "data": {
+            "per_conversation": [],
+            "turn_count_distribution": {},
+            "avg_quality_metrics": {}
+          }
+        },
+        {
+          "kind": "token_usage",
+          "title": "Token Usage",
+          "data": {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "reasoning_tokens": 0,
+            "avg_total_per_conversation": 0.0,
+            "avg_input_per_conversation": 0.0,
+            "avg_output_per_conversation": 0.0,
+            "avg_prompt_per_conversation": 0.0,
+            "avg_completion_per_conversation": 0.0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "unknown_usage_conversations": 0
+          }
+        },
+        {
+          "kind": "individual_results",
+          "title": "Individual Conversations",
+          "data": {
+            "entries": []
+          }
+        }
+      ],
+      "markdown": "# Agent Simulation Report\n\n**Target:** test-agent  \n**Date:** 2026-11-09 12:30 UTC  \n**Conversations:** 0  \n**Success Rate:** 0%  \n\n## Executive Summary\n\n> [!CAUTION]\n> GOAL ACHIEVEMENT: VERY LOW - success rate: **0%**\n> **Confidence: LOW** - only 0/0 goals achieved\n\n| Conversations | Goals Achieved | Success Rate | Avg Score | Errors |\n| :---: | :---: | :---: | :---: | :---: |\n| **0** | **0** | **0%** | **0.00** | **0** |\n\n| Metric | Value |\n| --- | --- |\n| Total Conversations | 0 |\n| Goals Achieved | 0 |\n| Success Rate | 0% |\n| Avg Goal Completion Score | 0.00 |\n| Avg Turn Count | 0.0 |\n| Total Tokens | 0 |\n\n## Failures\n\nNo failed conversations.\n\n## Failure Modes\n\nNo failure modes.\n\n## Persona x Scenario Success\n\nNo data.\n\n## Goal Score Distribution\n\nNo scores.\n\n## Turn Quality Timeline\n\nNo turn data.\n\n## Per-Persona Breakdown\n\nNo persona data.\n\n## Per-Scenario Breakdown\n\nNo scenario data.\n\n## Judge Verdicts\n\nNo termination data.\n\n## Turn Metrics\n\n\n<details>\n<summary>Token Usage</summary>\n\n  | Metric | Value |\n  | --- | --- |\n  | Input Tokens (total) | 0 |\n  | Output Tokens (total) | 0 |\n  | Total Tokens | 0 |\n  | Avg Total / Conversation | 0 |\n  | Avg Input / Conversation | 0 |\n  | Avg Output / Conversation | 0 |\n\n</details>\n\n<details>\n<summary>Individual Conversations</summary>\n\n  No conversations.\n\n</details>\n\n\n---\n\n*Generated by evaluatorq agent simulation suite.*",
+      "facts": "",
+      "triggers": [],
+      "prompts": [],
+      "tokenRows": [
+        [
+          "Input Tokens (total)",
+          "0"
+        ],
+        [
+          "Output Tokens (total)",
+          "0"
+        ],
+        [
+          "Total Tokens",
+          "0"
+        ],
+        [
+          "Avg Total / Conversation",
+          "0"
+        ],
+        [
+          "Avg Input / Conversation",
+          "0"
+        ],
+        [
+          "Avg Output / Conversation",
+          "0"
+        ]
+      ]
+    },
+    {
+      "name": "pass",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "options": {
+        "executiveSummary": null,
+        "recommendations": null,
+        "runTokenUsageTotal": null
+      },
+      "sections": [
+        {
+          "kind": "summary",
+          "title": "Executive Summary",
+          "data": {
+            "total_conversations": 1,
+            "goals_achieved": 1,
+            "goals_failed": 0,
+            "errors": 0,
+            "success_rate": 1.0,
+            "avg_goal_completion_score": 1.0,
+            "avg_turn_count": 1.0,
+            "total_tokens": 15,
+            "confidence": "HIGH",
+            "confidence_note": "1/1 goals achieved",
+            "verdict": "pass",
+            "narrative": null
+          }
+        },
+        {
+          "kind": "overview",
+          "title": "Overview",
+          "data": {
+            "total_conversations": 1,
+            "personas": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "name": "Careful",
+                "conversations": 1,
+                "traits": {
+                  "background": "Shopper",
+                  "emoji": "🙂"
+                },
+                "background": "Shopper"
+              }
+            ],
+            "scenarios": [
+              {
+                "id": "scenario:6c964f0fe48f0274",
+                "name": "Refund",
+                "goal": "Refund the correct charge",
+                "context": "Order 7",
+                "criteria": [
+                  {
+                    "description": "Verified",
+                    "type": null
+                  }
+                ],
+                "pass_rate": 1.0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failures_first",
+          "title": "Failures",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "failure_mode",
+          "title": "Failure Modes",
+          "data": {
+            "rows": []
+          }
+        },
+        {
+          "kind": "persona_scenario_heatmap",
+          "title": "Persona x Scenario Success",
+          "data": {
+            "personas": [
+              "Careful"
+            ],
+            "scenarios": [
+              "Refund"
+            ],
+            "cells": [
+              {
+                "persona_id": "persona:71c746d69a520eb8",
+                "scenario_id": "scenario:6c964f0fe48f0274",
+                "persona": "Careful",
+                "scenario": "Refund",
+                "success_rate": 1.0,
+                "avg_score": 1.0,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "score_distribution",
+          "title": "Goal Score Distribution",
+          "data": {
+            "scores": [
+              1.0
+            ],
+            "measured_scores": [
+              1.0
+            ],
+            "completed_conversations": 1,
+            "errored_conversations": 0,
+            "total_conversations": 1
+          }
+        },
+        {
+          "kind": "turn_quality_timeline",
+          "title": "Turn Quality Timeline",
+          "data": {
+            "turns": [],
+            "series": {}
+          }
+        },
+        {
+          "kind": "persona_breakdown",
+          "title": "Per-Persona Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "persona": "Careful",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 1,
+                "success_rate": 1.0,
+                "avg_goal_completion_score": 1.0,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "scenario_breakdown",
+          "title": "Per-Scenario Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "scenario:6c964f0fe48f0274",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 1,
+                "success_rate": 1.0,
+                "avg_goal_completion_score": 1.0,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "judge_verdicts",
+          "title": "Judge Verdicts",
+          "data": {
+            "terminated_by": {
+              "judge": 1
+            },
+            "rules_broken": {},
+            "total_rules_broken_instances": 0
+          }
+        },
+        {
+          "kind": "turn_metrics",
+          "title": "Turn Metrics",
+          "data": {
+            "per_conversation": [
+              {
+                "index": 1,
+                "label": "#1 Careful · Refund",
+                "turns": 1
+              }
+            ],
+            "turn_count_distribution": {
+              "1": 1
+            },
+            "avg_quality_metrics": {}
+          }
+        },
+        {
+          "kind": "token_usage",
+          "title": "Token Usage",
+          "data": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "reasoning_tokens": 0,
+            "avg_total_per_conversation": 15.0,
+            "avg_input_per_conversation": 10.0,
+            "avg_output_per_conversation": 5.0,
+            "avg_prompt_per_conversation": 10.0,
+            "avg_completion_per_conversation": 5.0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "unknown_usage_conversations": 0
+          }
+        },
+        {
+          "kind": "individual_results",
+          "title": "Individual Conversations",
+          "data": {
+            "entries": [
+              {
+                "index": 0,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "judge",
+                "goal_achieved": true,
+                "goal_completion_score": 1.0,
+                "rules_broken": [],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Verified",
+                    "type": null,
+                    "passed": true,
+                    "safety": false,
+                    "audited": null,
+                    "evidence": null,
+                    "state": "pass"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Request finished.",
+                "error": null,
+                "evaluator_scores": {},
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": "Refund the correct charge"
+              }
+            ]
+          }
+        }
+      ],
+      "markdown": "# Agent Simulation Report\n\n**Target:** test-agent  \n**Date:** 2026-11-09 12:30 UTC  \n**Conversations:** 1  \n**Success Rate:** 100%  \n\n## Executive Summary\n\n> [!TIP]\n> GOAL ACHIEVEMENT: STRONG - success rate: **100%**\n> **Confidence: HIGH** - 1/1 goals achieved\n\n| Conversations | Goals Achieved | Success Rate | Avg Score | Errors |\n| :---: | :---: | :---: | :---: | :---: |\n| **1** | **1** | **100%** | **1.00** | **0** |\n\n| Metric | Value |\n| --- | --- |\n| Total Conversations | 1 |\n| Goals Achieved | 1 |\n| Success Rate | 100% |\n| Avg Goal Completion Score | 1.00 |\n| Avg Turn Count | 1.0 |\n| Total Tokens | 15 |\n\n## Overview\n\nThis report evaluates the target agent across **1** persona(s) and **1** scenario(s), for **1** simulated conversation(s). In each, a simulated user (the persona) pursues the scenario goal while a judge scores success criteria and per-turn quality.\n\n**Personas**\n\n- Careful (1 conv.)\n  - _traits_: patience ? · assertiveness ? · politeness ? · technical ?\n  - _background_: Shopper\n\n**Scenarios**\n\n- Refund\n  - **Goal:** Refund the correct charge\n  - **Context:** Order 7\n  - _must_: Verified\n\n## Failures\n\nNo failed conversations.\n\n## Failure Modes\n\nNo failure modes.\n\n## Persona x Scenario Success\n\n| Scenario | Careful |\n| --- | --- |\n| Refund | 100% |\n\n## Goal Score Distribution\n\n`0.0-0.1` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.1-0.2` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.2-0.3` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.3-0.4` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.4-0.5` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.5-0.6` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.6-0.7` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.7-0.8` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.8-0.9` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.9-1.0` ████████████████████ 1\n\n## Turn Quality Timeline\n\nNo turn data.\n\n## Per-Persona Breakdown\n\n| Persona | Convs | Achieved | Success | Avg Score | Tokens |\n| --- | ---: | ---: | --- | --- | ---: |\n| Careful | 1 | 1 | **██████████ 100%** | 1.00 | 15 |\n\n## Per-Scenario Breakdown\n\n| Scenario | Convs | Achieved | Success | Avg Score | Avg Turns |\n| --- | ---: | ---: | --- | --- | ---: |\n| Refund | 1 | 1 | **██████████ 100%** | 1.00 | 1.0 |\n\n## Judge Verdicts\n\n**Terminated By:**\n\n| Reason | Count |\n| --- | ---: |\n| judge | 1 |\n\n## Turn Metrics\n\n**Turn Count Distribution:**\n\n| Turns | Conversations |\n| --- | ---: |\n| 1 | 1 |\n\n\n<details>\n<summary>Token Usage</summary>\n\n  | Metric | Value |\n  | --- | --- |\n  | Input Tokens (total) | 10 |\n  | Output Tokens (total) | 5 |\n  | Total Tokens | 15 |\n  | Avg Total / Conversation | 15 |\n  | Avg Input / Conversation | 10 |\n  | Avg Output / Conversation | 5 |\n\n</details>\n\n<details>\n<summary>Individual Conversations</summary>\n\n  <details>\n  <summary>#1: Careful / Refund - **ACHIEVED** (1 turns, score 1.00)</summary>\n\n    - **Terminated by:** judge\n    - **Tokens:** 15\n\n    **Judge reason:** Request finished.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n</details>\n\n\n---\n\n*Generated by evaluatorq agent simulation suite.*",
+      "facts": "Total simulations: 1\nGoals achieved: 1 (100%)\nGoals failed: 0",
+      "triggers": [
+        []
+      ],
+      "prompts": [
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Request finished.\nFlagged issues:\n\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>"
+      ],
+      "tokenRows": [
+        [
+          "Input Tokens (total)",
+          "10"
+        ],
+        [
+          "Output Tokens (total)",
+          "5"
+        ],
+        [
+          "Total Tokens",
+          "15"
+        ],
+        [
+          "Avg Total / Conversation",
+          "15"
+        ],
+        [
+          "Avg Input / Conversation",
+          "10"
+        ],
+        [
+          "Avg Output / Conversation",
+          "5"
+        ]
+      ]
+    },
+    {
+      "name": "fail",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "options": {
+        "executiveSummary": null,
+        "recommendations": null,
+        "runTokenUsageTotal": null
+      },
+      "sections": [
+        {
+          "kind": "summary",
+          "title": "Executive Summary",
+          "data": {
+            "total_conversations": 1,
+            "goals_achieved": 0,
+            "goals_failed": 1,
+            "errors": 0,
+            "success_rate": 0.0,
+            "avg_goal_completion_score": 0.25,
+            "avg_turn_count": 1.0,
+            "total_tokens": 15,
+            "confidence": "LOW",
+            "confidence_note": "only 0/1 goals achieved",
+            "verdict": "fail",
+            "narrative": null
+          }
+        },
+        {
+          "kind": "overview",
+          "title": "Overview",
+          "data": {
+            "total_conversations": 1,
+            "personas": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "name": "Careful",
+                "conversations": 1,
+                "traits": {
+                  "background": "Shopper",
+                  "emoji": "🙂"
+                },
+                "background": "Shopper"
+              }
+            ],
+            "scenarios": [
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "name": "Refund",
+                "goal": "Refund the correct charge",
+                "context": "Order 7",
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen"
+                  },
+                  {
+                    "description": "Verify account",
+                    "type": "must_happen"
+                  }
+                ],
+                "pass_rate": 0.0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failures_first",
+          "title": "Failures",
+          "data": {
+            "rows": [
+              {
+                "index": 1,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "violated": [
+                  "Keep IDs private"
+                ],
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "passed": false,
+                    "safety": true,
+                    "state": "fail"
+                  },
+                  {
+                    "description": "Verify account",
+                    "passed": true,
+                    "safety": false,
+                    "state": "unknown"
+                  }
+                ],
+                "has_safety": true,
+                "terminated_by": "judge",
+                "reason": "Leaked order ID.",
+                "score": 0.25,
+                "anchor": "conv-1"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failure_mode",
+          "title": "Failure Modes",
+          "data": {
+            "rows": [
+              [
+                "Refund: Keep IDs private",
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "persona_scenario_heatmap",
+          "title": "Persona x Scenario Success",
+          "data": {
+            "personas": [
+              "Careful"
+            ],
+            "scenarios": [
+              "Refund"
+            ],
+            "cells": [
+              {
+                "persona_id": "persona:71c746d69a520eb8",
+                "scenario_id": "scenario:be06c7bf76d83f58",
+                "persona": "Careful",
+                "scenario": "Refund",
+                "success_rate": 0.0,
+                "avg_score": 0.25,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "score_distribution",
+          "title": "Goal Score Distribution",
+          "data": {
+            "scores": [
+              0.25
+            ],
+            "measured_scores": [
+              0.25
+            ],
+            "completed_conversations": 1,
+            "errored_conversations": 0,
+            "total_conversations": 1
+          }
+        },
+        {
+          "kind": "turn_quality_timeline",
+          "title": "Turn Quality Timeline",
+          "data": {
+            "turns": [
+              1,
+              2
+            ],
+            "series": {
+              "response_quality": [
+                null,
+                0.5
+              ],
+              "hallucination_risk": [
+                0.75,
+                null
+              ],
+              "tone_appropriateness": [
+                0.25,
+                null
+              ],
+              "factual_accuracy": [
+                0.0,
+                0.5
+              ]
+            }
+          }
+        },
+        {
+          "kind": "persona_breakdown",
+          "title": "Per-Persona Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "persona": "Careful",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.25,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "scenario_breakdown",
+          "title": "Per-Scenario Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.25,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "judge_verdicts",
+          "title": "Judge Verdicts",
+          "data": {
+            "terminated_by": {
+              "judge": 1
+            },
+            "rules_broken": {
+              "criteria_0": 1,
+              "free rule": 1
+            },
+            "total_rules_broken_instances": 2
+          }
+        },
+        {
+          "kind": "turn_metrics",
+          "title": "Turn Metrics",
+          "data": {
+            "per_conversation": [
+              {
+                "index": 1,
+                "label": "#1 Careful · Refund",
+                "turns": 1
+              }
+            ],
+            "turn_count_distribution": {
+              "1": 1
+            },
+            "avg_quality_metrics": {
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.25,
+              "response_quality": 0.5
+            }
+          }
+        },
+        {
+          "kind": "evaluator_scores",
+          "title": "Evaluator Scores",
+          "data": {
+            "rows": [
+              {
+                "evaluator": "bool",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 1.0,
+                "min_score": 1.0,
+                "max_score": 1.0,
+                "first_error": null
+              },
+              {
+                "evaluator": "broken",
+                "runs": 0,
+                "dropped": 1,
+                "mean_score": null,
+                "min_score": null,
+                "max_score": null,
+                "first_error": "invalid score"
+              },
+              {
+                "evaluator": "quality",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 0.25,
+                "min_score": 0.25,
+                "max_score": 0.25,
+                "first_error": null
+              }
+            ]
+          }
+        },
+        {
+          "kind": "token_usage",
+          "title": "Token Usage",
+          "data": {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "reasoning_tokens": 0,
+            "avg_total_per_conversation": 15.0,
+            "avg_input_per_conversation": 10.0,
+            "avg_output_per_conversation": 5.0,
+            "avg_prompt_per_conversation": 10.0,
+            "avg_completion_per_conversation": 5.0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "unknown_usage_conversations": 0
+          }
+        },
+        {
+          "kind": "individual_results",
+          "title": "Individual Conversations",
+          "data": {
+            "entries": [
+              {
+                "index": 0,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "judge",
+                "goal_achieved": false,
+                "goal_completion_score": 0.25,
+                "rules_broken": [
+                  "criteria_0",
+                  "free rule"
+                ],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen",
+                    "passed": false,
+                    "safety": true,
+                    "audited": true,
+                    "evidence": "Order 7",
+                    "state": "fail"
+                  },
+                  {
+                    "id": "criteria_1",
+                    "description": "Verify account",
+                    "type": "must_happen",
+                    "passed": true,
+                    "safety": false,
+                    "audited": false,
+                    "evidence": null,
+                    "state": "unknown"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Leaked order ID.",
+                "error": null,
+                "evaluator_scores": {
+                  "quality": 0.25,
+                  "bool": 1.0
+                },
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": "Refund the correct charge"
+              }
+            ]
+          }
+        }
+      ],
+      "markdown": "# Agent Simulation Report\n\n**Target:** test-agent  \n**Date:** 2026-11-09 12:30 UTC  \n**Conversations:** 1  \n**Success Rate:** 0%  \n\n## Executive Summary\n\n> [!CAUTION]\n> GOAL ACHIEVEMENT: VERY LOW - success rate: **0%**\n> **Confidence: LOW** - only 0/1 goals achieved\n\n| Conversations | Goals Achieved | Success Rate | Avg Score | Errors |\n| :---: | :---: | :---: | :---: | :---: |\n| **1** | **0** | **0%** | **0.25** | **0** |\n\n| Metric | Value |\n| --- | --- |\n| Total Conversations | 1 |\n| Goals Achieved | 0 |\n| Success Rate | 0% |\n| Avg Goal Completion Score | 0.25 |\n| Avg Turn Count | 1.0 |\n| Total Tokens | 15 |\n\n## Overview\n\nThis report evaluates the target agent across **1** persona(s) and **1** scenario(s), for **1** simulated conversation(s). In each, a simulated user (the persona) pursues the scenario goal while a judge scores success criteria and per-turn quality.\n\n**Personas**\n\n- Careful (1 conv.)\n  - _traits_: patience ? · assertiveness ? · politeness ? · technical ?\n  - _background_: Shopper\n\n**Scenarios**\n\n- Refund\n  - **Goal:** Refund the correct charge\n  - **Context:** Order 7\n  - _must NOT_: Keep IDs private\n  - _must_: Verify account\n\n## Failures\n\n| # | Persona | Scenario | Violated criteria | Score | Ended |\n| --- | --- | --- | --- | --- | --- |\n| [#1](#conv-1) | Careful | Refund | Keep IDs private ⚠️ | 0.25 | judge |\n\n## Failure Modes\n\n| Scenario: Criterion | Count |\n| --- | ---: |\n| Refund: Keep IDs private | 1 |\n\n## Persona x Scenario Success\n\n| Scenario | Careful |\n| --- | --- |\n| Refund | 0% |\n\n## Goal Score Distribution\n\n`0.0-0.1` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.1-0.2` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.2-0.3` ████████████████████ 1\n`0.3-0.4` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.4-0.5` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.5-0.6` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.6-0.7` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.7-0.8` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.8-0.9` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.9-1.0` ░░░░░░░░░░░░░░░░░░░░ 0\n\n## Turn Quality Timeline\n\n| Turn | response_quality | hallucination_risk | tone_appropriateness | factual_accuracy |\n| --- | ---: | ---: | ---: | ---: |\n| 1 | - | 0.75 | 0.25 | 0.00 |\n| 2 | 0.50 | - | - | 0.50 |\n\n## Per-Persona Breakdown\n\n| Persona | Convs | Achieved | Success | Avg Score | Tokens |\n| --- | ---: | ---: | --- | --- | ---: |\n| Careful | 1 | 0 | ░░░░░░░░░░ 0% | 0.25 | 15 |\n\n## Per-Scenario Breakdown\n\n| Scenario | Convs | Achieved | Success | Avg Score | Avg Turns |\n| --- | ---: | ---: | --- | --- | ---: |\n| Refund | 1 | 0 | ░░░░░░░░░░ 0% | 0.25 | 1.0 |\n\n## Judge Verdicts\n\n**Terminated By:**\n\n| Reason | Count |\n| --- | ---: |\n| judge | 1 |\n\n## Turn Metrics\n\n**Turn Count Distribution:**\n\n| Turns | Conversations |\n| --- | ---: |\n| 1 | 1 |\n\n**Average Per-Turn Quality Metrics:**\n\n| Metric | Avg Score |\n| --- | --- |\n| hallucination_risk | 0.75 |\n| tone_appropriateness | 0.25 |\n| factual_accuracy | 0.25 |\n| response_quality | 0.50 |\n\n## Evaluator Scores\n\n| Evaluator | Runs | Dropped | Mean | Min | Max |\n| --- | ---: | ---: | ---: | ---: | ---: |\n| bool | 1 | 0 | 1.00 | 1.00 | 1.00 |\n| broken | 0 | 1 | - | - | - |\n| quality | 1 | 0 | 0.25 | 0.25 | 0.25 |\n\n**Dropped scores:**\n\n- `broken`: 1 score(s) dropped - invalid score\n\n\n<details>\n<summary>Token Usage</summary>\n\n  | Metric | Value |\n  | --- | --- |\n  | Input Tokens (total) | 10 |\n  | Output Tokens (total) | 5 |\n  | Total Tokens | 15 |\n  | Avg Total / Conversation | 15 |\n  | Avg Input / Conversation | 10 |\n  | Avg Output / Conversation | 5 |\n\n</details>\n\n<details>\n<summary>Individual Conversations</summary>\n\n  <details>\n  <summary>#1: Careful / Refund - **NOT ACHIEVED** (1 turns, score 0.25)</summary>\n\n    - **Terminated by:** judge\n    - **Tokens:** 15\n    - **Criteria violated:** Keep IDs private\n    - **Criteria not audited:** Verify account\n    - **Evidence:**\n        - Keep IDs private: \"Order 7\"\n    - **Evaluator scores:** quality=0.25, bool=1.00\n\n    **Judge reason:** Leaked order ID.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n</details>\n\n\n---\n\n*Generated by evaluatorq agent simulation suite.*",
+      "facts": "Total simulations: 1\nGoals achieved: 0 (0%)\nGoals failed: 1\nMost-broken rule: criteria_0 (broken in 1 simulation(s))\nRules broken (by frequency): criteria_0: 1, free rule: 1\nExample failure: Leaked order ID.",
+      "triggers": [
+        [
+          [
+            "rule_broken",
+            "free rule"
+          ],
+          [
+            "criterion_failed",
+            "Keep IDs private"
+          ],
+          [
+            "low_factual_accuracy",
+            "factual_accuracy averaged 0.25 across 1 turn"
+          ],
+          [
+            "high_hallucination_risk",
+            "hallucination_risk averaged 0.75 across 1 turn"
+          ],
+          [
+            "poor_tone",
+            "tone_appropriateness averaged 0.25 across 1 turn"
+          ]
+        ]
+      ],
+      "prompts": [
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Leaked order ID.\nFlagged issues:\n- [rule_broken] free rule\n- [criterion_failed] Keep IDs private\n- [low_factual_accuracy] factual_accuracy averaged 0.25 across 1 turn\n- [high_hallucination_risk] hallucination_risk averaged 0.75 across 1 turn\n- [poor_tone] tone_appropriateness averaged 0.25 across 1 turn\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>"
+      ],
+      "tokenRows": [
+        [
+          "Input Tokens (total)",
+          "10"
+        ],
+        [
+          "Output Tokens (total)",
+          "5"
+        ],
+        [
+          "Total Tokens",
+          "15"
+        ],
+        [
+          "Avg Total / Conversation",
+          "15"
+        ],
+        [
+          "Avg Input / Conversation",
+          "10"
+        ],
+        [
+          "Avg Output / Conversation",
+          "5"
+        ]
+      ]
+    },
+    {
+      "name": "mixed",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "error",
+          "reason": "Failed transport",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": false,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": null,
+            "scenario": false,
+            "error": "rate limit",
+            "evaluator_errors": {
+              "broken": "timeout",
+              "only_error": "no score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "options": {
+        "executiveSummary": "Observed results.",
+        "recommendations": [
+          {
+            "resultIndex": 1,
+            "datapointId": "dp-2",
+            "persona": "Careful",
+            "scenario": "Refund",
+            "triggers": [
+              "criterion_failed: Keep IDs private",
+              "some_other: x"
+            ],
+            "suggestions": [
+              "Remove internal IDs."
+            ]
+          }
+        ],
+        "runTokenUsageTotal": {
+          "input_tokens": 200,
+          "output_tokens": 50,
+          "total_tokens": 250,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": 0.012,
+          "calls": 4,
+          "priced_calls": 2,
+          "prompt_tokens": 200,
+          "completion_tokens": 50,
+          "cost_usd": 0.012
+        }
+      },
+      "sections": [
+        {
+          "kind": "summary",
+          "title": "Executive Summary",
+          "data": {
+            "total_conversations": 4,
+            "goals_achieved": 1,
+            "goals_failed": 2,
+            "errors": 1,
+            "success_rate": 0.25,
+            "avg_goal_completion_score": 0.6875,
+            "avg_turn_count": 1.0,
+            "total_tokens": 60,
+            "confidence": "LOW",
+            "confidence_note": "only 1/4 goals achieved",
+            "verdict": "fail",
+            "narrative": "Observed results."
+          }
+        },
+        {
+          "kind": "overview",
+          "title": "Overview",
+          "data": {
+            "total_conversations": 4,
+            "personas": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "name": "Careful",
+                "conversations": 2,
+                "traits": {
+                  "background": "Shopper",
+                  "emoji": "🙂"
+                },
+                "background": "Shopper"
+              },
+              {
+                "id": "persona:617ef85f1ca45ebe",
+                "name": "None",
+                "conversations": 1,
+                "traits": null,
+                "background": null
+              },
+              {
+                "id": "persona:p-2",
+                "name": "Careful",
+                "conversations": 1,
+                "traits": null,
+                "background": null
+              }
+            ],
+            "scenarios": [
+              {
+                "id": "scenario:6c964f0fe48f0274",
+                "name": "Refund",
+                "goal": "Refund the correct charge",
+                "context": "Order 7",
+                "criteria": [
+                  {
+                    "description": "Verified",
+                    "type": null
+                  }
+                ],
+                "pass_rate": 1.0
+              },
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "name": "Refund",
+                "goal": "Refund the correct charge",
+                "context": "Order 7",
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen"
+                  },
+                  {
+                    "description": "Verify account",
+                    "type": "must_happen"
+                  }
+                ],
+                "pass_rate": 0.0
+              },
+              {
+                "id": "scenario:df80ee4e56a5fd1e",
+                "name": "False",
+                "goal": null,
+                "context": null,
+                "criteria": [
+                  {
+                    "description": "Verified",
+                    "type": null
+                  }
+                ],
+                "pass_rate": 1.0
+              },
+              {
+                "id": "scenario:s-2",
+                "name": "Refund",
+                "goal": null,
+                "context": null,
+                "criteria": [
+                  {
+                    "description": "Do not leak",
+                    "type": "must_not_happen"
+                  }
+                ],
+                "pass_rate": 0.0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failures_first",
+          "title": "Failures",
+          "data": {
+            "rows": [
+              {
+                "index": 2,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "violated": [
+                  "Keep IDs private"
+                ],
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "passed": false,
+                    "safety": true,
+                    "state": "fail"
+                  },
+                  {
+                    "description": "Verify account",
+                    "passed": true,
+                    "safety": false,
+                    "state": "unknown"
+                  }
+                ],
+                "has_safety": true,
+                "terminated_by": "judge",
+                "reason": "Leaked order ID.",
+                "score": 0.25,
+                "anchor": "conv-2"
+              },
+              {
+                "index": 4,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "violated": [],
+                "criteria": [
+                  {
+                    "description": "Do not leak",
+                    "passed": true,
+                    "safety": false,
+                    "state": "unknown"
+                  }
+                ],
+                "has_safety": false,
+                "terminated_by": "max_turns",
+                "reason": "Request finished.",
+                "score": 0.5,
+                "anchor": "conv-4"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failure_mode",
+          "title": "Failure Modes",
+          "data": {
+            "rows": [
+              [
+                "Refund: Keep IDs private",
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "recommendations",
+          "title": "Remediation Suggestions",
+          "data": {
+            "rows": [
+              {
+                "index": 2,
+                "datapoint_id": "dp-2",
+                "persona": "Careful",
+                "scenario": "Refund",
+                "triggers": [
+                  "Criterion failed: Keep IDs private",
+                  "Some other: x"
+                ],
+                "suggestions": [
+                  "Remove internal IDs."
+                ],
+                "anchor": "conv-2"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "persona_scenario_heatmap",
+          "title": "Persona x Scenario Success",
+          "data": {
+            "personas": [
+              "Careful",
+              "None",
+              "Careful (2)"
+            ],
+            "scenarios": [
+              "Refund",
+              "Refund (2)",
+              "False",
+              "Refund (3)"
+            ],
+            "cells": [
+              {
+                "persona_id": "persona:71c746d69a520eb8",
+                "scenario_id": "scenario:6c964f0fe48f0274",
+                "persona": "Careful",
+                "scenario": "Refund",
+                "success_rate": 1.0,
+                "avg_score": 1.0,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              },
+              {
+                "persona_id": "persona:71c746d69a520eb8",
+                "scenario_id": "scenario:be06c7bf76d83f58",
+                "persona": "Careful",
+                "scenario": "Refund (2)",
+                "success_rate": 0.0,
+                "avg_score": 0.25,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              },
+              {
+                "persona_id": "persona:617ef85f1ca45ebe",
+                "scenario_id": "scenario:df80ee4e56a5fd1e",
+                "persona": "None",
+                "scenario": "False",
+                "success_rate": 0.0,
+                "avg_score": 1.0,
+                "n": 1,
+                "completed_conversations": 0,
+                "errored_conversations": 1
+              },
+              {
+                "persona_id": "persona:p-2",
+                "scenario_id": "scenario:s-2",
+                "persona": "Careful (2)",
+                "scenario": "Refund (3)",
+                "success_rate": 0.0,
+                "avg_score": 0.5,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "score_distribution",
+          "title": "Goal Score Distribution",
+          "data": {
+            "scores": [
+              1.0,
+              0.25,
+              1.0,
+              0.5
+            ],
+            "measured_scores": [
+              1.0,
+              0.25,
+              0.5
+            ],
+            "completed_conversations": 3,
+            "errored_conversations": 1,
+            "total_conversations": 4
+          }
+        },
+        {
+          "kind": "turn_quality_timeline",
+          "title": "Turn Quality Timeline",
+          "data": {
+            "turns": [
+              1,
+              2
+            ],
+            "series": {
+              "response_quality": [
+                null,
+                0.5
+              ],
+              "hallucination_risk": [
+                0.75,
+                null
+              ],
+              "tone_appropriateness": [
+                0.25,
+                null
+              ],
+              "factual_accuracy": [
+                0.0,
+                0.5
+              ]
+            }
+          }
+        },
+        {
+          "kind": "persona_breakdown",
+          "title": "Per-Persona Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "persona:617ef85f1ca45ebe",
+                "persona": "None",
+                "conversations": 1,
+                "completed_conversations": 0,
+                "errored_conversations": 1,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 1.0,
+                "total_tokens": 15
+              },
+              {
+                "id": "persona:p-2",
+                "persona": "Careful",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.5,
+                "total_tokens": 15
+              },
+              {
+                "id": "persona:71c746d69a520eb8",
+                "persona": "Careful",
+                "conversations": 2,
+                "completed_conversations": 2,
+                "errored_conversations": 0,
+                "goals_achieved": 1,
+                "success_rate": 0.5,
+                "avg_goal_completion_score": 0.625,
+                "total_tokens": 30
+              }
+            ]
+          }
+        },
+        {
+          "kind": "scenario_breakdown",
+          "title": "Per-Scenario Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.25,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              },
+              {
+                "id": "scenario:df80ee4e56a5fd1e",
+                "scenario": "False",
+                "conversations": 1,
+                "completed_conversations": 0,
+                "errored_conversations": 1,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 1.0,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              },
+              {
+                "id": "scenario:s-2",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.5,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              },
+              {
+                "id": "scenario:6c964f0fe48f0274",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 1,
+                "success_rate": 1.0,
+                "avg_goal_completion_score": 1.0,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "judge_verdicts",
+          "title": "Judge Verdicts",
+          "data": {
+            "terminated_by": {
+              "judge": 2,
+              "error": 1,
+              "max_turns": 1
+            },
+            "rules_broken": {
+              "criteria_0": 1,
+              "free rule": 1
+            },
+            "total_rules_broken_instances": 2
+          }
+        },
+        {
+          "kind": "turn_metrics",
+          "title": "Turn Metrics",
+          "data": {
+            "per_conversation": [
+              {
+                "index": 1,
+                "label": "#1 Careful · Refund",
+                "turns": 1
+              },
+              {
+                "index": 2,
+                "label": "#2 Careful · Refund",
+                "turns": 1
+              },
+              {
+                "index": 3,
+                "label": "#3 None · False",
+                "turns": 1
+              },
+              {
+                "index": 4,
+                "label": "#4 Careful · Refund",
+                "turns": 1
+              }
+            ],
+            "turn_count_distribution": {
+              "1": 4
+            },
+            "avg_quality_metrics": {
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.25,
+              "response_quality": 0.5
+            }
+          }
+        },
+        {
+          "kind": "evaluator_scores",
+          "title": "Evaluator Scores",
+          "data": {
+            "rows": [
+              {
+                "evaluator": "bool",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 1.0,
+                "min_score": 1.0,
+                "max_score": 1.0,
+                "first_error": null
+              },
+              {
+                "evaluator": "broken",
+                "runs": 0,
+                "dropped": 2,
+                "mean_score": null,
+                "min_score": null,
+                "max_score": null,
+                "first_error": "invalid score"
+              },
+              {
+                "evaluator": "only_error",
+                "runs": 0,
+                "dropped": 1,
+                "mean_score": null,
+                "min_score": null,
+                "max_score": null,
+                "first_error": "no score"
+              },
+              {
+                "evaluator": "quality",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 0.25,
+                "min_score": 0.25,
+                "max_score": 0.25,
+                "first_error": null
+              }
+            ]
+          }
+        },
+        {
+          "kind": "errors",
+          "title": "Errors",
+          "data": {
+            "total_errored": 1,
+            "by_message": {
+              "rate limit": 1
+            }
+          }
+        },
+        {
+          "kind": "token_usage",
+          "title": "Token Usage",
+          "data": {
+            "prompt_tokens": 40,
+            "completion_tokens": 20,
+            "input_tokens": 40,
+            "output_tokens": 20,
+            "total_tokens": 60,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "reasoning_tokens": 0,
+            "avg_total_per_conversation": 15.0,
+            "avg_input_per_conversation": 10.0,
+            "avg_output_per_conversation": 5.0,
+            "avg_prompt_per_conversation": 10.0,
+            "avg_completion_per_conversation": 5.0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "unknown_usage_conversations": 1,
+            "run_total_input_tokens": 200,
+            "run_total_output_tokens": 50,
+            "run_total_total_tokens": 250,
+            "run_total_cost": 0.012,
+            "run_total_calls": 4,
+            "run_total_priced_calls": 2
+          }
+        },
+        {
+          "kind": "individual_results",
+          "title": "Individual Conversations",
+          "data": {
+            "entries": [
+              {
+                "index": 0,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "judge",
+                "goal_achieved": true,
+                "goal_completion_score": 1.0,
+                "rules_broken": [],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Verified",
+                    "type": null,
+                    "passed": true,
+                    "safety": false,
+                    "audited": null,
+                    "evidence": null,
+                    "state": "pass"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Request finished.",
+                "error": null,
+                "evaluator_scores": {},
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": "Refund the correct charge"
+              },
+              {
+                "index": 1,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "judge",
+                "goal_achieved": false,
+                "goal_completion_score": 0.25,
+                "rules_broken": [
+                  "criteria_0",
+                  "free rule"
+                ],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen",
+                    "passed": false,
+                    "safety": true,
+                    "audited": true,
+                    "evidence": "Order 7",
+                    "state": "fail"
+                  },
+                  {
+                    "id": "criteria_1",
+                    "description": "Verify account",
+                    "type": "must_happen",
+                    "passed": true,
+                    "safety": false,
+                    "audited": false,
+                    "evidence": null,
+                    "state": "unknown"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Leaked order ID.",
+                "error": null,
+                "evaluator_scores": {
+                  "quality": 0.25,
+                  "bool": 1.0
+                },
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": "Refund the correct charge"
+              },
+              {
+                "index": 2,
+                "persona": "None",
+                "scenario": "False",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "error",
+                "goal_achieved": true,
+                "goal_completion_score": 1.0,
+                "rules_broken": [],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Verified",
+                    "type": null,
+                    "passed": true,
+                    "safety": false,
+                    "audited": null,
+                    "evidence": null,
+                    "state": "pass"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Failed transport",
+                "error": "rate limit",
+                "evaluator_scores": {},
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": null
+              },
+              {
+                "index": 3,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "max_turns",
+                "goal_achieved": false,
+                "goal_completion_score": 0.5,
+                "rules_broken": [],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Do not leak",
+                    "type": "must_not_happen",
+                    "passed": true,
+                    "safety": false,
+                    "audited": false,
+                    "evidence": null,
+                    "state": "unknown"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Request finished.",
+                "error": null,
+                "evaluator_scores": {},
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": null
+              }
+            ]
+          }
+        }
+      ],
+      "markdown": "# Agent Simulation Report\n\n**Target:** test-agent  \n**Date:** 2026-11-09 12:30 UTC  \n**Conversations:** 4  \n**Success Rate:** 25%  \n\n## Executive Summary\n\n> [!WARNING]\n> GOAL ACHIEVEMENT: LOW - success rate: **25%**\n> **Confidence: LOW** - only 1/4 goals achieved\n>\n> Observed results.\n\n| Conversations | Goals Achieved | Success Rate | Avg Score | Errors |\n| :---: | :---: | :---: | :---: | :---: |\n| **4** | **1** | **25%** | **0.69** | **1** |\n\n| Metric | Value |\n| --- | --- |\n| Total Conversations | 4 |\n| Goals Achieved | 1 |\n| Success Rate | 25% |\n| Avg Goal Completion Score | 0.69 |\n| Avg Turn Count | 1.0 |\n| Total Tokens | 60 |\n| Errors | 1 |\n\n## Overview\n\nThis report evaluates the target agent across **3** persona(s) and **4** scenario(s), for **4** simulated conversation(s). In each, a simulated user (the persona) pursues the scenario goal while a judge scores success criteria and per-turn quality.\n\n**Personas**\n\n- Careful (2 conv.)\n  - _traits_: patience ? · assertiveness ? · politeness ? · technical ?\n  - _background_: Shopper\n- None (1 conv.)\n- Careful (1 conv.)\n\n**Scenarios**\n\n- Refund\n  - **Goal:** Refund the correct charge\n  - **Context:** Order 7\n  - _must_: Verified\n- Refund\n  - **Goal:** Refund the correct charge\n  - **Context:** Order 7\n  - _must NOT_: Keep IDs private\n  - _must_: Verify account\n- False\n  - _must_: Verified\n- Refund\n  - _must NOT_: Do not leak\n\n## Failures\n\n| # | Persona | Scenario | Violated criteria | Score | Ended |\n| --- | --- | --- | --- | --- | --- |\n| [#2](#conv-2) | Careful | Refund | Keep IDs private ⚠️ | 0.25 | judge |\n| [#4](#conv-4) | Careful | Refund | - | 0.50 | max_turns |\n\n## Failure Modes\n\n| Scenario: Criterion | Count |\n| --- | ---: |\n| Refund: Keep IDs private | 1 |\n\n## Remediation Suggestions\n\n### [#2](#conv-2) Careful / Refund (datapoint `dp-2`)\n\n- **Flagged:** Criterion failed: Keep IDs private\n- **Flagged:** Some other: x\n- **Fix:** Remove internal IDs.\n\n## Persona x Scenario Success\n\n| Scenario | Careful | None | Careful (2) |\n| --- | --- | --- | --- |\n| Refund | 100% | - | - |\n| Refund (2) | 0% | - | - |\n| False | - | 0% | - |\n| Refund (3) | - | - | 0% |\n\n## Goal Score Distribution\n\n`0.0-0.1` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.1-0.2` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.2-0.3` ██████████░░░░░░░░░░ 1\n`0.3-0.4` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.4-0.5` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.5-0.6` ██████████░░░░░░░░░░ 1\n`0.6-0.7` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.7-0.8` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.8-0.9` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.9-1.0` ████████████████████ 2\n\n## Turn Quality Timeline\n\n| Turn | response_quality | hallucination_risk | tone_appropriateness | factual_accuracy |\n| --- | ---: | ---: | ---: | ---: |\n| 1 | - | 0.75 | 0.25 | 0.00 |\n| 2 | 0.50 | - | - | 0.50 |\n\n## Per-Persona Breakdown\n\n| Persona | Convs | Achieved | Success | Avg Score | Tokens |\n| --- | ---: | ---: | --- | --- | ---: |\n| None | 1 | 0 | ░░░░░░░░░░ 0% | 1.00 | 15 |\n| Careful | 1 | 0 | ░░░░░░░░░░ 0% | 0.50 | 15 |\n| Careful | 2 | 1 | █████░░░░░ 50% | 0.62 | 30 |\n\n## Per-Scenario Breakdown\n\n| Scenario | Convs | Achieved | Success | Avg Score | Avg Turns |\n| --- | ---: | ---: | --- | --- | ---: |\n| Refund | 1 | 0 | ░░░░░░░░░░ 0% | 0.25 | 1.0 |\n| False | 1 | 0 | ░░░░░░░░░░ 0% | 1.00 | 1.0 |\n| Refund | 1 | 0 | ░░░░░░░░░░ 0% | 0.50 | 1.0 |\n| Refund | 1 | 1 | **██████████ 100%** | 1.00 | 1.0 |\n\n## Judge Verdicts\n\n**Terminated By:**\n\n| Reason | Count |\n| --- | ---: |\n| judge | 2 |\n| error | 1 |\n| max_turns | 1 |\n\n## Turn Metrics\n\n**Turn Count Distribution:**\n\n| Turns | Conversations |\n| --- | ---: |\n| 1 | 4 |\n\n**Average Per-Turn Quality Metrics:**\n\n| Metric | Avg Score |\n| --- | --- |\n| hallucination_risk | 0.75 |\n| tone_appropriateness | 0.25 |\n| factual_accuracy | 0.25 |\n| response_quality | 0.50 |\n\n## Evaluator Scores\n\n| Evaluator | Runs | Dropped | Mean | Min | Max |\n| --- | ---: | ---: | ---: | ---: | ---: |\n| bool | 1 | 0 | 1.00 | 1.00 | 1.00 |\n| broken | 0 | 2 | - | - | - |\n| only_error | 0 | 1 | - | - | - |\n| quality | 1 | 0 | 0.25 | 0.25 | 0.25 |\n\n**Dropped scores:**\n\n- `broken`: 2 score(s) dropped - invalid score\n- `only_error`: 1 score(s) dropped - no score\n\n\n## Errors\n\n**Total errored conversations:** 1\n\n| Error | Count |\n| --- | ---: |\n| rate limit | 1 |\n\n<details>\n<summary>Token Usage</summary>\n\n  | Metric | Value |\n  | --- | --- |\n  | Input Tokens (total) | 40 |\n  | Output Tokens (total) | 20 |\n  | Total Tokens | 60 |\n  | Avg Total / Conversation | 15 |\n  | Avg Input / Conversation | 10 |\n  | Avg Output / Conversation | 5 |\n  | Usage Coverage | unknown for 1 conversation |\n  | Run Total Tokens (incl. generation & summary) | 250 |\n  | Run Total Cost (incl. generation & summary) | $0.0120 (2 of 4 calls) |\n\n</details>\n\n<details>\n<summary>Individual Conversations</summary>\n\n  <details>\n  <summary>#1: Careful / Refund - **ACHIEVED** (1 turns, score 1.00)</summary>\n\n    - **Terminated by:** judge\n    - **Tokens:** 15\n\n    **Judge reason:** Request finished.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n  <details>\n  <summary>#2: Careful / Refund - **NOT ACHIEVED** (1 turns, score 0.25)</summary>\n\n    - **Terminated by:** judge\n    - **Tokens:** 15\n    - **Criteria violated:** Keep IDs private\n    - **Criteria not audited:** Verify account\n    - **Evidence:**\n        - Keep IDs private: \"Order 7\"\n    - **Evaluator scores:** quality=0.25, bool=1.00\n\n    **Judge reason:** Leaked order ID.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n  <details>\n  <summary>#3: None / False - **ACHIEVED** (1 turns, score 1.00)</summary>\n\n    - **Terminated by:** error\n    - **Tokens:** 15\n    - **Error:** rate limit\n\n    **Judge reason:** Failed transport\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n  <details>\n  <summary>#4: Careful / Refund - **NOT ACHIEVED** (1 turns, score 0.50)</summary>\n\n    - **Terminated by:** max_turns\n    - **Tokens:** 15\n    - **Criteria not audited:** Do not leak\n\n    **Judge reason:** Request finished.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n</details>\n\n\n---\n\n*Generated by evaluatorq agent simulation suite.*",
+      "facts": "Total simulations: 4\nGoals achieved: 2 (50%)\nGoals failed: 2\nMost-broken rule: criteria_0 (broken in 1 simulation(s))\nRules broken (by frequency): criteria_0: 1, free rule: 1\nExample failure: Leaked order ID.",
+      "triggers": [
+        [],
+        [
+          [
+            "rule_broken",
+            "free rule"
+          ],
+          [
+            "criterion_failed",
+            "Keep IDs private"
+          ],
+          [
+            "low_factual_accuracy",
+            "factual_accuracy averaged 0.25 across 1 turn"
+          ],
+          [
+            "high_hallucination_risk",
+            "hallucination_risk averaged 0.75 across 1 turn"
+          ],
+          [
+            "poor_tone",
+            "tone_appropriateness averaged 0.25 across 1 turn"
+          ]
+        ],
+        [],
+        []
+      ],
+      "prompts": [
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Request finished.\nFlagged issues:\n\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>",
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Leaked order ID.\nFlagged issues:\n- [rule_broken] free rule\n- [criterion_failed] Keep IDs private\n- [low_factual_accuracy] factual_accuracy averaged 0.25 across 1 turn\n- [high_hallucination_risk] hallucination_risk averaged 0.75 across 1 turn\n- [poor_tone] tone_appropriateness averaged 0.25 across 1 turn\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>",
+        "Persona: None\nScenario: False\nJudge verdict: Failed transport\nFlagged issues:\n\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>",
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Request finished.\nFlagged issues:\n\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>"
+      ],
+      "tokenRows": [
+        [
+          "Input Tokens (total)",
+          "40"
+        ],
+        [
+          "Output Tokens (total)",
+          "20"
+        ],
+        [
+          "Total Tokens",
+          "60"
+        ],
+        [
+          "Avg Total / Conversation",
+          "15"
+        ],
+        [
+          "Avg Input / Conversation",
+          "10"
+        ],
+        [
+          "Avg Output / Conversation",
+          "5"
+        ],
+        [
+          "Usage Coverage",
+          "unknown for 1 conversation"
+        ],
+        [
+          "Run Total Tokens (incl. generation & summary)",
+          "250"
+        ],
+        [
+          "Run Total Cost (incl. generation & summary)",
+          "$0.0120 (2 of 4 calls)"
+        ]
+      ]
+    },
+    {
+      "name": "filtered",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "options": {
+        "executiveSummary": null,
+        "recommendations": null,
+        "runTokenUsageTotal": null
+      },
+      "sections": [
+        {
+          "kind": "summary",
+          "title": "Executive Summary",
+          "data": {
+            "total_conversations": 2,
+            "goals_achieved": 0,
+            "goals_failed": 2,
+            "errors": 0,
+            "success_rate": 0.0,
+            "avg_goal_completion_score": 0.375,
+            "avg_turn_count": 1.0,
+            "total_tokens": 30,
+            "confidence": "LOW",
+            "confidence_note": "only 0/2 goals achieved",
+            "verdict": "fail",
+            "narrative": null
+          }
+        },
+        {
+          "kind": "overview",
+          "title": "Overview",
+          "data": {
+            "total_conversations": 2,
+            "personas": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "name": "Careful",
+                "conversations": 1,
+                "traits": {
+                  "background": "Shopper",
+                  "emoji": "🙂"
+                },
+                "background": "Shopper"
+              },
+              {
+                "id": "persona:p-2",
+                "name": "Careful",
+                "conversations": 1,
+                "traits": null,
+                "background": null
+              }
+            ],
+            "scenarios": [
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "name": "Refund",
+                "goal": "Refund the correct charge",
+                "context": "Order 7",
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen"
+                  },
+                  {
+                    "description": "Verify account",
+                    "type": "must_happen"
+                  }
+                ],
+                "pass_rate": 0.0
+              },
+              {
+                "id": "scenario:s-2",
+                "name": "Refund",
+                "goal": null,
+                "context": null,
+                "criteria": [
+                  {
+                    "description": "Do not leak",
+                    "type": "must_not_happen"
+                  }
+                ],
+                "pass_rate": 0.0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failures_first",
+          "title": "Failures",
+          "data": {
+            "rows": [
+              {
+                "index": 1,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "violated": [
+                  "Keep IDs private"
+                ],
+                "criteria": [
+                  {
+                    "description": "Keep IDs private",
+                    "passed": false,
+                    "safety": true,
+                    "state": "fail"
+                  },
+                  {
+                    "description": "Verify account",
+                    "passed": true,
+                    "safety": false,
+                    "state": "unknown"
+                  }
+                ],
+                "has_safety": true,
+                "terminated_by": "judge",
+                "reason": "Leaked order ID.",
+                "score": 0.25,
+                "anchor": "conv-1"
+              },
+              {
+                "index": 2,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "violated": [],
+                "criteria": [
+                  {
+                    "description": "Do not leak",
+                    "passed": true,
+                    "safety": false,
+                    "state": "unknown"
+                  }
+                ],
+                "has_safety": false,
+                "terminated_by": "max_turns",
+                "reason": "Request finished.",
+                "score": 0.5,
+                "anchor": "conv-2"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "failure_mode",
+          "title": "Failure Modes",
+          "data": {
+            "rows": [
+              [
+                "Refund: Keep IDs private",
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "persona_scenario_heatmap",
+          "title": "Persona x Scenario Success",
+          "data": {
+            "personas": [
+              "Careful",
+              "Careful (2)"
+            ],
+            "scenarios": [
+              "Refund",
+              "Refund (2)"
+            ],
+            "cells": [
+              {
+                "persona_id": "persona:71c746d69a520eb8",
+                "scenario_id": "scenario:be06c7bf76d83f58",
+                "persona": "Careful",
+                "scenario": "Refund",
+                "success_rate": 0.0,
+                "avg_score": 0.25,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              },
+              {
+                "persona_id": "persona:p-2",
+                "scenario_id": "scenario:s-2",
+                "persona": "Careful (2)",
+                "scenario": "Refund (2)",
+                "success_rate": 0.0,
+                "avg_score": 0.5,
+                "n": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "score_distribution",
+          "title": "Goal Score Distribution",
+          "data": {
+            "scores": [
+              0.25,
+              0.5
+            ],
+            "measured_scores": [
+              0.25,
+              0.5
+            ],
+            "completed_conversations": 2,
+            "errored_conversations": 0,
+            "total_conversations": 2
+          }
+        },
+        {
+          "kind": "turn_quality_timeline",
+          "title": "Turn Quality Timeline",
+          "data": {
+            "turns": [
+              1,
+              2
+            ],
+            "series": {
+              "response_quality": [
+                null,
+                0.5
+              ],
+              "hallucination_risk": [
+                0.75,
+                null
+              ],
+              "tone_appropriateness": [
+                0.25,
+                null
+              ],
+              "factual_accuracy": [
+                0.0,
+                0.5
+              ]
+            }
+          }
+        },
+        {
+          "kind": "persona_breakdown",
+          "title": "Per-Persona Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "persona:71c746d69a520eb8",
+                "persona": "Careful",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.25,
+                "total_tokens": 15
+              },
+              {
+                "id": "persona:p-2",
+                "persona": "Careful",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.5,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "scenario_breakdown",
+          "title": "Per-Scenario Breakdown",
+          "data": {
+            "rows": [
+              {
+                "id": "scenario:be06c7bf76d83f58",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.25,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              },
+              {
+                "id": "scenario:s-2",
+                "scenario": "Refund",
+                "conversations": 1,
+                "completed_conversations": 1,
+                "errored_conversations": 0,
+                "goals_achieved": 0,
+                "success_rate": 0.0,
+                "avg_goal_completion_score": 0.5,
+                "avg_turn_count": 1.0,
+                "total_tokens": 15
+              }
+            ]
+          }
+        },
+        {
+          "kind": "judge_verdicts",
+          "title": "Judge Verdicts",
+          "data": {
+            "terminated_by": {
+              "judge": 1,
+              "max_turns": 1
+            },
+            "rules_broken": {
+              "criteria_0": 1,
+              "free rule": 1
+            },
+            "total_rules_broken_instances": 2
+          }
+        },
+        {
+          "kind": "turn_metrics",
+          "title": "Turn Metrics",
+          "data": {
+            "per_conversation": [
+              {
+                "index": 1,
+                "label": "#1 Careful · Refund",
+                "turns": 1
+              },
+              {
+                "index": 2,
+                "label": "#2 Careful · Refund",
+                "turns": 1
+              }
+            ],
+            "turn_count_distribution": {
+              "1": 2
+            },
+            "avg_quality_metrics": {
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.25,
+              "response_quality": 0.5
+            }
+          }
+        },
+        {
+          "kind": "evaluator_scores",
+          "title": "Evaluator Scores",
+          "data": {
+            "rows": [
+              {
+                "evaluator": "bool",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 1.0,
+                "min_score": 1.0,
+                "max_score": 1.0,
+                "first_error": null
+              },
+              {
+                "evaluator": "broken",
+                "runs": 0,
+                "dropped": 1,
+                "mean_score": null,
+                "min_score": null,
+                "max_score": null,
+                "first_error": "invalid score"
+              },
+              {
+                "evaluator": "quality",
+                "runs": 1,
+                "dropped": 0,
+                "mean_score": 0.25,
+                "min_score": 0.25,
+                "max_score": 0.25,
+                "first_error": null
+              }
+            ]
+          }
+        },
+        {
+          "kind": "token_usage",
+          "title": "Token Usage",
+          "data": {
+            "prompt_tokens": 20,
+            "completion_tokens": 10,
+            "input_tokens": 20,
+            "output_tokens": 10,
+            "total_tokens": 30,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "reasoning_tokens": 0,
+            "avg_total_per_conversation": 15.0,
+            "avg_input_per_conversation": 10.0,
+            "avg_output_per_conversation": 5.0,
+            "avg_prompt_per_conversation": 10.0,
+            "avg_completion_per_conversation": 5.0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "unknown_usage_conversations": 0
+          }
+        },
+        {
+          "kind": "individual_results",
+          "title": "Individual Conversations",
+          "data": {
+            "entries": [
+              {
+                "index": 0,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "judge",
+                "goal_achieved": false,
+                "goal_completion_score": 0.25,
+                "rules_broken": [
+                  "criteria_0",
+                  "free rule"
+                ],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Keep IDs private",
+                    "type": "must_not_happen",
+                    "passed": false,
+                    "safety": true,
+                    "audited": true,
+                    "evidence": "Order 7",
+                    "state": "fail"
+                  },
+                  {
+                    "id": "criteria_1",
+                    "description": "Verify account",
+                    "type": "must_happen",
+                    "passed": true,
+                    "safety": false,
+                    "audited": false,
+                    "evidence": null,
+                    "state": "unknown"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Leaked order ID.",
+                "error": null,
+                "evaluator_scores": {
+                  "quality": 0.25,
+                  "bool": 1.0
+                },
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": "Refund the correct charge"
+              },
+              {
+                "index": 1,
+                "persona": "Careful",
+                "scenario": "Refund",
+                "model": "unknown",
+                "target_model": null,
+                "terminated_by": "max_turns",
+                "goal_achieved": false,
+                "goal_completion_score": 0.5,
+                "rules_broken": [],
+                "criteria": [
+                  {
+                    "id": "criteria_0",
+                    "description": "Do not leak",
+                    "type": "must_not_happen",
+                    "passed": true,
+                    "safety": false,
+                    "audited": false,
+                    "evidence": null,
+                    "state": "unknown"
+                  }
+                ],
+                "criteria_verified": null,
+                "turn_count": 1,
+                "total_tokens": 15,
+                "judge_reason": "Request finished.",
+                "error": null,
+                "evaluator_scores": {},
+                "transcript": [
+                  {
+                    "role": "user",
+                    "content": "Please help <now>"
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Done & safe."
+                  }
+                ],
+                "thread_id": null,
+                "last_trace_id": null,
+                "goal": null
+              }
+            ]
+          }
+        }
+      ],
+      "markdown": "# Agent Simulation Report\n\n**Target:** test-agent  \n**Date:** 2026-11-09 12:30 UTC  \n**Conversations:** 2  \n**Success Rate:** 0%  \n\n## Executive Summary\n\n> [!CAUTION]\n> GOAL ACHIEVEMENT: VERY LOW - success rate: **0%**\n> **Confidence: LOW** - only 0/2 goals achieved\n\n| Conversations | Goals Achieved | Success Rate | Avg Score | Errors |\n| :---: | :---: | :---: | :---: | :---: |\n| **2** | **0** | **0%** | **0.38** | **0** |\n\n| Metric | Value |\n| --- | --- |\n| Total Conversations | 2 |\n| Goals Achieved | 0 |\n| Success Rate | 0% |\n| Avg Goal Completion Score | 0.38 |\n| Avg Turn Count | 1.0 |\n| Total Tokens | 30 |\n\n## Overview\n\nThis report evaluates the target agent across **2** persona(s) and **2** scenario(s), for **2** simulated conversation(s). In each, a simulated user (the persona) pursues the scenario goal while a judge scores success criteria and per-turn quality.\n\n**Personas**\n\n- Careful (1 conv.)\n  - _traits_: patience ? · assertiveness ? · politeness ? · technical ?\n  - _background_: Shopper\n- Careful (1 conv.)\n\n**Scenarios**\n\n- Refund\n  - **Goal:** Refund the correct charge\n  - **Context:** Order 7\n  - _must NOT_: Keep IDs private\n  - _must_: Verify account\n- Refund\n  - _must NOT_: Do not leak\n\n## Failures\n\n| # | Persona | Scenario | Violated criteria | Score | Ended |\n| --- | --- | --- | --- | --- | --- |\n| [#1](#conv-1) | Careful | Refund | Keep IDs private ⚠️ | 0.25 | judge |\n| [#2](#conv-2) | Careful | Refund | - | 0.50 | max_turns |\n\n## Failure Modes\n\n| Scenario: Criterion | Count |\n| --- | ---: |\n| Refund: Keep IDs private | 1 |\n\n## Persona x Scenario Success\n\n| Scenario | Careful | Careful (2) |\n| --- | --- | --- |\n| Refund | 0% | - |\n| Refund (2) | - | 0% |\n\n## Goal Score Distribution\n\n`0.0-0.1` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.1-0.2` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.2-0.3` ████████████████████ 1\n`0.3-0.4` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.4-0.5` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.5-0.6` ████████████████████ 1\n`0.6-0.7` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.7-0.8` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.8-0.9` ░░░░░░░░░░░░░░░░░░░░ 0\n`0.9-1.0` ░░░░░░░░░░░░░░░░░░░░ 0\n\n## Turn Quality Timeline\n\n| Turn | response_quality | hallucination_risk | tone_appropriateness | factual_accuracy |\n| --- | ---: | ---: | ---: | ---: |\n| 1 | - | 0.75 | 0.25 | 0.00 |\n| 2 | 0.50 | - | - | 0.50 |\n\n## Per-Persona Breakdown\n\n| Persona | Convs | Achieved | Success | Avg Score | Tokens |\n| --- | ---: | ---: | --- | --- | ---: |\n| Careful | 1 | 0 | ░░░░░░░░░░ 0% | 0.25 | 15 |\n| Careful | 1 | 0 | ░░░░░░░░░░ 0% | 0.50 | 15 |\n\n## Per-Scenario Breakdown\n\n| Scenario | Convs | Achieved | Success | Avg Score | Avg Turns |\n| --- | ---: | ---: | --- | --- | ---: |\n| Refund | 1 | 0 | ░░░░░░░░░░ 0% | 0.25 | 1.0 |\n| Refund | 1 | 0 | ░░░░░░░░░░ 0% | 0.50 | 1.0 |\n\n## Judge Verdicts\n\n**Terminated By:**\n\n| Reason | Count |\n| --- | ---: |\n| judge | 1 |\n| max_turns | 1 |\n\n## Turn Metrics\n\n**Turn Count Distribution:**\n\n| Turns | Conversations |\n| --- | ---: |\n| 1 | 2 |\n\n**Average Per-Turn Quality Metrics:**\n\n| Metric | Avg Score |\n| --- | --- |\n| hallucination_risk | 0.75 |\n| tone_appropriateness | 0.25 |\n| factual_accuracy | 0.25 |\n| response_quality | 0.50 |\n\n## Evaluator Scores\n\n| Evaluator | Runs | Dropped | Mean | Min | Max |\n| --- | ---: | ---: | ---: | ---: | ---: |\n| bool | 1 | 0 | 1.00 | 1.00 | 1.00 |\n| broken | 0 | 1 | - | - | - |\n| quality | 1 | 0 | 0.25 | 0.25 | 0.25 |\n\n**Dropped scores:**\n\n- `broken`: 1 score(s) dropped - invalid score\n\n\n<details>\n<summary>Token Usage</summary>\n\n  | Metric | Value |\n  | --- | --- |\n  | Input Tokens (total) | 20 |\n  | Output Tokens (total) | 10 |\n  | Total Tokens | 30 |\n  | Avg Total / Conversation | 15 |\n  | Avg Input / Conversation | 10 |\n  | Avg Output / Conversation | 5 |\n\n</details>\n\n<details>\n<summary>Individual Conversations</summary>\n\n  <details>\n  <summary>#1: Careful / Refund - **NOT ACHIEVED** (1 turns, score 0.25)</summary>\n\n    - **Terminated by:** judge\n    - **Tokens:** 15\n    - **Criteria violated:** Keep IDs private\n    - **Criteria not audited:** Verify account\n    - **Evidence:**\n        - Keep IDs private: \"Order 7\"\n    - **Evaluator scores:** quality=0.25, bool=1.00\n\n    **Judge reason:** Leaked order ID.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n  <details>\n  <summary>#2: Careful / Refund - **NOT ACHIEVED** (1 turns, score 0.50)</summary>\n\n    - **Terminated by:** max_turns\n    - **Tokens:** 15\n    - **Criteria not audited:** Do not leak\n\n    **Judge reason:** Request finished.\n\n    **Transcript:**\n\n    _user_:\n\n    > Please help <now>\n\n    _assistant_:\n\n    > Done & safe.\n\n  </details>\n\n</details>\n\n\n---\n\n*Generated by evaluatorq agent simulation suite.*",
+      "facts": "Total simulations: 2\nGoals achieved: 0 (0%)\nGoals failed: 2\nMost-broken rule: criteria_0 (broken in 1 simulation(s))\nRules broken (by frequency): criteria_0: 1, free rule: 1\nExample failure: Leaked order ID.",
+      "triggers": [
+        [
+          [
+            "rule_broken",
+            "free rule"
+          ],
+          [
+            "criterion_failed",
+            "Keep IDs private"
+          ],
+          [
+            "low_factual_accuracy",
+            "factual_accuracy averaged 0.25 across 1 turn"
+          ],
+          [
+            "high_hallucination_risk",
+            "hallucination_risk averaged 0.75 across 1 turn"
+          ],
+          [
+            "poor_tone",
+            "tone_appropriateness averaged 0.25 across 1 turn"
+          ]
+        ],
+        []
+      ],
+      "prompts": [
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Leaked order ID.\nFlagged issues:\n- [rule_broken] free rule\n- [criterion_failed] Keep IDs private\n- [low_factual_accuracy] factual_accuracy averaged 0.25 across 1 turn\n- [high_hallucination_risk] hallucination_risk averaged 0.75 across 1 turn\n- [poor_tone] tone_appropriateness averaged 0.25 across 1 turn\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>",
+        "Persona: Careful\nScenario: Refund\nJudge verdict: Request finished.\nFlagged issues:\n\n\n<transcript>\nuser: Please help &lt;now&gt;\nassistant: Done &amp; safe.\n</transcript>"
+      ],
+      "tokenRows": [
+        [
+          "Input Tokens (total)",
+          "20"
+        ],
+        [
+          "Output Tokens (total)",
+          "10"
+        ],
+        [
+          "Total Tokens",
+          "30"
+        ],
+        [
+          "Avg Total / Conversation",
+          "15"
+        ],
+        [
+          "Avg Input / Conversation",
+          "10"
+        ],
+        [
+          "Avg Output / Conversation",
+          "5"
+        ]
+      ]
+    }
+  ]
+}

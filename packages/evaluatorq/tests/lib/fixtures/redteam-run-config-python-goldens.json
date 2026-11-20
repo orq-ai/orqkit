@@ -1,0 +1,789 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "value": {},
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": []
+    },
+    {
+      "value": {
+        "target": "agent:key",
+        "mode": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "max_turns": 4,
+        "llm_parallelism": 2
+      },
+      "error": false,
+      "expected": {
+        "target": "agent:key",
+        "llmConfig": null,
+        "mode": "dynamic",
+        "categories": [
+          "ASI01"
+        ],
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": 4,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": 2,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "categories",
+        "llmParallelism",
+        "maxTurns",
+        "mode",
+        "target"
+      ]
+    },
+    {
+      "value": {
+        "target": [
+          "a",
+          "deployment:d"
+        ],
+        "delivery_methods": [
+          "unknown",
+          "DAN"
+        ],
+        "attack_techniques": [
+          "new-technique"
+        ]
+      },
+      "error": false,
+      "expected": {
+        "target": [
+          "a",
+          "deployment:d"
+        ],
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": [
+          "new-technique"
+        ],
+        "deliveryMethods": [
+          "unknown",
+          "DAN"
+        ],
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "attackTechniques",
+        "deliveryMethods",
+        "target"
+      ]
+    },
+    {
+      "value": {
+        "llm_parallelism": -1
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": -1,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "llmParallelism"
+      ]
+    },
+    {
+      "value": {
+        "llm_parallelism": 0
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "llm_parallelism": -2
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "llm_parallelism": 1.5
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "hooks": {}
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "llm_client": {}
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "unknown": true
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "llm_config": {
+          "attacker": {
+            "model": "attack"
+          },
+          "evaluator": {
+            "judges": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": {
+          "attacker": {
+            "model": "attack",
+            "api": "chat_completions",
+            "temperature": null,
+            "maxTokens": 10000,
+            "timeoutMs": 90000,
+            "extraKwargs": {},
+            "extraBody": {},
+            "reasoningEffort": null,
+            "retryCount": 1
+          },
+          "evaluator": {
+            "api": "responses",
+            "temperature": null,
+            "maxTokens": 10000,
+            "timeoutMs": 90000,
+            "extraKwargs": {},
+            "extraBody": {},
+            "reasoningEffort": null,
+            "retryCount": 1,
+            "judges": [
+              "a",
+              "b"
+            ],
+            "repetitions": 1,
+            "replacementJudges": [],
+            "minSuccessfulJudges": 1,
+            "minEvaluationCoverage": 0.8,
+            "strictPanel": false
+          },
+          "retryCount": 3,
+          "retryOnCodes": [
+            429,
+            500,
+            502,
+            503,
+            504
+          ],
+          "maxContentFilterRetries": 2,
+          "maxConsecutiveAdversarialTimeouts": 2,
+          "maxObjectivesPerLlmCall": 8,
+          "maxProbeTurns": 8,
+          "maxBacktracks": 0,
+          "cleanupTimeoutMs": 60000,
+          "targetAgentTimeoutMs": 240000,
+          "maxTargetRetries": 2,
+          "targetReasoningEffort": null,
+          "maxToolContinuations": 5
+        },
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "llmConfig"
+      ]
+    },
+    {
+      "value": {
+        "llm_config": {
+          "backend": {}
+        }
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "recommendations": false
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": false,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "recommendations"
+      ]
+    },
+    {
+      "value": {
+        "recommendations": {
+          "max_areas": 2,
+          "max_tokens": 3000
+        }
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": {
+          "maxSuggestions": 5,
+          "maxTokens": 3000,
+          "maxAreas": 2,
+          "maxAttacks": 10,
+          "maxAttackChars": 200000,
+          "maxExplanationChars": 300,
+          "condenseAboveChars": 1000,
+          "condenseMaxTokens": 10000,
+          "maxAreaPromptChars": 400000
+        },
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "recommendations"
+      ]
+    },
+    {
+      "value": {
+        "recommendations": {
+          "max_areas": 0
+        }
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "recommendations": null
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "target_config": {
+          "system_prompt": "Prompt"
+        },
+        "artifacts_dir": "relative/reports",
+        "previous_run": "latest",
+        "save": "detail"
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": "latest",
+        "artifactsDir": "relative/reports",
+        "targetConfig": {
+          "systemPrompt": "Prompt"
+        },
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "detail"
+      },
+      "fieldsSet": [
+        "artifactsDir",
+        "previousRun",
+        "save",
+        "targetConfig"
+      ]
+    },
+    {
+      "value": {
+        "target_config": null,
+        "llm_config": null,
+        "categories": null
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "categories",
+        "llmConfig",
+        "targetConfig"
+      ]
+    },
+    {
+      "value": {
+        "datapoints": [
+          {
+            "inputs": {
+              "prompt": "Hi"
+            },
+            "expected_output": "answer"
+          }
+        ]
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": [
+          {
+            "inputs": {
+              "prompt": "Hi"
+            },
+            "expectedOutput": "answer"
+          }
+        ],
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "datapoints"
+      ]
+    },
+    {
+      "value": {
+        "datapoints": [
+          {
+            "inputs": {}
+          }
+        ]
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": [
+          {
+            "inputs": {},
+            "expectedOutput": null
+          }
+        ],
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "datapoints"
+      ]
+    },
+    {
+      "value": {
+        "datapoints": [
+          {
+            "bad": 1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "value": {
+        "datapoints": [
+          {
+            "inputs": {
+              "prompt": "Hi"
+            },
+            "expected_output": [
+              {
+                "role": "assistant",
+                "content": "answer"
+              }
+            ]
+          }
+        ]
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": [
+          {
+            "inputs": {
+              "prompt": "Hi"
+            },
+            "expectedOutput": [
+              {
+                "role": "assistant",
+                "content": "answer",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ]
+          }
+        ],
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": null,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": true,
+        "generatedStrategyCount": 2,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": true,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": true,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "datapoints"
+      ]
+    },
+    {
+      "value": {
+        "verbosity": 0,
+        "generate_strategies": false,
+        "generated_strategy_count": 0,
+        "max_turns": 0,
+        "cleanup_memory": false,
+        "generate_executive_summary": false
+      },
+      "error": false,
+      "expected": {
+        "target": null,
+        "llmConfig": null,
+        "mode": null,
+        "categories": null,
+        "vulnerabilities": null,
+        "strategies": null,
+        "datapoints": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "maxTurns": 0,
+        "maxPerCategory": null,
+        "datapointParallelism": null,
+        "parallelism": null,
+        "llmParallelism": null,
+        "generateStrategies": false,
+        "generatedStrategyCount": 0,
+        "maxDynamicDatapoints": null,
+        "maxStaticDatapoints": null,
+        "cleanupMemory": false,
+        "name": null,
+        "description": null,
+        "dataset": null,
+        "previousRun": null,
+        "artifactsDir": null,
+        "targetConfig": null,
+        "recommendations": true,
+        "generateExecutiveSummary": false,
+        "attackerInstructions": null,
+        "verbosity": 0,
+        "save": "final"
+      },
+      "fieldsSet": [
+        "cleanupMemory",
+        "generateExecutiveSummary",
+        "generateStrategies",
+        "generatedStrategyCount",
+        "maxTurns",
+        "verbosity"
+      ]
+    },
+    {
+      "value": {
+        "max_turns": null,
+        "max_per_category": null,
+        "save": "invalid"
+      },
+      "error": true
+    }
+  ],
+  "cliDefaultVerbosity": 1
+}

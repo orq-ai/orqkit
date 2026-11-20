@@ -22,7 +22,7 @@
   ],
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
-    "@orq-ai/node": "4.1.4",
+    "@orq-ai/node": "4.18.4",
     "chalk": "^5.5.0"
   }
 }

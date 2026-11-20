@@ -261,6 +261,7 @@ export interface ResponseResource {
   reasoning: Record<string, unknown> | null;
   /** Token usage statistics. */
   usage: Usage | null;
+  token_usage_known?: boolean;
   /** Maximum output tokens allowed. */
   max_output_tokens: number | null;
   /** Maximum tool calls allowed. */
@@ -300,3 +301,9 @@ export function extractText(output: unknown): string {
   );
   return textContent?.text ?? "";
 }
+
+export {
+  recordOpenResponsesRequest,
+  recordOpenResponsesResponse,
+  withOpenResponsesSpan,
+} from "./tracing.js";

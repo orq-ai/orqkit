@@ -2,6 +2,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 
 import { failureReason } from "../../../../src/lib/integrations/simulation/evaluators/index.js";
 import type { FirstMessageGenerator } from "../../../../src/lib/integrations/simulation/generators/first-message-generator.js";
+import { SimulationGenerationError } from "../../../../src/lib/integrations/simulation/generators/structured-call.js";
 import { runSimulationInput } from "../../../../src/lib/integrations/simulation/runner/run-input.js";
 import { SimulationRunner } from "../../../../src/lib/integrations/simulation/runner/simulation.js";
 import { generateDatapoint } from "../../../../src/lib/integrations/simulation/utils/prompt-builders.js";
@@ -82,7 +83,9 @@ describe("runSimulationInput row timeout", () => {
       { persona, scenario },
       runner(),
       1,
-      firstMessages(() => Promise.reject(new Error("no model"))),
+      firstMessages(() =>
+        Promise.reject(new SimulationGenerationError("no model")),
+      ),
       100,
     );
 

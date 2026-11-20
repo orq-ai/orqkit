@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { z } from "zod/v4";
 
 /**
@@ -10,7 +9,23 @@ import { z } from "zod/v4";
  */
 export function toStrictSchema(schema: z.ZodObject): Record<string, unknown> {
   const { $schema: _draft, ...wire } = z.toJSONSchema(schema);
-  return wire;
+  return dropNullDefaults(wire) as Record<string, unknown>;
+}
+
+function dropNullDefaults(node: unknown): unknown {
+  if (Array.isArray(node)) {
+    return node.map(dropNullDefaults);
+  }
+  if (typeof node !== "object" || node === null) {
+    return node;
+  }
+  return Object.fromEntries(
+    Object.entries(node).flatMap(([key, value]) =>
+      key === "default" && value === null
+        ? []
+        : [[key, dropNullDefaults(value)]],
+    ),
+  );
 }
 
 const SCHEMA_REJECTION =
@@ -23,6 +38,13 @@ const SCHEMA_REJECTION =
  * back on those hides the cause and pays for the same failure again.
  */
 export function isSchemaRejection(err: unknown): boolean {
-  if (!(err instanceof OpenAI.APIError) || err.status !== 400) return false;
-  return SCHEMA_REJECTION.test(err.message);
+  const { status, message } = (err ?? {}) as {
+    status?: unknown;
+    message?: unknown;
+  };
+  return (
+    status === 400 &&
+    typeof message === "string" &&
+    SCHEMA_REJECTION.test(message)
+  );
 }

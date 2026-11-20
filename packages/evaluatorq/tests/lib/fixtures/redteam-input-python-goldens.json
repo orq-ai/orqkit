@@ -1,0 +1,713 @@
+{
+  "source": "a59c3a86",
+  "targets": [
+    {
+      "value": "agent-key",
+      "expected": [
+        "agent",
+        "agent-key"
+      ],
+      "error": false
+    },
+    {
+      "value": "",
+      "expected": [
+        "agent",
+        ""
+      ],
+      "error": false
+    },
+    {
+      "value": "AGENT:key",
+      "expected": [
+        "agent",
+        "key"
+      ],
+      "error": false
+    },
+    {
+      "value": "deployment:my:key",
+      "expected": [
+        "deployment",
+        "my:key"
+      ],
+      "error": false
+    },
+    {
+      "value": "agent:",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "deployment:",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "llm:gpt",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "OpenAI:model",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "direct:value",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "unknown:key",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": ":value",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": " agent:key",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "agent: key ",
+      "expected": [
+        "agent",
+        " key "
+      ],
+      "error": false
+    },
+    {
+      "value": "agent:key:more",
+      "expected": [
+        "agent",
+        "key:more"
+      ],
+      "error": false
+    },
+    {
+      "value": "AGENT :key",
+      "expected": null,
+      "error": true
+    }
+  ],
+  "frameworks": [
+    {
+      "value": "OWASP-AGENTIC",
+      "expected": "OWASP-ASI",
+      "error": false
+    },
+    {
+      "value": "OWASP-ASI",
+      "expected": "OWASP-ASI",
+      "error": false
+    },
+    {
+      "value": "OWASP-LLM",
+      "expected": "OWASP-LLM",
+      "error": false
+    },
+    {
+      "value": "CONTENT",
+      "expected": "CONTENT",
+      "error": false
+    },
+    {
+      "value": "LIABILITY",
+      "expected": "LIABILITY",
+      "error": false
+    },
+    {
+      "value": "FAIRNESS",
+      "expected": "FAIRNESS",
+      "error": false
+    },
+    {
+      "value": "GDPR",
+      "expected": "GDPR",
+      "error": false
+    },
+    {
+      "value": "AI-ACT",
+      "expected": "AI-ACT",
+      "error": false
+    },
+    {
+      "value": "ASI",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "owasp-asi",
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": "",
+      "expected": null,
+      "error": true
+    }
+  ],
+  "categories": [
+    {
+      "value": "ASI01",
+      "normalized": "ASI01",
+      "inferred": "OWASP-ASI"
+    },
+    {
+      "value": "OWASP-ASI01",
+      "normalized": "ASI01",
+      "inferred": "OWASP-ASI"
+    },
+    {
+      "value": "OWASP-LLM07",
+      "normalized": "LLM07",
+      "inferred": "OWASP-LLM"
+    },
+    {
+      "value": "ASI-future",
+      "normalized": "ASI-future",
+      "inferred": "OWASP-ASI"
+    },
+    {
+      "value": "LLM-future",
+      "normalized": "LLM-future",
+      "inferred": "OWASP-LLM"
+    },
+    {
+      "value": "OWASP-OWASP-ASI01",
+      "normalized": "OWASP-ASI01",
+      "inferred": "unknown"
+    },
+    {
+      "value": "asi01",
+      "normalized": "asi01",
+      "inferred": "unknown"
+    },
+    {
+      "value": "ASI",
+      "normalized": "ASI",
+      "inferred": "OWASP-ASI"
+    },
+    {
+      "value": "custom",
+      "normalized": "custom",
+      "inferred": "unknown"
+    },
+    {
+      "value": "",
+      "normalized": "",
+      "inferred": "unknown"
+    }
+  ],
+  "inputs": [
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "vulnerability": "goal_hijacking"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "OWASP-LLM01"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "prompt_injection",
+        "category": "OWASP-LLM01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "custom-category"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "",
+        "category": "custom-category",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "vulnerability": "future-vulnerability"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "future-vulnerability",
+        "category": "future-vulnerability",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "vulnerability": "tool_misuse",
+        "category": "LLM01"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "tool_misuse",
+        "category": "LLM01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "framework": "OWASP-AGENTIC"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-ASI",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "framework": "OWASP-ASI",
+        "delivery_method": "ROLE_PLAY"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "ROLE_PLAY",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-ASI",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "delivery_method": "future method",
+        "additional_metadata": {
+          "under_score": {
+            "free_key": true
+          },
+          "null_value": null
+        }
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "future method",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": {
+          "under_score": {
+            "free_key": true
+          },
+          "null_value": null
+        }
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "framework": null
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "framework": "owasp-asi"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": "",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "",
+        "category": "ASI01"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "HIGH",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01"
+      },
+      "expected": null,
+      "error": true
+    },
+    {
+      "value": {
+        "id": " ",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": " ",
+        "category": "ASI01"
+      },
+      "expected": {
+        "id": " ",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": " ",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "data",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "data",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "vulnerability_domain": "agent",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "application"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "application"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "model"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "model",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "agent"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "agent",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "data"
+      },
+      "expected": {
+        "id": "case",
+        "vulnerability": "goal_hijacking",
+        "category": "ASI01",
+        "attackTechnique": "",
+        "deliveryMethod": "",
+        "severity": "high",
+        "vulnerabilityDomain": "data",
+        "framework": "OWASP-AGENTIC",
+        "evaluatorId": "",
+        "evaluatorName": "",
+        "turnType": "single",
+        "source": "fixture",
+        "additionalMetadata": null
+      },
+      "error": false
+    },
+    {
+      "value": {
+        "id": "case",
+        "severity": "high",
+        "turn_type": "single",
+        "source": "fixture",
+        "category": "ASI01",
+        "scope": "unknown"
+      },
+      "expected": null,
+      "error": true
+    }
+  ],
+  "supportedTargets": {
+    "static": [
+      "agent",
+      "deployment"
+    ],
+    "dynamic": [
+      "agent"
+    ],
+    "hybrid": [
+      "agent"
+    ]
+  }
+}

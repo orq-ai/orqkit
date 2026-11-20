@@ -1,0 +1,410 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "index": 0,
+      "inputs": {},
+      "expected": null,
+      "error": "inference=false requires a recorded response in the 'messages' column, but this row has no messages."
+    },
+    {
+      "index": 1,
+      "inputs": {
+        "messages": []
+      },
+      "expected": null,
+      "error": "inference=false requires a recorded response in the 'messages' column, but this row has no messages."
+    },
+    {
+      "index": 2,
+      "inputs": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "question"
+          }
+        ]
+      },
+      "expected": null,
+      "error": "inference=false requires a recorded response in the 'messages' column, but this row has no assistant message with text content."
+    },
+    {
+      "index": 3,
+      "inputs": {
+        "messages": [
+          {
+            "role": "assistant",
+            "content": " first "
+          },
+          {
+            "role": "assistant",
+            "content": " "
+          }
+        ]
+      },
+      "expected": {
+        "name": "recorded",
+        "output": " first "
+      },
+      "error": null
+    },
+    {
+      "index": 4,
+      "inputs": {
+        "messages": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "part one"
+              },
+              {
+                "type": "input_text",
+                "text": "part two"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "name": "recorded",
+        "output": "part one\npart two"
+      },
+      "error": null
+    },
+    {
+      "index": 5,
+      "inputs": {
+        "recorded_output": "saved"
+      },
+      "expected": {
+        "name": "recorded",
+        "output": "saved"
+      },
+      "error": null
+    },
+    {
+      "index": 6,
+      "inputs": {
+        "recorded_output": []
+      },
+      "expected": null,
+      "error": "inference=false requires a non-empty 'recordedOutput' for an imported trace, but the selected trace span has no recorded assistant response."
+    },
+    {
+      "index": 7,
+      "inputs": {
+        "recorded_output": null
+      },
+      "expected": null,
+      "error": "inference=false requires a non-empty 'recordedOutput' for an imported trace, but the selected trace span has no recorded assistant response."
+    },
+    {
+      "index": 8,
+      "inputs": {
+        "recorded_output": " "
+      },
+      "expected": null,
+      "error": "inference=false requires a non-empty 'recordedOutput' for an imported trace, but the selected trace span has no recorded assistant response."
+    },
+    {
+      "index": 9,
+      "inputs": {
+        "recorded_output": 0
+      },
+      "expected": {
+        "name": "recorded",
+        "output": 0
+      },
+      "error": null
+    },
+    {
+      "index": 10,
+      "inputs": {
+        "recorded_output": false
+      },
+      "expected": {
+        "name": "recorded",
+        "output": false
+      },
+      "error": null
+    },
+    {
+      "index": 11,
+      "inputs": {
+        "recorded_output": [
+          {
+            "role": "assistant",
+            "content": "response"
+          }
+        ]
+      },
+      "expected": {
+        "name": "recorded",
+        "output": [
+          {
+            "role": "assistant",
+            "content": "response"
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "index": 12,
+      "inputs": {
+        "recorded_output": [
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "c",
+                "type": "function",
+                "function": {
+                  "name": "lookup",
+                  "arguments": "{}"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "name": "recorded",
+        "output": [
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "c",
+                "type": "function",
+                "function": {
+                  "name": "lookup",
+                  "arguments": "{}"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "index": 13,
+      "inputs": {
+        "trace_import_error": "bad source",
+        "recorded_output": "ignored"
+      },
+      "expected": null,
+      "error": "The source trace could not be imported: bad source"
+    },
+    {
+      "index": 14,
+      "inputs": {
+        "recorded_output": [],
+        "messages": [
+          {
+            "role": "assistant",
+            "content": "must not fall back"
+          }
+        ]
+      },
+      "expected": null,
+      "error": "inference=false requires a non-empty 'recordedOutput' for an imported trace, but the selected trace span has no recorded assistant response."
+    }
+  ],
+  "modes": [
+    {
+      "source": "array",
+      "inference": null,
+      "jobs": null,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "array",
+      "inference": null,
+      "jobs": 0,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "array",
+      "inference": null,
+      "jobs": 1,
+      "expected": true,
+      "error": false
+    },
+    {
+      "source": "array",
+      "inference": false,
+      "jobs": null,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "array",
+      "inference": false,
+      "jobs": 0,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "array",
+      "inference": false,
+      "jobs": 1,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "array",
+      "inference": true,
+      "jobs": null,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "array",
+      "inference": true,
+      "jobs": 0,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "array",
+      "inference": true,
+      "jobs": 1,
+      "expected": true,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": null,
+      "jobs": null,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": null,
+      "jobs": 0,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": null,
+      "jobs": 1,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": false,
+      "jobs": null,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": false,
+      "jobs": 0,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": false,
+      "jobs": 1,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "experiment",
+      "inference": true,
+      "jobs": null,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "experiment",
+      "inference": true,
+      "jobs": 0,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "experiment",
+      "inference": true,
+      "jobs": 1,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "trace",
+      "inference": null,
+      "jobs": null,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": null,
+      "jobs": 0,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": null,
+      "jobs": 1,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": false,
+      "jobs": null,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": false,
+      "jobs": 0,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": false,
+      "jobs": 1,
+      "expected": false,
+      "error": false
+    },
+    {
+      "source": "trace",
+      "inference": true,
+      "jobs": null,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "trace",
+      "inference": true,
+      "jobs": 0,
+      "expected": null,
+      "error": true
+    },
+    {
+      "source": "trace",
+      "inference": true,
+      "jobs": 1,
+      "expected": null,
+      "error": true
+    }
+  ]
+}

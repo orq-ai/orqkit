@@ -1,0 +1,1753 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "index": 0,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 0,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 1,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 1,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 2,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 2,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 3,
+      "input": {
+        "index": 1,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#1</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 3,
+      "input": {
+        "index": 1,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#1</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 4,
+      "input": {
+        "index": 2,
+        "persona": "None",
+        "scenario": "False",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "error",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Failed transport",
+        "error": "rate limit",
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#2</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">None</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">False</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--warn\">Error</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Failed transport</p></div></div><div class=\"sim-transcript-error\"><strong>Error:</strong> rate limit</div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 4,
+      "input": {
+        "index": 2,
+        "persona": "None",
+        "scenario": "False",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "error",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Failed transport",
+        "error": "rate limit",
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#2</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">None</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">False</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--warn\">Error</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Failed transport</p></div></div><div class=\"sim-transcript-error\"><strong>Error:</strong> rate limit</div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 5,
+      "input": {
+        "index": 3,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "max_turns",
+        "goal_achieved": false,
+        "goal_completion_score": 0.5,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Do not leak",
+            "type": "must_not_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#3</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/1 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Do not leak</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 5,
+      "input": {
+        "index": 3,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "max_turns",
+        "goal_achieved": false,
+        "goal_completion_score": 0.5,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Do not leak",
+            "type": "must_not_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#3</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/1 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Do not leak</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 6,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 6,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 0.25,
+        "rules_broken": [
+          "criteria_0",
+          "free rule"
+        ],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Keep IDs private",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Order 7",
+            "state": "fail"
+          },
+          {
+            "id": "criteria_1",
+            "description": "Verify account",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Leaked order ID.",
+        "error": null,
+        "evaluator_scores": {
+          "quality": 0.25,
+          "bool": 1.0
+        },
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Keep IDs private</span><span class=\"sim-criterion-evidence\">&ldquo;Order 7&rdquo;</span></li><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Verify account</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Leaked order ID.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 7,
+      "input": {
+        "index": 1,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "max_turns",
+        "goal_achieved": false,
+        "goal_completion_score": 0.5,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Do not leak",
+            "type": "must_not_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#1</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/1 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Do not leak</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 7,
+      "input": {
+        "index": 1,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "max_turns",
+        "goal_achieved": false,
+        "goal_completion_score": 0.5,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Do not leak",
+            "type": "must_not_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": null,
+            "state": "unknown"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#1</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/1 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Do not leak</span><span class=\"sim-criterion-unaudited\">not audited</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 8,
+      "input": {
+        "index": 0,
+        "persona": "<img onerror=\"oops\">",
+        "scenario": "Scenario <&",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "<script>alert(\"goal\")</script>"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">&lt;img onerror=&quot;oops&quot;&gt;</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Scenario &lt;&amp;</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">&lt;script&gt;alert(&quot;goal&quot;)&lt;/script&gt;</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 8,
+      "input": {
+        "index": 0,
+        "persona": "<img onerror=\"oops\">",
+        "scenario": "Scenario <&",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "<script>alert(\"goal\")</script>"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">&lt;img onerror=&quot;oops&quot;&gt;</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Scenario &lt;&amp;</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">&lt;script&gt;alert(&quot;goal&quot;)&lt;/script&gt;</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 9,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "error",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Judge \"quoted\" <&",
+        "error": "<script>error</script>",
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--warn\">Error</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Judge &quot;quoted&quot; &lt;&amp;</p></div></div><div class=\"sim-transcript-error\"><strong>Error:</strong> &lt;script&gt;error&lt;/script&gt;</div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 9,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "error",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Judge \"quoted\" <&",
+        "error": "<script>error</script>",
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--warn\">Error</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Judge &quot;quoted&quot; &lt;&amp;</p></div></div><div class=\"sim-transcript-error\"><strong>Error:</strong> &lt;script&gt;error&lt;/script&gt;</div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 10,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"></div></div></div>"
+    },
+    {
+      "index": 10,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": null
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"></div></div></div>"
+    },
+    {
+      "index": 11,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": false,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><p class=\"sim-criteria-unverified\">Criteria unverified - the judge did not audit every criterion and <code>criteria_met</code> scored this run 0.0.</p><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 11,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": false,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><p class=\"sim-criteria-unverified\">Criteria unverified - the judge did not audit every criterion and <code>criteria_met</code> scored this run 0.0.</p><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 12,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 12,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": false,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 13,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 13,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "criteria_0",
+            "description": "Verified",
+            "type": null,
+            "passed": true,
+            "safety": false,
+            "audited": null,
+            "evidence": null,
+            "state": "pass"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">1/1 criteria met</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-pass\"><span class=\"sim-criterion-icon\">&#x2713;</span><span class=\"sim-criterion-desc\">Verified</span></li></ul></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 14,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 14,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": null,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 15,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": false,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><p class=\"sim-criteria-unverified\">Criteria unverified - the judge did not audit every criterion and <code>criteria_met</code> scored this run 0.0.</p><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 15,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": false,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><p class=\"sim-criteria-unverified\">Criteria unverified - the judge did not audit every criterion and <code>criteria_met</code> scored this run 0.0.</p><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 16,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": true,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": null,
+      "scenarioEntityId": null,
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">Careful</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">Refund</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    },
+    {
+      "index": 16,
+      "input": {
+        "index": 0,
+        "persona": "Careful",
+        "scenario": "Refund",
+        "model": "unknown",
+        "target_model": null,
+        "terminated_by": "judge",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "criteria": [
+          {
+            "id": "required",
+            "description": "Required <&",
+            "type": "must_happen",
+            "passed": true,
+            "safety": false,
+            "audited": false,
+            "evidence": "<script>evidence</script>",
+            "state": "unknown"
+          },
+          {
+            "id": "prohibited",
+            "description": "Prohibited <&",
+            "type": "must_not_happen",
+            "passed": false,
+            "safety": true,
+            "audited": true,
+            "evidence": "Failed after tool call",
+            "state": "fail"
+          }
+        ],
+        "criteria_verified": true,
+        "turn_count": 1,
+        "total_tokens": 15,
+        "judge_reason": "Request finished.",
+        "error": null,
+        "evaluator_scores": {},
+        "transcript": [
+          {
+            "role": "user",
+            "content": "Please help <now>"
+          },
+          {
+            "role": "assistant",
+            "content": "Done & safe."
+          }
+        ],
+        "thread_id": null,
+        "last_trace_id": null,
+        "goal": "Refund the correct charge"
+      },
+      "personaEntityId": "persona\"<&",
+      "scenarioEntityId": "scenario\"<&",
+      "expected": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">1 turn</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona&quot;&lt;&amp;\">Careful</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario&quot;&lt;&amp;\">Refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text\">Refund the correct charge</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span><span class=\"sim-criteria-count\">0/2 criteria met</span><span class=\"sim-criteria-unknown\">1 not audited</span></div><ul class=\"sim-criteria-list\"><li class=\"sim-criterion sim-criterion-unknown\"><span class=\"sim-criterion-icon\">?</span><span class=\"sim-ctype\">Required</span><span class=\"sim-criterion-desc\">Required &lt;&amp;</span><span class=\"sim-criterion-unaudited\">not audited</span><span class=\"sim-criterion-evidence\">&ldquo;&lt;script&gt;evidence&lt;/script&gt;&rdquo;</span></li><li class=\"sim-criterion sim-criterion-fail\"><span class=\"sim-criterion-icon\">&#x2717;</span><span class=\"sim-ctype sim-ctype-unsafe\">Prohibited</span><span class=\"sim-criterion-desc\">Prohibited &lt;&amp;</span><span class=\"sim-criterion-evidence\">&ldquo;Failed after tool call&rdquo;</span></li></ul><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">Request finished.</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">Please help &lt;now&gt;</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">Done &amp; safe.</pre></div></div></div></div></div>"
+    }
+  ]
+}

@@ -1,0 +1,386 @@
+{
+  "pythonCommit": "a59c3a86",
+  "defaults": {
+    "max_tokens": 10000,
+    "summary_max_tokens": 10000,
+    "summary_target_tokens": 250,
+    "max_reduce_summaries": 50,
+    "generate_first_message": true,
+    "redact_pii": true
+  },
+  "direct": [
+    {
+      "mode": "fresh",
+      "calls": [
+        "summary",
+        "infer"
+      ],
+      "datapoints": [
+        {
+          "id": "trace-t1",
+          "persona": {
+            "name": "Precise customer",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "A customer testing an echo service."
+          },
+          "scenario": {
+            "name": "Echo",
+            "goal": "Get mango",
+            "context": "Echo service",
+            "criteria": [
+              {
+                "description": "The assistant replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "You are simulating a user with the following characteristics:\n\nName: <data>Precise customer</data>\nPatience: You are moderately patient\nAssertiveness: You are balanced\nPoliteness: You are neutral in tone\nTechnical Level: You are somewhat technical\nCommunication Style: <data>casual</data>\n\nBackground: <data>A customer testing an echo service.</data>\n\nStay in character throughout the conversation. Your responses should reflect these traits consistently.\nDo not break character or acknowledge that you are a simulation.\n\n---\n\nScenario: <data>Echo</data>\n\nYour Goal: <data>Get mango</data>\n\nContext: <data>Echo service</data>\n\nEmotional State: You approach this conversation calmly.\n\n\nYou expect the agent to: <data>The assistant replies mango</data>\n\nWork towards your goal naturally. React authentically based on how the agent responds.",
+          "first_message": "Fresh mango opener"
+        }
+      ]
+    },
+    {
+      "mode": "replay",
+      "calls": [
+        "summary",
+        "infer"
+      ],
+      "datapoints": [
+        {
+          "id": "trace-t1",
+          "persona": {
+            "name": "Precise customer",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "A customer testing an echo service."
+          },
+          "scenario": {
+            "name": "Echo",
+            "goal": "Get mango",
+            "context": "Echo service",
+            "criteria": [
+              {
+                "description": "The assistant replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "You are simulating a user with the following characteristics:\n\nName: <data>Precise customer</data>\nPatience: You are moderately patient\nAssertiveness: You are balanced\nPoliteness: You are neutral in tone\nTechnical Level: You are somewhat technical\nCommunication Style: <data>casual</data>\n\nBackground: <data>A customer testing an echo service.</data>\n\nStay in character throughout the conversation. Your responses should reflect these traits consistently.\nDo not break character or acknowledge that you are a simulation.\n\n---\n\nScenario: <data>Echo</data>\n\nYour Goal: <data>Get mango</data>\n\nContext: <data>Echo service</data>\n\nEmotional State: You approach this conversation calmly.\n\n\nYou expect the agent to: <data>The assistant replies mango</data>\n\nWork towards your goal naturally. React authentically based on how the agent responds.",
+          "first_message": "Recorded mango opener"
+        }
+      ]
+    },
+    {
+      "mode": "partial",
+      "calls": [],
+      "datapoints": []
+    },
+    {
+      "mode": "summary-fails",
+      "calls": [
+        "summary"
+      ],
+      "datapoints": []
+    },
+    {
+      "mode": "infer-fails",
+      "calls": [
+        "summary",
+        "infer"
+      ],
+      "datapoints": []
+    },
+    {
+      "mode": "opener-fails",
+      "calls": [
+        "summary",
+        "infer"
+      ],
+      "datapoints": [
+        {
+          "id": "trace-t1",
+          "persona": {
+            "name": "Precise customer",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "A customer testing an echo service."
+          },
+          "scenario": {
+            "name": "Echo",
+            "goal": "Get mango",
+            "context": "Echo service",
+            "criteria": [
+              {
+                "description": "The assistant replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "You are simulating a user with the following characteristics:\n\nName: <data>Precise customer</data>\nPatience: You are moderately patient\nAssertiveness: You are balanced\nPoliteness: You are neutral in tone\nTechnical Level: You are somewhat technical\nCommunication Style: <data>casual</data>\n\nBackground: <data>A customer testing an echo service.</data>\n\nStay in character throughout the conversation. Your responses should reflect these traits consistently.\nDo not break character or acknowledge that you are a simulation.\n\n---\n\nScenario: <data>Echo</data>\n\nYour Goal: <data>Get mango</data>\n\nContext: <data>Echo service</data>\n\nEmotional State: You approach this conversation calmly.\n\n\nYou expect the agent to: <data>The assistant replies mango</data>\n\nWork towards your goal naturally. React authentically based on how the agent responds.",
+          "first_message": "Recorded mango opener"
+        }
+      ]
+    },
+    {
+      "mode": "no-user",
+      "calls": [],
+      "datapoints": []
+    },
+    {
+      "mode": "alias",
+      "calls": [
+        "summary",
+        "infer"
+      ],
+      "datapoints": [
+        {
+          "id": "trace-t1",
+          "persona": {
+            "name": "Precise customer",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "A customer testing an echo service."
+          },
+          "scenario": {
+            "name": "Echo",
+            "goal": "Get mango",
+            "context": "Echo service",
+            "criteria": [
+              {
+                "description": "The assistant replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "You are simulating a user with the following characteristics:\n\nName: <data>Precise customer</data>\nPatience: You are moderately patient\nAssertiveness: You are balanced\nPoliteness: You are neutral in tone\nTechnical Level: You are somewhat technical\nCommunication Style: <data>casual</data>\n\nBackground: <data>A customer testing an echo service.</data>\n\nStay in character throughout the conversation. Your responses should reflect these traits consistently.\nDo not break character or acknowledge that you are a simulation.\n\n---\n\nScenario: <data>Echo</data>\n\nYour Goal: <data>Get mango</data>\n\nContext: <data>Echo service</data>\n\nEmotional State: You approach this conversation calmly.\n\n\nYou expect the agent to: <data>The assistant replies mango</data>\n\nWork towards your goal naturally. React authentically based on how the agent responds.",
+          "first_message": "Fresh mango opener"
+        }
+      ]
+    }
+  ],
+  "transcripts": [
+    {
+      "text": "hello",
+      "cap": null,
+      "first": "hello",
+      "transcript": "user: hello\nassistant: done"
+    },
+    {
+      "text": "hello",
+      "cap": 0,
+      "first": "hello",
+      "transcript": ""
+    },
+    {
+      "text": "hello",
+      "cap": 1,
+      "first": "hello",
+      "transcript": "u"
+    },
+    {
+      "text": "hello",
+      "cap": 7,
+      "first": "hello",
+      "transcript": "user: h"
+    },
+    {
+      "text": "hello",
+      "cap": -1,
+      "first": "hello",
+      "transcript": "user: hello\nassistant: don"
+    },
+    {
+      "text": "\ud83d\udc31abc",
+      "cap": null,
+      "first": "\ud83d\udc31abc",
+      "transcript": "user: \ud83d\udc31abc\nassistant: done"
+    },
+    {
+      "text": "\ud83d\udc31abc",
+      "cap": 0,
+      "first": "\ud83d\udc31abc",
+      "transcript": ""
+    },
+    {
+      "text": "\ud83d\udc31abc",
+      "cap": 1,
+      "first": "\ud83d\udc31abc",
+      "transcript": "u"
+    },
+    {
+      "text": "\ud83d\udc31abc",
+      "cap": 7,
+      "first": "\ud83d\udc31abc",
+      "transcript": "user: \ud83d\udc31"
+    },
+    {
+      "text": "\ud83d\udc31abc",
+      "cap": -1,
+      "first": "\ud83d\udc31abc",
+      "transcript": "user: \ud83d\udc31abc\nassistant: don"
+    },
+    {
+      "text": "\u0085",
+      "cap": null,
+      "first": null,
+      "transcript": "user: \u0085\nassistant: done"
+    },
+    {
+      "text": "\u0085",
+      "cap": 0,
+      "first": null,
+      "transcript": ""
+    },
+    {
+      "text": "\u0085",
+      "cap": 1,
+      "first": null,
+      "transcript": "u"
+    },
+    {
+      "text": "\u0085",
+      "cap": 7,
+      "first": null,
+      "transcript": "user: \u0085"
+    },
+    {
+      "text": "\u0085",
+      "cap": -1,
+      "first": null,
+      "transcript": "user: \u0085\nassistant: don"
+    },
+    {
+      "text": "\ufeff",
+      "cap": null,
+      "first": "\ufeff",
+      "transcript": "user: \ufeff\nassistant: done"
+    },
+    {
+      "text": "\ufeff",
+      "cap": 0,
+      "first": "\ufeff",
+      "transcript": ""
+    },
+    {
+      "text": "\ufeff",
+      "cap": 1,
+      "first": "\ufeff",
+      "transcript": "u"
+    },
+    {
+      "text": "\ufeff",
+      "cap": 7,
+      "first": "\ufeff",
+      "transcript": "user: \ufeff"
+    },
+    {
+      "text": "\ufeff",
+      "cap": -1,
+      "first": "\ufeff",
+      "transcript": "user: \ufeff\nassistant: don"
+    },
+    {
+      "text": "\u001c",
+      "cap": null,
+      "first": null,
+      "transcript": "user: \u001c\nassistant: done"
+    },
+    {
+      "text": "\u001c",
+      "cap": 0,
+      "first": null,
+      "transcript": ""
+    },
+    {
+      "text": "\u001c",
+      "cap": 1,
+      "first": null,
+      "transcript": "u"
+    },
+    {
+      "text": "\u001c",
+      "cap": 7,
+      "first": null,
+      "transcript": "user: \u001c"
+    },
+    {
+      "text": "\u001c",
+      "cap": -1,
+      "first": null,
+      "transcript": "user: \u001c\nassistant: don"
+    },
+    {
+      "text": "  ",
+      "cap": null,
+      "first": null,
+      "transcript": "user:   \nassistant: done"
+    },
+    {
+      "text": "  ",
+      "cap": 0,
+      "first": null,
+      "transcript": ""
+    },
+    {
+      "text": "  ",
+      "cap": 1,
+      "first": null,
+      "transcript": "u"
+    },
+    {
+      "text": "  ",
+      "cap": 7,
+      "first": null,
+      "transcript": "user:  "
+    },
+    {
+      "text": "  ",
+      "cap": -1,
+      "first": null,
+      "transcript": "user:   \nassistant: don"
+    },
+    {
+      "text": "line1\nline2",
+      "cap": null,
+      "first": "line1\nline2",
+      "transcript": "user: line1\nline2\nassistant: done"
+    },
+    {
+      "text": "line1\nline2",
+      "cap": 0,
+      "first": "line1\nline2",
+      "transcript": ""
+    },
+    {
+      "text": "line1\nline2",
+      "cap": 1,
+      "first": "line1\nline2",
+      "transcript": "u"
+    },
+    {
+      "text": "line1\nline2",
+      "cap": 7,
+      "first": "line1\nline2",
+      "transcript": "user: l"
+    },
+    {
+      "text": "line1\nline2",
+      "cap": -1,
+      "first": "line1\nline2",
+      "transcript": "user: line1\nline2\nassistant: don"
+    }
+  ]
+}

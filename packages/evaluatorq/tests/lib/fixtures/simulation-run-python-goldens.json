@@ -1,0 +1,324 @@
+{
+  "pythonCommit": "a59c3a86",
+  "run": {
+    "run_name": "Saved case",
+    "created_at": "2026-01-01T00:00:00Z",
+    "mode": "simulate",
+    "target_kind": "callback",
+    "target": "callback",
+    "target_model": null,
+    "max_turns": 3,
+    "agent_info": null,
+    "orq_base_url": null,
+    "evaluator_names": [
+      "good"
+    ],
+    "total_results": 1,
+    "scorer_averages": {
+      "good": 0.5,
+      "bool": 1.0
+    },
+    "results": [
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply mango",
+            "tool_calls": null,
+            "tool_call_id": null,
+            "name": null
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "c",
+                "type": "function",
+                "function": {
+                  "name": "echo",
+                  "arguments": "{}"
+                },
+                "item_id": null,
+                "incomplete": false
+              }
+            ],
+            "tool_call_id": null,
+            "name": null
+          },
+          {
+            "role": "tool",
+            "content": "mango",
+            "tool_calls": null,
+            "tool_call_id": "c",
+            "name": null
+          }
+        ],
+        "terminated_by": "judge",
+        "reason": "done",
+        "goal_achieved": true,
+        "goal_completion_score": 1.0,
+        "rules_broken": [],
+        "turn_count": 1,
+        "token_usage": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "token_usage_known": true,
+        "turn_metrics": [
+          {
+            "turn_number": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "response_quality": null,
+            "hallucination_risk": null,
+            "tone_appropriateness": null,
+            "factual_accuracy": null,
+            "judge_reason": "yes"
+          }
+        ],
+        "metadata": {
+          "evaluator_scores": {
+            "good": 0.5,
+            "bool": true,
+            "bad": "ignore"
+          },
+          "custom_under_score": {
+            "keep_key": true
+          }
+        },
+        "criteria_results": {
+          "Agent replies mango": true
+        },
+        "criteria_verified": true,
+        "evaluator_details": {},
+        "total_turns": null,
+        "thread_id": null,
+        "response_traces": [
+          {
+            "trace_id": "trace",
+            "span_id": "span"
+          }
+        ]
+      }
+    ],
+    "datapoints": [
+      {
+        "id": "case",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "B",
+          "emotional_arc": null,
+          "cultural_context": null
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "G",
+          "context": null,
+          "starting_emotion": null,
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen",
+              "evaluator": null
+            }
+          ],
+          "is_edge_case": null,
+          "conversation_strategy": null,
+          "ground_truth": null,
+          "input_format": null
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    ],
+    "replay_version": 1,
+    "executive_summary": null,
+    "token_usage_total": {
+      "input_tokens": 3,
+      "output_tokens": 2,
+      "total_tokens": 5,
+      "cached_tokens": 1,
+      "cache_creation_tokens": 0,
+      "cache_creation_1h_tokens": 0,
+      "cache_creation_5m_tokens": 0,
+      "reasoning_tokens": 1,
+      "input_cost": 0.01,
+      "output_cost": 0.02,
+      "total_cost": 0.03,
+      "calls": 1,
+      "priced_calls": 1,
+      "prompt_tokens": 3,
+      "completion_tokens": 2,
+      "cost_usd": 0.03
+    },
+    "run_id": "1234567890abcdef",
+    "experiment_url": null,
+    "recommendations": null,
+    "applied_suggestions": []
+  },
+  "summary": {
+    "mode": "simulate",
+    "target_kind": "callback",
+    "total_results": 1,
+    "scorer_averages": {
+      "good": 0.5,
+      "bool": 1.0
+    }
+  },
+  "names": [
+    {
+      "name": "Mixed Case",
+      "expected": "mixed_case"
+    },
+    {
+      "name": "//evil\\path",
+      "expected": "evil_path"
+    },
+    {
+      "name": "  __ --- __ ",
+      "expected": "---"
+    },
+    {
+      "name": "",
+      "expected": "sim"
+    },
+    {
+      "name": "\ud83e\udd80 \ud83e\udd80",
+      "expected": "sim"
+    },
+    {
+      "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "\u00c4\u00df\u0130 \u03a3",
+      "expected": "i"
+    },
+    {
+      "name": "x\u0000y",
+      "expected": "x_y"
+    },
+    {
+      "name": "a__b",
+      "expected": "a_b"
+    },
+    {
+      "name": "x-y_z",
+      "expected": "x-y_z"
+    }
+  ],
+  "agentResponse": {
+    "id": "id",
+    "role": "agent",
+    "description": "description",
+    "model": {
+      "id": "model"
+    },
+    "version": "v1",
+    "settings": {
+      "tools": [
+        {
+          "display_name": "Tool"
+        },
+        {
+          "key": "fallback"
+        },
+        {}
+      ]
+    },
+    "knowledge_bases": [
+      "kb",
+      {
+        "knowledge_id": "kb2"
+      },
+      {}
+    ],
+    "memory_stores": [
+      "store",
+      {
+        "key": "store2"
+      }
+    ],
+    "team_of_agents": [
+      {
+        "key": "worker"
+      },
+      {}
+    ],
+    "skills": [
+      "skill"
+    ],
+    "type": "agent",
+    "engine": "engine",
+    "workspace_id": "uuid",
+    "instructions": "DO NOT SAVE"
+  },
+  "snapshot": {
+    "key": "key",
+    "id": "id",
+    "role": "agent",
+    "description": "description",
+    "model": "model",
+    "version": "v1",
+    "tools": [
+      "Tool",
+      "fallback"
+    ],
+    "skills": [
+      "skill"
+    ],
+    "knowledge_bases": [
+      "kb",
+      "kb2"
+    ],
+    "memory_stores": [
+      "store",
+      "store2"
+    ],
+    "sub_agents": [
+      "worker"
+    ],
+    "agent_type": "agent",
+    "engine": "engine",
+    "workspace_id": "uuid",
+    "workspace_key": "test-workspace",
+    "base_url": "https://my.orq.ai",
+    "url": "https://my.orq.ai/test-workspace/agents/id"
+  }
+}

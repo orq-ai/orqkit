@@ -1,0 +1,4005 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"simtab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"simtab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"simtab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#simtab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#simtab-second\">2. Second</a><a href=\"#simtab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"simtab-first&lt;&amp;\" aria-labelledby=\"simtab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-second\" aria-labelledby=\"simtab-second-title\"><h2 class=\"export-section-title\" id=\"simtab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"simtab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"simtab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"simtab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#simtab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#simtab-second\">2. Second</a><a href=\"#simtab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"simtab-first&lt;&amp;\" aria-labelledby=\"simtab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-second\" aria-labelledby=\"simtab-second-title\"><h2 class=\"export-section-title\" id=\"simtab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-0\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-1\" checked><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"simtab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"simtab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"simtab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#simtab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#simtab-second\">2. Second</a><a href=\"#simtab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"simtab-first&lt;&amp;\" aria-labelledby=\"simtab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-second\" aria-labelledby=\"simtab-second-title\"><h2 class=\"export-section-title\" id=\"simtab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"simtab\" id=\"simtab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"simtab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"simtab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"simtab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "simtab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#simtab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#simtab-second\">2. Second</a><a href=\"#simtab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"simtab-first&lt;&amp;\" aria-labelledby=\"simtab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"simtab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-second\" aria-labelledby=\"simtab-second-title\"><h2 class=\"export-section-title\" id=\"simtab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"simtab-usage\" aria-labelledby=\"simtab-usage-title\"><h2 class=\"export-section-title\" id=\"simtab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"rttab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"rttab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"rttab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#rttab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#rttab-second\">2. Second</a><a href=\"#rttab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"rttab-first&lt;&amp;\" aria-labelledby=\"rttab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-second\" aria-labelledby=\"rttab-second-title\"><h2 class=\"export-section-title\" id=\"rttab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"rttab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"rttab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"rttab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#rttab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#rttab-second\">2. Second</a><a href=\"#rttab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"rttab-first&lt;&amp;\" aria-labelledby=\"rttab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-second\" aria-labelledby=\"rttab-second-title\"><h2 class=\"export-section-title\" id=\"rttab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-0\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-1\" checked><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"rttab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"rttab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"rttab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#rttab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#rttab-second\">2. Second</a><a href=\"#rttab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"rttab-first&lt;&amp;\" aria-labelledby=\"rttab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-second\" aria-labelledby=\"rttab-second-title\"><h2 class=\"export-section-title\" id=\"rttab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-1\"><input class=\"tab-radio\" type=\"radio\" name=\"rttab\" id=\"rttab-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"rttab-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"rttab-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"rttab-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "rttab",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#rttab-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#rttab-second\">2. Second</a><a href=\"#rttab-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"rttab-first&lt;&amp;\" aria-labelledby=\"rttab-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"rttab-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-second\" aria-labelledby=\"rttab-second-title\"><h2 class=\"export-section-title\" id=\"rttab-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"rttab-usage\" aria-labelledby=\"rttab-usage-title\"><h2 class=\"export-section-title\" id=\"rttab-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Usage totals cover the provider data recorded with this report.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-1\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": null,
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#group&quot;&lt;&amp;-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#group&quot;&lt;&amp;-second\">2. Second</a><a href=\"#group&quot;&lt;&amp;-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"group&quot;&lt;&amp;-first&lt;&amp;\" aria-labelledby=\"group&quot;&lt;&amp;-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-second\" aria-labelledby=\"group&quot;&lt;&amp;-second-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-usage\" aria-labelledby=\"group&quot;&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-1\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Empty",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#group&quot;&lt;&amp;-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#group&quot;&lt;&amp;-second\">2. Second</a><a href=\"#group&quot;&lt;&amp;-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"group&quot;&lt;&amp;-first&lt;&amp;\" aria-labelledby=\"group&quot;&lt;&amp;-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-second\" aria-labelledby=\"group&quot;&lt;&amp;-second-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-usage\" aria-labelledby=\"group&quot;&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-0\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-1\" checked><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Second",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#group&quot;&lt;&amp;-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#group&quot;&lt;&amp;-second\">2. Second</a><a href=\"#group&quot;&lt;&amp;-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"group&quot;&lt;&amp;-first&lt;&amp;\" aria-labelledby=\"group&quot;&lt;&amp;-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-second\" aria-labelledby=\"group&quot;&lt;&amp;-second-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-usage\" aria-labelledby=\"group&quot;&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": false,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<div class=\"tabs\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-0\" checked><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-1\"><input class=\"tab-radio\" type=\"radio\" name=\"group&quot;&lt;&amp;\" id=\"group&quot;&lt;&amp;-2\"><div class=\"tab-bar\"><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-0\">First&lt;&amp;</label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-1\">Second <b>2</b></label><label class=\"tab-label\" for=\"group&quot;&lt;&amp;-2\">Usage</label></div><div class=\"tab-panels\"><section class=\"tab-panel\"><p>first</p></section><section class=\"tab-panel\"><p>second</p></section><section class=\"tab-panel\"><p>usage</p></section></div></div>"
+    },
+    {
+      "group": "group\"<&",
+      "items": [
+        [
+          "Empty",
+          " \n\t"
+        ],
+        [
+          "First<&",
+          "<p>first</p>"
+        ],
+        [
+          "Second",
+          "<p>second</p>",
+          "Second <b>2</b>"
+        ],
+        [
+          "Usage",
+          "<p>usage</p>"
+        ]
+      ],
+      "options": {
+        "active": "Missing",
+        "standalone": true,
+        "brief": "<section id=\"export-brief\"></section>"
+      },
+      "expected": "<section id=\"export-brief\"></section><nav class=\"export-nav\" aria-label=\"Report sections\"><a href=\"#export-brief\">Brief</a><a href=\"#group&quot;&lt;&amp;-first&lt;&amp;\">1. First&lt;&amp;</a><a href=\"#group&quot;&lt;&amp;-second\">2. Second</a><a href=\"#group&quot;&lt;&amp;-usage\">3. Usage · Appendix</a></nav><section class=\"export-section\" id=\"group&quot;&lt;&amp;-first&lt;&amp;\" aria-labelledby=\"group&quot;&lt;&amp;-first&lt;&amp;-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-first&lt;&amp;-title\">1. First&lt;&amp;</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>first</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-second\" aria-labelledby=\"group&quot;&lt;&amp;-second-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-second-title\">2. Second</h2><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>second</p><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section><section class=\"export-section\" id=\"group&quot;&lt;&amp;-usage\" aria-labelledby=\"group&quot;&lt;&amp;-usage-title\"><h2 class=\"export-section-title\" id=\"group&quot;&lt;&amp;-usage-title\">3. Usage · Appendix</h2><details class=\"export-appendix-detail\"><summary>Show usage details</summary><p class=\"export-reading-note\">Read the saved counts and evidence together.</p><p>usage</p></details><p class=\"export-back-brief\"><a href=\"#export-brief\">Back to brief</a></p></section>"
+    }
+  ],
+  "stable": [
+    {
+      "name": "empty",
+      "results": [],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "empty",
+      "results": [],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "empty",
+      "results": [],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "pass",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "pass",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "pass",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "fail",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "fail",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "fail",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "mixed",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "error",
+          "reason": "Failed transport",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": false,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": null,
+            "scenario": false,
+            "error": "rate limit",
+            "evaluator_errors": {
+              "broken": "timeout",
+              "only_error": "no score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "mixed",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "error",
+          "reason": "Failed transport",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": false,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": null,
+            "scenario": false,
+            "error": "rate limit",
+            "evaluator_errors": {
+              "broken": "timeout",
+              "only_error": "no score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 2,
+          "persona": "None",
+          "scenario": "False",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Failed transport",
+          "error": "rate limit",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        },
+        {
+          "index": 3,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        }
+      ]
+    },
+    {
+      "name": "mixed",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Request finished.",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "error",
+          "reason": "Failed transport",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": false,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": null,
+            "scenario": false,
+            "error": "rate limit",
+            "evaluator_errors": {
+              "broken": "timeout",
+              "only_error": "no score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "expected": [
+        {
+          "index": 3,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        },
+        {
+          "index": 2,
+          "persona": "None",
+          "scenario": "False",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Failed transport",
+          "error": "rate limit",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        },
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "filtered",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [],
+      "expected": []
+    },
+    {
+      "name": "filtered",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        0,
+        1
+      ],
+      "expected": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        }
+      ]
+    },
+    {
+      "name": "filtered",
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "Leaked order ID.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 1,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": 0.75,
+              "tone_appropriateness": 0.25,
+              "factual_accuracy": 0.0,
+              "judge_reason": "bad"
+            },
+            {
+              "turn_number": 2,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": 0.5,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": 0.5,
+              "judge_reason": "ok"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "scenario_goal": "Refund the correct charge",
+            "scenario_context": "Order 7",
+            "persona_traits": {
+              "background": "Shopper",
+              "emoji": "🙂"
+            },
+            "datapoint_id": "dp-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Keep IDs private",
+                "type": "must_not_happen",
+                "passed": false,
+                "audited": true,
+                "evidence": "Order 7"
+              },
+              {
+                "id": "criteria_1",
+                "description": "Verify account",
+                "type": "must_happen",
+                "passed": true,
+                "audited": false,
+                "evidence": null
+              }
+            ],
+            "evaluator_scores": {
+              "quality": 0.25,
+              "bool": true,
+              "ignored": "x"
+            },
+            "evaluator_errors": {
+              "broken": "invalid score"
+            }
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Please help <now>",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe.",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "max_turns",
+          "reason": "Request finished.",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [
+            {
+              "turn_number": 3,
+              "token_usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "cached_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_creation_1h_tokens": 0,
+                "cache_creation_5m_tokens": 0,
+                "reasoning_tokens": 0,
+                "input_cost": null,
+                "output_cost": null,
+                "total_cost": null,
+                "calls": 0,
+                "priced_calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": null
+              },
+              "response_quality": null,
+              "hallucination_risk": null,
+              "tone_appropriateness": null,
+              "factual_accuracy": null,
+              "judge_reason": "unmeasured"
+            }
+          ],
+          "metadata": {
+            "persona": "Careful",
+            "scenario": "Refund",
+            "persona_id": "p-2",
+            "scenario_id": "s-2",
+            "criteria_meta": [
+              {
+                "id": "criteria_0",
+                "description": "Do not leak",
+                "type": "must_not_happen",
+                "passed": true,
+                "audited": false
+              }
+            ]
+          },
+          "criteria_results": {
+            "Verified": true
+          },
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "indexes": [
+        1,
+        0
+      ],
+      "expected": [
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        },
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    }
+  ]
+}
