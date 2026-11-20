@@ -481,7 +481,9 @@ it.each(["dataset", "experiment"] as const)(
     const previous = {
       key: process.env.ORQ_API_KEY,
       host: process.env.ORQ_BASE_URL,
+      tracing: process.env.ORQ_DISABLE_TRACING,
     };
+    process.env.ORQ_DISABLE_TRACING = "1";
     process.env.ORQ_API_KEY = "wire-key";
     process.env.ORQ_BASE_URL = `http://127.0.0.1:${server.port}`;
     try {
@@ -506,6 +508,9 @@ it.each(["dataset", "experiment"] as const)(
       else process.env.ORQ_API_KEY = previous.key;
       if (previous.host === undefined) delete process.env.ORQ_BASE_URL;
       else process.env.ORQ_BASE_URL = previous.host;
+      if (previous.tracing === undefined)
+        delete process.env.ORQ_DISABLE_TRACING;
+      else process.env.ORQ_DISABLE_TRACING = previous.tracing;
     }
   },
 );

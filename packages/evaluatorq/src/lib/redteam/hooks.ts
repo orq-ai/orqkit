@@ -71,11 +71,17 @@ function shellPath(path: string): string {
     : `'${path.replaceAll("'", `'"'"'`)}'`;
 }
 export class DefaultHooks implements PipelineHooks {
+  constructor(
+    private readonly info: (line: string) => void = console.info,
+    private readonly confirm: (
+      payload: ConfirmPayload,
+    ) => MaybeAsync<boolean> = () => true,
+  ) {}
   async onStageStart(
     stage: string,
     meta: Record<string, unknown>,
   ): Promise<void> {
-    console.info(
+    this.info(
       `[redteam] Stage started: ${stage} - ${stageLabels[stage] ?? stage} | meta=${JSON.stringify(meta)}`,
     );
   }
@@ -85,13 +91,13 @@ export class DefaultHooks implements PipelineHooks {
   ): Promise<void> {
     if (stage === PipelineStage.DATAPOINT_GENERATION) {
       if (meta.numDynamic != null && meta.numStatic != null)
-        console.info(
+        this.info(
           `[redteam] Generated ${Number(meta.numDynamic || 0) + Number(meta.numStatic || 0)} datapoints (${meta.numDynamic || 0} dynamic + ${meta.numStatic || 0} static)`,
         );
       else if (meta.numDatapoints != null)
-        console.info(`[redteam] Generated ${meta.numDatapoints} datapoints`);
+        this.info(`[redteam] Generated ${meta.numDatapoints} datapoints`);
     }
-    console.info(
+    this.info(
       `[redteam] Stage complete: ${stage} - ${stageLabels[stage] ?? stage} | meta=${JSON.stringify(meta)}`,
     );
   }
@@ -102,10 +108,10 @@ export class DefaultHooks implements PipelineHooks {
       payload.numDynamic != null && payload.numStatic != null
         ? `${count} datapoints (${payload.numDynamic} dynamic + ${payload.numStatic} static)`
         : `${count} datapoints`;
-    console.info(
+    this.info(
       `[redteam] Run plan: ${detail} | ${categories.length} ${categories.length === 1 ? "category" : "categories"} | mode=${JSON.stringify(payload.mode ?? "?")} | target=${JSON.stringify(payload.target ?? "?")} | attack_model=${JSON.stringify(payload.attackModel ?? "?")} | evaluator_model=${JSON.stringify(payload.evaluatorModel ?? "?")}`,
     );
-    return true;
+    return this.confirm(payload);
   }
   async onComplete(
     report: RedTeamReport,
@@ -119,7 +125,7 @@ export class DefaultHooks implements PipelineHooks {
         `[redteam] Run complete - NO VERDICT: 0/${summary.totalAttacks} attacks could be evaluated. The target was not tested.`,
       );
     else
-      console.info(
+      this.info(
         `[redteam] Run complete - resistance_rate=${pct(summary.resistanceRate)} (${summary.evaluatedAttacks}/${summary.totalAttacks} evaluated) vulnerabilities=${summary.vulnerabilitiesFound} attacks=${summary.totalAttacks}`,
       );
     const directory =
@@ -127,7 +133,7 @@ export class DefaultHooks implements PipelineHooks {
       (options.autoSavePath
         ? dirname(options.autoSavePath)
         : ".evaluatorq/runs");
-    console.info(
+    this.info(
       `[redteam] Tip: visualise results with  "eq dashboard ${shellPath(directory)}"`,
     );
   }

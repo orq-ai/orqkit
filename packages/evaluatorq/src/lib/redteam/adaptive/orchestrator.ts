@@ -132,7 +132,7 @@ async function startProgress(
     );
   } catch (error) {
     if (canceled(error)) throw error;
-    console.debug("Failed to start attack progress", error);
+    console.warn("Failed to start attack progress", error);
     return null;
   }
 }

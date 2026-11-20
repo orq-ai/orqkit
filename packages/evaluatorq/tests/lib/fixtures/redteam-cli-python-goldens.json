@@ -1,0 +1,3217 @@
+{
+ "cases": [
+  {
+   "name": "json",
+   "args": [
+    "run",
+    "-t",
+    "agent:x",
+    "--json"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 0,
+   "stdout": "{\n  \"version\": \"2.0.0\",\n  \"created_at\": \"2026-11-10T12:00:00Z\",\n  \"description\": null,\n  \"pipeline\": \"dynamic\",\n  \"framework\": null,\n  \"categories_tested\": [\n    \"ASI01\"\n  ],\n  \"tested_agents\": [],\n  \"total_results\": 1,\n  \"errors\": [],\n  \"agent_contexts\": {},\n  \"results\": [\n    {\n      \"attack\": {\n        \"id\": \"a\",\n        \"vulnerability\": \"goal_hijacking\",\n        \"category\": \"ASI01\",\n        \"framework\": \"OWASP-ASI\",\n        \"attack_technique\": \"direct-injection\",\n        \"delivery_methods\": [\n          \"direct-request\"\n        ],\n        \"turn_type\": \"multi\",\n        \"severity\": \"high\",\n        \"vulnerability_domain\": null,\n        \"source\": \"template_dynamic\",\n        \"strategy_name\": null,\n        \"objective\": null,\n        \"evaluator_id\": null,\n        \"evaluator_name\": null,\n        \"additional_metadata\": null\n      },\n      \"agent\": {\n        \"key\": null,\n        \"model\": null,\n        \"display_name\": null\n      },\n      \"messages\": [\n        {\n          \"role\": \"system\",\n          \"content\": \"skip\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"user\",\n          \"content\": \"<first>\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"assistant\",\n          \"content\": \"first reply\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"user\",\n          \"content\": \"second & final\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        }\n      ],\n      \"response\": \"final <answer>\",\n      \"evaluation\": {\n        \"value\": null,\n        \"passed\": false,\n        \"explanation\": \"reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason \",\n        \"evaluator_id\": null,\n        \"evaluator_name\": null,\n        \"token_usage\": null,\n        \"raw_output\": null,\n        \"jury\": null\n      },\n      \"vulnerable\": true,\n      \"execution\": null,\n      \"token_usage_bootstrap\": null,\n      \"seed_context\": [],\n      \"evaluation_error\": null,\n      \"error\": null,\n      \"error_type\": null,\n      \"error_stage\": null,\n      \"error_code\": null,\n      \"error_details\": null,\n      \"thread_id\": null,\n      \"response_traces\": []\n    }\n  ],\n  \"summary\": {\n    \"total_attacks\": 1,\n    \"evaluated_attacks\": 1,\n    \"unevaluated_attacks\": 0,\n    \"evaluation_coverage\": 1.0,\n    \"total_conversations\": 1,\n    \"total_turns\": 0,\n    \"average_turns_per_attack\": 0.0,\n    \"vulnerabilities_found\": 1,\n    \"vulnerability_rate\": 1.0,\n    \"resistance_rate\": 0.0,\n    \"total_errors\": 0,\n    \"pre_execution_errors\": 0,\n    \"errors_by_type\": {},\n    \"token_usage_total\": null,\n    \"token_usage_by_source\": {},\n    \"post_processing_token_usage\": null,\n    \"by_vulnerability\": {\n      \"goal_hijacking\": {\n        \"vulnerability\": \"goal_hijacking\",\n        \"vulnerability_name\": \"Agent Goal Hijacking\",\n        \"domain\": \"agent\",\n        \"total_attacks\": 1,\n        \"evaluated_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"strategies_used\": [],\n        \"framework_categories\": {\n          \"OWASP-ASI\": [\n            \"ASI01\"\n          ]\n        }\n      }\n    },\n    \"by_category\": {\n      \"ASI01\": {\n        \"category\": \"ASI01\",\n        \"category_name\": \"Agent Goal Hijacking\",\n        \"total_attacks\": 1,\n        \"evaluated_attacks\": 1,\n        \"unevaluated_attacks\": 0,\n        \"evaluation_coverage\": 1.0,\n        \"total_conversations\": 1,\n        \"total_turns\": 0,\n        \"vulnerabilities_found\": 1,\n        \"vulnerability_rate\": 1.0,\n        \"resistance_rate\": 0.0,\n        \"total_errors\": 0,\n        \"strategies_used\": []\n      }\n    },\n    \"by_technique\": {\n      \"direct-injection\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_severity\": {\n      \"high\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_delivery_method\": {\n      \"direct-request\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_turn_type\": {\n      \"multi\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0,\n        \"average_turns\": 0.0\n      }\n    },\n    \"by_domain\": {},\n    \"by_framework\": {\n      \"OWASP-ASI\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"jury_reliability\": null,\n    \"jury_health\": null,\n    \"datapoint_breakdown\": null,\n    \"min_evaluation_coverage\": null\n  },\n  \"focus_area_recommendations\": null,\n  \"applied_recommendations\": [],\n  \"executive_summary\": null,\n  \"token_usage_summary\": null,\n  \"duration_seconds\": null,\n  \"pipeline_warnings\": [],\n  \"orq_base_url\": null,\n  \"experiment_url\": null,\n  \"run_id\": null,\n  \"uploaded_count\": null,\n  \"rows_created\": null\n}\n",
+   "stderr": "",
+   "kwargs": {
+    "target": "agent:x",
+    "llm_config": null,
+    "mode": null,
+    "categories": null,
+    "vulnerabilities": null,
+    "strategies": null,
+    "datapoints": null,
+    "attack_techniques": null,
+    "delivery_methods": null,
+    "max_turns": null,
+    "max_per_category": null,
+    "datapoint_parallelism": null,
+    "parallelism": null,
+    "llm_parallelism": null,
+    "generate_strategies": true,
+    "generated_strategy_count": 2,
+    "max_dynamic_datapoints": null,
+    "max_static_datapoints": null,
+    "cleanup_memory": true,
+    "name": null,
+    "description": null,
+    "dataset": null,
+    "previous_run": null,
+    "artifacts_dir": null,
+    "target_config": null,
+    "recommendations": true,
+    "generate_executive_summary": true,
+    "attacker_instructions": null,
+    "verbosity": 1,
+    "save": "final"
+   },
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "no_verdict",
+   "args": [
+    "run",
+    "-t",
+    "agent:x"
+   ],
+   "variant": "none",
+   "stdin": null,
+   "exit_code": 1,
+   "stdout": "",
+   "stderr": "Error: 0/4 attacks could be evaluated \u2014 the target was not tested. Dominant failure: evaluation/parse (2/4 unscored attacks): guardrail refused: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx. Check evaluator model configuration, credentials, and any gateway guardrails that may be rejecting judge or target calls.\n",
+   "kwargs": {
+    "target": "agent:x",
+    "llm_config": null,
+    "mode": null,
+    "categories": null,
+    "vulnerabilities": null,
+    "strategies": null,
+    "datapoints": null,
+    "attack_techniques": null,
+    "delivery_methods": null,
+    "max_turns": null,
+    "max_per_category": null,
+    "datapoint_parallelism": null,
+    "parallelism": null,
+    "llm_parallelism": null,
+    "generate_strategies": true,
+    "generated_strategy_count": 2,
+    "max_dynamic_datapoints": null,
+    "max_static_datapoints": null,
+    "cleanup_memory": true,
+    "name": null,
+    "description": null,
+    "dataset": null,
+    "previous_run": null,
+    "artifacts_dir": null,
+    "target_config": null,
+    "recommendations": true,
+    "generate_executive_summary": true,
+    "attacker_instructions": null,
+    "verbosity": 1,
+    "save": "final"
+   },
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 4,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "guardrail refused: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+       "error_type": "judge_error",
+       "code": "parse"
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "second",
+       "error_type": "judge_error",
+       "code": "parse"
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": "target timed out",
+      "error_type": "target_error",
+      "error_stage": null,
+      "error_code": "timeout",
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "no code",
+       "error_type": "judge_error",
+       "code": null
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 4,
+     "evaluated_attacks": 0,
+     "unevaluated_attacks": 4,
+     "evaluation_coverage": 0.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": 0.8
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "below",
+   "args": [
+    "run",
+    "-t",
+    "agent:x"
+   ],
+   "variant": "below",
+   "stdin": null,
+   "exit_code": 1,
+   "stdout": "",
+   "stderr": "Error: only 1/5 attacks could be evaluated (20%), below the configured minimum of 80%. The reported rates cover that subset only. Dominant failure: evaluation/parse (2/4 unscored attacks): guardrail refused: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx. Check evaluator model configuration, credentials, and any gateway guardrails that may be rejecting judge or target calls.\n",
+   "kwargs": {
+    "target": "agent:x",
+    "llm_config": null,
+    "mode": null,
+    "categories": null,
+    "vulnerabilities": null,
+    "strategies": null,
+    "datapoints": null,
+    "attack_techniques": null,
+    "delivery_methods": null,
+    "max_turns": null,
+    "max_per_category": null,
+    "datapoint_parallelism": null,
+    "parallelism": null,
+    "llm_parallelism": null,
+    "generate_strategies": true,
+    "generated_strategy_count": 2,
+    "max_dynamic_datapoints": null,
+    "max_static_datapoints": null,
+    "cleanup_memory": true,
+    "name": null,
+    "description": null,
+    "dataset": null,
+    "previous_run": null,
+    "artifacts_dir": null,
+    "target_config": null,
+    "recommendations": true,
+    "generate_executive_summary": true,
+    "attacker_instructions": null,
+    "verbosity": 1,
+    "save": "final"
+   },
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 5,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "guardrail refused: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+       "error_type": "judge_error",
+       "code": "parse"
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "second",
+       "error_type": "judge_error",
+       "code": "parse"
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": "target timed out",
+      "error_type": "target_error",
+      "error_stage": null,
+      "error_code": "timeout",
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": null,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": {
+       "message": "no code",
+       "error_type": "judge_error",
+       "code": null
+      },
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     },
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 5,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 4,
+     "evaluation_coverage": 0.2,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": 0.8
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "flags",
+   "args": [
+    "run",
+    "-t",
+    "agent:a",
+    "-t",
+    "agent:b",
+    "-s",
+    "direct_override,roleplay_escape",
+    "-d",
+    "role-play,custom-dm",
+    "-c",
+    "ASI01",
+    "-V",
+    "goal_hijacking",
+    "--max-turns",
+    "3",
+    "--attack-model",
+    "m/a",
+    "--evaluator-model",
+    "m/e",
+    "--min-evaluation-coverage",
+    "0.5",
+    "--parallelism",
+    "4",
+    "-vv",
+    "--no-generate-strategies",
+    "--save",
+    "none",
+    "--llm-config",
+    "{\"attacker\": {\"temperature\": 0.9, \"model\": \"m/ignored\"}, \"retry_count\": 4}",
+    "--system-prompt",
+    "be nice",
+    "--config",
+    "{\"name\": \"cfg\", \"max_turns\": 8, \"parallelism\": 9, \"description\": \"d\"}"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "Warning: delivery method(s) ['custom-dm'] are not known delivery methods ['DAN', 'authority-impersonation', 'base64', 'character-spacing', 'code-assistance', 'code-elicitation', 'crescendo', 'direct-request', 'leetspeak', 'many-shot', 'multilingual', 'refusal-suppression', 'role-play', 'skeleton-key', 'tool-response', 'word-substitution']; filtering by them literally (they will only match a dataset row spelled exactly the same).\n",
+   "kwargs": {
+    "target": [
+     "agent:a",
+     "agent:b"
+    ],
+    "llm_config": {
+     "attacker": {
+      "model": "m/a",
+      "api": "chat_completions",
+      "temperature": 0.9,
+      "max_tokens": 10000,
+      "timeout_ms": 90000,
+      "extra_kwargs": {},
+      "extra_body": {},
+      "reasoning_effort": null,
+      "client": null,
+      "retry_count": 1
+     },
+     "evaluator": {
+      "api": "responses",
+      "temperature": null,
+      "max_tokens": 10000,
+      "timeout_ms": 90000,
+      "extra_kwargs": {},
+      "extra_body": {},
+      "reasoning_effort": null,
+      "client": null,
+      "retry_count": 1,
+      "judges": [
+       "m/e"
+      ],
+      "repetitions": 1,
+      "replacement_judges": [],
+      "min_successful_judges": 1,
+      "min_evaluation_coverage": 0.5,
+      "strict_panel": false
+     },
+     "retry_count": 4,
+     "retry_on_codes": [
+      429,
+      500,
+      502,
+      503,
+      504
+     ],
+     "max_content_filter_retries": 2,
+     "max_consecutive_adversarial_timeouts": 2,
+     "max_objectives_per_llm_call": 8,
+     "max_probe_turns": 8,
+     "max_backtracks": 0,
+     "cleanup_timeout_ms": 60000,
+     "target_agent_timeout_ms": 240000,
+     "max_target_retries": 2,
+     "target_reasoning_effort": null,
+     "max_tool_continuations": 5
+    },
+    "mode": null,
+    "categories": [
+     "ASI01"
+    ],
+    "vulnerabilities": [
+     "goal_hijacking"
+    ],
+    "strategies": [
+     "direct_override",
+     "roleplay_escape"
+    ],
+    "datapoints": null,
+    "attack_techniques": null,
+    "delivery_methods": [
+     "role-play",
+     "custom-dm"
+    ],
+    "max_turns": 3,
+    "max_per_category": null,
+    "datapoint_parallelism": 4,
+    "parallelism": null,
+    "llm_parallelism": null,
+    "generate_strategies": false,
+    "generated_strategy_count": 2,
+    "max_dynamic_datapoints": null,
+    "max_static_datapoints": null,
+    "cleanup_memory": true,
+    "name": "cfg",
+    "description": "d",
+    "dataset": null,
+    "previous_run": null,
+    "artifacts_dir": null,
+    "target_config": {
+     "system_prompt": "be nice"
+    },
+    "recommendations": true,
+    "generate_executive_summary": true,
+    "attacker_instructions": null,
+    "verbosity": 3,
+    "save": "none"
+   },
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "from_run",
+   "args": [
+    "run",
+    "--config",
+    "-",
+    "--from-run",
+    "latest",
+    "-q"
+   ],
+   "variant": "clean",
+   "stdin": "{\"target\": [\"agent:one\"], \"mode\": \"hybrid\", \"dataset\": \"x.json\", \"categories\": [\"ASI01\"], \"max_turns\": 2}",
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "",
+   "kwargs": {
+    "target": "agent:one",
+    "llm_config": null,
+    "mode": null,
+    "categories": null,
+    "vulnerabilities": null,
+    "strategies": null,
+    "datapoints": null,
+    "attack_techniques": null,
+    "delivery_methods": null,
+    "max_turns": 2,
+    "max_per_category": null,
+    "datapoint_parallelism": null,
+    "parallelism": null,
+    "llm_parallelism": null,
+    "generate_strategies": true,
+    "generated_strategy_count": 2,
+    "max_dynamic_datapoints": null,
+    "max_static_datapoints": null,
+    "cleanup_memory": true,
+    "name": null,
+    "description": null,
+    "dataset": null,
+    "previous_run": "latest",
+    "artifacts_dir": null,
+    "target_config": null,
+    "recommendations": true,
+    "generate_executive_summary": true,
+    "attacker_instructions": null,
+    "verbosity": 0,
+    "save": "final"
+   },
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "unknown_key",
+   "args": [
+    "run",
+    "--config",
+    "{\"bogus\": 1, \"llm_config\": {\"attacker\": {\"modl\": \"x\"}}, \"datapoints\": [{\"inputs\": {}, \"extra\": 1}]}"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 2,
+   "stdout": "",
+   "stderr": "Usage: redteam run [OPTIONS]\nTry 'redteam run -h' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Invalid value for --config: inline JSON: unknown key(s): llm_config.attacker.modl, datapoints[0].extra, bogus. Extra \u2502\n\u2502 inputs are not permitted.                                                                                            \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+   "kwargs": null,
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "llm_unknown",
+   "args": [
+    "run",
+    "-t",
+    "agent:x",
+    "--llm-config",
+    "{\"attackr\": {}}"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 2,
+   "stdout": "",
+   "stderr": "Usage: redteam run [OPTIONS]\nTry 'redteam run -h' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Invalid value for --llm-config: unknown key(s): attackr. Extra inputs are not permitted.                             \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+   "kwargs": null,
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "no_target",
+   "args": [
+    "run",
+    "--name",
+    "n"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 2,
+   "stdout": "",
+   "stderr": "Usage: redteam run [OPTIONS]\nTry 'redteam run -h' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Invalid value for '--target': provide --target, or set \"target\" in --config.                                         \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+   "kwargs": null,
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "bad_vuln",
+   "args": [
+    "run",
+    "-t",
+    "agent:x",
+    "-V",
+    "nope"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 2,
+   "stdout": "",
+   "stderr": "Usage: redteam run [OPTIONS]\nTry 'redteam run -h' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Invalid value: Unknown vulnerability ID: 'nope'. Valid IDs: ['cascading_failures', 'code_execution',                 \u2502\n\u2502 'data_poisoning', 'excessive_agency', 'goal_hijacking', 'identity_privilege_abuse', 'improper_output',               \u2502\n\u2502 'inter_agent_comms', 'memory_poisoning', 'misinformation', 'prompt_injection', 'rogue_agents',                       \u2502\n\u2502 'sensitive_info_disclosure', 'supply_chain', 'system_prompt_leakage', 'tool_misuse', 'trust_exploitation',           \u2502\n\u2502 'vector_embedding_weakness']                                                                                         \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+   "kwargs": null,
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  },
+  {
+   "name": "bad_strategy",
+   "args": [
+    "run",
+    "-t",
+    "agent:x",
+    "-s",
+    "nope,generated_ok"
+   ],
+   "variant": "clean",
+   "stdin": null,
+   "exit_code": 2,
+   "stdout": "",
+   "stderr": "Usage: redteam run [OPTIONS]\nTry 'redteam run -h' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Invalid value: Unknown strategy name(s): ['nope']. Valid names: ['capability_debug_mode',                            \u2502\n\u2502 'capability_escalation_hijack', 'code_assistance_to_malware', 'confident_dangerous_claim',                           \u2502\n\u2502 'context_aware_authority', 'context_leakage_probe', 'credential_extraction', 'crescendo_injection',                  \u2502\n\u2502 'data_source_injection', 'debug_mode_prompt_reveal', 'direct_override', 'direct_prompt_request',                     \u2502\n\u2502 'email_tool_weaponization', 'extract_and_poison', 'fabricated_citation_pressure', 'filesystem_scope_bypass',         \u2502\n\u2502 'gradual_unsafe_codegen', 'invented_history', 'jailbreak_dan', 'memory_directive_injection',                         \u2502\n\u2502 'memory_store_poisoning', 'memory_trust_exploit', 'multi_tool_chain_escalation', 'no_caveats_expert_advice',         \u2502\n\u2502 'path_traversal_helper', 'pii_extraction_direct', 'preference_injection', 'prompt_completion_trick',                 \u2502\n\u2502 'purpose_justified_rce', 'rapport_then_exploit', 'repeat_instructions', 'role_confusion_hijack', 'roleplay_escape',  \u2502\n\u2502 'shell_command_with_user_input', 'sql_concatenation_fragment', 'tool_code_injection', 'tool_command_injection',      \u2502\n\u2502 'tool_output_hijack', 'tool_output_memory_poison', 'tool_urgency_exploit', 'training_data_extraction',               \u2502\n\u2502 'translate_prompt', 'trust_then_overclaim', 'webhook_data_exfiltration', 'xss_payload_generation'] (or a             \u2502\n\u2502 'generated_*' name from a prior run).                                                                                \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n",
+   "kwargs": null,
+   "report": {
+    "version": "2.0.0",
+    "created_at": "2026-11-10T12:00:00Z",
+    "description": null,
+    "pipeline": "dynamic",
+    "framework": null,
+    "categories_tested": [
+     "ASI01"
+    ],
+    "tested_agents": [],
+    "total_results": 1,
+    "errors": [],
+    "agent_contexts": {},
+    "results": [
+     {
+      "attack": {
+       "id": "a",
+       "vulnerability": "goal_hijacking",
+       "category": "ASI01",
+       "framework": "OWASP-ASI",
+       "attack_technique": "direct-injection",
+       "delivery_methods": [
+        "direct-request"
+       ],
+       "turn_type": "multi",
+       "severity": "high",
+       "vulnerability_domain": null,
+       "source": "template_dynamic",
+       "strategy_name": null,
+       "objective": null,
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "additional_metadata": null
+      },
+      "agent": {
+       "key": null,
+       "model": null,
+       "display_name": null
+      },
+      "messages": [
+       {
+        "role": "system",
+        "content": "skip",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "<first>",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "assistant",
+        "content": "first reply",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       },
+       {
+        "role": "user",
+        "content": "second & final",
+        "tool_calls": null,
+        "tool_call_id": null,
+        "name": null
+       }
+      ],
+      "response": "final <answer>",
+      "evaluation": {
+       "value": null,
+       "passed": false,
+       "explanation": "reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason ",
+       "evaluator_id": null,
+       "evaluator_name": null,
+       "token_usage": null,
+       "raw_output": null,
+       "jury": null
+      },
+      "vulnerable": true,
+      "execution": null,
+      "token_usage_bootstrap": null,
+      "seed_context": [],
+      "evaluation_error": null,
+      "error": null,
+      "error_type": null,
+      "error_stage": null,
+      "error_code": null,
+      "error_details": null,
+      "thread_id": null,
+      "response_traces": []
+     }
+    ],
+    "summary": {
+     "total_attacks": 1,
+     "evaluated_attacks": 1,
+     "unevaluated_attacks": 0,
+     "evaluation_coverage": 1.0,
+     "total_conversations": 1,
+     "total_turns": 0,
+     "average_turns_per_attack": 0.0,
+     "vulnerabilities_found": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "total_errors": 0,
+     "pre_execution_errors": 0,
+     "errors_by_type": {},
+     "token_usage_total": null,
+     "token_usage_by_source": {},
+     "post_processing_token_usage": null,
+     "by_vulnerability": {
+      "goal_hijacking": {
+       "vulnerability": "goal_hijacking",
+       "vulnerability_name": "Agent Goal Hijacking",
+       "domain": "agent",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "strategies_used": [],
+       "framework_categories": {
+        "OWASP-ASI": [
+         "ASI01"
+        ]
+       }
+      }
+     },
+     "by_category": {
+      "ASI01": {
+       "category": "ASI01",
+       "category_name": "Agent Goal Hijacking",
+       "total_attacks": 1,
+       "evaluated_attacks": 1,
+       "unevaluated_attacks": 0,
+       "evaluation_coverage": 1.0,
+       "total_conversations": 1,
+       "total_turns": 0,
+       "vulnerabilities_found": 1,
+       "vulnerability_rate": 1.0,
+       "resistance_rate": 0.0,
+       "total_errors": 0,
+       "strategies_used": []
+      }
+     },
+     "by_technique": {
+      "direct-injection": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_severity": {
+      "high": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_delivery_method": {
+      "direct-request": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "by_turn_type": {
+      "multi": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0,
+       "average_turns": 0.0
+      }
+     },
+     "by_domain": {},
+     "by_framework": {
+      "OWASP-ASI": {
+       "total_attacks": 1,
+       "vulnerabilities_found": 1,
+       "resistance_rate": 0.0,
+       "vulnerability_rate": 1.0
+      }
+     },
+     "jury_reliability": null,
+     "jury_health": null,
+     "datapoint_breakdown": null,
+     "min_evaluation_coverage": null
+    },
+    "focus_area_recommendations": null,
+    "applied_recommendations": [],
+    "executive_summary": null,
+    "token_usage_summary": null,
+    "duration_seconds": null,
+    "pipeline_warnings": [],
+    "orq_base_url": null,
+    "experiment_url": null,
+    "run_id": null,
+    "uploaded_count": null,
+    "rows_created": null,
+    "run_name": "py-run"
+   }
+  }
+ ],
+ "helpers": {
+  "filenames": [
+   [
+    "agent:my/target",
+    "redteam-report-agent-my-target-20250615_103000.md",
+    "redteam-report-agent-my-target-20250615_103000.html"
+   ],
+   [
+    "agent:a, agent:b",
+    "redteam-report-agent-a,-agent-b-20250615_103000.md",
+    "redteam-report-agent-a,-agent-b-20250615_103000.html"
+   ],
+   [
+    "  x | y  ",
+    "redteam-report-x-y-20250615_103000.md",
+    "redteam-report-x-y-20250615_103000.html"
+   ],
+   [
+    "::a::",
+    "redteam-report-a-20250615_103000.md",
+    "redteam-report-a-20250615_103000.html"
+   ],
+   [
+    "deployment:key-1",
+    "redteam-report-deployment-key-1-20250615_103000.md",
+    "redteam-report-deployment-key-1-20250615_103000.html"
+   ]
+  ],
+  "split_csv": [
+   [
+    null,
+    null
+   ],
+   [
+    [],
+    null
+   ],
+   [
+    [
+     "a,b",
+     "c"
+    ],
+    [
+     "a",
+     "b",
+     "c"
+    ]
+   ],
+   [
+    [
+     " , ",
+     ""
+    ],
+    null
+   ],
+   [
+    [
+     "a,,b ",
+     " c "
+    ],
+    [
+     "a",
+     "b",
+     "c"
+    ]
+   ]
+  ],
+  "fmt_created": [
+   [
+    "2026-01-02T03:04:05.123+00:00",
+    "2026-01-02 03:04"
+   ],
+   [
+    "short",
+    "short"
+   ],
+   [
+    null,
+    ""
+   ],
+   [
+    "",
+    ""
+   ],
+   [
+    5,
+    "5"
+   ]
+  ],
+  "fmt_asr": [
+   [
+    0.125,
+    "12%"
+   ],
+   [
+    0.5,
+    "50%"
+   ],
+   [
+    0.005,
+    "0%"
+   ],
+   [
+    1,
+    "100%"
+   ],
+   [
+    null,
+    "\u2014"
+   ],
+   [
+    "x",
+    "\u2014"
+   ],
+   [
+    0.015,
+    "2%"
+   ],
+   [
+    0.025,
+    "2%"
+   ]
+  ]
+ },
+ "runs": {
+  "dir": "/python-run-dir",
+  "manifests": {
+   "run-1.json": {
+    "run_id": "run-1",
+    "surface": "redteam",
+    "run_name": "managed",
+    "status": "completed",
+    "stage": null,
+    "stages": [],
+    "planned_stages": [],
+    "stage_labels": {},
+    "started_at": "2026-11-17T10:57:17.441078Z",
+    "updated_at": "2026-11-17T10:57:17.443254Z",
+    "ended_at": "2026-11-17T10:57:17.441612Z",
+    "error": null,
+    "report_path": "/python-run-dir/managed-run.json",
+    "parallelism": null,
+    "summary": {
+     "pipeline": "dynamic",
+     "total_results": 1,
+     "total_attacks": 1,
+     "vulnerability_rate": 1.0,
+     "resistance_rate": 0.0,
+     "tested_agents": []
+    },
+    "summary_version": 1
+   },
+   "run-2.json": {
+    "run_id": "run-2",
+    "surface": "redteam",
+    "run_name": "still going",
+    "status": "running",
+    "stage": null,
+    "stages": [],
+    "planned_stages": [],
+    "stage_labels": {},
+    "started_at": "2026-11-17T10:57:17.443421Z",
+    "updated_at": "2026-11-17T10:57:17.443487Z",
+    "ended_at": null,
+    "error": null,
+    "report_path": null,
+    "parallelism": null,
+    "summary": null,
+    "summary_version": null
+   }
+  },
+  "json": {
+   "exit_code": 0,
+   "stdout": "[\n  {\n    \"report_id\": \"ZPUNvHbiGFpCuaa6\",\n    \"run_name\": \"still going\",\n    \"created_at\": \"2026-11-17T10:57:17.443421+00:00\",\n    \"status\": \"running\",\n    \"pipeline\": null,\n    \"tested_agents\": [],\n    \"total_attacks\": null,\n    \"vulnerability_rate\": null,\n    \"file\": null,\n    \"summary_version\": null\n  },\n  {\n    \"report_id\": \"JEiZBBfRjh4HwyLL\",\n    \"run_name\": \"managed\",\n    \"created_at\": \"2026-11-17T10:57:17.441078+00:00\",\n    \"status\": \"completed\",\n    \"pipeline\": \"dynamic\",\n    \"tested_agents\": [],\n    \"total_attacks\": 1,\n    \"vulnerability_rate\": 1.0,\n    \"file\": \"managed-run.json\",\n    \"summary_version\": 1\n  },\n  {\n    \"report_id\": \"DmnniCm02ekeOOy4\",\n    \"run_name\": \"legacy\",\n    \"created_at\": \"2026-01-01T10:00:00+00:00\",\n    \"status\": \"completed\",\n    \"pipeline\": \"static\",\n    \"tested_agents\": [\n      \"agent:l\"\n    ],\n    \"total_attacks\": 3,\n    \"vulnerability_rate\": 0.25,\n    \"file\": \"legacy-run.json\",\n    \"summary_version\": null\n  }\n]\n",
+   "stderr": "Warning: 1 file(s) could not be parsed and were skipped.\n"
+  },
+  "limit1": {
+   "exit_code": 0,
+   "stdout": "[\n  {\n    \"report_id\": \"ZPUNvHbiGFpCuaa6\",\n    \"run_name\": \"still going\",\n    \"created_at\": \"2026-11-17T10:57:17.443421+00:00\",\n    \"status\": \"running\",\n    \"pipeline\": null,\n    \"tested_agents\": [],\n    \"total_attacks\": null,\n    \"vulnerability_rate\": null,\n    \"file\": null,\n    \"summary_version\": null\n  }\n]\n"
+  },
+  "files": {
+   "legacy-run.json": "{\"run_name\": \"legacy\", \"created_at\": \"2026-01-01T10:00:00+00:00\", \"pipeline\": \"static\", \"tested_agents\": [\"agent:l\"], \"total_results\": 3, \"summary\": {\"vulnerability_rate\": 0.25}}",
+   "broken.json": "{not json",
+   "managed-run.json": "{\n  \"version\": \"2.0.0\",\n  \"created_at\": \"2026-11-10T12:00:00Z\",\n  \"description\": null,\n  \"pipeline\": \"dynamic\",\n  \"framework\": null,\n  \"categories_tested\": [\n    \"ASI01\"\n  ],\n  \"tested_agents\": [],\n  \"total_results\": 1,\n  \"errors\": [],\n  \"agent_contexts\": {},\n  \"results\": [\n    {\n      \"attack\": {\n        \"id\": \"a\",\n        \"vulnerability\": \"goal_hijacking\",\n        \"category\": \"ASI01\",\n        \"framework\": \"OWASP-ASI\",\n        \"attack_technique\": \"direct-injection\",\n        \"delivery_methods\": [\n          \"direct-request\"\n        ],\n        \"turn_type\": \"multi\",\n        \"severity\": \"high\",\n        \"vulnerability_domain\": null,\n        \"source\": \"template_dynamic\",\n        \"strategy_name\": null,\n        \"objective\": null,\n        \"evaluator_id\": null,\n        \"evaluator_name\": null,\n        \"additional_metadata\": null\n      },\n      \"agent\": {\n        \"key\": null,\n        \"model\": null,\n        \"display_name\": null\n      },\n      \"messages\": [\n        {\n          \"role\": \"system\",\n          \"content\": \"skip\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"user\",\n          \"content\": \"<first>\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"assistant\",\n          \"content\": \"first reply\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        },\n        {\n          \"role\": \"user\",\n          \"content\": \"second & final\",\n          \"tool_calls\": null,\n          \"tool_call_id\": null,\n          \"name\": null\n        }\n      ],\n      \"response\": \"final <answer>\",\n      \"evaluation\": {\n        \"value\": null,\n        \"passed\": false,\n        \"explanation\": \"reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason reason \",\n        \"evaluator_id\": null,\n        \"evaluator_name\": null,\n        \"token_usage\": null,\n        \"raw_output\": null,\n        \"jury\": null\n      },\n      \"vulnerable\": true,\n      \"execution\": null,\n      \"token_usage_bootstrap\": null,\n      \"seed_context\": [],\n      \"evaluation_error\": null,\n      \"error\": null,\n      \"error_type\": null,\n      \"error_stage\": null,\n      \"error_code\": null,\n      \"error_details\": null,\n      \"thread_id\": null,\n      \"response_traces\": []\n    }\n  ],\n  \"summary\": {\n    \"total_attacks\": 1,\n    \"evaluated_attacks\": 1,\n    \"unevaluated_attacks\": 0,\n    \"evaluation_coverage\": 1.0,\n    \"total_conversations\": 1,\n    \"total_turns\": 0,\n    \"average_turns_per_attack\": 0.0,\n    \"vulnerabilities_found\": 1,\n    \"vulnerability_rate\": 1.0,\n    \"resistance_rate\": 0.0,\n    \"total_errors\": 0,\n    \"pre_execution_errors\": 0,\n    \"errors_by_type\": {},\n    \"token_usage_total\": null,\n    \"token_usage_by_source\": {},\n    \"post_processing_token_usage\": null,\n    \"by_vulnerability\": {\n      \"goal_hijacking\": {\n        \"vulnerability\": \"goal_hijacking\",\n        \"vulnerability_name\": \"Agent Goal Hijacking\",\n        \"domain\": \"agent\",\n        \"total_attacks\": 1,\n        \"evaluated_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"strategies_used\": [],\n        \"framework_categories\": {\n          \"OWASP-ASI\": [\n            \"ASI01\"\n          ]\n        }\n      }\n    },\n    \"by_category\": {\n      \"ASI01\": {\n        \"category\": \"ASI01\",\n        \"category_name\": \"Agent Goal Hijacking\",\n        \"total_attacks\": 1,\n        \"evaluated_attacks\": 1,\n        \"unevaluated_attacks\": 0,\n        \"evaluation_coverage\": 1.0,\n        \"total_conversations\": 1,\n        \"total_turns\": 0,\n        \"vulnerabilities_found\": 1,\n        \"vulnerability_rate\": 1.0,\n        \"resistance_rate\": 0.0,\n        \"total_errors\": 0,\n        \"strategies_used\": []\n      }\n    },\n    \"by_technique\": {\n      \"direct-injection\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_severity\": {\n      \"high\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_delivery_method\": {\n      \"direct-request\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"by_turn_type\": {\n      \"multi\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0,\n        \"average_turns\": 0.0\n      }\n    },\n    \"by_domain\": {},\n    \"by_framework\": {\n      \"OWASP-ASI\": {\n        \"total_attacks\": 1,\n        \"vulnerabilities_found\": 1,\n        \"resistance_rate\": 0.0,\n        \"vulnerability_rate\": 1.0\n      }\n    },\n    \"jury_reliability\": null,\n    \"jury_health\": null,\n    \"datapoint_breakdown\": null,\n    \"min_evaluation_coverage\": null\n  },\n  \"focus_area_recommendations\": null,\n  \"applied_recommendations\": [],\n  \"executive_summary\": null,\n  \"token_usage_summary\": null,\n  \"duration_seconds\": null,\n  \"pipeline_warnings\": [],\n  \"orq_base_url\": null,\n  \"experiment_url\": null,\n  \"run_id\": null,\n  \"uploaded_count\": null,\n  \"rows_created\": null\n}"
+  }
+ }
+}

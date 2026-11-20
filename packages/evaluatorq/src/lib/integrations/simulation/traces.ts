@@ -289,13 +289,16 @@ export async function fetchTraceConversations(
     throw new Error("Pass startTime or startDateMs, not both");
   if (endDateMs !== undefined && query.endTime != null)
     throw new Error("Pass endTime or endDateMs, not both");
+  const startTime =
+    startDateMs === undefined ? query.startTime : new Date(startDateMs);
+  let endTime = endDateMs === undefined ? query.endTime : new Date(endDateMs);
+  // v3 trace search needs a closed window; an open-ended lookback ends now.
+  if (startTime != null && endTime == null) endTime = new Date();
   const batch = await loadTraces(
     new TraceInput({
       ...query,
-      ...(startDateMs === undefined
-        ? {}
-        : { startTime: new Date(startDateMs) }),
-      ...(endDateMs === undefined ? {} : { endTime: new Date(endDateMs) }),
+      ...(startTime == null ? {} : { startTime }),
+      ...(endTime == null ? {} : { endTime }),
     }),
     { caller: "fetchTraceConversations", apiKey, baseUrl, fetchFn },
   );
