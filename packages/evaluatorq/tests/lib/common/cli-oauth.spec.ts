@@ -43,7 +43,9 @@ beforeEach(() => {
 });
 afterEach(() => {
   Object.assign(cliProcess, original);
-  process.env = { ...savedEnv };
+  for (const key of Object.keys(process.env))
+    if (!Object.hasOwn(savedEnv, key)) delete process.env[key];
+  Object.assign(process.env, savedEnv);
 });
 
 const body = (i = 0) => JSON.parse(calls[i]?.options.input ?? "null");
