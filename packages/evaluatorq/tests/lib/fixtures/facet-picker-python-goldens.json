@@ -1,0 +1,423 @@
+{
+ "menus": [
+  {
+   "catalogue": null,
+   "kw": {
+    "form_id": "f"
+   },
+   "html": "<div class=\"finder-facets\"><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tokens\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>total tokens</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"duration_ms\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>duration</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tokens\" hidden><div class=\"hd\">total tokens</div><label><span>≥</span><input form=\"f\" name=\"tokens_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"tokens_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div><div class=\"facet-sub\" data-facet-sub=\"duration_ms\" hidden><div class=\"hd\">duration</div><label><span>≥</span><input form=\"f\" name=\"duration_ms_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"duration_ms_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div></div>"
+  },
+  {
+   "catalogue": {
+    "project": [
+     "default",
+     "Prod"
+    ],
+    "model": [
+     "gpt-5",
+     "Claude-Sonnet",
+     "b<x>"
+    ],
+    "status": [
+     "ok",
+     "error"
+    ],
+    "agent_name": [
+     "support",
+     "docs"
+    ],
+    "tool_name": [],
+    "truncated_facets": [
+     "model"
+    ],
+    "value_counts": {
+     "model": {
+      "gpt-5": 3,
+      "claude-sonnet": 7,
+      "extra": 2
+     },
+     "status": {
+      "error": 4
+     }
+    }
+   },
+   "kw": {
+    "form_id": "f"
+   },
+   "html": "<div class=\"finder-facets\"><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tokens\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>total tokens</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"duration_ms\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>duration</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search project values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"default\"><span>default</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"Prod\"><span>Prod</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search agent values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"support\"><span>support</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"docs\"><span>docs</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search model values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"gpt-5\"><span>gpt-5</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"Claude-Sonnet\"><span>Claude-Sonnet</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"b&lt;x&gt;\"><span>b&lt;x&gt;</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p><p class=\"facet-note\">More values exist in Orq; showing the returned values ranked by frequency.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search status values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"ok\"><span>ok</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"error\"><span>error</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tokens\" hidden><div class=\"hd\">total tokens</div><label><span>≥</span><input form=\"f\" name=\"tokens_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"tokens_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div><div class=\"facet-sub\" data-facet-sub=\"duration_ms\" hidden><div class=\"hd\">duration</div><label><span>≥</span><input form=\"f\" name=\"duration_ms_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"duration_ms_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div></div>"
+  },
+  {
+   "catalogue": {
+    "project": [
+     "default",
+     "Prod"
+    ],
+    "model": [
+     "gpt-5",
+     "Claude-Sonnet",
+     "b<x>"
+    ],
+    "status": [
+     "ok",
+     "error"
+    ],
+    "agent_name": [
+     "support",
+     "docs"
+    ],
+    "tool_name": [],
+    "truncated_facets": [
+     "model"
+    ],
+    "value_counts": {
+     "model": {
+      "gpt-5": 3,
+      "claude-sonnet": 7,
+      "extra": 2
+     },
+     "status": {
+      "error": 4
+     }
+    }
+   },
+   "kw": {
+    "form_id": "q\"x",
+    "selection": {
+     "model": [
+      "zeta",
+      "gpt-5"
+     ],
+     "agent_name": [
+      "docs"
+     ],
+     "status": [
+      "ok"
+     ]
+    },
+    "numeric": {
+     "tokens_min": 1500,
+     "duration_ms_max": 1234567
+    },
+    "open_": true
+   },
+   "html": "<div class=\"finder-facets open\"><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"count\">2</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tokens\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>total tokens</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"duration_ms\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>duration</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search project values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_project\" value=\"default\"><span>default</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_project\" value=\"Prod\"><span>Prod</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search agent values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_agent_name\" value=\"support\"><span>support</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_agent_name\" value=\"docs\" checked><span>docs</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search model values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_model\" value=\"gpt-5\" checked><span>gpt-5</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_model\" value=\"Claude-Sonnet\"><span>Claude-Sonnet</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_model\" value=\"b&lt;x&gt;\"><span>b&lt;x&gt;</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_model\" value=\"zeta\" checked><span>zeta</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p><p class=\"facet-note\">More values exist in Orq; showing the returned values ranked by frequency.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search status values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_status\" value=\"ok\" checked><span>ok</span></label><label><input form=\"q\"x\" type=\"checkbox\" name=\"facet_status\" value=\"error\"><span>error</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tokens\" hidden><div class=\"hd\">total tokens</div><label><span>≥</span><input form=\"q\"x\" name=\"tokens_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"1500\"></label><label><span>≤</span><input form=\"q\"x\" name=\"tokens_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div><div class=\"facet-sub\" data-facet-sub=\"duration_ms\" hidden><div class=\"hd\">duration</div><label><span>≥</span><input form=\"q\"x\" name=\"duration_ms_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"q\"x\" name=\"duration_ms_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"1234567\"></label></div></div>"
+  },
+  {
+   "catalogue": {
+    "project": [
+     "default",
+     "Prod"
+    ],
+    "model": [
+     "gpt-5",
+     "Claude-Sonnet",
+     "b<x>"
+    ],
+    "status": [
+     "ok",
+     "error"
+    ],
+    "agent_name": [
+     "support",
+     "docs"
+    ],
+    "tool_name": [],
+    "truncated_facets": [
+     "model"
+    ],
+    "value_counts": {
+     "model": {
+      "gpt-5": 3,
+      "claude-sonnet": 7,
+      "extra": 2
+     },
+     "status": {
+      "error": 4
+     }
+    }
+   },
+   "kw": {
+    "form_id": "f",
+    "selection": {
+     "model": [
+      "zeta",
+      "gpt-5"
+     ],
+     "agent_name": [
+      "docs"
+     ],
+     "status": [
+      "ok"
+     ]
+    },
+    "counts": {
+     "model": {
+      "gpt-5": 3,
+      "claude-sonnet": 7,
+      "extra": 2
+     },
+     "status": {
+      "error": 4
+     }
+    },
+    "count_note": "Traces in <window>",
+    "include_numeric": false
+   },
+   "html": "<div class=\"finder-facets\"><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"count\">2</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search project values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"default\"><span>default</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"Prod\"><span>Prod</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search agent values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"support\"><span>support</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"docs\" checked><span>docs</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><p class=\"facet-scope\">Traces in &lt;window&gt;</p><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search model values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"Claude-Sonnet\"><span>Claude-Sonnet</span><span class=\"facet-n\" title=\"Traces in &lt;window&gt;\">7</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"gpt-5\" checked><span>gpt-5</span><span class=\"facet-n\" title=\"Traces in &lt;window&gt;\">3</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"extra\"><span>extra</span><span class=\"facet-n\" title=\"Traces in &lt;window&gt;\">2</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"b&lt;x&gt;\"><span>b&lt;x&gt;</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"zeta\" checked><span>zeta</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p><p class=\"facet-note\">More values exist in Orq; showing the returned values ranked by frequency.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><p class=\"facet-scope\">Traces in &lt;window&gt;</p><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search status values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"error\"><span>error</span><span class=\"facet-n\" title=\"Traces in &lt;window&gt;\">4</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"ok\" checked><span>ok</span><span class=\"facet-n\" title=\"Traces in &lt;window&gt;\">0</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div></div>"
+  },
+  {
+   "catalogue": {
+    "project": [
+     "default",
+     "Prod"
+    ],
+    "model": [
+     "gpt-5",
+     "Claude-Sonnet",
+     "b<x>"
+    ],
+    "status": [
+     "ok",
+     "error"
+    ],
+    "agent_name": [
+     "support",
+     "docs"
+    ],
+    "tool_name": [],
+    "truncated_facets": [
+     "model"
+    ],
+    "value_counts": {
+     "model": {
+      "gpt-5": 3,
+      "claude-sonnet": 7,
+      "extra": 2
+     },
+     "status": {
+      "error": 4
+     }
+    }
+   },
+   "kw": {
+    "form_id": "f",
+    "counts": {
+     "agent_name": {
+      "Support": 2,
+      "SUPPORT": 1,
+      "new": 9
+     }
+    },
+    "count_note": "n",
+    "count_title": "t",
+    "list_note_html": "<p>x</p>",
+    "container_attrs": " data-x"
+   },
+   "html": "<div class=\"finder-facets\" data-x><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tokens\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>total tokens</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"duration_ms\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>duration</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><p>x</p></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search project values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"default\"><span>default</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_project\" value=\"Prod\"><span>Prod</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><p class=\"facet-scope\">n</p><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search agent values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"new\"><span>new</span><span class=\"facet-n\" title=\"t\">9</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"support\"><span>support</span><span class=\"facet-n\" title=\"t\">3</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"docs\"><span>docs</span><span class=\"facet-n\" title=\"t\">0</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search model values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"gpt-5\"><span>gpt-5</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"Claude-Sonnet\"><span>Claude-Sonnet</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"b&lt;x&gt;\"><span>b&lt;x&gt;</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p><p class=\"facet-note\">More values exist in Orq; showing the returned values ranked by frequency.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search status values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"ok\"><span>ok</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"error\"><span>error</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tokens\" hidden><div class=\"hd\">total tokens</div><label><span>≥</span><input form=\"f\" name=\"tokens_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"tokens_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div><div class=\"facet-sub\" data-facet-sub=\"duration_ms\" hidden><div class=\"hd\">duration</div><label><span>≥</span><input form=\"f\" name=\"duration_ms_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"duration_ms_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div></div>"
+  },
+  {
+   "catalogue": null,
+   "kw": {
+    "form_id": "f",
+    "selection": {
+     "model": [
+      "zeta",
+      "gpt-5"
+     ],
+     "agent_name": [
+      "docs"
+     ],
+     "status": [
+      "ok"
+     ]
+    },
+    "counts": {
+     "model": {
+      "zeta": 1
+     }
+    }
+   },
+   "html": "<div class=\"finder-facets\"><div class=\"facet-list\"><button type=\"button\" class=\"facet-item\" data-facet=\"project\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>project</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"agent_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>agent</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"model\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>model</span><span class=\"count\">2</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"provider\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>provider</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"status\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>status</span><span class=\"count\">1</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"product\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>product</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"trace_type\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>trace type</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tool_name\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>tool</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"tokens\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>total tokens</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button><button type=\"button\" class=\"facet-item\" data-facet=\"duration_ms\" aria-haspopup=\"true\" aria-expanded=\"false\"><span>duration</span><span class=\"chev\" aria-hidden=\"true\">&rsaquo;</span></button></div><div class=\"facet-sub\" data-facet-sub=\"project\" hidden><div class=\"hd\">project</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"agent_name\" hidden><div class=\"hd\">agent</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search agent values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_agent_name\" value=\"docs\" checked><span>docs</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"model\" hidden><div class=\"hd\">model</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search model values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"zeta\" checked><span>zeta</span><span class=\"facet-n\">1</span></label><label><input form=\"f\" type=\"checkbox\" name=\"facet_model\" value=\"gpt-5\" checked><span>gpt-5</span><span class=\"facet-n\">0</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"provider\" hidden><div class=\"hd\">provider</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"status\" hidden><div class=\"hd\">status</div><input class=\"facet-search\" type=\"search\" placeholder=\"Search values\" aria-label=\"Search status values\" autocomplete=\"off\"><div class=\"facet-values\"><label><input form=\"f\" type=\"checkbox\" name=\"facet_status\" value=\"ok\" checked><span>ok</span></label></div><p class=\"facet-no-results\" hidden>No matching values in this list.</p></div><div class=\"facet-sub\" data-facet-sub=\"product\" hidden><div class=\"hd\">product</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"trace_type\" hidden><div class=\"hd\">trace type</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tool_name\" hidden><div class=\"hd\">tool</div><p class=\"finder-empty\">No values in this window.</p></div><div class=\"facet-sub\" data-facet-sub=\"tokens\" hidden><div class=\"hd\">total tokens</div><label><span>≥</span><input form=\"f\" name=\"tokens_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"tokens_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div><div class=\"facet-sub\" data-facet-sub=\"duration_ms\" hidden><div class=\"hd\">duration</div><label><span>≥</span><input form=\"f\" name=\"duration_ms_min\" type=\"number\" min=\"0\" placeholder=\"min\" value=\"\"></label><label><span>≤</span><input form=\"f\" name=\"duration_ms_max\" type=\"number\" min=\"0\" placeholder=\"max\" value=\"\"></label></div></div>"
+  }
+ ],
+ "chips": [
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": null,
+   "removable": false,
+   "generated": null,
+   "html": "<span class=\"chip\"><b>agent</b><span class=\"v\">docs</span></span><span class=\"chip\"><b>model</b><span class=\"v\">gpt-5</span></span><span class=\"chip\"><b>model</b><span class=\"v\">zeta</span></span><span class=\"chip\"><b>status</b><span class=\"v\">ok</span></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": {
+    "tokens_min": 1500,
+    "duration_ms_max": 1234567
+   },
+   "removable": false,
+   "generated": null,
+   "html": "<span class=\"chip\"><b>agent</b><span class=\"v\">docs</span></span><span class=\"chip\"><b>model</b><span class=\"v\">gpt-5</span></span><span class=\"chip\"><b>model</b><span class=\"v\">zeta</span></span><span class=\"chip\"><b>status</b><span class=\"v\">ok</span></span><span class=\"chip\"><b>total tokens</b><span class=\"v\">≥ 1,500</span></span><span class=\"chip\"><b>duration</b><span class=\"v\">≤ 1,234,567</span></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": null,
+   "removable": false,
+   "generated": {
+    "model": [
+     "gpt-5"
+    ]
+   },
+   "html": "<span class=\"chip\"><b>agent</b><span class=\"v\">docs</span></span><span class=\"chip ai\"><b>model</b><b class=\"ai-badge\">AI</b><span class=\"v\">gpt-5</span></span><span class=\"chip\"><b>model</b><span class=\"v\">zeta</span></span><span class=\"chip\"><b>status</b><span class=\"v\">ok</span></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": {
+    "tokens_min": 1500,
+    "duration_ms_max": 1234567
+   },
+   "removable": false,
+   "generated": {
+    "model": [
+     "gpt-5"
+    ]
+   },
+   "html": "<span class=\"chip\"><b>agent</b><span class=\"v\">docs</span></span><span class=\"chip ai\"><b>model</b><b class=\"ai-badge\">AI</b><span class=\"v\">gpt-5</span></span><span class=\"chip\"><b>model</b><span class=\"v\">zeta</span></span><span class=\"chip\"><b>status</b><span class=\"v\">ok</span></span><span class=\"chip\"><b>total tokens</b><span class=\"v\">≥ 1,500</span></span><span class=\"chip\"><b>duration</b><span class=\"v\">≤ 1,234,567</span></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": null,
+   "removable": true,
+   "generated": null,
+   "html": "<span class=\"chip is-editable\" data-chip-name=\"facet_agent_name\" data-finder-value=\"docs\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"agent_name\" aria-label=\"Edit agent docs\"><b>agent</b><span class=\"v\">docs</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_agent_name\" data-finder-value=\"docs\" aria-label=\"Remove agent docs\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"gpt-5\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model gpt-5\"><b>model</b><span class=\"v\">gpt-5</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"gpt-5\" aria-label=\"Remove model gpt-5\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"zeta\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model zeta\"><b>model</b><span class=\"v\">zeta</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"zeta\" aria-label=\"Remove model zeta\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_status\" data-finder-value=\"ok\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"status\" aria-label=\"Edit status ok\"><b>status</b><span class=\"v\">ok</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_status\" data-finder-value=\"ok\" aria-label=\"Remove status ok\">✕</button></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": {
+    "tokens_min": 1500,
+    "duration_ms_max": 1234567
+   },
+   "removable": true,
+   "generated": null,
+   "html": "<span class=\"chip is-editable\" data-chip-name=\"facet_agent_name\" data-finder-value=\"docs\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"agent_name\" aria-label=\"Edit agent docs\"><b>agent</b><span class=\"v\">docs</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_agent_name\" data-finder-value=\"docs\" aria-label=\"Remove agent docs\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"gpt-5\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model gpt-5\"><b>model</b><span class=\"v\">gpt-5</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"gpt-5\" aria-label=\"Remove model gpt-5\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"zeta\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model zeta\"><b>model</b><span class=\"v\">zeta</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"zeta\" aria-label=\"Remove model zeta\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_status\" data-finder-value=\"ok\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"status\" aria-label=\"Edit status ok\"><b>status</b><span class=\"v\">ok</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_status\" data-finder-value=\"ok\" aria-label=\"Remove status ok\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"tokens_min\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"tokens\" aria-label=\"Edit total tokens ≥ 1,500\"><b>total tokens</b><span class=\"v\">≥ 1,500</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"tokens_min\" aria-label=\"Remove total tokens ≥ 1,500\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"duration_ms_max\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"duration_ms\" aria-label=\"Edit duration ≤ 1,234,567\"><b>duration</b><span class=\"v\">≤ 1,234,567</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"duration_ms_max\" aria-label=\"Remove duration ≤ 1,234,567\">✕</button></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": null,
+   "removable": true,
+   "generated": {
+    "model": [
+     "gpt-5"
+    ]
+   },
+   "html": "<span class=\"chip is-editable\" data-chip-name=\"facet_agent_name\" data-finder-value=\"docs\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"agent_name\" aria-label=\"Edit agent docs\"><b>agent</b><span class=\"v\">docs</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_agent_name\" data-finder-value=\"docs\" aria-label=\"Remove agent docs\">✕</button></span><span class=\"chip is-editable ai\" data-chip-name=\"facet_model\" data-finder-value=\"gpt-5\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model gpt-5\"><b>model</b><b class=\"ai-badge\">AI</b><span class=\"v\">gpt-5</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"gpt-5\" aria-label=\"Remove model gpt-5\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"zeta\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model zeta\"><b>model</b><span class=\"v\">zeta</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"zeta\" aria-label=\"Remove model zeta\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_status\" data-finder-value=\"ok\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"status\" aria-label=\"Edit status ok\"><b>status</b><span class=\"v\">ok</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_status\" data-finder-value=\"ok\" aria-label=\"Remove status ok\">✕</button></span>"
+  },
+  {
+   "selection": {
+    "model": [
+     "zeta",
+     "gpt-5"
+    ],
+    "agent_name": [
+     "docs"
+    ],
+    "status": [
+     "ok"
+    ]
+   },
+   "numeric": {
+    "tokens_min": 1500,
+    "duration_ms_max": 1234567
+   },
+   "removable": true,
+   "generated": {
+    "model": [
+     "gpt-5"
+    ]
+   },
+   "html": "<span class=\"chip is-editable\" data-chip-name=\"facet_agent_name\" data-finder-value=\"docs\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"agent_name\" aria-label=\"Edit agent docs\"><b>agent</b><span class=\"v\">docs</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_agent_name\" data-finder-value=\"docs\" aria-label=\"Remove agent docs\">✕</button></span><span class=\"chip is-editable ai\" data-chip-name=\"facet_model\" data-finder-value=\"gpt-5\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model gpt-5\"><b>model</b><b class=\"ai-badge\">AI</b><span class=\"v\">gpt-5</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"gpt-5\" aria-label=\"Remove model gpt-5\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_model\" data-finder-value=\"zeta\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"model\" aria-label=\"Edit model zeta\"><b>model</b><span class=\"v\">zeta</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_model\" data-finder-value=\"zeta\" aria-label=\"Remove model zeta\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"facet_status\" data-finder-value=\"ok\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"status\" aria-label=\"Edit status ok\"><b>status</b><span class=\"v\">ok</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"facet_status\" data-finder-value=\"ok\" aria-label=\"Remove status ok\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"tokens_min\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"tokens\" aria-label=\"Edit total tokens ≥ 1,500\"><b>total tokens</b><span class=\"v\">≥ 1,500</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"tokens_min\" aria-label=\"Remove total tokens ≥ 1,500\">✕</button></span><span class=\"chip is-editable\" data-chip-name=\"duration_ms_max\"><button type=\"button\" class=\"chip-open\" data-chip-open=\"duration_ms\" aria-label=\"Edit duration ≤ 1,234,567\"><b>duration</b><span class=\"v\">≤ 1,234,567</span></button><button type=\"button\" class=\"finder-chip-remove\" data-finder-remove=\"duration_ms_max\" aria-label=\"Remove duration ≤ 1,234,567\">✕</button></span>"
+  }
+ ],
+ "notes": [
+  "Traces in the selected time window",
+  "Traces in the last 1 day",
+  "Traces in the last 7 days",
+  "Traces in the last 1,500 days"
+ ]
+}

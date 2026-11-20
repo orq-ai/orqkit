@@ -37,7 +37,7 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
       expect(loaded.runId).toBe(run.runId);
       expect(
         (JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>)
-          .runName,
+          .run_name,
       ).toBe(run.runName);
     }
     expect(await listRunPaths(directory)).toHaveLength(8);

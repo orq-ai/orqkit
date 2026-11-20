@@ -28,6 +28,7 @@ import {
   snapshotDocuments,
 } from "./population.js";
 import { CODING_CONVERSATION_LABELS } from "./presets.js";
+import { insightsRunJson } from "./store.js";
 
 export interface InsightsCommandArguments {
   sessions?: boolean;
@@ -324,11 +325,7 @@ export async function executeInsights(
   });
   if (args.json) {
     await mkdir(dirname(args.json), { recursive: true });
-    await writeFile(
-      args.json,
-      `${JSON.stringify(run, (_key, value) => (value instanceof Set ? [...value] : value), 2)}\n`,
-      "utf8",
-    );
+    await writeFile(args.json, insightsRunJson(run), "utf8");
   }
   io.print(`Insights ${run.status}: ${run.traces.length} traces`);
   for (const warning of run.warnings) io.print(`Warning: ${warning}`);
