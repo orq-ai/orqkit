@@ -25,6 +25,7 @@ import { parseTarget, TargetKind } from "../../redteam/contracts.js";
 import { VercelAISdkTarget } from "../ai-sdk/http-target.js";
 import { dashboardCommand, echoNext, type SimIO } from "./cli.js";
 import { writeDatapoints } from "./cli-generate.js";
+import { DatapointSchema } from "./contract-schemas.js";
 import { extractSingleDatapoint } from "./datapoint-io.js";
 import { getEvaluator, SIMULATION_EVALUATORS } from "./evaluators/index.js";
 import { exportSimulationHtml } from "./reports/export-html.js";
@@ -141,29 +142,50 @@ export function loadDatapointRecords(path: string): Record<string, unknown>[] {
   if (!existsSync(path))
     throw new BadParameter(`Datapoints file not found: ${path}`);
   const records: Record<string, unknown>[] = [];
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+  for (const [index, line] of readFileSync(path, "utf8")
+    .split(/\r?\n/)
+    .entries()) {
     if (!line.trim()) continue;
+    const invalid = (reason: string): never => {
+      throw new BadParameter(
+        `Datapoints file ${path}, line ${index + 1}: ${reason}`,
+      );
+    };
     let raw: unknown;
     try {
       raw = JSON.parse(line);
     } catch {
-      continue;
+      invalid("Malformed JSON");
     }
-    if (!isObject(raw)) continue;
+    if (!isObject(raw)) invalid("Expected an object");
     const row = raw as Record<string, unknown>;
-    if (isObject(row.persona) && isObject(row.scenario)) {
+    if (Object.hasOwn(row, "persona") || Object.hasOwn(row, "scenario")) {
+      if (!DatapointSchema.safeParse(row).success)
+        invalid("Invalid persona/scenario datapoint");
       records.push(row);
       continue;
     }
-    const inputs = isObject(row.inputs) ? row.inputs : {};
+    if (!isObject(row.inputs))
+      invalid("Expected persona/scenario data or legacy inputs");
+    const inputs = row.inputs as Record<string, unknown>;
     const persona = parseJsonOrValue(inputs.persona);
     const scenario = parseJsonOrValue(inputs.scenario);
-    records.push({
+    for (const [field, value, legacy] of [
+      ["persona", persona, ["persona_name"]],
+      ["scenario", scenario, ["scenario_name", "goal"]],
+    ] as const) {
+      if (Object.hasOwn(inputs, field)) {
+        if (!isObject(value)) invalid(`Invalid ${field} inputs`);
+      } else if (!legacy.every((key) => typeof inputs[key] === "string")) {
+        invalid(`Legacy inputs require ${legacy.join(", ")}`);
+      }
+    }
+    const candidate = {
       id: `dp_${randomUUID().replaceAll("-", "").slice(0, 12)}`,
       persona: isObject(persona)
         ? persona
         : {
-            name: inputs.persona_name ?? "Unknown",
+            name: inputs.persona_name,
             patience: 0.5,
             assertiveness: 0.5,
             politeness: 0.5,
@@ -174,13 +196,16 @@ export function loadDatapointRecords(path: string): Record<string, unknown>[] {
       scenario: isObject(scenario)
         ? scenario
         : {
-            name: inputs.scenario_name ?? "Unknown",
+            name: inputs.scenario_name,
             goal: inputs.goal ?? "",
             context: inputs.context ?? "",
           },
       user_system_prompt: inputs.user_system_prompt ?? "",
       first_message: inputs.first_message ?? "",
-    });
+    };
+    if (!DatapointSchema.safeParse(candidate).success)
+      invalid("Invalid persona/scenario datapoint");
+    records.push(candidate);
   }
   if (!records.length) throw new Error(`No datapoints loaded from ${path}`);
   return records;

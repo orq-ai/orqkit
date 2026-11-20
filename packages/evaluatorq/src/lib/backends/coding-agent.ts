@@ -1028,7 +1028,7 @@ export class CodingAgentTarget extends AgentTarget {
       if (container.allowPrivilegeEscalation)
         console.warn(
           `CodingAgentTarget(${agent}): allow_privilege_escalation=True drops no-new-privileges; ` +
-            "the writable /etc/passwd lets the agent become root inside the container",
+            "container commands can gain privileges through installed setuid programs",
         );
       if (permissionMode === null)
         permissionMode = this.spec.containerPermission;

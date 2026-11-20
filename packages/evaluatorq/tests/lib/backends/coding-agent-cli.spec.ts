@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -76,32 +77,52 @@ test("the build dir ships both files", () => {
   expect(existsSync(join(CODING_AGENT_BUILD_DIR, "entrypoint.sh"))).toBe(true);
 });
 
-test("the entrypoint is idempotent and execs", () => {
+test("the entrypoint uses a private passwd copy and execs idempotently", () => {
   const passwd = join(dir, "passwd");
-  writeFileSync(passwd, "root:x:0:0::/root:/bin/sh\n");
+  const originalPasswd = "root:x:0:0::/root:/bin/sh\n";
+  writeFileSync(passwd, originalPasswd);
   const bin = join(dir, "bin");
   mkdirSync(bin);
   writeFileSync(
     join(bin, "id"),
-    `#!/bin/sh\ncase "$1" in\n  -un) if grep -q '^evq:x:4242:4242:' '${passwd}'; then echo evq; else exit 1; fi ;;\n  -u) echo 4242 ;;\n  -g) echo 4242 ;;\nesac\n`,
+    `#!/bin/sh\ncase "$1" in\n  -un) if grep -q '^evq:x:4242:4242:' "\${NSS_WRAPPER_PASSWD:-${passwd}}"; then echo evq; else exit 1; fi ;;\n  -u) echo 4242 ;;\n  -g) echo 4242 ;;\nesac\n`,
   );
   chmodSync(join(bin, "id"), 0o755);
-  const script = readFileSync(
-    join(CODING_AGENT_BUILD_DIR, "entrypoint.sh"),
-    "utf8",
-  ).replaceAll("/etc/passwd", passwd);
+  const script = join(dir, "entrypoint.sh");
+  // Dynamic NSS resolution is checked in the real image; this fixture checks its file lifecycle.
+  writeFileSync(
+    script,
+    readFileSync(join(CODING_AGENT_BUILD_DIR, "entrypoint.sh"), "utf8")
+      .replaceAll("/etc/passwd", passwd)
+      .replace(/^ {2}export LD_PRELOAD=.*\n/m, ""),
+  );
   for (let i = 0; i < 2; i++) {
     const out = spawnSync(
       "sh",
-      ["-c", script, "evq-entrypoint", "echo", "ran"],
+      [
+        script,
+        "sh",
+        "-c",
+        'sh "$EVQ_SCRIPT" sh -c \'printf "%s\\n" "$NSS_WRAPPER_PASSWD"; echo ran\'',
+      ],
       {
         encoding: "utf8",
-        env: { HOME: "/evq-home", PATH: `${bin}:/usr/bin:/bin` },
+        env: {
+          HOME: "/evq-home",
+          PATH: `${bin}:/usr/bin:/bin`,
+          TMPDIR: dir,
+          EVQ_SCRIPT: script,
+        },
       },
     );
-    expect(out.stdout.trim()).toBe("ran");
+    expect(out.status).toBe(0);
+    const [copy, ran] = out.stdout.trim().split("\n");
+    expect(ran).toBe("ran");
+    expect(copy).not.toBe(passwd);
+    expect(
+      readFileSync(copy as string, "utf8").split("evq:x:4242:4242:").length - 1,
+    ).toBe(1);
+    expect(statSync(copy as string).mode & 0o777).toBe(0o600);
+    expect(readFileSync(passwd, "utf8")).toBe(originalPasswd);
   }
-  const text = readFileSync(passwd, "utf8");
-  expect(text.split("evq:x:4242:4242:").length - 1).toBe(1);
-  expect(text.split("\n").length - 1).toBe(2);
 });

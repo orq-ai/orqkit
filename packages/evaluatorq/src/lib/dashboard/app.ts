@@ -3,6 +3,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { resolve, sep } from "node:path";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 import {
   defaultRoots,
@@ -470,6 +471,12 @@ export function createDashboardHandler(
     const url = new URL(req.url);
     const path = url.pathname;
     const method = req.method;
+    try {
+      decodeURIComponent(path);
+    } catch (error) {
+      if (error instanceof URIError) return text("400 Bad Request", 400);
+      throw error;
+    }
     const inspected = await compression(req, url);
     if (inspected) return inspected;
     const found = finder ? await finder(req, url) : null;
@@ -536,6 +543,41 @@ export function createDashboardHandler(
   return options.finder ? withFinderSessions(options.finder, handler) : handler;
 }
 
+function allowedHost(
+  authority: string | undefined,
+  bindHost: string,
+  port: number,
+  localAddress?: string,
+): boolean {
+  if (!authority || /[\s/\\@?#]/.test(authority)) return false;
+  try {
+    const url = new URL(`http://${authority}`);
+    const allowed = new Set([
+      "localhost",
+      "127.0.0.1",
+      "[::1]",
+      bindHost.toLowerCase(),
+    ]);
+    if (["0.0.0.0", "::", "[::]"].includes(bindHost) && localAddress) {
+      const address =
+        localAddress.startsWith("::ffff:") && localAddress.includes(".")
+          ? localAddress.slice(7)
+          : localAddress;
+      allowed.add(
+        new URL(`http://${address.includes(":") ? `[${address}]` : address}`)
+          .hostname,
+      );
+    }
+    if (bindHost.includes(":") && !bindHost.startsWith("["))
+      allowed.add(`[${bindHost}]`.toLowerCase());
+    return (
+      allowed.has(url.hostname.toLowerCase()) && Number(url.port || 80) === port
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function serveDashboard(options: {
   roots?: string[] | null;
   host?: string;
@@ -552,9 +594,22 @@ export function serveDashboard(options: {
     nonce && new URL(request.url).pathname === "/_dashboard-ready"
       ? text(nonce, 200)
       : dashboard(request);
+  const bindHost = options.host ?? "127.0.0.1";
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(bindHost))
+    console.warn(`Dashboard is unauthenticated and exposed on ${bindHost}.`);
   const server = createServer(async (incoming, outgoing) => {
     try {
-      const host = incoming.headers.host ?? "127.0.0.1";
+      const address = server.address();
+      const port =
+        typeof address === "object" && address !== null
+          ? address.port
+          : (options.port ?? 8765);
+      const host = incoming.headers.host;
+      if (!allowedHost(host, bindHost, port, incoming.socket.localAddress)) {
+        outgoing.writeHead(403, { "content-type": "text/plain" });
+        outgoing.end("Forbidden Host");
+        return;
+      }
       const hasBody = incoming.method !== "GET" && incoming.method !== "HEAD";
       const request = new Request(`http://${host}${incoming.url ?? "/"}`, {
         method: incoming.method,
@@ -566,13 +621,19 @@ export function serveDashboard(options: {
       });
       const response = await handle(request);
       outgoing.writeHead(response.status, Object.fromEntries(response.headers));
-      outgoing.end(Buffer.from(await response.arrayBuffer()));
+      if (response.body)
+        await pipeline(Readable.fromWeb(response.body), outgoing);
+      else outgoing.end();
     } catch (exc) {
       console.error("dashboard request failed", exc);
+      if (outgoing.headersSent) {
+        outgoing.destroy(exc instanceof Error ? exc : new Error(String(exc)));
+        return;
+      }
       outgoing.writeHead(500, { "content-type": "text/plain" });
       outgoing.end("Internal Server Error");
     }
   });
-  server.listen(options.port ?? 8765, options.host ?? "127.0.0.1");
+  server.listen(options.port ?? 8765, bindHost);
   return server;
 }

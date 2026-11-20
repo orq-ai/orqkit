@@ -6,6 +6,7 @@ import {
   experimentRowToDataPoint,
   fetchDatasetBatches,
   fetchExperimentDataPoints,
+  MAX_EXPERIMENT_EXPORT_BYTES,
   rowsFromExperimentExport,
 } from "../../../../src/lib/common/fetch-data.js";
 import { LLMCallConfig } from "../../../../src/lib/contracts.js";
@@ -143,7 +144,7 @@ function experiment(
         data: [
           { runId: "latest", createdAt: new Date("2026-01-01T00:00:00Z") },
         ],
-        hasMore: true,
+        hasMore: false,
       }),
       exportRun: async () =>
         new Blob([text.slice(0, 7), text.slice(7)]).stream(),
@@ -247,7 +248,7 @@ it("uses the newest v3 run metadata and supports an explicit run without listing
   expect(
     await datapointsFromExperiment("e", { apiKey: "k", orqClient: client }),
   ).toHaveLength(1);
-  expect(list).toHaveBeenCalledWith({ experimentId: "e", limit: 1 });
+  expect(list).toHaveBeenCalledWith({ experimentId: "e", limit: 50 });
   expect(exp.mock.calls[0]?.[0]).toEqual({
     experimentId: "e",
     runId: "latest",
@@ -436,7 +437,7 @@ beforeAll(() => {
       if (url.pathname === "/v3/experiments/e/runs")
         return Response.json({
           data: [{ run_id: "r", created_at: "2026-01-01T00:00:00Z" }],
-          has_more: true,
+          has_more: false,
         });
       if (url.pathname === "/v3/experiments/e/runs/r/export")
         return new Response(
@@ -468,7 +469,7 @@ it("uses the actual SDK dataset and v3 streaming experiment wire formats", async
   expect(exp[0]?.id).toBe(DP.id);
   expect(requests.map((request) => request.path)).toEqual([
     "/v2/datasets/d/datapoints?limit=50",
-    "/v3/experiments/e/runs?limit=1",
+    "/v3/experiments/e/runs?limit=50",
     "/v3/experiments/e/runs/r/export?format=jsonl",
   ]);
   expect(
@@ -534,3 +535,88 @@ it("rejects conflicting simulation sources before a fetch or model call", async 
   expect(requests).toHaveLength(0);
   expect(llmRequests.judge).toHaveLength(0);
 });
+
+it("selects the newest run across unordered pages", async () => {
+  const client = experiment();
+  const cursors: (string | undefined)[] = [];
+  client.experiments.listRuns = async ({ startingAfter }) => {
+    cursors.push(startingAfter);
+    return startingAfter === undefined
+      ? {
+          data: [{ runId: "old", createdAt: new Date("2020-01-01") }],
+          hasMore: true,
+        }
+      : {
+          data: [
+            { runId: "newest", createdAt: new Date("2026-01-01") },
+            { runId: "middle", createdAt: new Date("2022-01-01") },
+          ],
+          hasMore: false,
+        };
+  };
+  const exportRun = spyOn(client.experiments, "exportRun");
+  await fetchExperimentDataPoints("k", "e", undefined, { orqClient: client });
+  expect(cursors).toEqual([undefined, "old"]);
+  expect(exportRun.mock.calls[0]?.[0].runId).toBe("newest");
+});
+it("refuses repeated pagination cursors instead of evaluating an incomplete run list", async () => {
+  const client = experiment();
+  client.experiments.listRuns = async () => ({
+    data: [{ runId: "same", createdAt: new Date() }],
+    hasMore: true,
+  });
+  await expect(
+    fetchExperimentDataPoints("k", "e", undefined, { orqClient: client }),
+  ).rejects.toThrow("pagination repeated");
+});
+it.each(["sdk", "fetch"] as const)(
+  "caps and cancels oversized %s export streams",
+  async (kind) => {
+    let cancelled = false;
+    let emitted = 0;
+    const chunk = new Uint8Array(1024 * 1024);
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        emitted++;
+        controller.enqueue(chunk);
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const client = experiment();
+    client.experiments.exportRun = async () => stream;
+    const options =
+      kind === "sdk"
+        ? { orqClient: client }
+        : { fetchFn: async () => new Response(stream) };
+    await expect(
+      fetchExperimentDataPoints("k", "e", "r", options),
+    ).rejects.toThrow("100 MB size limit");
+    expect(cancelled).toBe(true);
+    expect(emitted * chunk.byteLength).toBeGreaterThan(
+      MAX_EXPERIMENT_EXPORT_BYTES,
+    );
+  },
+);
+it.each(["sdk", "fetch"] as const)(
+  "times out and cancels a stalled %s export body",
+  async (kind) => {
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const client = experiment();
+    client.experiments.exportRun = async () => stream;
+    const options =
+      kind === "sdk"
+        ? { orqClient: client, timeoutMs: 10 }
+        : { fetchFn: async () => new Response(stream), timeoutMs: 10 };
+    await expect(
+      fetchExperimentDataPoints("k", "e", "r", options),
+    ).rejects.toThrow();
+    expect(cancelled).toBe(true);
+  },
+);

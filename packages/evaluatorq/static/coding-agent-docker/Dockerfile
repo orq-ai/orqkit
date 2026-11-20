@@ -4,11 +4,12 @@ ARG CLAUDE_CODE_VERSION=2.1.282
 ARG CODEX_VERSION=0.157.0
 ARG OPENCODE_VERSION=1.18.32
 ARG ORQ_CLI_VERSION=11.0.0
-RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep ca-certificates libnss-wrapper \
+ && ln -s "$(find /usr/lib -name libnss_wrapper.so -print -quit)" /usr/local/lib/libnss_wrapper.so \
  && rm -rf /var/lib/apt/lists/*
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} @openai/codex@${CODEX_VERSION} \
       opencode-ai@${OPENCODE_VERSION} @orq-ai/cli@${ORQ_CLI_VERSION}
 COPY entrypoint.sh /usr/local/bin/evq-entrypoint
 RUN chmod 0755 /usr/local/bin/evq-entrypoint
-RUN useradd -m -u 1001 agent && chmod 0666 /etc/passwd
+RUN useradd -m -u 1001 agent && chmod 0644 /etc/passwd
 USER agent

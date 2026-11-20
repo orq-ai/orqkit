@@ -98,21 +98,20 @@ async function mayContain(
   text: string,
   stopped: () => boolean,
 ): Promise<boolean | null> {
+  if (stopped()) return null;
+  if (!Array.from(text).every((char) => (char.codePointAt(0) ?? 0) <= 127))
+    return true;
   const file = await open(path, "r"),
-    ascii = Array.from(text).every((char) => (char.codePointAt(0) ?? 0) <= 127),
-    needle = text.toLowerCase();
-  const needles = ascii ? [needle, JSON.stringify(needle).slice(1, -1)] : [];
-  const overlap = ascii
-    ? Math.max(...needles.map((value) => value.length)) - 1
-    : 0;
+    needle = text.toLowerCase(),
+    needles = [needle, JSON.stringify(needle).slice(1, -1)],
+    overlap = Math.max(...needles.map((value) => value.length)) - 1;
   let carry = "";
   try {
     const buffer = Buffer.alloc(1024 * 1024);
     while (true) {
       if (stopped()) return null;
       const { bytesRead } = await file.read(buffer, 0, buffer.length, null);
-      if (!bytesRead) return !ascii;
-      if (!ascii) continue;
+      if (!bytesRead) return false;
       const window =
         carry + buffer.subarray(0, bytesRead).toString("latin1").toLowerCase();
       if (needles.some((value) => window.includes(value))) return true;

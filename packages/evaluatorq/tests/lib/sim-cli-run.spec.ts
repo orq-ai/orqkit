@@ -8,6 +8,7 @@ import { BadParameter } from "../../src/lib/common/cli-config.js";
 import {
   executeSimRun,
   executeSimSimulate,
+  loadDatapointRecords,
   type SimRunArgs,
   type SimSimulateArgs,
 } from "../../src/lib/integrations/simulation/cli-run.js";
@@ -405,4 +406,32 @@ test("declining an interactive simulation plan prevents model and target calls",
   expect(targetCalls).toBe(0);
   expect(Object.values(requests).flat()).toHaveLength(0);
   expect(s.err()).toContain("Simulation cancelled before execution");
+});
+
+test("datapoint files reject partial JSONL and retain explicit legacy and hybrid records", async () => {
+  const fixture = await setup();
+  const path = join(fixture.dir, "checked.jsonl");
+  const raw = JSON.parse(golden.inputs["good.jsonl"]);
+  const invalidRows = [
+    "{",
+    "[]",
+    "null",
+    "{}",
+    JSON.stringify({ inputs: { persona: "broken", scenario: raw.scenario } }),
+  ];
+  for (const invalid of invalidRows) {
+    await writeFile(path, `${JSON.stringify(raw)}\n${invalid}`);
+    expect(() => loadDatapointRecords(path)).toThrow("line 2:");
+  }
+  const inputs = { persona_name: "P", scenario_name: "S", goal: "g" };
+  for (const row of [
+    { inputs },
+    { inputs: { ...inputs, persona: raw.persona } },
+    { inputs: { ...inputs, scenario: JSON.stringify(raw.scenario) } },
+  ]) {
+    await writeFile(path, JSON.stringify(row));
+    const [parsed] = loadDatapointRecords(path);
+    expect((parsed?.persona as { name: string }).name).toBe("P");
+    expect((parsed?.scenario as { goal: string }).goal).toBe("g");
+  }
 });
