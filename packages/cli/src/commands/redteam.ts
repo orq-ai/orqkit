@@ -51,7 +51,7 @@ async function guarded(body: () => Promise<number> | number): Promise<void> {
       `Error: ${error instanceof Error ? error.message : String(error)}`,
     );
     console.error(
-      "Set EQ_DEBUG=1 to see the full traceback; report at https://github.com/orq-ai/evaluatorq/issues",
+      "Set EQ_DEBUG=1 to see the full traceback; report at https://github.com/orq-ai/orqkit/issues",
     );
     process.exitCode = 1;
   }
