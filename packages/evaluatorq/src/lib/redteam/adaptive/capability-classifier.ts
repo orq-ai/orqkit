@@ -33,7 +33,7 @@ export const AgentCapabilitiesSchema = z.preprocess(
   z.object({
     capabilities: z
       .record(z.string(), z.array(AgentCapabilitySchema))
-      .default({}),
+      .default(() => ({})),
     classificationFailed: z.boolean().default(false),
   }),
 );

@@ -35,7 +35,9 @@ import {
 import { extractPrompt, extractResponse } from "./utils.js";
 
 const ResponseSchema = z.object({
-  recommendations: z.preprocess(coerceStrList, z.array(z.string())).default([]),
+  recommendations: z
+    .preprocess(coerceStrList, z.array(z.string()))
+    .default(() => []),
   patterns_observed: z.preprocess(coerceStr, z.string()).default(""),
 });
 const CondensedSchema = z.object({

@@ -85,10 +85,12 @@ export const GroupSchema = z.enum(["A", "B", "C", "D"]);
 export type Group = z.infer<typeof GroupSchema>;
 export const EvidenceSchema = signalModel({
   stepId: signalInteger,
-  agentPath: z.array(z.string()).default([]),
+  agentPath: z.array(z.string()).default(() => []),
   callId: z.string().nullable().default(null),
-  related: z.array(z.tuple([z.array(z.string()), signalInteger])).default([]),
-  relatedCallIds: z.array(z.string()).default([]),
+  related: z
+    .array(z.tuple([z.array(z.string()), signalInteger]))
+    .default(() => []),
+  relatedCallIds: z.array(z.string()).default(() => []),
   reason: z.string().default(""),
   subgroup: z.string().nullable().default(null),
 });
@@ -104,10 +106,10 @@ export const SignalResultSchema = signalModel({
   name: z.string(),
   group: GroupSchema,
   value: z.unknown().default(null),
-  evidence: z.array(EvidenceSchema).default([]),
+  evidence: z.array(EvidenceSchema).default(() => []),
   approximate: signalBoolean.default(false),
   noBasis: z.string().nullable().default(null),
-  preconditions: z.array(PreconditionSchema).default([]),
+  preconditions: z.array(PreconditionSchema).default(() => []),
   reason: z.string().nullable().default(null),
   ruleVersion: z.string().nullable().default(null),
 }).superRefine((result, ctx) => {
