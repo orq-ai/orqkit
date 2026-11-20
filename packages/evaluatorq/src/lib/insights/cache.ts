@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { closeSync, fchmodSync, mkdirSync, openSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { getStoreDir } from "../common/run-store-dir.js";
@@ -74,7 +74,15 @@ export class InsightsCache {
     const path = options.path ?? join(getStoreDir("cache"), "insights.sqlite");
     let db: Database | null = null;
     try {
-      mkdirSync(dirname(path), { recursive: true });
+      if (path !== ":memory:") {
+        mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+        const file = openSync(path, "a", 0o600);
+        try {
+          fchmodSync(file, 0o600);
+        } finally {
+          closeSync(file);
+        }
+      }
       const isBun = Boolean(
           (process.versions as Record<string, string | undefined>).bun,
         ),
