@@ -10,7 +10,7 @@ function byPython(model: string): Map<string, [string, ShapeRef]> {
   if (!map) {
     map = new Map();
     for (const [camel, [python, ref]] of Object.entries(
-      PYTHON_SHAPES[model] ?? {},
+      Object.hasOwn(PYTHON_SHAPES, model) ? PYTHON_SHAPES[model] : {},
     ))
       map.set(python, [camel, ref]);
     BY_PYTHON.set(model, map);
@@ -35,18 +35,22 @@ function convert(value: unknown, ref: ShapeRef, write: boolean): unknown {
     return Object.fromEntries(
       Object.entries(value).map(([k, v]) => [k, convert(v, ref[1], write)]),
     );
-  const fields = PYTHON_SHAPES[ref] ?? {};
+  const fields = Object.hasOwn(PYTHON_SHAPES, ref) ? PYTHON_SHAPES[ref] : {};
   const reverse = byPython(ref);
-  const out: Record<string, unknown> = {};
+  const out: [string, unknown][] = [];
   for (const [key, child] of Object.entries(value)) {
+    const field = Object.hasOwn(fields, key) ? fields[key] : undefined;
     const known = write
-      ? (fields[key] ??
+      ? (field ??
         (reverse.has(key) ? [key, reverse.get(key)?.[1] ?? null] : null))
-      : (reverse.get(key) ?? (fields[key] ? [key, fields[key][1]] : null));
-    if (known) out[known[0]] = convert(child, known[1], write);
-    else out[write ? camelToSnake(key) : snakeToCamel(key)] = child;
+      : (reverse.get(key) ?? (field ? [key, field[1]] : null));
+    out.push(
+      known
+        ? [known[0], convert(child, known[1], write)]
+        : [write ? camelToSnake(key) : snakeToCamel(key), child],
+    );
   }
-  return out;
+  return Object.fromEntries(out);
 }
 
 const plain = (value: unknown): unknown =>

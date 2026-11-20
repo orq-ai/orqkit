@@ -32,7 +32,11 @@ export interface DatasetClient {
 
 export interface ExperimentClient {
   experiments: {
-    listRuns(request: { experimentId: string; limit: number }): Promise<{
+    listRuns(request: {
+      experimentId: string;
+      limit: number;
+      startingAfter?: string;
+    }): Promise<{
       data?: { runId?: string; createdAt?: Date }[];
       hasMore?: boolean;
     }>;
@@ -208,6 +212,48 @@ export function rowsFromExperimentExport(
   return rows;
 }
 
+export const MAX_EXPERIMENT_EXPORT_BYTES = 100 * 1024 * 1024;
+
+async function beforeDeadline<T>(
+  promise: PromiseLike<T>,
+  signal: AbortSignal,
+): Promise<T> {
+  signal.throwIfAborted();
+  let onAbort: (() => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    onAbort = () => reject(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([promise, aborted]);
+  } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
+  }
+}
+
+async function boundedExportText(
+  stream: ReadableStream<Uint8Array>,
+  signal: AbortSignal,
+): Promise<string> {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { value, done } = await beforeDeadline(reader.read(), signal);
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_EXPERIMENT_EXPORT_BYTES)
+        throw new Error("Experiment export exceeds the 100 MB size limit");
+      chunks.push(value);
+    }
+    return Buffer.concat(chunks, size).toString("utf8");
+  } finally {
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
 export async function fetchExperimentDataPoints(
   apiKey: string,
   experimentId: string,
@@ -216,35 +262,72 @@ export async function fetchExperimentDataPoints(
     baseUrl?: string;
     orqClient?: ExperimentClient;
     fetchFn?: FetchLike;
+    timeoutMs?: number;
   } = {},
 ): Promise<DataPoint[]> {
   const client =
     options.orqClient ?? (await setupOrqClient(apiKey, options.baseUrl));
   let resolved = runId;
   if (resolved === undefined) {
-    const runs = await client.experiments.listRuns({ experimentId, limit: 1 });
-    const latest = runs.data?.[0];
-    if (!latest)
-      throw new Error(
-        `Experiment '${experimentId}' has no runs to load responses from.`,
-      );
-    if (!latest.createdAt || !Number.isFinite(latest.createdAt.getTime()))
-      throw new Error(
-        `Experiment '${experimentId}' latest run has no created timestamp; pass runId explicitly.`,
-      );
-    resolved = latest.runId;
+    let startingAfter: string | undefined;
+    let latest: { runId: string; createdAt: Date } | undefined;
+    const cursors = new Set<string>();
+    for (;;) {
+      const page = await client.experiments.listRuns({
+        experimentId,
+        limit: 50,
+        ...(startingAfter && { startingAfter }),
+      });
+      if (!page.data?.length) {
+        if (startingAfter)
+          throw new Error(
+            `Experiment '${experimentId}' pagination ended before all runs were loaded`,
+          );
+        throw new Error(
+          `Experiment '${experimentId}' has no runs to load responses from.`,
+        );
+      }
+      for (const run of page.data) {
+        if (
+          !(run.createdAt instanceof Date) ||
+          !Number.isFinite(run.createdAt.getTime()) ||
+          !run.runId
+        )
+          throw new Error(
+            `Experiment '${experimentId}' run has no valid created timestamp or run ID; pass runId explicitly.`,
+          );
+        if (!latest || run.createdAt > latest.createdAt)
+          latest = { runId: run.runId, createdAt: run.createdAt };
+      }
+      if (!page.hasMore) break;
+      const cursor = page.data.at(-1)?.runId;
+      if (!cursor || cursors.has(cursor))
+        throw new Error(
+          `Experiment '${experimentId}' pagination repeated or omitted its cursor`,
+        );
+      cursors.add(cursor);
+      startingAfter = cursor;
+    }
+    resolved = latest?.runId;
     if (!resolved)
       throw new Error(
         `Could not determine the latest run for experiment '${experimentId}'.`,
       );
   }
+  const timeoutMs = options.timeoutMs ?? 60_000;
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+    throw new RangeError("Export timeout must be positive and finite");
+  const signal = AbortSignal.timeout(timeoutMs);
   let text: string;
   if (options.orqClient) {
-    const stream = await client.experiments.exportRun(
-      { experimentId, runId: resolved, format: "jsonl" },
-      { timeoutMs: 60_000 },
+    const stream = await beforeDeadline(
+      client.experiments.exportRun(
+        { experimentId, runId: resolved, format: "jsonl" },
+        { timeoutMs },
+      ),
+      signal,
     );
-    text = await new Response(stream).text();
+    text = await boundedExportText(stream, signal);
   } else {
     // The API returns x-ndjson, which the installed SDK's export matcher rejects.
     const base = (
@@ -253,20 +336,25 @@ export async function fetchExperimentDataPoints(
       orqServerUrl()
     ).replace(/\/+$/, "");
     const url = `${base}/v3/experiments/${encodeURIComponent(experimentId)}/runs/${encodeURIComponent(resolved)}/export?format=jsonl`;
-    const response = await (options.fetchFn ?? fetch)(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/x-ndjson",
-      },
-      signal: AbortSignal.timeout(60_000),
-      redirect: "error",
-    });
+    const response = await beforeDeadline(
+      (options.fetchFn ?? fetch)(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/x-ndjson",
+        },
+        signal,
+        redirect: "error",
+      }),
+      signal,
+    );
     if (!response.ok)
       throw new Error(
         `Could not export run '${resolved}' for experiment '${experimentId}': HTTP ${response.status}`,
       );
-    text = await response.text();
+    if (!response.body)
+      throw new Error(`Experiment run '${resolved}' returned no export body`);
+    text = await boundedExportText(response.body, signal);
   }
   return rowsFromExperimentExport(text, experimentId, resolved).map(
     experimentRowToDataPoint,

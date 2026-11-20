@@ -51,18 +51,7 @@ function splitLines(data: Buffer): Buffer[] {
 export async function readRecords(
   path: string,
 ): Promise<{ records: SessionRecord[]; skipped: number }> {
-  const lines = splitLines(await readFile(path)),
-    tail = lines.pop() as Buffer,
-    result = decode(lines);
-  if (tail.toString("utf8").trim()) {
-    try {
-      const value: unknown = JSON.parse(tail.toString("utf8"));
-      if (value !== null && typeof value === "object" && !Array.isArray(value))
-        result.records.push(value as SessionRecord);
-      else result.skipped++;
-    } catch {}
-  }
-  return result;
+  return decode(splitLines(await readFile(path)));
 }
 export async function readHead(
   path: string,
