@@ -44,11 +44,11 @@ const PairwiseRunSchema = z.object({
   createdAt: z.string().datetime({ offset: true }),
   labelA: z.string().default("A"),
   labelB: z.string().default("B"),
-  judges: z.array(z.string()).default([]),
+  judges: z.array(z.string()).default(() => []),
   criteria: z.string().default(""),
   // Without this a single-ordering run reads as a panel with no position bias.
   swap: z.boolean().default(true),
-  entries: z.array(PairwiseEntrySchema).default([]),
+  entries: z.array(PairwiseEntrySchema).default(() => []),
   report: PairwiseReportSchema.nullable().default(null),
 });
 

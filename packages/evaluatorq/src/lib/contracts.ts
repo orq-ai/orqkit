@@ -161,8 +161,8 @@ export const LLMCallConfigSchema = z.object({
   temperature: z.number().min(0).max(2).nullable().default(null),
   maxTokens: z.number().int().positive().default(DEFAULT_TARGET_MAX_TOKENS),
   timeoutMs: z.number().int().positive().default(90_000),
-  extraKwargs: z.record(z.unknown()).default({}),
-  extraBody: z.record(z.unknown()).default({}),
+  extraKwargs: z.record(z.unknown()).default(() => ({})),
+  extraBody: z.record(z.unknown()).default(() => ({})),
   reasoningEffort: z.string().nullable().default(null),
   client: z.unknown().optional(),
   retryCount: z.number().int().nonnegative().default(1),
@@ -284,8 +284,8 @@ function serializeArguments(value: unknown): unknown {
 export const TextOutputItemSchema = z.object({
   type: z.literal("output_text"),
   text: z.string(),
-  annotations: z.array(z.unknown()).default([]),
-  logprobs: z.array(z.unknown()).default([]),
+  annotations: z.array(z.unknown()).default(() => []),
+  logprobs: z.array(z.unknown()).default(() => []),
 });
 export type TextOutputItem = z.infer<typeof TextOutputItemSchema>;
 
@@ -733,7 +733,7 @@ export const JuryVoteSchema = z
     value: verdictValue.nullable().default(null),
     explanation: z.string().default(""),
     error: z.string().nullable().default(null),
-    repetitions: z.array(JuryRepetitionSchema).default([]),
+    repetitions: z.array(JuryRepetitionSchema).default(() => []),
     repetitionsFailed: count.default(0),
   })
   .superRefine((vote, ctx) => {
@@ -771,7 +771,7 @@ export const JuryResultSchema = z
     replacementsUsed: count.default(0),
     tie: z.boolean().default(false),
     inconclusive: z.boolean().default(false),
-    votes: z.array(JuryVoteSchema).default([]),
+    votes: z.array(JuryVoteSchema).default(() => []),
     stats: JuryStatsSchema.nullable().default(null),
     rawAgreement: z.number().min(0).max(1).nullable().default(null),
   })
@@ -868,7 +868,7 @@ export const ResponseTraceSchema = z.object({
 export type ResponseTrace = z.infer<typeof ResponseTraceSchema>;
 
 const AgentResponseSchema = z.object({
-  output: z.array(OutputMessageSchema).default([]),
+  output: z.array(OutputMessageSchema).default(() => []),
   usage: UsageSchema.nullable().default(null),
   model: z.string().nullable().default(null),
   responseId: z.string().nullable().default(null),
@@ -1175,12 +1175,12 @@ export const AgentContextSchema = z.preprocess(
     /** A deployment's prompt; agents carry `instructions` and leave this empty. */
     systemPrompt: z.string().default(""),
     instructions: z.string().default(""),
-    tools: z.array(ToolInfoSchema).default([]),
-    memoryStores: z.array(MemoryStoreInfoSchema).default([]),
-    knowledgeBases: z.array(KnowledgeBaseInfoSchema).default([]),
+    tools: z.array(ToolInfoSchema).default(() => []),
+    memoryStores: z.array(MemoryStoreInfoSchema).default(() => []),
+    knowledgeBases: z.array(KnowledgeBaseInfoSchema).default(() => []),
     model: z.string().nullable().default(null),
     version: z.string().nullable().default(null),
-    skills: z.array(z.string()).default([]),
+    skills: z.array(z.string()).default(() => []),
     agentType: z.enum(["internal", "a2a"]).nullable().default(null),
     engine: z.enum(["text", "jinja", "mustache"]).nullable().default(null),
     /** Gates multi-agent-only attack categories, so it stays off unless confirmed. */
@@ -1384,9 +1384,9 @@ export const RunManifestObject = z.object({
   runName: z.string(),
   status: manifestStatus.default(ManifestStatus.RUNNING),
   stage: z.string().nullable().default(null),
-  stages: z.array(StageRecordSchema).default([]),
-  plannedStages: z.array(z.string()).default([]),
-  stageLabels: z.record(z.string(), z.string()).default({}),
+  stages: z.array(StageRecordSchema).default(() => []),
+  plannedStages: z.array(z.string()).default(() => []),
+  stageLabels: z.record(z.string(), z.string()).default(() => ({})),
   startedAt: dateTime,
   updatedAt: dateTime,
   endedAt: optionalDateTime,

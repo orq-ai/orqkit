@@ -162,7 +162,10 @@ const integer = z.preprocess(
 );
 const nullableInt = integer.nullable().default(null),
   nullableString = z.string().nullable().default(null),
-  strings = z.array(z.string()).readonly().default([]);
+  strings = z
+    .array(z.string())
+    .readonly()
+    .default(() => []);
 const time = z
   .unknown()
   .transform((value, ctx) => {
@@ -214,7 +217,7 @@ const shape = {
   usageExclusive: signalBoolean.default(false),
   costTotal: signalFloat.nullable().default(null),
   currency: nullableString,
-  raw: signalDictionary.default({}),
+  raw: signalDictionary.default(() => ({})),
 };
 export const TraceRowSchema = z.preprocess((value) => {
   if (value === null || typeof value !== "object" || Array.isArray(value))

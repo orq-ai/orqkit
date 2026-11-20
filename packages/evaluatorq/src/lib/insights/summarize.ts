@@ -87,9 +87,9 @@ const SummaryWireSchema = z.object({
   request: z.string().nullable(),
   task: z.string().nullable(),
   topic: z.string().nullable(),
-  assistant_errors: z.array(z.string()).default([]),
+  assistant_errors: z.array(z.string()).default(() => []),
   sentiment_explanation: z.string().nullable(),
-  languages: z.array(z.string()).default([]),
+  languages: z.array(z.string()).default(() => []),
 });
 export interface SummarizeOptions {
   client: OpenAI;

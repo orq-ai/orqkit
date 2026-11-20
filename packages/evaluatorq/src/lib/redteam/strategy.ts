@@ -53,7 +53,7 @@ export const AttackStrategySchema = z.preprocess(
       turnType: TurnTypeSchema,
       severity: SeveritySchema.default("medium"),
       requiresTools: bool.default(false),
-      requiredCapabilities: z.array(AgentCapabilitySchema).default([]),
+      requiredCapabilities: z.array(AgentCapabilitySchema).default(() => []),
       objectiveTemplate: z.string(),
       promptTemplate: z.string().nullable().default(null),
       isGenerated: bool.default(false),
