@@ -1,3 +1,5 @@
+import { runAbortSignal } from "./run-lifecycle.js";
+
 export const MAX_RETRY_ATTEMPTS = 5;
 export const RETRY_MIN_WAIT_MS = 2_000;
 export const RETRY_MAX_WAIT_MS = 60_000;
@@ -113,6 +115,7 @@ export function isRetryableError(
     return false;
   }
   const candidate = error as ErrorLike;
+  if (errorClassNames(error).includes("LlmTimeoutError")) return true;
   if (candidate.name === "AbortError" || candidate.name === "TimeoutError") {
     return false;
   }
@@ -147,6 +150,11 @@ export async function withRetry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {},
 ): Promise<T> {
+  const runSignal = runAbortSignal();
+  const signal =
+    runSignal && options.signal
+      ? AbortSignal.any([runSignal, options.signal])
+      : (runSignal ?? options.signal);
   const {
     maxAttempts = MAX_RETRY_ATTEMPTS,
     minWaitMs = RETRY_MIN_WAIT_MS,
@@ -173,12 +181,12 @@ export async function withRetry<T>(
   const statuses = retryStatuses ? new Set(retryStatuses) : undefined;
 
   for (let attempt = 1; ; attempt += 1) {
-    options.signal?.throwIfAborted();
+    signal?.throwIfAborted();
     try {
       return await fn();
     } catch (error) {
       if (
-        options.signal?.aborted ||
+        signal?.aborted ||
         attempt >= maxAttempts ||
         !isRetryableError(error, statuses)
       ) {
@@ -190,7 +198,6 @@ export async function withRetry<T>(
         `${label}: attempt ${attempt}/${maxAttempts} failed (${(error as Error).name}), retrying in ${(delay / 1000).toFixed(1)}s`,
       );
       await new Promise<void>((resolve, reject) => {
-        const signal = options.signal;
         signal?.throwIfAborted();
         const onAbort = () => {
           clearTimeout(timer);

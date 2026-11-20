@@ -48,12 +48,12 @@ export async function saveRun(
     .replace(/[-:]/g, "")
     .replace("T", "-");
   const base = `insights_${stamp}_${insightsRunSlug(parsed.runName)}`;
-  await mkdir(runsDir, { recursive: true });
+  await mkdir(runsDir, { recursive: true, mode: 0o700 });
   const tempName = `.${base}.${randomUUID()}.tmp`,
     temporary = join(runsDir, tempName);
   let keepTemporary = false;
   try {
-    const file = await open(temporary, "wx");
+    const file = await open(temporary, "wx", 0o600);
     try {
       await file.writeFile(insightsRunJson(parsed), "utf8");
       await file.sync();

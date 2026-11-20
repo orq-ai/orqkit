@@ -1,9 +1,12 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
-import { toPythonKeys } from "../../../src/lib/common/python-json.js";
+import {
+  fromPythonKeys,
+  toPythonKeys,
+} from "../../../src/lib/common/python-json.js";
 import { vlAvailable } from "../../../src/lib/common/reports/vega.js";
 import { InsightsRunSchema } from "../../../src/lib/insights/models.js";
 import {
@@ -33,6 +36,8 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
     );
     expect(new Set(paths).size).toBe(8);
     for (const path of paths) {
+      if (process.platform !== "win32")
+        expect((await stat(path)).mode & 0o777).toBe(0o600);
       const loaded = await loadRun(path);
       expect(loaded.runId).toBe(run.runId);
       expect(
@@ -85,4 +90,21 @@ test("chart loading cannot change saved Set fields into strings", async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("saved-run key conversion preserves unknown Object prototype names", () => {
+  const input = JSON.parse(
+    '{"constructor":{"nested":1},"toString":{"nested":2},"valueOf":3,"__proto__":{"marker":true}}',
+  );
+  const written = toPythonKeys(input, "InsightsRun") as Record<string, unknown>;
+  expect(Object.getPrototypeOf(written)).toBe(Object.prototype);
+  expect(Object.hasOwn(written, "__proto__")).toBe(true);
+  expect(written.constructor as unknown).toEqual({ nested: 1 });
+  expect(written.to_string).toEqual({ nested: 2 });
+  expect(written.value_of).toBe(3);
+  const read = fromPythonKeys(input, "InsightsRun") as Record<string, unknown>;
+  expect(Object.getPrototypeOf(read)).toBe(Object.prototype);
+  expect(read.constructor as unknown).toEqual({ nested: 1 });
+  expect(read.toString as unknown).toEqual({ nested: 2 });
+  expect(Object.hasOwn(read, "undefined")).toBe(false);
 });

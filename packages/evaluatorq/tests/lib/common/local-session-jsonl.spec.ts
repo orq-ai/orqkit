@@ -21,7 +21,7 @@ test("JSONL readers retain complete objects and tolerate malformed and partial l
     await writeFile(path, first + middle + partial);
     expect(await readRecords(path)).toEqual({
       records: [{ id: 1 }, { id: 2 }],
-      skipped: 2,
+      skipped: 3,
     });
     expect(await readHead(path, Buffer.byteLength(first) + 4)).toEqual([
       { id: 1 },

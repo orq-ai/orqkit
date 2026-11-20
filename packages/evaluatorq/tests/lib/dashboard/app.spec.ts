@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { once } from "node:events";
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -7,6 +9,7 @@ import { reportId } from "../../../src/lib/common/dashboard/library.js";
 import {
   createDashboardHandler,
   paging,
+  serveDashboard,
 } from "../../../src/lib/dashboard/app.js";
 import { dashboardCssVersion } from "../../../src/lib/dashboard/shell.js";
 
@@ -137,4 +140,64 @@ describe("core routes", () => {
     expect(paging(new URLSearchParams("page=x&per_page=99"))).toEqual([1, 8]);
     expect(paging(new URLSearchParams(""))).toEqual([1, 8]);
   });
+});
+
+it("malformed encoded paths are bad requests", async () => {
+  for (const path of ["/static/%E0%A4%A", "/r/%E0%A4%A", "/r/%FF/export"]) {
+    expect((await get(path)).status).toBe(400);
+  }
+});
+it("rejects untrusted hosts before routing or returning the readiness nonce", async () => {
+  const server = serveDashboard({
+    roots: [],
+    host: "127.0.0.1",
+    port: 0,
+  });
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string")
+    throw new Error("Missing test address");
+  const request = (host: string, path = "/static/dashboard.css") =>
+    new Promise<{ status: number; body: string }>((resolve, reject) => {
+      const req = httpRequest(
+        {
+          hostname: "127.0.0.1",
+          port: address.port,
+          path,
+          headers: { Host: host },
+        },
+        (response) => {
+          const chunks: Buffer[] = [];
+          response.on("data", (chunk: Buffer) => chunks.push(chunk));
+          response.on("end", () =>
+            resolve({
+              status: response.statusCode ?? 0,
+              body: Buffer.concat(chunks).toString("utf8"),
+            }),
+          );
+        },
+      );
+      req.on("error", reject);
+      req.end();
+    });
+  try {
+    for (const host of [
+      `evil.example:${address.port}`,
+      `evil@localhost:${address.port}`,
+      `localhost:${address.port + 1}`,
+    ]) {
+      for (const path of ["/", "/static/dashboard.css"])
+        expect((await request(host, path)).status).toBe(403);
+    }
+    for (const host of [
+      `localhost:${address.port}`,
+      `127.0.0.1:${address.port}`,
+    ])
+      expect((await request(host)).status).toBe(200);
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
 });

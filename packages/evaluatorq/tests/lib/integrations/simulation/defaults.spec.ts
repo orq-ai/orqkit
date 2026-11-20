@@ -46,6 +46,18 @@ describe("resolveRouterBaseUrl", () => {
     expect(resolveRouterBaseUrl()).toBe("https://a.example/v3/router");
   });
 
+  test("invalid deprecated router URLs fail before a request", () => {
+    for (const value of [
+      "my.staging.orq.ai/v3/router",
+      "ftp://example.com/router",
+    ]) {
+      process.env.ROUTER_BASE_URL = value;
+      expect(() => resolveRouterBaseUrl()).toThrow(
+        "ROUTER_BASE_URL is not a valid URL",
+      );
+    }
+  });
+
   test("ROUTER_BASE_URL still applies on its own", () => {
     process.env.ROUTER_BASE_URL = "https://b.example/custom";
     expect(resolveRouterBaseUrl()).toBe("https://b.example/custom");
