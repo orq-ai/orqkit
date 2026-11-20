@@ -1,5 +1,7 @@
 import type OpenAI from "openai";
 
+import { resolveRouterBaseUrl } from "../integrations/simulation/defaults.js";
+import { configuredOrqHost } from "../orq-host.js";
 import { DEFAULT_ORQ_BASE_URL, envRaw } from "./env-config.js";
 
 export const ORQ_DEFAULT_HOST = DEFAULT_ORQ_BASE_URL;
@@ -11,7 +13,7 @@ function stripSlashes(url: string): string {
 }
 
 export function orqBaseUrl(): string {
-  return stripSlashes(envRaw("ORQ_BASE_URL", DEFAULT_ORQ_BASE_URL));
+  return configuredOrqHost() ?? DEFAULT_ORQ_BASE_URL;
 }
 
 export class MissingLLMCredentialsError extends Error {
@@ -44,7 +46,7 @@ export function resolveResultsBaseUrl(
     return stripSlashes(host.slice(0, -ORQ_ROUTER_SUFFIX.length));
   }
   return stripSlashes(
-    envRaw("ORQ_BASE_URL", options.defaultOrqHost ?? DEFAULT_ORQ_BASE_URL),
+    configuredOrqHost() ?? options.defaultOrqHost ?? DEFAULT_ORQ_BASE_URL,
   );
 }
 
@@ -95,13 +97,15 @@ export async function resolveLlmClient(
   const retries = maxRetries === undefined ? {} : { maxRetries };
 
   if (orqApiKey) {
-    const host = stripSlashes(
-      orqHost || envRaw("ORQ_BASE_URL", defaultOrqHost),
-    );
+    const baseURL = orqHost
+      ? `${stripSlashes(orqHost)}${ORQ_ROUTER_SUFFIX}`
+      : process.env.ORQ_BASE_URL || process.env.ROUTER_BASE_URL
+        ? resolveRouterBaseUrl()
+        : `${stripSlashes(defaultOrqHost)}${ORQ_ROUTER_SUFFIX}`;
     return {
       client: new OpenAIClient({
         apiKey: orqApiKey,
-        baseURL: `${host}${ORQ_ROUTER_SUFFIX}`,
+        baseURL,
         ...retries,
       }),
       owned: true,

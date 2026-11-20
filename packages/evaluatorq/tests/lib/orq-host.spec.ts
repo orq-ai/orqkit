@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { fileURLToPath } from "node:url";
 
+import {
+  orqServerUrl,
+  resolveOrqClient,
+} from "../../src/lib/common/orq-client.js";
 import { configuredOrqHost } from "../../src/lib/orq-host.js";
 import { getOtlpEndpoint } from "../../src/lib/tracing/setup.js";
 
@@ -91,14 +95,39 @@ describe("configuredOrqHost", () => {
     }
   });
 
-  test.each([
-    "https://b.example/v3/router",
-    "https://b.example/v2/router",
-    "https://b.example/custom/",
-  ])("ROUTER_BASE_URL %s gives its origin", (value) => {
-    process.env.ROUTER_BASE_URL = value;
-    expect(configuredOrqHost()).toBe("https://b.example");
-  });
+  test.each(["https://b.example/v3/router", "https://b.example/v2/router"])(
+    "ROUTER_BASE_URL %s gives its origin",
+    (value) => {
+      process.env.ROUTER_BASE_URL = value;
+      expect(configuredOrqHost()).toBe("https://b.example");
+    },
+  );
+
+  test.each(["https://proxy.example", "https://proxy.example/custom/"])(
+    "platform operations require an explicit host for legacy proxy %s",
+    async (value) => {
+      process.env.ROUTER_BASE_URL = value;
+      expect(() => configuredOrqHost()).toThrow("set ORQ_BASE_URL explicitly");
+      expect(() => orqServerUrl()).toThrow("set ORQ_BASE_URL explicitly");
+      await expect(resolveOrqClient("test-key")).rejects.toThrow(
+        "set ORQ_BASE_URL explicitly",
+      );
+      const client = await resolveOrqClient(
+        "test-key",
+        "https://explicit.example",
+      );
+      expect(client).toBeDefined();
+      process.env.ORQ_API_KEY = "test-key";
+      const warn = spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        expect(getOtlpEndpoint()).toBeUndefined();
+      } finally {
+        warn.mockRestore();
+      }
+      process.env.ORQ_BASE_URL = "https://platform.example/prefix";
+      expect(configuredOrqHost()).toBe("https://platform.example/prefix");
+    },
+  );
 
   test("ORQ_BASE_URL wins over ROUTER_BASE_URL", () => {
     process.env.ORQ_BASE_URL = "https://a.example";

@@ -562,3 +562,21 @@ it("cancels an already aborted exchange before touching the SDK", async () => {
   ).rejects.toThrow();
   expect(calls).toBe(0);
 });
+
+it("requires an explicit platform host for a proxy-only Orq backend", async () => {
+  const names = ["ORQ_BASE_URL", "ROUTER_BASE_URL", "ORQ_API_KEY"];
+  const saved = new Map(names.map((name) => [name, process.env[name]]));
+  delete process.env.ORQ_BASE_URL;
+  process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+  process.env.ORQ_API_KEY = "test-key";
+  try {
+    await expect(
+      new OrqBackend().createTarget("fixture").respond(messages()),
+    ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+  } finally {
+    for (const [name, value] of saved) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+});
