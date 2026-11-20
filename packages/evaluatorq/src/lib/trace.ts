@@ -92,7 +92,10 @@ const TraceFilterSchema = z
       "exists",
       "not_exists",
     ]),
-    values: z.array(z.string().max(4096)).max(100).default([]),
+    values: z
+      .array(z.string().max(4096))
+      .max(100)
+      .default(() => []),
   })
   .strict();
 export type TraceFilter = z.input<typeof TraceFilterSchema>;

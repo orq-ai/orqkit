@@ -10,6 +10,7 @@ import {
   rebuildFilteredReport,
 } from "../../../src/lib/redteam/reports/summary.js";
 import { RunErrorSchema } from "../../../src/lib/redteam/strategy.js";
+import { SignalsConfig } from "../../../src/lib/signals/config.js";
 import goldens from "../fixtures/redteam-report-python-goldens.json" with {
   type: "json",
 };
@@ -53,6 +54,37 @@ const classes = {
   ReportSummary: models.ReportSummary,
   RedTeamReport: models.RedTeamReport,
 };
+it("keeps default report collections independent", () => {
+  const fixture = goldens.models.find((row) => row.kind === "RedTeamReport");
+  if (!fixture) throw new Error("Missing report fixture");
+  const first = new models.RedTeamReport(fixture.input);
+  const second = new models.RedTeamReport(fixture.input);
+  first.pipelineWarnings.push("NO VERDICT: first report only");
+  first.testedAgents.push("first report only");
+  first.appliedRecommendations.push("first report only");
+  const third = new models.RedTeamReport(fixture.input);
+  expect(second.pipelineWarnings).toEqual([]);
+  expect(third.pipelineWarnings).toEqual([]);
+  expect(second.testedAgents).toEqual([]);
+  expect(third.appliedRecommendations).toEqual([]);
+  expect(first.errors).not.toBe(second.errors);
+  expect(first.agentContexts).not.toBe(second.agentContexts);
+});
+it("keeps default report error counts independent", () => {
+  const first = models.ReportSummarySchema.parse({});
+  const second = models.ReportSummarySchema.parse({});
+  first.errorsByType.first = 1;
+  expect(second.errorsByType).toEqual({});
+  expect(models.ReportSummarySchema.parse({}).errorsByType).toEqual({});
+});
+it("keeps default signal patterns independent", () => {
+  const first = new SignalsConfig();
+  const second = new SignalsConfig();
+  const expected = [...second.errorPatterns];
+  first.errorPatterns.push("first config only");
+  expect(second.errorPatterns).toEqual(expected);
+  expect(new SignalsConfig().errorPatterns).toEqual(expected);
+});
 for (const fixture of goldens.models)
   it(`reads pinned Python report model: ${fixture.kind} ${fixture.label}`, () => {
     const ctor = classes[fixture.kind as keyof typeof classes];

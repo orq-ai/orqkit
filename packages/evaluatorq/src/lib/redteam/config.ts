@@ -51,7 +51,7 @@ const EvaluatorSchema = LLMCallConfigSchema.extend({
     .min(1)
     .default(() => [roleModel("smart", { task: "redteam.evaluator" })]),
   repetitions: z.number().int().min(1).default(1),
-  replacementJudges: z.array(z.string()).default([]),
+  replacementJudges: z.array(z.string()).default(() => []),
   minSuccessfulJudges: z.number().int().min(1).default(1),
   minEvaluationCoverage: z.number().min(0).max(1).nullable().default(0.8),
   strictPanel: z.boolean().default(false),
@@ -181,7 +181,9 @@ const PipelineSchema = z
     attacker: z.unknown().optional(),
     evaluator: z.unknown().optional(),
     retryCount: z.number().int().min(0).max(10).default(3),
-    retryOnCodes: z.array(z.number().int()).default([429, 500, 502, 503, 504]),
+    retryOnCodes: z
+      .array(z.number().int())
+      .default(() => [429, 500, 502, 503, 504]),
     maxContentFilterRetries: z.number().int().min(0).max(10).default(2),
     maxConsecutiveAdversarialTimeouts: z
       .number()

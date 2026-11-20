@@ -99,7 +99,7 @@ const Shape = z.strictObject({
   embeddingModel: selector,
   modelOverrides: z
     .record(z.string(), z.string())
-    .default({})
+    .default(() => ({}))
     .transform((values) => {
       const kept: Record<string, string> = {};
       for (const [task, model] of Object.entries(values)) {

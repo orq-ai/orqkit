@@ -31,7 +31,7 @@ const savedUsage = z
   .default(null);
 const nullableString = z.string().nullable().default(null);
 const ResultSchema = z.object({
-  turns: z.array(z.unknown()).default([]),
+  turns: z.array(z.unknown()).default(() => []),
   objectiveAchieved: z.boolean().default(false),
   objectiveRationale: nullableString,
   durationSeconds: z.number().default(0),
@@ -39,7 +39,7 @@ const ResultSchema = z.object({
   tokenUsageAdversarial: savedUsage,
   tokenUsageTarget: savedUsage,
   tokenUsageBootstrap: savedUsage,
-  seedContext: z.array(MessageSchema).default([]),
+  seedContext: z.array(MessageSchema).default(() => []),
   systemPrompt: nullableString,
   maxTurns: z.number().int().default(0),
   error: nullableString,
@@ -48,8 +48,8 @@ const ResultSchema = z.object({
   errorCode: nullableString,
   errorDetails: z.record(z.unknown()).nullable().default(null),
   errorTurn: z.number().int().nullable().default(null),
-  truncatedTurns: z.array(z.number().int()).default([]),
-  backtrackedTurns: z.array(z.unknown()).default([]),
+  truncatedTurns: z.array(z.number().int()).default(() => []),
+  backtrackedTurns: z.array(z.unknown()).default(() => []),
   refusalJudgeFailures: z.number().int().default(0),
 });
 export type OrchestratorResultInput = z.input<typeof ResultSchema>;
