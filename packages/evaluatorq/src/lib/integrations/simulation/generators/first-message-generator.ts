@@ -6,6 +6,9 @@
 
 import OpenAI from "openai";
 
+import { isRetryableStatus } from "../agents/base.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import {
   getTraceContextHeaders,
   recordLLMInput,
@@ -18,9 +21,31 @@ import {
   buildPersonaSystemPrompt,
   buildScenarioUserContext,
 } from "../utils/prompt-builders.js";
+import { SimulationGenerationError } from "./structured-call.js";
 
 // Temperature setting for message generation
 const TEMPERATURE_FIRST_MESSAGE = 0.8;
+
+const MAX_OUTPUT_TOKENS = 500;
+
+const TIMEOUT_MS = 60_000;
+
+// Attempts for a reply with no usable text.
+const CONTENT_ATTEMPTS = 3;
+
+/**
+ * True when one pair can be dropped: unusable output or a transient provider
+ * failure. Auth and request errors would hit every pair, so they abort the batch.
+ */
+export function isRecoverableFirstMessageFailure(err: unknown): boolean {
+  if (err instanceof SimulationGenerationError) {
+    return true;
+  }
+  if (!(err instanceof OpenAI.APIError)) {
+    return false;
+  }
+  return err.status === undefined || isRetryableStatus(err.status);
+}
 
 const FIRST_MESSAGE_PROMPT = `You are generating the authentic first message a user would type to a support agent.
 
@@ -88,21 +113,8 @@ export class FirstMessageGenerator {
   private client: OpenAI;
 
   constructor(config?: FirstMessageGeneratorConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
-    if (config?.client) {
-      this.client = config.client;
-    } else {
-      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v3/router",
-        apiKey,
-      });
-    }
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
   }
 
   /**
@@ -114,6 +126,9 @@ export class FirstMessageGenerator {
    * @param persona - User persona
    * @param scenario - Scenario context
    * @returns Generated first message string
+   * @throws {SimulationGenerationError} If the LLM returns no usable message
+   *   after retrying, or truncates it. There is no canned fallback: the caller
+   *   fails that datapoint instead.
    */
   async generate(persona: Persona, scenario: Scenario): Promise<string> {
     return withSimulationSpan(
@@ -137,18 +152,18 @@ Generate the FIRST message this user would send to start the conversation.
 The message should immediately convey their goal and emotional state.
 Keep it natural - this is how they would actually open a conversation.`;
 
-        try {
-          const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: FIRST_MESSAGE_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
+        const llmMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
+          [
+            { role: "system", content: FIRST_MESSAGE_PROMPT },
+            { role: "user", content: userPrompt },
+          ];
 
+        for (let attempt = 1; attempt <= CONTENT_ATTEMPTS; attempt++) {
           const response = await withLLMSpan(
             {
               model: this.model,
               temperature: TEMPERATURE_FIRST_MESSAGE,
-              maxTokens: 500,
+              maxTokens: MAX_OUTPUT_TOKENS,
               purpose: "first_message",
             },
             async (llmSpan) => {
@@ -166,9 +181,9 @@ Keep it natural - this is how they would actually open a conversation.`;
                   model: this.model,
                   messages: llmMessages,
                   temperature: TEMPERATURE_FIRST_MESSAGE,
-                  max_tokens: 500,
+                  max_tokens: MAX_OUTPUT_TOKENS,
                 },
-                { headers: traceHeaders },
+                { headers: traceHeaders, timeout: TIMEOUT_MS },
               );
 
               recordLLMResponse(llmSpan, res);
@@ -176,31 +191,31 @@ Keep it natural - this is how they would actually open a conversation.`;
             },
           );
 
-          let message = response.choices[0]?.message.content ?? "";
-          message = message.trim().replace(/^["']|["']$/g, "");
+          const choice = response.choices[0];
+          if (choice?.finish_reason === "length") {
+            // The same limit would truncate again, so this is not retried.
+            throw new SimulationGenerationError(
+              `FirstMessageGenerator: response truncated at max_tokens=${MAX_OUTPUT_TOKENS}`,
+            );
+          }
 
-          console.debug(
-            `Generated first message: ${message.substring(0, 100)}...`,
-          );
-          return message;
-        } catch (e) {
-          // Re-throw auth errors — a bad API key should fail fast, not silently
-          // produce meaningless results for the entire simulation run.
-          if (
-            e instanceof Error &&
-            "status" in e &&
-            ((e as { status: number }).status === 401 ||
-              (e as { status: number }).status === 403)
-          ) {
-            throw e;
+          const message = (choice?.message.content ?? "")
+            .trim()
+            .replace(/^["']|["']$/g, "");
+          if (message) {
+            console.debug(
+              `Generated first message: ${message.substring(0, 100)}...`,
+            );
+            return message;
           }
           console.warn(
-            `FirstMessageGenerator: API call failed, using generic fallback. Error: ${e}`,
+            `FirstMessageGenerator: empty message on attempt ${attempt} of ${CONTENT_ATTEMPTS}`,
           );
-          // Fallback to a generic message based on scenario (no persona traits applied)
-          _span?.setAttribute("orq.simulation.first_message_fallback", true);
-          return `Hi, I need help with: ${scenario.goal}`;
         }
+
+        throw new SimulationGenerationError(
+          `FirstMessageGenerator: empty message for persona '${persona.name}' and scenario '${scenario.name}'`,
+        );
       },
     );
   }

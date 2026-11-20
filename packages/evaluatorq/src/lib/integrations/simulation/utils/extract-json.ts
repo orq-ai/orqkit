@@ -3,19 +3,27 @@
  */
 
 /**
- * Regex pattern for extracting JSON from markdown code blocks.
- * Handles ```json ... ``` and ``` ... ``` blocks.
+ * Regex pattern for markdown code blocks, capturing language tag and body.
  */
-const JSON_BLOCK_PATTERN = /```(?:json)?\s*\n?([\s\S]*?)\n?```/i;
+const CODE_BLOCK_PATTERN = /```([^\r\n`]*)\r?\n?([\s\S]*?)\n?```/gi;
+
+function isValidJson(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Extract JSON from LLM response, handling markdown code blocks.
  *
- * Robust extraction that handles:
- * - ```json ... ``` blocks
- * - ``` ... ``` blocks (no language specifier)
- * - Plain JSON arrays or objects (no code block)
- * - Multiple code blocks (returns first one)
+ * Handles:
+ * - Multiple code blocks: json-tagged ones are tried first, and the first
+ *   body that parses wins, so an illustrative block cannot shadow the answer
+ * - Plain JSON arrays or objects (no code block): whichever opens first wins,
+ *   so an array nested in an object is not mistaken for the answer
  *
  * @param content - Raw LLM response content
  * @returns Extracted JSON string, stripped of whitespace
@@ -25,22 +33,43 @@ export function extractJsonFromResponse(content: string): string {
     return "";
   }
 
-  // Try to extract from code block using regex
-  const match = JSON_BLOCK_PATTERN.exec(content);
-  if (match?.[1]) {
-    return match[1].trim();
+  const blocks = [...content.matchAll(CODE_BLOCK_PATTERN)].map((match) => ({
+    isJson: (match[1] ?? "").trim().toLowerCase() === "json",
+    body: (match[2] ?? "").trim(),
+  }));
+  const ordered = [
+    ...blocks.filter((block) => block.isJson),
+    ...blocks.filter((block) => !block.isJson),
+  ];
+  for (const block of ordered) {
+    if (block.body && isValidJson(block.body)) {
+      return block.body;
+    }
   }
 
-  // No code block found — try to find the outermost JSON array or object
-  // by matching balanced brackets/braces
-  const arrayJson = extractBalanced(content, "[", "]");
-  if (arrayJson) return arrayJson;
+  const objectStart = content.indexOf("{");
+  const arrayStart = content.indexOf("[");
+  const objectFirst =
+    objectStart !== -1 && (arrayStart === -1 || objectStart < arrayStart);
+  const pairs: Array<[string, string]> = objectFirst
+    ? [
+        ["{", "}"],
+        ["[", "]"],
+      ]
+    : [
+        ["[", "]"],
+        ["{", "}"],
+      ];
 
-  const objectJson = extractBalanced(content, "{", "}");
-  if (objectJson) return objectJson;
+  let invalid: string | undefined;
+  for (const [open, close] of pairs) {
+    const json = extractBalanced(content, open, close);
+    if (json && isValidJson(json)) return json;
+    invalid ??= json ?? undefined;
+  }
 
   // Fallback: return trimmed content as-is
-  return content.trim();
+  return invalid ?? content.trim();
 }
 
 /**
@@ -65,7 +94,7 @@ function extractBalancedFrom(
       continue;
     }
 
-    if (ch === "\\") {
+    if (ch === "\\" && inString) {
       escaped = true;
       continue;
     }

@@ -3,6 +3,7 @@ import { Effect, pipe } from "effect";
 import type { Orq } from "@orq-ai/node";
 
 import { processDataPointEffect } from "./effects.js";
+import { configuredOrqHost } from "./orq-host.js";
 import {
   ProgressService,
   ProgressServiceLive,
@@ -34,7 +35,7 @@ import type {
 async function setupOrqClient(apiKey: string) {
   try {
     const client = await import("@orq-ai/node");
-    const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
+    const serverURL = configuredOrqHost() ?? "https://my.orq.ai";
 
     return new client.Orq({ apiKey, serverURL });
   } catch (error: unknown) {
@@ -180,6 +181,8 @@ export async function evaluatorq(
     print = true,
     description,
     path,
+    sendResults = true,
+    manageTracing = true,
   } = params;
 
   // Initialize tracing if OTEL is configured
@@ -199,7 +202,8 @@ export async function evaluatorq(
   let orqClient: Orq | undefined;
   const orqApiKey = process.env.ORQ_API_KEY;
 
-  if (orqApiKey) {
+  // Only dataset fetching needs the SDK, uploads go over plain fetch.
+  if (orqApiKey && "datasetId" in data) {
     orqClient = await setupOrqClient(orqApiKey);
   }
 
@@ -351,6 +355,9 @@ export async function evaluatorq(
                                 return {
                                   jobName: result.name,
                                   output: result.output,
+                                  ...(result.error && {
+                                    error: new Error(result.error),
+                                  }),
                                   evaluatorScores,
                                 };
                               },
@@ -413,7 +420,7 @@ export async function evaluatorq(
         ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
-      orqApiKey
+      orqApiKey && sendResults
         ? Effect.tap((results) =>
             sendResultsToOrqEffect(
               orqApiKey,
@@ -437,7 +444,7 @@ export async function evaluatorq(
     const streamingResults = await Effect.runPromise(streamingProgram);
 
     // Shutdown tracing gracefully for streaming case
-    if (tracingEnabled) {
+    if (tracingEnabled && manageTracing) {
       await flushTracing();
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await shutdownTracing();
@@ -497,7 +504,7 @@ export async function evaluatorq(
         ? Effect.tap((results) => displayResultsTableEffect(results, _name))
         : Effect.tap(() => Effect.void),
       // Send results to Orq when API key is available
-      orqApiKey
+      orqApiKey && sendResults
         ? Effect.tap((results) =>
             sendResultsToOrqEffect(
               orqApiKey,
@@ -525,7 +532,7 @@ export async function evaluatorq(
   const results = await executeEvaluation();
 
   // Shutdown tracing gracefully - flush and shutdown before checking failures
-  if (tracingEnabled) {
+  if (tracingEnabled && manageTracing) {
     // Force flush all pending spans
     await flushTracing();
     // Give additional time for network operations
@@ -555,6 +562,7 @@ export const evaluatorqEffect = (
     print = true,
     description,
     path,
+    sendResults = true,
   } = params;
 
   const startTime = new Date();
@@ -613,6 +621,7 @@ export const evaluatorqEffect = (
           apiKey,
           startTime,
           path,
+          sendResults,
         ),
       );
     });
@@ -631,6 +640,7 @@ export const evaluatorqEffect = (
     undefined,
     startTime,
     path,
+    sendResults,
   );
 };
 
@@ -647,6 +657,7 @@ const runEvaluationEffect = (
   apiKey: string | undefined,
   startTime: Date,
   path: string | undefined,
+  sendResults: boolean,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
   // Use API key from parameter or environment
   const orqApiKey = apiKey || process.env.ORQ_API_KEY;
@@ -691,7 +702,7 @@ const runEvaluationEffect = (
         )
       : Effect.tap(() => Effect.void),
     // Send results to Orq when API key is available
-    orqApiKey
+    orqApiKey && sendResults
       ? Effect.tap((results) =>
           sendResultsToOrqEffect(
             orqApiKey,

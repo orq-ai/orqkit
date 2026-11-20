@@ -132,6 +132,12 @@ export function toOpenResponses(
       ...(result.criteria_results && {
         criteria_results: result.criteria_results,
       }),
+      ...(result.criteria_verified !== undefined && {
+        criteria_verified: result.criteria_verified,
+      }),
+      ...(result.metadata?.criteria_meta !== undefined && {
+        criteria_meta: result.metadata.criteria_meta,
+      }),
       ...(result.turn_metrics.length > 0 && {
         turn_metrics: result.turn_metrics,
       }),

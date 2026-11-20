@@ -1,7 +1,8 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 
 import { Effect } from "effect";
 
+import { evaluatorqEffect } from "../../src/lib/evaluatorq.js";
 import { sendResultsToOrqEffect } from "../../src/lib/send-results.js";
 import type {
   EvaluationResultCellValue,
@@ -175,5 +176,52 @@ describe("sendResultsToOrqEffect serialization", () => {
     );
     const evalScore = extractFirstEvalScore(payload);
     expect(evalScore.error).toBe("Error: eval failed");
+  });
+});
+
+describe("evaluatorqEffect sendResults", () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.ORQ_API_KEY;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) {
+      delete process.env.ORQ_API_KEY;
+    } else {
+      process.env.ORQ_API_KEY = originalKey;
+    }
+  });
+
+  test("false skips the upload", async () => {
+    process.env.ORQ_API_KEY = "test-key";
+    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+
+    await Effect.runPromise(
+      evaluatorqEffect("no-upload", {
+        data: [{ inputs: {} }],
+        jobs: [async () => ({ name: "job", output: "ok" })],
+        print: false,
+        sendResults: false,
+      }),
+    );
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("uploads by default", async () => {
+    process.env.ORQ_API_KEY = "test-key";
+    const fetchSpy = mock(async () => new Response("{}", { status: 200 }));
+    globalThis.fetch = fetchSpy as unknown as typeof fetch;
+
+    await Effect.runPromise(
+      evaluatorqEffect("upload", {
+        data: [{ inputs: {} }],
+        jobs: [async () => ({ name: "job", output: "ok" })],
+        print: false,
+      }),
+    );
+
+    expect(fetchSpy).toHaveBeenCalled();
   });
 });

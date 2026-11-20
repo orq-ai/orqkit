@@ -73,9 +73,13 @@ export class UserSimulatorAgent extends BaseAgent {
    * Generate the first message to start a conversation.
    *
    * @param messages - Optional context messages
+   * @param signal - Stops the call when the conversation is cancelled
    * @returns First user message to start the conversation
    */
-  async generateFirstMessage(messages?: ChatMessage[]): Promise<string> {
+  async generateFirstMessage(
+    messages?: ChatMessage[],
+    signal?: AbortSignal,
+  ): Promise<string> {
     const promptMessages: ChatMessage[] = [...(messages ?? [])];
     promptMessages.push({
       role: "user",
@@ -86,6 +90,7 @@ export class UserSimulatorAgent extends BaseAgent {
     return this.respondAsync(promptMessages, {
       temperature: 0.8,
       llmPurpose: "first_message",
+      signal,
     });
   }
 

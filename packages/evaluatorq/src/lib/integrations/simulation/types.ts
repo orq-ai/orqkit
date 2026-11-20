@@ -170,6 +170,11 @@ export interface ChatMessage {
   content: string;
 }
 
+/** The agent under test: takes the conversation so far, returns its reply. */
+export type TargetCallback = (
+  messages: ChatMessage[],
+) => string | Promise<string>;
+
 // ---------------------------------------------------------------------------
 // Token usage
 // ---------------------------------------------------------------------------
@@ -226,6 +231,23 @@ export interface Scenario {
 // Judgment
 // ---------------------------------------------------------------------------
 
+/** One judge report on whether a criterion occurred. Never a pass or fail. */
+export interface CriterionVerdict {
+  criterion_id: string;
+  occurred: boolean;
+  evidence?: string;
+}
+
+/** Audit trail for one criterion, stored in `metadata.criteria_meta`. */
+export interface CriteriaMeta {
+  id: string;
+  description: string;
+  type: Criterion["type"];
+  passed: boolean;
+  audited: boolean | null;
+  evidence: string | null;
+}
+
 export interface Judgment {
   should_terminate: boolean;
   reason: string;
@@ -236,15 +258,11 @@ export interface Judgment {
   hallucination_risk?: number | null;
   tone_appropriateness?: number | null;
   factual_accuracy?: number | null;
-}
-
-// ---------------------------------------------------------------------------
-// Message
-// ---------------------------------------------------------------------------
-
-export interface Message {
-  role: "user" | "assistant" | "system";
-  content: string;
+  /**
+   * Occurrence audit for this turn. Absent or null means unknown, an empty
+   * list means the judge had nothing left to report.
+   */
+  criteria_verdicts?: CriterionVerdict[] | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -268,7 +286,7 @@ export interface TurnMetrics {
 export type TerminatedBy = "judge" | "max_turns" | "error" | "timeout";
 
 export interface SimulationResult {
-  messages: Message[];
+  messages: ChatMessage[];
   terminated_by: TerminatedBy;
   reason: string;
   goal_achieved: boolean;
@@ -280,6 +298,8 @@ export interface SimulationResult {
   metadata: Record<string, unknown>;
   /** Convenience fields for evaluatorq integration */
   criteria_results?: Record<string, boolean>;
+  /** False when the scenario has criteria and the judge never audited them. */
+  criteria_verified?: boolean;
   total_turns?: number;
 }
 

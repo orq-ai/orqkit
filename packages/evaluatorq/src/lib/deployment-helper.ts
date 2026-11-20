@@ -1,5 +1,7 @@
 import type { Orq } from "@orq-ai/node";
 
+import { configuredOrqHost } from "./orq-host.js";
+
 /**
  * Options for invoking a deployment.
  */
@@ -53,7 +55,7 @@ async function getOrCreateClient(): Promise<Orq> {
 
   try {
     const client = await import("@orq-ai/node");
-    const serverURL = process.env.ORQ_BASE_URL || "https://my.orq.ai";
+    const serverURL = configuredOrqHost() ?? "https://my.orq.ai";
 
     cachedClient = new client.Orq({ apiKey, serverURL });
     return cachedClient;
