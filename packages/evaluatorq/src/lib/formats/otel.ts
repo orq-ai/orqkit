@@ -379,7 +379,7 @@ export const OtelSpanSchema = model({
     .array(z.union([...partModels.values(), OtelGenericPartSchema]))
     .nullable()
     .default(null),
-  attributes: dictionary.default({}),
+  attributes: dictionary.default(() => ({})),
 });
 export type OtelSpanFields = z.infer<typeof OtelSpanSchema>;
 export class OtelSpan implements OtelSpanFields {

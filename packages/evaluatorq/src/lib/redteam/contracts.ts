@@ -120,7 +120,9 @@ export const VulnerabilityDefSchema = z.object({
   domain: VulnerabilityDomainSchema,
   description: z.string().default(""),
   defaultAttackTechnique: AttackTechniqueSchema,
-  frameworkMappings: z.record(z.string(), z.array(z.string())).default({}),
+  frameworkMappings: z
+    .record(z.string(), z.array(z.string()))
+    .default(() => ({})),
 });
 export type VulnerabilityDef = z.infer<typeof VulnerabilityDefSchema>;
 export function isKnownAttackTechnique(

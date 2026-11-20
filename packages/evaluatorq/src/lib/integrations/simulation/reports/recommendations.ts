@@ -138,7 +138,9 @@ export function buildRecommendationPrompt(
   return `Persona: ${xmlEscape(personaName(result))}\nScenario: ${xmlEscape(scenarioName(result))}\nJudge verdict: ${xmlEscape(truncate(result.reason, config.maxVerdictChars))}\nFlagged issues:\n${triggers.map(([trigger, evidence]) => `- [${trigger}] ${xmlEscape(evidence)}`).join("\n")}\n\n<transcript>\n${xmlEscape(truncate(transcript, config.maxTranscriptChars))}\n</transcript>`;
 }
 const SuggestionsSchema = z.object({
-  suggestions: z.preprocess(coerceStrList, z.array(z.string())).default([]),
+  suggestions: z
+    .preprocess(coerceStrList, z.array(z.string()))
+    .default(() => []),
 });
 export interface GenerateRecommendationsOptions {
   config?: SimulationRecommendationConfig | SimulationRecommendationConfigInput;
