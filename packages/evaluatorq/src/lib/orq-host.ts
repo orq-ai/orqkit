@@ -29,8 +29,8 @@ export function parseHostUrl(name: string, value: string): URL {
  * The Orq host the environment points at, or undefined when it names none, so
  * each caller keeps its own production default.
  *
- * ROUTER_BASE_URL is the deprecated way to set this. It counts here because a
- * run configured with it alone would otherwise upload to production.
+ * A versioned ROUTER_BASE_URL can also identify the platform host. Other
+ * router URLs require ORQ_BASE_URL so platform data cannot reach a proxy.
  */
 export function configuredOrqHost(): string | undefined {
   const orqBaseUrl = process.env.ORQ_BASE_URL;
@@ -47,6 +47,11 @@ export function configuredOrqHost(): string | undefined {
     return undefined;
   }
   const url = parseHostUrl("ROUTER_BASE_URL", routerBaseUrl);
-  const prefix = url.pathname.match(/^(.*)\/v\d+\/router\/?$/)?.[1] ?? "";
-  return `${url.origin}${prefix}`;
+  const route = url.pathname.match(/^(.*)\/v\d+\/router\/?$/);
+  if (!route) {
+    throw new Error(
+      "ROUTER_BASE_URL does not identify an Orq platform host; set ORQ_BASE_URL explicitly for platform operations.",
+    );
+  }
+  return `${url.origin}${route[1]}`;
 }
