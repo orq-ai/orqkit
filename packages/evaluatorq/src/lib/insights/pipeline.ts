@@ -34,6 +34,7 @@ import {
   LabelResult,
   LabelSpec,
   labelKey,
+  readsOrq,
   realAssistantErrors,
   type TraceInsight,
   TraceInsightSchema,
@@ -639,6 +640,10 @@ export interface InsightsOptions extends InsightsRunOptions {
   orqClient?: Orq | null;
   onSaved?: (path: string) => void | Promise<void>;
   signal?: AbortSignal;
+  finderExportSource?: string | null;
+  finderExportSha256?: string | null;
+  sourceName?: string | null;
+  orqScope?: Readonly<Record<string, string | null>> | null;
 }
 export async function insights(
   population: InsightsPopulation,
@@ -746,6 +751,17 @@ export async function insights(
       n_matched: resolved.compiled?.length ? 0 : documents.length,
       n_failed_match: 0,
     };
+    if (
+      options.finderExportSource != null &&
+      population.finderExport !== null
+    ) {
+      run.population.finder_export = options.finderExportSource;
+      if (options.finderExportSha256 != null)
+        run.population.finder_export_sha256 = options.finderExportSha256;
+    }
+    if (options.sourceName) run.population.source_name = options.sourceName;
+    if (options.orqScope != null && readsOrq(run.population))
+      run.population.orq_scope = { ...options.orqScope };
     const truncated = Number(resolved.echo.n_projection_truncated ?? 0);
     if (truncated)
       run.warnings.push(
