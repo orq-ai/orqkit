@@ -12,6 +12,7 @@ import * as os from "node:os";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
+import { OrqCLIError } from "../../../src/lib/common/cli-oauth.js";
 import {
   compressionInspectorRoutes,
   DocumentCache,
@@ -85,7 +86,7 @@ interface Harness {
 }
 
 function harness(
-  options: { client?: OrqSourceClient; failBuild?: boolean } = {},
+  options: { client?: OrqSourceClient; failBuild?: unknown } = {},
 ): Harness {
   let builds = 0;
   const queries: Harness["queries"] = [];
@@ -108,7 +109,10 @@ function harness(
     documents: new DocumentCache(),
     buildClient: async () => {
       builds++;
-      if (options.failBuild) throw new Error("credential at /private/key");
+      if (options.failBuild)
+        throw options.failBuild === true
+          ? new Error("credential at /private/key")
+          : options.failBuild;
       return client;
     },
   });
@@ -535,4 +539,28 @@ test("the oldest loaded trace expires after eight newer ones", async () => {
     )
   ).text();
   expect(live).toContain("Load the trace again to adjust it.");
+});
+
+test("source failures retain safe diagnostics and actionable CLI notices", async () => {
+  await enable();
+  for (const [kind, notice] of [
+    ["setup", "Install the orq CLI"],
+    ["authentication", "Run orq auth login"],
+  ] as const) {
+    const h = harness({
+      failBuild: new OrqCLIError("api_key=private-source-token", {
+        failureKind: kind,
+      }),
+    });
+    const response = await h.call("POST", "/compression-inspector/source/orq", {
+      ...csrf(),
+      trace_id: "trace-id",
+    });
+    const body = await response.text();
+    expect(body).toContain(notice);
+    expect(body).not.toContain("private-source-token");
+  }
+  const logged = warn.mock.calls.flat().join(" ");
+  expect(logged).toContain("OrqCLIError");
+  expect(logged).not.toContain("private-source-token");
 });

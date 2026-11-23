@@ -134,10 +134,10 @@ async function runWithSelectedAuth(
       "Dashboard authentication changed after this run started. Start the run again.",
     );
   const auth = await resolveDashboardAuth(settings);
-  const account = accountIdentity(auth);
+  const account = await accountIdentity(auth);
   if (
     payload.authIdentity !== null &&
-    authIdentity(auth, settings) !== payload.authIdentity
+    (await authIdentity(auth, settings)) !== payload.authIdentity
   )
     throw new Error(
       "Dashboard authentication or scope changed after this run started. Start the run again.",

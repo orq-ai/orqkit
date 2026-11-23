@@ -1,5 +1,8 @@
 import { randomBytes } from "node:crypto";
 
+import { OrqCLIError, safeError } from "../common/cli-oauth.js";
+import { ModelInputCapError } from "../common/model-input.js";
+import { scrubKnownSecrets } from "../common/redact.js";
 import { esc } from "../common/reports/html-helpers.js";
 import type { TraceDocument } from "../common/trace-document.js";
 import {
@@ -364,17 +367,39 @@ const disabled = () =>
   });
 
 const isRenderLimit = (error: unknown) =>
-  error instanceof KnobError ||
-  error?.constructor?.name === "ModelInputCapError" ||
-  (error instanceof Error && error.constructor === Error && !("code" in error));
+  error instanceof KnobError || error instanceof ModelInputCapError;
+
+function sourceFailure(error: unknown, fallback: string): string {
+  let cause = error;
+  for (
+    let depth = 0;
+    depth < 8 && cause instanceof Error && cause.cause !== undefined;
+    depth++
+  )
+    cause = cause.cause;
+  const message =
+    cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause);
+  console.warn(
+    `Compression inspector source failed: ${safeError(scrubKnownSecrets(message))}`,
+  );
+  if (isRenderLimit(cause))
+    return safeError(scrubKnownSecrets((cause as Error).message));
+  if (cause instanceof OrqCLIError) {
+    if (cause.failureKind === "setup")
+      return "Install the orq CLI and sign in before using CLI OAuth.";
+    if (cause.failureKind === "authentication")
+      return "Orq CLI OAuth sign-in needs attention. Run orq auth login.";
+  }
+  return fallback;
+}
 
 export async function defaultOrqClient(): Promise<OrqSourceClient> {
   const settings = await effectiveDashboardSettings();
   const auth = await resolveDashboardAuth(settings);
-  return (await buildOrqClient(auth, {
+  return buildOrqClient(auth, {
     workspace: settings.orqWorkspace,
     project: settings.orqProjectId,
-  })) as unknown as OrqSourceClient;
+  });
 }
 
 export interface CompressionInspectorOptions {
@@ -434,8 +459,8 @@ export function compressionInspectorRoutes(
           notice: "No Orq trace matched that ID in the selected date range.",
         });
       loaded = await load(document);
-    } catch {
-      return pageResponse({ notice: ORQ_ERROR });
+    } catch (error) {
+      return pageResponse({ notice: sourceFailure(error, ORQ_ERROR) });
     }
     return pageResponse({ loaded });
   }
@@ -451,8 +476,10 @@ export function compressionInspectorRoutes(
         text: null,
         limit: 50,
       });
-    } catch {
-      return pageResponse({ notice: SESSION_SEARCH_ERROR });
+    } catch (error) {
+      return pageResponse({
+        notice: sourceFailure(error, SESSION_SEARCH_ERROR),
+      });
     }
     return pageResponse({ sessions: result });
   }
@@ -475,8 +502,8 @@ export function compressionInspectorRoutes(
       const ref = { source: source as SessionSource, path: rawPath };
       const sourcePath = (await resolveSessionRef(ref)).path;
       loaded = await load(await loadSessionDocument(ref), sourcePath);
-    } catch {
-      return pageResponse({ notice: SESSION_ERROR });
+    } catch (error) {
+      return pageResponse({ notice: sourceFailure(error, SESSION_ERROR) });
     }
     return pageResponse({ loaded });
   }

@@ -40,6 +40,7 @@ async function fit(
   dimensions: number,
   seed: number,
   cosine: boolean,
+  onError?: (message: string) => void,
 ): Promise<number[][] | null> {
   try {
     const model = new UMAP({
@@ -49,10 +50,12 @@ async function fit(
       ...(cosine ? { distanceFn: cosineDistance } : {}),
     });
     const result = await model.fitAsync(rows.map((row) => [...row]));
-    return result.length === rows.length && finiteMatrix(result, dimensions)
-      ? result
-      : null;
-  } catch {
+    if (result.length === rows.length && finiteMatrix(result, dimensions))
+      return result;
+    onError?.("UMAP returned invalid coordinates");
+    return null;
+  } catch (error) {
+    onError?.(error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -60,6 +63,7 @@ async function fit(
 export async function reduce3d(
   vectors: readonly (readonly number[])[],
   randomState = 42,
+  onError?: (message: string) => void,
 ): Promise<number[][] | null> {
   if (
     vectors.length < 5 ||
@@ -78,13 +82,14 @@ export async function reduce3d(
     )
   )
     return null;
-  return fit(vectors, 3, randomState, true);
+  return fit(vectors, 3, randomState, true, onError);
 }
 
 export async function project2d(
   coordinates: readonly (readonly number[])[],
   randomState = 7,
+  onError?: (message: string) => void,
 ): Promise<number[][] | null> {
   if (coordinates.length < 5 || !finiteMatrix(coordinates, 3)) return null;
-  return fit(coordinates, 2, randomState, false);
+  return fit(coordinates, 2, randomState, false, onError);
 }

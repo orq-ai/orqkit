@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
-import { stat } from "node:fs/promises";
+import { realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import type { ModelInfo } from "../common/model-catalogue.js";
 import { esc } from "../common/reports/html-helpers.js";
-import { listManifests } from "../common/run-manifest.js";
+import { listManifests, readManifest } from "../common/run-manifest.js";
 import type { RunManifest } from "../contracts.js";
 import {
   estimateRun,
@@ -123,6 +123,7 @@ import {
 } from "./insights-uploads.js";
 import {
   clusterDetail,
+  type InsightsOverviewRun,
   type InsightsRun,
   mapPayload,
   overviewPage,
@@ -150,6 +151,11 @@ import {
 import { modelControl } from "./view.js";
 
 type Loaded = readonly [path: string, run: InsightsRun | string];
+interface RunMetadata {
+  row: RunEntry;
+  overview: InsightsOverviewRun | null;
+  manifest: RunManifest | null;
+}
 type Form = FormData;
 type CatalogueResult = [FacetCatalogue | null, string | null, boolean];
 
@@ -273,65 +279,65 @@ function snapshotClassifierQuestions(
   );
 }
 
-async function entries(directory: string): Promise<{
+async function entries(
+  directory: string,
+  readMetadata: (path: string) => Promise<RunMetadata>,
+  reconcile = true,
+): Promise<{
   rows: RunEntry[];
-  loaded: Map<string, Loaded>;
+  loaded: Map<string, readonly [string, RunMetadata]>;
   manifests: Map<string, RunManifest>;
 }> {
+  let all = await listManifests(directory);
   try {
-    for (const manifest of await listManifests(directory))
-      if (manifest.surface === "insights")
-        await reconcileStaleWorker(directory, manifest.runId);
+    if (reconcile) {
+      let changed = false;
+      for (const manifest of all)
+        if (manifest.surface === "insights" && manifest.status === "running")
+          changed =
+            (await reconcileStaleWorker(directory, manifest.runId)) || changed;
+      if (changed) all = await listManifests(directory);
+    }
   } catch (error) {
     console.warn(
       `Could not reconcile stale Insights workers in ${directory}: ${errorText(error)}`,
     );
   }
   const rows: RunEntry[] = [];
-  const loaded = new Map<string, Loaded>();
-  const aliases: [string, Loaded][] = [];
+  const loaded = new Map<string, readonly [string, RunMetadata]>();
+  const aliases: [string, readonly [string, RunMetadata]][] = [];
   const seen = new Set<string>();
   for (const path of await listRunPaths(directory)) {
     const stem = basename(path, ".json");
-    let run: InsightsRun | string;
-    try {
-      run = await loadRun(path);
-    } catch (error) {
-      run = `${error instanceof Error ? error.name : "Error"}: ${errorText(error)}`;
-      console.warn(`Unreadable Insights run ${path}: ${run}`);
-    }
-    if (typeof run !== "string") {
-      if (!seen.has(run.runId)) {
-        rows.push([run.runId, run.runName, run.status]);
-        loaded.set(run.runId, [path, run]);
-        seen.add(run.runId);
+    const metadata = await readMetadata(path);
+    const [runId] = metadata.row;
+    if (metadata.overview !== null) {
+      if (!seen.has(runId)) {
+        rows.push(metadata.row);
+        loaded.set(runId, [path, metadata]);
+        seen.add(runId);
       }
-      aliases.push([stem, [path, run]]);
+      aliases.push([stem, [path, metadata]]);
     } else {
-      rows.push([stem, stem, "unreadable"]);
-      if (!loaded.has(stem)) loaded.set(stem, [path, run]);
+      rows.push(metadata.row);
+      if (!loaded.has(stem)) loaded.set(stem, [path, metadata]);
     }
   }
   for (const [alias, target] of aliases)
     if (!loaded.has(alias)) loaded.set(alias, target);
-  const all = await listManifests(directory);
   const manifests = new Map(
     all
       .filter((manifest) => manifest.surface === "insights")
       .map((manifest) => [manifest.runId, manifest] as const),
   );
-  for (const [, run] of loaded.values())
-    if (typeof run !== "string" && !manifests.has(run.runId))
-      manifests.set(run.runId, runManifestFor(run));
+  for (const [, metadata] of loaded.values())
+    if (metadata.manifest && !manifests.has(metadata.row[0]))
+      manifests.set(metadata.row[0], metadata.manifest);
   const known = new Set(rows.map(([id]) => id));
   const manifestRows: RunEntry[] = [];
   for (const manifest of all) {
     if (manifest.surface !== "insights" || known.has(manifest.runId)) continue;
     manifestRows.push([manifest.runId, manifest.runName, manifest.status]);
-    loaded.set(manifest.runId, [
-      join(directory, `${manifest.runId}.json`),
-      manifest.status,
-    ]);
   }
   return { rows: [...manifestRows, ...rows], loaded, manifests };
 }
@@ -540,6 +546,77 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
   const entryFor = deps.catalogueEntry ?? catalogueEntry;
   const groupsFor = deps.modelGroups ?? modelGroups;
   const latestSearch = new Map<string, AbortController>();
+  const runMetadata = new Map<string, { stamp: string; value: RunMetadata }>();
+  const safeRunId = (id: string) =>
+    id !== "." && id !== ".." && basename(id) === id && !id.includes("\\");
+
+  async function metadataFor(path: string): Promise<RunMetadata> {
+    const stem = basename(path, ".json");
+    let stamp: string | undefined;
+    let value: RunMetadata;
+    try {
+      const info = await stat(path);
+      stamp = [
+        info.dev,
+        info.ino,
+        info.uid,
+        info.mode,
+        info.size,
+        info.mtimeMs,
+        info.ctimeMs,
+      ].join(":");
+      const cached = runMetadata.get(path);
+      if (cached?.stamp === stamp) {
+        runMetadata.delete(path);
+        runMetadata.set(path, cached);
+        return cached.value;
+      }
+      const run = await loadRun(path);
+      value = {
+        row: [run.runId, run.runName, run.status],
+        overview: {
+          createdAt: run.createdAt,
+          counts: { n_traces: run.counts.n_traces ?? run.traces.length },
+          traces: [],
+          dimensions: Object.fromEntries(
+            Object.keys(run.dimensions).map((name) => [name, null]),
+          ),
+        },
+        manifest: runManifestFor(run),
+      };
+    } catch (error) {
+      console.warn(`Unreadable Insights run ${path}: ${errorText(error)}`);
+      value = {
+        row: [stem, stem, "unreadable"],
+        overview: null,
+        manifest: null,
+      };
+    }
+    if (stamp !== undefined) {
+      runMetadata.delete(path);
+      runMetadata.set(path, { stamp, value });
+      while (runMetadata.size > 512)
+        runMetadata.delete(runMetadata.keys().next().value as string);
+    }
+    return value;
+  }
+
+  async function manifestFor(runId: string): Promise<RunManifest | null> {
+    if (!safeRunId(runId)) return null;
+    let manifest = await readManifest(runsDir(), runId);
+    if (manifest?.surface !== "insights") return null;
+    if (manifest.status === "running") {
+      try {
+        if (await reconcileStaleWorker(runsDir(), runId))
+          manifest = await readManifest(runsDir(), runId);
+      } catch (error) {
+        console.warn(
+          `Could not reconcile Insights worker ${runId}: ${errorText(error)}`,
+        );
+      }
+    }
+    return manifest;
+  }
   const catalogueCache = new Map<
     string,
     [number, FacetCatalogue | null, boolean]
@@ -768,8 +845,57 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
     resolved: Loaded | undefined;
     manifests: Map<string, RunManifest>;
   }> {
-    const { loaded, manifests } = await entries(runsDir());
-    return { resolved: loaded.get(runId), manifests };
+    const directory = runsDir();
+    const manifests = new Map<string, RunManifest>();
+    let manifest = await manifestFor(runId);
+    if (manifest) manifests.set(manifest.runId, manifest);
+    let path: string | undefined;
+    if (
+      manifest?.reportPath &&
+      dirname(resolve(manifest.reportPath)) === resolve(directory) &&
+      basename(manifest.reportPath).startsWith("insights_") &&
+      manifest.reportPath.endsWith(".json")
+    )
+      path = manifest.reportPath;
+    else if (!manifest && safeRunId(runId) && runId.startsWith("insights_")) {
+      const candidate = join(directory, `${runId}.json`);
+      if (
+        await stat(candidate).then(
+          (info) => info.isFile(),
+          () => false,
+        )
+      )
+        path = candidate;
+    }
+    if (!path && manifest?.status === "running")
+      return {
+        resolved: [join(directory, `${runId}.json`), manifest.status],
+        manifests,
+      };
+    if (!path) {
+      const indexed = await entries(directory, metadataFor, false);
+      path = indexed.loaded.get(runId)?.[0];
+      if (!path)
+        return {
+          resolved: manifest
+            ? [join(directory, `${runId}.json`), manifest.status]
+            : undefined,
+          manifests,
+        };
+    }
+    let run: InsightsRun | string;
+    try {
+      run = await loadRun(path);
+      if (!manifest || manifest.runId !== run.runId)
+        manifest = await manifestFor(run.runId);
+      manifests.set(run.runId, manifest ?? runManifestFor(run));
+    } catch (error) {
+      if (manifest && (error as NodeJS.ErrnoException).code === "ENOENT")
+        return { resolved: [path, manifest.status], manifests };
+      run = `${error instanceof Error ? error.name : "Error"}: ${errorText(error)}`;
+      console.warn(`Unreadable Insights run ${path}: ${run}`);
+    }
+    return { resolved: [path, run], manifests };
   }
 
   async function loadedRun(runId: string): Promise<InsightsRun | null> {
@@ -811,7 +937,7 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
     if (scope !== null && scope.account_version !== "2") {
       let account: string;
       try {
-        account = accountIdentity(auth);
+        account = await accountIdentity(auth);
       } catch (error) {
         console.warn(
           `Insights trace source could not identify the selected Orq account: ${errorText(error)}`,
@@ -876,10 +1002,10 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
   async function home(): Promise<Response> {
     const directory = runsDir();
     await cleanupExpiredUploads(directory);
-    const { rows, loaded, manifests } = await entries(directory);
-    const runs = new Map<string, InsightsRun>();
-    for (const [id, [, run]] of loaded)
-      if (typeof run !== "string") runs.set(id, run);
+    const { rows, loaded, manifests } = await entries(directory, metadataFor);
+    const runs = new Map<string, InsightsOverviewRun>();
+    for (const [id, [, metadata]] of loaded)
+      if (metadata.overview) runs.set(id, metadata.overview);
     return html(await overviewPage(rows, runs, manifests));
   }
 
@@ -980,6 +1106,8 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
   }
 
   async function upload(req: Request): Promise<Response> {
+    const earlyRejection = requestRejected(req);
+    if (earlyRejection) return json({ error: earlyRejection }, 403);
     await cleanupExpiredUploads(runsDir());
     let form: Form;
     try {
@@ -1176,11 +1304,12 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
     let matched: number;
     try {
       const directory = runsDir();
-      const root = resolve(finderDir());
-      const requested = expandUser(rawPath);
-      const path = resolve(
-        isAbsolute(requested) ? requested : join(root, requested),
+      const root = await realpath(finderDir()).catch(() =>
+        resolve(finderDir()),
       );
+      const requested = expandUser(rawPath);
+      const joined = isAbsolute(requested) ? requested : join(root, requested);
+      const path = await realpath(joined).catch(() => resolve(joined));
       let contents: Buffer;
       if (await isUploadedSource(directory, path))
         contents = await readUploadedSource(directory, path, "finder");
@@ -1191,10 +1320,15 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
           );
         contents = await readApprovedFinderExport(root, path);
       }
-      matched = new RunExport(JSON.parse(contents.toString("utf8")))
-        .matchedTraceIds.length;
-    } catch {
-      return alert("Could not read a valid Finder export.", 422);
+      matched = new RunExport(
+        JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(contents)),
+      ).matchedTraceIds.length;
+    } catch (error) {
+      console.warn(`Could not preview Finder export: ${errorText(error)}`);
+      return alert(
+        `Could not read a valid Finder export. ${errorText(error)}`,
+        422,
+      );
     }
     return html(
       `<p class="insights-projection" role="status">Finder export is ready with ${matched.toLocaleString("en-US")} matched traces.</p>`,
@@ -1245,7 +1379,7 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
     let identity: string;
     try {
       auth = await selectedAuth();
-      identity = authIdentity(auth, await settings());
+      identity = await authIdentity(auth, await settings());
     } catch (error) {
       return runFormResponse(values, errorText(error), 422);
     }

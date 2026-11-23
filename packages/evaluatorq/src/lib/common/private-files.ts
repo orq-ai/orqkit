@@ -10,7 +10,7 @@ import { basename, dirname, extname, join } from "node:path";
 export async function writePrivateAtomic(
   path: string,
   contents: string | Uint8Array,
-  options: { privateDirectory?: boolean; mode?: number } = {},
+  options: { privateDirectory?: boolean } = {},
 ): Promise<void> {
   const directory = dirname(path);
   await mkdir(directory, { mode: 0o700, recursive: true });
@@ -27,13 +27,30 @@ export async function writePrivateAtomic(
   if (options.privateDirectory ?? true) {
     await chmod(directory, 0o700);
   }
+  await replaceAtomic(path, contents, 0o600);
+}
+
+export async function writeAtomic(
+  path: string,
+  contents: string | Uint8Array,
+): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await replaceAtomic(path, contents, 0o666);
+}
+
+async function replaceAtomic(
+  path: string,
+  contents: string | Uint8Array,
+  mode: number,
+): Promise<void> {
+  const directory = dirname(path);
   const stem = basename(path, extname(path));
   const temporary = join(
     directory,
     `.${stem}.${randomBytes(6).toString("hex")}.tmp`,
   );
   try {
-    const handle = await open(temporary, "wx", options.mode ?? 0o600);
+    const handle = await open(temporary, "wx", mode);
     try {
       await handle.writeFile(contents);
       await handle.sync();

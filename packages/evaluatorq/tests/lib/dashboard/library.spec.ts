@@ -80,7 +80,7 @@ describe("readJsonCached", () => {
     const p = join(rt, "m.json");
     await writeFile(p, '{"a": 1}');
     const first = await readJsonCached(p);
-    expect(await readJsonCached(p)).toBe(first);
+    expect(await readJsonCached(p)).toEqual(first);
     await writeFile(p, '{"a": 2}');
     const { mtime } = await stat(p);
     await utimes(p, mtime, new Date(mtime.getTime() + 1000));
@@ -218,4 +218,13 @@ describe("scan manifests", () => {
     expect(cards[0]?.status).toBe("error");
     expect(cards[0]?.path).toBeNull();
   });
+});
+
+it("cached report values are isolated from caller mutations", async () => {
+  const root = await runsDir();
+  const path = join(root, "mutable.json");
+  await writeFile(path, '{"items":["original"]}');
+  const first = (await readJsonCached(path)) as { items: string[] };
+  first.items.push("changed");
+  expect(await readJsonCached(path)).toEqual({ items: ["original"] });
 });
