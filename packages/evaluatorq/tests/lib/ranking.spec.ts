@@ -1,5 +1,7 @@
 import { describe, expect, spyOn, test } from "bun:test";
 
+import { adamBiasCorrections } from "../../src/lib/common/adam-bias.js";
+import { pythonFloatSum } from "../../src/lib/formats/shared.js";
 import {
   binarize,
   comparisonsPerJudge,
@@ -8,6 +10,9 @@ import {
   type JudgedComparison,
   reliability,
 } from "../../src/lib/ranking.js";
+import portability from "./fixtures/ranking-portability-python-golden.json" with {
+  type: "json",
+};
 
 const vote = (
   judge: string,
@@ -18,6 +23,38 @@ const vote = (
 ): JudgedComparison => ({ judge, itemA, itemB, pA, weight });
 
 describe("fitBt", () => {
+  test("uses compensated Python sums and stable Adam bias corrections", () => {
+    expect(pythonFloatSum([1e16, 1, -1e16])).toBe(1);
+    expect(adamBiasCorrections(0.9, 4)).toEqual([
+      0, 0.09999999999999998, 0.18999999999999995, 0.2709999999999999, 0.3439,
+    ]);
+    expect(adamBiasCorrections(0.999, 4)).toEqual([
+      0, 0.0010000000000000009, 0.001998999999999973, 0.002997000999999999,
+      0.003994003998999962,
+    ]);
+  });
+
+  for (const [index, fixture] of portability.cases.entries())
+    test(`matches pinned Python ranking and probabilities for portability vector ${index}`, () => {
+      const fit = fitBt(fixture.rows, {
+        judgeSigma: fixture.judgeSigma,
+        hard: fixture.hard,
+      });
+      expect(fit.ranking).toEqual(fixture.ranking);
+      expect(fit.converged).toBe(fixture.converged);
+      // Raw skill/sigma scales vary with libm and the stopping iterate; fitted probabilities are comparable.
+      for (const [rowIndex, row] of fixture.rows.entries()) {
+        const score =
+          ((fit.skills[row.itemA] as number) -
+            (fit.skills[row.itemB] as number)) /
+          (fit.sigmas[row.judge] ?? 1);
+        const probability = 1 / (1 + Math.exp(-score));
+        expect(
+          Math.abs(probability - (fixture.probabilities[rowIndex] as number)),
+        ).toBeLessThanOrEqual(portability.probabilityTolerance);
+      }
+    });
+
   test("rejects empty input and out of range preferences", () => {
     expect(() => fitBt([])).toThrow("at least one");
     expect(() => fitBt([vote("j", "a", "b", 1.5)])).toThrow();

@@ -187,7 +187,7 @@ it("rejects trace and static-only selector conflicts before target execution", (
         { inputs: { traceSeedMessages: [{ role: "user", content: "seed" }] } },
       ],
     }),
-  ).toThrow("traceStartFrom");
+  ).toThrow("trace_start_from");
 });
 it("enforces history ownership for both native and Python trace metadata", () => {
   for (const inputs of [

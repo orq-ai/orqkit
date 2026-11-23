@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
   buildReviewPayload,
   buildSignalDetailPayload,
+  utcTimestamp,
 } from "../../../src/lib/dashboard/insights-review-data.js";
 import { reviewTraceKey } from "../../../src/lib/dashboard/insights-review-projection.js";
 import { uploadsDir } from "../../../src/lib/dashboard/insights-uploads.js";
@@ -17,7 +19,7 @@ import { getInsightsRunsDir } from "../../../src/lib/insights/store.js";
 import { SHELL_TOOL_NAMES } from "../../../src/lib/signals/config.js";
 
 type Row = Record<string, unknown>;
-const SCRATCH = join(process.env.HOME ?? ".", "insights-review-data-tests");
+const SCRATCH = join(tmpdir(), "insights-review-data-tests");
 const previous = process.env.EVALUATORQ_DIR;
 let root: string;
 let warn: ReturnType<typeof spyOn<Console, "warn">>;
@@ -479,3 +481,15 @@ test("null answers are label errors and yes/no answers send label keys", async (
     (await rows(run([yes, no]))).map((item) => (item.l as Row).failed_question),
   ).toEqual([["yes"], ["no"]]);
 });
+
+for (const [input, expected] of [
+  ["2026-11-23T12:34:56.123456Z", "2026-11-23T12:34:56.123456Z"],
+  ["2026-11-23T12:34:56.123456+02:30", "2026-11-23T10:04:56.123456Z"],
+  ["2026-11-23T12:34:56.123456", "2026-11-23T12:34:56.123456Z"],
+  ["1969-12-31T23:59:59.999999Z", "1969-12-31T23:59:59.999999Z"],
+  ["9999-12-31T23:59:59.999999Z", "9999-12-31T23:59:59.999999Z"],
+  ["2026-11-23T12:34:56Z", "2026-11-23T12:34:56Z"],
+])
+  test(`review timestamp retains microseconds for ${input}`, () => {
+    expect(utcTimestamp(input as string)).toBe(expected as string);
+  });

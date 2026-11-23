@@ -237,8 +237,8 @@ const CompilerResponseSchema = CompilerWireQuerySchema.extend({
         .meta({ minLength: 1, maxLength: 40 }),
     }),
   ),
-  start: z.iso.datetime({ offset: true }).nullable(),
-  end: z.iso.datetime({ offset: true }).nullable(),
+  start: z.string().meta({ format: "date-time" }).nullable(),
+  end: z.string().meta({ format: "date-time" }).nullable(),
 });
 export type CompilerWireQuery = z.infer<typeof CompilerWireQuerySchema>;
 export function dimensionToDomain(input: unknown): CompiledQuery {

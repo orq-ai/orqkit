@@ -1,3 +1,4 @@
+import { traceDocumentJson } from "../common/trace-document.js";
 import {
   MAX_SELECTED_SESSIONS,
   SessionLoadError,
@@ -42,12 +43,7 @@ export async function buildSessionSnapshot(
       if (end <= previous.ended) continue;
       total -= previous.json.length;
     }
-    const json = Buffer.from(
-      JSON.stringify({
-        metadata: document.metadata,
-        trajectory: document.trajectory.toJsonDict(),
-      }),
-    );
+    const json = Buffer.from(traceDocumentJson(document));
     documents.set(document.traceId, { ended: end, json });
     total += json.length;
     if (options.maxBytes !== undefined && total > options.maxBytes)

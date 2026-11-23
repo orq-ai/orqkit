@@ -9,6 +9,7 @@ import {
 } from "../insights/models.js";
 import { CODING_LABELS } from "../insights/presets.js";
 import { SHELL_TOOL_NAMES } from "../signals/config.js";
+import { timeMicros } from "../trace-finder/models.js";
 import { SOURCE_BY_MODE, SOURCES } from "./insights-launch.js";
 import {
   reviewTraceKey,
@@ -74,16 +75,19 @@ function sourceLabel(mode: unknown): string {
 export function utcTimestamp(value: Date | string | null): string | null {
   if (value === null) return null;
   const text = typeof value === "string" ? value : value.toISOString();
-  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(text);
-  const date = new Date(
-    hasZone || typeof value !== "string" ? text : `${text}Z`,
-  );
-  if (Number.isNaN(date.getTime())) return text;
-  const iso = date.toISOString();
-  const ms = date.getUTCMilliseconds();
-  return ms === 0
-    ? iso.replace(".000Z", "Z")
-    : iso.replace(/\.\d{3}Z$/, `.${String(ms).padStart(3, "0")}000Z`);
+  let microseconds: bigint;
+  try {
+    microseconds = timeMicros(text);
+  } catch {
+    return text;
+  }
+  const second =
+    microseconds >= 0n
+      ? microseconds / 1000000n
+      : (microseconds - 999999n) / 1000000n;
+  const fraction = Number(microseconds - second * 1000000n);
+  const utc = new Date(Number(second) * 1000).toISOString().slice(0, 19);
+  return `${utc}${fraction ? `.${String(fraction).padStart(6, "0")}` : ""}Z`;
 }
 
 /** Map a saved Insights run into the complete, JSON-safe dashboard contract. */

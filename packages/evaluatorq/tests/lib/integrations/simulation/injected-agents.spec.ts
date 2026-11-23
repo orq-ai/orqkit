@@ -76,6 +76,57 @@ class PrivateJudge implements SimulationJudge {
   }
 }
 
+test("a failed judge leaves the criterion audit unknown instead of passing every criterion", async () => {
+  const point = {
+    ...datapoint,
+    scenario: {
+      ...datapoint.scenario,
+      criteria: [
+        { description: "answer", type: "must_happen" as const },
+        { description: "invent facts", type: "must_not_happen" as const },
+      ],
+    },
+  };
+  const judge: SimulationJudge = {
+    resetUsage() {},
+    getUsage: usage,
+    async evaluate() {
+      throw Object.assign(new Error("model not found"), { status: 404 });
+    },
+  };
+  const runner = new SimulationRunner({
+    userSimulator: new PrivateUser(),
+    judge,
+    targetCallback: async () => "reply",
+  });
+  const result = await runner.run({ datapoint: point, maxTurns: 1 });
+  expect(result.terminated_by).toBe("error");
+  expect(result.metadata.criteria_meta).toBeNull();
+  expect(result.criteria_results).toBeUndefined();
+  expect(result.criteria_verified).toBe(false);
+  expect(result.metadata).toMatchObject({
+    persona_traits: { background: "test", communication_style: "casual" },
+    scenario_goal: "test",
+    scenario_context: "",
+  });
+});
+
+test("a target call deadline terminates the conversation as timeout", async () => {
+  const runner = new SimulationRunner({
+    userSimulator: new PrivateUser(),
+    judge: new PrivateJudge(),
+    targetCallback: async () => {
+      await Bun.sleep(30);
+      return "late";
+    },
+    targetAgentTimeoutMs: 5,
+    maxTargetRetries: 0,
+  });
+  const result = await runner.run({ datapoint, maxTurns: 1 });
+  expect(result.terminated_by).toBe("timeout");
+  expect(result.metadata.errorType).toBe("timeout");
+});
+
 test("runs shared injected agents with native private state without overlapping resets", async () => {
   const userSimulator = new PrivateUser(),
     judge = new PrivateJudge();

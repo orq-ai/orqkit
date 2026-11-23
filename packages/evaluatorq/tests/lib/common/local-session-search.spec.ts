@@ -1,4 +1,5 @@
 import { expect, spyOn, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -137,6 +138,11 @@ test("session CLI validates dates and writes a private reusable snapshot", async
   expect(() => sessionQuery({ from: "2026-11-10", to: "2026-11-09" })).toThrow(
     "first day",
   );
+  expect(sessionQuery({ from: "20261101" }).start).toEqual(
+    sessionQuery({ from: "2026-11-01" }).start,
+  );
+  expect(() => sessionQuery({ limit: 0 })).toThrow("limit must be");
+  expect(() => sessionQuery({ text: "x".repeat(501) })).toThrow("text must be");
   const dir = await mkdtemp(join(tmpdir(), "sessions-export-")),
     previous = process.env.CODEX_HOME;
   try {
@@ -173,8 +179,42 @@ test("session CLI validates dates and writes a private reusable snapshot", async
         },
       ),
     ).toBe(0);
-    expect(JSON.parse(lines[0] ?? "[]") as unknown[]).toHaveLength(1);
-    const snapshot = new Snapshot(JSON.parse(await readFile(output, "utf8")));
+    const listed = JSON.parse(lines[0] ?? "[]");
+    expect(listed).toHaveLength(1);
+    expect(listed[0].session_id).toBe("s");
+    expect(listed[0].started_at).toBe("2026-11-10T10:00:00Z");
+    expect(listed[0]).not.toHaveProperty("sessionId");
+    const wire = JSON.parse(await readFile(output, "utf8"));
+    expect(wire.documents[0].metadata.trace_id).toBe("codex:s");
+    expect(wire.documents[0].metadata).not.toHaveProperty("traceId");
+    expect(wire.documents[0].trajectory.steps[0]).toHaveProperty(
+      "tool_calls",
+      null,
+    );
+    if (process.env.EVALUATORQ_PYTHON) {
+      const checked = spawnSync(
+        process.env.EVALUATORQ_PYTHON,
+        [
+          "-c",
+          `
+import json, sys
+from evaluatorq.trace_finder.models import Snapshot
+from evaluatorq.local_sessions.models import SessionSummary
+Snapshot.model_validate_json(open(sys.argv[1], encoding="utf-8").read())
+SessionSummary.model_validate(json.loads(sys.argv[2])[0])
+print("Python accepted snapshot and session listing")
+`,
+          output,
+          lines[0] ?? "[]",
+        ],
+        { encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024 },
+      );
+      expect(checked.status, checked.stderr).toBe(0);
+      expect(checked.stdout).toContain(
+        "Python accepted snapshot and session listing",
+      );
+    }
+    const snapshot = new Snapshot(wire);
     expect(snapshot.documents[0]?.traceId).toBe("codex:s");
     if (process.platform !== "win32")
       expect((await stat(output)).mode & 0o777).toBe(0o600);
