@@ -293,6 +293,10 @@ test("fetch replaces auth failures with one fixed message", async () => {
   }, "private-trace-id").catch((caught: unknown) => caught);
   expect(error).toBeInstanceOf(InspectorSourceError);
   expect((error as Error).message).toBe(SAFE);
+  expect((error as Error).cause).toBeInstanceOf(Error);
+  expect(((error as Error).cause as Error).message).toContain(
+    "/private/credentials.json",
+  );
 });
 
 test("fetch rejects an inverted or invalid window without the trace id", async () => {

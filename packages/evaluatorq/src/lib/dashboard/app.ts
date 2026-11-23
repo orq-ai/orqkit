@@ -1,3 +1,4 @@
+import { once } from "node:events";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -494,22 +495,28 @@ function allowedHost(
   }
 }
 
-export function serveDashboard(options: {
+export async function serveDashboard(options: {
   roots?: string[] | null;
   host?: string;
   port?: number;
 }) {
   const handle = createDashboardHandler({ roots: options.roots });
-  const bindHost = options.host ?? "127.0.0.1";
-  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(bindHost))
-    console.warn(`Dashboard is unauthenticated and exposed on ${bindHost}.`);
+  const requestedHost = options.host ?? "127.0.0.1";
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(requestedHost))
+    throw new Error("The local dashboard must bind to a loopback address.");
+  const bindHost =
+    requestedHost === "localhost"
+      ? "127.0.0.1"
+      : requestedHost === "[::1]"
+        ? "::1"
+        : requestedHost;
   const server = createServer(async (incoming, outgoing) => {
     try {
       const address = server.address();
       const port =
         typeof address === "object" && address !== null
           ? address.port
-          : (options.port ?? 8765);
+          : (options.port ?? 8080);
       const host = incoming.headers.host;
       if (!allowedHost(host, bindHost, port, incoming.socket.localAddress)) {
         outgoing.writeHead(403, { "content-type": "text/plain" });
@@ -540,6 +547,7 @@ export function serveDashboard(options: {
       outgoing.end("Internal Server Error");
     }
   });
-  server.listen(options.port ?? 8765, bindHost);
+  server.listen(options.port ?? 8080, bindHost);
+  await once(server, "listening");
   return server;
 }

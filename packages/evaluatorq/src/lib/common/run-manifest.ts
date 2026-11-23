@@ -1,5 +1,5 @@
-import { readdir, readFile, realpath, stat } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, readdir, readFile, realpath, stat } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import {
@@ -14,7 +14,7 @@ import {
   StageRecordSchema,
 } from "../contracts.js";
 import { withFileLock } from "./file-lock.js";
-import { writePrivateAtomic } from "./private-files.js";
+import { writeAtomic as writeFileAtomic } from "./private-files.js";
 import { camelToSnake } from "./python-json.js";
 
 export const MANIFESTS_DIR_NAME = ".manifests";
@@ -95,10 +95,8 @@ async function writeAtomic(
   path: string,
 ): Promise<boolean> {
   try {
-    await writePrivateAtomic(path, manifestJson(manifest), {
-      mode: 0o666,
-      privateDirectory: false,
-    });
+    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+    await writeFileAtomic(path, manifestJson(manifest));
     return true;
   } catch (error) {
     console.warn(

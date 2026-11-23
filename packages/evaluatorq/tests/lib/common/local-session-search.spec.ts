@@ -1,9 +1,11 @@
-import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { expect, spyOn, test } from "bun:test";
+import { mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { READERS } from "../../../src/lib/local-sessions/readers.js";
 import {
+  clearSummaryCache,
   projectMatches,
   searchSessions,
 } from "../../../src/lib/local-sessions/search.js";
@@ -59,6 +61,64 @@ test("session search filters source, project and confirmed conversation text", a
     expect(stopped.complete).toBe(false);
     expect(stopped.sessions).toEqual([]);
   } finally {
+    if (previous === undefined) delete process.env.CODEX_HOME;
+    else process.env.CODEX_HOME = previous;
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("session search skips disappearing files and propagates unexpected reader errors", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "session-search-race-")),
+    previous = process.env.CODEX_HOME,
+    summarize = READERS.codex.summarize,
+    warning = spyOn(console, "warn").mockImplementation(() => {});
+  const root = join(dir, "sessions"),
+    path = join(root, "rollout-race.jsonl"),
+    records = [
+      { type: "session_meta", payload: { id: "race" } },
+      {
+        type: "response_item",
+        payload: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "needle" }],
+        },
+      },
+    ]
+      .map((record) => JSON.stringify(record))
+      .join("\n");
+  const query = {
+    sources: ["codex"] as const,
+    start: null,
+    end: null,
+    projectDir: null,
+    text: "needle",
+    limit: 10,
+  };
+  try {
+    process.env.CODEX_HOME = dir;
+    await mkdir(root);
+    await writeFile(path, records);
+    clearSummaryCache();
+    READERS.codex.summarize = async (file) => {
+      const summary = await summarize(file);
+      await unlink(file);
+      return summary;
+    };
+    const found = await searchSessions(query);
+    expect(found.sessions).toEqual([]);
+    expect(found.complete).toBe(true);
+    expect(warning).toHaveBeenCalled();
+    await writeFile(path, records);
+    clearSummaryCache();
+    READERS.codex.summarize = async () => {
+      throw new TypeError("reader bug");
+    };
+    await expect(searchSessions(query)).rejects.toThrow("reader bug");
+  } finally {
+    READERS.codex.summarize = summarize;
+    clearSummaryCache();
+    warning.mockRestore();
     if (previous === undefined) delete process.env.CODEX_HOME;
     else process.env.CODEX_HOME = previous;
     await rm(dir, { recursive: true, force: true });
