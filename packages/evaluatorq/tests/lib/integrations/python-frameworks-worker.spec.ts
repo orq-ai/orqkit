@@ -65,11 +65,24 @@ class CrewAITarget:
 `,
     );
     const factory = `import os, threading
+from types import SimpleNamespace
 print("Factory import stdout")
 os.write(1, b"Factory import fd stdout\\n")
 class Crew:
     def __init__(self): self.count = 0
     def kickoff(self, messages):
+        content = messages[-1].content
+        if content.startswith("wrapped:"):
+            _, status, chain = content.split(":")
+            try:
+                error = RuntimeError("provider failed")
+                error.response = SimpleNamespace(status_code=int(status))
+                error.status_code = 500
+                raise error
+            except RuntimeError as error:
+                if chain == "cause":
+                    raise RuntimeError("wrapped failure") from error
+                raise RuntimeError("wrapped failure")
         self.count += 1
         print("Crew stdout")
         thread = threading.Thread(target=lambda: os.write(1, b"Crew thread fd stdout\\n"))
@@ -111,6 +124,13 @@ runpy.run_path(sys.argv[-1], run_name="__main__")
       expect(
         (await target.respond([{ role: "user", content: "again" }])).text,
       ).toBe("2:again");
+      for (const status of [400, 401, 403, 429])
+        for (const chain of ["cause", "context"])
+          await expect(
+            target.respond([
+              { role: "user", content: `wrapped:${status}:${chain}` },
+            ]),
+          ).rejects.toMatchObject({ status });
     }
   } finally {
     await Promise.all(targets.map((target) => target.close()));

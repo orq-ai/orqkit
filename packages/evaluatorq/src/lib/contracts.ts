@@ -733,7 +733,21 @@ export const JuryVoteSchema = z
     value: verdictValue.nullable().default(null),
     explanation: z.string().default(""),
     error: z.string().nullable().default(null),
-    repetitions: z.array(JuryRepetitionSchema).default(() => []),
+    repetitions: z
+      .preprocess(
+        (raw) =>
+          Array.isArray(raw)
+            ? raw.map((item) =>
+                item !== null &&
+                typeof item === "object" &&
+                !Array.isArray(item)
+                  ? item
+                  : { value: item },
+              )
+            : raw,
+        z.array(JuryRepetitionSchema),
+      )
+      .default(() => []),
     repetitionsFailed: count.default(0),
   })
   .superRefine((vote, ctx) => {

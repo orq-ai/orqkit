@@ -2,6 +2,7 @@ import {
   executeSessions,
   type SessionArguments,
 } from "@orq-ai/evaluatorq/local-sessions";
+import { BadParameter } from "@orq-ai/evaluatorq/redteam";
 
 export async function runSessions(options: SessionArguments): Promise<void> {
   try {
@@ -12,6 +13,6 @@ export async function runSessions(options: SessionArguments): Promise<void> {
     if (code) process.exitCode = code;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
+    process.exitCode = error instanceof BadParameter ? 2 : 1;
   }
 }

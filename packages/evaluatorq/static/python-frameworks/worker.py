@@ -4,6 +4,7 @@ import importlib.util
 import inspect
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from uuid import uuid4
@@ -86,9 +87,25 @@ def error_payload(error):
     if len(message) > MAX_ERROR_CHARS:
         message = message[:MAX_ERROR_CHARS] + " (truncated)"
     result = {"type": type(error).__name__, "message": message}
-    status = getattr(error, "status_code", None) or getattr(error, "status", None)
-    if isinstance(status, int):
-        result["status_code"] = status
+    current = error
+    for _ in range(5):
+        if current is None:
+            break
+        response = getattr(current, "response", None)
+        values = [getattr(response, "status_code", None),
+                  getattr(current, "status_code", None), getattr(current, "status", None)]
+        status = next((value for value in values
+                       if isinstance(value, int) and not isinstance(value, bool) and 100 <= value <= 599), None)
+        if status is not None:
+            result["status_code"] = status
+            break
+        current = current.__cause__ or current.__context__
+    if "status_code" not in result:
+        for pattern in (r'\bstatus(?:_code)?\s*[=:]\s*(\d{3})\b', r'\bHTTP\s*(\d{3})\b', r'\bcode\s*[=:]\s*(\d{3})\b'):
+            match = re.search(pattern, str(error), flags=re.IGNORECASE)
+            if match and 100 <= int(match.group(1)) <= 599:
+                result["status_code"] = int(match.group(1))
+                break
     usage = getattr(error, "usage", None)
     if usage is not None:
         result["usage"] = usage.model_dump(mode="json") if hasattr(usage, "model_dump") else usage

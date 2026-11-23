@@ -25,6 +25,7 @@ import {
   textOutputItem,
   type Usage,
 } from "../../contracts.js";
+import { parsePythonJson } from "../../formats/json.js";
 import { messagesToResponsesInput } from "../openresponses/input-items.js";
 
 export interface OpenAIAgentTargetOptions {
@@ -191,6 +192,18 @@ const BUILTIN_RESULTS = new Set([
   "program_output",
 ]);
 
+function argumentsJson(raw: unknown): string {
+  if (raw !== null && typeof raw === "object" && !Array.isArray(raw))
+    return toolResultToText(raw);
+  if (typeof raw !== "string") return "{}";
+  try {
+    parsePythonJson(raw);
+    return raw;
+  } catch {
+    return JSON.stringify({ raw });
+  }
+}
+
 function sdkOutputItems(items: readonly unknown[]): Record<string, unknown>[] {
   const pendingSearch: string[] = [];
   return items.map((item) => {
@@ -252,9 +265,7 @@ function sdkOutputItems(items: readonly unknown[]): Record<string, unknown>[] {
         arguments:
           argumentsValue === undefined
             ? UNKNOWN_ARGUMENTS
-            : typeof argumentsValue === "string"
-              ? argumentsValue
-              : toolResultToText(argumentsValue),
+            : argumentsJson(argumentsValue),
       };
     }
     if (type === "hosted_tool_call")
@@ -262,7 +273,7 @@ function sdkOutputItems(items: readonly unknown[]): Record<string, unknown>[] {
         ...fields,
         type: "function_call",
         call_id: fields.id,
-        arguments: fields.arguments ?? "",
+        arguments: argumentsJson(fields.arguments),
         result: fields.output ?? null,
       };
     if (
@@ -279,6 +290,9 @@ function sdkOutputItems(items: readonly unknown[]): Record<string, unknown>[] {
     return {
       ...fields,
       ...(callId === undefined ? {} : { call_id: callId }),
+      ...(type === "function_call"
+        ? { arguments: argumentsJson(fields.arguments) }
+        : {}),
       ...(type === "function_call_result"
         ? {
             type: "function_call_output",

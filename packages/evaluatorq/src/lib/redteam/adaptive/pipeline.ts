@@ -74,20 +74,29 @@ export function expandTraceSeedDatapoints(
   if (seeds === null) return dynamicDatapoints;
   return seeds.flatMap((seed, index) => {
     const slice: Record<string, unknown> = {};
-    for (const key of [
-      TRACE_SEED_MESSAGES_KEY,
-      TRACE_START_FROM_KEY,
-      "sourceTraceId",
-    ]) {
-      const snake = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+    for (const [key, legacy] of [
+      [TRACE_SEED_MESSAGES_KEY, "traceSeedMessages"],
+      [TRACE_START_FROM_KEY, "traceStartFrom"],
+      ["sourceTraceId", "source_trace_id"],
+    ] as const) {
       if (Object.hasOwn(seed.inputs, key)) slice[key] = seed.inputs[key];
-      else if (Object.hasOwn(seed.inputs, snake))
-        slice[key] = seed.inputs[snake];
+      else if (Object.hasOwn(seed.inputs, legacy))
+        slice[key] = seed.inputs[legacy];
     }
     return dynamicDatapoints.map((attack) => ({
       ...attack,
       inputs: {
-        ...attack.inputs,
+        ...Object.fromEntries(
+          Object.entries(attack.inputs).filter(
+            ([key]) =>
+              ![
+                TRACE_SEED_MESSAGES_KEY,
+                TRACE_START_FROM_KEY,
+                "traceSeedMessages",
+                "traceStartFrom",
+              ].includes(key),
+          ),
+        ),
         ...slice,
         id: `trace_${slice.sourceTraceId || seed.inputs.id || "seed"}_${index}_${attack.inputs.id ?? "attack"}`,
       },

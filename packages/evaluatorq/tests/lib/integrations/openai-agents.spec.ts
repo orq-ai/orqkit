@@ -40,6 +40,39 @@ const completed = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+test.each([
+  ["not json", { raw: "not json" }],
+  ["", { raw: "" }],
+  ['{"nested":{"id":1}}', { nested: { id: 1 } }],
+  [{ nested: { id: 1 } }, { nested: { id: 1 } }],
+  [null, {}],
+])(
+  "normalizes SDK tool arguments %j without dropping their value",
+  async (raw, expected) => {
+    const target = new OpenAIAgentTarget(agent, {
+      runner: {
+        run: async () =>
+          completed({
+            output: [
+              {
+                type: "function_call",
+                id: "fc",
+                callId: "call",
+                name: "lookup",
+                arguments: raw,
+              },
+            ],
+          }),
+      },
+    });
+    const response = await target.respond([user("fixture")]);
+    expect(response.toolCalls).toHaveLength(1);
+    expect(JSON.parse(response.toolCalls[0]?.arguments ?? "null")).toEqual(
+      expected,
+    );
+  },
+);
+
 test("preserves ordered tool activity, result pairing, final output and complete SDK usage", async () => {
   const target = new OpenAIAgentTarget(agent, {
     runner: {

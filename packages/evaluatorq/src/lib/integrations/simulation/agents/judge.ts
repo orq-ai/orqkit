@@ -52,22 +52,29 @@ const QUALITY_SCORES = {
 
 const CRITERIA_VERDICTS = z
   .array(
-    z.object({
-      criterion_id: z
-        .string()
-        .describe("The criterion ID, copied exactly as listed"),
-      occurred: z
-        .boolean()
-        .describe(
-          "Whether the described event has happened in the conversation so far",
-        ),
-      evidence: z
-        .string()
-        .default("")
-        .describe(
-          "Short quote from the conversation showing the behaviour, or empty when occurred is false.",
-        ),
-    }),
+    z
+      .object({
+        criterion_id: z
+          .string()
+          .regex(/^criteria_\d+$/)
+          .describe(
+            'The criterion id exactly as listed under EVALUATION CRITERIA, e.g. "criteria_0". Copy it; do not paraphrase or renumber.',
+          )
+          .meta({ title: "Criterion Id" }),
+        occurred: z
+          .boolean()
+          .describe(
+            "true if the described behaviour has actually appeared in the conversation so far, false if it has not. Answer for the description alone, ignoring whether the criterion is must_happen or must_not_happen.",
+          )
+          .meta({ title: "Occurred" }),
+        evidence: z
+          .string()
+          .describe(
+            "Short quote from the conversation showing the behaviour, or empty when occurred is false.",
+          )
+          .meta({ title: "Evidence" }),
+      })
+      .meta({ id: "CriterionVerdict", title: "CriterionVerdict" }),
   )
   .describe(
     "Occurrence audit. One entry for every criterion listed under EVALUATION CRITERIA, no omissions. Skip any criterion listed as ALREADY CONFIRMED in the final user message; those are settled and re-reporting them changes nothing. Send [] when that leaves nothing to report. Report only what literally happened in the conversation so far; do NOT judge whether that is good or bad.",
@@ -77,28 +84,37 @@ const CRITERIA_VERDICTS = z
 // Judge tools for structured decision making
 // ---------------------------------------------------------------------------
 
-export const JudgeDecisionSchema = z.object({
-  reason: z.string().default("").describe("Brief explanation of the decision"),
-  should_terminate: z
-    .boolean()
-    .describe(
-      "true to end the conversation when the goal is achieved or a must_not_happen criterion has occurred; false to continue.",
-    ),
-  goal_achieved: z
-    .boolean()
-    .default(false)
-    .describe(
-      "Whether the user goal was achieved. false unless should_terminate is true.",
-    ),
-  goal_completion_score: z
-    .number()
-    .default(0)
-    .describe(
-      "How much of the goal is achieved SO FAR, 0.0 (none) to 1.0 (fully). Assess every turn.",
-    ),
-  criteria_verdicts: CRITERIA_VERDICTS,
-  ...QUALITY_SCORES,
-});
+export const JudgeDecisionSchema = z
+  .object({
+    reason: z
+      .string()
+      .default("")
+      .describe("Brief explanation of the decision")
+      .meta({ title: "Reason" }),
+    should_terminate: z
+      .boolean()
+      .describe(
+        "true to end the conversation: the goal is achieved or a must_not_happen criterion has occurred. false to let it continue.",
+      )
+      .meta({ title: "Should Terminate" }),
+    goal_achieved: z
+      .boolean()
+      .default(false)
+      .describe(
+        "Whether the user's goal was successfully achieved. false unless should_terminate is true.",
+      )
+      .meta({ title: "Goal Achieved" }),
+    goal_completion_score: z
+      .number()
+      .default(0)
+      .describe(
+        "How much of the goal is achieved SO FAR, 0.0 (none) to 1.0 (fully). Assess every turn; if the run hits max turns this is the final score.",
+      )
+      .meta({ title: "Goal Completion Score" }),
+    criteria_verdicts: CRITERIA_VERDICTS.meta({ title: "Criteria Verdicts" }),
+    ...QUALITY_SCORES,
+  })
+  .meta({ title: "JudgeDecision" });
 
 // ---------------------------------------------------------------------------
 // Default judge system prompt

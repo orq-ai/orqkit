@@ -1,5 +1,8 @@
+import { BadParameter } from "../common/cli-config.js";
 import { writePrivateAtomic } from "../common/private-files.js";
 import {
+  MAX_SELECTED_SESSIONS,
+  MAX_SESSION_TEXT_CHARS,
   SESSION_SOURCES,
   type SessionQuery,
   type SessionSource,
@@ -19,11 +22,11 @@ export interface SessionArguments {
 }
 function day(value: string | undefined, next: boolean): Date | null {
   if (!value) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) throw new Error("session date must be YYYY-MM-DD");
+  const match = /^(\d{4})(?:-(\d{2})-(\d{2})|(\d{2})(\d{2}))$/.exec(value);
+  if (!match) throw new BadParameter("session date must be YYYY-MM-DD");
   const year = Number(match[1]),
-    month = Number(match[2]),
-    date = Number(match[3]);
+    month = Number(match[2] ?? match[4]),
+    date = Number(match[3] ?? match[5]);
   const result = new Date(0);
   result.setFullYear(year, month - 1, date);
   result.setHours(0, 0, 0, 0);
@@ -33,7 +36,7 @@ function day(value: string | undefined, next: boolean): Date | null {
     result.getMonth() !== month - 1 ||
     result.getDate() !== date
   )
-    throw new Error("invalid session date");
+    throw new BadParameter("invalid session date");
   if (next) result.setDate(result.getDate() + 1);
   return result;
 }
@@ -47,18 +50,27 @@ export function sessionQuery(
       (source) => !SESSION_SOURCES.includes(source as SessionSource),
     )
   )
-    throw new Error("unknown session source");
+    throw new BadParameter("unknown session source");
   const start = day(args.from, false),
     end = day(args.to, true);
   if (start && end && start >= end)
-    throw new Error("The first day must not be after the last day.");
+    throw new BadParameter("The first day must not be after the last day.");
+  const limit = args.limit ?? defaultLimit;
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_SELECTED_SESSIONS)
+    throw new BadParameter(
+      `limit must be between 1 and ${MAX_SELECTED_SESSIONS}`,
+    );
+  if (args.text && Array.from(args.text).length > MAX_SESSION_TEXT_CHARS)
+    throw new BadParameter(
+      `text must be at most ${MAX_SESSION_TEXT_CHARS} characters`,
+    );
   return {
     sources: SESSION_SOURCES.filter((source) => requested.includes(source)),
     start,
     end,
     projectDir: args.projectDir ?? null,
     text: args.text || null,
-    limit: args.limit ?? defaultLimit,
+    limit,
   };
 }
 export async function executeSessions(
@@ -71,7 +83,35 @@ export async function executeSessions(
     io.warn(
       `Searched ${result.scannedFiles} of ${result.candidateFiles} session files before the time limit; narrow the search to see the rest.`,
     );
-  if (args.json) io.print(JSON.stringify(result.sessions, null, 2));
+  if (result.sessions.length === query.limit)
+    io.warn(
+      `Listed the newest ${query.limit} sessions; ${query.limit < MAX_SELECTED_SESSIONS ? `raise --limit (up to ${MAX_SELECTED_SESSIONS}) to see more.` : "narrow --from/--to or --text to see more."}`,
+    );
+  if (args.json)
+    io.print(
+      JSON.stringify(
+        result.sessions.map((session) => ({
+          source: session.source,
+          path: session.path,
+          session_id: session.sessionId,
+          title: session.title,
+          project_dir: session.projectDir,
+          started_at: session.startedAt
+            .toISOString()
+            .replace(/\.000Z$/, "Z")
+            .replace(/\.(\d{3})Z$/, ".$1000Z"),
+          updated_at: session.updatedAt
+            .toISOString()
+            .replace(/\.000Z$/, "Z")
+            .replace(/\.(\d{3})Z$/, ".$1000Z"),
+          size_bytes: session.sizeBytes,
+          first_prompt: session.firstPrompt,
+          agent_version: session.agentVersion,
+        })),
+        null,
+        2,
+      ),
+    );
   else if (!result.sessions.length) io.print("No local sessions match.");
   else
     for (const session of result.sessions)
