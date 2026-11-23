@@ -53,6 +53,7 @@ import {
   PairwiseComparisonSchema,
   runPairwise,
 } from "./pairwise.js";
+import { signalBoolean } from "./signals/models.js";
 import type {
   DataPoint,
   EvaluationResult,
@@ -142,7 +143,7 @@ function buildVerdictModel(
   let description: string | null;
   if (verdictKind === "categorical") {
     value =
-      labels === null ? z.boolean() : z.enum(labels as [string, ...string[]]);
+      labels === null ? signalBoolean : z.enum(labels as [string, ...string[]]);
     description = labelsDescription(labelDescriptions);
   } else {
     value = z.number();

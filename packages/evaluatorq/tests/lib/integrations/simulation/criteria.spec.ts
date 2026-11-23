@@ -111,10 +111,21 @@ describe("buildCriteriaResults", () => {
 });
 
 describe("buildCriteriaMeta", () => {
+  test("an absent audit emits explicit Python-compatible false flags and empty evidence", () => {
+    expect(
+      buildCriteriaMeta(scenario, []).map(({ audited, evidence }) => ({
+        audited,
+        evidence,
+      })),
+    ).toEqual([
+      { audited: false, evidence: "" },
+      { audited: false, evidence: "" },
+    ]);
+  });
   test("keeps unknown apart from audited", () => {
     const [unknown] = buildCriteriaMeta(scenario, [], null, null);
-    expect(unknown?.audited).toBeNull();
-    expect(unknown?.evidence).toBeNull();
+    expect(unknown?.audited).toBe(false);
+    expect(unknown?.evidence).toBe("");
 
     const [audited, unaudited] = buildCriteriaMeta(
       scenario,

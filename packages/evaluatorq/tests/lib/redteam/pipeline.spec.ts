@@ -218,6 +218,22 @@ it("crosses trace seeds with selected strategies while projecting only consumed 
   ];
   expect(expandTraceSeedDatapoints(null, attacks)).toBe(attacks);
   expect(expandTraceSeedDatapoints([], attacks)).toEqual([]);
+  expect(
+    expandTraceSeedDatapoints(
+      [
+        {
+          inputs: {
+            traceSeedMessages: [{ role: "user", content: "legacy" }],
+            traceStartFrom: "last_assistant",
+          },
+        },
+      ],
+      attacks,
+    )[0]?.inputs,
+  ).toMatchObject({
+    trace_seed_messages: [{ role: "user", content: "legacy" }],
+    trace_start_from: "last_assistant",
+  });
   const expanded = expandTraceSeedDatapoints(
     [
       {
@@ -238,8 +254,8 @@ it("crosses trace seeds with selected strategies while projecting only consumed 
       inputs: {
         id: "trace_trace_0_attack",
         sourceTraceId: "trace",
-        traceSeedMessages: [{ role: "user", content: "seed" }],
-        traceStartFrom: "first_user",
+        trace_seed_messages: [{ role: "user", content: "seed" }],
+        trace_start_from: "first_user",
         keep: 1,
       },
       expectedOutput: "expected",

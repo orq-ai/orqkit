@@ -127,6 +127,27 @@ describe("runJury", () => {
     expect(result.jury.inconclusive).toBe(true);
   });
 
+  test("Boolean and equal numeric categorical votes share Python's tally", async () => {
+    for (const [first, equivalent] of [
+      [true, 1],
+      [1, true],
+      [false, 0],
+      [0, false],
+    ] as const) {
+      const result = await runJury({
+        panel: ["a", "b", "c"],
+        verdictKind: "categorical",
+        judgeFn: byModel({
+          a: { value: first },
+          b: { value: equivalent },
+          c: { value: equivalent },
+        }),
+      });
+      expect(result.verdict).toBe(first);
+      expect(result.jury.rawAgreement).toBe(1);
+    }
+  });
+
   test("custom aggregator sees failed votes", async () => {
     let seen = 0;
     const result = await runJury({
@@ -231,6 +252,31 @@ describe("runJury", () => {
 });
 
 describe("contracts", () => {
+  test("saved votes accept Python bare repetition values", () => {
+    const vote = JuryVoteSchema.parse({
+      model: "m",
+      success: true,
+      value: "yes",
+      repetitions: [
+        "yes",
+        null,
+        true,
+        1,
+        { value: "no", explanation: "checked" },
+      ],
+    });
+    expect(vote.repetitions.map((item) => item.value)).toEqual([
+      "yes",
+      null,
+      true,
+      1,
+      "no",
+    ]);
+    expect(vote.repetitions[4]?.explanation).toBe("checked");
+    expect(() =>
+      JuryVoteSchema.parse({ model: "m", success: false, repetitions: [[]] }),
+    ).toThrow();
+  });
   test("votes reject contradictions", () => {
     expect(() => JuryVoteSchema.parse({ model: "m", success: true })).toThrow();
     expect(() =>
