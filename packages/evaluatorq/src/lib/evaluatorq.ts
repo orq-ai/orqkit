@@ -1,7 +1,24 @@
-import { Effect, pipe } from "effect";
+import { Cause, Effect, Exit, pipe } from "effect";
 
 import type { Orq } from "@orq-ai/node";
 
+import {
+  fetchDatasetAsDataPoints,
+  fetchDatasetBatches,
+  setupOrqClient,
+} from "./common/fetch-data.js";
+import { checkLlmParallelism } from "./common/llm-limit.js";
+import { resolveDatapointParallelism } from "./common/parallelism.js";
+import {
+  checkRunActive,
+  notifyDatapointComplete,
+  trackRunWork,
+  withRunLifecycle,
+} from "./common/run-lifecycle.js";
+import {
+  resolveEvaluationData,
+  resolveEvaluationMode,
+} from "./common/runner-input.js";
 import { processDataPointEffect } from "./effects.js";
 import { configuredOrqHost } from "./orq-host.js";
 import {
@@ -32,122 +49,6 @@ import type {
   Job,
 } from "./types.js";
 
-async function setupOrqClient(apiKey: string) {
-  try {
-    const client = await import("@orq-ai/node");
-    const serverURL = configuredOrqHost() ?? "https://my.orq.ai";
-
-    return new client.Orq({ apiKey, serverURL });
-  } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    if (
-      err.code === "MODULE_NOT_FOUND" ||
-      err.code === "ERR_MODULE_NOT_FOUND" ||
-      err.message?.includes("Cannot find module")
-    ) {
-      throw new Error(
-        "The @orq-ai/node package is not installed. To use dataset features, please install it:\n" +
-          "  npm install @orq-ai/node\n" +
-          "  # or\n" +
-          "  yarn add @orq-ai/node\n" +
-          "  # or\n" +
-          "  bun add @orq-ai/node",
-      );
-    }
-    throw new Error(`Failed to setup ORQ client: ${err.message || err}`);
-  }
-}
-
-interface DataPointBatch {
-  datapoints: DataPoint[];
-  hasMore: boolean;
-  batchNumber: number;
-}
-
-async function* fetchDatasetBatches(
-  orqClient: Orq,
-  datasetId: string,
-  options?: { includeMessages?: boolean },
-): AsyncGenerator<DataPointBatch> {
-  let startingAfter: string | undefined;
-  let batchNumber = 0;
-  let hasYielded = false;
-
-  try {
-    while (true) {
-      const response = await orqClient.datasets.listDatapoints({
-        datasetId,
-        limit: 50,
-        startingAfter,
-      });
-
-      if (!response.data || response.data.length === 0) {
-        if (!hasYielded) {
-          throw new Error(`Dataset ${datasetId} not found or has no data`);
-        }
-        break;
-      }
-
-      const batchDatapoints: DataPoint[] = [];
-      for (const datapoint of response.data) {
-        const inputs = { ...(datapoint.inputs || {}) };
-        if (options?.includeMessages) {
-          if ("messages" in inputs) {
-            throw new Error(
-              "includeMessages is enabled but the datapoint inputs already contain a 'messages' key. Remove 'messages' from inputs or disable includeMessages.",
-            );
-          }
-          if (datapoint.messages) {
-            inputs.messages = datapoint.messages;
-          }
-        }
-        batchDatapoints.push({
-          inputs,
-          expectedOutput: datapoint.expectedOutput,
-        } as DataPoint);
-
-        startingAfter =
-          (datapoint as unknown as { _id?: string })._id ??
-          (datapoint as unknown as { id?: string }).id;
-      }
-
-      batchNumber++;
-      const hasMore = response.hasMore ?? false;
-
-      yield {
-        datapoints: batchDatapoints,
-        hasMore,
-        batchNumber,
-      };
-      hasYielded = true;
-
-      if (!hasMore) {
-        break;
-      }
-    }
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch dataset ${datasetId}: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
-
-async function fetchDatasetAsDataPoints(
-  orqClient: Orq,
-  datasetId: string,
-  options?: { includeMessages?: boolean },
-): Promise<Promise<DataPoint>[]> {
-  const allDatapoints: DataPoint[] = [];
-  for await (const batch of fetchDatasetBatches(
-    orqClient,
-    datasetId,
-    options,
-  )) {
-    allDatapoints.push(...batch.datapoints);
-  }
-  return allDatapoints.map((dp) => Promise.resolve(dp));
-}
-
 /**
  * Check if any evaluator returned pass: false
  */
@@ -169,23 +70,72 @@ function checkPassFailures(results: EvaluatorqResult): boolean {
  * @param params - The parameters for the evaluation run.
  * @returns The results of the evaluation run.
  */
+async function runEvaluationPromise<T>(
+  program: Effect.Effect<T, Error, never>,
+  options: { signal?: AbortSignal } = {},
+): Promise<T> {
+  const exit = await Effect.runPromiseExit(program, options);
+  if (Exit.isSuccess(exit)) return exit.value;
+  throw Cause.squash(exit.cause);
+}
+export class StreamingEvaluationError extends AggregateError {
+  override readonly name = "StreamingEvaluationError";
+  constructor(errors: unknown[]) {
+    super(
+      errors,
+      `Streaming evaluation failed with ${errors.length} errors: ${errors.map((error) => (error instanceof Error ? `${error.name}: ${error.message}` : String(error))).join("; ")}`,
+    );
+  }
+}
+type NormalizedEvaluatorParams = EvaluatorParams & { parallelism: number };
+function normalizeEvaluatorParams(
+  params: EvaluatorParams,
+): NormalizedEvaluatorParams {
+  const parallelism = resolveDatapointParallelism(
+    params.datapointParallelism,
+    params.parallelism,
+    { caller: "evaluatorq" },
+  );
+  if (!Number.isInteger(parallelism) || parallelism < 1)
+    throw new RangeError("datapointParallelism must be a positive integer");
+  checkLlmParallelism(params.llmParallelism ?? undefined);
+  return { ...params, parallelism };
+}
 export async function evaluatorq(
-  _name: string,
+  name: string,
   params: EvaluatorParams,
 ): Promise<EvaluatorqResult> {
-  if (params.sendResults !== false && process.env.ORQ_API_KEY)
+  const normalized = normalizeEvaluatorParams(params);
+  if (normalized.sendResults !== false && process.env.ORQ_API_KEY)
     configuredOrqHost();
+  return withRunLifecycle(normalized.llmParallelism ?? undefined, () =>
+    evaluatorqCore(name, normalized),
+  );
+}
+async function evaluatorqCore(
+  _name: string,
+  params: NormalizedEvaluatorParams,
+): Promise<EvaluatorqResult> {
   const {
-    data,
     evaluators = [],
-    jobs,
     parallelism = 1,
     print = true,
     description,
     path,
     sendResults = true,
     manageTracing = true,
+    exitOnFailure = true,
   } = params;
+
+  const { jobs, inference } = resolveEvaluationMode(
+    params.data,
+    params.jobs,
+    params.inference,
+  );
+  const data = await resolveEvaluationData(params.data, {
+    apiKey: process.env.ORQ_API_KEY,
+    baseUrl: process.env.ORQ_BASE_URL,
+  });
 
   // Initialize tracing if OTEL is configured
   const tracingEnabled = await initTracingIfNeeded();
@@ -223,7 +173,7 @@ export async function evaluatorq(
 
     datasetId = data.datasetId;
     const datasetIdValue = datasetId; // Capture for use in callbacks
-    const includeMessages = data.includeMessages ?? false;
+    const includeMessages = (data.includeMessages ?? false) || !inference;
 
     // Shared progress state that can be updated from within Effect.promise
     const progressRef = {
@@ -234,6 +184,7 @@ export async function evaluatorq(
     };
 
     // Stream fetch and process batches concurrently
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
     const streamingProgram = pipe(
       Effect.gen(function* (_) {
         const progress = yield* _(ProgressService);
@@ -248,7 +199,7 @@ export async function evaluatorq(
         );
 
         // Start a polling loop to update progress from progressRef
-        const progressInterval = setInterval(() => {
+        progressInterval = setInterval(() => {
           Effect.runPromise(
             progress.updateProgress({
               totalDataPoints: progressRef.totalDataPoints,
@@ -273,8 +224,10 @@ export async function evaluatorq(
               // Simple semaphore for parallelism control
               const waitForSlot = async () => {
                 while (activeCount >= parallelism) {
+                  checkRunActive();
                   await new Promise((resolve) => setTimeout(resolve, 10));
                 }
+                checkRunActive();
                 activeCount++;
               };
 
@@ -294,7 +247,7 @@ export async function evaluatorq(
                   // Wait for available slot
                   await waitForSlot();
 
-                  const promise = (async () => {
+                  const promise = trackRunWork(async () => {
                     try {
                       // Process datapoint directly without Effect to avoid progress conflicts
                       const jobResults = await Promise.all(
@@ -308,16 +261,19 @@ export async function evaluatorq(
                                 parentContext: tracingContext?.parentContext,
                               },
                               async (jobSpan) => {
+                                checkRunActive();
                                 const result = await job(
                                   datapoint,
                                   currentIndex,
                                 );
+                                checkRunActive();
                                 setJobNameAttribute(jobSpan, result.name);
 
                                 // Run evaluators for this job
                                 const evaluatorScores = await Promise.all(
                                   evaluators.map(async (evaluator) => {
                                     try {
+                                      checkRunActive();
                                       // Wrap evaluator in evaluation span (child of job span)
                                       const score = await withEvaluationSpan(
                                         {
@@ -326,16 +282,20 @@ export async function evaluatorq(
                                         },
                                         async (evalSpan) => {
                                           const evalResult =
-                                            await evaluator.scorer({
-                                              data: datapoint,
-                                              output: result.output,
-                                            });
+                                            await (async () => {
+                                              checkRunActive();
+                                              return evaluator.scorer({
+                                                data: datapoint,
+                                                output: result.output,
+                                                row: currentIndex,
+                                              });
+                                            })();
 
                                           setEvaluationAttributes(
                                             evalSpan,
                                             evalResult.value,
                                             evalResult.explanation,
-                                            evalResult.pass,
+                                            evalResult.pass ?? undefined,
                                           );
 
                                           return evalResult;
@@ -374,32 +334,38 @@ export async function evaluatorq(
                           }
                         }),
                       );
-                      progressRef.processedDataPoints++;
-                      return [
+                      const completed = [
                         { dataPoint: datapoint, jobResults },
                       ] as EvaluatorqResult;
+                      await notifyDatapointComplete(
+                        params.onDatapointComplete,
+                        completed,
+                      );
+                      progressRef.processedDataPoints++;
+                      return completed;
                     } finally {
                       activeCount--;
                     }
-                  })();
+                  });
                   processingPromises.push(promise);
                 }
               }
 
               // Wait for all processing to complete
-              const resultsNested = await Promise.all(processingPromises);
-              for (const resultList of resultsNested) {
-                results.push(...resultList);
+              const settled = await Promise.allSettled(processingPromises),
+                errors: unknown[] = [];
+              for (const outcome of settled) {
+                if (outcome.status === "fulfilled")
+                  results.push(...outcome.value);
+                else errors.push(outcome.reason);
               }
-
+              if (errors.length === 1) throw errors[0];
+              if (errors.length) throw new StreamingEvaluationError(errors);
               return results;
             }),
           );
         } catch (error) {
           fetchError = error as Error;
-        } finally {
-          // Always stop the progress polling
-          clearInterval(progressInterval);
         }
 
         if (fetchError) {
@@ -433,6 +399,7 @@ export async function evaluatorq(
               startTime,
               new Date(),
               path,
+              params.onResultsUploaded,
             ),
           )
         : Effect.tap(() => Effect.void),
@@ -440,10 +407,15 @@ export async function evaluatorq(
       Effect.provide(ProgressServiceLive),
       // Wrap with progress tracking
       (effect) => withProgress(effect, print),
+      Effect.ensuring(
+        Effect.sync(() => {
+          if (progressInterval !== undefined) clearInterval(progressInterval);
+        }),
+      ),
     );
 
     // Execute the streaming program
-    const streamingResults = await Effect.runPromise(streamingProgram);
+    const streamingResults = await runEvaluationPromise(streamingProgram);
 
     // Shutdown tracing gracefully for streaming case
     if (tracingEnabled && manageTracing) {
@@ -454,7 +426,7 @@ export async function evaluatorq(
 
     // Check for pass failures
     const hasStreamingFailures = checkPassFailures(streamingResults);
-    if (hasStreamingFailures) {
+    if (hasStreamingFailures && exitOnFailure) {
       process.exit(1);
     }
 
@@ -494,6 +466,7 @@ export async function evaluatorq(
                 evaluators,
                 parallelism,
                 tracingContext,
+                params.onDatapointComplete,
               ),
             { concurrency: parallelism },
           ),
@@ -517,6 +490,7 @@ export async function evaluatorq(
               startTime,
               new Date(),
               path,
+              params.onResultsUploaded,
             ),
           )
         : Effect.tap(() => Effect.void),
@@ -527,7 +501,7 @@ export async function evaluatorq(
     );
 
     // Run the Effect and convert back to Promise
-    return Effect.runPromise(program);
+    return runEvaluationPromise(program);
   };
 
   // Execute evaluation - each job span is independent (no parent evaluation_run span)
@@ -544,7 +518,7 @@ export async function evaluatorq(
 
   // Check for pass failures and exit if any
   const hasFailures = checkPassFailures(results);
-  if (hasFailures) {
+  if (hasFailures && exitOnFailure) {
     process.exit(1);
   }
 
@@ -552,107 +526,159 @@ export async function evaluatorq(
 }
 
 // Create an Effect that runs evaluation and optionally displays results
-export const evaluatorqEffect = (
+const evaluatorqCoreEffect = (
   _name: string,
-  params: EvaluatorParams,
+  params: NormalizedEvaluatorParams,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
-  try {
-    if (params.sendResults !== false && process.env.ORQ_API_KEY)
-      configuredOrqHost();
-  } catch (error) {
-    return Effect.fail(
-      error instanceof Error ? error : new Error(String(error)),
-    );
-  }
-  const {
-    data,
-    evaluators = [],
-    jobs,
-    parallelism = 1,
-    print = true,
-    description,
-    path,
-    sendResults = true,
-  } = params;
-
-  const startTime = new Date();
-
-  // Handle datasetId case
-  if ("datasetId" in data) {
-    return Effect.gen(function* (_) {
-      const apiKey = process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        return yield* _(
-          Effect.fail(
-            new Error(
-              "ORQ_API_KEY environment variable must be set to fetch datasets from Orq platform.",
-            ),
-          ),
+  return pipe(
+    Effect.tryPromise({
+      try: async () => {
+        const mode = resolveEvaluationMode(
+          params.data,
+          params.jobs,
+          params.inference,
         );
-      }
+        const data = await resolveEvaluationData(params.data, {
+          apiKey: process.env.ORQ_API_KEY,
+          baseUrl: process.env.ORQ_BASE_URL,
+        });
+        return { ...mode, data };
+      },
+      catch: (error) =>
+        error instanceof Error ? error : new Error(String(error)),
+    }),
+    Effect.flatMap(({ data, jobs, inference }) => {
+      const {
+        evaluators = [],
+        parallelism = 1,
+        print = true,
+        description,
+        path,
+        sendResults = true,
+      } = params;
 
-      const orqClient = yield* _(
-        Effect.tryPromise({
-          try: () => setupOrqClient(apiKey),
-          catch: (error) =>
-            new Error(
-              `Failed to setup Orq client: ${error instanceof Error ? error.message : String(error)}`,
-            ),
-        }),
-      );
+      const startTime = new Date();
 
-      if (!orqClient) {
-        return yield* _(Effect.fail(new Error("Failed to setup Orq client")));
-      }
+      // Handle datasetId case
+      if ("datasetId" in data) {
+        return Effect.gen(function* (_) {
+          const apiKey = process.env.ORQ_API_KEY;
+          if (!apiKey) {
+            return yield* _(
+              Effect.fail(
+                new Error(
+                  "ORQ_API_KEY environment variable must be set to fetch datasets from Orq platform.",
+                ),
+              ),
+            );
+          }
 
-      const dataPromises = yield* _(
-        Effect.tryPromise({
-          try: () =>
-            fetchDatasetAsDataPoints(orqClient, data.datasetId, {
-              includeMessages: data.includeMessages,
+          const orqClient = yield* _(
+            Effect.tryPromise({
+              try: () => setupOrqClient(apiKey),
+              catch: (error) =>
+                new Error(
+                  `Failed to setup Orq client: ${error instanceof Error ? error.message : String(error)}`,
+                ),
             }),
-          catch: (error) =>
-            error instanceof Error
-              ? error
-              : new Error(`Failed to fetch dataset: ${String(error)}`),
-        }),
-      );
+          );
 
-      return yield* _(
-        runEvaluationEffect(
-          dataPromises,
-          evaluators,
-          jobs,
-          parallelism,
-          print,
-          description,
-          _name,
-          data.datasetId,
-          apiKey,
-          startTime,
-          path,
-          sendResults,
-        ),
-      );
-    });
-  }
+          if (!orqClient) {
+            return yield* _(
+              Effect.fail(new Error("Failed to setup Orq client")),
+            );
+          }
 
-  const dataPromises = data;
-  return runEvaluationEffect(
-    dataPromises,
-    evaluators,
-    jobs,
-    parallelism,
-    print,
-    description,
-    _name,
-    undefined,
-    undefined,
-    startTime,
-    path,
-    sendResults,
+          const dataPromises = yield* _(
+            Effect.tryPromise({
+              try: () =>
+                fetchDatasetAsDataPoints(orqClient, data.datasetId, {
+                  includeMessages:
+                    (data.includeMessages ?? false) || !inference,
+                }),
+              catch: (error) =>
+                error instanceof Error
+                  ? error
+                  : new Error(`Failed to fetch dataset: ${String(error)}`),
+            }),
+          );
+
+          return yield* _(
+            runEvaluationEffect(
+              dataPromises,
+              evaluators,
+              jobs,
+              parallelism,
+              print,
+              description,
+              _name,
+              data.datasetId,
+              apiKey,
+              startTime,
+              path,
+              sendResults,
+              params.onResultsUploaded,
+              params.onDatapointComplete,
+            ),
+          );
+        });
+      }
+
+      const dataPromises = data;
+      return runEvaluationEffect(
+        dataPromises,
+        evaluators,
+        jobs,
+        parallelism,
+        print,
+        description,
+        _name,
+        undefined,
+        undefined,
+        startTime,
+        path,
+        sendResults,
+        params.onResultsUploaded,
+        params.onDatapointComplete,
+      );
+    }),
   );
 };
+
+export const evaluatorqEffect = (
+  name: string,
+  params: EvaluatorParams,
+): Effect.Effect<EvaluatorqResult, Error, never> =>
+  Effect.suspend(() => {
+    let running: Promise<EvaluatorqResult> | undefined;
+    return Effect.tryPromise({
+      try: (signal) => {
+        const normalized = normalizeEvaluatorParams(params);
+        if (normalized.sendResults !== false && process.env.ORQ_API_KEY)
+          configuredOrqHost();
+        running = withRunLifecycle(
+          normalized.llmParallelism ?? undefined,
+          () =>
+            runEvaluationPromise(evaluatorqCoreEffect(name, normalized), {
+              signal,
+            }),
+          signal,
+        );
+        return running;
+      },
+      catch: (error) =>
+        error instanceof Error ? error : new Error(String(error)),
+    }).pipe(
+      Effect.ensuring(
+        Effect.promise(async () => {
+          await running?.then(
+            () => undefined,
+            () => undefined,
+          );
+        }),
+      ),
+    );
+  });
 
 // Extract common evaluation logic
 const runEvaluationEffect = (
@@ -668,6 +694,8 @@ const runEvaluationEffect = (
   startTime: Date,
   path: string | undefined,
   sendResults: boolean,
+  onResultsUploaded?: (experimentUrl: string) => void,
+  onDatapointComplete?: EvaluatorParams["onDatapointComplete"],
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
   // Use API key from parameter or environment
   const orqApiKey = apiKey || process.env.ORQ_API_KEY;
@@ -698,6 +726,8 @@ const runEvaluationEffect = (
               jobs,
               evaluators,
               parallelism,
+              undefined,
+              onDatapointComplete,
             ),
           { concurrency: parallelism },
         ),
@@ -723,6 +753,7 @@ const runEvaluationEffect = (
             startTime,
             new Date(),
             path,
+            onResultsUploaded,
           ),
         )
       : Effect.tap(() => Effect.void),

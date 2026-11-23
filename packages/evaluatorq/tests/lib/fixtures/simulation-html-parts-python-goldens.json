@@ -1,0 +1,3041 @@
+{
+  "source": "a59c3a86",
+  "sections": [
+    {
+      "label": "empty/judge_verdicts",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "Judge Verdicts",
+        "data": {
+          "terminated_by": {},
+          "rules_broken": {},
+          "total_rules_broken_instances": 0
+        }
+      },
+      "expected": ""
+    },
+    {
+      "label": "empty/token_usage",
+      "input": {
+        "kind": "token_usage",
+        "title": "Token Usage",
+        "data": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "total_tokens": 0,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "reasoning_tokens": 0,
+          "avg_total_per_conversation": 0.0,
+          "avg_input_per_conversation": 0.0,
+          "avg_output_per_conversation": 0.0,
+          "avg_prompt_per_conversation": 0.0,
+          "avg_completion_per_conversation": 0.0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "unknown_usage_conversations": 0
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Token Usage</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td data-label=\"Metric\">Input Tokens (total)</td><td data-label=\"Value\">0</td></tr><tr><td data-label=\"Metric\">Output Tokens (total)</td><td data-label=\"Value\">0</td></tr><tr><td data-label=\"Metric\">Total Tokens</td><td data-label=\"Value\">0</td></tr><tr><td data-label=\"Metric\">Avg Total / Conversation</td><td data-label=\"Value\">0</td></tr><tr><td data-label=\"Metric\">Avg Input / Conversation</td><td data-label=\"Value\">0</td></tr><tr><td data-label=\"Metric\">Avg Output / Conversation</td><td data-label=\"Value\">0</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "pass/judge_verdicts",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "Judge Verdicts",
+        "data": {
+          "terminated_by": {
+            "judge": 1
+          },
+          "rules_broken": {},
+          "total_rules_broken_instances": 0
+        }
+      },
+      "expected": ""
+    },
+    {
+      "label": "pass/token_usage",
+      "input": {
+        "kind": "token_usage",
+        "title": "Token Usage",
+        "data": {
+          "prompt_tokens": 10,
+          "completion_tokens": 5,
+          "input_tokens": 10,
+          "output_tokens": 5,
+          "total_tokens": 15,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "reasoning_tokens": 0,
+          "avg_total_per_conversation": 15.0,
+          "avg_input_per_conversation": 10.0,
+          "avg_output_per_conversation": 5.0,
+          "avg_prompt_per_conversation": 10.0,
+          "avg_completion_per_conversation": 5.0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "unknown_usage_conversations": 0
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Token Usage</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td data-label=\"Metric\">Input Tokens (total)</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Output Tokens (total)</td><td data-label=\"Value\">5</td></tr><tr><td data-label=\"Metric\">Total Tokens</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Total / Conversation</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Input / Conversation</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Avg Output / Conversation</td><td data-label=\"Value\">5</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "fail/judge_verdicts",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "Judge Verdicts",
+        "data": {
+          "terminated_by": {
+            "judge": 1
+          },
+          "rules_broken": {
+            "criteria_0": 1,
+            "free rule": 1
+          },
+          "total_rules_broken_instances": 2
+        }
+      },
+      "expected": ""
+    },
+    {
+      "label": "fail/evaluator_scores",
+      "input": {
+        "kind": "evaluator_scores",
+        "title": "Evaluator Scores",
+        "data": {
+          "rows": [
+            {
+              "evaluator": "bool",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 1.0,
+              "min_score": 1.0,
+              "max_score": 1.0,
+              "first_error": null
+            },
+            {
+              "evaluator": "broken",
+              "runs": 0,
+              "dropped": 1,
+              "mean_score": null,
+              "min_score": null,
+              "max_score": null,
+              "first_error": "invalid score"
+            },
+            {
+              "evaluator": "quality",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 0.25,
+              "min_score": 0.25,
+              "max_score": 0.25,
+              "first_error": null
+            }
+          ]
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Evaluator Scores</h2><table><thead><tr><th>Evaluator</th><th>Runs</th><th>Dropped</th><th>Mean</th><th>Min</th><th>Max</th></tr></thead><tbody><tr><td data-label=\"Evaluator\">Bool <span class=\"dir\" title=\"bool · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#157f57\">1.00</span></td><td data-label=\"Min\">1.00</td><td data-label=\"Max\">1.00</td></tr><tr><td data-label=\"Evaluator\">Broken <span class=\"dir\" title=\"broken · higher is better\">▲</span></td><td data-label=\"Runs\">0</td><td data-label=\"Dropped\"><span title=\"invalid score\">1</span></td><td data-label=\"Mean\">-</td><td data-label=\"Min\">-</td><td data-label=\"Max\">-</td></tr><tr><td data-label=\"Evaluator\">Quality <span class=\"dir\" title=\"quality · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#a8422e\">0.25</span></td><td data-label=\"Min\">0.25</td><td data-label=\"Max\">0.25</td></tr></tbody></table><p class=\"score-legend\"><span class=\"dir\">▲</span> higher is better &nbsp;·&nbsp; <span class=\"dir\">▼</span> lower is better &nbsp;·&nbsp; mean shaded <span class=\"score-chip score-chip--bad\">worse</span> → <span class=\"score-chip score-chip--good\">better</span></p></section>"
+    },
+    {
+      "label": "fail/token_usage",
+      "input": {
+        "kind": "token_usage",
+        "title": "Token Usage",
+        "data": {
+          "prompt_tokens": 10,
+          "completion_tokens": 5,
+          "input_tokens": 10,
+          "output_tokens": 5,
+          "total_tokens": 15,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "reasoning_tokens": 0,
+          "avg_total_per_conversation": 15.0,
+          "avg_input_per_conversation": 10.0,
+          "avg_output_per_conversation": 5.0,
+          "avg_prompt_per_conversation": 10.0,
+          "avg_completion_per_conversation": 5.0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "unknown_usage_conversations": 0
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Token Usage</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td data-label=\"Metric\">Input Tokens (total)</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Output Tokens (total)</td><td data-label=\"Value\">5</td></tr><tr><td data-label=\"Metric\">Total Tokens</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Total / Conversation</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Input / Conversation</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Avg Output / Conversation</td><td data-label=\"Value\">5</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "mixed/judge_verdicts",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "Judge Verdicts",
+        "data": {
+          "terminated_by": {
+            "judge": 2,
+            "error": 1,
+            "max_turns": 1
+          },
+          "rules_broken": {
+            "criteria_0": 1,
+            "free rule": 1
+          },
+          "total_rules_broken_instances": 2
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Judge Verdicts</h2><h3>Terminated By</h3><table><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody><tr><td data-label=\"Reason\">judge</td><td data-label=\"Count\">2</td></tr><tr><td data-label=\"Reason\">error</td><td data-label=\"Count\">1</td></tr><tr><td data-label=\"Reason\">max_turns</td><td data-label=\"Count\">1</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "mixed/evaluator_scores",
+      "input": {
+        "kind": "evaluator_scores",
+        "title": "Evaluator Scores",
+        "data": {
+          "rows": [
+            {
+              "evaluator": "bool",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 1.0,
+              "min_score": 1.0,
+              "max_score": 1.0,
+              "first_error": null
+            },
+            {
+              "evaluator": "broken",
+              "runs": 0,
+              "dropped": 2,
+              "mean_score": null,
+              "min_score": null,
+              "max_score": null,
+              "first_error": "invalid score"
+            },
+            {
+              "evaluator": "only_error",
+              "runs": 0,
+              "dropped": 1,
+              "mean_score": null,
+              "min_score": null,
+              "max_score": null,
+              "first_error": "no score"
+            },
+            {
+              "evaluator": "quality",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 0.25,
+              "min_score": 0.25,
+              "max_score": 0.25,
+              "first_error": null
+            }
+          ]
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Evaluator Scores</h2><table><thead><tr><th>Evaluator</th><th>Runs</th><th>Dropped</th><th>Mean</th><th>Min</th><th>Max</th></tr></thead><tbody><tr><td data-label=\"Evaluator\">Bool <span class=\"dir\" title=\"bool · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#157f57\">1.00</span></td><td data-label=\"Min\">1.00</td><td data-label=\"Max\">1.00</td></tr><tr><td data-label=\"Evaluator\">Broken <span class=\"dir\" title=\"broken · higher is better\">▲</span></td><td data-label=\"Runs\">0</td><td data-label=\"Dropped\"><span title=\"invalid score\">2</span></td><td data-label=\"Mean\">-</td><td data-label=\"Min\">-</td><td data-label=\"Max\">-</td></tr><tr><td data-label=\"Evaluator\">Only error <span class=\"dir\" title=\"only_error · lower is better\">▼</span></td><td data-label=\"Runs\">0</td><td data-label=\"Dropped\"><span title=\"no score\">1</span></td><td data-label=\"Mean\">-</td><td data-label=\"Min\">-</td><td data-label=\"Max\">-</td></tr><tr><td data-label=\"Evaluator\">Quality <span class=\"dir\" title=\"quality · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#a8422e\">0.25</span></td><td data-label=\"Min\">0.25</td><td data-label=\"Max\">0.25</td></tr></tbody></table><p class=\"score-legend\"><span class=\"dir\">▲</span> higher is better &nbsp;·&nbsp; <span class=\"dir\">▼</span> lower is better &nbsp;·&nbsp; mean shaded <span class=\"score-chip score-chip--bad\">worse</span> → <span class=\"score-chip score-chip--good\">better</span></p></section>"
+    },
+    {
+      "label": "mixed/errors",
+      "input": {
+        "kind": "errors",
+        "title": "Errors",
+        "data": {
+          "total_errored": 1,
+          "by_message": {
+            "rate limit": 1
+          }
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Errors</h2><p>Total errored conversations: <strong>1</strong></p><table><thead><tr><th>Error</th><th>Count</th></tr></thead><tbody><tr><td data-label=\"Error\">rate limit</td><td data-label=\"Count\">1</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "mixed/token_usage",
+      "input": {
+        "kind": "token_usage",
+        "title": "Token Usage",
+        "data": {
+          "prompt_tokens": 40,
+          "completion_tokens": 20,
+          "input_tokens": 40,
+          "output_tokens": 20,
+          "total_tokens": 60,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "reasoning_tokens": 0,
+          "avg_total_per_conversation": 15.0,
+          "avg_input_per_conversation": 10.0,
+          "avg_output_per_conversation": 5.0,
+          "avg_prompt_per_conversation": 10.0,
+          "avg_completion_per_conversation": 5.0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "unknown_usage_conversations": 1,
+          "run_total_input_tokens": 200,
+          "run_total_output_tokens": 50,
+          "run_total_total_tokens": 250,
+          "run_total_cost": 0.012,
+          "run_total_calls": 4,
+          "run_total_priced_calls": 2
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Token Usage</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td data-label=\"Metric\">Input Tokens (total)</td><td data-label=\"Value\">40</td></tr><tr><td data-label=\"Metric\">Output Tokens (total)</td><td data-label=\"Value\">20</td></tr><tr><td data-label=\"Metric\">Total Tokens</td><td data-label=\"Value\">60</td></tr><tr><td data-label=\"Metric\">Avg Total / Conversation</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Input / Conversation</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Avg Output / Conversation</td><td data-label=\"Value\">5</td></tr><tr><td data-label=\"Metric\">Usage Coverage</td><td data-label=\"Value\">unknown for 1 conversation</td></tr><tr><td data-label=\"Metric\">Run Total Tokens (incl. generation & summary)</td><td data-label=\"Value\">250</td></tr><tr><td data-label=\"Metric\">Run Total Cost (incl. generation & summary)</td><td data-label=\"Value\">$0.0120 (2 of 4 calls)</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "filtered/judge_verdicts",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "Judge Verdicts",
+        "data": {
+          "terminated_by": {
+            "judge": 1,
+            "max_turns": 1
+          },
+          "rules_broken": {
+            "criteria_0": 1,
+            "free rule": 1
+          },
+          "total_rules_broken_instances": 2
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Judge Verdicts</h2><h3>Terminated By</h3><table><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody><tr><td data-label=\"Reason\">judge</td><td data-label=\"Count\">1</td></tr><tr><td data-label=\"Reason\">max_turns</td><td data-label=\"Count\">1</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "filtered/evaluator_scores",
+      "input": {
+        "kind": "evaluator_scores",
+        "title": "Evaluator Scores",
+        "data": {
+          "rows": [
+            {
+              "evaluator": "bool",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 1.0,
+              "min_score": 1.0,
+              "max_score": 1.0,
+              "first_error": null
+            },
+            {
+              "evaluator": "broken",
+              "runs": 0,
+              "dropped": 1,
+              "mean_score": null,
+              "min_score": null,
+              "max_score": null,
+              "first_error": "invalid score"
+            },
+            {
+              "evaluator": "quality",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 0.25,
+              "min_score": 0.25,
+              "max_score": 0.25,
+              "first_error": null
+            }
+          ]
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Evaluator Scores</h2><table><thead><tr><th>Evaluator</th><th>Runs</th><th>Dropped</th><th>Mean</th><th>Min</th><th>Max</th></tr></thead><tbody><tr><td data-label=\"Evaluator\">Bool <span class=\"dir\" title=\"bool · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#157f57\">1.00</span></td><td data-label=\"Min\">1.00</td><td data-label=\"Max\">1.00</td></tr><tr><td data-label=\"Evaluator\">Broken <span class=\"dir\" title=\"broken · higher is better\">▲</span></td><td data-label=\"Runs\">0</td><td data-label=\"Dropped\"><span title=\"invalid score\">1</span></td><td data-label=\"Mean\">-</td><td data-label=\"Min\">-</td><td data-label=\"Max\">-</td></tr><tr><td data-label=\"Evaluator\">Quality <span class=\"dir\" title=\"quality · higher is better\">▲</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#a8422e\">0.25</span></td><td data-label=\"Min\">0.25</td><td data-label=\"Max\">0.25</td></tr></tbody></table><p class=\"score-legend\"><span class=\"dir\">▲</span> higher is better &nbsp;·&nbsp; <span class=\"dir\">▼</span> lower is better &nbsp;·&nbsp; mean shaded <span class=\"score-chip score-chip--bad\">worse</span> → <span class=\"score-chip score-chip--good\">better</span></p></section>"
+    },
+    {
+      "label": "filtered/token_usage",
+      "input": {
+        "kind": "token_usage",
+        "title": "Token Usage",
+        "data": {
+          "prompt_tokens": 20,
+          "completion_tokens": 10,
+          "input_tokens": 20,
+          "output_tokens": 10,
+          "total_tokens": 30,
+          "cached_tokens": 0,
+          "cache_creation_tokens": 0,
+          "reasoning_tokens": 0,
+          "avg_total_per_conversation": 15.0,
+          "avg_input_per_conversation": 10.0,
+          "avg_output_per_conversation": 5.0,
+          "avg_prompt_per_conversation": 10.0,
+          "avg_completion_per_conversation": 5.0,
+          "input_cost": null,
+          "output_cost": null,
+          "total_cost": null,
+          "calls": 0,
+          "priced_calls": 0,
+          "unknown_usage_conversations": 0
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>Token Usage</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td data-label=\"Metric\">Input Tokens (total)</td><td data-label=\"Value\">20</td></tr><tr><td data-label=\"Metric\">Output Tokens (total)</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Total Tokens</td><td data-label=\"Value\">30</td></tr><tr><td data-label=\"Metric\">Avg Total / Conversation</td><td data-label=\"Value\">15</td></tr><tr><td data-label=\"Metric\">Avg Input / Conversation</td><td data-label=\"Value\">10</td></tr><tr><td data-label=\"Metric\">Avg Output / Conversation</td><td data-label=\"Value\">5</td></tr></tbody></table></section>"
+    },
+    {
+      "label": "one-termination",
+      "input": {
+        "kind": "judge_verdicts",
+        "title": "End <reasons>",
+        "data": {
+          "terminated_by": {
+            "judge": 1
+          }
+        }
+      },
+      "expected": ""
+    },
+    {
+      "label": "unknown-score",
+      "input": {
+        "kind": "evaluator_scores",
+        "title": "<Scores>",
+        "data": {
+          "rows": [
+            {
+              "evaluator": "custom_key",
+              "runs": 2,
+              "dropped": 2,
+              "first_error": "<bad>",
+              "mean_score": null,
+              "min_score": null,
+              "max_score": null
+            },
+            {
+              "evaluator": "latency_cost",
+              "runs": 1,
+              "dropped": 0,
+              "mean_score": 0.3,
+              "min_score": 0.2,
+              "max_score": 0.9
+            }
+          ]
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>&lt;Scores&gt;</h2><table><thead><tr><th>Evaluator</th><th>Runs</th><th>Dropped</th><th>Mean</th><th>Min</th><th>Max</th></tr></thead><tbody><tr><td data-label=\"Evaluator\">Custom key <span class=\"dir\" title=\"custom_key · higher is better\">▲</span></td><td data-label=\"Runs\">2</td><td data-label=\"Dropped\"><span title=\"&lt;bad&gt;\">2</span></td><td data-label=\"Mean\">-</td><td data-label=\"Min\">-</td><td data-label=\"Max\">-</td></tr><tr><td data-label=\"Evaluator\">Latency cost <span class=\"dir\" title=\"latency_cost · lower is better\">▼</span></td><td data-label=\"Runs\">1</td><td data-label=\"Dropped\">0</td><td data-label=\"Mean\"><span class=\"score-chip\" style=\"background:#506646\">0.30</span></td><td data-label=\"Min\">0.20</td><td data-label=\"Max\">0.90</td></tr></tbody></table><p class=\"score-legend\"><span class=\"dir\">▲</span> higher is better &nbsp;·&nbsp; <span class=\"dir\">▼</span> lower is better &nbsp;·&nbsp; mean shaded <span class=\"score-chip score-chip--bad\">worse</span> → <span class=\"score-chip score-chip--good\">better</span></p></section>"
+    },
+    {
+      "label": "no-scores",
+      "input": {
+        "kind": "evaluator_scores",
+        "title": "Empty",
+        "data": {
+          "rows": []
+        }
+      },
+      "expected": ""
+    },
+    {
+      "label": "escaped-errors",
+      "input": {
+        "kind": "errors",
+        "title": "<Errors>",
+        "data": {
+          "total_errored": 3,
+          "by_message": {
+            "<error>": 2,
+            "other & error": 1
+          }
+        }
+      },
+      "expected": "<section class=\"report-card\"><h2>&lt;Errors&gt;</h2><p>Total errored conversations: <strong>3</strong></p><table><thead><tr><th>Error</th><th>Count</th></tr></thead><tbody><tr><td data-label=\"Error\">&lt;error&gt;</td><td data-label=\"Count\">2</td></tr><tr><td data-label=\"Error\">other &amp; error</td><td data-label=\"Count\">1</td></tr></tbody></table></section>"
+    }
+  ],
+  "recommendations": [
+    {
+      "label": "0/orq_agent/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      },
+      "standalone": false,
+      "expected": ""
+    },
+    {
+      "label": "0/orq_agent/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      },
+      "standalone": true,
+      "expected": ""
+    },
+    {
+      "label": "0/openai_model/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      },
+      "standalone": false,
+      "expected": ""
+    },
+    {
+      "label": "0/openai_model/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      },
+      "standalone": true,
+      "expected": ""
+    },
+    {
+      "label": "1/orq_agent/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "datapoint_id": "d",
+            "persona": "<Persona>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "goal not met",
+              "<safety>"
+            ],
+            "suggestions": [
+              "First fix",
+              "<second fix>",
+              "First fix"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      },
+      "standalone": false,
+      "expected": "<div class=\"rt-apply-bar\"><div class=\"rt-apply-bar-text\"><span class=\"rt-apply-count\">2 recommendation(s) ready to apply</span><span class=\"rt-apply-hint\">Apply one from its card below, or all at once here. Preview folds them into the agent instructions; nothing is written until you approve the diff.</span></div><form class=\"rt-apply-form\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\"><input type=\"hidden\" id=\"rt-apply-agent-field\" name=\"agent_key\" value=\"synthetic-agent\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><button type=\"submit\" class=\"rt-apply-btn\">Preview &amp; apply all 2 recommendations</button></form></div><div id=\"rt-apply-drawer\"></div><p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">&lt;Persona&gt;</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario &amp; case</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-patterns\"><span class=\"rt-focus-pattern-dot\" style=\"background:var(--accent)\"></span><span>goal not met; &lt;safety&gt;</span></div><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span><form class=\"rt-focus-rec-apply\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\" hx-include=\"#rt-apply-agent-field\"><input type=\"hidden\" name=\"rec\" value=\"First fix\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><input type=\"hidden\" name=\"result_index\" value=\"0\"><button type=\"submit\" class=\"rt-apply-btn rt-apply-btn--sm\">Apply</button></form></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span><form class=\"rt-focus-rec-apply\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\" hx-include=\"#rt-apply-agent-field\"><input type=\"hidden\" name=\"rec\" value=\"&lt;second fix&gt;\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><input type=\"hidden\" name=\"result_index\" value=\"0\"><button type=\"submit\" class=\"rt-apply-btn rt-apply-btn--sm\">Apply</button></form></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span><form class=\"rt-focus-rec-apply\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\" hx-include=\"#rt-apply-agent-field\"><input type=\"hidden\" name=\"rec\" value=\"First fix\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><input type=\"hidden\" name=\"result_index\" value=\"0\"><button type=\"submit\" class=\"rt-apply-btn rt-apply-btn--sm\">Apply</button></form></li></ul></div></div></div>"
+    },
+    {
+      "label": "1/orq_agent/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "datapoint_id": "d",
+            "persona": "<Persona>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "goal not met",
+              "<safety>"
+            ],
+            "suggestions": [
+              "First fix",
+              "<second fix>",
+              "First fix"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      },
+      "standalone": true,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">&lt;Persona&gt;</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario &amp; case</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-patterns\"><span class=\"rt-focus-pattern-dot\" style=\"background:var(--accent)\"></span><span>goal not met; &lt;safety&gt;</span></div><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li></ul></div></div></div>"
+    },
+    {
+      "label": "1/openai_model/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "datapoint_id": "d",
+            "persona": "<Persona>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "goal not met",
+              "<safety>"
+            ],
+            "suggestions": [
+              "First fix",
+              "<second fix>",
+              "First fix"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      },
+      "standalone": false,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">&lt;Persona&gt;</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario &amp; case</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-patterns\"><span class=\"rt-focus-pattern-dot\" style=\"background:var(--accent)\"></span><span>goal not met; &lt;safety&gt;</span></div><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li></ul></div></div></div>"
+    },
+    {
+      "label": "1/openai_model/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "datapoint_id": "d",
+            "persona": "<Persona>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "goal not met",
+              "<safety>"
+            ],
+            "suggestions": [
+              "First fix",
+              "<second fix>",
+              "First fix"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      },
+      "standalone": true,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">&lt;Persona&gt;</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario &amp; case</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-patterns\"><span class=\"rt-focus-pattern-dot\" style=\"background:var(--accent)\"></span><span>goal not met; &lt;safety&gt;</span></div><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">First fix</span></li></ul></div></div></div>"
+    },
+    {
+      "label": "2/orq_agent/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona",
+            "scenario": "Scenario",
+            "triggers": [],
+            "suggestions": [
+              "First fix",
+              "<second fix>"
+            ]
+          }
+        ],
+        "applied_suggestions": [
+          "First fix"
+        ]
+      },
+      "standalone": false,
+      "expected": "<div class=\"rt-apply-bar\"><div class=\"rt-apply-bar-text\"><span class=\"rt-apply-count\">1 recommendation(s) ready to apply · 1 already applied</span><span class=\"rt-apply-hint\">Apply one from its card below, or all at once here. Preview folds them into the agent instructions; nothing is written until you approve the diff.</span></div><form class=\"rt-apply-form\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\"><input type=\"hidden\" id=\"rt-apply-agent-field\" name=\"agent_key\" value=\"synthetic-agent\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><button type=\"submit\" class=\"rt-apply-btn\">Preview &amp; apply all 1 recommendation</button></form></div><div id=\"rt-apply-drawer\"></div><p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">Persona</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec rt-focus-rec--applied\"><span class=\"rt-focus-rec-text\">First fix</span><span class=\"rt-focus-rec-applied\">✓ applied</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span><form class=\"rt-focus-rec-apply\" hx-post=\"/r/r&lt;&amp;&quot;/sim/apply/preview\" hx-target=\"#rt-apply-drawer\" hx-swap=\"innerHTML\" hx-include=\"#rt-apply-agent-field\"><input type=\"hidden\" name=\"rec\" value=\"&lt;second fix&gt;\"><input type=\"hidden\" name=\"csrf\" value=\"CSRF\"><input type=\"hidden\" name=\"result_index\" value=\"0\"><button type=\"submit\" class=\"rt-apply-btn rt-apply-btn--sm\">Apply</button></form></li></ul></div></div></div>"
+    },
+    {
+      "label": "2/orq_agent/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "orq_agent",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona",
+            "scenario": "Scenario",
+            "triggers": [],
+            "suggestions": [
+              "First fix",
+              "<second fix>"
+            ]
+          }
+        ],
+        "applied_suggestions": [
+          "First fix"
+        ]
+      },
+      "standalone": true,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">Persona</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec rt-focus-rec--applied\"><span class=\"rt-focus-rec-text\">First fix</span><span class=\"rt-focus-rec-applied\">✓ applied</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li></ul></div></div></div>"
+    },
+    {
+      "label": "2/openai_model/False",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona",
+            "scenario": "Scenario",
+            "triggers": [],
+            "suggestions": [
+              "First fix",
+              "<second fix>"
+            ]
+          }
+        ],
+        "applied_suggestions": [
+          "First fix"
+        ]
+      },
+      "standalone": false,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">Persona</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec rt-focus-rec--applied\"><span class=\"rt-focus-rec-text\">First fix</span><span class=\"rt-focus-rec-applied\">✓ applied</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li></ul></div></div></div>"
+    },
+    {
+      "label": "2/openai_model/True",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "openai_model",
+        "target": "synthetic-agent",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Reply mango",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [
+                  {
+                    "id": "c",
+                    "type": "function",
+                    "function": {
+                      "name": "echo",
+                      "arguments": "{}"
+                    },
+                    "item_id": null,
+                    "incomplete": false
+                  }
+                ],
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "tool",
+                "content": "mango",
+                "tool_calls": null,
+                "tool_call_id": "c",
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "done",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 3,
+              "output_tokens": 2,
+              "total_tokens": 5,
+              "cached_tokens": 1,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 1,
+              "input_cost": 0.01,
+              "output_cost": 0.02,
+              "total_cost": 0.03,
+              "calls": 1,
+              "priced_calls": 1,
+              "prompt_tokens": 3,
+              "completion_tokens": 2,
+              "cost_usd": 0.03
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 3,
+                  "output_tokens": 2,
+                  "total_tokens": 5,
+                  "cached_tokens": 1,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 1,
+                  "input_cost": 0.01,
+                  "output_cost": 0.02,
+                  "total_cost": 0.03,
+                  "calls": 1,
+                  "priced_calls": 1,
+                  "prompt_tokens": 3,
+                  "completion_tokens": 2,
+                  "cost_usd": 0.03
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "yes"
+              }
+            ],
+            "metadata": {
+              "evaluator_scores": {
+                "good": 0.5,
+                "bool": true,
+                "bad": "ignore"
+              },
+              "custom_under_score": {
+                "keep_key": true
+              }
+            },
+            "criteria_results": {
+              "Agent replies mango": true
+            },
+            "criteria_verified": true,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": [
+              {
+                "trace_id": "trace",
+                "span_id": "span"
+              }
+            ]
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona",
+            "scenario": "Scenario",
+            "triggers": [],
+            "suggestions": [
+              "First fix",
+              "<second fix>"
+            ]
+          }
+        ],
+        "applied_suggestions": [
+          "First fix"
+        ]
+      },
+      "standalone": true,
+      "expected": "<p class=\"rt-focus-intro\">Remediation suggestions generated from the simulated conversations, grouped by the persona and scenario that surfaced them.</p><div class=\"rk-panel rt-focus-card\"><div class=\"rt-focus-head\"><div class=\"rt-focus-head-main\"><div class=\"rt-focus-category-name\">Persona</div><div class=\"rt-focus-tier-row\"><span class=\"rt-focus-tier-label\">Scenario</span></div></div></div><div class=\"rt-focus-body\"><div class=\"rt-focus-recs-section\"><div class=\"rt-focus-fixbox-label rt-focus-recs-label\">Suggestions</div><ul class=\"rt-focus-recs\"><li class=\"rt-focus-rec rt-focus-rec--applied\"><span class=\"rt-focus-rec-text\">First fix</span><span class=\"rt-focus-rec-applied\">✓ applied</span></li><li class=\"rt-focus-rec\"><span class=\"rt-focus-rec-text\">&lt;second fix&gt;</span></li></ul></div></div></div>"
+    }
+  ],
+  "labels": [
+    {
+      "input": "goal_achieved",
+      "pretty": "Resolved the issue",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "criteria_met",
+      "pretty": "Met success criteria",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "turn_efficiency",
+      "pretty": "Efficient (few turns)",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "conversation_quality",
+      "pretty": "Conversation quality",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "response_quality",
+      "pretty": "Response quality",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "tone_appropriateness",
+      "pretty": "Appropriate tone",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "factual_accuracy",
+      "pretty": "Factual accuracy",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "hallucination_risk",
+      "pretty": "Hallucination risk",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "Custom_UNKNOWN",
+      "pretty": "Custom unknown",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "COST_eval",
+      "pretty": "Cost eval",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "toxicity",
+      "pretty": "Toxicity",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "error_rate",
+      "pretty": "Error rate",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "risk",
+      "pretty": "Risk",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "latency",
+      "pretty": "Latency",
+      "arrow": "▼",
+      "lower": true
+    },
+    {
+      "input": "safe",
+      "pretty": "Safe",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "straße_name",
+      "pretty": "Straße name",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "ΟΣ",
+      "pretty": "Ος",
+      "arrow": "▲",
+      "lower": false
+    },
+    {
+      "input": "",
+      "pretty": "",
+      "arrow": "▲",
+      "lower": false
+    }
+  ]
+}

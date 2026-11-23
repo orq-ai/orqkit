@@ -1,0 +1,278 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "value": {},
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {},
+      "required": false,
+      "error": false,
+      "messages": null,
+      "start": null
+    },
+    {
+      "value": {
+        "trace_seed_messages": []
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": "bad",
+        "trace_start_from": "first_user"
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          "bad"
+        ],
+        "trace_start_from": "first_user"
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "user",
+            "content": "Hi"
+          }
+        ]
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "user",
+            "content": "Hi"
+          }
+        ],
+        "trace_start_from": "future"
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "user",
+            "content": "Hi"
+          }
+        ],
+        "trace_start_from": "first_user"
+      },
+      "required": true,
+      "error": false,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "start": "first_user"
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "assistant",
+            "content": "Hello"
+          }
+        ],
+        "trace_start_from": "last_assistant"
+      },
+      "required": true,
+      "error": false,
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "Hello",
+          "tool_calls": null,
+          "tool_call_id": null,
+          "name": null
+        }
+      ],
+      "start": "last_assistant"
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "user",
+            "content": "Hi"
+          }
+        ],
+        "trace_start_from": "last_assistant"
+      },
+      "required": true,
+      "error": true
+    },
+    {
+      "value": {
+        "trace_seed_messages": [
+          {
+            "role": "unknown",
+            "content": "Hi"
+          }
+        ],
+        "trace_start_from": "first_user"
+      },
+      "required": true,
+      "error": true
+    }
+  ],
+  "seeds": [
+    {
+      "messages": [],
+      "start": "first_user",
+      "expected": null
+    },
+    {
+      "messages": [],
+      "start": "last_assistant",
+      "expected": null
+    },
+    {
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "No user"
+        }
+      ],
+      "start": "first_user",
+      "expected": null
+    },
+    {
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "No user"
+        }
+      ],
+      "start": "last_assistant",
+      "expected": null
+    },
+    {
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi"
+        }
+      ],
+      "start": "first_user",
+      "expected": [
+        {
+          "role": "user",
+          "content": "Hi"
+        }
+      ]
+    },
+    {
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi"
+        }
+      ],
+      "start": "last_assistant",
+      "expected": null
+    },
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "System"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Hi"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "Hello"
+        },
+        {
+          "role": "user",
+          "content": "Later"
+        }
+      ],
+      "start": "first_user",
+      "expected": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Hi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "messages": [
+        {
+          "role": "system",
+          "content": "System"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Hi"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "Hello"
+        },
+        {
+          "role": "user",
+          "content": "Later"
+        }
+      ],
+      "start": "last_assistant",
+      "expected": [
+        {
+          "role": "system",
+          "content": "System"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Hi"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "Hello"
+        }
+      ]
+    }
+  ]
+}

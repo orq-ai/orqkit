@@ -1,0 +1,1110 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": null,
+      "maxDynamicDatapoints": 2,
+      "attackTechniques": [
+        "direct-injection"
+      ],
+      "expected": {
+        "count": 0,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 0,
+            "filtered": 5,
+            "generated": 0,
+            "selected": 0
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 0,
+            "filtered": 4,
+            "generated": 0,
+            "selected": 0
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": 1,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 1,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 1,
+            "selected": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": 2,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 4,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 2,
+            "selected": 2
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 2,
+            "selected": 2
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": 3,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 3,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 0,
+            "selected": 3
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": null,
+      "maxDynamicDatapoints": 2,
+      "attackTechniques": null,
+      "expected": {
+        "count": 2,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 1,
+            "selected": 5,
+            "capped": 1
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 1,
+            "selected": 5,
+            "capped": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": 1,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": [
+        "direct-injection"
+      ],
+      "expected": {
+        "count": 1,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 0,
+            "filtered": 5,
+            "generated": 2,
+            "selected": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": 2,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 4,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 0,
+            "selected": 2
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 0,
+            "selected": 2
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": 3,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 3,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 1,
+            "selected": 3
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": null,
+      "maxDynamicDatapoints": 2,
+      "attackTechniques": null,
+      "expected": {
+        "count": 2,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 2,
+            "selected": 6,
+            "capped": 1
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 2,
+            "selected": 6,
+            "capped": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": 1,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 1,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 0,
+            "selected": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": 2,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": [
+        "direct-injection"
+      ],
+      "expected": {
+        "count": 2,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 0,
+            "filtered": 5,
+            "generated": 1,
+            "selected": 1
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 0,
+            "filtered": 4,
+            "generated": 1,
+            "selected": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": 3,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 3,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 2,
+            "selected": 3
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": null,
+      "maxDynamicDatapoints": 2,
+      "attackTechniques": null,
+      "expected": {
+        "count": 2,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 0,
+            "selected": 4,
+            "capped": 1
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 0,
+            "selected": 4,
+            "capped": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": 1,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 1,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 1,
+            "selected": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": 2,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 4,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 2,
+            "selected": 2
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 2,
+            "selected": 2
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 0,
+      "generateStrategies": false,
+      "maxPerCategory": 3,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": [
+        "direct-injection"
+      ],
+      "expected": {
+        "count": 0,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 0,
+            "filtered": 5,
+            "generated": 0,
+            "selected": 0
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": null,
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 1,
+      "generateStrategies": true,
+      "maxPerCategory": null,
+      "maxDynamicDatapoints": 2,
+      "attackTechniques": null,
+      "expected": {
+        "count": 2,
+        "breakdown": {
+          "ASI01": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 1,
+            "selected": 5,
+            "capped": 1
+          },
+          "ASI02": {
+            "totalHardcoded": 4,
+            "applicable": 4,
+            "filtered": 0,
+            "generated": 1,
+            "selected": 5,
+            "capped": 1
+          }
+        }
+      }
+    },
+    {
+      "context": {
+        "key": "test",
+        "id": null,
+        "workspace_id": null,
+        "target_kind": null,
+        "display_name": null,
+        "description": null,
+        "system_prompt": "",
+        "instructions": "",
+        "tools": [
+          {
+            "name": "email",
+            "description": "send mail",
+            "parameters": null,
+            "action_type": null
+          }
+        ],
+        "memory_stores": [
+          {
+            "id": "memory",
+            "key": null,
+            "description": null
+          }
+        ],
+        "knowledge_bases": [],
+        "model": null,
+        "version": null,
+        "skills": [],
+        "agent_type": null,
+        "engine": null,
+        "is_multi_agent": false
+      },
+      "vulnerabilities": [
+        "goal_hijacking"
+      ],
+      "categories": [
+        "ASI01",
+        "ASI02"
+      ],
+      "generatedStrategyCount": 2,
+      "generateStrategies": true,
+      "maxPerCategory": 1,
+      "maxDynamicDatapoints": null,
+      "attackTechniques": null,
+      "expected": {
+        "count": 1,
+        "breakdown": {
+          "goal_hijacking": {
+            "totalHardcoded": 5,
+            "applicable": 4,
+            "filtered": 1,
+            "generated": 2,
+            "selected": 1
+          }
+        }
+      }
+    }
+  ]
+}

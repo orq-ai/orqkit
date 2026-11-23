@@ -1,22 +1,38 @@
+import {
+  sumStructuredUsage,
+  warnUnreadConfigFields,
+} from "../../../common/structured-output.js";
+
 /**
  * First message generator using LLM.
  *
  * Generates contextually appropriate first messages based on persona and scenario.
  */
 
-import OpenAI from "openai";
+/**
+ * First message generator using LLM.
+ *
+ * Generates contextually appropriate first messages based on persona and scenario.
+ */
 
-import { isRetryableStatus } from "../agents/base.js";
-import { createRouterClient } from "../client.js";
-import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import type OpenAI from "openai";
+
+import { executeResponse } from "../../../common/llm-call.js";
 import {
-  getTraceContextHeaders,
-  recordLLMInput,
-  recordLLMResponse,
-  withLLMSpan,
-  withSimulationSpan,
-} from "../tracing.js";
-import type { Persona, Scenario, TokenUsage } from "../types.js";
+  firstResponsesRefusal,
+  responsesOutputText,
+  responsesStopReason,
+} from "../../../common/responses.js";
+import {
+  isRetryableError,
+  withoutClientRetries,
+  withRetry,
+} from "../../../common/retry.js";
+import type { LLMCallConfig, Usage } from "../../../contracts.js";
+import { createRouterClient } from "../client.js";
+import { resolveSimLlmConfig, simRoleConfig } from "../config.js";
+import { recordLLMInput, withLLMSpan, withSimulationSpan } from "../tracing.js";
+import type { Persona, Scenario } from "../types.js";
 import {
   buildPersonaSystemPrompt,
   buildScenarioUserContext,
@@ -24,7 +40,6 @@ import {
 import { SimulationGenerationError } from "./structured-call.js";
 
 // Temperature setting for message generation
-const TEMPERATURE_FIRST_MESSAGE = 0.8;
 
 const MAX_OUTPUT_TOKENS = 500;
 
@@ -33,18 +48,16 @@ const TIMEOUT_MS = 60_000;
 // Attempts for a reply with no usable text.
 const CONTENT_ATTEMPTS = 3;
 
+export class FirstMessageGenerationError extends SimulationGenerationError {
+  override name = "FirstMessageGenerationError";
+}
+
 /**
  * True when one pair can be dropped: unusable output or a transient provider
  * failure. Auth and request errors would hit every pair, so they abort the batch.
  */
 export function isRecoverableFirstMessageFailure(err: unknown): boolean {
-  if (err instanceof SimulationGenerationError) {
-    return true;
-  }
-  if (!(err instanceof OpenAI.APIError)) {
-    return false;
-  }
-  return err.status === undefined || isRetryableStatus(err.status);
+  return err instanceof SimulationGenerationError || isRetryableError(err);
 }
 
 const FIRST_MESSAGE_PROMPT = `You are generating the authentic first message a user would type to a support agent.
@@ -97,6 +110,7 @@ Return ONLY the message text. No quotes, no explanations, no labels.`;
  * Configuration for FirstMessageGenerator.
  */
 export interface FirstMessageGeneratorConfig {
+  llmConfig?: LLMCallConfig;
   model?: string;
   client?: OpenAI;
   apiKey?: string;
@@ -109,20 +123,37 @@ export interface FirstMessageGeneratorConfig {
  * persona characteristics and scenario context.
  */
 export class FirstMessageGenerator {
-  private usage: TokenUsage = {
-    prompt_tokens: 0,
-    completion_tokens: 0,
-    total_tokens: 0,
-  };
-  getUsage(): TokenUsage {
-    return { ...this.usage };
-  }
   private model: string;
+  private usage: Usage | null = null;
+
+  getUsage(): Usage | null {
+    return this.usage;
+  }
+  private readonly llmConfig: LLMCallConfig;
   private client: OpenAI;
 
   constructor(config?: FirstMessageGeneratorConfig) {
-    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-    this.client = config?.client ?? createRouterClient(config?.apiKey);
+    this.llmConfig = simRoleConfig(
+      resolveSimLlmConfig(config ?? {}, "FirstMessageGenerator"),
+      "sim.generator",
+    );
+    warnUnreadConfigFields(
+      this.llmConfig,
+      [
+        "model",
+        "client",
+        "temperature",
+        "timeoutMs",
+        "reasoningEffort",
+        "extraKwargs",
+        "extraBody",
+      ],
+      { caller: "FirstMessageGenerator" },
+    );
+    this.model = this.llmConfig.model;
+    this.client = withoutClientRetries(
+      (this.llmConfig.client as OpenAI) ?? createRouterClient(config?.apiKey),
+    );
   }
 
   /**
@@ -138,7 +169,11 @@ export class FirstMessageGenerator {
    *   after retrying, or truncates it. There is no canned fallback: the caller
    *   fails that datapoint instead.
    */
-  async generate(persona: Persona, scenario: Scenario): Promise<string> {
+  async generate(
+    persona: Persona,
+    scenario: Scenario,
+    signal?: AbortSignal,
+  ): Promise<string> {
     return withSimulationSpan(
       "orq.simulation.first_message_generation",
       {
@@ -170,7 +205,8 @@ Keep it natural - this is how they would actually open a conversation.`;
           const response = await withLLMSpan(
             {
               model: this.model,
-              temperature: TEMPERATURE_FIRST_MESSAGE,
+              operation: "responses",
+              temperature: this.llmConfig.temperature ?? undefined,
               maxTokens: MAX_OUTPUT_TOKENS,
               purpose: "first_message",
             },
@@ -183,40 +219,43 @@ Keep it natural - this is how they would actually open a conversation.`;
                 })),
               );
 
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: llmMessages,
-                  temperature: TEMPERATURE_FIRST_MESSAGE,
-                  max_tokens: MAX_OUTPUT_TOKENS,
-                },
-                { headers: traceHeaders, timeout: TIMEOUT_MS },
+              const { response, usage } = await withRetry(
+                () =>
+                  executeResponse({
+                    client: this.client,
+                    model: this.model,
+                    messages: llmMessages,
+                    span: llmSpan,
+                    timeoutMs: this.llmConfig.resolveTimeoutMs(TIMEOUT_MS),
+                    maxOutputTokens: MAX_OUTPUT_TOKENS,
+                    ...this.llmConfig.setValues(
+                      "temperature",
+                      "reasoningEffort",
+                      "extraBody",
+                      "extraKwargs",
+                    ),
+                    signal,
+                  }),
+                { label: "FirstMessageGenerator.generate", signal },
               );
-
-              recordLLMResponse(llmSpan, res);
+              this.usage = sumStructuredUsage([this.usage, usage]);
+              const res = response;
               return res;
             },
           );
 
-          if (response.usage) {
-            this.usage.prompt_tokens += response.usage.prompt_tokens;
-            this.usage.completion_tokens += response.usage.completion_tokens;
-            this.usage.total_tokens += response.usage.total_tokens;
-          }
-          const choice = response.choices[0];
-          if (choice?.finish_reason === "length") {
+          if (responsesStopReason(response) === "length") {
             // The same limit would truncate again, so this is not retried.
-            throw new SimulationGenerationError(
+            throw new FirstMessageGenerationError(
               `FirstMessageGenerator: response truncated at max_tokens=${MAX_OUTPUT_TOKENS}`,
             );
           }
 
-          const message = (choice?.message.content ?? "")
+          const message = responsesOutputText(response)
             .trim()
             .replace(/^["']|["']$/g, "");
-          if (message) {
-            console.debug(
+          if (firstResponsesRefusal(response) === null && message) {
+            console.error(
               `Generated first message: ${message.substring(0, 100)}...`,
             );
             return message;
@@ -226,7 +265,7 @@ Keep it natural - this is how they would actually open a conversation.`;
           );
         }
 
-        throw new SimulationGenerationError(
+        throw new FirstMessageGenerationError(
           `FirstMessageGenerator: empty message for persona '${persona.name}' and scenario '${scenario.name}'`,
         );
       },

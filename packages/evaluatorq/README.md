@@ -156,7 +156,7 @@ await evaluatorq("dataset-evaluation", {
 });
 ```
 
-> **Tip:** Use `parallelism` to control how many data points are processed concurrently. Start with a low value (3-5) when calling external APIs to avoid rate limits.
+> **Tip:** Use `datapointParallelism` to control concurrent data points and `llmParallelism` to bound requests through evaluatorq's LLM helpers. Start with 3 to 5 concurrent requests when calling an external API.
 
 ### Advanced Features
 
@@ -435,6 +435,163 @@ The Orq platform provides:
 - Performance metrics
 - Historical comparisons
 
+## Trace inputs
+
+`fetchTraces` uses the v3 trace API and reads every span page and its message-bearing details. Search mode requires an explicit time window. Filters use `{ field, op, values }` from the v3 trace filter grammar.
+
+```typescript
+import { fetchTraces, TraceInput } from "@orq-ai/evaluatorq";
+
+const traces = await fetchTraces(new TraceInput({
+  startTime: new Date(Date.now() - 60 * 60 * 1000),
+  endTime: new Date(),
+  limit: 20,
+}));
+```
+
+An exact lookup, `new TraceInput({ traceId, spanId })`, needs no dates; `spanId` is optional. Unreadable or incomplete span imports carry `importError`. Use `partitionTraces` to separate them from usable traces. Invalid search responses reject the search.
+
+The v3 API does not expose the named trace-level feedback used by the legacy `correction` expected-output mapping. V3 corrections refer to evaluator results and are not imported as expected answers.
+
+Pass a `TraceInput` or `ExperimentInput` directly to `evaluatorq()` to score recorded responses. Both sources default to `inference: false`; setting `inference: true` rejects the call. No jobs are required in replay mode, and supplied jobs are ignored.
+
+```typescript
+import { evaluatorq, ExperimentInput, TraceInput } from "@orq-ai/evaluatorq";
+
+await evaluatorq("trace replay", {
+  data: new TraceInput({ traceId: "trace-id" }),
+  evaluators,
+});
+
+await evaluatorq("experiment replay", {
+  data: new ExperimentInput({ experimentId: "experiment-id", runId: "run-id" }),
+  evaluators,
+});
+```
+
+Experiment replay requires `ORQ_API_KEY`. Omit `runId` to load the latest run. Trace imports retain their recorded output structure, and failed imports remain failed rows. A trace search with no matches rejects the call.
+
+For arrays or datasets, set `inference: false` explicitly to replay `inputs.recordedOutput` or the last assistant text in `inputs.messages`. Dataset replay loads messages even when `includeMessages` is false. These rules also apply to `evaluatorqEffect()`.
+
+
+To build simulation inputs from traces, summarize the conversations once and reuse the summaries in either generation mode:
+
+```typescript
+import {
+  datapointsFromTraces,
+  extendFromTraces,
+  fetchTraceConversations,
+  summarizeConversations,
+} from "@orq-ai/evaluatorq/simulation";
+
+const conversations = await fetchTraceConversations({
+  startTime: new Date(Date.now() - 60 * 60 * 1000),
+  endTime: new Date(),
+  limit: 20,
+});
+const summaries = await summarizeConversations(conversations);
+const direct = await datapointsFromTraces(conversations, { summaries });
+const extended = await extendFromTraces(conversations, {
+  numDatapoints: 20,
+  summaries,
+});
+```
+
+Both outputs can be passed to `simulate({ datapoints, ... })`. `datapointsFromTraces` also accepts a `TraceInput` or loaded `Trace` objects. Fetch credentials use `orqApiKey`; model credentials use `apiKey` or the supplied client.
+
+`TraceAnalysisConfig` controls summary length targets, output budgets, the profile sample cap, redaction instructions and fresh opening messages. Supplied summaries are authoritative: missing entries are dropped without another model call. Only summarization reads raw transcripts; later inference and profiling read summaries. Redaction is a model instruction. With `generateFirstMessage: false`, direct mode replays the recorded opening; a failed fresh-opening call also replays it and warns, matching Python.
+
+Simulation inputs can also come from an Orq dataset or a prior experiment:
+
+```typescript
+import {
+  datapointsFromDataset,
+  datapointsFromExperiment,
+  extendFromDataset,
+  extendFromExperiment,
+  simulate,
+} from "@orq-ai/evaluatorq/simulation";
+
+const original = await datapointsFromDataset(datasetId);
+const priorRun = await datapointsFromExperiment(experimentId, { runId });
+const fresh = await extendFromDataset(datasetId, {
+  numPersonas: 2,
+  numScenarios: 3,
+});
+const more = await extendFromExperiment(experimentId, { runId });
+await simulate({ datasetId, target });
+await simulate({ experimentId, experimentRunId: runId, target });
+```
+
+These sources require `ORQ_API_KEY`, or `apiKey` on the loader/extension functions. Extension uses that key for model calls unless `llmConfig.client` supplies a client. Omit the experiment run ID to select the latest run. `datasetId`, `experimentId`, `datapoints` and `personas`/`scenarios` are mutually exclusive inputs to `simulate()`.
+
+Each source row must encode exactly one conversation using `datapoint`, a one-element `datapoints` array, `persona` plus `scenario`, or one-element `personas` plus `scenarios` arrays. Full datapoints include `id`, `user_system_prompt` and `first_message`. JSON strings are accepted for the singular objects and `datapoints`; encode objects as JSON strings when creating scalar dataset columns. Invalid rows reject the load with the source ID and row index. Empty sources and incomplete pagination also fail.
+
+Extension deduplicates identical seed objects while preserving distinct variants with the same name, then asks for new coverage. It returns the grid of personas and scenarios actually generated, so its count can differ from the requested grid. Experiment exports use v3 and are read completely before parsing.
+
+Save and replay simulation runs with their exact cases:
+
+```typescript
+import { simulate, SimulationRun } from "@orq-ai/evaluatorq/simulation";
+
+await simulate({ target, datapoints, maxTurns: 3, save: true });
+await simulate({ target, previousRun: "latest" });
+await simulate({ target, previousRun: "nightly", maxTurns: 5 });
+const run = await SimulationRun.load(savedPath);
+```
+
+Saved runs go to `.evaluatorq/sim-runs` under the working directory, or `sim-runs` under `EVALUATORQ_DIR`. Automatic filenames avoid collisions. With `save: true`, `reportPath` writes JSON to an explicit path and replaces that file; `report` is its alias. Saving is opt-in. A save failure warns and leaves completed results available to the caller.
+
+`previousRun` accepts a path, filename, saved name, manifest run ID or unique ID prefix, or `latest`. Replay restores the saved turn cap unless `maxTurns` overrides it, and uses the new invocation's target and evaluators. It regenerates neither cases nor opening messages. A prior run without cases or recorded openings cannot be replayed. Newer replay formats and conflicting version fields are rejected.
+
+Saved model fields use camelCase; Python snake_case run files remain readable. Message content, tool arguments and caller metadata retain their data. Runs include per-turn and conversation usage, aggregate generation/conversation/analysis usage, available pricing, trace handles and the uploaded experiment URL when supplied by the backend. Unknown costs remain null; `pricedCalls` indicates how much of the run was priced. First-opening generation is excluded from aggregate generation usage, matching Python. Runtime results keep the legacy `token_usage` counters and expose richer `usage`; saved JSON uses `tokenUsage`. Custom simulators and judges can supply `getUsageDetails()`; legacy-only counters cannot recover missing prices or exact call counts. Opted-in runs also record completion, cancellation and failures in a manifest.
+
+Recommendations and an executive summary are enabled by default and use the generator model. Set `recommendations: false` or `executiveSummary: false` to skip those model calls. Recommendations run only for concrete criterion, rule or turn-quality failures, and are retained when `save: true`. Customize their thresholds, result/suggestion limits, input caps and output budget with a `recommendations` config object. Capped recommendation inputs warn; an incomplete executive summary is omitted. Saved run totals include analysis calls and reported spend on failures.
+
+Render saved results without further model calls:
+
+```typescript
+import { exportSimulationMarkdown, printSimulationSummary } from "@orq-ai/evaluatorq/simulation";
+
+const markdown = await exportSimulationMarkdown(run.results, {
+  target: run.target,
+  runDate: run.createdAt,
+  executiveSummary: run.executiveSummary,
+  recommendations: run.recommendations,
+  runTokenUsageTotal: run.tokenUsageTotal,
+});
+printSimulationSummary(run.results, { experimentUrl: run.experimentUrl });
+```
+
+Pass `runTokenUsageTotal` only for the full result set; omit it when rendering a filtered subset. Report sections retain unaudited criteria as unknown and separate execution errors from goal failures. Terminal summaries default to stderr and accept an `output` console.
+
+Use `CallableTarget` from the root package for callbacks that need usage extraction, a reset hook or explicit agent capabilities. `fromChatCompletions` also preserves an `AgentResponse` returned by its callback. `fromOrqDeployment` returns an `AgentResponse`, retaining provider usage and forwarding simulation thread/run metadata.
+
+`VercelAISdkTarget` from `@orq-ai/evaluatorq/ai-sdk` or the simulation entry point calls an HTTP endpoint. It accepts plain text, common JSON response shapes and the legacy AI SDK data stream protocol; `messageFormat: "v5"` (default) or `"v4"` controls replayed tool turns. It is separate from `fromAISdkAgent`, which calls an in-process SDK agent. HTTP UI SSE streams are not supported by this target.
+
+`LangGraphTarget` from `@orq-ai/evaluatorq/langgraph` or `@orq-ai/evaluatorq/langchain` wraps a compiled graph. It owns a fresh checkpointer thread per clone, sends only the latest user turn, preserves ordered text/tool results and gathers usage through callbacks. Supply `agentContext` when the graph's capabilities cannot be introspected. `resetConversation()` starts a fresh thread; use independent clones for concurrent conversations.
+
+`criteria_verified` is true only when every scenario criterion has received a valid judge audit, including `must_not_happen` criteria. Partial audits keep their per-criterion evidence in `metadata.criteria_meta`, but leave the run unverified and score `criteria_met` as zero. With no criteria, there is nothing to audit and the flag is true. `criteria_results` is a legacy boolean view; inspect `criteria_meta[].audited` to distinguish an unaudited default from a measured verdict.
+
+## Trace signals
+
+`@orq-ai/evaluatorq/signals` computes 60 deterministic signals on an ATIF trajectory, including tool behavior, autonomy, timing and eight derived tags. Use the format models to convert chat messages, Responses items or OTel spans first.
+
+```typescript
+import { ChatConversation } from "@orq-ai/evaluatorq/formats";
+import { computeSignals, signalEvaluator, signalEvaluators } from "@orq-ai/evaluatorq/signals";
+
+const trajectory = new ChatConversation({ messages }).toAtif();
+const report = computeSignals(trajectory, { only: ["tool_error_count", "stalled"] });
+const values = report.values();
+const errorRate = signalEvaluator("tool_error_rate", { threshold: 0.1 });
+const tagEvaluators = signalEvaluators("tags");
+```
+
+Selected tags also compute their metric dependencies. Results retain evidence and preconditions; missing source coverage produces `noBasis`, and `values()` omits those results. Tag evaluators fail when a tag fires. Numeric metrics produce a verdict only when a threshold is supplied, with values at or below it passing. Unsupported evaluator outputs are inconclusive. Evaluators accept native format models, chat message lists and objects containing `messages`.
+
+`classifyToolRoles` and `classifyToolDoors` are separate, opt-in model calls. Role classification sends unknown tool names. Door classification sends each distinct scrubbed tool input and its description, preserving the first and last 2,000 characters of long inputs. An unresolved door stays unknown. Neither classifier executes the tools being classified.
+
 ## 🔍 OpenTelemetry Tracing
 
 Evaluatorq automatically creates OpenTelemetry spans for observability into your evaluation runs.
@@ -482,7 +639,7 @@ const qualityEvaluator: Evaluator = {
 };
 ```
 
-**CI/CD Integration:** When any evaluator returns `pass: false`, the process exits with code 1. This enables fail-fast behavior in CI/CD pipelines.
+**CI/CD Integration:** When any evaluator returns `pass: false`, the process exits with code 1. Set `exitOnFailure: false` to inspect failed results in the calling application. The redteam runner uses this option to save findings and finish cleanup.
 
 **Pass Rate Display:** The summary table shows pass rate when evaluators use the `pass` field:
 
@@ -502,10 +659,14 @@ Main function to run evaluations.
 
 - `name`: String identifier for the evaluation run
 - `options`: Configuration object with:
-  - `data`: Array of data points, async iterable, or Orq dataset config
-  - `jobs`: Array of job functions to run on each data point
+  - `data`: Array of data points or promises, Orq dataset config, `TraceInput`, or `ExperimentInput`
+  - `jobs`: Job functions to run on each data point, required when inference is enabled
+  - `inference`: Defaults to false for trace and experiment sources, true otherwise
   - `evaluators`: Array of evaluator configurations
-  - `parallelism`: Number of concurrent jobs (default: 1)
+  - `datapointParallelism`: Number of concurrent data points (default: 10)
+  - `llmParallelism`: Concurrent requests through evaluatorq's LLM helpers; inherits the enclosing limit when omitted, or use `-1` to remove this run's ceiling
+  - `parallelism`: Deprecated alias for `datapointParallelism`; the new name takes precedence
+  - `onDatapointComplete`: Optional sync or async callback, awaited once for each terminal result before releasing its datapoint slot. Callback failures fail the run and settle work already started.
   - `path`: Optional string for organizing results on the Orq dashboard (e.g., `"Project/Category"`)
   - `description`: Optional string describing the evaluation run
 

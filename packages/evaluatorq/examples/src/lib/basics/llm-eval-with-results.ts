@@ -89,7 +89,7 @@ const rougeNEvaluator: Evaluator = {
   scorer: async ({ data, output }) => {
     const result = await orq.evals.invoke({
       id: ROUGE_N_EVALUATOR_ID,
-      requestBody: {
+      invokeEvaluatorRequest: {
         output: String(output),
         reference: String(data.expectedOutput ?? ""),
       },
@@ -126,7 +126,7 @@ const bertScoreEvaluator: Evaluator = {
     const reference = String(data.expectedOutput ?? "");
     const result = await orq.evals.invoke({
       id: BERT_SCORE_EVALUATOR_ID,
-      requestBody: {
+      invokeEvaluatorRequest: {
         output: String(output),
         reference,
       },

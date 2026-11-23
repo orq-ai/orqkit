@@ -25,6 +25,7 @@
 export { convertToOpenResponses } from "./convert.js";
 export type { LangChainSimulationAdapterOptions } from "./simulation-adapter.js";
 export { fromLangChainAgent } from "./simulation-adapter.js";
+export { LangGraphTarget, type LangGraphTargetOptions } from "./target.js";
 export type {
   AgentJobOptions,
   ContentBlock,

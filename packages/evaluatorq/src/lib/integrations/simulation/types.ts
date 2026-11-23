@@ -90,10 +90,10 @@ export const CULTURAL_CONTEXT_INSTRUCTIONS: Record<CulturalContext, string> = {
   direct:
     "You communicate in a very direct, low-context style typical of Northern European " +
     "or North American cultures. Say exactly what you mean without hints or implication. " +
-    "Get straight to the point. 'No' means 'no' — you don't soften refusals.",
+    "Get straight to the point. 'No' means 'no' : you don't soften refusals.",
   indirect:
     "You communicate indirectly, typical of many East Asian or Southeast Asian cultures. " +
-    "Avoid saying 'no' directly — instead use phrases like 'that might be difficult' or " +
+    "Avoid saying 'no' directly : instead use phrases like 'that might be difficult' or " +
     "'I'll think about it.' Hint at problems rather than stating them outright. Use hedging " +
     "language ('perhaps', 'maybe', 'it seems'). Preserving harmony is important.",
   high_context:
@@ -166,14 +166,20 @@ export const INPUT_FORMAT_INSTRUCTIONS: Record<InputFormat, string> = {
 // ---------------------------------------------------------------------------
 
 export interface ChatMessage {
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" | "system" | "tool" | "developer";
+  tool_calls?: import("../../contracts.js").Message["tool_calls"];
+  tool_call_id?: string | null;
+  name?: string | null;
   content: string;
 }
 
 /** The agent under test: takes the conversation so far, returns its reply. */
 export type TargetCallback = (
   messages: ChatMessage[],
-) => string | Promise<string>;
+) =>
+  | string
+  | import("../../contracts.js").AgentResponse
+  | Promise<string | import("../../contracts.js").AgentResponse>;
 
 // ---------------------------------------------------------------------------
 // Token usage
@@ -271,6 +277,7 @@ export interface Judgment {
 
 export interface TurnMetrics {
   turn_number: number;
+  usage?: import("../../contracts.js").Usage | null;
   token_usage: TokenUsage;
   response_quality?: number | null;
   hallucination_risk?: number | null;
@@ -286,6 +293,7 @@ export interface TurnMetrics {
 export type TerminatedBy = "judge" | "max_turns" | "error" | "timeout";
 
 export interface SimulationResult {
+  usage?: import("../../contracts.js").Usage | null;
   messages: ChatMessage[];
   terminated_by: TerminatedBy;
   reason: string;
@@ -298,9 +306,13 @@ export interface SimulationResult {
   metadata: Record<string, unknown>;
   /** Convenience fields for evaluatorq integration */
   criteria_results?: Record<string, boolean>;
-  /** False when the scenario has criteria and the judge never audited them. */
+  /** False when any scenario criterion has never received a valid judge audit. */
   criteria_verified?: boolean;
   total_turns?: number;
+  token_usage_known?: boolean;
+  thread_id?: string | null;
+  response_traces?: { traceId: string; spanId?: string | null }[];
+  evaluator_details?: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------

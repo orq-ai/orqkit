@@ -1,474 +1,368 @@
-/**
- * Base agent class for simulation agents.
- *
- * Provides common functionality for all agents in the simulation system,
- * including LLM interaction with retry logic.
- */
+import type OpenAI from "openai";
 
-import OpenAI from "openai";
-
-import { createRouterClient } from "../client.js";
-import { DEFAULT_SIMULATION_MODEL, resolveLLMMaxTokens } from "../defaults.js";
 import {
-  getTraceContextHeaders,
-  recordLLMInput,
-  recordLLMResponse,
-  withLLMSpan,
-} from "../tracing.js";
+  executeChatCompletion,
+  executeResponse,
+  type NamedSchema,
+} from "../../../common/llm-call.js";
+import { clientRoutesThroughOrq } from "../../../common/llm-client.js";
+import {
+  applyCacheBreakpoints,
+  cachingApplies,
+  markResponsesInput,
+  responsesVolatileItems,
+} from "../../../common/prompt-cache.js";
+import {
+  firstResponsesRefusal,
+  responsesOutputText,
+  responsesStopReason,
+} from "../../../common/responses.js";
+import { withoutClientRetries, withRetry } from "../../../common/retry.js";
+import { threadBodyParam } from "../../../common/thread-context.js";
+import {
+  addUsage,
+  LLMCallConfig,
+  type LLMCallConfigInput,
+  MessageSchema,
+  type Usage,
+} from "../../../contracts.js";
+import { messagesToResponsesInput } from "../../openresponses/input-items.js";
+import { createRouterClient } from "../client.js";
+import {
+  explicitConfig,
+  resolveSimLlmConfig,
+  simRoleConfig,
+} from "../config.js";
+import { resolveLLMMaxTokens } from "../defaults.js";
+import { recordLLMInput, withLLMSpan } from "../tracing.js";
 import type { ChatMessage, TokenUsage } from "../types.js";
 import { isSchemaRejection } from "../utils/strict-schema.js";
 
-// Retry configuration
-const MAX_RETRY_ATTEMPTS = 5;
-const RETRY_MIN_WAIT_MS = 2_000;
-const RETRY_MAX_WAIT_MS = 60_000;
-const DEFAULT_TIMEOUT_S = 60;
-
-/**
- * Result of a single LLM call, including optional tool calls.
- */
 export interface LLMResult {
   content: string;
   tool_calls?: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[];
+  refusal?: string | null;
 }
 
-/**
- * Configuration options for constructing an agent.
- */
-export interface AgentConfig {
-  /** Model identifier (default: DEFAULT_SIMULATION_MODEL). */
-  model?: string;
-  /** Pre-existing OpenAI client to reuse. The agent will NOT close an injected client. */
-  client?: OpenAI;
-  /** API key override. Ignored when `client` is provided. */
+export interface AgentConfig extends LLMCallConfigInput {
+  llmConfig?: LLMCallConfig;
   apiKey?: string;
 }
 
-/**
- * Determines whether an HTTP status code is retryable.
- */
 export function isRetryableStatus(status: number | undefined): boolean {
-  if (status === undefined) return false;
-  return status === 429 || status >= 500;
+  return status !== undefined && (status === 429 || status >= 500);
 }
 
-/**
- * Send a chat request through the Responses API and return it in chat shape.
- *
- * The judge needs this: a model that reasons by default answers function tools
- * on chat completions with a 400. A 400 rejecting the strict schema retries once
- * without strict, for models that reject it.
- */
-async function createViaResponses(
-  client: OpenAI,
-  params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
-  requestOptions: OpenAI.RequestOptions,
-): Promise<OpenAI.Chat.Completions.ChatCompletion> {
-  const tools = params.tools?.map((tool) => ({
-    type: "function" as const,
-    name: tool.function.name,
-    description: tool.function.description,
-    parameters: tool.function.parameters ?? null,
-    strict: tool.function.strict ?? false,
-  }));
-  const send = (sentTools: typeof tools) =>
-    client.responses.create(
-      {
-        model: params.model,
-        input: params.messages as OpenAI.Responses.ResponseInput,
-        temperature: params.temperature,
-        max_output_tokens: params.max_tokens,
-        tools: sentTools,
-        tool_choice:
-          params.tool_choice as OpenAI.Responses.ResponseCreateParams["tool_choice"],
-      },
-      requestOptions,
-    );
-
-  const response = await send(tools).catch((err: unknown) => {
-    if (!tools || !isSchemaRejection(err)) {
-      throw err;
-    }
-    console.warn(
-      `Model ${params.model} rejected strict tools, retrying without strict: ${(err as Error).message}`,
-    );
-    return send(tools.map((tool) => ({ ...tool, strict: false })));
-  });
-
-  // These arrive as a 200, so the status check is what stops a partial output
-  // from being read as the judge's decision.
-  if (response.status === "failed") {
-    throw new Error(
-      `Responses API call failed: ${response.error?.message ?? "no error details"}`,
-    );
-  }
-  const incompleteReason = response.incomplete_details?.reason;
-  if (
-    (response.status === "incomplete" || incompleteReason) &&
-    incompleteReason !== "max_output_tokens"
-  ) {
-    throw new Error(
-      `Responses API call incomplete: ${incompleteReason ?? "no reason given"}`,
-    );
-  }
-
-  const toolCalls = response.output.flatMap((item) =>
-    item.type === "function_call"
-      ? [
-          {
-            id: item.call_id,
-            type: "function" as const,
-            function: { name: item.name, arguments: item.arguments },
-          },
-        ]
-      : [],
-  );
-
-  return {
-    id: response.id,
-    object: "chat.completion",
-    created: response.created_at,
-    model: response.model,
-    choices: [
-      {
-        index: 0,
-        logprobs: null,
-        finish_reason: incompleteReason
-          ? "length"
-          : toolCalls.length > 0
-            ? "tool_calls"
-            : "stop",
-        message: {
-          role: "assistant",
-          content: response.output_text || null,
-          refusal: null,
-          ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
-        },
-      },
-    ],
-    usage: response.usage && {
-      prompt_tokens: response.usage.input_tokens,
-      completion_tokens: response.usage.output_tokens,
-      total_tokens: response.usage.total_tokens,
-      prompt_tokens_details: {
-        cached_tokens: response.usage.input_tokens_details?.cached_tokens,
-      },
-    },
-  };
+export interface AgentCallOptions {
+  temperature?: number | null;
+  maxTokens?: number;
+  timeout?: number;
+  timeoutMs?: number;
+  tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
+  toolChoice?: "auto" | "required";
+  useResponsesApi?: boolean;
+  responseFormat?: NamedSchema;
+  signal?: AbortSignal;
+  llmPurpose?: string;
+  volatileTail?: number;
 }
 
-/**
- * Abstract base class for simulation agents.
- *
- * Provides common LLM interaction functionality with exponential-backoff
- * retry logic and cumulative token-usage tracking.
- *
- * **Client injection**: pass an existing `OpenAI` client via `config.client`
- * to share a single HTTP connection across multiple agents. The agent will
- * NOT close an injected client -- the caller is responsible for its lifecycle.
- */
 export abstract class BaseAgent {
   protected model: string;
   protected client: OpenAI;
+  readonly config: LLMCallConfig;
   private clientOwned: boolean;
-  private usage: TokenUsage;
+  private detailedUsage: Usage | null = null;
+  private usage: TokenUsage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+  };
 
-  constructor(config?: AgentConfig) {
-    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
-
-    this.client = config?.client ?? createRouterClient(config?.apiKey);
-    this.clientOwned = !config?.client;
-
-    this.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+  protected get modelTask(): string {
+    return "sim.user";
+  }
+  protected get requiredApi(): "responses" | undefined {
+    return undefined;
   }
 
-  // ---------------------------------------------------------------------------
-  // Abstract interface
-  // ---------------------------------------------------------------------------
+  constructor(options?: AgentConfig | LLMCallConfig) {
+    const supplied =
+      options instanceof LLMCallConfig
+        ? options
+        : (options?.llmConfig ?? new LLMCallConfig(options));
+    let config = simRoleConfig(
+      resolveSimLlmConfig(
+        {
+          llmConfig: supplied,
+          model: options instanceof LLMCallConfig ? undefined : options?.model,
+          client: options?.client,
+        },
+        this.constructor.name,
+      ),
+      this.modelTask,
+    );
+    const api =
+      this.requiredApi ??
+      (config.fieldsSet.has("api") ? config.api : "responses");
+    if (
+      this.requiredApi &&
+      config.fieldsSet.has("api") &&
+      config.api !== this.requiredApi
+    ) {
+      console.warn(
+        `${this.constructor.name} runs on ${this.requiredApi}; llmConfig.api does not apply to it.`,
+      );
+    }
+    config = new LLMCallConfig({ ...explicitConfig(config), api });
+    this.config = config;
+    this.model = config.model;
+    const client = config.client as OpenAI | undefined;
+    this.client = withoutClientRetries(
+      client ??
+        createRouterClient(
+          options instanceof LLMCallConfig ? undefined : options?.apiKey,
+        ),
+    );
+    this.clientOwned = !client;
+  }
 
-  /** Agent name for identification. */
   abstract get name(): string;
-
-  /** System prompt for this agent. */
   abstract get systemPrompt(): string;
 
-  // ---------------------------------------------------------------------------
-  // Public API
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Generate a text response for a conversation.
-   *
-   * @param messages - Conversation history
-   * @param options  - Temperature, maxTokens, and timeout overrides
-   * @returns The agent's response text
-   * @throws {Error} If the LLM call returns no content
-   */
   async respondAsync(
     messages: ChatMessage[],
-    options?: {
-      temperature?: number;
-      maxTokens?: number;
-      timeout?: number;
-      signal?: AbortSignal;
-      llmPurpose?: string;
-    },
+    options?: AgentCallOptions,
   ): Promise<string> {
-    const result = await this.callLLM(messages, {
-      temperature: options?.temperature,
-      maxTokens: options?.maxTokens,
-      timeout: options?.timeout,
-      signal: options?.signal,
-      llmPurpose: options?.llmPurpose,
-    });
-
-    if (!result.content) {
+    const result = await this.callLLM(messages, options);
+    if (!result.content)
       throw new Error(
         `${this.name}: LLM call failed -- no content in response`,
       );
-    }
-
     return result.content;
   }
 
-  /**
-   * Get cumulative token usage for this agent.
-   */
   getUsage(): TokenUsage {
     return { ...this.usage };
   }
-
-  /**
-   * Reset token usage counters to zero.
-   */
+  getUsageDetails(): Usage | null {
+    return this.detailedUsage ? { ...this.detailedUsage } : null;
+  }
   resetUsage(): void {
+    this.detailedUsage = null;
     this.usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   }
 
-  /**
-   * Close the underlying HTTP client.
-   *
-   * Only closes clients that the agent created itself (not injected ones).
-   */
   async close(): Promise<void> {
-    // The OpenAI Node SDK does not currently expose a public close() method,
-    // but we guard against future changes and respect ownership semantics.
-    if (
-      this.clientOwned &&
-      typeof (this.client as unknown as { close?: () => Promise<void> })
-        .close === "function"
-    ) {
-      await (this.client as unknown as { close: () => Promise<void> }).close();
-    }
+    const client = this.client as OpenAI & { close?: () => Promise<void> };
+    if (this.clientOwned && client.close) await client.close();
   }
 
-  // ---------------------------------------------------------------------------
-  // Protected helpers
-  // ---------------------------------------------------------------------------
+  private accumulate(usage: Usage | null): void {
+    if (!usage) return;
+    this.detailedUsage = this.detailedUsage
+      ? addUsage(this.detailedUsage, usage)
+      : usage;
+    this.usage.prompt_tokens += usage.inputTokens;
+    this.usage.completion_tokens += usage.outputTokens;
+    this.usage.total_tokens += usage.totalTokens;
+  }
 
-  /**
-   * Call the LLM with retry logic (exponential backoff).
-   *
-   * Retries on rate-limit (429) and server errors (500+). All other errors
-   * are raised immediately.
-   */
   protected async callLLM(
     messages: ChatMessage[],
-    options?: {
-      temperature?: number;
-      maxTokens?: number;
-      timeout?: number;
-      tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
-      toolChoice?: "auto" | "required";
-      /** Send through the Responses API instead of chat completions. */
-      useResponsesApi?: boolean;
-      /** External abort signal — aborts in-flight LLM requests immediately. */
-      signal?: AbortSignal;
-      /** Semantic purpose for OTel span (e.g. "judge", "user_simulator"). */
-      llmPurpose?: string;
-    },
+    options: AgentCallOptions = {},
   ): Promise<LLMResult> {
-    const temperature = options?.temperature ?? 0.7;
-    const maxTokens = options?.maxTokens ?? resolveLLMMaxTokens();
-    const timeoutS = options?.timeout ?? DEFAULT_TIMEOUT_S;
-
+    const config = this.config;
+    const temperature = config.fieldsSet.has("temperature")
+      ? config.temperature
+      : options.temperature;
+    const maxTokens = config.fieldsSet.has("maxTokens")
+      ? config.maxTokens
+      : (options.maxTokens ?? resolveLLMMaxTokens());
+    const envTimeout =
+      Number(process.env.EVALUATORQ_LLM_TIMEOUT_S ?? 60) * 1000;
+    const timeoutMs = config.resolveTimeoutMs(
+      options.timeoutMs ??
+        (options.timeout === undefined
+          ? Number.isFinite(envTimeout) && envTimeout > 0
+            ? envTimeout
+            : 60_000
+          : options.timeout * 1000),
+    );
+    const envEffort =
+      process.env.EVALUATORQ_REASONING_EFFORT?.trim().toLowerCase();
+    const reasoningEffort = config.fieldsSet.has("reasoningEffort")
+      ? config.reasoningEffort
+      : envEffort && !["none", "off"].includes(envEffort)
+        ? envEffort
+        : undefined;
+    const responses =
+      this.requiredApi !== undefined ||
+      (options.useResponsesApi ?? config.api === "responses");
+    if (options.responseFormat && !responses)
+      throw new Error(
+        `${this.name}: responseFormat is only supported on the Responses API`,
+      );
     return withLLMSpan(
       {
+        operation: responses ? "responses" : "chat",
         model: this.model,
-        temperature,
+        temperature: temperature ?? undefined,
         maxTokens,
-        purpose: options?.llmPurpose,
+        purpose: options.llmPurpose,
       },
       async (span) => {
-        const fullMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-          [
-            { role: "system" as const, content: this.systemPrompt },
-            ...messages.map((m) => ({
-              role: m.role as "user" | "assistant" | "system",
-              content: m.content,
-            })),
-          ];
-
-        // Record input messages on the span for platform UI display
-        recordLLMInput(
-          span,
-          fullMessages.map((m) => ({
-            role: String(m.role),
-            content: typeof m.content === "string" ? m.content : "",
-          })),
+        const fullMessages = [
+          { role: "system", content: this.systemPrompt },
+          ...messages,
+        ];
+        const extraBody = {
+          ...(clientRoutesThroughOrq(this.client) ? threadBodyParam() : {}),
+          ...config.extraBody,
+        };
+        let input = messagesToResponsesInput(
+          messages.map((message) => MessageSchema.parse(message)),
         );
-
-        // Inject W3C trace context so the router links its spans to the
-        // current simulation trace. The active span and trace context don't
-        // change across retries, so compute the headers once.
-        const traceHeaders = await getTraceContextHeaders();
-
-        let lastError: unknown;
-
-        for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
-          try {
-            // Bail immediately if already cancelled
-            if (options?.signal?.aborted) {
-              throw new Error("Cancelled");
-            }
-
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), timeoutS * 1000);
-
-            // Link external signal to this request's controller
-            const onAbort = () => controller.abort();
-            options?.signal?.addEventListener("abort", onAbort, { once: true });
-
-            try {
-              const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming =
-                {
-                  model: this.model,
-                  messages: fullMessages,
-                  temperature,
-                  max_tokens: maxTokens,
-                };
-
-              if (options?.tools && options.tools.length > 0) {
-                params.tools = options.tools;
-                params.tool_choice = options.toolChoice ?? "auto";
+        let chatInput: Record<string, unknown>[] = fullMessages.map(
+          (message) => ({ ...message }),
+        );
+        if (cachingApplies(this.client, this.model)) {
+          input = markResponsesInput(input, {
+            volatileItems: responsesVolatileItems(
+              messages.map((message) => MessageSchema.parse(message)),
+              { volatileTail: options.volatileTail ?? 0 },
+            ),
+          });
+          chatInput = applyCacheBreakpoints(chatInput, {
+            volatileTail: options.volatileTail ?? 0,
+          });
+        }
+        const common = {
+          client: this.client,
+          model: this.model,
+          span,
+          timeoutMs,
+          temperature,
+          reasoningEffort,
+          extraBody,
+          extraKwargs: config.extraKwargs,
+          signal: options.signal,
+        };
+        return withRetry(
+          async () => {
+            options.signal?.throwIfAborted();
+            if (responses) {
+              recordLLMInput(span, messages);
+              span?.setAttribute(
+                "gen_ai.request.instructions",
+                this.systemPrompt.slice(0, 2000),
+              );
+              const tools = options.tools?.map((tool) => ({
+                type: "function",
+                name: tool.function.name,
+                description: tool.function.description,
+                parameters: tool.function.parameters ?? {
+                  type: "object",
+                  properties: {},
+                },
+                strict: tool.function.strict ?? false,
+              }));
+              const send = (sentTools: typeof tools) =>
+                executeResponse({
+                  ...common,
+                  messages: input,
+                  instructions: this.systemPrompt,
+                  tools: sentTools,
+                  extraKwargs: {
+                    ...(options.toolChoice
+                      ? { tool_choice: options.toolChoice }
+                      : {}),
+                    ...config.extraKwargs,
+                  },
+                  responseTextFormat: options.responseFormat,
+                  maxOutputTokens: maxTokens,
+                  recordInput: false,
+                });
+              let called: Awaited<ReturnType<typeof send>>;
+              try {
+                called = await send(tools);
+              } catch (error) {
+                if (!tools?.length || !isSchemaRejection(error)) throw error;
+                console.warn(
+                  `${this.name}: model rejected strict tools, retrying without strict`,
+                );
+                called = await send(
+                  tools.map((tool) => ({ ...tool, strict: false })),
+                );
               }
-
-              const requestOptions = {
-                signal: controller.signal,
-                headers: traceHeaders,
-              };
-              const response = options?.useResponsesApi
-                ? await createViaResponses(this.client, params, requestOptions)
-                : await this.client.chat.completions.create(
-                    params,
-                    requestOptions,
-                  );
-
-              clearTimeout(timer);
-
-              const choice = response.choices[0];
-              if (!choice) {
-                throw new Error(`${this.name}: No choices in response`);
-              }
-
-              const message = choice.message;
-
-              // Record LLM response on the span (token usage, finish reason, etc.)
-              recordLLMResponse(span, response);
-
-              // Accumulate token usage
-              if (response.usage) {
-                this.usage.prompt_tokens += response.usage.prompt_tokens;
-                this.usage.completion_tokens +=
-                  response.usage.completion_tokens;
-                this.usage.total_tokens += response.usage.total_tokens;
-              }
-
-              if (choice.finish_reason === "length") {
+              this.accumulate(called.usage);
+              const raw = called.response as OpenAI.Responses.Response;
+              if (raw.status === "failed")
+                throw new Error(
+                  `Responses API call failed: ${raw.error?.message ?? "no error details"}`,
+                );
+              const stop = responsesStopReason(raw);
+              if (stop === "length")
                 throw new Error(
                   `${this.name}: response truncated at max_output_tokens=${maxTokens}`,
                 );
-              }
-
-              const result: LLMResult = {
-                content: message.content ?? "",
-              };
-
-              if (message.tool_calls && message.tool_calls.length > 0) {
-                result.tool_calls = message.tool_calls;
-              }
-
-              return result;
-            } finally {
-              clearTimeout(timer);
-              options?.signal?.removeEventListener("abort", onAbort);
-            }
-          } catch (err: unknown) {
-            lastError = err;
-
-            // Abort errors (from timeout cancellation) should never be retried
-            if (err instanceof Error && err.name === "AbortError") {
-              throw err;
-            }
-
-            // Determine if retryable
-            const isApiError = err instanceof OpenAI.APIError;
-            const status = isApiError ? err.status : undefined;
-            const isNetworkError =
-              !isApiError &&
-              err instanceof Error &&
-              "code" in err &&
-              typeof (err as NodeJS.ErrnoException).code === "string" &&
-              /^E(CONN|TIMEOUT|NOTFOUND|RESET)/.test(
-                (err as NodeJS.ErrnoException).code ?? "",
+              if (raw.status === "incomplete")
+                throw new Error(
+                  `Responses API call incomplete: ${stop ?? "no reason given"}`,
+                );
+              const calls = (raw.output ?? []).flatMap((item) =>
+                item.type === "function_call"
+                  ? [
+                      {
+                        id: item.call_id,
+                        type: "function" as const,
+                        function: {
+                          name: item.name,
+                          arguments: item.arguments,
+                        },
+                      },
+                    ]
+                  : [],
               );
-
-            // Re-throw immediately for external cancellation
-            if (options?.signal?.aborted) throw err;
-
-            if (!isRetryableStatus(status) && !isNetworkError) {
-              throw err;
+              return {
+                content: responsesOutputText(raw),
+                refusal: firstResponsesRefusal(raw),
+                ...(calls.length && { tool_calls: calls }),
+              };
             }
-
-            if (attempt < MAX_RETRY_ATTEMPTS) {
-              const baseWait = RETRY_MIN_WAIT_MS * 2 ** (attempt - 1);
-              const waitMs = Math.min(baseWait, RETRY_MAX_WAIT_MS);
-              // Add jitter (0-25% of wait time)
-              const jitter = Math.random() * waitMs * 0.25;
-              await sleepCancellable(waitMs + jitter, options?.signal);
-            }
-          }
-        }
-
-        throw (
-          lastError ??
-          new Error(
-            `${this.name}: Max retries (${MAX_RETRY_ATTEMPTS}) exceeded`,
-          )
+            const called = await executeChatCompletion({
+              ...common,
+              messages: chatInput,
+              tools: options.tools,
+              maxTokens,
+              extraKwargs: {
+                ...(options.tools?.length
+                  ? { tool_choice: options.toolChoice ?? "auto" }
+                  : {}),
+                ...config.extraKwargs,
+              },
+            });
+            this.accumulate(called.usage);
+            const choice = called.response.choices[0];
+            if (!choice)
+              throw new Error(`${this.name}: No choices in response`);
+            if (choice.finish_reason === "length")
+              throw new Error(
+                `${this.name}: response truncated at max_tokens=${maxTokens}`,
+              );
+            return {
+              content: choice.message.content ?? "",
+              refusal: choice.message.refusal,
+              tool_calls: choice.message.tool_calls as LLMResult["tool_calls"],
+            };
+          },
+          {
+            maxAttempts: config.retryCount + 1,
+            label: `${this.name}.callLLM`,
+            signal: options.signal,
+          },
         );
       },
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// Utility
-// ---------------------------------------------------------------------------
-
-function sleepCancellable(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new Error("Cancelled"));
-      return;
-    }
-    const onAbort = () => {
-      clearTimeout(timer);
-      reject(new Error("Cancelled"));
-    };
-    const timer = setTimeout(() => {
-      signal?.removeEventListener("abort", onAbort);
-      resolve();
-    }, ms);
-    signal?.addEventListener("abort", onAbort, { once: true });
-  });
 }

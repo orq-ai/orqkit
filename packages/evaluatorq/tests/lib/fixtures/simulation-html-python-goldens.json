@@ -1,0 +1,3233 @@
+{
+  "source": "a59c3a86",
+  "runs": [
+    {
+      "name": "empty",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 0,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 0,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": "Saved <summary> & whole-run context.",
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "pass",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Request finished.",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "pass",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Request finished.",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": "Saved <summary> & whole-run context.",
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "fail",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "fail",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 1,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": "Saved <summary> & whole-run context.",
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "mixed",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 4,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Request finished.",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "error",
+            "reason": "Failed transport",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": false,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": null,
+              "scenario": false,
+              "error": "rate limit",
+              "evaluator_errors": {
+                "broken": "timeout",
+                "only_error": "no score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "max_turns",
+            "reason": "Request finished.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.5,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 3,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "unmeasured"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "persona_id": "p-2",
+              "scenario_id": "s-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Do not leak",
+                  "type": "must_not_happen",
+                  "passed": true,
+                  "audited": false
+                }
+              ]
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "mixed",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 4,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Request finished.",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "error",
+            "reason": "Failed transport",
+            "goal_achieved": true,
+            "goal_completion_score": 1.0,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": false,
+            "turn_metrics": [],
+            "metadata": {
+              "persona": null,
+              "scenario": false,
+              "error": "rate limit",
+              "evaluator_errors": {
+                "broken": "timeout",
+                "only_error": "no score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "max_turns",
+            "reason": "Request finished.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.5,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 3,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "unmeasured"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "persona_id": "p-2",
+              "scenario_id": "s-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Do not leak",
+                  "type": "must_not_happen",
+                  "passed": true,
+                  "audited": false
+                }
+              ]
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": "Saved <summary> & whole-run context.",
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "filtered",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 2,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "max_turns",
+            "reason": "Request finished.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.5,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 3,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "unmeasured"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "persona_id": "p-2",
+              "scenario_id": "s-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Do not leak",
+                  "type": "must_not_happen",
+                  "passed": true,
+                  "audited": false
+                }
+              ]
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": null,
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    },
+    {
+      "name": "filtered",
+      "input": {
+        "run_name": "Saved case",
+        "created_at": "2026-01-01T00:00:00Z",
+        "mode": "simulate",
+        "target_kind": "callback",
+        "target": "callback",
+        "target_model": null,
+        "max_turns": 3,
+        "agent_info": null,
+        "orq_base_url": null,
+        "evaluator_names": [
+          "good"
+        ],
+        "total_results": 2,
+        "scorer_averages": {
+          "good": 0.5,
+          "bool": 1.0
+        },
+        "results": [
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "judge",
+            "reason": "Leaked order ID.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.25,
+            "rules_broken": [
+              "criteria_0",
+              "free rule"
+            ],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 1,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": 0.75,
+                "tone_appropriateness": 0.25,
+                "factual_accuracy": 0.0,
+                "judge_reason": "bad"
+              },
+              {
+                "turn_number": 2,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": 0.5,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": 0.5,
+                "judge_reason": "ok"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "scenario_goal": "Refund the correct charge",
+              "scenario_context": "Order 7",
+              "persona_traits": {
+                "background": "Shopper",
+                "emoji": "🙂"
+              },
+              "datapoint_id": "dp-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Keep IDs private",
+                  "type": "must_not_happen",
+                  "passed": false,
+                  "audited": true,
+                  "evidence": "Order 7"
+                },
+                {
+                  "id": "criteria_1",
+                  "description": "Verify account",
+                  "type": "must_happen",
+                  "passed": true,
+                  "audited": false,
+                  "evidence": null
+                }
+              ],
+              "evaluator_scores": {
+                "quality": 0.25,
+                "bool": true,
+                "ignored": "x"
+              },
+              "evaluator_errors": {
+                "broken": "invalid score"
+              }
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          },
+          {
+            "messages": [
+              {
+                "role": "user",
+                "content": "Please help <now>",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              },
+              {
+                "role": "assistant",
+                "content": "Done & safe.",
+                "tool_calls": null,
+                "tool_call_id": null,
+                "name": null
+              }
+            ],
+            "terminated_by": "max_turns",
+            "reason": "Request finished.",
+            "goal_achieved": false,
+            "goal_completion_score": 0.5,
+            "rules_broken": [],
+            "turn_count": 1,
+            "token_usage": {
+              "input_tokens": 10,
+              "output_tokens": 5,
+              "total_tokens": 15,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0,
+              "cache_creation_1h_tokens": 0,
+              "cache_creation_5m_tokens": 0,
+              "reasoning_tokens": 0,
+              "input_cost": null,
+              "output_cost": null,
+              "total_cost": null,
+              "calls": 0,
+              "priced_calls": 0,
+              "prompt_tokens": 10,
+              "completion_tokens": 5,
+              "cost_usd": null
+            },
+            "token_usage_known": true,
+            "turn_metrics": [
+              {
+                "turn_number": 3,
+                "token_usage": {
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "total_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_creation_tokens": 0,
+                  "cache_creation_1h_tokens": 0,
+                  "cache_creation_5m_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "input_cost": null,
+                  "output_cost": null,
+                  "total_cost": null,
+                  "calls": 0,
+                  "priced_calls": 0,
+                  "prompt_tokens": 0,
+                  "completion_tokens": 0,
+                  "cost_usd": null
+                },
+                "response_quality": null,
+                "hallucination_risk": null,
+                "tone_appropriateness": null,
+                "factual_accuracy": null,
+                "judge_reason": "unmeasured"
+              }
+            ],
+            "metadata": {
+              "persona": "Careful",
+              "scenario": "Refund",
+              "persona_id": "p-2",
+              "scenario_id": "s-2",
+              "criteria_meta": [
+                {
+                  "id": "criteria_0",
+                  "description": "Do not leak",
+                  "type": "must_not_happen",
+                  "passed": true,
+                  "audited": false
+                }
+              ]
+            },
+            "criteria_results": {
+              "Verified": true
+            },
+            "criteria_verified": null,
+            "evaluator_details": {},
+            "total_turns": null,
+            "thread_id": null,
+            "response_traces": []
+          }
+        ],
+        "datapoints": [
+          {
+            "id": "case",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "B",
+              "emotional_arc": null,
+              "cultural_context": null
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "G",
+              "context": null,
+              "starting_emotion": null,
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen",
+                  "evaluator": null
+                }
+              ],
+              "is_edge_case": null,
+              "conversation_strategy": null,
+              "ground_truth": null,
+              "input_format": null
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ],
+        "replay_version": 1,
+        "executive_summary": "Saved <summary> & whole-run context.",
+        "token_usage_total": {
+          "input_tokens": 3,
+          "output_tokens": 2,
+          "total_tokens": 5,
+          "cached_tokens": 1,
+          "cache_creation_tokens": 0,
+          "cache_creation_1h_tokens": 0,
+          "cache_creation_5m_tokens": 0,
+          "reasoning_tokens": 1,
+          "input_cost": 0.01,
+          "output_cost": 0.02,
+          "total_cost": 0.03,
+          "calls": 1,
+          "priced_calls": 1,
+          "prompt_tokens": 3,
+          "completion_tokens": 2,
+          "cost_usd": 0.03
+        },
+        "run_id": "1234567890abcdef",
+        "experiment_url": null,
+        "recommendations": [
+          {
+            "result_index": 0,
+            "persona": "Persona <one>",
+            "scenario": "Scenario & case",
+            "triggers": [
+              "failed goal"
+            ],
+            "suggestions": [
+              "Improve <instructions>"
+            ]
+          }
+        ],
+        "applied_suggestions": []
+      }
+    }
+  ],
+  "cases": [
+    {
+      "run": 0,
+      "indexes": null,
+      "standalone": false,
+      "body": "00a1bf2cf167737e2e3590d06df246516ca0e580a7925e2cb4247e8c3d363b92",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": null,
+      "standalone": true,
+      "body": "3c2c3ce96a49d377c8bb7aea30a662b9b251c667316be4f915e3bed997c20115",
+      "document": "b69263dd189fc95f1d536030c4a51c72c71474dd22368e4ba2a3a04cca5997cd"
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": false,
+      "body": "cdd6a7cfcb2747b745eddaa3e18f2003e107d7c4aca9f47536adf74ea8c4be17",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": true,
+      "body": "530a9c4f5b9e9a0c0d67f841a64ddf856deafa3ee2a09603faa0cec4157893e3",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": false,
+      "body": "cdd6a7cfcb2747b745eddaa3e18f2003e107d7c4aca9f47536adf74ea8c4be17",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": true,
+      "body": "530a9c4f5b9e9a0c0d67f841a64ddf856deafa3ee2a09603faa0cec4157893e3",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": false,
+      "body": "cdd6a7cfcb2747b745eddaa3e18f2003e107d7c4aca9f47536adf74ea8c4be17",
+      "document": null
+    },
+    {
+      "run": 0,
+      "indexes": [],
+      "standalone": true,
+      "body": "530a9c4f5b9e9a0c0d67f841a64ddf856deafa3ee2a09603faa0cec4157893e3",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": null,
+      "standalone": false,
+      "body": "70c440a130394f37af0ffdcb5dfe00751da3f89c2e08240d63fef13d06ab90fe",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": null,
+      "standalone": true,
+      "body": "6f8a1b94aea3114f61a653478c8a7678db7473a8ea1348325a903ce1e9fe105d",
+      "document": "13c4ee3e79ab6d5b495d929cab45bad2b9a285e1a2f7e42eefaa68c4f3f3faa9"
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": false,
+      "body": "d1b5b686063fe5f9bf5865e090ddbfbfd03c900375ff3ceac2ee510dabb5a2e8",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": true,
+      "body": "e73cbcaf53b7829d1ad5f4d4dc8a5bce012584a163eb05290dd0e2fc96675922",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": false,
+      "body": "d1b5b686063fe5f9bf5865e090ddbfbfd03c900375ff3ceac2ee510dabb5a2e8",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": true,
+      "body": "e73cbcaf53b7829d1ad5f4d4dc8a5bce012584a163eb05290dd0e2fc96675922",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": false,
+      "body": "d1b5b686063fe5f9bf5865e090ddbfbfd03c900375ff3ceac2ee510dabb5a2e8",
+      "document": null
+    },
+    {
+      "run": 1,
+      "indexes": [],
+      "standalone": true,
+      "body": "e73cbcaf53b7829d1ad5f4d4dc8a5bce012584a163eb05290dd0e2fc96675922",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": null,
+      "standalone": false,
+      "body": "f4ec264efa93aba957f04b17a9de1da4c555004e2bcf5d19a44d128813e840f1",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": null,
+      "standalone": true,
+      "body": "49be1043c503c65a3aaeab73224a2ac48e4a894cef4cf9c478181f373b5c73fd",
+      "document": "b83370b60b968d7112297946edbede760cd032a085fa67f462994efe092cbb73"
+    },
+    {
+      "run": 2,
+      "indexes": [],
+      "standalone": false,
+      "body": "1acfc7377970677a5c2df4018c932219b539554dd09450250b313291e00a31b0",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": [],
+      "standalone": true,
+      "body": "dfa909f7090de6f04d966487d5246d3bd8b70c0b68588cf961d0ba6411967842",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "c98095c557efdb3b155dd28f09aa2fecfddbfbd8cc3ab74b1513f3d3a5d96dc0",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "831f8759117d3fb6f5fddc7e3ca0c971345ad047c305e29c377c82794001568e",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "c98095c557efdb3b155dd28f09aa2fecfddbfbd8cc3ab74b1513f3d3a5d96dc0",
+      "document": null
+    },
+    {
+      "run": 2,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "831f8759117d3fb6f5fddc7e3ca0c971345ad047c305e29c377c82794001568e",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": null,
+      "standalone": false,
+      "body": "dc9cd8e72d1e94b9e8378e194dc18fc78c876ecb3ff278bacb9583a2a0a35865",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": null,
+      "standalone": true,
+      "body": "7c6f2044546eaf5e149a793ab7ca1175835776c3a84a37e7ab0eca35fce945c6",
+      "document": "62e046d3944b0cf8a99c48d55178870bde1784e1f1a5a5e6c9c9b4ba93d7079e"
+    },
+    {
+      "run": 3,
+      "indexes": [],
+      "standalone": false,
+      "body": "44c66598203467a4f4aa9cf71e8c960089c17650721e74d2e1e92f5759e1515e",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": [],
+      "standalone": true,
+      "body": "19b09b83565ae3af99c1f3cd11bd0eb3f1ab6f73f34fd35dde633a34308ab1f3",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "2d83aa75af052defee586541e908e7969cec0c550ad6ec24348163c557b99820",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "e3143828fc6765c745860e2a427eaee0c579191caf439979eb5bdaa9f215ec47",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "2d83aa75af052defee586541e908e7969cec0c550ad6ec24348163c557b99820",
+      "document": null
+    },
+    {
+      "run": 3,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "e3143828fc6765c745860e2a427eaee0c579191caf439979eb5bdaa9f215ec47",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": null,
+      "standalone": false,
+      "body": "49c731a29ead8e634e4a3fbf3dbf16655b2d02db05dcd4ff8b22c902ee99c394",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": null,
+      "standalone": true,
+      "body": "c282f2b5a3faa0816b7896e43a6c4084fb4defcda4b2c4b62d7c04dcd25c05ac",
+      "document": "babc44a67c9995d99eaa2717d40888c9a2f2b1e69f33d209cdc44c8fcc8a68f2"
+    },
+    {
+      "run": 4,
+      "indexes": [],
+      "standalone": false,
+      "body": "5b376c4c3ca5ac076d088745916a9b85fd89626d2c7ffc56825ee50716461d33",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": [],
+      "standalone": true,
+      "body": "ceacdce82d8306db4aa41b54b47f7309fb70aab15b703374d7ba53bf2936a512",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "23c0cd8c0535af3714891dcb0a8dc41ae4f3fe0d604ed2873cf5af6ad86accc3",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "5f425fe2eb5d7657d665341573c4d0f48acc68d6b1b76c443c399092e312c8bc",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "23c0cd8c0535af3714891dcb0a8dc41ae4f3fe0d604ed2873cf5af6ad86accc3",
+      "document": null
+    },
+    {
+      "run": 4,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "5f425fe2eb5d7657d665341573c4d0f48acc68d6b1b76c443c399092e312c8bc",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": null,
+      "standalone": false,
+      "body": "8a1999e16eb1229249d874524b673a8001a9e1adf7135043b653c2bfb1be3ea3",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": null,
+      "standalone": true,
+      "body": "ae71cc94eb6a9c634b33139530c2491d42634df521fe898cf695607d4e3ee23d",
+      "document": "c1cdc7195cb7fddcdeb6d33064845af7994f1ed9b89fbd3530002e3ff271e5f1"
+    },
+    {
+      "run": 5,
+      "indexes": [],
+      "standalone": false,
+      "body": "587352110a6f2fc86c3fcd420ecf894a2406a0a21da05c72bb1e73d0fd8b4c66",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": [],
+      "standalone": true,
+      "body": "3ffd68037c43af2c72779042169c59a4aa61a6092feb214b22c95bff4fbdc94e",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "0ecf049ffd89a361bf64d6d690777f7a709cf8f06e69658b6cc5d1b045329c93",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "630fc22081bcace7d764977e28a27320bd14413838e7fbf30f84a959f497fb3a",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "0ecf049ffd89a361bf64d6d690777f7a709cf8f06e69658b6cc5d1b045329c93",
+      "document": null
+    },
+    {
+      "run": 5,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "630fc22081bcace7d764977e28a27320bd14413838e7fbf30f84a959f497fb3a",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": null,
+      "standalone": false,
+      "body": "69ec487ac42dcd5811435fbfc7b10d3432efe4217a8e3c844c221be61737e6ad",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": null,
+      "standalone": true,
+      "body": "f6ecc42d2d556f454f64d55a871b8d106c552a8c66560a6706141fc38ad038d1",
+      "document": "0913498d764e354a6d4e470b974adcece57ce7508336a256fbc722079ad620dc"
+    },
+    {
+      "run": 6,
+      "indexes": [],
+      "standalone": false,
+      "body": "4b92263619d289c69564c70ff41b62c0167c6951b2486095eac80b1424376543",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": [],
+      "standalone": true,
+      "body": "c1856bfee2f0273eac9b3e3a44dd42c345663e2375870be4b708eaa633463c4a",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "standalone": false,
+      "body": "6ce5b3ed8f533e53c1fe8ce7e081e02718a1c8520afe9bbf912118778cbd9996",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "standalone": true,
+      "body": "44209cb216530ff5c672420a13e4449a2abf0f7d0f7746c63714cbbdd664d877",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": [
+        0,
+        2
+      ],
+      "standalone": false,
+      "body": "676c9662cd3c42831b13e63df2911d03d78211b6caebf072b93289dfb32ba980",
+      "document": null
+    },
+    {
+      "run": 6,
+      "indexes": [
+        0,
+        2
+      ],
+      "standalone": true,
+      "body": "112d38c08d9de4bd5a5b4c704feffa5632916ea680f8c4371cbab17ae6f62621",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": null,
+      "standalone": false,
+      "body": "6f805825571d33b1581272fcb8498ed9512bba1bc07f3b59816f01efac287f32",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": null,
+      "standalone": true,
+      "body": "29e75c592007e2dfebfbf26e240052f84941d4c713b908b434febae6df08b2fb",
+      "document": "e89cdc7a0ba330a233541ae2791c91382ad01f8e0529c97d6899514ac798bb34"
+    },
+    {
+      "run": 7,
+      "indexes": [],
+      "standalone": false,
+      "body": "61a9b12d528d817ef2c014781a1ba5f18376a518c2af9324d3b7a29e1d95a318",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": [],
+      "standalone": true,
+      "body": "eccb9f54b2da165a25892f3b6aa845f8d2baba3713bb046b5f816b73fa6b0510",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "standalone": false,
+      "body": "cfa74c166b88aafc1b7079aae6b85986068200aa8db198e768b2909be5c90afa",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "standalone": true,
+      "body": "81a1acfc77e469b376a218972db0f16f9a8dcb20b14af0b225cad32c43002de2",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": [
+        0,
+        2
+      ],
+      "standalone": false,
+      "body": "0cf685c4cb626fb55b338b8ce91b4d0dc1926e96c3aed6b311df50de13eec432",
+      "document": null
+    },
+    {
+      "run": 7,
+      "indexes": [
+        0,
+        2
+      ],
+      "standalone": true,
+      "body": "a867f9ec59f82028c6efc15d3ef6c7bd6b19201f922e181005b822023464bcc0",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": null,
+      "standalone": false,
+      "body": "e97b2b1eb40a51de1b3cc36cfa01fc770963fa18202c1075e48652fd1e7b0662",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": null,
+      "standalone": true,
+      "body": "64e46b28a077c18f0b280ef866a666b57e04b64e34d9fca8743afe2540988ca6",
+      "document": "d9b9d235d725a32505c1a4f425c27759e72276faca984302b5be5ccc136a7298"
+    },
+    {
+      "run": 8,
+      "indexes": [],
+      "standalone": false,
+      "body": "00c9ab63272d343415cfddb5136361a8ced6b98f9a791d47549a0a0015f06bc4",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": [],
+      "standalone": true,
+      "body": "27ab949b570a5334c480fdb56ee0608fd5967f2e15e01b8324573a402fd51664",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": [
+        1,
+        0
+      ],
+      "standalone": false,
+      "body": "06ae9cc2132b8690485f280c57309136e979ab63152f9aa78669e5e4e3b6e123",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": [
+        1,
+        0
+      ],
+      "standalone": true,
+      "body": "2b31ec11c5bbed71ce8f0c2a7813a59d88977d2af8541ed013ed80daea663728",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "b0270b3b68e25dc13c566f99ecf4b0b3c2fe333864e69c50009c95b4ec21ae0a",
+      "document": null
+    },
+    {
+      "run": 8,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "d8243cad09cca7c800cdd678e40289fbefff2446e6ad022fb82d53567abb1359",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": null,
+      "standalone": false,
+      "body": "9b482ab3f2188efa882b906426113b7e159dfe3f30bd5b873ba0722036417ceb",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": null,
+      "standalone": true,
+      "body": "052aaeffad8eac5985ed2dc0a998e0b324a12354d3255bd5df4dc8619303955a",
+      "document": "ad223e7859b78a82fd80ac7631c0f277c905b4b0cfa5c96cb563b7710234197f"
+    },
+    {
+      "run": 9,
+      "indexes": [],
+      "standalone": false,
+      "body": "ee300e31d0fcb1e798f87b15b48f4ee750fdfa9964ee231187fe11c7289b06ea",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": [],
+      "standalone": true,
+      "body": "2179a4e2671326b506c3d05e23717651b79a0e05262abc4338704e92b505dad0",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": [
+        1,
+        0
+      ],
+      "standalone": false,
+      "body": "dd0e91ff40c330f6eca45f59cbe4370d652cf53c2bf5de90c273afe2e3300e6a",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": [
+        1,
+        0
+      ],
+      "standalone": true,
+      "body": "fae4cf09f6e0a7b6c40d30f653ad7769e250ddd512c0336f45eb9d302ee986e0",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": [
+        0
+      ],
+      "standalone": false,
+      "body": "5cc06c232bb9ab53b83f7d5e7b249c841f9c801665d4c7b330f05ba144bf0e59",
+      "document": null
+    },
+    {
+      "run": 9,
+      "indexes": [
+        0
+      ],
+      "standalone": true,
+      "body": "5aea87496a2bcd6c867b099f8bb9972f45a97dff167293e97a7a530ba25aac9d",
+      "document": null
+    }
+  ],
+  "lists": [
+    {
+      "run": 0,
+      "expected": "2abc9d83841ddb5a133a49a9665711cc90da6fcb4a5f7181b3c9de5b3184da3c"
+    },
+    {
+      "run": 1,
+      "expected": "4448aeda3024224d27521ab3fb7857844ea2a1758816d9cf4994a79c00a82715"
+    },
+    {
+      "run": 2,
+      "expected": "a9e3846ece7cef8c320b71d553a85c6a32ad8944354ec28666fcb87da287dbbf"
+    },
+    {
+      "run": 3,
+      "expected": "8b96eeb7dc783d25ac557c2e7e0283facce7fa3ab61501cf12bc0dcfaf02e0be"
+    },
+    {
+      "run": 4,
+      "expected": "df2e5bd36cc0ab0fd14cf0ed6740ddc8d1a6b72d1f8f2e41c2b0df3b0ff148c7"
+    },
+    {
+      "run": 5,
+      "expected": "b894ad471cc00da78fe2f6a4e342cb24f47c1b7495a1f8aad75bb988d64f8d34"
+    },
+    {
+      "run": 6,
+      "expected": "1ad56b095f7be5ac1089aeb974ec2f97ffa9238d5954c67910d7fa191cebe588"
+    },
+    {
+      "run": 7,
+      "expected": "0ce2d7036f644735e0ef45421b4288eae3fb35a4ec3f8030b9683eb628fb8196"
+    },
+    {
+      "run": 8,
+      "expected": "195232faac1b87e8763ff710e28ac6d3e502926bb03aba1930bc80ff4091de0b"
+    },
+    {
+      "run": 9,
+      "expected": "37112829e3079987c6a02d7ece4b5f5643fe05e8dbf42ebcf8fee7658b001be2"
+    }
+  ]
+}

@@ -1,0 +1,1397 @@
+[
+  {
+    "text": "NaN",
+    "ok": true,
+    "expected": "NaN"
+  },
+  {
+    "text": "Infinity",
+    "ok": true,
+    "expected": "Infinity"
+  },
+  {
+    "text": "-Infinity",
+    "ok": true,
+    "expected": "-Infinity"
+  },
+  {
+    "text": "[NaN, Infinity, -Infinity]",
+    "ok": true,
+    "expected": "[NaN, Infinity, -Infinity]"
+  },
+  {
+    "text": "{\"argument\":NaN,\"__proto__\":{\"safe\":true}}",
+    "ok": true,
+    "expected": "{\"argument\": NaN, \"__proto__\": {\"safe\": true}}"
+  },
+  {
+    "text": "{\"NaN\":\"Infinity\",\"quoted\":\"\\\"NaN\\\"\"}",
+    "ok": true,
+    "expected": "{\"NaN\": \"Infinity\", \"quoted\": \"\\\"NaN\\\"\"}"
+  },
+  {
+    "text": "[1e999,-1e999,-0,-0.0,1.25]",
+    "ok": true,
+    "expected": "[Infinity, -Infinity, 0, -0.0, 1.25]"
+  },
+  {
+    "text": "{\"a\": [1, 1.25, 1, NaN, NaN, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, 1.25, 1, NaN, NaN, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, -Infinity, 1.25, Infinity, \"\\u00e9\", \"\\u00e9\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, -Infinity, 1.25, Infinity, \"\\u00e9\", \"\\u00e9\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", Infinity, NaN, 1.25, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", Infinity, NaN, 1.25, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1.25, 1, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1.25, 1, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", \"NaN\", Infinity, true, \"\\u00e9\", \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", \"NaN\", Infinity, true, \"\\u00e9\", \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, -Infinity, -Infinity, NaN, 1.25, NaN, \"\\u00e9\", true, 1, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, -Infinity, -Infinity, NaN, 1.25, NaN, \"\\u00e9\", true, 1, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, null, true, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, null, true, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", null, \"NaN\", 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", null, \"NaN\", 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, NaN, -Infinity, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, NaN, -Infinity, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, Infinity, \"NaN\", null, \"\\u00e9\", true, NaN, 1, 1, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, Infinity, \"NaN\", null, \"\\u00e9\", true, NaN, 1, 1, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", true, Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", true, Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", true, -Infinity, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", true, -Infinity, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, NaN, 1.25, -Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, NaN, 1.25, -Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, Infinity, 1.25, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, Infinity, 1.25, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", null, \"\\u00e9\", 1.25, 1, 1.25, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", null, \"\\u00e9\", 1.25, 1, 1.25, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", \"NaN\", NaN, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", \"NaN\", NaN, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, \"\\u00e9\", Infinity, -Infinity, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, \"\\u00e9\", Infinity, -Infinity, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", \"NaN\", -Infinity, Infinity, Infinity, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", \"NaN\", -Infinity, Infinity, Infinity, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, true, true, 1, 1, Infinity, 1.25, Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, true, true, 1, 1, Infinity, 1.25, Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, 1, 1, null, Infinity, -Infinity, -Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, 1, 1, null, Infinity, -Infinity, -Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, null, \"NaN\", null, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, null, \"NaN\", null, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, Infinity, null, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, Infinity, null, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1.25, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1.25, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, -Infinity, \"\\u00e9\", Infinity, 1.25, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, -Infinity, \"\\u00e9\", Infinity, 1.25, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", true, NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", true, NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, \"NaN\", -Infinity, true, 1.25, \"NaN\", NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, \"NaN\", -Infinity, true, 1.25, \"NaN\", NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", NaN, \"NaN\", Infinity, Infinity, Infinity, -Infinity, \"\\u00e9\", Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", NaN, \"NaN\", Infinity, Infinity, Infinity, -Infinity, \"\\u00e9\", Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, null, -Infinity, NaN, \"NaN\", Infinity, 1, \"\\u00e9\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, null, -Infinity, NaN, \"NaN\", Infinity, 1, \"\\u00e9\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, 1.25, 1.25, 1.25, 1.25, true, 1, null, null, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, 1.25, 1.25, 1.25, 1.25, true, 1, null, null, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, -Infinity, null, -Infinity, null, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, -Infinity, null, -Infinity, null, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", NaN, null, \"NaN\", NaN, 1.25, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", NaN, null, \"NaN\", NaN, 1.25, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", \"NaN\", NaN, -Infinity, null, NaN, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", \"NaN\", NaN, -Infinity, null, NaN, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, 1, null, \"NaN\", \"\\u00e9\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, 1, null, \"NaN\", \"\\u00e9\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", 1, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", 1, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, -Infinity, \"\\u00e9\", -Infinity, \"NaN\", true, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, -Infinity, \"\\u00e9\", -Infinity, \"NaN\", true, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, Infinity, -Infinity, true, 1, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, Infinity, -Infinity, true, 1, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1.25, null, null, NaN, Infinity, -Infinity, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1.25, null, null, NaN, Infinity, -Infinity, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, NaN, true, Infinity, \"NaN\", true, true, NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, NaN, true, Infinity, \"NaN\", true, true, NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, NaN, \"\\u00e9\", \"\\u00e9\", true, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, NaN, \"\\u00e9\", \"\\u00e9\", true, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", NaN, 1, -Infinity, 1.25, \"NaN\", 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", NaN, 1, -Infinity, 1.25, \"NaN\", 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", true, NaN, true, \"NaN\", true, true, \"NaN\", \"\\u00e9\", 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", true, NaN, true, \"NaN\", true, true, \"NaN\", \"\\u00e9\", 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, Infinity, \"\\u00e9\", Infinity, 1.25, Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, Infinity, \"\\u00e9\", Infinity, 1.25, Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, null, Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, null, Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, 1, 1, 1.25, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, 1, 1, 1.25, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, NaN, Infinity, 1, \"NaN\", 1, null, null, NaN, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, NaN, Infinity, 1, \"NaN\", 1, null, null, NaN, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, -Infinity, 1.25, NaN, null, NaN, 1, null, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, -Infinity, 1.25, NaN, null, NaN, 1, null, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", -Infinity, 1, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", -Infinity, 1, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, NaN, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, NaN, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", Infinity, 1, 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", Infinity, 1, 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, \"\\u00e9\", 1, 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, \"\\u00e9\", 1, 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", \"\\u00e9\", NaN, NaN, Infinity, NaN, true, true, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", \"\\u00e9\", NaN, NaN, Infinity, NaN, true, true, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, true, true, \"NaN\", true, NaN, -Infinity, 1.25, \"NaN\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, true, true, \"NaN\", true, NaN, -Infinity, 1.25, \"NaN\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", -Infinity, \"NaN\", -Infinity, -Infinity, \"\\u00e9\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", -Infinity, \"NaN\", -Infinity, -Infinity, \"\\u00e9\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1.25, -Infinity, 1.25, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1.25, -Infinity, 1.25, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", 1, -Infinity, Infinity, \"\\u00e9\", -Infinity, \"\\u00e9\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", 1, -Infinity, Infinity, \"\\u00e9\", -Infinity, \"\\u00e9\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, \"\\u00e9\", \"NaN\", null, null, Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, \"\\u00e9\", \"NaN\", null, null, Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, Infinity, -Infinity, Infinity, 1.25, Infinity, \"\\u00e9\", \"\\u00e9\", 1, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, Infinity, -Infinity, Infinity, 1.25, Infinity, \"\\u00e9\", \"\\u00e9\", 1, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, true, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, true, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, \"\\u00e9\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, \"\\u00e9\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, Infinity, \"\\u00e9\", NaN, -Infinity, Infinity, \"\\u00e9\", true, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, Infinity, \"\\u00e9\", NaN, -Infinity, Infinity, \"\\u00e9\", true, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", Infinity, \"\\u00e9\", null, \"NaN\", \"NaN\", 1.25, 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", Infinity, \"\\u00e9\", null, \"NaN\", \"NaN\", 1.25, 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"\\u00e9\", -Infinity, 1, \"\\u00e9\", \"\\u00e9\", \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"\\u00e9\", -Infinity, 1, \"\\u00e9\", \"\\u00e9\", \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, null, 1.25, null, Infinity, NaN, Infinity, 1.25, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, null, 1.25, null, Infinity, NaN, Infinity, 1.25, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", -Infinity, true, NaN, true, \"NaN\", Infinity, 1.25, \"NaN\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", -Infinity, true, NaN, true, \"NaN\", Infinity, 1.25, \"NaN\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, Infinity, 1.25, NaN, 1, \"NaN\", true, null, \"\\u00e9\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, Infinity, 1.25, NaN, 1, \"NaN\", true, null, \"\\u00e9\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, true, Infinity, 1.25, 1.25, \"\\u00e9\", Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, true, Infinity, 1.25, 1.25, \"\\u00e9\", Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, NaN, null, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, NaN, null, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, 1.25, -Infinity, Infinity, \"NaN\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, 1.25, -Infinity, Infinity, \"NaN\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1, NaN, 1.25, -Infinity, null, 1, \"NaN\", true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1, NaN, 1.25, -Infinity, null, 1, \"NaN\", true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, -Infinity, null, 1.25, 1, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, -Infinity, null, 1.25, 1, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, \"NaN\", true, null, -Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, \"NaN\", true, null, -Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, true, 1.25, -Infinity, \"\\u00e9\", \"NaN\", \"\\u00e9\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, true, 1.25, -Infinity, \"\\u00e9\", \"NaN\", \"\\u00e9\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"NaN\", \"\\u00e9\", -Infinity, 1.25, \"NaN\", 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"NaN\", \"\\u00e9\", -Infinity, 1.25, \"NaN\", 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, true, \"NaN\", null, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, true, \"NaN\", null, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, true, Infinity, 1.25, 1.25, 1.25, -Infinity, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, true, Infinity, 1.25, 1.25, 1.25, -Infinity, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"\\u00e9\", \"NaN\", NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"\\u00e9\", \"NaN\", NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, null, 1.25, NaN, null, \"NaN\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, null, 1.25, NaN, null, \"NaN\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1.25, null, NaN, NaN, Infinity, -Infinity, Infinity, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1.25, null, NaN, NaN, Infinity, -Infinity, Infinity, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, true, \"\\u00e9\", \"\\u00e9\", Infinity, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, true, \"\\u00e9\", \"\\u00e9\", Infinity, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", true, NaN, \"NaN\", 1, -Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", true, NaN, \"NaN\", 1, -Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, \"\\u00e9\", 1.25, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, \"\\u00e9\", 1.25, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, true, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, true, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", -Infinity, \"\\u00e9\", \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", -Infinity, \"\\u00e9\", \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", NaN, \"NaN\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", NaN, \"NaN\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", \"\\u00e9\", \"NaN\", Infinity, 1, \"\\u00e9\", 1, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", \"\\u00e9\", \"NaN\", Infinity, 1, \"\\u00e9\", 1, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, null, \"\\u00e9\", true, \"\\u00e9\", \"NaN\", 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, null, \"\\u00e9\", true, \"\\u00e9\", \"NaN\", 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", 1.25, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", 1.25, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, Infinity, 1.25, 1, 1.25, true, 1.25, Infinity, 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, Infinity, 1.25, 1, 1.25, true, 1.25, Infinity, 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", 1, true, NaN, 1.25, NaN, -Infinity, true, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", 1, true, NaN, 1.25, NaN, -Infinity, true, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", 1, -Infinity, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", 1, -Infinity, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, Infinity, \"\\u00e9\", \"\\u00e9\", Infinity, 1.25, true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, Infinity, \"\\u00e9\", \"\\u00e9\", Infinity, 1.25, true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, 1.25, NaN, true, 1.25, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, 1.25, NaN, true, 1.25, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, NaN, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, NaN, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", NaN, Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", NaN, Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", null, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", null, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", \"NaN\", null, null, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", \"NaN\", null, null, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, -Infinity, Infinity, -Infinity, true, 1.25, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, -Infinity, Infinity, -Infinity, true, 1.25, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, \"\\u00e9\", 1, \"NaN\", \"NaN\", true, null, null, NaN, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, \"\\u00e9\", 1, \"NaN\", \"NaN\", true, null, null, NaN, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", null, \"NaN\", Infinity, NaN, true, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", null, \"NaN\", Infinity, NaN, true, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, null, \"\\u00e9\", -Infinity, -Infinity, 1.25, null, NaN, \"NaN\", \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, null, \"\\u00e9\", -Infinity, -Infinity, 1.25, null, NaN, \"NaN\", \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, \"\\u00e9\", null, null, null, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, \"\\u00e9\", null, null, null, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, true, 1, 1.25, NaN, 1.25, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, true, 1, 1.25, NaN, 1.25, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, Infinity, true, Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, Infinity, true, Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity, Infinity, 1, -Infinity, \"\\u00e9\", NaN, 1, \"\\u00e9\", NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity, Infinity, 1, -Infinity, \"\\u00e9\", NaN, 1, \"\\u00e9\", NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, 1.25, Infinity, true, true, \"\\u00e9\", 1.25, -Infinity, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, 1.25, Infinity, true, true, \"\\u00e9\", 1.25, -Infinity, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", NaN, 1, -Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", NaN, 1, -Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, 1, null, Infinity, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, 1, null, Infinity, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, null, \"\\u00e9\", NaN, true, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, null, \"\\u00e9\", NaN, true, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"NaN\", true, NaN, 1, null, -Infinity, NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"NaN\", true, NaN, 1, null, -Infinity, NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, \"\\u00e9\", \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, \"\\u00e9\", \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"\\u00e9\", 1, -Infinity, \"NaN\", NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"\\u00e9\", 1, -Infinity, \"NaN\", NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity, null, NaN, Infinity, true, Infinity, \"NaN\", true, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity, null, NaN, Infinity, true, Infinity, \"NaN\", true, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, true, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, true, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"\\u00e9\", 1.25, null, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"\\u00e9\", 1.25, null, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, Infinity, 1, 1.25, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, Infinity, 1, 1.25, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity, \"NaN\", Infinity, 1, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity, \"NaN\", Infinity, 1, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, 1.25, NaN, 1.25, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, 1.25, NaN, 1.25, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", true, 1, true, -Infinity, true, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", true, 1, true, -Infinity, true, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", 1, true, null, null, NaN, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", 1, true, null, null, NaN, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", NaN, true, \"NaN\", \"\\u00e9\", -Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", NaN, true, \"NaN\", \"\\u00e9\", -Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, Infinity, 1, \"\\u00e9\", 1, true, \"NaN\", -Infinity, Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, Infinity, 1, \"\\u00e9\", 1, true, \"NaN\", -Infinity, Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", -Infinity, -Infinity, NaN, NaN, true, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", -Infinity, -Infinity, NaN, NaN, true, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, null, 1, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, null, 1, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, -Infinity, null, NaN, -Infinity, -Infinity, \"\\u00e9\", Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, -Infinity, null, NaN, -Infinity, -Infinity, \"\\u00e9\", Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, Infinity, true, 1.25, \"NaN\", \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, Infinity, true, 1.25, \"NaN\", \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, true, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, true, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", null, \"\\u00e9\", true, 1.25, \"\\u00e9\", null, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", null, \"\\u00e9\", true, 1.25, \"\\u00e9\", null, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", 1, -Infinity, NaN, \"NaN\", -Infinity, \"NaN\", 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", 1, -Infinity, NaN, \"NaN\", -Infinity, \"NaN\", 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, 1, true, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, 1, true, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, NaN, true, 1, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, NaN, true, 1, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, null, -Infinity, 1.25, null, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, null, -Infinity, 1.25, null, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, true, \"NaN\", 1, null, Infinity, true, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, true, \"NaN\", 1, null, Infinity, true, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, null, \"NaN\", \"\\u00e9\", null, 1, Infinity, 1.25, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, null, \"NaN\", \"\\u00e9\", null, 1, Infinity, 1.25, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", 1, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", 1, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity, 1.25, Infinity, NaN, 1, true, \"\\u00e9\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity, 1.25, Infinity, NaN, 1, true, \"\\u00e9\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, -Infinity, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, -Infinity, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, 1.25, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, 1.25, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, Infinity, NaN, \"\\u00e9\", true, -Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, Infinity, NaN, \"\\u00e9\", true, -Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, \"NaN\", NaN, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, \"NaN\", NaN, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, NaN, true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, NaN, true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, NaN, \"NaN\", true, NaN, -Infinity, 1, 1, true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, NaN, \"NaN\", true, NaN, -Infinity, 1, 1, true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, \"\\u00e9\", \"\\u00e9\", \"\\u00e9\", Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, \"\\u00e9\", \"\\u00e9\", \"\\u00e9\", Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, null, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, null, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, null, 1.25, 1, -Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, null, 1.25, 1, -Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, null, NaN, \"NaN\", 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, null, NaN, \"NaN\", 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", 1.25, \"\\u00e9\", -Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", 1.25, \"\\u00e9\", -Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, \"NaN\", Infinity, -Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, \"NaN\", Infinity, -Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, 1.25, -Infinity, true, null, 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, 1.25, -Infinity, true, null, 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, \"\\u00e9\", \"\\u00e9\", null, null, 1.25, null, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, \"\\u00e9\", \"\\u00e9\", null, null, 1.25, null, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, -Infinity, NaN, 1, NaN, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, -Infinity, NaN, 1, NaN, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, 1.25, \"\\u00e9\", -Infinity, 1.25, 1, null, \"\\u00e9\", \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, 1.25, \"\\u00e9\", -Infinity, 1.25, 1, null, \"\\u00e9\", \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, 1.25, \"NaN\", Infinity, true, null, -Infinity, true, 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, 1.25, \"NaN\", Infinity, true, null, -Infinity, true, 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", \"NaN\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", \"NaN\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, -Infinity, \"\\u00e9\", true, \"NaN\", true, 1, \"NaN\", null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, -Infinity, \"\\u00e9\", true, \"NaN\", true, 1, \"NaN\", null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, 1, -Infinity, -Infinity, \"\\u00e9\", \"NaN\", 1, \"\\u00e9\", 1.25, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, 1, -Infinity, -Infinity, \"\\u00e9\", \"NaN\", 1, \"\\u00e9\", 1.25, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [null, \"NaN\", 1.25, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [null, \"NaN\", 1.25, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"NaN\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"NaN\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, Infinity, NaN, true, -Infinity, -Infinity, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, Infinity, NaN, true, -Infinity, -Infinity, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, NaN, true, \"\\u00e9\", NaN, 1.25, null, null, null, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, NaN, true, \"\\u00e9\", NaN, 1.25, null, null, null, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, \"\\u00e9\", null, 1.25, 1.25, 1.25, \"NaN\", \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, \"\\u00e9\", null, 1.25, 1.25, 1.25, \"NaN\", \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, NaN, Infinity, -Infinity, true, \"NaN\", true, -Infinity, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, NaN, Infinity, -Infinity, true, \"NaN\", true, -Infinity, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", \"\\u00e9\", 1.25, \"\\u00e9\", null, 1, 1.25, \"\\u00e9\", Infinity, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", \"\\u00e9\", 1.25, \"\\u00e9\", null, 1, 1.25, \"\\u00e9\", Infinity, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, \"NaN\", 1, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, \"NaN\", 1, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, null, -Infinity, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, null, -Infinity, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, true, 1, null, Infinity, true, Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, true, 1, null, Infinity, true, Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, Infinity, null, \"\\u00e9\", \"NaN\", \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, Infinity, null, \"\\u00e9\", \"NaN\", \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, true, null, \"\\u00e9\", null, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, true, null, \"\\u00e9\", null, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\", -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\", -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, NaN, null], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, NaN, null], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [true, true, \"\\u00e9\", 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [true, true, \"\\u00e9\", 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, \"NaN\", Infinity, true, -Infinity, null, \"\\u00e9\", NaN, 1, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, \"NaN\", Infinity, true, -Infinity, null, \"\\u00e9\", NaN, 1, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, 1.25], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, 1.25], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, true, null, Infinity, NaN], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, true, null, Infinity, NaN], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [1.25, \"NaN\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [1.25, \"NaN\"], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [Infinity, 1, \"NaN\", true, 1.25, \"NaN\", \"NaN\", 1], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [Infinity, 1, \"NaN\", true, 1.25, \"NaN\", \"NaN\", 1], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [NaN, NaN, 1.25, \"\\u00e9\", 1, 1, \"NaN\", -Infinity, -Infinity], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [NaN, NaN, 1.25, \"\\u00e9\", 1, 1, \"NaN\", -Infinity, -Infinity], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [-Infinity, NaN, \"\\u00e9\", true], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [-Infinity, NaN, \"\\u00e9\", true], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [], \"b\": {}}"
+  },
+  {
+    "text": "{\"a\": [\"\\u00e9\", NaN, true, true, -Infinity, 1, \"\\u00e9\"], \"b\": {}}",
+    "ok": true,
+    "expected": "{\"a\": [\"\\u00e9\", NaN, true, true, -Infinity, 1, \"\\u00e9\"], \"b\": {}}"
+  },
+  {
+    "text": "",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "NaN x",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "nan",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "+Infinity",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "-NaN",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "NaNInfinity",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "[1,]",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "{\"a\":1,}",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "[undefined]",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "{\"a\" 1}",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "[1 2]",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "{\"a\":NaN} 0",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "01",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "1e",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "[1e]",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "\"broken",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "\"\\x01\"",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "\ufeff{}",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "{__proto__:1}",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "/*comment*/{}",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "{} trailing",
+    "ok": false,
+    "expected": null
+  },
+  {
+    "text": "[1,Infinity false]",
+    "ok": false,
+    "expected": null
+  }
+]

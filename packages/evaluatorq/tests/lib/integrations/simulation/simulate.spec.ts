@@ -8,8 +8,13 @@ import {
   test,
 } from "bun:test";
 
+import { SimulationDroppedError } from "../../../../src/lib/integrations/simulation/exceptions.js";
+import { DatapointGenerator } from "../../../../src/lib/integrations/simulation/generators/datapoint-generator.js";
 import { SimulationRunner } from "../../../../src/lib/integrations/simulation/runner/simulation.js";
-import { simulate } from "../../../../src/lib/integrations/simulation/simulation/index.js";
+import {
+  generateAndSimulate,
+  simulate,
+} from "../../../../src/lib/integrations/simulation/simulation/index.js";
 import type { TargetCallback } from "../../../../src/lib/integrations/simulation/types.js";
 import { finishTurn, makeFakeClient } from "./fake-client.js";
 
@@ -46,6 +51,50 @@ const audited = (occurred: boolean) => [
 ];
 
 describe("simulate", () => {
+  test("rejects ambiguous upload configuration before executing a row", async () => {
+    const saved = {
+      ORQ_BASE_URL: process.env.ORQ_BASE_URL,
+      ROUTER_BASE_URL: process.env.ROUTER_BASE_URL,
+    };
+    delete process.env.ORQ_BASE_URL;
+    process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+    process.env.ORQ_API_KEY = "test-key";
+    const target = mock(async () => "reply");
+    const generate = spyOn(
+      DatapointGenerator.prototype,
+      "generateFromDescription",
+    );
+    const { client } = makeFakeClient({
+      judge: () => finishTurn(audited(true)),
+    });
+    try {
+      await expect(
+        simulate({
+          evaluationName: "invalid-upload",
+          client,
+          datapoints: [datapoint("a")],
+          targetCallback: target,
+        }),
+      ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      await expect(
+        generateAndSimulate({
+          evaluationName: "invalid-generation-upload",
+          agentDescription: "Fixture agent",
+          client,
+          targetCallback: target,
+        }),
+      ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      expect(target).not.toHaveBeenCalled();
+      expect(generate).not.toHaveBeenCalled();
+    } finally {
+      generate.mockRestore();
+      for (const [name, value] of Object.entries(saved)) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
+  });
+
   const originalKey = process.env.ORQ_API_KEY;
   const originalFetch = globalThis.fetch;
 
@@ -115,23 +164,28 @@ describe("simulate", () => {
     ).rejects.toThrow("agentKey must be a non-empty string");
   });
 
-  test("a persona no prompt can be built from fails only its own row", async () => {
-    const { client } = makeFakeClient({
-      judge: () => finishTurn([]),
-    });
+  test("raises on a dropped row and carries completed rows", async () => {
+    const { client } = makeFakeClient({ judge: () => finishTurn([]) });
     const { background: _dropped, ...withoutBackground } = persona;
-
-    const results = await simulate({
-      evaluationName: "bad-persona",
-      client,
-      personas: [withoutBackground as typeof persona, persona],
-      scenarios: [noCriteria],
-      uploadResults: false,
-      targetCallback: () => "reply",
-    });
-
-    expect(results.map((r) => r.terminated_by)).toEqual(["error", "judge"]);
-    expect(results[0]?.reason).toContain("First message failed");
+    let error: unknown;
+    try {
+      await simulate({
+        evaluationName: "bad-persona",
+        client,
+        personas: [withoutBackground as typeof persona, persona],
+        scenarios: [noCriteria],
+        uploadResults: false,
+        targetCallback: () => "reply",
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(SimulationDroppedError);
+    expect(
+      (error as SimulationDroppedError).partialResults.map(
+        (result) => result.terminated_by,
+      ),
+    ).toEqual(["judge"]);
   });
 
   test("returns results in input order whatever order they finish in", async () => {
@@ -212,31 +266,23 @@ describe("simulate", () => {
     expect(requests.firstMessage).toHaveLength(4);
   });
 
-  test("a failed first message fails its row and keeps the others", async () => {
-    let calls = 0;
+  test("an unexpected first-message failure rejects the run", async () => {
     const { client } = makeFakeClient({
-      judge: () => finishTurn([]),
       firstMessage: () => {
-        calls++;
-        if (calls === 1) {
-          throw new Error("generator down");
-        }
-        return "opener";
+        throw new Error("generator down");
       },
     });
-
-    const results = await simulate({
-      evaluationName: "first-message",
-      client,
-      parallelism: 1,
-      personas: [persona, { ...persona, name: "Other" }],
-      scenarios: [noCriteria],
-      targetCallback: async () => "reply",
-    });
-
-    expect(results[0]?.terminated_by).toBe("error");
-    expect(results[0]?.reason).toContain("generator down");
-    expect(results[1]?.terminated_by).toBe("judge");
+    await expect(
+      simulate({
+        evaluationName: "first-message",
+        client,
+        datapointParallelism: 1,
+        personas: [persona],
+        scenarios: [noCriteria],
+        uploadResults: false,
+        targetCallback: async () => "reply",
+      }),
+    ).rejects.toBeInstanceOf(SimulationDroppedError);
   });
 
   test("a low score does not end the process", async () => {
@@ -277,7 +323,11 @@ describe("simulate", () => {
     });
 
     expect(fetchSpy).toHaveBeenCalled();
-    const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    const [, init] = fetchSpy.mock.calls.find((call) =>
+      String((call as unknown as [string, RequestInit])[1]?.body).includes(
+        "upload",
+      ),
+    ) as unknown as [string, RequestInit];
     const body = String(init.body);
     expect(body).toContain("upload");
     expect(body).toContain("goal_achieved");
@@ -297,7 +347,11 @@ describe("simulate", () => {
       targetCallback: async () => "reply",
     });
 
-    const [, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    const [, init] = fetchSpy.mock.calls.find((call) =>
+      String((call as unknown as [string, RequestInit])[1]?.body).includes(
+        "unverified",
+      ),
+    ) as unknown as [string, RequestInit];
     expect(String(init.body)).toContain("criteria_verified=false");
   });
 
@@ -370,6 +424,7 @@ describe("simulate", () => {
 
     const [result] = await simulate({
       evaluationName: "timeout",
+      raiseOnExecutionFailure: false,
       client,
       uploadResults: false,
       timeoutPerSimulation: 5,
@@ -395,6 +450,7 @@ describe("simulate", () => {
       client,
       uploadResults: false,
       timeoutPerSimulation: 20,
+      raiseOnExecutionFailure: false,
       datapoints: [datapoint("")],
       targetCallback: () => "reply",
     });

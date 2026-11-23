@@ -11,6 +11,17 @@
  * ```
  */
 
+export {
+  type AISdkHttpTargetOptions,
+  type AISdkMessageFormat,
+  VercelAISdkTarget,
+} from "../ai-sdk/http-target.js";
+export {
+  type AgentCallable,
+  CallableTarget,
+  type CallableTargetOptions,
+} from "../callable/index.js";
+export { OrqResponsesTarget } from "../openresponses/target.js";
 // --- Adapters ---
 export {
   fromChatCompletions,
@@ -30,17 +41,45 @@ export {
   buildCriteriaResults,
   CriteriaTracker,
   criterionIdFor,
+  parseCriteriaMeta,
 } from "./criteria.js";
+export type {
+  DatasetSourceOptions,
+  ExtendFromDatasetOptions,
+} from "./datasets.js";
+export { datapointsFromDataset, extendFromDataset } from "./datasets.js";
 export { DEFAULT_SIMULATION_MODEL } from "./defaults.js";
-export type { SimulationScorer } from "./evaluators/index.js";
+export type {
+  ConversationQualityScore,
+  SimulationScorer,
+  SimulationScoringConfigInput,
+} from "./evaluators/index.js";
 // --- Evaluators ---
 export {
+  conversationQualityDetails,
+  DEFAULT_SCORING_CONFIG,
   failureReason,
   getAllEvaluators,
   getEvaluator,
+  readCriteriaMeta,
   SIMULATION_EVALUATORS,
+  SimulationScoringConfig,
   unverifiedReason,
 } from "./evaluators/index.js";
+export {
+  SimulationCancelledError,
+  SimulationDroppedError,
+  SimulationError,
+} from "./exceptions.js";
+export type {
+  ExperimentSourceOptions,
+  ExtendFromExperimentOptions,
+} from "./experiments.js";
+export {
+  datapointsFromExperiment,
+  extendFromExperiment,
+} from "./experiments.js";
+export { FirstMessageGenerationError } from "./generators/first-message-generator.js";
 // --- Generators (advanced usage) ---
 export {
   DatapointGenerator,
@@ -49,6 +88,13 @@ export {
   ScenarioGenerator,
   SimulationGenerationError,
 } from "./generators/index.js";
+export type { SimulationHooks, SimulationRunMeta } from "./hooks.js";
+export {
+  CompositeSimulationHooks,
+  DefaultHooks,
+  ManifestStageHooks,
+  SimStage,
+} from "./hooks.js";
 export type { PerturbationType } from "./quality/message-perturbation.js";
 // --- Quality (advanced usage) ---
 export {
@@ -56,14 +102,58 @@ export {
   applyPerturbationsBatch,
   applyRandomPerturbation,
 } from "./quality/message-perturbation.js";
+export { applySimulationSuggestions } from "./reports/apply.js";
+export {
+  printSimulationSummary,
+  renderSimulationSummary,
+} from "./reports/display.js";
+export {
+  buildSimulationFacts,
+  populateSimulationExecutiveSummary,
+} from "./reports/executive-summary.js";
+export { exportSimulationHtml } from "./reports/export-html.js";
+export { exportSimulationMarkdown } from "./reports/export-md.js";
+export type {
+  GenerateRecommendationsOptions,
+  SimulationRecommendationConfigInput,
+} from "./reports/recommendations.js";
+export {
+  findSimulationTriggers,
+  generateSimulationRecommendations,
+  SimulationRecommendationConfig,
+} from "./reports/recommendations.js";
+export {
+  buildSimulationReportSections,
+  simulationIndividualEntries,
+} from "./reports/sections.js";
+export { buildSimulationTokenUsageRows } from "./reports/token-usage.js";
+export type {
+  AgentInfoSnapshot,
+  SimulationRecommendation,
+  SimulationReplay,
+  SimulationRunInput,
+  StoredSimulationResult,
+} from "./run-store.js";
+export {
+  autoSaveSimulationRun,
+  buildSimulationRun,
+  getSimulationRunsDir,
+  loadSimulationReplay,
+  ReplayError,
+  SimulationRun,
+  sanitiseRunName,
+} from "./run-store.js";
 export type {
   RunBatchParams,
   RunParams,
+  SimulationJudge,
   SimulationRunnerConfig,
+  SimulationUserSimulator,
   TargetAgent,
 } from "./runner/simulation.js";
 // --- Runner (advanced usage) ---
 export { SimulationRunner } from "./runner/simulation.js";
+export { wrapSimulationScorer } from "./scorer-adapter.js";
 // --- Schemas ---
 // Zod schemas have their own entry point: "@orq-ai/evaluatorq/simulation/schemas".
 export type {
@@ -72,6 +162,22 @@ export type {
 } from "./simulation/index.js";
 // --- High-level simulation functions ---
 export { generateAndSimulate, simulate } from "./simulation/index.js";
+export type {
+  DatapointsFromTracesOptions,
+  ExtendFromTracesOptions,
+  FetchTraceConversationsOptions,
+  SimulationTraceSource,
+  TraceAnalysisConfigInput,
+  TraceGenerationOptions,
+} from "./traces.js";
+export {
+  datapointsFromTraces,
+  extendFromTraces,
+  fetchTraceConversations,
+  summarizeConversations,
+  TraceAnalysisConfig,
+  TraceConversation,
+} from "./traces.js";
 // --- Types ---
 export type {
   ChatMessage,
@@ -108,6 +214,6 @@ export {
   buildScenarioUserContext,
   generateDatapoint,
 } from "./utils/prompt-builders.js";
-export type { SimulationJobOptions } from "./wrap-agent.js";
+export type { SimulationJob, SimulationJobOptions } from "./wrap-agent.js";
 // --- Job wrapper ---
 export { wrapSimulationAgent } from "./wrap-agent.js";

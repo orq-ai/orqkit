@@ -1,10 +1,23 @@
+import type { AgentResponse, Message, Usage } from "./contracts.js";
+import type { ExperimentInput } from "./experiment.js";
+import type { AtifTrajectory } from "./formats/atif.js";
+import type { ChatConversation } from "./formats/chat.js";
+import type { OtelTrace } from "./formats/otel.js";
+import type { ResponsesConversation } from "./formats/responses.js";
 import type { ResponseResource } from "./integrations/openresponses/index.js";
+import type { TraceInput } from "./trace.js";
 
 export type Output =
+  | AtifTrajectory
+  | ChatConversation
+  | OtelTrace
+  | ResponsesConversation
   | string
   | number
   | boolean
   | ResponseResource
+  | AgentResponse
+  | Message[]
   | Record<string, unknown>
   | null;
 
@@ -18,16 +31,24 @@ export type EvaluationResultCell = {
   value: Record<string, EvaluationResultCellValue>;
 };
 
-type EvaluationResult<T> = {
+export type EvaluationResult<T> = {
   value: T;
-  explanation?: string;
-  pass?: boolean;
+  explanation?: string | null;
+  /** null records a verdict with no pass or fail, such as an inconclusive jury. */
+  pass?: boolean | null;
+  tokenUsage?: Usage | null;
+  rawOutput?: Record<string, unknown> | null;
 };
 
 export interface EvaluatorScore {
   evaluatorName: string;
   score: EvaluationResult<
-    number | boolean | string | EvaluationResultCell | Record<string, unknown>
+    | number
+    | boolean
+    | string
+    | EvaluationResultCell
+    | Record<string, unknown>
+    | null
   >;
   error?: Error;
 }
@@ -95,35 +116,52 @@ export type Job = (
  */
 export interface EvaluatorParams {
   data:
+    | ExperimentInput
+    | TraceInput
     | {
         datasetId: string;
         includeMessages?: boolean;
       }
     | (Promise<DataPoint> | DataPoint)[];
   evaluators?: Evaluator[];
-  jobs: Job[];
+  jobs?: Job[];
+  inference?: boolean | null;
   parallelism?: number;
+  datapointParallelism?: number | null;
+  llmParallelism?: number | null;
+  onDatapointComplete?: (result: DataPointResult) => void | Promise<void>;
   print?: boolean;
   description?: string;
   path?: string;
   sendResults?: boolean;
+  onResultsUploaded?: (experimentUrl: string) => void;
   manageTracing?: boolean;
+  /** Exit with code 1 for failed scores. Disable when a higher-level runner owns the verdict. */
+  exitOnFailure?: boolean;
 }
 
 export type Evaluator = {
   name: string;
+  evaluatorType?: string;
   scorer: Scorer;
 };
 
 export type ScorerParameter = {
   data: DataPoint;
   output: Output;
+  /** Dataset row index, set when the runner calls the scorer. */
+  row?: number;
 };
 
 export type Scorer = (
   params: ScorerParameter,
 ) => Promise<
   EvaluationResult<
-    string | number | boolean | EvaluationResultCell | Record<string, unknown>
+    | string
+    | number
+    | boolean
+    | EvaluationResultCell
+    | Record<string, unknown>
+    | null
   >
 >;

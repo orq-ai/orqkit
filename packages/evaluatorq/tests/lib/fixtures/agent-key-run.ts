@@ -132,7 +132,10 @@ if (mode === "wrap") {
       datapoints: [datapoint],
     },
   }[mode as string];
-  const results = await simulate(params as never);
+  const results = await simulate({
+    ...params,
+    raiseOnExecutionFailure: false,
+  } as never);
   reasons = results.map((result: { reason?: string }) => result.reason ?? "");
 }
 

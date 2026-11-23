@@ -20,11 +20,13 @@
 
 import type { Tracer } from "@opentelemetry/api";
 import type { NodeSDK } from "@opentelemetry/sdk-node";
+import type { SpanProcessor } from "@opentelemetry/sdk-trace-base";
 
 import { configuredOrqHost } from "../orq-host.js";
 
 let sdk: NodeSDK | null = null;
 let tracer: Tracer | null = null;
+let processor: SpanProcessor | null = null;
 let isInitialized = false;
 let initializationAttempted = false;
 
@@ -106,11 +108,11 @@ export async function initTracingIfNeeded(): Promise<boolean> {
   if (!isTracingEnabled()) {
     if (process.env.ORQ_DEBUG) {
       if (isTracingExplicitlyDisabled()) {
-        console.debug(
+        console.error(
           "[evaluatorq] OTEL tracing disabled via ORQ_DISABLE_TRACING",
         );
       } else {
-        console.debug(
+        console.error(
           "[evaluatorq] OTEL tracing not enabled (no ORQ_API_KEY or OTEL_EXPORTER_OTLP_ENDPOINT)",
         );
       }
@@ -182,11 +184,11 @@ export async function initTracingIfNeeded(): Promise<boolean> {
         : process.env.ORQ_BASE_URL || process.env.ROUTER_BASE_URL
           ? "ORQ_BASE_URL or ROUTER_BASE_URL (derived)"
           : "default (ORQ_API_KEY)";
-      console.debug(`[evaluatorq] OTEL tracing enabled`);
-      console.debug(`[evaluatorq] OTEL endpoint: ${tracesEndpoint}`);
-      console.debug(`[evaluatorq] OTEL endpoint source: ${source}`);
+      console.error(`[evaluatorq] OTEL tracing enabled`);
+      console.error(`[evaluatorq] OTEL endpoint: ${tracesEndpoint}`);
+      console.error(`[evaluatorq] OTEL endpoint source: ${source}`);
       if (headers.Authorization) {
-        console.debug(
+        console.error(
           `[evaluatorq] Authorization: Bearer ***${apiKey?.slice(-8) || ""}`,
         );
       }
@@ -207,6 +209,7 @@ export async function initTracingIfNeeded(): Promise<boolean> {
     });
 
     sdk.start();
+    processor = spanProcessor;
     tracer = trace.getTracer("evaluatorq");
     isInitialized = true;
 
@@ -214,7 +217,7 @@ export async function initTracingIfNeeded(): Promise<boolean> {
   } catch (error) {
     // OTEL packages not installed or initialization failed
     if (process.env.ORQ_DEBUG) {
-      console.debug("[evaluatorq] OpenTelemetry not available:", error);
+      console.error("[evaluatorq] OpenTelemetry not available:", error);
     }
     return false;
   }
@@ -227,19 +230,10 @@ export async function initTracingIfNeeded(): Promise<boolean> {
 export async function flushTracing(): Promise<void> {
   if (sdk) {
     try {
-      // Access the trace provider to force flush
-      const { trace } = await import("@opentelemetry/api");
-      const provider = trace.getTracerProvider();
-      // TracerProvider may have forceFlush method
-      const providerWithFlush = provider as {
-        forceFlush?: () => Promise<void>;
-      };
-      if (providerWithFlush.forceFlush) {
-        await providerWithFlush.forceFlush();
-      }
+      await processor?.forceFlush();
     } catch (error) {
       if (process.env.ORQ_DEBUG) {
-        console.debug("[evaluatorq] Error flushing traces:", error);
+        console.error("[evaluatorq] Error flushing traces:", error);
       }
     }
   }
@@ -257,10 +251,11 @@ export async function shutdownTracing(): Promise<void> {
       await sdk.shutdown();
     } catch (error) {
       if (process.env.ORQ_DEBUG) {
-        console.debug("[evaluatorq] Error shutting down tracing:", error);
+        console.error("[evaluatorq] Error shutting down tracing:", error);
       }
     }
     sdk = null;
+    processor = null;
     tracer = null;
     isInitialized = false;
   }

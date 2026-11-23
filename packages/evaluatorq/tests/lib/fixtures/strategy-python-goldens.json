@@ -1,0 +1,1969 @@
+{
+  "source": "a59c3a86",
+  "categories": [
+    "ASI01",
+    "ASI02",
+    "ASI03",
+    "ASI04",
+    "ASI05",
+    "ASI06",
+    "ASI07",
+    "ASI08",
+    "ASI09",
+    "ASI10",
+    "LLM01",
+    "LLM02",
+    "LLM04",
+    "LLM05",
+    "LLM06",
+    "LLM07",
+    "LLM08",
+    "LLM09"
+  ],
+  "info": {
+    "ASI01": {
+      "name": "Agent Goal Hijacking",
+      "strategy_count": 5,
+      "single_turn_count": 4,
+      "multi_turn_count": 1,
+      "vulnerability": "goal_hijacking",
+      "vulnerability_name": "Agent Goal Hijacking"
+    },
+    "ASI02": {
+      "name": "Tool Misuse & Exploitation",
+      "strategy_count": 4,
+      "single_turn_count": 3,
+      "multi_turn_count": 1,
+      "vulnerability": "tool_misuse",
+      "vulnerability_name": "Tool Misuse & Exploitation"
+    },
+    "ASI03": {
+      "name": "Identity & Privilege Abuse",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "identity_privilege_abuse",
+      "vulnerability_name": "Identity & Privilege Abuse"
+    },
+    "ASI04": {
+      "name": "Supply Chain Vulnerabilities",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "supply_chain",
+      "vulnerability_name": "Supply Chain Vulnerabilities"
+    },
+    "ASI05": {
+      "name": "Unexpected Code Execution",
+      "strategy_count": 4,
+      "single_turn_count": 3,
+      "multi_turn_count": 1,
+      "vulnerability": "code_execution",
+      "vulnerability_name": "Unexpected Code Execution"
+    },
+    "ASI06": {
+      "name": "Memory & Context Poisoning",
+      "strategy_count": 4,
+      "single_turn_count": 3,
+      "multi_turn_count": 1,
+      "vulnerability": "memory_poisoning",
+      "vulnerability_name": "Memory & Context Poisoning"
+    },
+    "ASI07": {
+      "name": "Insecure Inter-Agent Communication",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "inter_agent_comms",
+      "vulnerability_name": "Insecure Inter-Agent Communication"
+    },
+    "ASI08": {
+      "name": "Cascading Failures",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "cascading_failures",
+      "vulnerability_name": "Cascading Failures"
+    },
+    "ASI09": {
+      "name": "Human-Agent Trust Exploitation",
+      "strategy_count": 5,
+      "single_turn_count": 4,
+      "multi_turn_count": 1,
+      "vulnerability": "trust_exploitation",
+      "vulnerability_name": "Human-Agent Trust Exploitation"
+    },
+    "ASI10": {
+      "name": "Rogue Agents",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "rogue_agents",
+      "vulnerability_name": "Rogue Agents"
+    },
+    "LLM01": {
+      "name": "Prompt Injection",
+      "strategy_count": 4,
+      "single_turn_count": 3,
+      "multi_turn_count": 1,
+      "vulnerability": "prompt_injection",
+      "vulnerability_name": "Prompt Injection"
+    },
+    "LLM02": {
+      "name": "Sensitive Information Disclosure",
+      "strategy_count": 4,
+      "single_turn_count": 3,
+      "multi_turn_count": 1,
+      "vulnerability": "sensitive_info_disclosure",
+      "vulnerability_name": "Sensitive Information Disclosure"
+    },
+    "LLM04": {
+      "name": "Data and Model Poisoning",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "data_poisoning",
+      "vulnerability_name": "Data and Model Poisoning"
+    },
+    "LLM05": {
+      "name": "Improper Output Handling",
+      "strategy_count": 5,
+      "single_turn_count": 4,
+      "multi_turn_count": 1,
+      "vulnerability": "improper_output",
+      "vulnerability_name": "Improper Output Handling"
+    },
+    "LLM06": {
+      "name": "Excessive Agency",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "excessive_agency",
+      "vulnerability_name": "Excessive Agency"
+    },
+    "LLM07": {
+      "name": "System Prompt Leakage",
+      "strategy_count": 5,
+      "single_turn_count": 5,
+      "multi_turn_count": 0,
+      "vulnerability": "system_prompt_leakage",
+      "vulnerability_name": "System Prompt Leakage"
+    },
+    "LLM08": {
+      "name": "Vector and Embedding Weaknesses",
+      "strategy_count": 0,
+      "single_turn_count": 0,
+      "multi_turn_count": 0,
+      "vulnerability": "vector_embedding_weakness",
+      "vulnerability_name": "Vector and Embedding Weaknesses"
+    },
+    "LLM09": {
+      "name": "Misinformation",
+      "strategy_count": 5,
+      "single_turn_count": 4,
+      "multi_turn_count": 1,
+      "vulnerability": "misinformation",
+      "vulnerability_name": "Misinformation"
+    }
+  },
+  "contexts": [
+    {},
+    {
+      "tools": [
+        {
+          "name": "lookup"
+        }
+      ]
+    },
+    {
+      "memory_stores": [
+        {
+          "id": "memory"
+        }
+      ]
+    },
+    {
+      "knowledge_bases": [
+        {
+          "id": "kb"
+        }
+      ]
+    },
+    {
+      "tools": [
+        {
+          "name": "lookup"
+        }
+      ],
+      "memory_stores": [
+        {
+          "id": "memory"
+        }
+      ],
+      "knowledge_bases": [
+        {
+          "id": "kb"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    null,
+    {},
+    {
+      "classification_failed": true
+    },
+    {
+      "capabilities": {
+        "tool": [
+          "code_execution"
+        ]
+      }
+    },
+    {
+      "capabilities": {
+        "resource": [
+          "memory_read",
+          "knowledge_retrieval"
+        ]
+      }
+    }
+  ],
+  "cases": [
+    {
+      "contextIndex": 0,
+      "capabilitiesIndex": 0,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 0,
+      "capabilitiesIndex": 1,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 0,
+      "capabilitiesIndex": 2,
+      "expected": {
+        "ASI01": [
+          "memory_directive_injection",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 0,
+      "capabilitiesIndex": 3,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 0,
+      "capabilitiesIndex": 4,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 1,
+      "capabilitiesIndex": 0,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "filesystem_scope_bypass",
+          "webhook_data_exfiltration",
+          "email_tool_weaponization",
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "tool_command_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 1,
+      "capabilitiesIndex": 1,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 1,
+      "capabilitiesIndex": 2,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "data_source_injection",
+          "memory_directive_injection",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "filesystem_scope_bypass",
+          "webhook_data_exfiltration",
+          "email_tool_weaponization",
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "tool_command_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison",
+          "tool_output_memory_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "memory_trust_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 1,
+      "capabilitiesIndex": 3,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 1,
+      "capabilitiesIndex": 4,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "data_source_injection",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "memory_trust_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 2,
+      "capabilitiesIndex": 0,
+      "expected": {
+        "ASI01": [
+          "memory_directive_injection",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 2,
+      "capabilitiesIndex": 1,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 2,
+      "capabilitiesIndex": 2,
+      "expected": {
+        "ASI01": [
+          "memory_directive_injection",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 2,
+      "capabilitiesIndex": 3,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 2,
+      "capabilitiesIndex": 4,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 3,
+      "capabilitiesIndex": 0,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 3,
+      "capabilitiesIndex": 1,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 3,
+      "capabilitiesIndex": 2,
+      "expected": {
+        "ASI01": [
+          "memory_directive_injection",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 3,
+      "capabilitiesIndex": 3,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 3,
+      "capabilitiesIndex": 4,
+      "expected": {
+        "ASI01": [
+          "role_confusion_hijack"
+        ],
+        "ASI02": [],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "memory_trust_exploit",
+          "rapport_then_exploit"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 4,
+      "capabilitiesIndex": 0,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "data_source_injection",
+          "memory_directive_injection",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "filesystem_scope_bypass",
+          "webhook_data_exfiltration",
+          "email_tool_weaponization",
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "tool_command_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison",
+          "tool_output_memory_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "memory_trust_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 4,
+      "capabilitiesIndex": 1,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 4,
+      "capabilitiesIndex": 2,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "data_source_injection",
+          "memory_directive_injection",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "filesystem_scope_bypass",
+          "webhook_data_exfiltration",
+          "email_tool_weaponization",
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "tool_command_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "memory_store_poisoning",
+          "preference_injection",
+          "extract_and_poison",
+          "tool_output_memory_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "memory_trust_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 4,
+      "capabilitiesIndex": 3,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "tool_code_injection",
+          "code_assistance_to_malware",
+          "purpose_justified_rce"
+        ],
+        "ASI06": [],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    },
+    {
+      "contextIndex": 4,
+      "capabilitiesIndex": 4,
+      "expected": {
+        "ASI01": [
+          "tool_output_hijack",
+          "data_source_injection",
+          "capability_escalation_hijack",
+          "role_confusion_hijack"
+        ],
+        "ASI02": [
+          "multi_tool_chain_escalation"
+        ],
+        "ASI03": [],
+        "ASI04": [],
+        "ASI05": [
+          "purpose_justified_rce"
+        ],
+        "ASI06": [
+          "extract_and_poison"
+        ],
+        "ASI07": [],
+        "ASI08": [],
+        "ASI09": [
+          "context_aware_authority",
+          "tool_urgency_exploit",
+          "memory_trust_exploit",
+          "rapport_then_exploit",
+          "capability_debug_mode"
+        ],
+        "ASI10": [],
+        "LLM01": [
+          "direct_override",
+          "jailbreak_dan",
+          "roleplay_escape",
+          "crescendo_injection"
+        ],
+        "LLM02": [
+          "pii_extraction_direct",
+          "credential_extraction",
+          "training_data_extraction",
+          "context_leakage_probe"
+        ],
+        "LLM04": [],
+        "LLM05": [
+          "xss_payload_generation",
+          "sql_concatenation_fragment",
+          "shell_command_with_user_input",
+          "path_traversal_helper",
+          "gradual_unsafe_codegen"
+        ],
+        "LLM06": [],
+        "LLM07": [
+          "direct_prompt_request",
+          "repeat_instructions",
+          "translate_prompt",
+          "debug_mode_prompt_reveal",
+          "prompt_completion_trick"
+        ],
+        "LLM08": [],
+        "LLM09": [
+          "fabricated_citation_pressure",
+          "confident_dangerous_claim",
+          "invented_history",
+          "no_caveats_expert_advice",
+          "trust_then_overclaim"
+        ]
+      }
+    }
+  ],
+  "filters": [
+    {
+      "value": {
+        "names": null,
+        "delivery_methods": null,
+        "attack_techniques": null
+      },
+      "expected": [
+        "tool_output_hijack",
+        "data_source_injection",
+        "memory_directive_injection",
+        "capability_escalation_hijack",
+        "role_confusion_hijack",
+        "filesystem_scope_bypass",
+        "webhook_data_exfiltration",
+        "email_tool_weaponization",
+        "multi_tool_chain_escalation",
+        "tool_code_injection",
+        "tool_command_injection",
+        "code_assistance_to_malware",
+        "purpose_justified_rce",
+        "memory_store_poisoning",
+        "preference_injection",
+        "extract_and_poison",
+        "tool_output_memory_poison",
+        "context_aware_authority",
+        "tool_urgency_exploit",
+        "memory_trust_exploit",
+        "rapport_then_exploit",
+        "capability_debug_mode",
+        "direct_override",
+        "jailbreak_dan",
+        "roleplay_escape",
+        "crescendo_injection",
+        "pii_extraction_direct",
+        "credential_extraction",
+        "training_data_extraction",
+        "context_leakage_probe",
+        "xss_payload_generation",
+        "sql_concatenation_fragment",
+        "shell_command_with_user_input",
+        "path_traversal_helper",
+        "gradual_unsafe_codegen",
+        "direct_prompt_request",
+        "repeat_instructions",
+        "translate_prompt",
+        "debug_mode_prompt_reveal",
+        "prompt_completion_trick",
+        "fabricated_citation_pressure",
+        "confident_dangerous_claim",
+        "invented_history",
+        "no_caveats_expert_advice",
+        "trust_then_overclaim"
+      ]
+    },
+    {
+      "value": {
+        "names": [],
+        "delivery_methods": null,
+        "attack_techniques": null
+      },
+      "expected": []
+    },
+    {
+      "value": {
+        "names": [
+          "tool_output_hijack"
+        ],
+        "delivery_methods": null,
+        "attack_techniques": null
+      },
+      "expected": [
+        "tool_output_hijack"
+      ]
+    },
+    {
+      "value": {
+        "names": null,
+        "delivery_methods": [
+          "role-play"
+        ],
+        "attack_techniques": null
+      },
+      "expected": [
+        "rapport_then_exploit",
+        "roleplay_escape"
+      ]
+    },
+    {
+      "value": {
+        "names": null,
+        "delivery_methods": [],
+        "attack_techniques": null
+      },
+      "expected": []
+    },
+    {
+      "value": {
+        "names": null,
+        "delivery_methods": null,
+        "attack_techniques": [
+          "prompt_injection"
+        ]
+      },
+      "expected": []
+    },
+    {
+      "value": {
+        "names": [
+          "tool_output_hijack"
+        ],
+        "delivery_methods": [
+          "role-play"
+        ],
+        "attack_techniques": null
+      },
+      "expected": []
+    }
+  ],
+  "templateCount": 45
+}

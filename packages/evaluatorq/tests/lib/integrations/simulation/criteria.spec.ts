@@ -78,8 +78,11 @@ describe("CriteriaTracker", () => {
   test("a partial audit reports the ids it never saw", () => {
     const tracker = new CriteriaTracker(scenario);
     tracker.observe([occurred("criteria_0")]);
-    expect(tracker.verified).toBe(true);
+    expect(tracker.verified).toBe(false);
+    expect(tracker.hasAudit).toBe(true);
     expect(tracker.unauditedIds).toEqual(["criteria_1"]);
+    tracker.observe([notOccurred("criteria_1")]);
+    expect(tracker.verified).toBe(true);
   });
 });
 

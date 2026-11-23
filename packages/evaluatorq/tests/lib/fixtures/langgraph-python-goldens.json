@@ -1,0 +1,193 @@
+{
+  "source": "a59c3a86",
+  "cases": [
+    {
+      "messages": [],
+      "output": []
+    },
+    {
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hi"
+        },
+        {
+          "role": "assistant",
+          "content": "Checking",
+          "tool_calls": [
+            {
+              "id": "call",
+              "name": "lookup",
+              "args": {
+                "q": "hello"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call",
+          "content": [
+            {
+              "type": "text",
+              "text": "found"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "Done"
+        }
+      ],
+      "output": [
+        {
+          "type": "output_text",
+          "text": "Checking",
+          "annotations": [],
+          "logprobs": []
+        },
+        {
+          "type": "function_call",
+          "call_id": "call",
+          "name": "lookup",
+          "arguments": {
+            "q": "hello"
+          },
+          "status": "completed",
+          "result": "found"
+        },
+        {
+          "type": "output_text",
+          "text": "Done",
+          "annotations": [],
+          "logprobs": []
+        }
+      ]
+    },
+    {
+      "messages": [
+        {
+          "type": "ai",
+          "data": {
+            "content": [
+              "Hello ",
+              {
+                "type": "text",
+                "text": "world"
+              },
+              {
+                "type": "thinking",
+                "thinking": "secret"
+              },
+              {
+                "type": "image",
+                "url": "ignored"
+              }
+            ]
+          }
+        }
+      ],
+      "output": [
+        {
+          "type": "output_text",
+          "text": "Hello world",
+          "annotations": [],
+          "logprobs": []
+        }
+      ]
+    },
+    {
+      "messages": [
+        {
+          "type": "constructor",
+          "id": [
+            "langchain_core",
+            "messages",
+            "AIMessage"
+          ],
+          "kwargs": {
+            "content": "Serialized",
+            "tool_calls": [
+              {
+                "id": "c",
+                "name": "lookup",
+                "args": {}
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool",
+          "data": {
+            "tool_call_id": "c",
+            "content": {
+              "status": "ok"
+            }
+          }
+        },
+        {
+          "type": "tool",
+          "data": {
+            "tool_call_id": "c",
+            "content": "duplicate"
+          }
+        }
+      ],
+      "output": [
+        {
+          "type": "output_text",
+          "text": "Serialized",
+          "annotations": [],
+          "logprobs": []
+        },
+        {
+          "type": "function_call",
+          "call_id": "c",
+          "name": "lookup",
+          "arguments": {},
+          "status": "completed",
+          "result": "{\"status\": \"ok\"}"
+        }
+      ]
+    },
+    {
+      "messages": [
+        {
+          "role": "tool",
+          "tool_call_id": "orphan",
+          "content": "orphaned"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "name": "lookup",
+              "args": {
+                "a": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": [
+        {
+          "type": "output_text",
+          "text": "null",
+          "annotations": [],
+          "logprobs": []
+        },
+        {
+          "type": "function_call",
+          "call_id": "generated",
+          "name": "lookup",
+          "arguments": {
+            "a": 1
+          },
+          "status": "completed",
+          "result": null
+        }
+      ]
+    }
+  ]
+}

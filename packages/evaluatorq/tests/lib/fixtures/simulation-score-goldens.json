@@ -1,0 +1,1352 @@
+[
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 1,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 2,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 3,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 4,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 5,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 6,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 7,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 8,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 9,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 10,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 11,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 12,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 13,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 14,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 15,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 16,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 17,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 18,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 19,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 20,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 21,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 22,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 23,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 24,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": false,
+    "turns": 25,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 1,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 2,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 3,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 4,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 5,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 6,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 7,
+    "efficiency": 0.6,
+    "quality": 0.73
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 8,
+    "efficiency": 0.5,
+    "quality": 0.7
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 9,
+    "efficiency": 0.4,
+    "quality": 0.67
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 10,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 11,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 12,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 13,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 14,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 15,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 16,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 17,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 18,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 19,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 20,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 21,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 22,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 23,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 24,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {},
+    "achieved": true,
+    "turns": 25,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 1,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 2,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 3,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 4,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 5,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 6,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 7,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 8,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 9,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 10,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 11,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 12,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 13,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 14,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 15,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 16,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 17,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 18,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 19,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 20,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 21,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 22,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 23,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 24,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": false,
+    "turns": 25,
+    "efficiency": 0.0,
+    "quality": 0.15
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 1,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 2,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 3,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 4,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 5,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 6,
+    "efficiency": 1.0,
+    "quality": 0.85
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 7,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 8,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 9,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 10,
+    "efficiency": 0.9,
+    "quality": 0.82
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 11,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 12,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 13,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 14,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 15,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 16,
+    "efficiency": 0.7,
+    "quality": 0.76
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 17,
+    "efficiency": 0.6,
+    "quality": 0.73
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 18,
+    "efficiency": 0.5,
+    "quality": 0.7
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 19,
+    "efficiency": 0.4,
+    "quality": 0.67
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 20,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 21,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 22,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 23,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 24,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "turn_efficiency_cliffs": [[6, 1], [10, 0.9], [16, 0.7]]
+    },
+    "achieved": true,
+    "turns": 25,
+    "efficiency": 0.3,
+    "quality": 0.64
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 1,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 2,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 3,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 4,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 5,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 6,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 7,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 8,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 9,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 10,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 11,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 12,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 13,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 14,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 15,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 16,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 17,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 18,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 19,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 20,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 21,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 22,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 23,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 24,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": false,
+    "turns": 25,
+    "efficiency": 0.0,
+    "quality": 0.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 1,
+    "efficiency": 1.0,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 2,
+    "efficiency": 1.0,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 3,
+    "efficiency": 0.9,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 4,
+    "efficiency": 0.9,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 5,
+    "efficiency": 0.7,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 6,
+    "efficiency": 0.7,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 7,
+    "efficiency": 0.6,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 8,
+    "efficiency": 0.5,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 9,
+    "efficiency": 0.4,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 10,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 11,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 12,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 13,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 14,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 15,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 16,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 17,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 18,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 19,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 20,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 21,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 22,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 23,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 24,
+    "efficiency": 0.3,
+    "quality": 1.0
+  },
+  {
+    "config": {
+      "goal_achieved_weight": 1,
+      "criteria_met_weight": 0,
+      "turn_efficiency_weight": 0
+    },
+    "achieved": true,
+    "turns": 25,
+    "efficiency": 0.3,
+    "quality": 1.0
+  }
+]

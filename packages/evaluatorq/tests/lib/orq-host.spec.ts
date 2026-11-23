@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { fileURLToPath } from "node:url";
 
+import {
+  orqServerUrl,
+  resolveOrqClient,
+} from "../../src/lib/common/orq-client.js";
 import { configuredOrqHost } from "../../src/lib/orq-host.js";
 import { getOtlpEndpoint } from "../../src/lib/tracing/setup.js";
 
@@ -104,6 +108,15 @@ describe("configuredOrqHost", () => {
     async (value) => {
       process.env.ROUTER_BASE_URL = value;
       expect(() => configuredOrqHost()).toThrow("set ORQ_BASE_URL explicitly");
+      expect(() => orqServerUrl()).toThrow("set ORQ_BASE_URL explicitly");
+      await expect(resolveOrqClient("test-key")).rejects.toThrow(
+        "set ORQ_BASE_URL explicitly",
+      );
+      const client = await resolveOrqClient(
+        "test-key",
+        "https://explicit.example",
+      );
+      expect(client).toBeDefined();
       process.env.ORQ_API_KEY = "test-key";
       const warn = spyOn(console, "warn").mockImplementation(() => {});
       try {

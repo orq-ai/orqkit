@@ -1,0 +1,4148 @@
+{
+  "source": "a59c3a86",
+  "sets": [
+    {
+      "name": "empty",
+      "entries": []
+    },
+    {
+      "name": "pass",
+      "entries": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "fail",
+      "entries": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    },
+    {
+      "name": "mixed",
+      "entries": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 2,
+          "persona": "None",
+          "scenario": "False",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Failed transport",
+          "error": "rate limit",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        },
+        {
+          "index": 3,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        }
+      ]
+    },
+    {
+      "name": "filtered",
+      "entries": [
+        {
+          "index": 0,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": false,
+          "goal_completion_score": 0.25,
+          "rules_broken": [
+            "criteria_0",
+            "free rule"
+          ],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Keep IDs private",
+              "type": "must_not_happen",
+              "passed": false,
+              "safety": true,
+              "audited": true,
+              "evidence": "Order 7",
+              "state": "fail"
+            },
+            {
+              "id": "criteria_1",
+              "description": "Verify account",
+              "type": "must_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Leaked order ID.",
+          "error": null,
+          "evaluator_scores": {
+            "quality": 0.25,
+            "bool": 1.0
+          },
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 1,
+          "persona": "Careful",
+          "scenario": "Refund",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "max_turns",
+          "goal_achieved": false,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Do not leak",
+              "type": "must_not_happen",
+              "passed": true,
+              "safety": false,
+              "audited": false,
+              "evidence": null,
+              "state": "unknown"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": null
+        }
+      ]
+    },
+    {
+      "name": "pagination-and-ties",
+      "entries": [
+        {
+          "index": 0,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": "failed",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 1,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 2,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 3,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 4,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 4,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 5,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": "failed",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 6,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 7,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 4,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 8,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 9,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 10,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": "failed",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 11,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 4,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 12,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 13,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 14,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 15,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 4,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": "failed",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 16,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 17,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 18,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 19,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 4,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 20,
+          "persona": "Alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "error",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 1,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": "failed",
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 21,
+          "persona": "Zulu",
+          "scenario": "Б",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.0,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 2,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        },
+        {
+          "index": 22,
+          "persona": "alpha",
+          "scenario": "A",
+          "model": "unknown",
+          "target_model": null,
+          "terminated_by": "judge",
+          "goal_achieved": true,
+          "goal_completion_score": 0.5,
+          "rules_broken": [],
+          "criteria": [
+            {
+              "id": "criteria_0",
+              "description": "Verified",
+              "type": null,
+              "passed": true,
+              "safety": false,
+              "audited": null,
+              "evidence": null,
+              "state": "pass"
+            }
+          ],
+          "criteria_verified": null,
+          "turn_count": 3,
+          "total_tokens": 15,
+          "judge_reason": "Request finished.",
+          "error": null,
+          "evaluator_scores": {},
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Please help <now>"
+            },
+            {
+              "role": "assistant",
+              "content": "Done & safe."
+            }
+          ],
+          "thread_id": null,
+          "last_trace_id": null,
+          "goal": "Refund the correct charge"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 0,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "90661f3e51137275e9f5aff8d7084a519b728cde19d3b013c902a92237f261c7"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "c7bfe8528ca0d7490fb5a372c3636612191ec9ad941f5733da46c58f366a7feb"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "c7bfe8528ca0d7490fb5a372c3636612191ec9ad941f5733da46c58f366a7feb"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "c7bfe8528ca0d7490fb5a372c3636612191ec9ad941f5733da46c58f366a7feb"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "3715c0fb1c97084d470296ff7d4f6fc04b8f5c525c2e7ab217feb006ed8ae9a7"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "3715c0fb1c97084d470296ff7d4f6fc04b8f5c525c2e7ab217feb006ed8ae9a7"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "3715c0fb1c97084d470296ff7d4f6fc04b8f5c525c2e7ab217feb006ed8ae9a7"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "ca6ea3bd505d91533a6500ce27927e5f30ad14e84b91fb8e6cfcd4475f812e17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "ca6ea3bd505d91533a6500ce27927e5f30ad14e84b91fb8e6cfcd4475f812e17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "ca6ea3bd505d91533a6500ce27927e5f30ad14e84b91fb8e6cfcd4475f812e17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "27a50fc30e7d9799fc1460613b5e2947a8783811a1474291f6971a5da16f42f6"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "27a50fc30e7d9799fc1460613b5e2947a8783811a1474291f6971a5da16f42f6"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "27a50fc30e7d9799fc1460613b5e2947a8783811a1474291f6971a5da16f42f6"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "c712df91b53a5334a90c2b3904f002aa11d4f9414947a7fca5c039d8cb815916"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "c712df91b53a5334a90c2b3904f002aa11d4f9414947a7fca5c039d8cb815916"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "c712df91b53a5334a90c2b3904f002aa11d4f9414947a7fca5c039d8cb815916"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "d75be0c11bf8c9ef2041c59772cf99d2781084fe246ece397ccf21a66f0d86b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "d75be0c11bf8c9ef2041c59772cf99d2781084fe246ece397ccf21a66f0d86b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "d75be0c11bf8c9ef2041c59772cf99d2781084fe246ece397ccf21a66f0d86b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "f93ebc8fa597195bacbb318d4f3e894b8102697b989e9c9a3b54bb62c95710cf"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "f93ebc8fa597195bacbb318d4f3e894b8102697b989e9c9a3b54bb62c95710cf"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f93ebc8fa597195bacbb318d4f3e894b8102697b989e9c9a3b54bb62c95710cf"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "0351e9784fff9b9b2b62e0dce35806fe0f4022746ee3e3c225fbd776f7feed80"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "0351e9784fff9b9b2b62e0dce35806fe0f4022746ee3e3c225fbd776f7feed80"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "0351e9784fff9b9b2b62e0dce35806fe0f4022746ee3e3c225fbd776f7feed80"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "bf4662156b5eecbe560706012f70ed4eebd8a6741a75256d8b41da7e718674b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "bf4662156b5eecbe560706012f70ed4eebd8a6741a75256d8b41da7e718674b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "bf4662156b5eecbe560706012f70ed4eebd8a6741a75256d8b41da7e718674b4"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "b2da432994fdc63c307b0021944dc643add4446fa4773d9ca57e0c51b97994e1"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "b2da432994fdc63c307b0021944dc643add4446fa4773d9ca57e0c51b97994e1"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "b2da432994fdc63c307b0021944dc643add4446fa4773d9ca57e0c51b97994e1"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "6a333be566052c032edcf1df6dae2a92f661ee0012283a374c9111daf4e516fa"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "d2368450e631d540e934ae82767a571f4f5090db3500304d7880fcf7946184df"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "5f8949864bb693c68fee05b451848d6b06d6bcda0ae9d6aa12eeceae966ed90b"
+    },
+    {
+      "set": 1,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "5bac492e8d1117100b1e2b34a305101b776f4ec1fc80e2689e148431b715ac17"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "15ae163e25d3c181e53a8df40e67a7b16fd58e64137d0cee679e29d96fa26941"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "15ae163e25d3c181e53a8df40e67a7b16fd58e64137d0cee679e29d96fa26941"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "15ae163e25d3c181e53a8df40e67a7b16fd58e64137d0cee679e29d96fa26941"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "ac2d8c421a601dc04bd904de827346eea2ff401c112135936c74460882002cb7"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "ac2d8c421a601dc04bd904de827346eea2ff401c112135936c74460882002cb7"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "ac2d8c421a601dc04bd904de827346eea2ff401c112135936c74460882002cb7"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "846eadd671e1152894b66b0c59097276dfe6f964058a4c16cf42ac4a326a5743"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "846eadd671e1152894b66b0c59097276dfe6f964058a4c16cf42ac4a326a5743"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "846eadd671e1152894b66b0c59097276dfe6f964058a4c16cf42ac4a326a5743"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "f01242b865826eee17a2720847a2f5187e42d3182416fcd6c111444a52e9e524"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "f01242b865826eee17a2720847a2f5187e42d3182416fcd6c111444a52e9e524"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f01242b865826eee17a2720847a2f5187e42d3182416fcd6c111444a52e9e524"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "5aa2e0e6e4c7ef5df931c628d50e97fc429c1c8a9bc97ccf9d03f36c347f8549"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "5aa2e0e6e4c7ef5df931c628d50e97fc429c1c8a9bc97ccf9d03f36c347f8549"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "5aa2e0e6e4c7ef5df931c628d50e97fc429c1c8a9bc97ccf9d03f36c347f8549"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "a60f14916c820559a9bfce873c2c24993cbe13ed18563d2f5e8769a3a4bf159d"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "a60f14916c820559a9bfce873c2c24993cbe13ed18563d2f5e8769a3a4bf159d"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "a60f14916c820559a9bfce873c2c24993cbe13ed18563d2f5e8769a3a4bf159d"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "82aa16ed1ae2b92ba0e86959170d44270df7c92cafbc22d8d51b5ec5f793f4eb"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "82aa16ed1ae2b92ba0e86959170d44270df7c92cafbc22d8d51b5ec5f793f4eb"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "82aa16ed1ae2b92ba0e86959170d44270df7c92cafbc22d8d51b5ec5f793f4eb"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "d167c0b5aa7aa21fa6525be74408f5808859e00cfb69b726cd6f667861c420ea"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "d167c0b5aa7aa21fa6525be74408f5808859e00cfb69b726cd6f667861c420ea"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "d167c0b5aa7aa21fa6525be74408f5808859e00cfb69b726cd6f667861c420ea"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "fde14b4102e96a9d8df203a431d14104500caea633e204ff0720fb554bc11c47"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "fde14b4102e96a9d8df203a431d14104500caea633e204ff0720fb554bc11c47"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "fde14b4102e96a9d8df203a431d14104500caea633e204ff0720fb554bc11c47"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "9d62b0c20263b705f887f75b51e656ba3809e0c2ccd46a736a8e861538e0295e"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "9d62b0c20263b705f887f75b51e656ba3809e0c2ccd46a736a8e861538e0295e"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "9d62b0c20263b705f887f75b51e656ba3809e0c2ccd46a736a8e861538e0295e"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "bbc2cf7093a586757d1e5d25ebb07c877798b2161c813c034c66984d4bcf2e73"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "2db8dcf83932ac31c6f717c9929216da624545496aedb09e285f510074b2b51d"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "9276619348a5da148084367a2002bf6e309200a418fa3cad95c6baa2f227ef8f"
+    },
+    {
+      "set": 2,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "add2605d145ad55ece83e88c2f3a99d1a1c7fe3aeb2ee6e19133724ce56968aa"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "b70ad623803e3a2dbd228f20d0ae76f5cccce243c329030a30295f490e3903e5"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "b70ad623803e3a2dbd228f20d0ae76f5cccce243c329030a30295f490e3903e5"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "b70ad623803e3a2dbd228f20d0ae76f5cccce243c329030a30295f490e3903e5"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "cb875873f99f5f2b8b956ec9ed28ac18d1f623c3e755f03720020a8658850c24"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "cb875873f99f5f2b8b956ec9ed28ac18d1f623c3e755f03720020a8658850c24"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "cb875873f99f5f2b8b956ec9ed28ac18d1f623c3e755f03720020a8658850c24"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "2381454b4e80bf981f80afa53312e51dba963bed46cad5b0e5c7c553f228c6ff"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "2381454b4e80bf981f80afa53312e51dba963bed46cad5b0e5c7c553f228c6ff"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "2381454b4e80bf981f80afa53312e51dba963bed46cad5b0e5c7c553f228c6ff"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "364df3d76b2d5f8823ab275a4f8f8e1cacfce4afff6e3020c33fc8929b2b667a"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "364df3d76b2d5f8823ab275a4f8f8e1cacfce4afff6e3020c33fc8929b2b667a"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "364df3d76b2d5f8823ab275a4f8f8e1cacfce4afff6e3020c33fc8929b2b667a"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "89565d8141b4c304e194eed6465e7f94b28db821c7cbea41df36433404ea6c42"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "89565d8141b4c304e194eed6465e7f94b28db821c7cbea41df36433404ea6c42"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "89565d8141b4c304e194eed6465e7f94b28db821c7cbea41df36433404ea6c42"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "0bd7ec0d746b69e6c2ea567bbbc23337e92000ea21d4355e6ec097fcecc18609"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "0bd7ec0d746b69e6c2ea567bbbc23337e92000ea21d4355e6ec097fcecc18609"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "0bd7ec0d746b69e6c2ea567bbbc23337e92000ea21d4355e6ec097fcecc18609"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "794763514b22c7efd1b9560bfb5679c6d328945df665240728f1cf5fd2ff0fd2"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "794763514b22c7efd1b9560bfb5679c6d328945df665240728f1cf5fd2ff0fd2"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "794763514b22c7efd1b9560bfb5679c6d328945df665240728f1cf5fd2ff0fd2"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "77f55c3c59c625189c14940715343af6bd5d297eca04060791b35891af565169"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "77f55c3c59c625189c14940715343af6bd5d297eca04060791b35891af565169"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "77f55c3c59c625189c14940715343af6bd5d297eca04060791b35891af565169"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "bd831d3defb7c2ab5f0cbb5c0e57895726d4938e01459099127fd91ac341c700"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "bd831d3defb7c2ab5f0cbb5c0e57895726d4938e01459099127fd91ac341c700"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "bd831d3defb7c2ab5f0cbb5c0e57895726d4938e01459099127fd91ac341c700"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "4b4b3cc07afd2fad139adb0c5a8cdf3791f826880b76e2061af2d5009a7fb60e"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "4b4b3cc07afd2fad139adb0c5a8cdf3791f826880b76e2061af2d5009a7fb60e"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "4b4b3cc07afd2fad139adb0c5a8cdf3791f826880b76e2061af2d5009a7fb60e"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "13e43f2a0b8ecc064487b428361db5ee3d179a8452e90a64be1598028f82433d"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "77a30976e17a0e6134e30b3a42febf0afa21d3b08b14cb4756af5f20193dd1d5"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "8f14a3acc4e84bd560f6f388bdab221437d59d85843d92e69098998a4dcb988f"
+    },
+    {
+      "set": 3,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "dc645a72be77d772dd5ed33fa9d9c55241b77bc1551e55124550e50d467a8559"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "d407eb8457dfb9d694f3be8b4cfb83a970e5bf80e5cb92201df186340b94035d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "d407eb8457dfb9d694f3be8b4cfb83a970e5bf80e5cb92201df186340b94035d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "d407eb8457dfb9d694f3be8b4cfb83a970e5bf80e5cb92201df186340b94035d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "0807040285ca8055b1ee0f5338131256fc8c12958f353b7228e4d8cb3ea9dcc3"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "0807040285ca8055b1ee0f5338131256fc8c12958f353b7228e4d8cb3ea9dcc3"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "0807040285ca8055b1ee0f5338131256fc8c12958f353b7228e4d8cb3ea9dcc3"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "b96713ef48ccf6441ae1b76c91db7112d6b60880ac644620a234d8411da2c245"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "b96713ef48ccf6441ae1b76c91db7112d6b60880ac644620a234d8411da2c245"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "b96713ef48ccf6441ae1b76c91db7112d6b60880ac644620a234d8411da2c245"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "2a5cf56c8154322c043cf88917bdc024c2c86d88312904568933115b6cfb5709"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "2a5cf56c8154322c043cf88917bdc024c2c86d88312904568933115b6cfb5709"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "2a5cf56c8154322c043cf88917bdc024c2c86d88312904568933115b6cfb5709"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "36540a5919adce69dc33ebd4a6ef1661ffdb5e23cde84ed2f01ed522a006976d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "36540a5919adce69dc33ebd4a6ef1661ffdb5e23cde84ed2f01ed522a006976d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "36540a5919adce69dc33ebd4a6ef1661ffdb5e23cde84ed2f01ed522a006976d"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "9a0dc8d484fce74d397f50b5cd91696dc3f660a27ea08f5380774e32f47cf291"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "9a0dc8d484fce74d397f50b5cd91696dc3f660a27ea08f5380774e32f47cf291"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "9a0dc8d484fce74d397f50b5cd91696dc3f660a27ea08f5380774e32f47cf291"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "b3305b9db097d02b44c8412612abed2ddb09979a20453e8534f15c45ecd87b16"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "b3305b9db097d02b44c8412612abed2ddb09979a20453e8534f15c45ecd87b16"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "b3305b9db097d02b44c8412612abed2ddb09979a20453e8534f15c45ecd87b16"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "32f4031f9618a2f0c96270d52ab689b9d01ab36c3effc5fa8f900680b1e60cc2"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "32f4031f9618a2f0c96270d52ab689b9d01ab36c3effc5fa8f900680b1e60cc2"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "32f4031f9618a2f0c96270d52ab689b9d01ab36c3effc5fa8f900680b1e60cc2"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "1b9facd36c4f3c5ccc9afc2122be01ccace296d3d7f253d296e02843178c8102"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "1b9facd36c4f3c5ccc9afc2122be01ccace296d3d7f253d296e02843178c8102"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "1b9facd36c4f3c5ccc9afc2122be01ccace296d3d7f253d296e02843178c8102"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "d71850f4b564f2cd684500d073a6968ba6db13bfd29ded240cef936aa4efca33"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "d71850f4b564f2cd684500d073a6968ba6db13bfd29ded240cef936aa4efca33"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "d71850f4b564f2cd684500d073a6968ba6db13bfd29ded240cef936aa4efca33"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f2d4d88420855d011b6dbf01a43577880b48c6263d5e40d82604c00c56265edd"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "b9f27bbabc4c3b01a4d1c7ec09f7ca8bee1551783f81f9a5f3d821f970f785e1"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "0c88278b66c5d514595796684cd66213fc41306dd272324b58403933b0d734f5"
+    },
+    {
+      "set": 4,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "3e6fd92326b540cd1ae10e5705e751671cab56e75d8d92fdd239f835dcb9993e"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "a73c4559c35f612d6f61da736a122931276d9976fac4e0c71311ebcde67411cd"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "a73c4559c35f612d6f61da736a122931276d9976fac4e0c71311ebcde67411cd"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "66a274eb169a016e3eab865c2a9232f903c2456f575402010793b17cbfed5a82"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "dda34c825e480cfed9f16b69e1691228dee1347440189ccfc2b854a928bc0944"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "dda34c825e480cfed9f16b69e1691228dee1347440189ccfc2b854a928bc0944"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f019c9302f0c6c125dac470e92a422e0e9e12d95e770f452c2bcc0eb15a541c9"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "5d1d649b4167c8e7b15177d9883674b5053644101bc96c87ab1a16444641a2e2"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "5d1d649b4167c8e7b15177d9883674b5053644101bc96c87ab1a16444641a2e2"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "e6d02137bcdb9413c16b534ac0642fb66456e7c86a1d993d7a5317d1e24c0187"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "33b91d5001ad8f208299c8ea2749b6cd4b00af28bcba596578139627a8349f9d"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "33b91d5001ad8f208299c8ea2749b6cd4b00af28bcba596578139627a8349f9d"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "persona",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "56cf68ea7c539a44f30bd6b2fe5f4693b72b173338ebe0fdc9ba46c1cde97c53"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "56593dfc16a7197bc015ae108c3bf1a9372b46264bf42975f30eb31ac25896da"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "56593dfc16a7197bc015ae108c3bf1a9372b46264bf42975f30eb31ac25896da"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "9f482455fbd118aed3465e9ea3956f67bbc0a5db2b61cf7d637cd68c0e293962"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "46a78b96cf9323c37eb9901d253c3ee48e25e2e5e87d8b93fd2bc7d862b67bd6"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "46a78b96cf9323c37eb9901d253c3ee48e25e2e5e87d8b93fd2bc7d862b67bd6"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "scenario",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "db0f6d7ce368a6e3a0e87cdd8ce29dbba82422fd120d795b06f5c1c6b40ac6f4"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "947bf3364e5b0d6ead3680c7104d05b908c835b0ad0dd55540217c490ad84ba1"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "947bf3364e5b0d6ead3680c7104d05b908c835b0ad0dd55540217c490ad84ba1"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "16f10ed7141f1f9009512e3722612b862182be9d6d3cc4077fea36b015a6b721"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "3e5c767409cce09113d633cc9a7e5cdb8a8d022f63ebb28c735cc38c7f690ea3"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "3e5c767409cce09113d633cc9a7e5cdb8a8d022f63ebb28c735cc38c7f690ea3"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "turn_count",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f1392ccd55400de80301ec70963f2286b2e8e6ff0045715cc7dcfab333f0ba00"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "5188ee3a20ef61600d8a1afd7d6309e690bc2989a33c77926152d648e576a795"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "5188ee3a20ef61600d8a1afd7d6309e690bc2989a33c77926152d648e576a795"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "8c0e93dd5dfef3f7fe080b7100c8134257a4d737a269c82049f8e6b1a928be85"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "e402a0596604757b0cb6c4034afb47792ea20883705eae4d3451c7200bd60bdf"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "e402a0596604757b0cb6c4034afb47792ea20883705eae4d3451c7200bd60bdf"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "goal_completion_score",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "80f8ea9fd5605588b924984c32e5e5b707dfb349dc7d946676d7b86ecf8f487c"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "976e3467ed6386e3bd0ba330b7e0697be5481542f8b52aa1b119d78cbb396474"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "976e3467ed6386e3bd0ba330b7e0697be5481542f8b52aa1b119d78cbb396474"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "634b5eb2d72c4be4b2ed51205192ddd3637e936e24bff3932982929141d66c2f"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "ede4ff3c79720380d1fb6a82e9a7b091b731e066468aaa8fe60ec3c6cd97bd84"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "ede4ff3c79720380d1fb6a82e9a7b091b731e066468aaa8fe60ec3c6cd97bd84"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "terminated_by",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "5108fd1c5ec54d15332c772997bb26672d55dbbc14ebefe8fdb5bdaa2ff5b6e9"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "a73c4559c35f612d6f61da736a122931276d9976fac4e0c71311ebcde67411cd"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "a73c4559c35f612d6f61da736a122931276d9976fac4e0c71311ebcde67411cd"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "asc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "66a274eb169a016e3eab865c2a9232f903c2456f575402010793b17cbfed5a82"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 0,
+        "page_size": 5
+      },
+      "expected": "dda34c825e480cfed9f16b69e1691228dee1347440189ccfc2b854a928bc0944"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 1,
+        "page_size": 5
+      },
+      "expected": "dda34c825e480cfed9f16b69e1691228dee1347440189ccfc2b854a928bc0944"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "invalid",
+        "direction": "desc",
+        "page": 999,
+        "page_size": 5
+      },
+      "expected": "f019c9302f0c6c125dac470e92a422e0e9e12d95e770f452c2bcc0eb15a541c9"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 10
+      },
+      "expected": "9433d58689b9aff7d6f99862572405b7e998a064514980c8fc06ec70c0cad021"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 25
+      },
+      "expected": "da0729f6516842f89e2530f6dbb83ebd744584d8b415443d8d6e95b149b406e7"
+    },
+    {
+      "set": 5,
+      "options": {
+        "sort": "index",
+        "direction": "invalid",
+        "page": 2,
+        "page_size": 99
+      },
+      "expected": "f85747299e2c48248533f1c944de0006fcee739ea2c7f1f7b73ad168512440e4"
+    }
+  ],
+  "sizes": [
+    {
+      "input": null,
+      "expected": 5
+    },
+    {
+      "input": "",
+      "expected": 5
+    },
+    {
+      "input": "5",
+      "expected": 5
+    },
+    {
+      "input": "10",
+      "expected": 10
+    },
+    {
+      "input": "25",
+      "expected": 25
+    },
+    {
+      "input": "25.0",
+      "expected": 5
+    },
+    {
+      "input": " 25 ",
+      "expected": 25
+    },
+    {
+      "input": "+25",
+      "expected": 25
+    },
+    {
+      "input": "2_5",
+      "expected": 25
+    },
+    {
+      "input": "bad",
+      "expected": 5
+    },
+    {
+      "input": 0,
+      "expected": 5
+    },
+    {
+      "input": 5,
+      "expected": 5
+    },
+    {
+      "input": 10,
+      "expected": 10
+    },
+    {
+      "input": 25,
+      "expected": 25
+    },
+    {
+      "input": 25.3,
+      "expected": 25
+    }
+  ]
+}

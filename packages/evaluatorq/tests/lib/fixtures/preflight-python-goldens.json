@@ -1,0 +1,1939 @@
+{
+  "source": "a59c3a86",
+  "filters": [
+    {
+      "raw": {
+        "strategies": null,
+        "attack_techniques": null,
+        "delivery_methods": null,
+        "categories": null,
+        "vulnerabilities": null
+      },
+      "expected": {
+        "strategyNames": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "filterSelection": null
+      }
+    },
+    {
+      "raw": {
+        "strategies": [],
+        "attack_techniques": [],
+        "delivery_methods": [],
+        "categories": [],
+        "vulnerabilities": null
+      },
+      "expected": {
+        "strategyNames": [],
+        "attackTechniques": [],
+        "deliveryMethods": [],
+        "filterSelection": [
+          "categories",
+          []
+        ]
+      }
+    },
+    {
+      "raw": {
+        "strategies": [
+          "a",
+          "a"
+        ],
+        "attack_techniques": [
+          "direct-injection"
+        ],
+        "delivery_methods": [
+          "custom",
+          "base64"
+        ],
+        "categories": [
+          "ASI01"
+        ],
+        "vulnerabilities": null
+      },
+      "expected": {
+        "strategyNames": [
+          "a"
+        ],
+        "attackTechniques": [
+          "direct-injection"
+        ],
+        "deliveryMethods": [
+          "base64",
+          "custom"
+        ],
+        "filterSelection": [
+          "categories",
+          [
+            "ASI01"
+          ]
+        ]
+      }
+    },
+    {
+      "raw": {
+        "strategies": null,
+        "attack_techniques": null,
+        "delivery_methods": null,
+        "categories": [
+          "ASI01"
+        ],
+        "vulnerabilities": [
+          "prompt_injection"
+        ]
+      },
+      "expected": {
+        "strategyNames": null,
+        "attackTechniques": null,
+        "deliveryMethods": null,
+        "filterSelection": [
+          "vulnerabilities",
+          [
+            "prompt_injection"
+          ]
+        ]
+      }
+    },
+    {
+      "raw": {
+        "strategies": null,
+        "attack_techniques": [
+          "wrong"
+        ],
+        "delivery_methods": null,
+        "categories": null,
+        "vulnerabilities": null
+      },
+      "error": true
+    }
+  ],
+  "selections": [
+    {
+      "categories": null,
+      "vulnerabilities": null,
+      "expected": {
+        "vulnerabilities": [
+          "goal_hijacking",
+          "tool_misuse",
+          "identity_privilege_abuse",
+          "supply_chain",
+          "code_execution",
+          "memory_poisoning",
+          "inter_agent_comms",
+          "cascading_failures",
+          "trust_exploitation",
+          "rogue_agents",
+          "prompt_injection",
+          "sensitive_info_disclosure",
+          "data_poisoning",
+          "improper_output",
+          "excessive_agency",
+          "system_prompt_leakage",
+          "vector_embedding_weakness",
+          "misinformation"
+        ],
+        "categories": [
+          "ASI01",
+          "ASI02",
+          "ASI03",
+          "ASI04",
+          "ASI05",
+          "ASI06",
+          "ASI07",
+          "ASI08",
+          "ASI09",
+          "ASI10",
+          "LLM01",
+          "LLM02",
+          "LLM04",
+          "LLM05",
+          "LLM06",
+          "LLM07",
+          "LLM08",
+          "LLM09"
+        ],
+        "unevaluableCodes": []
+      }
+    },
+    {
+      "categories": [],
+      "vulnerabilities": null,
+      "expected": {
+        "vulnerabilities": [],
+        "categories": [],
+        "unevaluableCodes": []
+      }
+    },
+    {
+      "categories": [
+        "ASI01",
+        "LLM03"
+      ],
+      "vulnerabilities": null,
+      "expected": {
+        "vulnerabilities": [
+          "goal_hijacking",
+          "supply_chain"
+        ],
+        "categories": [
+          "ASI01",
+          "LLM03"
+        ],
+        "unevaluableCodes": []
+      }
+    },
+    {
+      "categories": [
+        "goal_hijacking",
+        "LLM03"
+      ],
+      "vulnerabilities": null,
+      "expected": {
+        "vulnerabilities": [
+          "goal_hijacking",
+          "supply_chain"
+        ],
+        "categories": [
+          "goal_hijacking",
+          "LLM03"
+        ],
+        "unevaluableCodes": []
+      }
+    },
+    {
+      "categories": [
+        "wrong"
+      ],
+      "vulnerabilities": null,
+      "error": true
+    },
+    {
+      "categories": [
+        "wrong"
+      ],
+      "vulnerabilities": [
+        "prompt_injection"
+      ],
+      "expected": {
+        "vulnerabilities": [
+          "prompt_injection"
+        ],
+        "categories": [
+          "LLM01"
+        ],
+        "unevaluableCodes": []
+      }
+    },
+    {
+      "categories": [
+        "ASI01"
+      ],
+      "vulnerabilities": [],
+      "expected": {
+        "vulnerabilities": [],
+        "categories": [],
+        "unevaluableCodes": []
+      }
+    }
+  ],
+  "caps": [
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI01"
+        },
+        {
+          "id": "2",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "3",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": null
+        },
+        {
+          "id": "7",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "8",
+          "category": "ASI02"
+        },
+        {
+          "id": "9",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "10",
+          "category": "ASI02"
+        },
+        {
+          "id": "11",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "12",
+          "category": "ASI02"
+        },
+        {
+          "id": "13",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "14",
+          "category": "ASI02",
+          "vulnerability": ""
+        }
+      ],
+      "cap": 2,
+      "expected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "2",
+          "category": "ASI01",
+          "vulnerability": ""
+        }
+      ],
+      "cap": 8,
+      "expected": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 20,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "6",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "8",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "9",
+          "category": "ASI01"
+        },
+        {
+          "id": "10",
+          "category": "ASI02"
+        },
+        {
+          "id": "11",
+          "category": "LLM01"
+        },
+        {
+          "id": "12",
+          "category": "LLM01"
+        },
+        {
+          "id": "13",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 5,
+      "expected": [
+        "0",
+        "3",
+        "4",
+        "9",
+        "10"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02"
+        },
+        {
+          "id": "1",
+          "category": "ASI02"
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": "ASI01"
+        },
+        {
+          "id": "4",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "5",
+          "category": "ASI01"
+        },
+        {
+          "id": "6",
+          "category": null
+        },
+        {
+          "id": "7",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "8",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "9",
+          "category": "ASI02"
+        },
+        {
+          "id": "10",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "11",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "12",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "13",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "14",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 7,
+      "expected": [
+        "0",
+        "2",
+        "3",
+        "4",
+        "6",
+        "7",
+        "1"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "2",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "4",
+          "category": "ASI02"
+        },
+        {
+          "id": "5",
+          "category": "LLM01"
+        },
+        {
+          "id": "6",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "8",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "9",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "10",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "11",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "12",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 19,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "4",
+        "5",
+        "3",
+        "7",
+        "9",
+        "6",
+        "8",
+        "10",
+        "11",
+        "12"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "1",
+          "category": null
+        },
+        {
+          "id": "2",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "6",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 10,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "4",
+        "3",
+        "6",
+        "5"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI01"
+        },
+        {
+          "id": "2",
+          "category": null
+        },
+        {
+          "id": "3",
+          "category": "ASI01"
+        }
+      ],
+      "cap": 14,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": "ASI01"
+        },
+        {
+          "id": "4",
+          "category": "LLM01"
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": "ASI02"
+        },
+        {
+          "id": "7",
+          "category": null
+        }
+      ],
+      "cap": 8,
+      "expected": [
+        "0",
+        "2",
+        "3",
+        "4",
+        "6",
+        "1",
+        "5",
+        "7"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01"
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "2",
+          "category": null
+        },
+        {
+          "id": "3",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "4",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": null,
+          "vulnerability": null
+        }
+      ],
+      "cap": 4,
+      "expected": [
+        "0",
+        "1",
+        "3",
+        "2"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "1",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "LLM01"
+        },
+        {
+          "id": "3",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 9,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "1",
+          "category": null
+        },
+        {
+          "id": "2",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "3",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "4",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": "ASI01"
+        }
+      ],
+      "cap": 13,
+      "expected": [
+        "0",
+        "1",
+        "3",
+        "4",
+        "6",
+        "2",
+        "5"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": null
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 0,
+      "expected": []
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "1",
+          "category": "ASI02",
+          "vulnerability": null
+        }
+      ],
+      "cap": 7,
+      "expected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "1",
+          "category": "ASI02"
+        },
+        {
+          "id": "2",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "3",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "4",
+          "category": "ASI01",
+          "vulnerability": ""
+        }
+      ],
+      "cap": 0,
+      "expected": []
+    },
+    {
+      "rows": [],
+      "cap": 17,
+      "expected": []
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01"
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 3,
+      "expected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01"
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 1,
+      "expected": [
+        "0"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "ASI02",
+          "vulnerability": ""
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "6",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": "ASI01"
+        }
+      ],
+      "cap": 19,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "4",
+        "7",
+        "5",
+        "3",
+        "6"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 1,
+      "expected": [
+        "0"
+      ]
+    },
+    {
+      "rows": [],
+      "cap": 3,
+      "expected": []
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02"
+        }
+      ],
+      "cap": 5,
+      "expected": [
+        "0"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01"
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 17,
+      "expected": [
+        "0",
+        "1"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "LLM01"
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": null
+        },
+        {
+          "id": "7",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "8",
+          "category": null
+        },
+        {
+          "id": "9",
+          "category": null,
+          "vulnerability": ""
+        }
+      ],
+      "cap": 8,
+      "expected": [
+        "0",
+        "2",
+        "3",
+        "4",
+        "5",
+        "1",
+        "9",
+        "7"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "2",
+          "category": "ASI01"
+        },
+        {
+          "id": "3",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "7",
+          "category": "ASI01"
+        },
+        {
+          "id": "8",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "9",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "10",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 19,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "4",
+        "10",
+        "5",
+        "3",
+        "7",
+        "9",
+        "6",
+        "8"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "2",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 20,
+      "expected": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "3",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "5",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "6",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "8",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "9",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "10",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        }
+      ],
+      "cap": 15,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "5",
+        "6",
+        "4",
+        "9",
+        "8",
+        "7",
+        "10"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 6,
+      "expected": [
+        "0"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "1",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "3",
+          "category": null
+        },
+        {
+          "id": "4",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "6",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "7",
+          "category": "ASI01"
+        },
+        {
+          "id": "8",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "9",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "10",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "11",
+          "category": "ASI01"
+        }
+      ],
+      "cap": 11,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "7",
+        "5",
+        "8",
+        "4",
+        "11",
+        "9",
+        "6"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "2",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "3",
+          "category": "LLM01"
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "5",
+          "category": "ASI02"
+        },
+        {
+          "id": "6",
+          "category": "ASI02",
+          "vulnerability": ""
+        },
+        {
+          "id": "7",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "8",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "9",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "10",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "11",
+          "category": null
+        },
+        {
+          "id": "12",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "13",
+          "category": "LLM01",
+          "vulnerability": ""
+        }
+      ],
+      "cap": 20,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "5",
+        "6",
+        "9",
+        "4",
+        "8",
+        "13",
+        "12",
+        "7",
+        "10",
+        "11"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02",
+          "vulnerability": ""
+        },
+        {
+          "id": "1",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "2",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "4",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "6",
+          "category": null,
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "7",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 7,
+      "expected": [
+        "0",
+        "1",
+        "3",
+        "2",
+        "5",
+        "7",
+        "4"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02"
+        },
+        {
+          "id": "1",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "2",
+          "category": "ASI02"
+        },
+        {
+          "id": "3",
+          "category": "LLM01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "4",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "5",
+          "category": "ASI01"
+        },
+        {
+          "id": "6",
+          "category": "LLM01"
+        },
+        {
+          "id": "7",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "8",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "9",
+          "category": "ASI02"
+        },
+        {
+          "id": "10",
+          "category": "ASI01",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "11",
+          "category": "ASI01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "12",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "13",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 5,
+      "expected": [
+        "0",
+        "1",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "1",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "2",
+          "category": "ASI02"
+        },
+        {
+          "id": "3",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "4",
+          "category": null,
+          "vulnerability": ""
+        },
+        {
+          "id": "5",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "7",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "8",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "9",
+          "category": "LLM01"
+        },
+        {
+          "id": "10",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "11",
+          "category": "LLM01",
+          "vulnerability": null
+        },
+        {
+          "id": "12",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 18,
+      "expected": [
+        "0",
+        "2",
+        "3",
+        "4",
+        "6",
+        "9",
+        "1",
+        "10",
+        "12",
+        "5",
+        "7",
+        "8",
+        "11"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "ASI02"
+        },
+        {
+          "id": "1",
+          "category": null
+        },
+        {
+          "id": "2",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "3",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": "LLM01",
+          "vulnerability": ""
+        },
+        {
+          "id": "5",
+          "category": "ASI02",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "6",
+          "category": "ASI01",
+          "vulnerability": null
+        },
+        {
+          "id": "7",
+          "category": null
+        },
+        {
+          "id": "8",
+          "category": "ASI02",
+          "vulnerability": ""
+        }
+      ],
+      "cap": 8,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "6",
+        "5",
+        "4",
+        "7"
+      ]
+    },
+    {
+      "rows": [
+        {
+          "id": "0",
+          "category": "LLM01",
+          "vulnerability": "tool_misuse"
+        },
+        {
+          "id": "1",
+          "category": "LLM01"
+        },
+        {
+          "id": "2",
+          "category": "ASI02"
+        },
+        {
+          "id": "3",
+          "category": "ASI01",
+          "vulnerability": ""
+        },
+        {
+          "id": "4",
+          "category": "ASI02"
+        },
+        {
+          "id": "5",
+          "category": null,
+          "vulnerability": null
+        },
+        {
+          "id": "6",
+          "category": "LLM01"
+        },
+        {
+          "id": "7",
+          "category": "LLM01"
+        },
+        {
+          "id": "8",
+          "category": "ASI02",
+          "vulnerability": null
+        },
+        {
+          "id": "9",
+          "category": "ASI02",
+          "vulnerability": "goal_hijacking"
+        },
+        {
+          "id": "10",
+          "category": null
+        },
+        {
+          "id": "11",
+          "category": "ASI01"
+        },
+        {
+          "id": "12",
+          "category": null,
+          "vulnerability": "tool_misuse"
+        }
+      ],
+      "cap": 15,
+      "expected": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "5",
+        "9",
+        "11",
+        "12",
+        "6",
+        "4",
+        "8",
+        "7",
+        "10"
+      ]
+    }
+  ],
+  "matched": {
+    "rows": [
+      {
+        "strategy": {
+          "name": "fixed",
+          "delivery_methods": [
+            "base64",
+            "custom"
+          ],
+          "attack_technique": "direct-injection"
+        }
+      },
+      {
+        "delivery_method": "direct-request"
+      },
+      {
+        "strategy": {
+          "name": "other",
+          "delivery_methods": [
+            "role-play"
+          ],
+          "attack_technique": "tool-abuse"
+        }
+      }
+    ],
+    "expected": {
+      "names": [
+        "fixed",
+        "other"
+      ],
+      "methods": [
+        "base64",
+        "custom",
+        "direct-request",
+        "role-play"
+      ],
+      "techniques": [
+        "direct-injection",
+        "tool-abuse"
+      ]
+    }
+  },
+  "checks": [
+    {
+      "filterIndex": 0,
+      "empty": false,
+      "error": false
+    },
+    {
+      "filterIndex": 0,
+      "empty": true,
+      "error": false
+    },
+    {
+      "filterIndex": 1,
+      "empty": false,
+      "error": false
+    },
+    {
+      "filterIndex": 1,
+      "empty": true,
+      "error": true
+    },
+    {
+      "filterIndex": 2,
+      "empty": false,
+      "error": false
+    },
+    {
+      "filterIndex": 2,
+      "empty": true,
+      "error": true
+    },
+    {
+      "filterIndex": 3,
+      "empty": false,
+      "error": false
+    },
+    {
+      "filterIndex": 3,
+      "empty": true,
+      "error": true
+    }
+  ]
+}

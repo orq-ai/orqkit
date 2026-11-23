@@ -1,0 +1,1611 @@
+{
+  "pythonCommit": "a59c3a86",
+  "rows": [
+    {
+      "inputs": {
+        "datapoint": {
+          "id": "dp-one",
+          "persona": {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          },
+          "scenario": {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "cached",
+          "first_message": "Reply mango"
+        }
+      },
+      "error": false,
+      "expected": {
+        "id": "dp-one",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    },
+    {
+      "inputs": {
+        "datapoint": "{\"id\": \"dp-one\", \"persona\": {\"name\": \"P\", \"patience\": 0.5, \"assertiveness\": 0.5, \"politeness\": 0.5, \"technical_level\": 0.5, \"communication_style\": \"casual\", \"background\": \"Customer context\"}, \"scenario\": {\"name\": \"S\", \"goal\": \"Get mango\", \"criteria\": [{\"description\": \"Agent replies mango\", \"type\": \"must_happen\"}]}, \"user_system_prompt\": \"cached\", \"first_message\": \"Reply mango\"}"
+      },
+      "error": false,
+      "expected": {
+        "id": "dp-one",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    },
+    {
+      "inputs": {
+        "datapoints": [
+          {
+            "id": "dp-one",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "Customer context"
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "Get mango",
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen"
+                }
+              ]
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ]
+      },
+      "error": false,
+      "expected": {
+        "id": "dp-one",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    },
+    {
+      "inputs": {
+        "datapoints": "[{\"id\": \"dp-one\", \"persona\": {\"name\": \"P\", \"patience\": 0.5, \"assertiveness\": 0.5, \"politeness\": 0.5, \"technical_level\": 0.5, \"communication_style\": \"casual\", \"background\": \"Customer context\"}, \"scenario\": {\"name\": \"S\", \"goal\": \"Get mango\", \"criteria\": [{\"description\": \"Agent replies mango\", \"type\": \"must_happen\"}]}, \"user_system_prompt\": \"cached\", \"first_message\": \"Reply mango\"}]"
+      },
+      "error": false,
+      "expected": {
+        "id": "dp-one",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    },
+    {
+      "inputs": {
+        "datapoints": [
+          "{\"id\": \"dp-one\", \"persona\": {\"name\": \"P\", \"patience\": 0.5, \"assertiveness\": 0.5, \"politeness\": 0.5, \"technical_level\": 0.5, \"communication_style\": \"casual\", \"background\": \"Customer context\"}, \"scenario\": {\"name\": \"S\", \"goal\": \"Get mango\", \"criteria\": [{\"description\": \"Agent replies mango\", \"type\": \"must_happen\"}]}, \"user_system_prompt\": \"cached\", \"first_message\": \"Reply mango\"}"
+        ]
+      },
+      "error": false,
+      "expected": {
+        "id": "dp-one",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "cached",
+        "first_message": "Reply mango"
+      }
+    },
+    {
+      "inputs": {
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        }
+      },
+      "error": false,
+      "expected": {
+        "id": "P-S",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "",
+        "first_message": ""
+      }
+    },
+    {
+      "inputs": {
+        "persona": "{\"name\": \"P\", \"patience\": 0.5, \"assertiveness\": 0.5, \"politeness\": 0.5, \"technical_level\": 0.5, \"communication_style\": \"casual\", \"background\": \"Customer context\"}",
+        "scenario": "{\"name\": \"S\", \"goal\": \"Get mango\", \"criteria\": [{\"description\": \"Agent replies mango\", \"type\": \"must_happen\"}]}",
+        "first_message": "Given opener"
+      },
+      "error": false,
+      "expected": {
+        "id": "P-S",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "",
+        "first_message": "Given opener"
+      }
+    },
+    {
+      "inputs": {
+        "personas": [
+          {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          }
+        ],
+        "scenarios": [
+          {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          }
+        ],
+        "first_message": ""
+      },
+      "error": false,
+      "expected": {
+        "id": "P-S",
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "",
+        "first_message": ""
+      }
+    },
+    {
+      "inputs": {
+        "persona": {
+          "name": "P",
+          "patience": "0.75",
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        }
+      },
+      "error": false,
+      "expected": {
+        "id": "P-S",
+        "persona": {
+          "name": "P",
+          "patience": 0.75,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "user_system_prompt": "",
+        "first_message": ""
+      }
+    },
+    {
+      "inputs": {
+        "datapoint": null
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "datapoints": []
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "datapoints": [
+          {
+            "id": "dp-one",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "Customer context"
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "Get mango",
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen"
+                }
+              ]
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          },
+          {
+            "id": "dp-one",
+            "persona": {
+              "name": "P",
+              "patience": 0.5,
+              "assertiveness": 0.5,
+              "politeness": 0.5,
+              "technical_level": 0.5,
+              "communication_style": "casual",
+              "background": "Customer context"
+            },
+            "scenario": {
+              "name": "S",
+              "goal": "Get mango",
+              "criteria": [
+                {
+                  "description": "Agent replies mango",
+                  "type": "must_happen"
+                }
+              ]
+            },
+            "user_system_prompt": "cached",
+            "first_message": "Reply mango"
+          }
+        ]
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "datapoints": "bad"
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "No goal"
+        }
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "persona": {
+          "name": "Missing traits"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        }
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "personas": [
+          {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          },
+          {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          }
+        ],
+        "scenarios": [
+          {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          }
+        ]
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "personas": "[{\"name\": \"P\", \"patience\": 0.5, \"assertiveness\": 0.5, \"politeness\": 0.5, \"technical_level\": 0.5, \"communication_style\": \"casual\", \"background\": \"Customer context\"}]",
+        "scenarios": [
+          {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          }
+        ]
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "persona": {
+          "name": "P",
+          "patience": 0.5,
+          "assertiveness": 0.5,
+          "politeness": 0.5,
+          "technical_level": 0.5,
+          "communication_style": "casual",
+          "background": "Customer context"
+        },
+        "scenario": {
+          "name": "S",
+          "goal": "Get mango",
+          "criteria": [
+            {
+              "description": "Agent replies mango",
+              "type": "must_happen"
+            }
+          ]
+        },
+        "first_message": null
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "datapoint": {
+          "persona": {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          },
+          "scenario": {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "user_system_prompt": "cached",
+          "first_message": "Reply mango"
+        }
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {
+        "datapoint": {
+          "id": "dp-one",
+          "persona": {
+            "name": "P",
+            "patience": 0.5,
+            "assertiveness": 0.5,
+            "politeness": 0.5,
+            "technical_level": 0.5,
+            "communication_style": "casual",
+            "background": "Customer context"
+          },
+          "scenario": {
+            "name": "S",
+            "goal": "Get mango",
+            "criteria": [
+              {
+                "description": "Agent replies mango",
+                "type": "must_happen"
+              }
+            ]
+          },
+          "first_message": "Reply mango"
+        }
+      },
+      "error": true,
+      "expected": null
+    },
+    {
+      "inputs": {},
+      "error": true,
+      "expected": null
+    }
+  ],
+  "exports": [
+    {
+      "row": {
+        "inputs": null,
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": null,
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": null,
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": null,
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": null,
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": null,
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {},
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "",
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "nonsense",
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": "nonsense",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "[1,2]",
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": [
+            1,
+            2
+          ],
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": "{\"x\":1}",
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "x": 1,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            },
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            },
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            }
+          ]
+        },
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "existing"
+            },
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": null,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": "",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": "  ",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": []
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": "mango",
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "mango"
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": false,
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": false
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    },
+    {
+      "row": {
+        "inputs": 42,
+        "task_output": {
+          "key": "value"
+        },
+        "expected_output": "expected"
+      },
+      "expected": {
+        "inputs": {
+          "input": 42,
+          "messages": [
+            {
+              "role": "assistant",
+              "content": {
+                "key": "value"
+              }
+            }
+          ]
+        },
+        "expected_output": "expected"
+      }
+    }
+  ],
+  "seeds": [
+    {
+      "id": "dp-one",
+      "persona": {
+        "name": "P",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "Customer context"
+      },
+      "scenario": {
+        "name": "S",
+        "goal": "Get mango",
+        "criteria": [
+          {
+            "description": "Agent replies mango",
+            "type": "must_happen"
+          }
+        ]
+      },
+      "user_system_prompt": "cached",
+      "first_message": "Reply mango"
+    },
+    {
+      "id": "dp-one",
+      "persona": {
+        "name": "P",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "Customer context"
+      },
+      "scenario": {
+        "name": "S",
+        "goal": "Get mango",
+        "criteria": [
+          {
+            "description": "Agent replies mango",
+            "type": "must_happen"
+          }
+        ]
+      },
+      "user_system_prompt": "cached",
+      "first_message": "Reply mango"
+    },
+    {
+      "id": "dp-one",
+      "persona": {
+        "name": "P",
+        "patience": 0.25,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "Customer context"
+      },
+      "scenario": {
+        "name": "S",
+        "goal": "Get kiwi",
+        "criteria": [
+          {
+            "description": "Agent replies mango",
+            "type": "must_happen"
+          }
+        ]
+      },
+      "user_system_prompt": "cached",
+      "first_message": "Reply mango"
+    }
+  ],
+  "description": "An agent whose users pursue goals such as: Get mango; Get kiwi",
+  "seedContext": "The following personas and scenarios come from a previous run. Generate NEW personas and scenarios in the same domain and style that EXTEND this coverage - do not duplicate or trivially rephrase them.\n\nSeed personas:\n- {\"name\":\"P\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"Customer context\"}\n- {\"name\":\"P\",\"patience\":0.25,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"Customer context\"}\n\nSeed scenarios:\n- {\"name\":\"S\",\"goal\":\"Get mango\",\"criteria\":[{\"description\":\"Agent replies mango\",\"type\":\"must_happen\"}]}\n- {\"name\":\"S\",\"goal\":\"Get kiwi\",\"criteria\":[{\"description\":\"Agent replies mango\",\"type\":\"must_happen\"}]}"
+}

@@ -1,0 +1,263 @@
+{
+  "models": [
+    {
+      "options": {},
+      "models": {
+        "sim.user": "openai/gpt-6-luna",
+        "sim.judge": "openai/gpt-6-sol",
+        "sim.generator": "openai/gpt-6-luna"
+      }
+    },
+    {
+      "options": {
+        "temperature": 0.2
+      },
+      "models": {
+        "sim.user": "openai/gpt-6-luna",
+        "sim.judge": "openai/gpt-6-sol",
+        "sim.generator": "openai/gpt-6-luna"
+      }
+    },
+    {
+      "options": {
+        "model": "custom"
+      },
+      "models": {
+        "sim.user": "custom",
+        "sim.judge": "custom",
+        "sim.generator": "custom"
+      }
+    },
+    {
+      "options": {
+        "api": "chat_completions"
+      },
+      "models": {
+        "sim.user": "openai/gpt-6-luna",
+        "sim.judge": "openai/gpt-6-sol",
+        "sim.generator": "openai/gpt-6-luna"
+      }
+    },
+    {
+      "options": {
+        "reasoning_effort": null
+      },
+      "models": {
+        "sim.user": "openai/gpt-6-luna",
+        "sim.judge": "openai/gpt-6-sol",
+        "sim.generator": "openai/gpt-6-luna"
+      }
+    }
+  ],
+  "schemas": [
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer"
+      },
+      "output": {
+        "name": "Dana",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": null,
+        "cultural_context": null
+      }
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": "0.4",
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer"
+      },
+      "output": {
+        "name": "Dana",
+        "patience": 0.4,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": null,
+        "cultural_context": null
+      }
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": true,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer"
+      },
+      "output": {
+        "name": "Dana",
+        "patience": 1.0,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": null,
+        "cultural_context": null
+      }
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": null,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer"
+      },
+      "output": null
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": -2,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer"
+      },
+      "output": {
+        "name": "Dana",
+        "patience": -2.0,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": null,
+        "cultural_context": null
+      }
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "weird",
+        "background": "A customer"
+      },
+      "output": null
+    },
+    {
+      "kind": "persona",
+      "input": {
+        "name": "Dana",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": "escalating"
+      },
+      "output": {
+        "name": "Dana",
+        "patience": 0.5,
+        "assertiveness": 0.5,
+        "politeness": 0.5,
+        "technical_level": 0.5,
+        "communication_style": "casual",
+        "background": "A customer",
+        "emotional_arc": "escalating",
+        "cultural_context": null
+      }
+    },
+    {
+      "kind": "scenario",
+      "input": {
+        "name": "S",
+        "goal": "G"
+      },
+      "output": {
+        "name": "S",
+        "goal": "G",
+        "context": null,
+        "starting_emotion": null,
+        "criteria": null,
+        "is_edge_case": null,
+        "conversation_strategy": null,
+        "ground_truth": null,
+        "input_format": null
+      }
+    },
+    {
+      "kind": "scenario",
+      "input": {
+        "name": "S",
+        "goal": "G",
+        "criteria": [
+          {
+            "description": "D",
+            "type": "must_happen"
+          }
+        ]
+      },
+      "output": {
+        "name": "S",
+        "goal": "G",
+        "context": null,
+        "starting_emotion": null,
+        "criteria": [
+          {
+            "description": "D",
+            "type": "must_happen",
+            "evaluator": null
+          }
+        ],
+        "is_edge_case": null,
+        "conversation_strategy": null,
+        "ground_truth": null,
+        "input_format": null
+      }
+    },
+    {
+      "kind": "scenario",
+      "input": {
+        "name": "S",
+        "goal": "G",
+        "is_edge_case": "true"
+      },
+      "output": {
+        "name": "S",
+        "goal": "G",
+        "context": null,
+        "starting_emotion": null,
+        "criteria": null,
+        "is_edge_case": true,
+        "conversation_strategy": null,
+        "ground_truth": null,
+        "input_format": null
+      }
+    }
+  ]
+}
