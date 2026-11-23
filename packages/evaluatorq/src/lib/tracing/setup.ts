@@ -78,10 +78,13 @@ export function getOtlpEndpoint(): string | undefined {
       const host = url.host.replace(/^my\./, "api.");
       const prefix = url.pathname.replace(/\/+$/, "");
       return `${url.protocol}//${host}${prefix}/v2/otel`;
-    } catch {
+    } catch (error) {
       // Falling back to production here would send a staging user's key there.
       console.warn(
-        "Tracing is off: ORQ_BASE_URL or ROUTER_BASE_URL is not a valid URL.",
+        error instanceof Error &&
+          error.message.includes("set ORQ_BASE_URL explicitly")
+          ? "Tracing is off: set ORQ_BASE_URL explicitly for platform operations."
+          : "Tracing is off: ORQ_BASE_URL or ROUTER_BASE_URL is not a valid URL.",
       );
       return undefined;
     }

@@ -10,12 +10,17 @@ export function csrfField(): string {
 }
 export function requestRejected(
   request: Pick<Request, "headers">,
-  form: Pick<FormData, "get">,
+  form?: Pick<FormData, "get">,
 ): string | null {
   const site = request.headers.get("sec-fetch-site") || "";
   if (site && site !== "same-origin" && site !== "none")
     return "Cross-origin request rejected.";
-  const supplied = Buffer.from(String(form.get(CSRF_FIELD) || "")),
+  const supplied = Buffer.from(
+      String(
+        (form ? form.get(CSRF_FIELD) : request.headers.get("x-csrf-token")) ||
+          "",
+      ),
+    ),
     expected = Buffer.from(TOKEN);
   if (
     supplied.length !== expected.length ||

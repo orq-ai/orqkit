@@ -50,7 +50,7 @@ async function writeAtomic(
 ): Promise<boolean> {
   const temporary = `${path}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`;
   try {
-    await mkdir(dirname(path), { recursive: true });
+    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
     await writeFile(temporary, JSON.stringify(manifest, null, 2), "utf8");
     await rename(temporary, path);
     return true;
