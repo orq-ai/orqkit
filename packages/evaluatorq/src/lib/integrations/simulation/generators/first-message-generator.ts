@@ -16,7 +16,7 @@ import {
   withLLMSpan,
   withSimulationSpan,
 } from "../tracing.js";
-import type { Persona, Scenario } from "../types.js";
+import type { Persona, Scenario, TokenUsage } from "../types.js";
 import {
   buildPersonaSystemPrompt,
   buildScenarioUserContext,
@@ -109,6 +109,14 @@ export interface FirstMessageGeneratorConfig {
  * persona characteristics and scenario context.
  */
 export class FirstMessageGenerator {
+  private usage: TokenUsage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+  };
+  getUsage(): TokenUsage {
+    return { ...this.usage };
+  }
   private model: string;
   private client: OpenAI;
 
@@ -191,6 +199,11 @@ Keep it natural - this is how they would actually open a conversation.`;
             },
           );
 
+          if (response.usage) {
+            this.usage.prompt_tokens += response.usage.prompt_tokens;
+            this.usage.completion_tokens += response.usage.completion_tokens;
+            this.usage.total_tokens += response.usage.total_tokens;
+          }
           const choice = response.choices[0];
           if (choice?.finish_reason === "length") {
             // The same limit would truncate again, so this is not retried.

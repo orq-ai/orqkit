@@ -209,6 +209,7 @@ async function _simulateCore(
       () => firstMessages as FirstMessageGenerator,
       timeoutPerSimulation,
     );
+    if (evaluationName) result.metadata.evaluation_name = evaluationName;
     stampScores(result);
     resultsByRow.set(data, result);
     return {

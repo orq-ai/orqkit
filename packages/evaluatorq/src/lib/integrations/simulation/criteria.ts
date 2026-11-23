@@ -154,8 +154,7 @@ export function buildCriteriaResults(
 /**
  * Per-criterion audit trail for scoring and reporting.
  *
- * `audited` and `evidence` are null when no audit data exists at all, which
- * keeps "unknown" apart from "audited and found nothing".
+ * Unaudited criteria carry an explicit false flag and empty evidence.
  */
 export function buildCriteriaMeta(
   scenario: Scenario | undefined,
@@ -171,8 +170,8 @@ export function buildCriteriaMeta(
       description: criterion.description,
       type: criterion.type,
       passed: !broken.has(id),
-      audited: auditedIds ? auditedIds.has(id) : null,
-      evidence: evidence ? (evidence[id] ?? "") : null,
+      audited: auditedIds?.has(id) ?? false,
+      evidence: evidence?.[id] ?? "",
     };
   });
 }

@@ -56,11 +56,14 @@ const CRITERIA_VERDICTS = z
     z.object({
       criterion_id: z
         .string()
-        .describe("The criterion ID, copied exactly as listed"),
+        .regex(/^criteria_\d+$/)
+        .describe(
+          'The criterion id exactly as listed under EVALUATION CRITERIA, e.g. "criteria_0". Copy it; do not paraphrase or renumber.',
+        ),
       occurred: z
         .boolean()
         .describe(
-          "Whether the described event has happened in the conversation so far",
+          "true if the described behaviour has actually appeared in the conversation so far, false if it has not. Answer for the description alone, ignoring whether the criterion is must_happen or must_not_happen.",
         ),
       evidence: z
         .string()
