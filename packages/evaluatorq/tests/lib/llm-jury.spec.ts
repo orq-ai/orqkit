@@ -156,6 +156,21 @@ beforeEach(() => {
 });
 
 describe("llmJury", () => {
+  test.each([true, false, "true", "FALSE", "yes", "off", 1, 0])(
+    "accepts Python-compatible Boolean verdict %p",
+    async (value) => {
+      script = votes(value);
+      const result = await score({ criteria: "correct?", model: MODELS[0] });
+      const expected =
+        value === true || value === 1 || value === "true" || value === "yes";
+      expect(result.value).toBe(expected);
+      expect(result.rawOutput?.jury.judgesFailed).toBe(0);
+      expect(requests[0]?.body.text).toMatchObject({
+        format: { schema: { properties: { value: { type: "boolean" } } } },
+      });
+    },
+  );
+
   test("a single boolean judge reports its verdict, usage and audit", async () => {
     script = votes(true);
     const result = await score({ criteria: "correct?", model: MODELS[0] });

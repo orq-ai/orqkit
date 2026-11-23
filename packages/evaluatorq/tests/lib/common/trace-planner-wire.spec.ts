@@ -436,8 +436,8 @@ test("Insights query refuses to broaden when the facet catalogue fails", async (
     },
   );
   expect(result.echo.mode).toBe("query");
-  expect(result.echo.emptyMatch).toBe(true);
-  expect(typeof result.echo.filterSelectionError).toBe("string");
+  expect(result.echo.empty_match).toBe(true);
+  expect(typeof result.echo.filter_selection_error).toBe("string");
   expect(result.traces).toEqual([]);
   expect(result.compiled?.[0]?.name).toBe("Frustration");
   expect(usage.totals().population?.calls).toBe(1);

@@ -204,6 +204,35 @@ const ZERO_USAGE: TokenUsage = {
   total_tokens: 0,
 };
 
+function simulationMetadata(
+  persona?: Persona,
+  scenario?: Scenario,
+): Record<string, unknown> {
+  return {
+    persona: persona?.name ?? null,
+    scenario: scenario?.name ?? null,
+    criteria_meta: null,
+    ...(persona
+      ? {
+          persona_traits: {
+            patience: persona.patience,
+            assertiveness: persona.assertiveness,
+            politeness: persona.politeness,
+            technical_level: persona.technical_level,
+            communication_style: persona.communication_style,
+            background: persona.background,
+          },
+        }
+      : {}),
+    ...(scenario
+      ? {
+          scenario_goal: scenario.goal,
+          scenario_context: scenario.context ?? "",
+        }
+      : {}),
+  };
+}
+
 export function errorResult(
   reason: string,
   persona?: Persona,
@@ -221,8 +250,7 @@ export function errorResult(
     token_usage_known: false,
     token_usage: { ...ZERO_USAGE },
     metadata: {
-      persona: persona?.name ?? "unknown",
-      scenario: scenario?.name ?? "unknown",
+      ...simulationMetadata(persona, scenario),
       error: reason,
     },
   };
@@ -313,8 +341,7 @@ function maxTurnsResult(
     criteria_results: buildCriteriaResults(scenario, rulesBroken),
     criteria_verified: tracker.verified,
     metadata: {
-      persona: persona?.name,
-      scenario: scenario?.name,
+      ...simulationMetadata(persona, scenario),
       criteria_meta: buildCriteriaMeta(
         scenario,
         rulesBroken,
@@ -792,8 +819,7 @@ export class SimulationRunner {
                 criteria_results: buildCriteriaResults(scenario, rulesBroken),
                 criteria_verified: tracker.verified,
                 metadata: {
-                  persona: persona?.name,
-                  scenario: scenario?.name,
+                  ...simulationMetadata(persona, scenario),
                   criteria_meta: buildCriteriaMeta(
                     scenario,
                     rulesBroken,
@@ -868,8 +894,15 @@ export class SimulationRunner {
       result.token_usage_known = usageKnown;
       if (targetModel) result.metadata.target_model = targetModel;
       result.metadata.datapoint_id = params.datapoint?.id;
-      if (e && typeof e === "object" && "targetPayload" in e)
-        Object.assign(result.metadata, e.targetPayload);
+      const targetPayload =
+        e && typeof e === "object" && "targetPayload" in e
+          ? (e.targetPayload as { errorType?: unknown })
+          : null;
+      if (targetPayload) {
+        Object.assign(result.metadata, targetPayload);
+        if (targetPayload.errorType === "timeout")
+          result.terminated_by = "timeout";
+      }
       result.messages = messages;
       result.turn_count = messages.filter((m) => m.role === "assistant").length;
       result.turn_metrics = turnMetricsList;
@@ -883,16 +916,19 @@ export class SimulationRunner {
       for (const id of tracker.unconfirmedIds) {
         audited.delete(id);
       }
-      result.criteria_results = buildCriteriaResults(
-        scenario,
-        result.rules_broken,
-      );
-      result.metadata.criteria_meta = buildCriteriaMeta(
-        scenario,
-        result.rules_broken,
-        audited,
-        tracker.evidence,
-      );
+      if (targetPayload)
+        result.criteria_results = buildCriteriaResults(
+          scenario,
+          result.rules_broken,
+        );
+      result.metadata.criteria_meta = targetPayload
+        ? buildCriteriaMeta(
+            scenario,
+            result.rules_broken,
+            audited,
+            tracker.evidence,
+          )
+        : null;
       return result;
     } finally {
       if (target && target !== this.targetAgent) {

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { adamBiasCorrections } from "./common/adam-bias.js";
+import { pythonFloatSum } from "./formats/shared.js";
+
 const LR = 0.1;
 const LR_DECAY_STEPS = 200;
 const MAX_ITER = 20_000;
@@ -20,6 +23,9 @@ const P_EPS = 1e-6;
 // arbitrary winner.
 const GRAD_FLOOR = 1e-10;
 const MIN_JUDGE_COMPARISONS = 3;
+
+const ADAM_B1_CORRECTIONS = adamBiasCorrections(ADAM_B1, MAX_ITER);
+const ADAM_B2_CORRECTIONS = adamBiasCorrections(ADAM_B2, MAX_ITER);
 
 export const JudgedComparisonSchema = z.object({
   judge: z.string(),
@@ -123,14 +129,16 @@ function adamStep(
   step: number,
   lr: number,
 ): void {
+  const b1 = ADAM_B1_CORRECTIONS[step] as number,
+    b2 = ADAM_B2_CORRECTIONS[step] as number;
   for (let i = 0; i < values.length; i += 1) {
     const g = gradients[i] as number;
     const m = ADAM_B1 * (state.m[i] as number) + (1 - ADAM_B1) * g;
     const v = ADAM_B2 * (state.v[i] as number) + (1 - ADAM_B2) * g * g;
     state.m[i] = m;
     state.v[i] = v;
-    const mHat = m / (1 - ADAM_B1 ** step);
-    const vHat = v / (1 - ADAM_B2 ** step);
+    const mHat = m / b1;
+    const vHat = v / b2;
     values[i] =
       (values[i] as number) + (lr * mHat) / (Math.sqrt(vHat) + ADAM_EPS);
   }
@@ -170,8 +178,9 @@ function iterate(
     iterations = step;
     const gS = zeros(items.length);
     const gT = zeros(judges.length);
+    const sigmaByJudge = useSigma ? tau.map(Math.exp) : [];
     for (const { a, b, k, p, weight } of records) {
-      const sigma = useSigma ? Math.exp(tau[k] as number) : 1;
+      const sigma = useSigma ? (sigmaByJudge[k] as number) : 1;
       const z = ((s[a] as number) - (s[b] as number)) / sigma;
       const err = (p - logistic(z)) * weight;
       gS[a] = (gS[a] as number) + err / sigma;
@@ -205,7 +214,7 @@ function iterate(
       adamStep(tau, gT, adamT, step, lr);
     }
 
-    const mean = s.reduce((sum, value) => sum + value, 0) / s.length;
+    const mean = pythonFloatSum(s) / s.length;
     for (let i = 0; i < s.length; i += 1) {
       s[i] = (s[i] as number) - mean;
     }
