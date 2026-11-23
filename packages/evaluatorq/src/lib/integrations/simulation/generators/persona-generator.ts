@@ -163,7 +163,30 @@ export class PersonaGenerator {
     context?: string;
     numPersonas?: number;
     edgeCasePercentage?: number;
+    seed?: string;
+    seeds?: string[];
+    generationInstructions?: string;
   }): Promise<Persona[]> {
+    if (params.seeds?.length) {
+      const batches = await Promise.all(
+        params.seeds.map((seed) =>
+          this.generate({
+            ...params,
+            seeds: undefined,
+            seed,
+            numPersonas: 1,
+            edgeCasePercentage: 0,
+          }),
+        ),
+      );
+      return batches.map((batch, index) => {
+        if (!batch[0])
+          throw new SimulationGenerationError(
+            `Persona generation returned nothing for seed: ${params.seeds?.[index]}`,
+          );
+        return batch[0];
+      });
+    }
     return withSimulationSpan(
       "orq.simulation.persona_generation",
       {
@@ -175,6 +198,8 @@ export class PersonaGenerator {
           agentDescription,
           context = "",
           numPersonas = 5,
+          seed = "",
+          generationInstructions = "",
           edgeCasePercentage = 0.2,
         } = params;
 
@@ -184,10 +209,16 @@ export class PersonaGenerator {
 
 Additional Context: ${delimit(context || "None provided")}
 
-Generate ${numPersonas} diverse personas for testing this agent.
+${
+  seed
+    ? `Generate ${numPersonas} persona(s), each embodying this archetype: "${seed}".
+- Fill patience, assertiveness, politeness, technical level, background, communication style, and emotional arc so each persona is coherent and realistic for that archetype`
+    : `Generate ${numPersonas} diverse personas for testing this agent.
 - Include ${numEdgeCases} edge case/challenging personas
 - Ensure variety in patience, assertiveness, and technical levels
-- Create realistic backgrounds relevant to the agent's domain
+- Create realistic backgrounds relevant to the agent's domain`
+}
+${generationInstructions ? `\nAdditional instructions from the caller (apply to every persona, but keep each persona valid and coherent):\n${generationInstructions}` : ""}
 
 Return ONLY a JSON array, no other text.`;
 
@@ -396,7 +427,7 @@ Return ONLY a JSON array, no other text.`;
             ...p,
             communication_style: style,
           };
-          console.error(
+          console.debug(
             `Adjusted persona '${p.name}' to style '${style}' for coverage`,
           );
         }
@@ -431,7 +462,7 @@ Return ONLY a JSON array, no other text.`;
     if (!hasHigh(techVals)) gaps.push("high technical_level (>0.8)");
 
     if (gaps.length > 0) {
-      console.error(`Trait coverage gaps: ${gaps.join(", ")}`);
+      console.debug(`Trait coverage gaps: ${gaps.join(", ")}`);
     }
   }
 }

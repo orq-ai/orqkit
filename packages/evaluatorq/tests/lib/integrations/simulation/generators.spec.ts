@@ -636,3 +636,42 @@ describe("isSchemaRejection", () => {
     expect(isSchemaRejection(new Error("Invalid schema"))).toBe(false);
   });
 });
+
+test("seeded generators keep one item per seed and apply caller instructions", async () => {
+  for (const kind of ["personas", "scenarios"] as const) {
+    const { client, requests } = makeListClient({
+      generator: () => ({
+        content: JSON.stringify(
+          kind === "personas"
+            ? [validPersona, validPersona]
+            : [scenario, scenario],
+        ),
+      }),
+    });
+    const generator =
+      kind === "personas"
+        ? new PersonaGenerator({ client })
+        : new ScenarioGenerator({ client });
+    const result = await generator.generate({
+      agentDescription: "Support bot",
+      seeds: ["angry", "confused"],
+      numPersonas: 20,
+      numScenarios: 20,
+      edgeCasePercentage: 0.9,
+      generationInstructions: "Reply in Dutch",
+    });
+    expect(result).toHaveLength(2);
+    expect(requests.generator).toHaveLength(2);
+    for (const [index, request] of requests.generator.entries()) {
+      const prompt = request.messages.find((m) => m.role === "user")?.content;
+      expect(prompt).toContain(index === 0 ? "angry" : "confused");
+      expect(prompt).toContain("Reply in Dutch");
+      expect(prompt).toContain(
+        kind === "personas"
+          ? "Generate 1 persona(s)"
+          : "Generate 1 scenario(s)",
+      );
+    }
+    expect(generator.getUsage()?.totalTokens).toBeGreaterThan(0);
+  }
+});

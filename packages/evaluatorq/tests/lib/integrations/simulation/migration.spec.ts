@@ -563,3 +563,65 @@ describe("simulation tool transcripts", () => {
     expect(exported.output[0]?.id).toBe("fc_real");
   });
 });
+
+test("emits reusable generated cases before execution and bills dropped first-message attempts", async () => {
+  const { client, requests } = makeFakeClient({
+    generator: (request) => ({
+      content: JSON.stringify(
+        request.response_format?.type === "json_schema" &&
+          request.response_format.json_schema.name === "personas"
+          ? {
+              personas: [
+                {
+                  ...persona,
+                  name: JSON.stringify(request.messages).includes("BrokenSeed")
+                    ? "BrokenSeed"
+                    : "WorkingSeed",
+                },
+              ],
+            }
+          : { scenarios: [scenario] },
+      ),
+    }),
+    firstMessage: (request) =>
+      JSON.stringify(request.messages).includes("BrokenSeed")
+        ? ""
+        : "saved opener",
+  });
+  let emitted: import("../../../../src/lib/integrations/simulation/types.js").Datapoint[] =
+    [];
+  let total: number | undefined;
+  const results = await generateAndSimulate({
+    client,
+    agentDescription: "Support",
+    personaSeeds: ["WorkingSeed", "BrokenSeed"],
+    numScenarios: 1,
+    generationInstructions: "Use Dutch",
+    edgeCasePercentage: 0,
+    targetCallback: () => {
+      expect(emitted).toHaveLength(1);
+      return "reply";
+    },
+    emitDatapoints: (datapoints) => {
+      emitted = datapoints;
+    },
+    onRun: (run) => {
+      total = run.tokenUsageTotal?.totalTokens;
+    },
+    uploadResults: false,
+    executiveSummary: false,
+    recommendations: false,
+    maxTurns: 1,
+  });
+  expect(results).toHaveLength(1);
+  expect(emitted[0]?.first_message).toBe("saved opener");
+  expect(results[0]?.messages[0]?.content).toBe("saved opener");
+  expect(requests.firstMessage).toHaveLength(4);
+  const billedTokens =
+    2 *
+      (requests.generator.length +
+        requests.firstMessage.length +
+        requests.userSimulator.length) +
+    5 * requests.judge.length;
+  expect(total).toBe(billedTokens);
+});

@@ -1,0 +1,188 @@
+{
+ "cases": {
+  "generate_quiet": {
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "\u2713 Generated 2 datapoint(s) \u2192 /python-work/gen/dp.jsonl\n"
+  },
+  "generate_dataset_format": {
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "\u2713 Generated 2 datapoint(s) \u2192 /python-work/ds.jsonl\n"
+  },
+  "generate_loud": {
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "                                                                                          Generate Plan                                                                                           \n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Parameter          \u2502 Value                                                                                                                                                                     \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Source             \u2502 inline description                                                                                                                                                        \u2502\n\u2502 Provider           \u2502 unresolved provider \u00b7 openai/gpt-6-luna                                                                                                                                   \u2502\n\u2502 Building           \u2502 5 personas x 5 scenarios = 25 datapoints                                                                                                                                  \u2502\n\u2502 Output             \u2502 /python-work/loud.jsonl \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\nPersonas                                \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Name \u2503 Patience \u2503 Assertive \u2503 Style  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 P    \u2502      0.5 \u2502       0.5 \u2502 casual \u2502\n\u2502 Q    \u2502      0.5 \u2502       0.5 \u2502 casual \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nScenarios      \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Name \u2503 Goal \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 S    \u2502 g    \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2713 Generated 2 datapoint(s) \u2192 /python-work/loud.jsonl\n\n\u25b8 Next \u2014 run the simulation against your agent:\n\n    eq sim simulate -i /python-work/loud.jsonl --target agent:bot\n"
+  },
+  "generate_no_description": {
+   "exit_code": 1,
+   "stdout": "",
+   "stderr": "Error: This command requires --agent-description unless --target is an agent target\n"
+  },
+  "traces_basic": {
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "Built 1 datapoint(s) from 2 trace(s) -> /python-work/tr.jsonl\n"
+  },
+  "traces_extend": {
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "Built 1 datapoint(s) from 2 trace(s) + 2 distribution-matched datapoint(s) (--extend) -> /python-work/tr2.jsonl\n"
+  },
+  "traces_none": {
+   "exit_code": 1,
+   "stdout": "",
+   "stderr": "Error: No traces with a usable conversation found. Widen --lookback-hours, raise --limit, or drop --search.\n"
+  },
+  "traces_empty": {
+   "exit_code": 1,
+   "stdout": "",
+   "stderr": "Error: no datapoints could be built from the fetched traces.\n"
+  }
+ },
+ "gen_calls": [
+  {
+   "agent_description": "desc",
+   "num_personas": 5,
+   "num_scenarios": 5
+  },
+  {
+   "agent_description": "desc",
+   "num_personas": 2,
+   "num_scenarios": 5
+  },
+  {
+   "agent_description": "desc",
+   "num_personas": 5,
+   "num_scenarios": 5
+  }
+ ],
+ "trace_calls": [
+  {
+   "fetch": {
+    "limit": 20,
+    "search": ""
+   },
+   "has_start": false
+  },
+  {
+   "summarize": {
+    "max_tokens": 10000,
+    "summary_max_tokens": 10000,
+    "summary_target_tokens": 250,
+    "max_reduce_summaries": 50,
+    "generate_first_message": true,
+    "redact_pii": true
+   }
+  },
+  {
+   "fetch": {
+    "limit": 5,
+    "search": "refund"
+   },
+   "has_start": true
+  },
+  {
+   "summarize": {
+    "max_tokens": 10000,
+    "summary_max_tokens": 10000,
+    "summary_target_tokens": 250,
+    "max_reduce_summaries": 7,
+    "generate_first_message": false,
+    "redact_pii": false
+   }
+  },
+  {
+   "extend": 2,
+   "agent_description": "bot"
+  },
+  {
+   "fetch": {
+    "limit": 20,
+    "search": ""
+   },
+   "has_start": false
+  },
+  {
+   "fetch": {
+    "limit": 20,
+    "search": ""
+   },
+   "has_start": false
+  },
+  {
+   "summarize": {
+    "max_tokens": 10000,
+    "summary_max_tokens": 10000,
+    "summary_target_tokens": 250,
+    "max_reduce_summaries": 50,
+    "generate_first_message": true,
+    "redact_pii": true
+   }
+  }
+ ],
+ "files": {
+  "ds.jsonl": "{\"inputs\": {\"category\": \"P - S\", \"first_message\": \"hi\", \"user_system_prompt\": \"u\", \"persona\": \"{\\\"name\\\":\\\"P\\\",\\\"patience\\\":0.5,\\\"assertiveness\\\":0.5,\\\"politeness\\\":0.5,\\\"technical_level\\\":0.5,\\\"communication_style\\\":\\\"casual\\\",\\\"background\\\":\\\"b\\\",\\\"emotional_arc\\\":null,\\\"cultural_context\\\":null}\", \"scenario\": \"{\\\"name\\\":\\\"S\\\",\\\"goal\\\":\\\"g\\\",\\\"context\\\":null,\\\"starting_emotion\\\":null,\\\"criteria\\\":null,\\\"is_edge_case\\\":null,\\\"conversation_strategy\\\":null,\\\"ground_truth\\\":null,\\\"input_format\\\":null}\"}, \"expected_output\": \"\"}\n{\"inputs\": {\"category\": \"Q - S\", \"first_message\": \"hi\", \"user_system_prompt\": \"u\", \"persona\": \"{\\\"name\\\":\\\"Q\\\",\\\"patience\\\":0.5,\\\"assertiveness\\\":0.5,\\\"politeness\\\":0.5,\\\"technical_level\\\":0.5,\\\"communication_style\\\":\\\"casual\\\",\\\"background\\\":\\\"b\\\",\\\"emotional_arc\\\":null,\\\"cultural_context\\\":null}\", \"scenario\": \"{\\\"name\\\":\\\"S\\\",\\\"goal\\\":\\\"g\\\",\\\"context\\\":null,\\\"starting_emotion\\\":null,\\\"criteria\\\":null,\\\"is_edge_case\\\":null,\\\"conversation_strategy\\\":null,\\\"ground_truth\\\":null,\\\"input_format\\\":null}\"}, \"expected_output\": \"\"}\n",
+  "gen/dp.jsonl": "{\"id\":\"dp-1\",\"persona\":{\"name\":\"P\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n{\"id\":\"dp-2\",\"persona\":{\"name\":\"Q\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n",
+  "loud.jsonl": "{\"id\":\"dp-1\",\"persona\":{\"name\":\"P\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n{\"id\":\"dp-2\",\"persona\":{\"name\":\"Q\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n",
+  "tr.jsonl": "{\"id\":\"dp-1\",\"persona\":{\"name\":\"P\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n",
+  "tr2.jsonl": "{\"id\":\"dp-1\",\"persona\":{\"name\":\"P\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n{\"id\":\"dp-2\",\"persona\":{\"name\":\"Q\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n{\"id\":\"dp-2\",\"persona\":{\"name\":\"Q\",\"patience\":0.5,\"assertiveness\":0.5,\"politeness\":0.5,\"technical_level\":0.5,\"communication_style\":\"casual\",\"background\":\"b\",\"emotional_arc\":null,\"cultural_context\":null},\"scenario\":{\"name\":\"S\",\"goal\":\"g\",\"context\":null,\"starting_emotion\":null,\"criteria\":null,\"is_edge_case\":null,\"conversation_strategy\":null,\"ground_truth\":null,\"input_format\":null},\"user_system_prompt\":\"u\",\"first_message\":\"hi\"}\n"
+ },
+ "datapoints": [
+  {
+   "id": "dp-1",
+   "persona": {
+    "name": "P",
+    "patience": 0.5,
+    "assertiveness": 0.5,
+    "politeness": 0.5,
+    "technical_level": 0.5,
+    "communication_style": "casual",
+    "background": "b",
+    "emotional_arc": null,
+    "cultural_context": null
+   },
+   "scenario": {
+    "name": "S",
+    "goal": "g",
+    "context": null,
+    "starting_emotion": null,
+    "criteria": null,
+    "is_edge_case": null,
+    "conversation_strategy": null,
+    "ground_truth": null,
+    "input_format": null
+   },
+   "user_system_prompt": "u",
+   "first_message": "hi"
+  },
+  {
+   "id": "dp-2",
+   "persona": {
+    "name": "Q",
+    "patience": 0.5,
+    "assertiveness": 0.5,
+    "politeness": 0.5,
+    "technical_level": 0.5,
+    "communication_style": "casual",
+    "background": "b",
+    "emotional_arc": null,
+    "cultural_context": null
+   },
+   "scenario": {
+    "name": "S",
+    "goal": "g",
+    "context": null,
+    "starting_emotion": null,
+    "criteria": null,
+    "is_edge_case": null,
+    "conversation_strategy": null,
+    "ground_truth": null,
+    "input_format": null
+   },
+   "user_system_prompt": "u",
+   "first_message": "hi"
+  }
+ ]
+}

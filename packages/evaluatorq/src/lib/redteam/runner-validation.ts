@@ -353,7 +353,7 @@ export function resolveVulnsAndCategories(
       const vulnerability = resolveCategorySafe(category),
         primary = vulnerability ? getPrimaryCategory(vulnerability) : null;
       if (primary && primary !== category)
-        console.info(
+        console.warn(
           `Category ${category} is scored by the ${vulnerability} evaluator and reported under ${primary}.`,
         );
     }

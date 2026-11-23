@@ -464,7 +464,7 @@ export async function redTeam(
                     maxRetries: config.retryCount,
                   });
                 } catch (error) {
-                  console.debug(
+                  console.warn(
                     "No LLM client available for capability classification",
                     error,
                   );

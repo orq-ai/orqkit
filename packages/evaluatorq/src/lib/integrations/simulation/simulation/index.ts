@@ -1,3 +1,4 @@
+import { DatapointGenerator } from "../generators/datapoint-generator.js";
 /**
  * evaluatorq integration for agent simulation.
  *
@@ -71,6 +72,7 @@ import {
   buildSimulationRun,
   getSimulationRunsDir,
   loadSimulationReplay,
+  type SimulationRun,
   type SimulationRunInput,
 } from "../run-store.js";
 import {
@@ -158,6 +160,8 @@ export interface SimulateParams {
   path?: string;
   /** Pre-configured client for the user simulator, judge and first messages. */
   client?: OpenAI;
+  /** Receives the finished run, after recommendations and the executive summary are attached. */
+  onRun?: (run: SimulationRun) => void;
 }
 
 /**
@@ -280,7 +284,11 @@ async function _simulateCore(
     throw new Error(
       "runName and evaluationName must match when both are supplied",
     );
-  const evaluationName = (params.runName ?? suppliedName) || "sim";
+  // Python's default experiment name; a fixed "sim" collides with experiments
+  // the key cannot see and the upload fails with "project access denied".
+  const evaluationName =
+    (params.runName ?? suppliedName) ||
+    `simulation-${new Date().toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-")}-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
   const llmConfig = resolveSimLlmConfig(
     { llmConfig: params.llmConfig, model: suppliedModel, client },
     "simulate",
@@ -535,7 +543,7 @@ async function _simulateCore(
       data: rows,
       jobs: [job],
       evaluators,
-      parallelism,
+      datapointParallelism: parallelism,
       print: false,
       description,
       path,
@@ -691,16 +699,19 @@ async function _simulateCore(
         runName: evaluationName,
         mode: session?.mode ?? "simulate",
         targetKind: kind,
-        target,
+        target:
+          kind === "orq_agent" ? target.replace(/^agent[:/]/, "") : target,
         agentInfo:
           kind === "orq_agent"
             ? await fetchAgentInfo(target.replace(/^agent[:/]/, ""))
             : null,
         targetModel:
-          results
-            .map((result) => result.metadata.target_model)
-            .find((value): value is string => typeof value === "string") ??
-          modelTarget,
+          kind === "orq_agent"
+            ? null
+            : (results
+                .map((result) => result.metadata.target_model)
+                .find((value): value is string => typeof value === "string") ??
+              modelTarget),
         maxTurns,
         runId,
         experimentUrl,
@@ -772,6 +783,7 @@ async function _simulateCore(
           error,
         );
       }
+      params.onRun?.(run);
       summary = run.manifestSummary();
       const output = session?.reportPath;
       if (!params.save) return results;
@@ -809,6 +821,11 @@ export interface GenerateAndSimulateParams
   agentDescription: string;
   numPersonas?: number;
   numScenarios?: number;
+  personaSeeds?: string[];
+  scenarioSeeds?: string[];
+  generationInstructions?: string;
+  edgeCasePercentage?: number;
+  emitDatapoints?: (datapoints: Datapoint[]) => void | Promise<void>;
 }
 
 /**
@@ -865,58 +882,91 @@ export async function generateAndSimulate(
           async (pipelineSpan) => {
             return withSimulationSession(params, "run", async (session) => {
               await session.hooks.onStageStart(SimStage.Generate, {});
-              // Generate personas and scenarios in parallel (under the pipeline span)
-              const llmConfig = resolveSimLlmConfig(
-                params,
-                "generateAndSimulate",
-              );
-              const personaGen = new PersonaGenerator({
-                llmConfig,
-                client: params.generationClient ?? client,
-              });
-              const scenarioGen = new ScenarioGenerator({
-                llmConfig,
-                client: params.generationClient ?? client,
-              });
+              let generationEnded = false;
+              try {
+                // Generate personas and scenarios in parallel (under the pipeline span)
+                const llmConfig = resolveSimLlmConfig(
+                  params,
+                  "generateAndSimulate",
+                );
+                const personaGen = new PersonaGenerator({
+                  llmConfig,
+                  client: params.generationClient ?? client,
+                });
+                const scenarioGen = new ScenarioGenerator({
+                  llmConfig,
+                  client: params.generationClient ?? client,
+                });
 
-              const [personas, scenarios] = await Promise.all([
-                personaGen.generate({
-                  agentDescription,
-                  numPersonas,
-                }),
-                scenarioGen.generate({
-                  agentDescription,
-                  numScenarios,
-                }),
-              ]);
+                const [personas, scenarios] = await Promise.all([
+                  personaGen.generate({
+                    agentDescription,
+                    numPersonas,
+                    seeds: params.personaSeeds,
+                    generationInstructions: params.generationInstructions,
+                    edgeCasePercentage: params.edgeCasePercentage,
+                  }),
+                  scenarioGen.generate({
+                    agentDescription,
+                    numScenarios,
+                    seeds: params.scenarioSeeds,
+                    generationInstructions: params.generationInstructions,
+                    edgeCasePercentage: params.edgeCasePercentage,
+                  }),
+                ]);
 
-              await session.hooks.onStageEnd(SimStage.Generate, {});
-              // Delegate to core logic (no duplicate pipeline span)
-              return _simulateCore(
-                {
-                  ...params,
-                  evaluationName,
-                  targetCallback,
-                  agentKey,
-                  personas,
-                  scenarios,
-                  maxTurns,
-                  model,
-                  evaluators,
-                  parallelism,
-                  uploadResults,
-                  timeoutPerSimulation,
-                  description,
-                  path,
-                  client,
-                },
-                pipelineSpan,
-                sumStructuredUsage([
-                  personaGen.getUsage(),
-                  scenarioGen.getUsage(),
-                ]),
-                session,
-              );
+                let generatedDatapoints: Datapoint[] | undefined;
+                let firstMessageUsage: Usage | null = null;
+                if (params.emitDatapoints) {
+                  const generator = new DatapointGenerator({
+                    llmConfig,
+                    client: params.generationClient ?? client,
+                    rateLimitDelay: 0,
+                  });
+                  generatedDatapoints =
+                    await generator.generateFromCombinations(
+                      personas,
+                      scenarios,
+                    );
+                  firstMessageUsage = generator.getUsage();
+                  await params.emitDatapoints(generatedDatapoints);
+                }
+
+                generationEnded = true;
+                await session.hooks.onStageEnd(SimStage.Generate, {});
+                // Delegate to core logic (no duplicate pipeline span)
+                return _simulateCore(
+                  {
+                    ...params,
+                    evaluationName,
+                    targetCallback,
+                    agentKey,
+                    personas: generatedDatapoints ? undefined : personas,
+                    scenarios: generatedDatapoints ? undefined : scenarios,
+                    datapoints: generatedDatapoints,
+                    maxTurns,
+                    model,
+                    evaluators,
+                    parallelism,
+                    uploadResults,
+                    timeoutPerSimulation,
+                    description,
+                    path,
+                    client,
+                  },
+                  pipelineSpan,
+                  sumStructuredUsage([
+                    personaGen.getUsage(),
+                    scenarioGen.getUsage(),
+                    firstMessageUsage,
+                  ]),
+                  session,
+                );
+              } catch (error) {
+                if (!generationEnded)
+                  await session.hooks.onStageEnd(SimStage.Generate, { error });
+                throw error;
+              }
             });
           },
         ),

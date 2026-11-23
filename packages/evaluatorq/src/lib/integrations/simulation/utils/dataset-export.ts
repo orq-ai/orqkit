@@ -5,6 +5,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { DatapointSchema } from "../contract-schemas.js";
+import { extractSingleDatapoint } from "../datapoint-io.js";
 import type {
   Criterion,
   Datapoint,
@@ -17,6 +19,21 @@ import type {
 // Export
 // ---------------------------------------------------------------------------
 
+export function toOrqDatasetRows(
+  datapoints: readonly Datapoint[],
+): Record<string, unknown>[] {
+  return datapoints.map((dp) => ({
+    inputs: {
+      category: `${dp.persona.name} - ${dp.scenario.name}`,
+      first_message: dp.first_message || "",
+      user_system_prompt: dp.user_system_prompt || "",
+      persona: JSON.stringify(dp.persona),
+      scenario: JSON.stringify(dp.scenario),
+    },
+    expected_output: "",
+  }));
+}
+
 /**
  * Export datapoints to JSONL format for orq.ai datasets.
  */
@@ -27,18 +44,7 @@ export function exportDatapointsToJsonl(
   const dir = path.dirname(outputPath);
   fs.mkdirSync(dir, { recursive: true });
 
-  const lines = datapoints.map((dp) =>
-    JSON.stringify({
-      inputs: {
-        category: `${dp.persona.name} - ${dp.scenario.name}`,
-        first_message: dp.first_message,
-        user_system_prompt: dp.user_system_prompt,
-        persona: dp.persona,
-        scenario: dp.scenario,
-      },
-      expected_output: null,
-    }),
-  );
+  const lines = toOrqDatasetRows(datapoints).map((row) => JSON.stringify(row));
   fs.writeFileSync(outputPath, `${lines.join("\n")}\n`, "utf-8");
 }
 
@@ -74,16 +80,36 @@ export function loadDatapointsFromJsonl(inputPath: string): Datapoint[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    let data: { inputs?: Record<string, unknown> };
+    let data: Record<string, unknown> & { inputs?: Record<string, unknown> };
     try {
-      data = JSON.parse(trimmed) as { inputs?: Record<string, unknown> };
+      data = JSON.parse(trimmed);
     } catch {
       console.warn(
         `loadDatapointsFromJsonl: skipping malformed line: ${trimmed.slice(0, 80)}`,
       );
       continue;
     }
+    // Raw datapoint line (what `sim generate` writes): keep id and fields as is.
+    if (
+      data.persona &&
+      typeof data.persona === "object" &&
+      data.scenario &&
+      typeof data.scenario === "object"
+    ) {
+      datapoints.push(DatapointSchema.parse(data) as Datapoint);
+      continue;
+    }
     const inputs = data.inputs ?? {};
+    if (Object.hasOwn(inputs, "persona") && Object.hasOwn(inputs, "scenario")) {
+      const datapoint = extractSingleDatapoint({ inputs });
+      datapoints.push({
+        ...datapoint,
+        id: `dp_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`,
+        user_system_prompt:
+          (inputs.user_system_prompt as string | undefined) ?? "",
+      });
+      continue;
+    }
 
     // Reconstruct persona
     let persona: Persona;

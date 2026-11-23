@@ -1,4 +1,8 @@
-export { BadParameter } from "../common/cli-config.js";
+export {
+  applyModelFlags,
+  BadParameter,
+  MODEL_OPTION_NOTE,
+} from "../common/cli-config.js";
 export { classifyErrorType } from "../common/target-call.js";
 export * from "./adaptive/attack-generator.js";
 export * from "./adaptive/blackbox-classifier.js";
@@ -13,6 +17,15 @@ export * from "./adaptive/strategy-planner.js";
 export * from "./adaptive/strategy-registry.js";
 export * from "./adaptive/tool-chaining.js";
 export * from "./backends/index.js";
+export {
+  executeRedteamRun,
+  executeRedteamRuns,
+  executeRedteamSchema,
+  executeRedteamValidateDataset,
+  REDTEAM_RUN_EXAMPLES,
+  type RedteamIO,
+  type RedteamRunArguments,
+} from "./cli.js";
 export * from "./config.js";
 export * from "./contracts.js";
 export * from "./delivery-method-registry.js";

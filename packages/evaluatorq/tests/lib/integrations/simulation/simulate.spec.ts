@@ -164,6 +164,23 @@ describe("simulate", () => {
     ).rejects.toThrow("agentKey must be a non-empty string");
   });
 
+  test("an agent target with no keys asks for Orq routing, as in Python", async () => {
+    const openai = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      await expect(
+        simulate({
+          evaluationName: "no-key",
+          agentKey: "agent:support",
+          datapoints: [datapoint("a")],
+          uploadResults: false,
+        }),
+      ).rejects.toThrow("ORQ routing is required for this target");
+    } finally {
+      if (openai !== undefined) process.env.OPENAI_API_KEY = openai;
+    }
+  });
+
   test("raises on a dropped row and carries completed rows", async () => {
     const { client } = makeFakeClient({ judge: () => finishTurn([]) });
     const { background: _dropped, ...withoutBackground } = persona;
