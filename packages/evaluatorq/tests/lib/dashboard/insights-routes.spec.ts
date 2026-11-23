@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { DashboardAuth } from "../../../src/lib/dashboard/auth.js";
 import { insightsRoutes } from "../../../src/lib/dashboard/insights-routes.js";
 import { csrfToken } from "../../../src/lib/dashboard/security.js";
+import { InsightsRunSchema } from "../../../src/lib/insights/models.js";
 
 type Row = Record<string, unknown>;
-const SCRATCH = join(process.env.HOME ?? ".", "insights-routes-tests");
+const SCRATCH = join(tmpdir(), "insights-routes-tests");
 const previous = process.env.EVALUATORQ_DIR;
 let root: string;
 let runsDir: string;
@@ -191,7 +193,11 @@ test("export downloads the run as an attachment", async () => {
   expect(response.headers.get("content-disposition")).toBe(
     'attachment; filename="route-test.json"',
   );
-  expect(((await response.json()) as Row).runId ?? "").toBeTruthy();
+  const payload = (await response.json()) as Row;
+  expect(payload.run_id).toBe("route-test");
+  expect(payload.runId).toBeUndefined();
+  expect(InsightsRunSchema.parse(payload).runId).toBe("route-test");
+  expect((payload.traces as Row[])[0]?.trace_id).toBe("t1");
 });
 
 test("a missing trace renders a 404 fragment", async () => {

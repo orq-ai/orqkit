@@ -3,7 +3,9 @@ import {
   RESPONSES_ASSISTANT_TURN_ORDER_KEY,
   RESPONSES_ITEM_ORDER_KEY,
 } from "../../common/output-adapters.js";
+import { toPythonKeys } from "../../common/python-json.js";
 import { responsesFunctionCallItemId } from "../openresponses/input-items.js";
+import { usageDetails } from "./usage.js";
 
 /**
  * Conversion functions from SimulationResult to OpenResponses format.
@@ -180,7 +182,13 @@ export function toOpenResponses(
       [RESPONSES_ITEM_ORDER_KEY]: itemOrder,
       [RESPONSES_ASSISTANT_TURN_ORDER_KEY]: assistantTurnOrder,
       ...(result.turn_metrics.length > 0 && {
-        turn_metrics: result.turn_metrics,
+        turn_metrics: result.turn_metrics.map(({ usage, ...turn }) => ({
+          ...turn,
+          token_usage: toPythonKeys(
+            usageDetails(turn.token_usage, usage),
+            "Usage",
+          ),
+        })),
       }),
     },
     safety_identifier: null,

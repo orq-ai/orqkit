@@ -747,22 +747,22 @@ export async function insights(
     );
     run.population = {
       ...resolved.echo,
-      nScanned: resolved.nScanned,
-      nMatched: resolved.compiled?.length ? 0 : documents.length,
-      nFailedMatch: 0,
+      n_scanned: resolved.nScanned,
+      n_matched: resolved.compiled?.length ? 0 : documents.length,
+      n_failed_match: 0,
     };
     if (
       options.finderExportSource != null &&
       population.finderExport !== null
     ) {
-      run.population.finderExport = options.finderExportSource;
+      run.population.finder_export = options.finderExportSource;
       if (options.finderExportSha256 != null)
-        run.population.finderExportSha256 = options.finderExportSha256;
+        run.population.finder_export_sha256 = options.finderExportSha256;
     }
-    if (options.sourceName) run.population.sourceName = options.sourceName;
+    if (options.sourceName) run.population.source_name = options.sourceName;
     if (options.orqScope != null && readsOrq(run.population))
-      run.population.orqScope = { ...options.orqScope };
-    const truncated = Number(resolved.echo.nProjectionTruncated ?? 0);
+      run.population.orq_scope = { ...options.orqScope };
+    const truncated = Number(resolved.echo.n_projection_truncated ?? 0);
     if (truncated)
       run.warnings.push(
         `Input character cap: ${truncated} of ${documents.length} traces exceeded the model projection budget for summary or classifier input.`,
@@ -783,10 +783,10 @@ export async function insights(
       }),
     }));
     await writer.endStage("population");
-    const missing = Number(resolved.echo.nMissingExportIds ?? 0);
+    const missing = Number(resolved.echo.n_missing_export_ids ?? 0);
     if (missing > 0)
       run.warnings.push(
-        `${missing} of ${Number(resolved.echo.nMatchedIds ?? 0)} matched Finder traces could not be reloaded from Orq; ${run.traces.length} traces will be analyzed.`,
+        `${missing} of ${Number(resolved.echo.n_matched_ids ?? 0)} matched Finder traces could not be reloaded from Orq; ${run.traces.length} traces will be analyzed.`,
       );
     if (!run.traces.length) run.warnings.push("population is empty");
     else {
@@ -811,8 +811,8 @@ export async function insights(
         Boolean(resolved.compiled?.length),
       );
       run.traces = applied.traces;
-      run.population.nMatched = applied.nMatched;
-      run.population.nFailedMatch = applied.nFailedMatch;
+      run.population.n_matched = applied.nMatched;
+      run.population.n_failed_match = applied.nFailedMatch;
       run.warnings.push(...applied.warnings);
       const labelError =
         applied.allFailed &&

@@ -336,7 +336,7 @@ describe("simulation controls", () => {
     });
     try {
       const result = await runner.run({ datapoint });
-      expect(result.terminated_by).toBe("error");
+      expect(result.terminated_by).toBe("timeout");
       expect(calls).toBe(3);
       expect(result.reason).toContain("3 attempt(s)");
       expect(result.messages.at(-1)?.role).toBe("assistant");

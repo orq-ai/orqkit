@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
 
+import { UnexpectedClientError } from "@orq-ai/node/models/errors/httpclienterrors.js";
+
 import { OrqCLIError } from "../../../src/lib/common/cli-oauth.js";
 import { authStatus, DashboardAuth } from "../../../src/lib/dashboard/auth.js";
 import type { DashboardSettings } from "../../../src/lib/trace-finder/settings.js";
@@ -101,6 +103,7 @@ describe("authStatus", () => {
     for (const failure of [
       new OrqCLIError("connection refused", { failureKind: "unavailable" }),
       new SDKError("connection refused"),
+      new UnexpectedClientError("connection refused"),
     ]) {
       const result = await authStatus({
         ...base,
@@ -110,7 +113,7 @@ describe("authStatus", () => {
       });
       expect(result.status).toBe("unavailable");
     }
-    expect(warn).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledTimes(3);
     expect(error).not.toHaveBeenCalled();
   });
 

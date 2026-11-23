@@ -253,9 +253,17 @@ describe("toOpenResponses", () => {
     const res = toOpenResponses(makeResult({ turn_metrics: metrics }));
 
     expect(res.metadata).toHaveProperty("turn_metrics");
-    expect((res.metadata as Record<string, unknown>).turn_metrics).toEqual(
-      metrics,
-    );
+    expect(
+      (res.metadata as Record<string, unknown>).turn_metrics,
+    ).toMatchObject([
+      {
+        ...metrics[0],
+        token_usage: { input_tokens: 5, output_tokens: 5, total_tokens: 10 },
+      },
+    ]);
+    expect(
+      JSON.stringify((res.metadata as Record<string, unknown>).turn_metrics),
+    ).not.toContain('"usage"');
   });
 
   test("16. custom model name is used", () => {

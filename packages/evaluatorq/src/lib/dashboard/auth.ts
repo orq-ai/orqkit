@@ -286,6 +286,7 @@ const PROVIDER_ERROR_NAMES = new Set([
   "APIError",
   "SDKError",
   "HTTPClientError",
+  "UnexpectedClientError",
   "ConnectionError",
   "RequestAbortedError",
   "RequestTimeoutError",

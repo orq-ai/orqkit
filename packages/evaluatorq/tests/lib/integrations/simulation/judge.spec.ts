@@ -42,6 +42,37 @@ describe("JudgeDecisionSchema", () => {
     for (const property of Object.values(schema.properties))
       expect(property).not.toHaveProperty("default");
   });
+  test("preserves the occurrence audit instructions and stable criterion identifier constraint", () => {
+    const schema = format.schema as {
+      title: string;
+      $defs: Record<
+        string,
+        {
+          properties: Record<
+            string,
+            { description?: string; pattern?: string }
+          >;
+        }
+      >;
+      properties: Record<string, { description?: string }>;
+    };
+    expect(schema.title).toBe("JudgeDecision");
+    expect(schema.$defs.CriterionVerdict).not.toHaveProperty("id");
+    expect(
+      schema.$defs.CriterionVerdict?.properties.criterion_id?.pattern,
+    ).toBe("^criteria_\\d+$");
+    expect(
+      schema.$defs.CriterionVerdict?.properties.criterion_id?.description,
+    ).toContain("Copy it; do not paraphrase or renumber");
+    expect(
+      schema.$defs.CriterionVerdict?.properties.occurred?.description,
+    ).toContain(
+      "ignoring whether the criterion is must_happen or must_not_happen",
+    );
+    expect(schema.properties.goal_completion_score?.description).toContain(
+      "if the run hits max turns this is the final score",
+    );
+  });
 });
 
 describe("JudgeAgent with strict answers", () => {

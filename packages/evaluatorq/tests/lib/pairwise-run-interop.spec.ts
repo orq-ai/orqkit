@@ -51,3 +51,35 @@ describe("pairwise run interop with Python", () => {
     expect(again.report).toEqual(run.report);
   });
 });
+
+const savedValues = (
+  await import("./fixtures/saved-run-scalars-python-golden.json", {
+    with: { type: "json" },
+  })
+).default;
+for (const [index, row] of savedValues.datetimes.entries())
+  test(`pairwise accepts pinned datetime shape ${index}`, async () => {
+    const path = join(await dir(), "run.json");
+    await writeFile(
+      path,
+      JSON.stringify({ run_name: "time fixture", created_at: row.input }),
+    );
+    if (row.error) await expect(PairwiseRun.load(path)).rejects.toThrow();
+    else
+      expect((await PairwiseRun.load(path)).createdAt).toBe(
+        row.expected as string,
+      );
+  });
+for (const [index, row] of savedValues.booleans.entries())
+  test(`pairwise accepts pinned swap shape ${index}`, () => {
+    const load = () =>
+      new PairwiseRun({ runName: "swap fixture", swap: row.input });
+    if (row.error) expect(load).toThrow();
+    else expect(load().swap).toBe(row.expected as boolean);
+  });
+test("pairwise defaults a missing creation time to now", () => {
+  const before = Date.now();
+  const run = new PairwiseRun({ runName: "missing time" });
+  expect(Date.parse(run.createdAt)).toBeGreaterThanOrEqual(before);
+  expect(Date.parse(run.createdAt)).toBeLessThanOrEqual(Date.now());
+});

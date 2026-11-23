@@ -34,6 +34,7 @@ import {
 import { runManifestFor } from "../insights/progress.js";
 import {
   getInsightsRunsDir,
+  insightsRunJson,
   listRunPaths,
   loadRun,
 } from "../insights/store.js";
@@ -1653,19 +1654,12 @@ export function insightsRoutes(deps: InsightsRouteDeps = {}) {
           status: 404,
           headers: { "content-type": "application/json" },
         });
-      return new Response(
-        JSON.stringify(
-          run,
-          (_key, value) => (value instanceof Set ? [...value] : value),
-          2,
-        ),
-        {
-          headers: {
-            "content-type": "application/json",
-            "content-disposition": `attachment; filename="${encodeURIComponent(runId)}.json"`,
-          },
+      return new Response(insightsRunJson(run), {
+        headers: {
+          "content-type": "application/json",
+          "content-disposition": `attachment; filename="${encodeURIComponent(runId)}.json"`,
         },
-      );
+      });
     }
     return null;
   }

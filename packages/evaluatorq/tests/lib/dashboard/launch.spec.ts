@@ -248,3 +248,30 @@ describe("readiness route", () => {
     expect(body).toBe("test-nonce");
   });
 });
+
+const dotenvFixture = (
+  await import("../fixtures/dotenv-python-golden.json", {
+    with: { type: "json" },
+  })
+).default;
+for (const fixture of dotenvFixture.cases)
+  it(`loads python-dotenv fixture: ${fixture.name}`, async () => {
+    const dir = await tmp();
+    await writeFile(join(dir, ".env"), fixture.text);
+    for (const key of Object.keys(process.env))
+      if (key.startsWith("EQ_PARITY_")) delete process.env[key];
+    Object.assign(process.env, fixture.environment);
+    const previousWarn = console.warn;
+    console.warn = mock(() => {});
+    try {
+      loadLocalEnv(dir);
+      const actual = Object.fromEntries(
+        Object.entries(process.env).filter(([key]) =>
+          key.startsWith("EQ_PARITY_"),
+        ),
+      );
+      expect(actual).toEqual(fixture.expected);
+    } finally {
+      console.warn = previousWarn;
+    }
+  });
