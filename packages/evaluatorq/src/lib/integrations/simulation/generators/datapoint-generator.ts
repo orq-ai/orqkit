@@ -4,12 +4,19 @@
  * Combines personas and scenarios into complete datapoints with first messages.
  */
 
+import type OpenAI from "openai";
+
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
 import { applyRandomPerturbation } from "../quality/message-perturbation.js";
 import type { Datapoint, Persona, Scenario } from "../types.js";
 import { generateDatapoint } from "../utils/prompt-builders.js";
-import { FirstMessageGenerator } from "./first-message-generator.js";
+import {
+  FirstMessageGenerator,
+  isRecoverableFirstMessageFailure,
+} from "./first-message-generator.js";
 import { PersonaGenerator } from "./persona-generator.js";
 import { ScenarioGenerator } from "./scenario-generator.js";
+import { SimulationGenerationError } from "./structured-call.js";
 
 // Default rate limit settings
 const DEFAULT_RATE_LIMIT_DELAY = 100; // 100ms delay between API calls
@@ -60,6 +67,7 @@ export interface DatapointGeneratorConfig {
   model?: string;
   rateLimitDelay?: number;
   maxConcurrentCalls?: number;
+  client?: OpenAI;
 }
 
 /**
@@ -77,16 +85,15 @@ export class DatapointGenerator {
   private firstMessageGenerator: FirstMessageGenerator;
 
   constructor(config?: DatapointGeneratorConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
     this.rateLimitDelay = config?.rateLimitDelay ?? DEFAULT_RATE_LIMIT_DELAY;
     this.semaphore = new Semaphore(
       config?.maxConcurrentCalls ?? DEFAULT_MAX_CONCURRENT_CALLS,
     );
-    this.personaGenerator = new PersonaGenerator({ model: this.model });
-    this.scenarioGenerator = new ScenarioGenerator({ model: this.model });
-    this.firstMessageGenerator = new FirstMessageGenerator({
-      model: this.model,
-    });
+    const shared = { model: this.model, client: config?.client };
+    this.personaGenerator = new PersonaGenerator(shared);
+    this.scenarioGenerator = new ScenarioGenerator(shared);
+    this.firstMessageGenerator = new FirstMessageGenerator(shared);
   }
 
   /**
@@ -172,7 +179,7 @@ export class DatapointGenerator {
       results[key] = rawResults[i] as Persona[] | Scenario[];
     }
 
-    let personas = results.personas as Persona[];
+    const personas = results.personas as Persona[];
     let scenarios = results.scenarios as Scenario[];
 
     // Merge additional scenario types
@@ -185,34 +192,6 @@ export class DatapointGenerator {
       const security = results.security as Scenario[];
       console.log(`Generated ${security.length} security scenarios`);
       scenarios = [...scenarios, ...security];
-    }
-
-    if (personas.length === 0) {
-      console.warn("No personas generated, using defaults");
-      personas = [
-        {
-          name: "Default User",
-          patience: 0.5,
-          assertiveness: 0.5,
-          politeness: 0.5,
-          technical_level: 0.5,
-          communication_style: "casual",
-          background: "",
-        },
-      ];
-    }
-
-    if (scenarios.length === 0) {
-      console.warn("No scenarios generated, using defaults");
-      scenarios = [
-        {
-          name: "Default Scenario",
-          goal: "Get help",
-          context: "User needs general assistance",
-          starting_emotion: "neutral" as const,
-          criteria: [],
-        },
-      ];
     }
 
     // Generate datapoints from all combinations
@@ -267,8 +246,33 @@ export class DatapointGenerator {
     };
 
     // Generate all datapoints with bounded concurrency
-    const tasks = combinations.map(([p, s]) => generateSingle(p, s));
-    const datapoints = await Promise.all(tasks);
+    const settled = await Promise.allSettled(
+      combinations.map(([p, s]) => generateSingle(p, s)),
+    );
+
+    const datapoints: Datapoint[] = [];
+    let lastFailure: unknown;
+    settled.forEach((outcome, i) => {
+      if (outcome.status === "fulfilled") {
+        datapoints.push(outcome.value);
+        return;
+      }
+      if (!isRecoverableFirstMessageFailure(outcome.reason)) {
+        throw outcome.reason;
+      }
+      lastFailure = outcome.reason;
+      const [persona, scenario] = combinations[i] as [Persona, Scenario];
+      console.warn(
+        `DatapointGenerator: dropping pair ${persona.name} x ${scenario.name}: ${String(outcome.reason)}`,
+      );
+    });
+
+    if (datapoints.length === 0 && combinations.length > 0) {
+      throw new SimulationGenerationError(
+        "DatapointGenerator: no first message could be generated",
+        { cause: lastFailure },
+      );
+    }
 
     console.log(`Generated ${datapoints.length} datapoints`);
     return datapoints;

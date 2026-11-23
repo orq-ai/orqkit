@@ -4,37 +4,41 @@
  * Generates test scenarios from agent descriptions and optional context.
  */
 
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { z } from "zod/v4";
 
-import {
-  getTraceContextHeaders,
-  recordLLMInput,
-  recordLLMResponse,
-  withLLMSpan,
-  withSimulationSpan,
-} from "../tracing.js";
+import { createRouterClient } from "../client.js";
+import { DEFAULT_SIMULATION_MODEL } from "../defaults.js";
+import { withSimulationSpan } from "../tracing.js";
 import type {
   ConversationStrategy,
   Criterion,
   Scenario,
   StartingEmotion,
 } from "../types.js";
-import { extractJsonFromResponse } from "../utils/extract-json.js";
 import { delimit } from "../utils/sanitize.js";
+import {
+  requestJsonList,
+  SimulationGenerationError,
+  tokenBudgetForItems,
+} from "./structured-call.js";
 
 // Temperature settings for different generation modes
 const TEMPERATURE_CREATIVE = 0.8;
 const TEMPERATURE_BALANCED = 0.7;
 const TEMPERATURE_EDGE_CASE = 0.9;
 
-const VALID_EMOTIONS = new Set<string>([
+const scenarioTokenBudget = (numScenarios: number) =>
+  tokenBudgetForItems(numScenarios, 500, 6000);
+
+const EMOTIONS = [
   "neutral",
   "frustrated",
   "confused",
   "happy",
   "urgent",
-]);
-const VALID_STRATEGIES = new Set<string>([
+] as const satisfies readonly StartingEmotion[];
+const STRATEGIES = [
   "cooperative",
   "topic_switching",
   "contradictory",
@@ -42,11 +46,30 @@ const VALID_STRATEGIES = new Set<string>([
   "evasive",
   "repetitive",
   "ambiguous",
-]);
-const VALID_CRITERION_TYPES = new Set<string>([
+] as const satisfies readonly ConversationStrategy[];
+const CRITERION_TYPES = [
   "must_happen",
   "must_not_happen",
-]);
+] as const satisfies readonly Criterion["type"][];
+const VALID_EMOTIONS = new Set<string>(EMOTIONS);
+const VALID_STRATEGIES = new Set<string>(STRATEGIES);
+const VALID_CRITERION_TYPES = new Set<string>(CRITERION_TYPES);
+
+const SCENARIO_ITEM_SCHEMA = z.object({
+  name: z.string(),
+  goal: z.string(),
+  context: z.string(),
+  starting_emotion: z.enum(EMOTIONS),
+  criteria: z.array(
+    z.object({
+      description: z.string(),
+      type: z.enum(CRITERION_TYPES),
+      evaluator: z.string().nullable(),
+    }),
+  ),
+  is_edge_case: z.boolean(),
+  conversation_strategy: z.enum(STRATEGIES).nullable(),
+});
 
 const SCENARIO_GENERATOR_PROMPT = `You are an expert test scenario designer for AI agent evaluation. Create realistic, testable scenarios that thoroughly evaluate agent capabilities.
 
@@ -178,55 +201,77 @@ export interface ScenarioGeneratorConfig {
 }
 
 /**
- * Safely parse a JSON string into an array of scenario dicts.
- * Returns an empty array (with a warning) if the parsed result is not an array.
+ * Convert raw LLM items into Scenario objects, dropping unusable ones.
+ *
+ * @throws {SimulationGenerationError} If no usable scenario remains
  */
-function parseJsonArray(json: string): Record<string, unknown>[] {
-  const parsed: unknown = JSON.parse(json);
-  if (!Array.isArray(parsed)) {
-    console.warn(
-      "ScenarioGenerator: expected JSON array but got non-array response",
-    );
-    return [];
-  }
-  return parsed as Record<string, unknown>[];
-}
-
-/**
- * Parse raw scenario dicts from JSON into typed Scenario objects.
- */
-function parseScenarios(scenarioDicts: Record<string, unknown>[]): Scenario[] {
+function parseScenarios(
+  scenarioDicts: Record<string, unknown>[],
+  label: string,
+): Scenario[] {
   const scenarios: Scenario[] = [];
   for (const sDict of scenarioDicts) {
-    try {
-      const rawCriteria = (sDict.criteria as Record<string, unknown>[]) ?? [];
-      const criteria: Criterion[] = rawCriteria
-        .filter((c) => VALID_CRITERION_TYPES.has(String(c.type ?? "")))
-        .map((c) => ({
-          description: String(c.description ?? ""),
-          type: c.type as "must_happen" | "must_not_happen",
-          evaluator: (c.evaluator as string | null) ?? null,
-        }));
-
-      const rawEmotion = String(sDict.starting_emotion ?? "neutral");
-      const rawStrategy = String(sDict.conversation_strategy ?? "cooperative");
-
-      scenarios.push({
-        name: String(sDict.name ?? ""),
-        goal: String(sDict.goal ?? ""),
-        context: String(sDict.context ?? ""),
-        starting_emotion: VALID_EMOTIONS.has(rawEmotion)
-          ? (rawEmotion as StartingEmotion)
-          : "neutral",
-        criteria,
-        is_edge_case: Boolean(sDict.is_edge_case ?? false),
-        conversation_strategy: VALID_STRATEGIES.has(rawStrategy)
-          ? (rawStrategy as ConversationStrategy)
-          : "cooperative",
-      });
-    } catch (e) {
-      console.warn(`Failed to parse scenario: ${e}`);
+    if (
+      typeof sDict.name !== "string" ||
+      !sDict.name.trim() ||
+      typeof sDict.goal !== "string" ||
+      !sDict.goal.trim()
+    ) {
+      console.warn(`${label}: dropping scenario without a name or goal`);
+      continue;
     }
+
+    const rawCriteria = sDict.criteria ?? [];
+    // One bad criterion drops the scenario: keeping the rest would test less
+    // than the model wrote and score higher for it.
+    const criteriaValid =
+      Array.isArray(rawCriteria) &&
+      rawCriteria.every(
+        (c) =>
+          VALID_CRITERION_TYPES.has(String(c?.type ?? "")) &&
+          typeof c.description === "string" &&
+          c.description.trim(),
+      );
+    if (!criteriaValid) {
+      console.warn(
+        `${label}: dropping scenario '${sDict.name}' with an invalid criterion`,
+      );
+      continue;
+    }
+    const criteria: Criterion[] = (
+      rawCriteria as Record<string, unknown>[]
+    ).map((c) => ({
+      description: c.description as string,
+      type: c.type as "must_happen" | "must_not_happen",
+      evaluator: typeof c.evaluator === "string" ? c.evaluator : null,
+    }));
+
+    const emotion = sDict.starting_emotion ?? undefined;
+    const strategy = sDict.conversation_strategy ?? undefined;
+    if (
+      (emotion !== undefined && !VALID_EMOTIONS.has(String(emotion))) ||
+      (strategy !== undefined && !VALID_STRATEGIES.has(String(strategy)))
+    ) {
+      console.warn(
+        `${label}: dropping scenario '${sDict.name}' with an unknown emotion or strategy (starting_emotion=${emotion}, conversation_strategy=${strategy})`,
+      );
+      continue;
+    }
+
+    scenarios.push({
+      name: sDict.name,
+      goal: sDict.goal,
+      context: String(sDict.context ?? ""),
+      starting_emotion: emotion as StartingEmotion | undefined,
+      criteria,
+      is_edge_case: Boolean(sDict.is_edge_case ?? false),
+      conversation_strategy: strategy as ConversationStrategy | undefined,
+    });
+  }
+  if (scenarios.length === 0) {
+    throw new SimulationGenerationError(
+      `${label}: LLM returned no usable scenarios`,
+    );
   }
   return scenarios;
 }
@@ -242,21 +287,36 @@ export class ScenarioGenerator {
   private client: OpenAI;
 
   constructor(config?: ScenarioGeneratorConfig) {
-    this.model = config?.model ?? "azure/gpt-4o-mini";
-    if (config?.client) {
-      this.client = config.client;
-    } else {
-      const apiKey = config?.apiKey ?? process.env.ORQ_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "ORQ_API_KEY environment variable is not set. Set it or pass apiKey/client in config.",
-        );
-      }
-      this.client = new OpenAI({
-        baseURL: process.env.ROUTER_BASE_URL || "https://api.orq.ai/v3/router",
-        apiKey,
-      });
-    }
+    this.model = config?.model ?? DEFAULT_SIMULATION_MODEL;
+    this.client = config?.client ?? createRouterClient(config?.apiKey);
+  }
+
+  private async requestScenarios(params: {
+    system: string;
+    user: string;
+    temperature: number;
+    maxTokens: number;
+    purpose: string;
+    forceEdgeCase?: boolean;
+  }): Promise<Scenario[]> {
+    const items = await requestJsonList({
+      client: this.client,
+      model: this.model,
+      system: params.system,
+      user: params.user,
+      temperature: params.temperature,
+      maxTokens: params.maxTokens,
+      purpose: params.purpose,
+      listKey: "scenarios",
+      itemSchema: SCENARIO_ITEM_SCHEMA,
+      label: "ScenarioGenerator",
+    });
+    return parseScenarios(
+      params.forceEdgeCase
+        ? items.map((item) => ({ ...item, is_edge_case: true }))
+        : items,
+      "ScenarioGenerator",
+    );
   }
 
   /**
@@ -296,62 +356,19 @@ Generate ${numScenarios} diverse test scenarios for this agent.
 
 Return ONLY a JSON array, no other text.`;
 
-        try {
-          const genMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
-
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_CREATIVE,
-              maxTokens: 6000,
-              purpose: "scenario_generation",
-            },
-            async (llmSpan) => {
-              recordLLMInput(llmSpan, [
-                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-                { role: "user", content: userPrompt },
-              ]);
-
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: genMessages,
-                  temperature: TEMPERATURE_CREATIVE,
-                  max_tokens: 6000,
-                },
-                { headers: traceHeaders },
-              );
-
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
+        const scenarios = await this.requestScenarios({
+          system: SCENARIO_GENERATOR_PROMPT,
+          user: userPrompt,
+          temperature: TEMPERATURE_CREATIVE,
+          maxTokens: scenarioTokenBudget(numScenarios),
+          purpose: "scenario_generation",
+        });
+        if (scenarios.length < numScenarios) {
+          console.warn(
+            `ScenarioGenerator: requested ${numScenarios} scenarios but only ${scenarios.length} were successfully parsed`,
           );
-
-          const content = response.choices[0]?.message.content ?? "[]";
-          const extracted = extractJsonFromResponse(content);
-          const scenarioDicts = parseJsonArray(extracted);
-          const scenarios = parseScenarios(scenarioDicts);
-
-          if (scenarios.length < numScenarios) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} scenarios but only ${scenarios.length} were successfully parsed`,
-            );
-          }
-          return scenarios;
-        } catch (e) {
-          if (e instanceof SyntaxError) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
-            );
-            return [];
-          }
-          throw e;
         }
+        return scenarios;
       },
     );
   }
@@ -414,71 +431,29 @@ Additional requirements:
 
 Return ONLY a JSON array, no other text.`;
 
-        try {
-          const covMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
+        let scenarios = await this.requestScenarios({
+          system: SCENARIO_GENERATOR_PROMPT,
+          user: userPrompt,
+          temperature: TEMPERATURE_BALANCED,
+          maxTokens: scenarioTokenBudget(numScenarios),
+          purpose: "scenario_generation_coverage",
+        });
 
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_BALANCED,
-              maxTokens: 6000,
-              purpose: "scenario_generation_coverage",
-            },
-            async (llmSpan) => {
-              recordLLMInput(llmSpan, [
-                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-                { role: "user", content: userPrompt },
-              ]);
+        // Validate coverage and fill gaps
+        scenarios = this.ensureEmotionCoverage(scenarios, emotions);
+        scenarios = this.ensureCriteriaCoverage(scenarios);
 
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: covMessages,
-                  temperature: TEMPERATURE_BALANCED,
-                  max_tokens: 6000,
-                },
-                { headers: traceHeaders },
-              );
-
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
-          );
-
-          const content = response.choices[0]?.message.content ?? "[]";
-          const extracted = extractJsonFromResponse(content);
-          const scenarioDicts = parseJsonArray(extracted);
-          let scenarios = parseScenarios(scenarioDicts);
-
-          // Validate coverage and fill gaps
-          scenarios = this.ensureEmotionCoverage(scenarios, emotions);
-          scenarios = this.ensureCriteriaCoverage(scenarios);
-
-          // Trim to requested count (coverage adjustments may have kept extras)
-          if (scenarios.length > numScenarios) {
-            scenarios = scenarios.slice(0, numScenarios);
-          }
-
-          if (scenarios.length < numScenarios) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} scenarios (with coverage) but only ${scenarios.length} were successfully parsed`,
-            );
-          }
-          return scenarios;
-        } catch (e) {
-          if (e instanceof SyntaxError) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} scenarios but LLM response was not valid JSON — returning empty array`,
-            );
-            return [];
-          }
-          throw e;
+        // Trim to requested count (coverage adjustments may have kept extras)
+        if (scenarios.length > numScenarios) {
+          scenarios = scenarios.slice(0, numScenarios);
         }
+
+        if (scenarios.length < numScenarios) {
+          console.warn(
+            `ScenarioGenerator: requested ${numScenarios} scenarios (with coverage) but only ${scenarios.length} were successfully parsed`,
+          );
+        }
+        return scenarios;
       },
     );
   }
@@ -584,67 +559,20 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text.`;
 
-        try {
-          const edgeMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
-
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_EDGE_CASE,
-              maxTokens: 4000,
-              purpose: "scenario_edge_cases",
-            },
-            async (llmSpan) => {
-              recordLLMInput(llmSpan, [
-                { role: "system", content: SCENARIO_GENERATOR_PROMPT },
-                { role: "user", content: userPrompt },
-              ]);
-
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: edgeMessages,
-                  temperature: TEMPERATURE_EDGE_CASE,
-                  max_tokens: 4000,
-                },
-                { headers: traceHeaders },
-              );
-
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
+        const scenarios = await this.requestScenarios({
+          system: SCENARIO_GENERATOR_PROMPT,
+          user: userPrompt,
+          temperature: TEMPERATURE_EDGE_CASE,
+          maxTokens: scenarioTokenBudget(numEdgeCases),
+          purpose: "scenario_edge_cases",
+          forceEdgeCase: true,
+        });
+        if (scenarios.length < numEdgeCases) {
+          console.warn(
+            `ScenarioGenerator: requested ${numEdgeCases} edge cases but only ${scenarios.length} were successfully parsed`,
           );
-
-          const content = response.choices[0]?.message.content ?? "[]";
-          const extracted = extractJsonFromResponse(content);
-          const scenarioDicts = parseJsonArray(extracted);
-
-          // Force edge case flag
-          for (const sDict of scenarioDicts) {
-            sDict.is_edge_case = true;
-          }
-
-          const scenarios = parseScenarios(scenarioDicts);
-          if (scenarios.length < numEdgeCases) {
-            console.warn(
-              `ScenarioGenerator: requested ${numEdgeCases} edge cases but only ${scenarios.length} were successfully parsed`,
-            );
-          }
-          return scenarios;
-        } catch (e) {
-          if (e instanceof SyntaxError) {
-            console.warn(
-              `ScenarioGenerator: requested ${numEdgeCases} edge cases but LLM response was not valid JSON — returning empty array`,
-            );
-            return [];
-          }
-          throw e;
         }
+        return scenarios;
       },
     );
   }
@@ -680,67 +608,20 @@ Each scenario MUST have is_edge_case: true
 
 Return ONLY a JSON array, no other text.`;
 
-        try {
-          const bndMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
-
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_EDGE_CASE,
-              maxTokens: 4000,
-              purpose: "scenario_boundary",
-            },
-            async (llmSpan) => {
-              recordLLMInput(llmSpan, [
-                { role: "system", content: BOUNDARY_SCENARIO_PROMPT },
-                { role: "user", content: userPrompt },
-              ]);
-
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: bndMessages,
-                  temperature: TEMPERATURE_EDGE_CASE,
-                  max_tokens: 4000,
-                },
-                { headers: traceHeaders },
-              );
-
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
+        const scenarios = await this.requestScenarios({
+          system: BOUNDARY_SCENARIO_PROMPT,
+          user: userPrompt,
+          temperature: TEMPERATURE_EDGE_CASE,
+          maxTokens: scenarioTokenBudget(numScenarios),
+          purpose: "scenario_boundary",
+          forceEdgeCase: true,
+        });
+        if (scenarios.length < numScenarios) {
+          console.warn(
+            `ScenarioGenerator: requested ${numScenarios} boundary scenarios but only ${scenarios.length} were successfully parsed`,
           );
-
-          const content = response.choices[0]?.message.content ?? "[]";
-          const extracted = extractJsonFromResponse(content);
-          const scenarioDicts = parseJsonArray(extracted);
-
-          // Force edge case flag
-          for (const sDict of scenarioDicts) {
-            sDict.is_edge_case = true;
-          }
-
-          const scenarios = parseScenarios(scenarioDicts);
-          if (scenarios.length < numScenarios) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} boundary scenarios but only ${scenarios.length} were successfully parsed`,
-            );
-          }
-          return scenarios;
-        } catch (e) {
-          if (e instanceof SyntaxError) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} boundary scenarios but LLM response was not valid JSON — returning empty array`,
-            );
-            return [];
-          }
-          throw e;
         }
+        return scenarios;
       },
     );
   }
@@ -799,67 +680,20 @@ Requirements:
 
 Return ONLY a JSON array, no other text.`;
 
-        try {
-          const secMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-            [
-              { role: "system", content: SECURITY_SCENARIO_PROMPT },
-              { role: "user", content: userPrompt },
-            ];
-
-          const response = await withLLMSpan(
-            {
-              model: this.model,
-              temperature: TEMPERATURE_EDGE_CASE,
-              maxTokens: 6000,
-              purpose: "scenario_security",
-            },
-            async (llmSpan) => {
-              recordLLMInput(llmSpan, [
-                { role: "system", content: SECURITY_SCENARIO_PROMPT },
-                { role: "user", content: userPrompt },
-              ]);
-
-              const traceHeaders = await getTraceContextHeaders();
-              const res = await this.client.chat.completions.create(
-                {
-                  model: this.model,
-                  messages: secMessages,
-                  temperature: TEMPERATURE_EDGE_CASE,
-                  max_tokens: 6000,
-                },
-                { headers: traceHeaders },
-              );
-
-              recordLLMResponse(llmSpan, res);
-              return res;
-            },
+        const scenarios = await this.requestScenarios({
+          system: SECURITY_SCENARIO_PROMPT,
+          user: userPrompt,
+          temperature: TEMPERATURE_EDGE_CASE,
+          maxTokens: scenarioTokenBudget(numScenarios),
+          purpose: "scenario_security",
+          forceEdgeCase: true,
+        });
+        if (scenarios.length < numScenarios) {
+          console.warn(
+            `ScenarioGenerator: requested ${numScenarios} security scenarios but only ${scenarios.length} were successfully parsed`,
           );
-
-          const content = response.choices[0]?.message.content ?? "[]";
-          const extracted = extractJsonFromResponse(content);
-          const scenarioDicts = parseJsonArray(extracted);
-
-          // Force edge case flag
-          for (const sDict of scenarioDicts) {
-            sDict.is_edge_case = true;
-          }
-
-          const scenarios = parseScenarios(scenarioDicts);
-          if (scenarios.length < numScenarios) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} security scenarios but only ${scenarios.length} were successfully parsed`,
-            );
-          }
-          return scenarios;
-        } catch (e) {
-          if (e instanceof SyntaxError) {
-            console.warn(
-              `ScenarioGenerator: requested ${numScenarios} security scenarios but LLM response was not valid JSON — returning empty array`,
-            );
-            return [];
-          }
-          throw e;
         }
+        return scenarios;
       },
     );
   }

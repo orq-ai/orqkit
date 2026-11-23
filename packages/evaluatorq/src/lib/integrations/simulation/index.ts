@@ -24,12 +24,22 @@ export { JudgeAgent } from "./agents/judge.js";
 export { UserSimulatorAgent } from "./agents/user-simulator.js";
 // --- Conversion ---
 export { toOpenResponses } from "./convert.js";
+// --- Criteria (advanced usage) ---
+export {
+  buildCriteriaMeta,
+  buildCriteriaResults,
+  CriteriaTracker,
+  criterionIdFor,
+} from "./criteria.js";
+export { DEFAULT_SIMULATION_MODEL } from "./defaults.js";
 export type { SimulationScorer } from "./evaluators/index.js";
 // --- Evaluators ---
 export {
+  failureReason,
   getAllEvaluators,
   getEvaluator,
   SIMULATION_EVALUATORS,
+  unverifiedReason,
 } from "./evaluators/index.js";
 // --- Generators (advanced usage) ---
 export {
@@ -37,6 +47,7 @@ export {
   FirstMessageGenerator,
   PersonaGenerator,
   ScenarioGenerator,
+  SimulationGenerationError,
 } from "./generators/index.js";
 export type { PerturbationType } from "./quality/message-perturbation.js";
 // --- Quality (advanced usage) ---
@@ -54,8 +65,7 @@ export type {
 // --- Runner (advanced usage) ---
 export { SimulationRunner } from "./runner/simulation.js";
 // --- Schemas ---
-// Zod schemas are NOT re-exported here to avoid requiring zod at import time.
-// Import from "@orq-ai/evaluatorq/simulation/schemas" instead.
+// Zod schemas have their own entry point: "@orq-ai/evaluatorq/simulation/schemas".
 export type {
   GenerateAndSimulateParams,
   SimulateParams,
@@ -65,19 +75,22 @@ export { generateAndSimulate, simulate } from "./simulation/index.js";
 // --- Types ---
 export type {
   ChatMessage,
+  ChatMessage as SimulationMessage,
   CommunicationStyle,
   ConversationStrategy,
+  CriteriaMeta,
   Criterion,
+  CriterionVerdict,
   CulturalContext,
   Datapoint,
   EmotionalArc,
   InputFormat,
   Judgment,
-  Message as SimulationMessage,
   Persona,
   Scenario,
   SimulationResult,
   StartingEmotion,
+  TargetCallback,
   TerminatedBy,
   TokenUsage,
   TurnMetrics,

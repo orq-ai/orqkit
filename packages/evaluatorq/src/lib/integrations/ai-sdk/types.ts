@@ -1,7 +1,17 @@
-import type { StepResult } from "ai";
+import type { Agent, StepResult, ToolSet } from "ai";
 
 import type { DataPoint } from "../../types.js";
 import type { FunctionTool, ResponseResource } from "../openresponses/index.js";
+
+export type AISdkTools = Record<
+  string,
+  { description?: string; parameters?: unknown }
+>;
+
+export type AISdkAgent<TOOLS extends AISdkTools = AISdkTools> = Pick<
+  Agent<never, ToolSet, never>,
+  "generate" | "id"
+> & { readonly tools: TOOLS };
 
 // Re-export AI SDK types for consumers
 export type { StepResult };

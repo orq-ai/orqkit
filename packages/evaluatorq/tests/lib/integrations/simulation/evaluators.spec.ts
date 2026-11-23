@@ -3,10 +3,12 @@ import { describe, expect, test } from "bun:test";
 import {
   conversationQualityScorer,
   criteriaMetScorer,
+  failureReason,
   getAllEvaluators,
   getEvaluator,
   goalAchievedScorer,
   turnEfficiencyScorer,
+  unverifiedReason,
 } from "../../../../src/lib/integrations/simulation/evaluators/index.js";
 import type { SimulationResult } from "../../../../src/lib/integrations/simulation/types.js";
 
@@ -64,6 +66,99 @@ describe("criteriaMetScorer", () => {
       ),
     ).toBe(0);
   });
+
+  test("returns 0 for an errored run even when criteria look met", () => {
+    expect(
+      criteriaMetScorer(
+        makeResult({ terminated_by: "error", criteria_results: { a: true } }),
+      ),
+    ).toBe(0);
+  });
+
+  test("returns 0 for a timed out run", () => {
+    expect(
+      criteriaMetScorer(
+        makeResult({ terminated_by: "timeout", criteria_results: { a: true } }),
+      ),
+    ).toBe(0);
+  });
+
+  test("returns 0 when the judge never audited the criteria", () => {
+    expect(
+      criteriaMetScorer(
+        makeResult({
+          criteria_verified: false,
+          criteria_results: { a: true },
+        }),
+      ),
+    ).toBe(0);
+  });
+
+  test("a criterion that passed without an audit does not count as met", () => {
+    const entry = {
+      id: "criteria_0",
+      description: "a",
+      type: "must_not_happen",
+      passed: true,
+      evidence: "",
+    };
+    expect(
+      criteriaMetScorer(
+        makeResult({
+          criteria_verified: true,
+          metadata: {
+            criteria_meta: [
+              { ...entry, audited: true },
+              { ...entry, id: "criteria_1", audited: false },
+            ],
+          },
+        }),
+      ),
+    ).toBe(0.5);
+  });
+
+  test("returns 0 for malformed criteria_meta", () => {
+    expect(
+      criteriaMetScorer(makeResult({ metadata: { criteria_meta: "broken" } })),
+    ).toBe(0);
+    expect(
+      criteriaMetScorer(makeResult({ metadata: { criteria_meta: [{}] } })),
+    ).toBe(0);
+  });
+});
+
+describe("unverifiedReason", () => {
+  test("names why a run cannot vouch for its criteria", () => {
+    expect(unverifiedReason(makeResult({ terminated_by: "error" }))).toBe(
+      "terminated_by=error",
+    );
+    expect(unverifiedReason(makeResult({ criteria_verified: false }))).toBe(
+      "criteria_verified=false",
+    );
+    expect(unverifiedReason(makeResult())).toBeNull();
+  });
+});
+
+describe("failureReason", () => {
+  test("is null unless the run errored or timed out", () => {
+    expect(failureReason(makeResult())).toBeNull();
+    expect(failureReason(makeResult({ criteria_verified: false }))).toBeNull();
+  });
+
+  test("prefers metadata.error, then the reason", () => {
+    expect(
+      failureReason(
+        makeResult({
+          terminated_by: "error",
+          reason: "fallback",
+          metadata: { error: "exact" },
+        }),
+      ),
+    ).toBe("exact");
+    expect(
+      failureReason(makeResult({ terminated_by: "timeout", reason: "late" })),
+    ).toBe("late");
+  });
 });
 
 describe("turnEfficiencyScorer", () => {
@@ -92,6 +187,17 @@ describe("turnEfficiencyScorer", () => {
     expect(
       turnEfficiencyScorer(makeResult({ goal_achieved: true, turn_count: 5 })),
     ).toBe(0.7);
+  });
+
+  test("decays from the last cliff, so a longer run never scores higher", () => {
+    const score = (turn_count: number) =>
+      turnEfficiencyScorer(makeResult({ goal_achieved: true, turn_count }));
+
+    expect(score(6)).toBe(0.7);
+    expect(score(7)).toBe(0.6);
+    expect(score(8)).toBe(0.5);
+    expect(score(9)).toBe(0.4);
+    expect(score(10)).toBe(0.3);
   });
 
   test("degrades for many turns but floors at 0.3", () => {

@@ -1,4 +1,4 @@
-import type { Agent, ModelMessage, ToolSet } from "ai";
+import type { ModelMessage } from "ai";
 
 import type { DataPoint, Job, Output } from "../../types.js";
 import {
@@ -6,7 +6,7 @@ import {
   extractPromptFromData,
 } from "../common/utils.js";
 import { convertToOpenResponses } from "./convert.js";
-import type { AgentJobOptions } from "./types.js";
+import type { AgentJobOptions, AISdkAgent, AISdkTools } from "./types.js";
 
 /**
  * Creates an evaluatorq Job from any AI SDK Agent.
@@ -61,8 +61,8 @@ import type { AgentJobOptions } from "./types.js";
  * });
  * ```
  */
-export function wrapAISdkAgent<TOOLS extends ToolSet>(
-  agent: Agent<never, TOOLS, never>,
+export function wrapAISdkAgent<TOOLS extends AISdkTools>(
+  agent: AISdkAgent<TOOLS>,
   options: AgentJobOptions = {},
 ): Job {
   const {
