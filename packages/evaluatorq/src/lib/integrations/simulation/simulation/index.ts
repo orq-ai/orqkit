@@ -1,3 +1,5 @@
+import { configuredOrqHost } from "../../../orq-host.js";
+
 /**
  * evaluatorq integration for agent simulation.
  *
@@ -82,6 +84,8 @@ export interface SimulateParams {
 export async function simulate(
   params: SimulateParams,
 ): Promise<SimulationResult[]> {
+  if (params.uploadResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   // Initialize OTel tracing (no-op if already initialized or not configured)
   await initTracingIfNeeded();
 
@@ -315,6 +319,8 @@ export interface GenerateAndSimulateParams {
 export async function generateAndSimulate(
   params: GenerateAndSimulateParams,
 ): Promise<SimulationResult[]> {
+  if (params.uploadResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   // Initialize tracing early so generation spans are captured
   await initTracingIfNeeded();
 

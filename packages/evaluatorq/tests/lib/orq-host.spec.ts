@@ -108,6 +108,9 @@ describe("configuredOrqHost", () => {
       const warn = spyOn(console, "warn").mockImplementation(() => {});
       try {
         expect(getOtlpEndpoint()).toBeUndefined();
+        expect(String(warn.mock.calls[0]?.[0])).toContain(
+          "set ORQ_BASE_URL explicitly",
+        );
       } finally {
         warn.mockRestore();
       }

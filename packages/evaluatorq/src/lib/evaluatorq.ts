@@ -173,6 +173,8 @@ export async function evaluatorq(
   _name: string,
   params: EvaluatorParams,
 ): Promise<EvaluatorqResult> {
+  if (params.sendResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   const {
     data,
     evaluators = [],
@@ -554,6 +556,14 @@ export const evaluatorqEffect = (
   _name: string,
   params: EvaluatorParams,
 ): Effect.Effect<EvaluatorqResult, Error, never> => {
+  try {
+    if (params.sendResults !== false && process.env.ORQ_API_KEY)
+      configuredOrqHost();
+  } catch (error) {
+    return Effect.fail(
+      error instanceof Error ? error : new Error(String(error)),
+    );
+  }
   const {
     data,
     evaluators = [],
