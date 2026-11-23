@@ -58,10 +58,50 @@ export {
   OrqSpanMismatchError,
   requireCompleteTargetedLoad,
 };
-export type OrqSourceClient = Pick<Orq, "_options" | "_baseURL"> & {
-  traces: Pick<Orq["traces"], "query" | "getSpan" | "listSpans">;
-  projects: Pick<Orq["projects"], "list">;
+export interface SourceRequestOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  headers?: RequestInit["headers"];
+}
+export interface SourceAfterSuccessHook {
+  afterSuccess: (
+    context: { operationID: string },
+    response: Response,
+  ) => Promise<Response>;
+}
+export type SourceClientOptions = Pick<
+  Orq["_options"],
+  "apiKey" | "serverURL"
+> & {
+  hooks?: {
+    registerAfterSuccessHook: (hook: SourceAfterSuccessHook) => void;
+  } | null;
 };
+export interface SourceProjects {
+  list: (
+    request?: Parameters<Orq["projects"]["list"]>[0],
+    options?: SourceRequestOptions,
+  ) => Promise<unknown>;
+}
+export interface OrqSourceClient {
+  _options: SourceClientOptions;
+  _baseURL: Orq["_baseURL"];
+  traces: {
+    query: (
+      request: Parameters<Orq["traces"]["query"]>[0],
+      options?: SourceRequestOptions,
+    ) => Promise<unknown>;
+    getSpan: (
+      request: Parameters<Orq["traces"]["getSpan"]>[0],
+      options?: SourceRequestOptions,
+    ) => Promise<unknown>;
+    listSpans: (
+      request: Parameters<Orq["traces"]["listSpans"]>[0],
+      options?: SourceRequestOptions,
+    ) => Promise<unknown>;
+  };
+  projects: SourceProjects;
+}
 const captureContext = new AsyncLocalStorage<symbol>(),
   registrations = new WeakMap<object, CaptureRegistration>();
 const first = (...values: unknown[]): unknown =>
@@ -78,7 +118,7 @@ async function settleRequests<T>(tasks: Promise<T>[]): Promise<T[]> {
 class RawCapture {
   private readonly responses = new Map<symbol, Map<string, Row[]>>();
   static key(path: string): string {
-    return path.replace(/^\/v\d+(?=\/)/, "");
+    return path.replace(/^.*\/v\d+(?=\/traces(?:\/|$))/, "");
   }
   push(marker: symbol, path: string, payload: Row): void {
     let rows = this.responses.get(marker);
@@ -425,11 +465,7 @@ export class OrqTraceSource {
     ctx: Context,
   ): Promise<Record<string, string>> {
     return this.call(
-      () =>
-        loadProjectNames(
-          this.client as Parameters<typeof loadProjectNames>[0],
-          { start, end, signal: ctx.signal },
-        ),
+      () => loadProjectNames(this.client, { start, end, signal: ctx.signal }),
       ctx,
     );
   }
