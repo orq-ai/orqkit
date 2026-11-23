@@ -34,17 +34,21 @@ describe("dashboard auth", () => {
     delete process.env.ORQ_BASE_URL;
     process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
     try {
-      for (const orqAuthMethod of ["environment", "cli_oauth"] as const) {
-        await expect(
-          resolveDashboardAuth(settings({ orqAuthMethod })),
-        ).rejects.toThrow("set ORQ_BASE_URL explicitly");
-      }
       await expect(
-        resolveDashboardAuth(
-          settings({ orqAuthMethod: "cli_profile", orqProfile: "dev" }),
-          { profiles: [{ ...profile, server: null }] },
-        ),
+        resolveDashboardAuth(settings({ orqAuthMethod: "environment" })),
       ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      expect(
+        (await resolveDashboardAuth(settings({ orqAuthMethod: "cli_oauth" })))
+          .baseUrl,
+      ).toBe("https://my.orq.ai");
+      expect(
+        (
+          await resolveDashboardAuth(
+            settings({ orqAuthMethod: "cli_profile", orqProfile: "dev" }),
+            { profiles: [{ ...profile, server: null }] },
+          )
+        ).baseUrl,
+      ).toBe("https://my.orq.ai");
       expect(
         (
           await resolveDashboardAuth(
@@ -76,12 +80,15 @@ describe("dashboard auth", () => {
     }
   });
 
-  it("hashes account and scope like Python", () => {
-    expect(accountIdentity(auth)).toBe(
+  it("hashes account and scope like Python", async () => {
+    expect(await accountIdentity(auth)).toBe(
       "e266b3da4a57f3c8d9631a1d3ab965ea33c209c027d6fd9bf6f8b90bb1112e2b",
     );
     expect(
-      authIdentity(auth, settings({ orqWorkspace: "wé", orqProjectId: null })),
+      await authIdentity(
+        auth,
+        settings({ orqWorkspace: "wé", orqProjectId: null }),
+      ),
     ).toBe("8f15e83c5280b5fc9566b8bd6b3257eca5dc3c3ad51d7c016f76ec72740be331");
   });
 

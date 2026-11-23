@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { buildCliOauthClients, oauthSubject } from "../common/cli-oauth.js";
-import { envText } from "../common/env-config.js";
+import { DEFAULT_ORQ_BASE_URL, envText } from "../common/env-config.js";
 import { resolveLlmClient } from "../common/llm-client.js";
 import {
   listOrqProfiles,
@@ -16,15 +16,16 @@ import {
 
 export type AuthMethod = DashboardSettings["orqAuthMethod"];
 
-const METHOD_LABELS: Record<string, string> = {
+const METHOD_LABELS: Record<AuthMethod, string> = {
   environment: "ORQ_API_KEY",
   cli_oauth: "CLI OAuth",
+  cli_profile: "CLI API-key profile",
   stored_api_key: "Saved API key",
 };
 
 export class DashboardAuth {
   constructor(
-    readonly method: string,
+    readonly method: AuthMethod,
     readonly apiKey: string | null,
     readonly baseUrl: string,
     readonly profile: OrqProfile | null = null,
@@ -73,30 +74,25 @@ export async function resolveDashboardAuth(
     return new DashboardAuth(
       method,
       profile.apiKey,
-      profile.server || orqServerUrl(),
+      profile.server || DEFAULT_ORQ_BASE_URL,
       profile,
     );
   }
   if (method === "stored_api_key") {
-    let key: string | null;
-    try {
-      key = await readStoredDashboardApiKey(settings);
-    } catch (e) {
-      throw new Error(e instanceof Error ? e.message : String(e));
-    }
+    const key = await readStoredDashboardApiKey(settings);
     if (!key)
       throw new Error("No saved API key is available. Enter one in Settings.");
     return new DashboardAuth(
       method,
       key,
-      settings.orqProfileHost || orqServerUrl(),
+      settings.orqProfileHost || DEFAULT_ORQ_BASE_URL,
     );
   }
   if (method === "cli_oauth")
     return new DashboardAuth(
       method,
       null,
-      settings.orqOauthServer || orqServerUrl(),
+      settings.orqOauthServer || DEFAULT_ORQ_BASE_URL,
     );
   throw new Error(
     "Unknown dashboard authentication method. Choose one in Settings.",
@@ -127,7 +123,9 @@ function pyJson(value: unknown): string {
 
 const hashFields = (fields: Record<string, unknown>) => sha256(pyJson(fields));
 
-function accountFields(auth: DashboardAuth): Record<string, unknown> {
+async function accountFields(
+  auth: DashboardAuth,
+): Promise<Record<string, unknown>> {
   const fields: Record<string, unknown> = {
     method: auth.method,
     base_url: auth.baseUrl.replace(/\/+$/, ""),
@@ -135,23 +133,23 @@ function accountFields(auth: DashboardAuth): Record<string, unknown> {
     key_fingerprint: auth.apiKey ? sha256(auth.apiKey) : null,
   };
   if (auth.method === "cli_oauth")
-    fields.oauth_subject = oauthSubject(auth.baseUrl);
+    fields.oauth_subject = await oauthSubject(auth.baseUrl);
   return fields;
 }
 
-export function authIdentity(
+export async function authIdentity(
   auth: DashboardAuth,
   settings: DashboardSettings,
-): string {
+): Promise<string> {
   return hashFields({
-    ...accountFields(auth),
+    ...(await accountFields(auth)),
     workspace: settings.orqWorkspace,
     project: settings.orqProjectId,
   });
 }
 
-export function accountIdentity(auth: DashboardAuth): string {
-  return hashFields(accountFields(auth));
+export async function accountIdentity(auth: DashboardAuth): Promise<string> {
+  return hashFields(await accountFields(auth));
 }
 
 interface ListPage {
@@ -179,11 +177,16 @@ export async function verifiedAccountIdentity(
   auth: DashboardAuth,
   client: VerifyClient,
 ): Promise<string> {
-  const url = new URL(auth.baseUrl);
-  const baseUrl = `${url.protocol.toLowerCase()}//${url.host.toLowerCase()}${url.pathname.replace(/\/+$/, "")}`;
+  let url: URL;
+  try {
+    url = new URL(auth.baseUrl);
+  } catch {
+    throw new Error(`Orq base URL is not a valid URL: ${auth.baseUrl}`);
+  }
+  const baseUrl = `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, "")}`;
   let principal: Record<string, string>;
   if (auth.method === "cli_oauth") {
-    const userId = oauthSubject(auth.baseUrl).user_id;
+    const userId = (await oauthSubject(auth.baseUrl)).user_id;
     if (typeof userId !== "string" || !userId)
       throw new Error("Orq OAuth did not return a verified user ID.");
     principal = { user_id: userId };
