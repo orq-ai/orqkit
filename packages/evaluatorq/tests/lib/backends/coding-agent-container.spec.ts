@@ -174,7 +174,8 @@ for (const error of [
     try {
       const e = await failure(target().respond(user));
       expect(e.code).toBe("cli.image_missing");
-      expect(e.detail).toContain("eq coding-agent build-image --tag img:1");
+      expect(e.detail).toContain("build -t img:1");
+      expect(e.detail).not.toContain("eq coding-agent");
       expect(calls("run")).toHaveLength(0);
     } finally {
       r();

@@ -1179,8 +1179,7 @@ export class CodingAgentTarget extends AgentTarget {
           throw new CodingAgentUnavailableError(
             "cli.image_missing",
             `image ${pyRepr(opts.image)} not found. Build it with ` +
-              `\`${shellJoin(["eq", "coding-agent", "build-image", "--tag", opts.image])}\` ` +
-              `or \`${shellJoin([opts.binary, "build", "-t", opts.image, CODING_AGENT_BUILD_DIR])}\``,
+              `\`${shellJoin([opts.binary, "build", "-t", opts.image, CODING_AGENT_BUILD_DIR])}\``,
           );
         throw new CodingAgentUnavailableError(
           "cli.container_start",
