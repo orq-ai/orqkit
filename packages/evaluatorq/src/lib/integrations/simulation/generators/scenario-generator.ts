@@ -454,7 +454,7 @@ Return ONLY a JSON array, no other text.`;
             ...s,
             starting_emotion: emotion,
           };
-          console.error(
+          console.debug(
             `Adjusted scenario '${s.name}' to emotion '${emotion}' for coverage`,
           );
         }
@@ -486,7 +486,7 @@ Return ONLY a JSON array, no other text.`;
         ...s,
         criteria: newCriteria,
       };
-      console.error("Added must_not_happen criterion for coverage");
+      console.debug("Added must_not_happen criterion for coverage");
     }
 
     return scenarios;

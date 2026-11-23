@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 
 import { DASHBOARD_HELP } from "@orq-ai/evaluatorq/dashboard";
 
@@ -30,7 +30,9 @@ import {
 } from "../commands/sim.js";
 
 // Python keeps debug logs hidden by default; Bun prints console.debug always.
-if (!process.env.ORQ_DEBUG) console.debug = () => {};
+console.debug = process.env.ORQ_DEBUG
+  ? (...args) => console.error(...args)
+  : () => {};
 
 const program = new Command();
 
@@ -53,7 +55,13 @@ program
     "Pin one task to a model; repeatable",
     (value: string, previous: string[] = []) => [...previous, value],
   )
-  .hook("preAction", (command) => applyRootModelFlags(command.opts()));
+  .hook("preAction", (command, action) => {
+    applyRootModelFlags(command.opts());
+    const options = action.opts();
+    if (options.quiet) console.debug = () => {};
+    else if (options.verbose)
+      console.debug = (...args) => console.error(...args);
+  });
 
 program
   .command("evaluate <pattern>")
@@ -62,8 +70,15 @@ program
   .action(evaluate);
 
 const integer = (value: string): number => {
-  if (!/^\d+$/.test(value)) throw new Error(`Invalid integer: ${value}`);
-  return Number(value);
+  const parsed = Number(value);
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(parsed))
+    throw new InvalidArgumentError(`Invalid integer: ${value}`);
+  return parsed;
+};
+const positiveInteger = (value: string): number => {
+  const parsed = integer(value);
+  if (parsed < 1) throw new InvalidArgumentError("Must be at least 1");
+  return parsed;
 };
 const collect = (value: string, previous: string[] = []): string[] => [
   ...previous,
@@ -196,13 +211,20 @@ program
   .action(runDashboard);
 
 const signedInteger = (value: string): number => {
-  if (!/^-?\d+$/.test(value)) throw new Error(`Invalid integer: ${value}`);
-  return Number(value);
+  const parsed = Number(value);
+  if (!/^-?\d+$/.test(value) || !Number.isSafeInteger(parsed))
+    throw new InvalidArgumentError(`Invalid integer: ${value}`);
+  return parsed;
 };
 const number = (value: string): number => {
   const parsed = Number(value);
-  if (value.trim() === "" || Number.isNaN(parsed))
-    throw new Error(`Invalid number: ${value}`);
+  if (value.trim() === "" || !Number.isFinite(parsed))
+    throw new InvalidArgumentError(`Invalid number: ${value}`);
+  return parsed;
+};
+const nonnegativeNumber = (value: string): number => {
+  const parsed = number(value);
+  if (parsed < 0) throw new InvalidArgumentError("Must be at least 0");
   return parsed;
 };
 const count = (_value: string, previous = 0): number => previous + 1;
@@ -346,6 +368,7 @@ sim
   .description("List recent simulation runs.")
   .option("-n, --limit <count>", "Maximum number of runs to show", integer)
   .option("--json", "Emit runs as a JSON array on stdout")
+  .option("-f, --full", "Render the full table without truncating columns")
   .action(runSimRuns);
 
 function simSharedOptions(command: Command): Command {
@@ -403,6 +426,7 @@ function simSharedOptions(command: Command): Command {
     .option("--llm-config <json>", "LLMCallConfig as JSON")
     .option("--json", "Emit the SimulationRun as JSON on stdout")
     .option("-q, --quiet", "Suppress non-error output")
+    .option("-v, --verbose", "Increase verbosity; repeatable", count)
     .option("-y, --yes", "Skip interactive confirmation prompt");
 }
 
@@ -424,8 +448,8 @@ simSharedOptions(
     .command("run")
     .description("Generate personas and scenarios, then run simulations.")
     .option("--agent-description <text>", "Description of the agent under test")
-    .option("--num-personas <count>", "Personas to generate", integer)
-    .option("--num-scenarios <count>", "Scenarios to generate", integer)
+    .option("--num-personas <count>", "Personas to generate", positiveInteger)
+    .option("--num-scenarios <count>", "Scenarios to generate", positiveInteger)
     .option("--persona-seed <seed>", "Persona seed; repeatable", collect)
     .option("--scenario-seed <seed>", "Scenario seed; repeatable", collect)
     .option("--generation-instructions <text>", "Extra generation instructions")
@@ -442,13 +466,14 @@ sim
   .option("--agent-description <text>", "Description of the agent under test")
   .option("--target <target>", "Agent target used to fetch the description")
   .option("--sim-model <model>", "Model for generation")
-  .option("--num-personas <count>", "Personas to generate", integer)
-  .option("--num-scenarios <count>", "Scenarios to generate", integer)
+  .option("--num-personas <count>", "Personas to generate", positiveInteger)
+  .option("--num-scenarios <count>", "Scenarios to generate", positiveInteger)
   .option("--persona-seed <seed>", "Persona seed; repeatable", collect)
   .option("--scenario-seed <seed>", "Scenario seed; repeatable", collect)
   .option("--generation-instructions <text>", "Extra generation instructions")
   .option("--dataset-format", "Write the Orq dataset-row envelope")
   .option("-q, --quiet", "Suppress non-error output")
+  .option("-v, --verbose", "Increase verbosity; repeatable", count)
   .action(runSimGenerate);
 
 sim
@@ -458,11 +483,15 @@ sim
     "-o, --output <path>",
     "Path to write the generated datapoints JSONL",
   )
-  .option("--limit <count>", "Maximum number of traces to fetch", integer)
+  .option(
+    "--limit <count>",
+    "Maximum number of traces to fetch",
+    positiveInteger,
+  )
   .option(
     "--lookback-hours <hours>",
     "Only traces from the last N hours",
-    number,
+    nonnegativeNumber,
   )
   .option("--search <text>", "Free-text search applied to the trace list")
   .option("--extend <count>", "Extra distribution-matched datapoints", integer)
@@ -475,7 +504,7 @@ sim
   .option(
     "--max-summaries <count>",
     "Summaries in the traffic profile",
-    integer,
+    positiveInteger,
   )
   .option(
     "--llm-parallelism <count>",
@@ -483,6 +512,7 @@ sim
     signedInteger,
   )
   .option("-q, --quiet", "Suppress non-error output")
+  .option("-v, --verbose", "Increase verbosity; repeatable", count)
   .action((options) =>
     runSimFromTraces({
       ...options,

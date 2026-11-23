@@ -255,7 +255,7 @@ Keep it natural - this is how they would actually open a conversation.`;
             .trim()
             .replace(/^["']|["']$/g, "");
           if (firstResponsesRefusal(response) === null && message) {
-            console.error(
+            console.debug(
               `Generated first message: ${message.substring(0, 100)}...`,
             );
             return message;

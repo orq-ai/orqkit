@@ -427,7 +427,7 @@ Return ONLY a JSON array, no other text.`;
             ...p,
             communication_style: style,
           };
-          console.error(
+          console.debug(
             `Adjusted persona '${p.name}' to style '${style}' for coverage`,
           );
         }
@@ -462,7 +462,7 @@ Return ONLY a JSON array, no other text.`;
     if (!hasHigh(techVals)) gaps.push("high technical_level (>0.8)");
 
     if (gaps.length > 0) {
-      console.error(`Trait coverage gaps: ${gaps.join(", ")}`);
+      console.debug(`Trait coverage gaps: ${gaps.join(", ")}`);
     }
   }
 }

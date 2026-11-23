@@ -16,6 +16,7 @@ import {
   type Message,
   MessageSchema,
 } from "../../contracts.js";
+import { signalBoolean } from "../../signals/models.js";
 import {
   attackerModelFor,
   type LLMConfig,
@@ -51,36 +52,29 @@ export const PROBES: Readonly<Record<string, readonly string[]>> = {
 export const MAX_PROBE_TURNS = PIPELINE_CONFIG.maxProbeTurns;
 
 export const BlackboxCapabilityInferenceSchema = z.object({
-  memory_read: z
-    .boolean()
+  memory_read: signalBoolean
     .default(false)
     .describe(
       "Agent recalled information from an earlier turn (persistent/session memory read).",
     ),
-  memory_write: z
-    .boolean()
+  memory_write: signalBoolean
     .default(false)
     .describe(
       "Agent stored information for later recall (persistent/session memory write). Cross-turn recall implies both read and write.",
     ),
-  knowledge_retrieval: z
-    .boolean()
+  knowledge_retrieval: signalBoolean
     .default(false)
     .describe("Agent can search documents, files, or a knowledge base (RAG)."),
-  code_execution: z
-    .boolean()
+  code_execution: signalBoolean
     .default(false)
     .describe("Agent can run code or scripts."),
-  web_request: z
-    .boolean()
+  web_request: signalBoolean
     .default(false)
     .describe("Agent can make web/HTTP requests or browse."),
-  file_system: z
-    .boolean()
+  file_system: signalBoolean
     .default(false)
     .describe("Agent can read or write files."),
-  is_multi_agent: z
-    .boolean()
+  is_multi_agent: signalBoolean
     .default(false)
     .describe(
       "Agent orchestrates, delegates to, or hands off to OTHER agents (multi-agent system), versus being a single standalone agent. A single agent with many tools is NOT multi-agent.",

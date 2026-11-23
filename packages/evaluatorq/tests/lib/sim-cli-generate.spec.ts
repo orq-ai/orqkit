@@ -3,6 +3,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+import { BadParameter } from "../../src/lib/common/cli-config.js";
 import {
   executeSimFromTraces,
   executeSimGenerate,
@@ -20,6 +21,41 @@ type Case = { exit_code: number; stdout: string; stderr: string };
 const cases = golden.cases as Record<string, Case>;
 const PY = "/python-work";
 const datapoints = golden.datapoints as Datapoint[];
+
+test("generation and trace ranges reject before any external work", async () => {
+  let calls = 0;
+  const io = {
+    print: () => {},
+    printError: () => {},
+    generate: async () => {
+      calls++;
+      return [];
+    },
+    resolveAgentDescription: async () => {
+      calls++;
+      return "fixture";
+    },
+  };
+  for (const key of ["num_personas", "num_scenarios"] as const)
+    for (const value of [0, -1, 1.5, NaN, Infinity])
+      await expect(
+        executeSimGenerate(
+          { datapoints_path: "/unused", target: "agent:fixture", [key]: value },
+          io,
+        ),
+      ).rejects.toBeInstanceOf(BadParameter);
+  for (const [key, values] of [
+    ["limit", [0, -1, 1.5, NaN, Infinity]],
+    ["max_summaries", [0, -1, 1.5, NaN, Infinity]],
+    ["extend", [-1, 1.5, NaN, Infinity]],
+    ["lookback_hours", [-1, NaN, Infinity]],
+  ] as const)
+    for (const value of values)
+      await expect(
+        executeSimFromTraces({ output: "/unused", [key]: value }, io),
+      ).rejects.toBeInstanceOf(BadParameter);
+  expect(calls).toBe(0);
+});
 
 async function setup() {
   const dir = resolve(await mkdtemp(join(tmpdir(), "eq-sim-gen-")));

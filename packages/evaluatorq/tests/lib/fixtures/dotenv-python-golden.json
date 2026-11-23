@@ -1,0 +1,126 @@
+{
+  "source": "python-dotenv, load_dotenv override=False on synthetic input",
+  "cases": [
+    {
+      "name": "duplicates",
+      "text": "EQ_PARITY_K=first\nEQ_PARITY_K=second\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "second"
+      }
+    },
+    {
+      "name": "shell wins",
+      "text": "EQ_PARITY_K=file\nEQ_PARITY_A=${EQ_PARITY_K}-x\n",
+      "environment": {
+        "EQ_PARITY_K": "shell"
+      },
+      "expected": {
+        "EQ_PARITY_K": "shell",
+        "EQ_PARITY_A": "shell-x"
+      }
+    },
+    {
+      "name": "escapes",
+      "text": "EQ_PARITY_K=\"l1\\nl2\\t\\\"q\\\"\\\\end\"\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "l1\nl2\t\"q\"\\end"
+      }
+    },
+    {
+      "name": "expansion",
+      "text": "EQ_PARITY_A=first\nEQ_PARITY_K=${EQ_PARITY_A}-x\nEQ_PARITY_A=last\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_A": "last",
+        "EQ_PARITY_K": "first-x"
+      }
+    },
+    {
+      "name": "empty fallback",
+      "text": "EQ_PARITY_A=\nEQ_PARITY_K=${EQ_PARITY_A:-fallback}/${EQ_PARITY_UNKNOWN:-default}\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_A": "",
+        "EQ_PARITY_K": "/default"
+      }
+    },
+    {
+      "name": "multiline",
+      "text": "EQ_PARITY_K=\"line1\nline2\"\nEQ_PARITY_A=end\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "line1\nline2",
+        "EQ_PARITY_A": "end"
+      }
+    },
+    {
+      "name": "single quotes",
+      "text": "EQ_PARITY_K='line1\nline2\\n'\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "line1\nline2\\n"
+      }
+    },
+    {
+      "name": "trailing text",
+      "text": "EQ_PARITY_K=\"q\" trailing\nEQ_PARITY_A=ok\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_A": "ok"
+      }
+    },
+    {
+      "name": "hashes",
+      "text": "EQ_PARITY_K=abc#def\nEQ_PARITY_A=abc # comment\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "abc#def",
+        "EQ_PARITY_A": "abc"
+      }
+    },
+    {
+      "name": "export and quoted keys",
+      "text": "export EQ_PARITY_K = spaced\n'EQ_PARITY_A'=quoted\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "spaced",
+        "EQ_PARITY_A": "quoted"
+      }
+    },
+    {
+      "name": "unset and empty",
+      "text": "EQ_PARITY_UNSET\nEQ_PARITY_K=\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": ""
+      }
+    },
+    {
+      "name": "malformed recovery",
+      "text": "EQ_PARITY_BAD=\"unterminated\nEQ_PARITY_K=ok\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "ok"
+      }
+    },
+    {
+      "name": "CRLF",
+      "text": "EQ_PARITY_K=one\r\nEQ_PARITY_A=\"two\r\nthree\"\r\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": "one",
+        "EQ_PARITY_A": "two\r\nthree"
+      }
+    },
+    {
+      "name": "null expansion",
+      "text": "EQ_PARITY_A\nEQ_PARITY_K=${EQ_PARITY_A:-fallback}\n",
+      "environment": {},
+      "expected": {
+        "EQ_PARITY_K": ""
+      }
+    }
+  ]
+}

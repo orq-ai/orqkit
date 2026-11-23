@@ -59,7 +59,7 @@ export function runSimValidateDataset(path: string): Promise<void> {
 
 export function runSimRuns(
   directory: string | undefined,
-  options: { limit?: number; json?: boolean },
+  options: { limit?: number; json?: boolean; full?: boolean },
 ): Promise<void> {
   return guarded(() => executeSimRuns({ directory, ...options }, io));
 }

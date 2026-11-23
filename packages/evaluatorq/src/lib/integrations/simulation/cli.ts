@@ -203,7 +203,7 @@ export function formatScorerAverages(averages: unknown): string {
 }
 
 export async function executeSimRuns(
-  args: { directory?: string; limit?: number; json?: boolean },
+  args: { directory?: string; limit?: number; json?: boolean; full?: boolean },
   io: SimIO,
 ): Promise<number> {
   const runsDir =

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { fromPythonKeys, toPythonKeys } from "./common/python-json.js";
 import { getStoreDir } from "./common/run-store-dir.js";
 import { UsageSchema } from "./contracts.js";
+import { parseSavedDateTime } from "./formats/time.js";
 import {
   buildReport,
   type PairwiseAggregation,
@@ -41,13 +42,30 @@ export type PairwiseEntry = z.infer<typeof PairwiseEntrySchema>;
 const PairwiseRunSchema = z.object({
   judging: z.literal("pairwise").default("pairwise"),
   runName: z.string(),
-  createdAt: z.string().datetime({ offset: true }),
+  createdAt: z
+    .preprocess((value) => {
+      try {
+        return parseSavedDateTime(value);
+      } catch {
+        return undefined;
+      }
+    }, z.string())
+    .default(() => new Date().toISOString()),
   labelA: z.string().default("A"),
   labelB: z.string().default("B"),
   judges: z.array(z.string()).default(() => []),
   criteria: z.string().default(""),
   // Without this a single-ordering run reads as a panel with no position bias.
-  swap: z.boolean().default(true),
+  swap: z
+    .preprocess((value) => {
+      if (typeof value === "string") {
+        const text = value.toLowerCase();
+        if (["1", "on", "t", "true", "y", "yes"].includes(text)) return true;
+        if (["0", "off", "f", "false", "n", "no"].includes(text)) return false;
+      }
+      return value === 1 ? true : value === 0 ? false : value;
+    }, z.boolean())
+    .default(true),
   entries: z.array(PairwiseEntrySchema).default(() => []),
   report: PairwiseReportSchema.nullable().default(null),
 });

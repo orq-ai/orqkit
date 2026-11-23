@@ -14,21 +14,82 @@ export const BROWSER_NONCE_ENV = "EVALUATORQ_DASHBOARD_LAUNCH_NONCE";
 export function loadLocalEnv(cwd = process.cwd()): void {
   const path = join(cwd, ".env");
   if (!existsSync(path)) return;
-  for (const raw of readFileSync(path, "utf8").split(/\r?\n/)) {
-    const line = raw.replace(/^\s*export\s+/, "").trim();
-    if (!line || line.startsWith("#")) continue;
-    const eq = line.indexOf("=");
-    if (eq <= 0) continue;
-    const key = line.slice(0, eq).trim();
-    let value = line.slice(eq + 1).trim();
-    const quote = value[0];
-    if ((quote === '"' || quote === "'") && value.endsWith(quote)) {
-      value = value.slice(1, -1);
-    } else {
-      value = value.replace(/\s+#.*$/, "");
+  const source = readFileSync(path, "utf8");
+  const values = new Map<string, string | null>();
+  let cursor = 0;
+  const read = (pattern: RegExp): RegExpExecArray => {
+    const match = pattern.exec(source.slice(cursor));
+    if (!match) throw new Error("Invalid dotenv statement");
+    cursor += match[0].length;
+    return match;
+  };
+  const escapes: Record<string, string> = {
+    a: "\x07",
+    b: "\b",
+    f: "\f",
+    n: "\n",
+    r: "\r",
+    t: "\t",
+    v: "\v",
+    "\\": "\\",
+    "'": "'",
+    '"': '"',
+  };
+  while (cursor < source.length) {
+    read(/^\s*/);
+    if (cursor === source.length) break;
+    const line = source.slice(0, cursor).split(/\r\n|\r|\n/).length;
+    try {
+      read(/^(?:export[^\S\r\n]+)?/);
+      const key =
+        source[cursor] === "#"
+          ? null
+          : source[cursor] === "'"
+            ? (read(/^'([^']+)'/)[1] as string)
+            : (read(/^([^=#\s]+)/)[1] as string);
+      read(/^[^\S\r\n]*/);
+      let value: string | null = null;
+      if (source[cursor] === "=") {
+        read(/^=[^\S\r\n]*/);
+        if (source[cursor] === "'")
+          value = (read(/^'((?:\\'|[^'])*)'/)[1] as string).replace(
+            /\\([\\'])/g,
+            (_match, escaped: string) => escaped,
+          );
+        else if (source[cursor] === '"')
+          value = (read(/^"((?:\\"|[^"])*)"/)[1] as string).replace(
+            /\\([\\'"abfnrtv])/g,
+            (_match, escaped: string) => escapes[escaped] as string,
+          );
+        else
+          value = read(/^[^\r\n]*/)[0]
+            .replace(/\s+#.*/, "")
+            .trimEnd();
+      }
+      read(/^(?:[^\S\r\n]*#[^\r\n]*)?/);
+      read(/^[^\S\r\n]*(?:\r\n|\n|\r|$)/);
+      if (key !== null)
+        values.set(
+          key,
+          value === null
+            ? null
+            : value.replace(
+                /\$\{([^}:]*)(?::-([^}]*))?\}/g,
+                (_match, name: string, fallback?: string) =>
+                  process.env[name] ??
+                  (values.has(name)
+                    ? (values.get(name) ?? "")
+                    : (fallback ?? "")),
+              ),
+        );
+    } catch {
+      console.warn(`Could not parse .env statement at line ${line}.`);
+      read(/^[^\r\n]*(?:\r\n|\r|\n)?/);
     }
-    if (process.env[key] === undefined) process.env[key] = value;
   }
+  for (const [key, value] of values)
+    if (value !== null && process.env[key] === undefined)
+      process.env[key] = value;
 }
 
 export function browserHost(host: string): string {

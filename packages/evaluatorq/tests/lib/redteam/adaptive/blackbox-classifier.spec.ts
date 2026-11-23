@@ -8,6 +8,7 @@ import {
   AgentTarget,
   type Message,
 } from "../../../../src/lib/contracts.js";
+import { BlackboxCapabilityInferenceSchema } from "../../../../src/lib/redteam/adaptive/blackbox-classifier.js";
 import {
   AgentCapabilities,
   AgentCapability,
@@ -18,6 +19,25 @@ import {
   PROBES,
   runProbes,
 } from "../../../../src/lib/redteam/index.js";
+
+it("accepts Python-compatible capability booleans without treating false strings as true", () => {
+  expect(
+    BlackboxCapabilityInferenceSchema.parse({
+      code_execution: "yes",
+      web_request: 1,
+      memory_read: "false",
+      memory_write: "0",
+    }),
+  ).toMatchObject({
+    code_execution: true,
+    web_request: true,
+    memory_read: false,
+    memory_write: false,
+  });
+  expect(() =>
+    BlackboxCapabilityInferenceSchema.parse({ code_execution: "maybe" }),
+  ).toThrow();
+});
 
 let warn: ReturnType<typeof spyOn<typeof console, "warn">>,
   error: ReturnType<typeof spyOn<typeof console, "error">>,

@@ -135,6 +135,15 @@ export async function executeSimGenerate(
 ): Promise<number> {
   const numPersonas = args.num_personas ?? 5;
   const numScenarios = args.num_scenarios ?? 5;
+  for (const [name, value] of [
+    ["num-personas", numPersonas],
+    ["num-scenarios", numScenarios],
+  ] as const)
+    if (!Number.isSafeInteger(value) || value < 1)
+      throw new BadParameter(
+        "Must be an integer of at least 1.",
+        `'--${name}'`,
+      );
   if (!args.quiet) {
     const model =
       args.sim_model || roleModel("fast", { task: "sim.generator" });
@@ -278,6 +287,24 @@ export async function executeSimFromTraces(
       throw new BadParameter(errorText(error), "'--llm-parallelism'");
     }
   }
+  for (const [name, value, minimum] of [
+    ["limit", args.limit ?? 20, 1],
+    ["max-summaries", args.max_summaries ?? 50, 1],
+    ["extend", args.extend ?? 0, 0],
+  ] as const)
+    if (!Number.isSafeInteger(value) || value < minimum)
+      throw new BadParameter(
+        `Must be an integer of at least ${minimum}.`,
+        `'--${name}'`,
+      );
+  if (
+    args.lookback_hours !== undefined &&
+    (!Number.isFinite(args.lookback_hours) || args.lookback_hours < 0)
+  )
+    throw new BadParameter(
+      "Must be a finite number of at least 0.",
+      "'--lookback-hours'",
+    );
   const { TraceAnalysisConfig } = await import("./traces.js");
   const config = new TraceAnalysisConfig({
     generateFirstMessage: !args.replay_first_message,

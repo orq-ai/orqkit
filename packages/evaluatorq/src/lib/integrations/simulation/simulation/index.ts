@@ -329,7 +329,7 @@ async function _simulateCore(
   const selected =
     params.target ?? params.targetAgent ?? targetCallback ?? agentKey;
   const { targetCallback: resolvedCallback, targetAgent: resolvedTarget } =
-    resolveSimulationTarget(params);
+    session?.targetResolution ?? resolveSimulationTarget(params);
   const hooks =
     session?.hooks ??
     new CompositeSimulationHooks(
@@ -355,19 +355,6 @@ async function _simulateCore(
     fn: getEvaluator(name, params.scoring),
   }));
 
-  if (
-    !llmConfig.client &&
-    (!params.userSimulator || !params.judge) &&
-    !process.env.ORQ_API_KEY &&
-    !process.env.OPENAI_API_KEY
-  ) {
-    // Agent targets only run on the Orq router; say so, as Python does.
-    if (typeof selected === "string" && !selected.startsWith("deployment:"))
-      await resolveLlmClient(null, { requireOrq: true });
-    throw new Error(
-      "Set ORQ_API_KEY or OPENAI_API_KEY, or pass client/llmConfig.client for simulation",
-    );
-  }
   let inputs: SimulationInput[];
   let firstMessages: FirstMessageGenerator | undefined;
 
@@ -491,6 +478,7 @@ async function _simulateCore(
       throw error;
     }
     result.thread_id = buildThreadId(runId, index);
+    if (evaluationName) result.metadata.evaluation_name = evaluationName;
 
     const input = data.inputs as unknown as SimulationInput;
     const opening = result.messages.find(
@@ -531,8 +519,8 @@ async function _simulateCore(
             ? {
                 criteria:
                   result.metadata.criteria_meta ?? result.criteria_results,
-                criteriaVerified: result.criteria_verified,
-                unverifiedReason: explanation,
+                criteria_verified: explanation === null,
+                unverified_reason: explanation,
               }
             : undefined;
       return {
@@ -1010,6 +998,7 @@ function resolveAlias<T>(
 }
 
 interface SimulationSession {
+  targetResolution: ReturnType<typeof resolveSimulationTarget>;
   runId: string;
   mode: "run" | "simulate";
   hooks: CompositeSimulationHooks;
@@ -1021,6 +1010,40 @@ async function withSimulationSession(
   mode: "run" | "simulate",
   work: (session: SimulationSession) => Promise<SimulationResult[]>,
 ): Promise<SimulationResult[]> {
+  const targetResolution = resolveSimulationTarget(params);
+  const selected =
+    params.target ??
+    params.targetAgent ??
+    params.targetCallback ??
+    params.agentKey;
+  if (
+    typeof selected === "string" &&
+    (selected.startsWith("agent:") || !selected.includes(":"))
+  )
+    await resolveLlmClient(null, { requireOrq: true, maxRetries: 0 });
+  else if (
+    selected instanceof OrqResponsesTarget &&
+    selected.options.requireOrq
+  )
+    await resolveLlmClient(
+      selected.options.client ?? (selected.config.client as OpenAI | undefined),
+      {
+        requireOrq: true,
+        maxRetries: 0,
+      },
+    );
+  if (
+    !(params.client ?? params.llmConfig?.client) &&
+    (!params.userSimulator ||
+      !params.judge ||
+      (mode === "run" && !params.generationClient)) &&
+    !process.env.ORQ_API_KEY &&
+    !process.env.OPENAI_API_KEY
+  ) {
+    throw new Error(
+      "Set ORQ_API_KEY or OPENAI_API_KEY, or pass client/llmConfig.client for simulation",
+    );
+  }
   const reportPath = resolveAlias(
     "report",
     params.report,
@@ -1061,6 +1084,7 @@ async function withSimulationSession(
   try {
     return await evaluatorqRunId(runId, () =>
       work({
+        targetResolution,
         runId,
         mode,
         hooks,

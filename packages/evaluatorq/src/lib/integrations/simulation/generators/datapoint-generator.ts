@@ -149,7 +149,7 @@ export class DatapointGenerator {
       securityCategories,
     } = params;
 
-    console.error(
+    console.debug(
       `Generating ${numPersonas} personas and ${numScenarios} scenarios...`,
     );
 
@@ -174,7 +174,7 @@ export class DatapointGenerator {
     };
 
     if (includeBoundary) {
-      console.error(`Including ${numBoundary} boundary scenarios`);
+      console.debug(`Including ${numBoundary} boundary scenarios`);
       namedTasks.boundary = this.scenarioGenerator.generateBoundaryScenarios({
         agentDescription,
         numScenarios: numBoundary,
@@ -182,7 +182,7 @@ export class DatapointGenerator {
     }
 
     if (includeSecurity) {
-      console.error(`Including ${numSecurity} security scenarios`);
+      console.debug(`Including ${numSecurity} security scenarios`);
       namedTasks.security = this.scenarioGenerator.generateSecurityScenarios({
         agentDescription,
         seedExamples: securitySeedExamples,
@@ -207,12 +207,12 @@ export class DatapointGenerator {
     // Merge additional scenario types
     if (results.boundary) {
       const boundary = results.boundary as Scenario[];
-      console.error(`Generated ${boundary.length} boundary scenarios`);
+      console.debug(`Generated ${boundary.length} boundary scenarios`);
       scenarios = [...scenarios, ...boundary];
     }
     if (results.security) {
       const security = results.security as Scenario[];
-      console.error(`Generated ${security.length} security scenarios`);
+      console.debug(`Generated ${security.length} security scenarios`);
       scenarios = [...scenarios, ...security];
     }
 
@@ -245,7 +245,7 @@ export class DatapointGenerator {
       }
     }
 
-    console.error(
+    console.debug(
       `Generating ${combinations.length} datapoints from ${personas.length} personas x ${scenarios.length} scenarios`,
     );
 
@@ -296,7 +296,7 @@ export class DatapointGenerator {
       );
     }
 
-    console.error(`Generated ${datapoints.length} datapoints`);
+    console.debug(`Generated ${datapoints.length} datapoints`);
     return datapoints;
   }
 
@@ -314,7 +314,7 @@ export class DatapointGenerator {
       if (dp.first_message && Math.random() < perturbationRate) {
         const [perturbedMsg, pType] = applyRandomPerturbation(dp.first_message);
         perturbedCount++;
-        console.error(`Applied ${pType} perturbation to: ${dp.scenario.name}`);
+        console.debug(`Applied ${pType} perturbation to: ${dp.scenario.name}`);
         // Create a new datapoint with the perturbed message (immutable update)
         return {
           ...dp,
@@ -325,7 +325,7 @@ export class DatapointGenerator {
     });
 
     if (perturbedCount > 0) {
-      console.error(
+      console.debug(
         `Applied perturbations to ${perturbedCount}/${datapoints.length} first messages`,
       );
     }
