@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { once } from "node:events";
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
@@ -148,13 +147,12 @@ it("malformed encoded paths are bad requests", async () => {
   }
 });
 it("rejects untrusted hosts before routing or returning the readiness nonce", async () => {
-  const server = serveDashboard({
+  const server = await serveDashboard({
     roots: [],
     host: "127.0.0.1",
     port: 0,
     readyNonce: "private-ready",
   });
-  await once(server, "listening");
   const address = server.address();
   if (!address || typeof address === "string")
     throw new Error("Missing test address");
@@ -203,5 +201,22 @@ it("rejects untrusted hosts before routing or returning the readiness nonce", as
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );
+  }
+});
+
+it("rejects unsafe binds and occupied ports before reporting startup success", async () => {
+  await expect(
+    serveDashboard({ roots: [], host: "0.0.0.0", port: 0 }),
+  ).rejects.toThrow("loopback");
+  const server = await serveDashboard({ roots: [], port: 0 });
+  try {
+    const address = server.address();
+    if (!address || typeof address === "string")
+      throw new Error("Missing address");
+    await expect(
+      serveDashboard({ roots: [], port: address.port }),
+    ).rejects.toThrow();
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });

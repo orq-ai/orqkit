@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, mock } from "bun:test";
 
+import { OrqCLIError } from "../../../src/lib/common/cli-oauth.js";
 import { authStatus, DashboardAuth } from "../../../src/lib/dashboard/auth.js";
 import type { DashboardSettings } from "../../../src/lib/trace-finder/settings.js";
 
@@ -92,6 +93,25 @@ describe("authStatus", () => {
     });
     expect(result.status).toBe("unavailable");
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("recognizes CLI outages and SDK errors without a custom name", async () => {
+    class SDKError extends Error {}
+    const { warn, error } = silence();
+    for (const failure of [
+      new OrqCLIError("connection refused", { failureKind: "unavailable" }),
+      new SDKError("connection refused"),
+    ]) {
+      const result = await authStatus({
+        ...base,
+        clients: async () => {
+          throw failure;
+        },
+      });
+      expect(result.status).toBe("unavailable");
+    }
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(error).not.toHaveBeenCalled();
   });
 
   it("asks for action when the CLI OAuth sign-in is missing", async () => {

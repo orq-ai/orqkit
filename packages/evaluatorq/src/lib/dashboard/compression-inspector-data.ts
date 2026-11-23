@@ -376,8 +376,8 @@ export const jevReductionPercent = (preview: CompressionPreview) =>
 /** A source failure whose text is fixed and cannot expose selected input or provider data. */
 export class InspectorSourceError extends Error {
   override name = "InspectorSourceError";
-  constructor(..._args: unknown[]) {
-    super(SAFE_ORQ_ERROR);
+  constructor(cause?: unknown) {
+    super(SAFE_ORQ_ERROR, cause === undefined ? undefined : { cause });
   }
 }
 
@@ -511,8 +511,8 @@ export async function fetchOrqDocument(
   try {
     [start, end] = inspectorWindow(window.start ?? null, window.end ?? null);
     client = await buildClient();
-  } catch {
-    throw new InspectorSourceError();
+  } catch (cause) {
+    throw new InspectorSourceError(cause);
   }
   let source: OrqTraceSource | null = null;
   try {
@@ -531,8 +531,8 @@ export async function fetchOrqDocument(
     });
     const record = snapshot.traces.find((item) => item.traceId === traceId);
     return record ? ensureTraceDocument(record) : null;
-  } catch {
-    throw new InspectorSourceError();
+  } catch (cause) {
+    throw new InspectorSourceError(cause);
   } finally {
     try {
       source?.close();

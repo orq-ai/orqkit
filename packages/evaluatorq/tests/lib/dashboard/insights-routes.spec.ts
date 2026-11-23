@@ -88,7 +88,11 @@ function writeRun(update: Row = {}): void {
   );
 }
 
-const auth = new DashboardAuth("api_key", "sk-test", "https://my.orq.ai");
+const auth = new DashboardAuth(
+  "stored_api_key",
+  "sk-test",
+  "https://my.orq.ai",
+);
 const handler = (extra: Parameters<typeof insightsRoutes>[0] = {}) =>
   insightsRoutes({
     runsDir: () => runsDir,
@@ -336,7 +340,11 @@ test("uploads need a CSRF token and a file", async () => {
   expect(rejected.status).toBe(403);
   form.set("csrf", csrfToken());
   const empty = (await handler()(
-    new Request(url.href, { method: "POST", body: form }),
+    new Request(url.href, {
+      method: "POST",
+      headers: { "X-CSRF-Token": csrfToken() },
+      body: form,
+    }),
     url,
   )) as Response;
   expect(empty.status).toBe(422);

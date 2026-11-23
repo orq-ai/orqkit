@@ -478,15 +478,16 @@ describe("unknown and invalid runs", () => {
     ).toBe(404);
   });
 
-  for (const [name, dirName, body] of [
-    ["a non-pairwise rid", "sim-runs", '{"mode": "simulation"}'],
+  for (const [name, dirName, body, status] of [
+    ["a non-pairwise rid", "sim-runs", '{"mode": "simulation"}', 404],
     [
       "a pairwise file that fails validation",
       "pairwise-runs",
       '{"judging": "pairwise", "entries": "not-a-list"}',
+      422,
     ],
   ] as const)
-    it(`${name} is 404`, async () => {
+    it(`${name} is ${status}`, async () => {
       const dir = join(tmp, dirName);
       mkdirSync(dir);
       const path = join(dir, "x.json");
@@ -497,7 +498,7 @@ describe("unknown and invalid runs", () => {
         const resp = await handle(
           new Request(`http://localhost/r/${rid}/pairwise/${p}`),
         );
-        expect(resp.status).toBe(404);
+        expect(resp.status).toBe(status);
       }
     });
 });

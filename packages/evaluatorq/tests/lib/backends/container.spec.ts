@@ -7,8 +7,10 @@ import {
   spyOn,
   test,
 } from "bun:test";
+import { spawn } from "node:child_process";
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -16,7 +18,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { hostname, tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 
 import {
   BEAT_WARNED,
@@ -34,6 +36,7 @@ import {
   pyRepr,
   rawEnvironmentFlags,
   register,
+  registerProcessCleanup,
   releaseContainers,
   removeAll,
   removeContainers,
@@ -46,6 +49,7 @@ import {
   watchdogScript,
   writeBeat,
 } from "../../../src/lib/backends/container.js";
+import { installFake } from "./fakes.js";
 import goldens from "./fixtures/coding-agent-python-goldens.json" with {
   type: "json",
 };
@@ -282,6 +286,126 @@ test("signal handler cleans up then chains to the previous handler", () => {
   makeSignalHandler((signal) => seen.push(signal))("SIGTERM");
   expect(seen).toEqual(["a", "SIGTERM"]);
 });
+
+test("process cleanup is removable and one failure does not skip other owners", () => {
+  const seen: string[] = [];
+  const forget = registerProcessCleanup(() => seen.push("forgotten"));
+  forget();
+  registerProcessCleanup(() => {
+    throw new Error("fixture cleanup failure");
+  });
+  registerProcessCleanup(() => seen.push("process"));
+  containerRuntime.removeContainers = () => {
+    seen.push("container");
+    return [];
+  };
+  register("fixture", { binary: "docker", context: null, beat: "unused" });
+  removeAll("fixture");
+  removeAll("fixture");
+  expect(seen).toEqual(["process", "container"]);
+  expect(warn).toHaveBeenCalledWith(
+    "Process cleanup failed: Error: fixture cleanup failure",
+  );
+});
+
+test.skipIf(process.platform === "win32")(
+  "SIGINT ends detached agent and Python groups and removes containers before exiting",
+  async () => {
+    const agentPids = join(dir, "agent-pids"),
+      workerPids = join(dir, "worker-pids"),
+      ready = join(dir, "ready"),
+      removed = join(dir, "removed");
+    const sleeper = `
+const { spawn } = require("node:child_process");
+const { writeFileSync } = require("node:fs");
+const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+`;
+    installFake(
+      dir,
+      "claude",
+      `${sleeper}
+writeFileSync(${JSON.stringify(agentPids)}, JSON.stringify([process.pid, child.pid]));
+setInterval(() => {}, 1000);
+`,
+    );
+    const worker = installFake(
+      dir,
+      "python-fixture",
+      `${sleeper}
+writeFileSync(${JSON.stringify(workerPids)}, JSON.stringify([process.pid, child.pid]));
+require("node:readline").createInterface({ input: process.stdin }).on("line", (line) => {
+  const request = JSON.parse(line);
+  const result = request.method === "init" ? { history_mode: "caller", memory_entity_id: request.params.memory_entity_id } : {};
+  console.log(JSON.stringify({ id: request.id, ok: true, result }));
+});
+`,
+    );
+    const docker = installFake(
+      dir,
+      "docker",
+      `require("node:fs").writeFileSync(${JSON.stringify(removed)}, process.argv.slice(2).join(" "));`,
+    );
+    const runner = join(dir, "host.ts");
+    writeFileSync(
+      runner,
+      `
+import { writeFileSync, existsSync } from "node:fs";
+import { CodingAgentTarget } from ${JSON.stringify(join(import.meta.dir, "../../../src/lib/backends/coding-agent.ts"))};
+import { register } from ${JSON.stringify(join(import.meta.dir, "../../../src/lib/backends/container.ts"))};
+import { PythonFrameworkBridge } from ${JSON.stringify(join(import.meta.dir, "../../../src/lib/integrations/python-frameworks/bridge.ts"))};
+const agent = new CodingAgentTarget("claude", { env: { PATH: ${JSON.stringify(`${dir}${delimiter}${process.env.PATH ?? ""}`)} }, timeoutMs: 10000 });
+void agent.respond([{ role: "user", content: "fixture" }]).catch(() => {});
+const worker = new PythonFrameworkBridge("crewai", { factory: "fixture:make", pythonExecutable: ${JSON.stringify(worker)} }, {}, "fixture-memory", "caller");
+await worker.request("get_agent_context", {});
+while (!existsSync(${JSON.stringify(agentPids)})) await Bun.sleep(10);
+register("fixture-container", { binary: ${JSON.stringify(docker)}, context: null, beat: ${JSON.stringify(join(dir, "beat"))} });
+writeFileSync(${JSON.stringify(ready)}, agent.workdir);
+setInterval(() => {}, 1000);
+`,
+    );
+    const host = spawn(process.execPath, [runner], { stdio: "ignore" });
+    const closed = new Promise<[number | null, NodeJS.Signals | null]>(
+      (resolve) =>
+        host.once("close", (code, signal) => resolve([code, signal])),
+    );
+    const pids: number[] = [];
+    const waitFor = async (predicate: () => boolean) => {
+      const deadline = Date.now() + 5000;
+      while (!predicate()) {
+        if (Date.now() >= deadline)
+          throw new Error("Cleanup fixture timed out");
+        await Bun.sleep(10);
+      }
+    };
+    try {
+      await waitFor(() => existsSync(ready));
+      for (const path of [agentPids, workerPids])
+        pids.push(...(JSON.parse(readFileSync(path, "utf8")) as number[]));
+      expect(pids.every(pidAlive)).toBe(true);
+      host.kill("SIGINT");
+      await waitFor(() => host.exitCode !== null || host.signalCode !== null);
+      const [code, signal] = await closed;
+      expect(signal === "SIGINT" || code === 130).toBe(true);
+      await waitFor(() => pids.every((pid) => !pidAlive(pid)));
+      expect(readFileSync(removed, "utf8")).toBe("rm -f fixture-container");
+    } finally {
+      host.kill("SIGKILL");
+      for (const path of [agentPids, workerPids]) {
+        if (!existsSync(path)) continue;
+        const [group] = JSON.parse(readFileSync(path, "utf8")) as number[];
+        if (group !== undefined) {
+          try {
+            process.kill(-group, "SIGKILL");
+          } catch {}
+        }
+      }
+      await closed;
+      if (existsSync(ready))
+        rmSync(readFileSync(ready, "utf8"), { recursive: true, force: true });
+    }
+  },
+  15000,
+);
 
 test("writeBeat and heartbeatOnce warn once per failing lease", () => {
   const beat = join(dir, "beat");

@@ -35,7 +35,8 @@ async function tmp(): Promise<string> {
   return dir;
 }
 
-const fakeServer = () => ({ close: mock(() => {}) }) as unknown as Server;
+const fakeServer = () =>
+  ({ close: mock(() => {}), address: () => null }) as unknown as Server;
 const noSleep = async () => {};
 const env = (key: string): string | undefined => process.env[key];
 
@@ -43,6 +44,7 @@ describe("browserHost", () => {
   it("maps wildcard binds to loopback", () => {
     expect(browserHost("0.0.0.0")).toBe("127.0.0.1");
     expect(browserHost("::")).toBe("::1");
+    expect(browserHost("[::1]")).toBe("::1");
     expect(browserHost("localhost")).toBe("localhost");
   });
 });
@@ -177,7 +179,8 @@ describe("serve", () => {
       {
         start,
         canConnect: async () => probes++ > 0,
-        fetchText: async () => process.env[BROWSER_NONCE_ENV] as string,
+        fetchText: async () =>
+          (start.mock.calls[0]?.[0] as { readyNonce: string }).readyNonce,
         openUrl,
         sleep: noSleep,
       },
@@ -193,25 +196,22 @@ describe("serve", () => {
     expect(process.env[BROWSER_NONCE_ENV]).toBeUndefined();
   });
 
-  it("does not open a port that is already in use", async () => {
+  it("propagates startup failures without opening a browser", async () => {
     process.chdir(await tmp());
-    const warn = mock(() => {});
     const openUrl = mock(async (_url: string) => true);
-    const { browser, stop } = await serve(
-      null,
-      {},
-      {
-        start: () => fakeServer(),
-        canConnect: async () => true,
-        openUrl,
-        warn,
-      },
-    );
-    expect(browser).toBeNull();
+    await expect(
+      serve(
+        null,
+        {},
+        {
+          start: async () => {
+            throw new Error("Port is already in use");
+          },
+          openUrl,
+        },
+      ),
+    ).rejects.toThrow("Port is already in use");
     expect(openUrl).not.toHaveBeenCalled();
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(process.env[ROOTS_ENV]).toBeUndefined();
-    stop();
   });
 
   it("skips the probe and nonce when the browser is off", async () => {
@@ -239,8 +239,7 @@ describe("readiness route", () => {
   it("answers the nonce on /_dashboard-ready", async () => {
     process.chdir(await tmp());
     process.env[BROWSER_NONCE_ENV] = "test-nonce";
-    const server = buildServerFromEnv({ host: "127.0.0.1", port: 0 });
-    await new Promise((done) => server.once("listening", done));
+    const server = await buildServerFromEnv({ host: "127.0.0.1", port: 0 });
     const { port } = server.address() as { port: number };
     const body = await (
       await fetch(`http://127.0.0.1:${port}/_dashboard-ready`)

@@ -33,8 +33,12 @@ export function loadLocalEnv(cwd = process.cwd()): void {
 
 export function browserHost(host: string): string {
   return (
-    ({ "0.0.0.0": "127.0.0.1", "::": "::1" } as Record<string, string>)[host] ??
-    host
+    (
+      { "0.0.0.0": "127.0.0.1", "::": "::1", "[::1]": "::1" } as Record<
+        string,
+        string
+      >
+    )[host] ?? host
   );
 }
 
@@ -120,8 +124,10 @@ export async function openBrowserWhenReady(
 
 export function buildServerFromEnv(
   options: { host?: string; port?: number; finder?: FinderState | null } = {},
-  start: typeof serveDashboard = serveDashboard,
-): Server {
+  start: (
+    options: Parameters<typeof serveDashboard>[0],
+  ) => Server | Promise<Server> = serveDashboard,
+): Server | Promise<Server> {
   loadLocalEnv();
   const raw = process.env[ROOTS_ENV];
   const roots = raw ? (JSON.parse(raw) as string[]) : null;
@@ -147,7 +153,11 @@ export async function serve(
     openBrowser?: boolean;
     finder?: FinderState | null;
   } = {},
-  deps: Partial<LaunchDeps> & { start?: typeof serveDashboard } = {},
+  deps: Partial<LaunchDeps> & {
+    start?: (
+      options: Parameters<typeof serveDashboard>[0],
+    ) => Server | Promise<Server>;
+  } = {},
 ): Promise<{
   server: Server;
   browser: Promise<void> | null;
@@ -155,26 +165,23 @@ export async function serve(
 }> {
   const d = { ...defaultDeps, ...deps };
   loadLocalEnv();
-  if (roots === null) delete process.env[ROOTS_ENV];
-  else process.env[ROOTS_ENV] = JSON.stringify(roots);
   const nonce = openBrowser ? randomBytes(24).toString("base64url") : null;
-  if (nonce) process.env[BROWSER_NONCE_ENV] = nonce;
-  else delete process.env[BROWSER_NONCE_ENV];
   const controller = new AbortController();
-  let browser: Promise<void> | null = null;
-  if (openBrowser) {
-    if (await d.canConnect(browserHost(host), port)) {
-      d.warn(
-        `Port ${port} is already in use; skipping automatic browser launch`,
-      );
-    } else {
-      browser = openBrowserWhenReady(host, port, controller.signal, nonce, d);
-    }
-  }
-  const server = buildServerFromEnv({ host, port, finder }, deps.start);
+  const server = await (deps.start ?? serveDashboard)({
+    roots,
+    host,
+    port,
+    finder,
+    readyNonce: nonce,
+  });
+  const address = server.address();
+  const actualPort =
+    typeof address === "object" && address !== null ? address.port : port;
+  const browser = openBrowser
+    ? openBrowserWhenReady(host, actualPort, controller.signal, nonce, d)
+    : null;
   const stop = () => {
     controller.abort();
-    delete process.env[BROWSER_NONCE_ENV];
     server.close();
   };
   return { server, browser, stop };

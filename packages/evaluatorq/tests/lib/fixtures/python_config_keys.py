@@ -1,4 +1,9 @@
 import json, sys, typing, types
+from importlib.metadata import version
+
+if version('evaluatorq') != '1.85.0':
+    raise SystemExit('Use evaluatorq v1.85.0, commit a59c3a862dcb6a991ba660fe1bd13f56838b73ed')
+
 from pydantic import AliasChoices, AliasPath, BaseModel
 from evaluatorq.redteam.run_config import RedTeamCliConfig
 from evaluatorq.simulation.run_config import GenerateAndSimulateCliConfig, SimulateCliConfig

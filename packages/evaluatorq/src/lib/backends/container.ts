@@ -550,6 +550,15 @@ export interface LiveContainer {
 /** Every container this process started and has not removed. */
 export const LIVE_CONTAINERS = new Map<string, LiveContainer>();
 export const BEAT_WARNED = new Set<string>();
+const processCleanups = new Set<() => void>();
+
+export function registerProcessCleanup(cleanup: () => void): () => void {
+  processCleanups.add(cleanup);
+  containerRuntime.installExitHooks();
+  return () => {
+    processCleanups.delete(cleanup);
+  };
+}
 
 interface HookState {
   exitInstalled: boolean;
@@ -578,7 +587,9 @@ export const containerRuntime = {
   ): string[] => removeContainers(binary, context, names, options),
   monotonic: (): number => performance.now() / 1000,
   signals: (): NodeJS.Signals[] =>
-    process.platform === "win32" ? ["SIGTERM"] : ["SIGTERM", "SIGHUP"],
+    process.platform === "win32"
+      ? ["SIGINT", "SIGTERM"]
+      : ["SIGINT", "SIGTERM", "SIGHUP"],
 };
 
 /** Track a container and ensure process cleanup and heartbeat are active. */
@@ -786,6 +797,14 @@ export function removeAll(
   reason: string,
   options: { maxCleanupS?: number } = {},
 ): void {
+  for (const cleanup of [...processCleanups]) {
+    processCleanups.delete(cleanup);
+    try {
+      cleanup();
+    } catch (error) {
+      console.warn(`Process cleanup failed: ${String(error)}`);
+    }
+  }
   const deadline =
     options.maxCleanupS !== undefined
       ? containerRuntime.monotonic() + options.maxCleanupS

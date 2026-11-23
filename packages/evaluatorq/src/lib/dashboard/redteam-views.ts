@@ -1,4 +1,4 @@
-import { loadSurface, resolve } from "../common/dashboard/library.js";
+import { loadTypedReport } from "../common/dashboard/library.js";
 import { esc } from "../common/reports/html-helpers.js";
 import type {
   RedTeamReport,
@@ -11,22 +11,13 @@ import {
   renderAttackFragment,
   renderDisagreement,
 } from "./redteam-transcripts.js";
-import { ADAPTERS } from "./surfaces.js";
 
 export async function loadReport(
   rid: string,
   roots: readonly string[],
 ): Promise<RedTeamReport | null> {
-  const path = await resolve(rid, [...roots]);
-  if (path === null) return null;
-  const [surface] = await loadSurface(path);
-  if (surface !== "redteam") return null;
-  try {
-    return (await ADAPTERS.redteam?.load(path)) as unknown as RedTeamReport;
-  } catch (error) {
-    console.warn(`redteam_views: failed to load ${path}: ${error}`);
-    return null;
-  }
+  const [, value] = await loadTypedReport<RedTeamReport>(rid, roots, "redteam");
+  return value;
 }
 
 export const notFoundFragment = (message: string): string =>
@@ -68,8 +59,15 @@ export async function redteamBreakdownRoute(
 ): Promise<Response> {
   const groupBy = query.get("group_by") ?? "vulnerability";
   const stackRaw = query.get("stack_by") ?? "none";
-  const report = await loadReport(rid, roots);
-  if (report === null) return missing(rid);
+  const [status, report] = await loadTypedReport<RedTeamReport>(
+    rid,
+    roots,
+    "redteam",
+  );
+  if (report === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing(rid);
   return htmlResponse(
     renderBreakdown({
       report: withResults(report, filteredResults(report, query)),
@@ -86,8 +84,15 @@ export async function redteamAgentHeatmapRoute(
   roots: readonly string[],
 ): Promise<Response> {
   const dim = query.get("dim") ?? "vulnerability";
-  const report = await loadReport(rid, roots);
-  if (report === null) return missing(rid);
+  const [status, report] = await loadTypedReport<RedTeamReport>(
+    rid,
+    roots,
+    "redteam",
+  );
+  if (report === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing(rid);
   return htmlResponse(
     renderAgentHeatmap({
       report: withResults(report, filteredResults(report, query)),
@@ -103,8 +108,15 @@ export async function redteamAttackRoute(
   roots: readonly string[],
 ): Promise<Response> {
   const idx = pyInt(query.get("idx") ?? "0");
-  const report = await loadReport(rid, roots);
-  if (report === null) return missing(rid);
+  const [status, report] = await loadTypedReport<RedTeamReport>(
+    rid,
+    roots,
+    "redteam",
+  );
+  if (report === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing(rid);
   const filtered = filteredResults(report, query);
   const result = idx !== null && idx >= 0 ? filtered[idx] : undefined;
   if (result === undefined)
@@ -122,8 +134,15 @@ export async function redteamDisagreementRoute(
   const agentA = query.get("a") ?? "";
   const agentB = query.get("b") ?? "";
   const page = pyInt(query.get("page") ?? "1") ?? 1;
-  const report = await loadReport(rid, roots);
-  if (report === null) return missing(rid);
+  const [status, report] = await loadTypedReport<RedTeamReport>(
+    rid,
+    roots,
+    "redteam",
+  );
+  if (report === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing(rid);
   return htmlResponse(
     renderDisagreement({
       report: withResults(report, filteredResults(report, query)),

@@ -1,7 +1,12 @@
-import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import {
+  type ChildProcessWithoutNullStreams,
+  spawn,
+  spawnSync,
+} from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { registerProcessCleanup } from "../../backends/container.js";
 import { NonRetryableTargetError } from "../../common/target-call.js";
 import { parseUsage } from "../../contracts.js";
 
@@ -194,6 +199,26 @@ export class PythonFrameworkBridge {
       windowsHide: true,
     });
     this.child = child;
+    const forgetProcess = registerProcessCleanup(() => {
+      if (!child.pid) return;
+      if (process.platform === "win32") {
+        spawnSync("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+          stdio: "ignore",
+          windowsHide: true,
+          timeout: 2000,
+          killSignal: "SIGKILL",
+        });
+      } else {
+        try {
+          process.kill(-child.pid, "SIGKILL");
+          return;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "ESRCH") return;
+        }
+      }
+      child.kill("SIGKILL");
+    });
+    child.once("close", forgetProcess);
     this.exited = new Promise((resolve) =>
       child.once("close", () => resolve()),
     );

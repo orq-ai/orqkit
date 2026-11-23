@@ -266,7 +266,6 @@ export function recordAppliedOnReport(
     }
     raw[field] = existing;
     await writePrivateAtomic(path, pythonJsonDumps(raw), {
-      mode: 0o666,
       privateDirectory: false,
     });
   };

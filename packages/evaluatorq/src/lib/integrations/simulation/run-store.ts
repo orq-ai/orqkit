@@ -5,7 +5,7 @@ import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 
 import { orqServerUrl } from "../../common/orq-client.js";
-import { writePrivateAtomic } from "../../common/private-files.js";
+import { writeAtomic } from "../../common/private-files.js";
 import { toPythonKeys } from "../../common/python-json.js";
 import {
   loadRunPayload,
@@ -420,10 +420,7 @@ export class SimulationRun implements SimulationRunInput {
     );
   }
   async save(path: string): Promise<void> {
-    await writePrivateAtomic(path, this.toPythonJson(), {
-      mode: 0o666,
-      privateDirectory: false,
-    });
+    await writeAtomic(path, this.toPythonJson());
   }
   static async load(path: string): Promise<SimulationRun> {
     return new SimulationRun(JSON.parse(await readFile(path, "utf8")));

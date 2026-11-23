@@ -305,6 +305,11 @@ export async function buildDimension(
       Object.values(described).every((value) => typeof value === "string")
     )
       throw new Error("describe failed for every base cluster");
+    for (const [id, value] of Object.entries(described))
+      if (typeof value === "string")
+        result.warnings.push(
+          `dimension ${dimension} group ${group === null ? "None" : `'${group}'`}: base cluster ${id}: ${value}; description unavailable`,
+        );
     const names = Object.fromEntries(
       Object.entries(described).filter(
         ([, value]) => typeof value !== "string",
@@ -389,6 +394,11 @@ export async function buildDimension(
           signal: options.signal,
         })
       : {};
+    for (const [id, value] of Object.entries(descriptions))
+      if (typeof value === "string")
+        result.warnings.push(
+          `dimension ${dimension} group ${group === null ? "None" : `'${group}'`}: top cluster ${id}: ${value}; using a generic description`,
+        );
     const topIds = [...new Set(topMap.values())].sort((a, b) => a - b),
       topGlobal = new Map<number, string>(),
       baseGlobal = new Map<number, string>(),
@@ -445,7 +455,10 @@ export async function buildDimension(
         group,
       });
     }
-    const coords = await reduce3d(vectors);
+    let reductionError: string | undefined;
+    const coords = await reduce3d(vectors, 42, (message) => {
+      reductionError = message;
+    });
     if (coords)
       for (const [index, coord] of coords.entries())
         (rows[index] as { trace: TraceInsight }).trace.coords[dimension] = [
@@ -455,17 +468,22 @@ export async function buildDimension(
         ];
     else
       result.warnings.push(
-        `dimension ${dimension} group ${group === null ? "None" : `'${group}'`}: UMAP unavailable for ${indices.length} traces`,
+        `dimension ${dimension} group ${group === null ? "None" : `'${group}'`}: UMAP unavailable for ${indices.length} traces${reductionError ? `: ${reductionError}` : ""}`,
       );
   }
   const mapped = traces.filter(
     (trace) => trace.coords[dimension] !== undefined,
   );
   if (mapped.length) {
+    let projectionError: string | undefined;
     const review = await project2d(
       mapped.map(
         (trace) => trace.coords[dimension] as [number, number, number],
       ),
+      7,
+      (message) => {
+        projectionError = message;
+      },
     );
     if (review)
       for (const [index, coord] of review.entries()) {
@@ -475,7 +493,7 @@ export async function buildDimension(
       }
     else
       result.warnings.push(
-        `dimension ${dimension}: 2D review layout unavailable for ${mapped.length} traces`,
+        `dimension ${dimension}: 2D review layout unavailable for ${mapped.length} traces${projectionError ? `: ${projectionError}` : ""}`,
       );
   }
   result.nFailed = failedCount();

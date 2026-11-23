@@ -430,7 +430,10 @@ export async function readApprovedFinderExport(
       throw new Error(
         "Finder export must be a safe regular file in the approved directory.",
       );
-    return await readBounded(handle, MAX_FINDER_EXPORT_BYTES);
+    const contents = await readBounded(handle, MAX_FINDER_EXPORT_BYTES);
+    if (contents.length > MAX_FINDER_EXPORT_BYTES)
+      throw new Error("Finder export exceeds the 10 MiB size limit.");
+    return contents;
   } finally {
     await handle.close();
   }

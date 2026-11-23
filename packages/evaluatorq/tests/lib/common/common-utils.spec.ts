@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import {
+  chmodSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -36,7 +38,10 @@ import {
 } from "../../../src/lib/common/hook-compose.js";
 import { pairIndicesByKey } from "../../../src/lib/common/matching.js";
 import { resolveDatapointParallelism } from "../../../src/lib/common/parallelism.js";
-import { writePrivateAtomic } from "../../../src/lib/common/private-files.js";
+import {
+  writeAtomic,
+  writePrivateAtomic,
+} from "../../../src/lib/common/private-files.js";
 import {
   applyCacheBreakpoints,
   cachingApplies,
@@ -227,6 +232,40 @@ describe("files", () => {
     expect(readFileSync(path, "utf8")).toBe("{}");
     expect(statSync(path).mode & 0o777).toBe(0o600);
     expect(statSync(join(path, "..")).mode & 0o777).toBe(0o700);
+  });
+
+  test("writeAtomic preserves shared directory modes and uses ordinary creation permissions", async () => {
+    const directory = join(scratch(), "shared"),
+      path = join(directory, "file.json");
+    mkdirSync(directory);
+    chmodSync(directory, 0o775);
+    const owner =
+      process.getuid === undefined
+        ? null
+        : spyOn(process, "getuid").mockReturnValue(statSync(directory).uid + 1);
+    try {
+      await writeAtomic(path, "first");
+      await writeAtomic(path, "replacement");
+      expect(readFileSync(path, "utf8")).toBe("replacement");
+      if (process.platform !== "win32") {
+        expect(statSync(directory).mode & 0o777).toBe(0o775);
+        expect(statSync(path).mode & 0o777).toBe(0o666 & ~process.umask());
+      }
+      if (owner)
+        await expect(writePrivateAtomic(path, "private")).rejects.toThrow(
+          "not an owned directory",
+        );
+    } finally {
+      owner?.mockRestore();
+    }
+  });
+
+  test("writeAtomic creates ordinary export directories", async () => {
+    const directory = join(scratch(), "exports"),
+      path = join(directory, "file.json");
+    await writeAtomic(path, "{}");
+    if (process.platform !== "win32")
+      expect(statSync(directory).mode & 0o777).toBe(0o777 & ~process.umask());
   });
 
   test("withFileLock serialises callers and releases after a throw", async () => {
@@ -663,6 +702,8 @@ describe("run manifest", () => {
   test("a run walks through its stages to completed", async () => {
     const runsDir = scratch();
     const writer = await start(runsDir);
+    if (process.platform !== "win32")
+      expect(statSync(join(runsDir, ".manifests")).mode & 0o777).toBe(0o700);
     await writer.startStage("a");
     await writer.startStage("b");
     await writer.stageProgress("b", 1, 2);

@@ -53,10 +53,16 @@ if (sub === "run") {
   console.log("cid");
 }
 if (sub === "inspect") {
+  if (env.FAKE_AFTER_EXEC && fs.existsSync(env.FAKE_AFTER_EXEC)) {
+    if (env.FAKE_EXEC_STATE === "missing") { process.stderr.write("Error: No such container: fixture\\n"); process.exit(1); }
+    if (env.FAKE_EXEC_STATE === "unavailable") { process.stderr.write("Cannot connect to the Docker daemon\\n"); process.exit(1); }
+    if (env.FAKE_EXEC_STATE === "stopped") { console.log("false"); process.exit(0); }
+  }
   if (env.FAKE_STOPPED && fs.existsSync(env.FAKE_STOPPED)) { fs.unlinkSync(env.FAKE_STOPPED); console.log("false"); }
   else console.log("true");
 }
 if (sub === "exec") {
+  if (env.FAKE_AFTER_EXEC) fs.writeFileSync(env.FAKE_AFTER_EXEC, "");
   log(Object.entries(env).map(([k, v]) => "ENV " + k + "=" + v).join("\\n"));
   try { fs.readFileSync(0); } catch {}
   if (env.FAKE_EXEC_SLEEP) sleep(Number(env.FAKE_EXEC_SLEEP));
@@ -233,7 +239,7 @@ test("a container that exits immediately is removed", async () => {
 for (const [exit, code] of [
   ["127", "cli.agent_not_found"],
   ["126", "cli.agent_not_found"],
-  ["137", "cli.timeout"],
+  ["137", "cli.exit.137"],
   ["2", "cli.exit.2"],
 ] as const)
   test(`exec exit ${exit} is ${code} and removes the container`, async () => {
@@ -241,11 +247,35 @@ for (const [exit, code] of [
     try {
       const e = await failure(target().respond(user));
       expect(e.code).toBe(code);
-      if (exit === "137") expect(e.killReason).toBe("container_lost");
+      if (exit === "137") expect(e.killReason).toBeNull();
       expect(count("REMOVED")).toBe(1);
       expect(LIVE_CONTAINERS.size).toBe(0);
     } finally {
       r();
+    }
+  });
+
+for (const state of ["stopped", "missing", "unavailable"] as const)
+  test(`exec exit 137 distinguishes ${state} container state`, async () => {
+    const restore = withEnv({
+      FAKE_EXEC_EXIT: "137",
+      FAKE_EXEC_STATE: state,
+      FAKE_AFTER_EXEC: join(dir, "after-exec"),
+    });
+    try {
+      const error = await failure(target().respond(user));
+      expect(error.code).toBe(
+        state === "unavailable" ? "cli.exit.137" : "cli.timeout",
+      );
+      expect(error.killReason).toBe(
+        state === "unavailable" ? null : "container_lost",
+      );
+      if (state === "unavailable")
+        expect(error.detail).toContain("container state: unavailable");
+      expect(count("REMOVED")).toBe(1);
+      expect(LIVE_CONTAINERS.size).toBe(0);
+    } finally {
+      restore();
     }
   });
 
