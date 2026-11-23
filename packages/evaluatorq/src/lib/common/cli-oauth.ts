@@ -1,7 +1,13 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { accessSync, constants, statSync } from "node:fs";
 import { delimiter, extname, resolve } from "node:path";
 
+import type { FacetClient } from "../trace-finder/facets.js";
+import type {
+  OrqSourceClient,
+  SourceAfterSuccessHook,
+  SourceRequestOptions,
+} from "../trace-finder/orq-source.js";
 import { DEFAULT_ORQ_BASE_URL } from "./env-config.js";
 
 export const DECISIONS_PATH = "/decisions";
@@ -28,6 +34,7 @@ export interface RunOptions {
   env: Record<string, string>;
   input?: string;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 function which(binary: string): string | null {
@@ -59,41 +66,42 @@ function runAsync(
   options: RunOptions,
 ): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
+    options.signal?.throwIfAborted();
     const [bin, ...args] = command as [string, ...string[]];
     const child = spawn(bin, args, {
       env: options.env,
       timeout: options.timeoutMs ?? 300_000,
       killSignal: "SIGKILL",
+      signal: options.signal,
       stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     const out: Buffer[] = [];
     const err: Buffer[] = [];
     child.stdout?.on("data", (c: Buffer) => out.push(c));
     child.stderr?.on("data", (c: Buffer) => err.push(c));
-    child.on("error", reject);
-    child.on("close", (code) =>
-      resolve({
-        returncode: code ?? 1,
-        stdout: Buffer.concat(out).toString("utf8"),
-        stderr: Buffer.concat(err).toString("utf8"),
-      }),
-    );
+    let failure: Error | undefined;
+    child.on("error", (error) => {
+      failure = error;
+    });
+    child.stdin?.on("error", (error) => {
+      failure = error;
+      child.kill("SIGKILL");
+    });
+    child.on("close", (code) => {
+      if (options.signal?.aborted) reject(options.signal.reason);
+      else if (failure) reject(failure);
+      else
+        resolve({
+          returncode: code ?? 1,
+          stdout: Buffer.concat(out).toString("utf8"),
+          stderr: Buffer.concat(err).toString("utf8"),
+        });
+    });
     if (options.input !== undefined) child.stdin?.end(options.input);
   });
 }
 
-function runSync(command: string[], options: RunOptions): ProcessResult {
-  const [bin, ...args] = command as [string, ...string[]];
-  const r = spawnSync(bin, args, {
-    env: options.env,
-    encoding: "utf8",
-    timeout: options.timeoutMs,
-  });
-  if (r.error) throw r.error;
-  return { returncode: r.status ?? 1, stdout: r.stdout, stderr: r.stderr };
-}
-
-export const cliProcess = { which, runAsync, runSync };
+export const cliProcess = { which, runAsync };
 
 function oauthEnv(): Record<string, string> {
   const env: Record<string, string> = {};
@@ -192,6 +200,7 @@ export type ResponseHook =
 class CLI {
   readonly binary: string;
   readonly responseHooks: ResponseHook[] = [];
+  readonly sourceHooks: SourceAfterSuccessHook[] = [];
   constructor(
     readonly serverUrl: string | null,
     readonly workspace: string | null,
@@ -204,7 +213,9 @@ class CLI {
     args: string[],
     payload?: unknown,
     capture?: [string, string],
+    options: SourceRequestOptions = {},
   ): Promise<unknown> {
+    options.signal?.throwIfAborted();
     const command = [
       this.binary,
       "--no-input",
@@ -223,8 +234,12 @@ class CLI {
       result = await cliProcess.runAsync(command, {
         env: oauthEnv(),
         input: payload === undefined ? undefined : JSON.stringify(payload),
+        timeoutMs: options.timeoutMs,
+        signal: options.signal,
       });
+      options.signal?.throwIfAborted();
     } catch (cause) {
+      options.signal?.throwIfAborted();
       throw new OrqCLIError(`Could not start the orq CLI: ${String(cause)}`);
     }
     if (result.returncode) {
@@ -248,6 +263,22 @@ class CLI {
     }
     if (capture) {
       const [operationId, path] = capture;
+      if (this.sourceHooks.length) {
+        let response = new Response(result.stdout, {
+          headers: { "content-type": "application/json" },
+        });
+        Object.defineProperty(response, "url", {
+          value: `${(this.serverUrl || DEFAULT_ORQ_BASE_URL).replace(/\/+$/, "")}/v3${path}`,
+        });
+        for (const hook of [...this.sourceHooks]) {
+          options.signal?.throwIfAborted();
+          response = await hook.afterSuccess(
+            { operationID: operationId },
+            response,
+          );
+        }
+        parsed = await response.json();
+      }
       const response: CapturedResponse = {
         json: () => parsed,
         request: { url: { path: `/v3${path}` } },
@@ -258,7 +289,7 @@ class CLI {
           throw new TypeError(
             "Orq CLI response hook has no callable after_success method.",
           );
-        cb.call(hook, { operationId }, response);
+        await cb.call(hook, { operationId }, response);
       }
     }
     return parsed;
@@ -270,14 +301,24 @@ type Opt<T> = T | null | undefined;
 class Traces {
   constructor(private readonly cli: CLI) {}
 
-  queryAsync(p: {
-    from: unknown;
-    to: unknown;
-    oql: string;
-    limit?: Opt<number>;
-    pageToken?: Opt<string>;
-    timeoutMs?: Opt<number>;
-  }): Promise<unknown> {
+  query(
+    p: Parameters<OrqSourceClient["traces"]["query"]>[0],
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
+    return this.queryAsync(p, options);
+  }
+
+  queryAsync(
+    p: {
+      from: unknown;
+      to: unknown;
+      oql: string;
+      limit?: Opt<number>;
+      pageToken?: Opt<string>;
+      timeoutMs?: Opt<number>;
+    },
+    options: SourceRequestOptions = {},
+  ): Promise<unknown> {
     const payload: Record<string, unknown> = {
       from: jsonValue(p.from),
       to: jsonValue(p.to),
@@ -285,38 +326,76 @@ class Traces {
     };
     if (p.limit != null) payload.limit = p.limit;
     if (p.pageToken != null) payload.page_token = p.pageToken;
-    return this.cli.call(["traces", "query-oql"], payload, [
-      "TracesQueryOql",
-      "/traces/query",
-    ]);
+    return this.cli.call(
+      ["traces", "query-oql"],
+      payload,
+      ["TracesQueryOql", "/traces/query"],
+      { ...options, timeoutMs: options.timeoutMs ?? p.timeoutMs ?? undefined },
+    );
   }
 
-  getSpanAsync(p: { traceId: string; spanId: string }): Promise<unknown> {
+  getSpan(
+    p: Parameters<OrqSourceClient["traces"]["getSpan"]>[0],
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
+    return this.getSpanAsync(p, options);
+  }
+
+  getSpanAsync(
+    p: { traceId: string; spanId: string },
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
     return this.cli.call(
       ["traces", "get-span", p.traceId, p.spanId],
       undefined,
       ["TracesGetSpan", `/traces/${p.traceId}/spans/${p.spanId}`],
+      options,
     );
   }
 
-  listSpansAsync(p: {
-    traceId: string;
-    limit?: Opt<number>;
-    pageToken?: Opt<string>;
-  }): Promise<unknown> {
+  listSpans(
+    p: Parameters<OrqSourceClient["traces"]["listSpans"]>[0],
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
+    return this.listSpansAsync(p, options);
+  }
+
+  listSpansAsync(
+    p: {
+      traceId: string;
+      limit?: Opt<number>;
+      pageToken?: Opt<string>;
+    },
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
     const args = ["traces", "list-spans", p.traceId];
     if (p.limit != null) args.push("--limit", String(p.limit));
     if (p.pageToken != null) args.push("--page-token", p.pageToken);
-    return this.cli.call(args);
+    return this.cli.call(
+      args,
+      undefined,
+      ["TracesListSpans", `/traces/${p.traceId}/spans`],
+      options,
+    );
   }
 
-  listFacetValuesAsync(p: {
-    field: string;
-    from?: unknown;
-    to?: unknown;
-    limit?: Opt<number>;
-    filterOperator?: Opt<string>;
-  }): Promise<unknown> {
+  listFacetValues(
+    p: Parameters<FacetClient["traces"]["listFacetValues"]>[0],
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
+    return this.listFacetValuesAsync(p, options);
+  }
+
+  listFacetValuesAsync(
+    p: {
+      field: string;
+      from?: unknown;
+      to?: unknown;
+      limit?: Opt<number>;
+      filterOperator?: Opt<string>;
+    },
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
     const args = ["traces", "list-facet-values", p.field];
     for (const [key, value] of [
       ["--from", p.from],
@@ -325,28 +404,46 @@ class Traces {
       ["--filter-operator", p.filterOperator],
     ] as const)
       if (value != null) args.push(key, String(jsonValue(value)));
-    return this.cli.call(args);
+    return this.cli.call(args, undefined, undefined, options);
   }
 }
 
 class Projects {
   constructor(private readonly cli: CLI) {}
+  list(
+    p: Parameters<OrqSourceClient["projects"]["list"]>[0] = {},
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
+    return this.listAsync(p, options);
+  }
   listAsync(
     p: { limit?: Opt<number>; startingAfter?: Opt<string> } = {},
+    options?: SourceRequestOptions,
   ): Promise<unknown> {
     const args = ["projects", "list"];
     if (p.limit != null) args.push("--limit", String(p.limit));
     if (p.startingAfter) args.push("--starting-after", p.startingAfter);
-    return this.cli.call(args);
+    return this.cli.call(args, undefined, undefined, options);
   }
 }
 
-export class CliOrqClient {
+export class CliOrqClient implements OrqSourceClient, FacetClient {
   readonly traces: Traces;
   readonly projects: Projects;
+  readonly _baseURL: URL;
+  readonly _options: OrqSourceClient["_options"];
   constructor(private readonly cli: CLI) {
     this.traces = new Traces(cli);
     this.projects = new Projects(cli);
+    this._baseURL = new URL(cli.serverUrl || DEFAULT_ORQ_BASE_URL);
+    this._options = {
+      serverURL: this._baseURL.href,
+      hooks: {
+        registerAfterSuccessHook: (hook) => {
+          if (!cli.sourceHooks.includes(hook)) cli.sourceHooks.push(hook);
+        },
+      },
+    };
   }
   registerAfterSuccessHook(hook: ResponseHook): void {
     if (!this.cli.responseHooks.includes(hook))
@@ -365,32 +462,32 @@ class Endpoint {
     private readonly command: string[],
   ) {}
 
-  create(params: Record<string, unknown>): Promise<unknown> {
+  create(
+    params: Record<string, unknown>,
+    options?: SourceRequestOptions,
+  ): Promise<unknown> {
     const { extra_body: extra, ...rest } = params;
     const body = isRecord(extra) ? { ...rest, ...extra } : rest;
-    return this.cli.call(this.command, jsonValue(body));
+    return this.cli.call(this.command, jsonValue(body), undefined, options);
   }
 
   async parse<T>(
     params: Record<string, unknown> & {
       responseParser?: (content: string) => T;
     },
+    options?: SourceRequestOptions,
   ): Promise<unknown> {
     const { responseParser, ...rest } = params;
-    const response = await this.create(rest);
+    const response = await this.create(rest, options);
     if (responseParser && isRecord(response)) {
       for (const choice of (response.choices as unknown[]) ?? []) {
         const message = isRecord(choice) ? choice.message : null;
         if (!isRecord(message)) continue;
         const content = message.content;
-        try {
-          message.parsed =
-            typeof content === "string" && content
-              ? responseParser(content)
-              : null;
-        } catch {
-          message.parsed = null;
-        }
+        message.parsed =
+          typeof content === "string" && content
+            ? responseParser(content)
+            : null;
       }
     }
     return response;
@@ -414,13 +511,18 @@ export class CliLlmClient {
     this.baseURL = `${(cli.serverUrl || DEFAULT_ORQ_BASE_URL).replace(/\/+$/, "")}/v3/router`;
   }
 
-  async post(path: string, options: { body: unknown }): Promise<unknown> {
+  async post(
+    path: string,
+    options: { body: unknown } & SourceRequestOptions,
+  ): Promise<unknown> {
     if (path !== DECISIONS_PATH)
       throw new RangeError(`Unsupported CLI OAuth model endpoint: ${path}`);
     // Caller headers may carry credentials; argv is visible to process inspection.
     const result = await this.cli.call(
       ["request", "POST", `/v3/router${path}`, "--force"],
       jsonValue(options.body),
+      undefined,
+      options,
     );
     return isStatusEnvelope(result) ? result.body : result;
   }
@@ -469,8 +571,8 @@ function whoami(
   binary: string,
   serverUrl: string,
   timeoutMs: number,
-): ProcessResult {
-  return cliProcess.runSync(
+): Promise<ProcessResult> {
+  return cliProcess.runAsync(
     [
       binary,
       "--no-input",
@@ -498,11 +600,11 @@ export interface OAuthSubject {
   project: string | null;
 }
 
-export function oauthSubject(serverUrl: string): OAuthSubject {
+export async function oauthSubject(serverUrl: string): Promise<OAuthSubject> {
   const binary = requireBinary();
   let result: ProcessResult;
   try {
-    result = whoami(binary, serverUrl, 10_000);
+    result = await whoami(binary, serverUrl, 10_000);
   } catch {
     throw new OrqCLIError("Could not check the Orq CLI OAuth sign-in.");
   }
@@ -552,14 +654,14 @@ export interface OAuthSession {
   active: boolean;
 }
 
-function sessionStatus(
+async function sessionStatus(
   binary: string,
   serverUrl: string,
   timeoutMs: number,
-): SessionStatus {
+): Promise<SessionStatus> {
   let result: ProcessResult;
   try {
-    result = whoami(binary, serverUrl, timeoutMs);
+    result = await whoami(binary, serverUrl, timeoutMs);
   } catch {
     return "unknown";
   }
@@ -574,14 +676,16 @@ function sessionStatus(
   return SIGNED_OUT.test(result.stderr) ? "signed-out" : "unknown";
 }
 
-export function listOauthSessions(timeoutSeconds = 5): OAuthSession[] {
+export async function listOauthSessions(
+  timeoutSeconds = 5,
+): Promise<OAuthSession[]> {
   const binary = cliProcess.which("orq");
   if (!binary) return [];
   const timeoutMs = timeoutSeconds * 1000;
   let listing: unknown;
   let returncode = 0;
   try {
-    const result = cliProcess.runSync(
+    const result = await cliProcess.runAsync(
       [binary, "--no-input", "--output-format", "json", "auth", "sessions"],
       { env: oauthEnv(), timeoutMs },
     );
@@ -605,10 +709,19 @@ export function listOauthSessions(timeoutSeconds = 5): OAuthSession[] {
       typeof row.status === "string" &&
       (UNREADABLE.has(row.status) || nonEmpty(row.server)),
   );
-  const checked = new Map<string, SessionStatus>();
-  for (const row of rows)
-    if (!UNREADABLE.has(row.status) && row.status !== "ok")
-      checked.set(row.server, sessionStatus(binary, row.server, timeoutMs));
+  const servers = new Set(
+    rows
+      .filter((row) => !UNREADABLE.has(row.status) && row.status !== "ok")
+      .map((row) => row.server),
+  );
+  const checked = new Map(
+    await Promise.all(
+      [...servers].map(
+        async (server) =>
+          [server, await sessionStatus(binary, server, timeoutMs)] as const,
+      ),
+    ),
+  );
   return rows.map((row) => {
     const unreadable = UNREADABLE.has(row.status);
     return {

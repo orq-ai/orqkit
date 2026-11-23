@@ -232,7 +232,13 @@ export async function searchSessions(
         }
         matches.push(summary);
       } catch (error) {
-        if (!(error instanceof SessionLoadError) && !(error instanceof Error))
+        const filesystemError =
+          error instanceof Error &&
+          "code" in error &&
+          typeof error.code === "string" &&
+          "syscall" in error &&
+          typeof error.syscall === "string";
+        if (!(error instanceof SessionLoadError) && !filesystemError)
           throw error;
         console.warn(
           `Skipping session file ${candidate.path}: ${error instanceof Error ? error.name : "Error"}`,

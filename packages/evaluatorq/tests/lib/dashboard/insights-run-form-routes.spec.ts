@@ -66,7 +66,11 @@ afterEach(() => {
   }
 });
 
-const AUTH = new DashboardAuth("api_key", "sk-test", "https://my.orq.ai");
+const AUTH = new DashboardAuth(
+  "stored_api_key",
+  "sk-test",
+  "https://my.orq.ai",
+);
 const price = (modelType = "chat") =>
   new ModelInfo({
     inputCostPer1k: 0.01,

@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, spyOn, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import OpenAI from "openai";
+import { UMAP } from "umap-js";
 
 import {
   ModelInfo,
@@ -15,6 +16,8 @@ import { buildDimension } from "../../../src/lib/insights/pipeline.js";
 
 const requests: { path: string; body: Record<string, unknown> }[] = [];
 let multi = false;
+let descriptionFailure: "partial" | "top" | "all" | null = null;
+let baseDescriptions = 0;
 const server = Bun.serve({
   port: 0,
   async fetch(request) {
@@ -47,6 +50,23 @@ const server = Bun.serve({
     const prompt = String(
       ((body.messages as { content?: string }[]) ?? [])[0]?.content ?? "",
     );
+    const baseDescription = prompt.includes("<examples>"),
+      topDescription = prompt.includes("<children>");
+    if (
+      (baseDescription &&
+        (descriptionFailure === "all" ||
+          (descriptionFailure === "partial" && baseDescriptions++ === 0))) ||
+      (topDescription && descriptionFailure === "top")
+    )
+      return Response.json(
+        {
+          error: {
+            message: "synthetic description failure",
+            type: "invalid_request_error",
+          },
+        },
+        { status: 400 },
+      );
     const reply = prompt.includes("<conversation>")
       ? {
           summary: "Test conversation",
@@ -232,6 +252,108 @@ test("sibling clusters remain distinct when a merge would erase their split", as
     cache.close();
   }
 }, 15000);
+
+test.each(["partial", "top", "all"] as const)(
+  "%s cluster description failures remain visible",
+  async (failure) => {
+    const cache = await InsightsCache.open({ enabled: false });
+    descriptionFailure = failure;
+    baseDescriptions = 0;
+    multi = failure === "partial";
+    try {
+      const result = buildDimension(
+        "intent",
+        Array.from({ length: multi ? 30 : 8 }, (_, i) => trace(i)),
+        {
+          client,
+          cache,
+          embeddingModel: "test/embed-dimension",
+          summaryModel: "test/describe-dimension",
+          classifierModel: "test/classify-dimension",
+          maxClusters: multi ? 2 : 1,
+          maxSubclusters: multi ? 2 : 1,
+          outlierZscore: null,
+          parallelism: 2,
+        },
+      );
+      if (failure === "all") {
+        await expect(result).rejects.toThrow(
+          "describe failed for every base cluster",
+        );
+      } else {
+        const dimension = await result;
+        expect(
+          dimension.warnings.some(
+            (warning) =>
+              warning.includes(
+                `${failure === "partial" ? "base" : "top"} cluster`,
+              ) && warning.includes("synthetic description failure"),
+          ),
+        ).toBe(true);
+        expect(
+          dimension.clusters.some(
+            (cluster) =>
+              cluster.name ===
+              (failure === "partial"
+                ? "Unlabeled cluster"
+                : "Conversation group"),
+          ),
+        ).toBe(true);
+      }
+    } finally {
+      descriptionFailure = null;
+      multi = false;
+      cache.close();
+    }
+  },
+  15000,
+);
+
+test.each(["3D", "2D"] as const)(
+  "%s UMAP errors are included in dimension warnings",
+  async (stage) => {
+    let calls = 0;
+    const fit = spyOn(UMAP.prototype, "fitAsync").mockImplementation(
+      async (rows) => {
+        if (stage === "3D" || calls++ > 0)
+          throw new Error("synthetic layout failure");
+        return rows.map((_, index) => [index, index % 3, index % 5]);
+      },
+    );
+    const cache = await InsightsCache.open({ enabled: false });
+    try {
+      const result = await buildDimension(
+        "intent",
+        Array.from({ length: 8 }, (_, i) => trace(i)),
+        {
+          client,
+          cache,
+          embeddingModel: "test/embed-dimension",
+          summaryModel: "test/describe-dimension",
+          classifierModel: "test/classify-dimension",
+          maxClusters: 1,
+          maxSubclusters: 1,
+          outlierZscore: null,
+          parallelism: 2,
+        },
+      );
+      expect(
+        result.warnings.some(
+          (warning) =>
+            warning.includes(
+              stage === "3D"
+                ? "UMAP unavailable"
+                : "2D review layout unavailable",
+            ) && warning.includes("synthetic layout failure"),
+        ),
+      ).toBe(true);
+    } finally {
+      fit.mockRestore();
+      cache.close();
+    }
+  },
+  15000,
+);
 
 test("complete snapshot run persists its report and terminal manifest", async () => {
   const { insights } = await import("../../../src/lib/insights/pipeline.js");

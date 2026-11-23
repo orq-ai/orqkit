@@ -29,6 +29,12 @@ import { traceLinkButton, traceSpanUrl } from "./trace-links.js";
 
 export type InsightsRun = InsightsRunFields;
 export type RunEntry = readonly [runId: string, label: string, status: string];
+export interface InsightsOverviewRun {
+  createdAt: string;
+  counts: Readonly<Record<string, number>>;
+  traces: readonly unknown[];
+  dimensions: Readonly<Record<string, unknown>>;
+}
 
 export const TABS = [
   "dimensions",
@@ -186,13 +192,13 @@ function overviewStages(manifest: RunManifest | undefined): string {
   );
 }
 
-const traceCount = (run: InsightsRun) =>
+const traceCount = (run: InsightsOverviewRun) =>
   run.counts.n_traces ?? run.traces.length;
 
 /** Render the saved runs as one navigable overview. */
 export function runOverview(
   entries: readonly RunEntry[],
-  runs: ReadonlyMap<string, InsightsRun>,
+  runs: ReadonlyMap<string, InsightsOverviewRun>,
   manifests: ReadonlyMap<string, RunManifest>,
 ): string {
   if (!entries.length)
@@ -1663,7 +1669,7 @@ function refreshIfRunning(entries: readonly RunEntry[]): string {
 
 export async function overviewPage(
   entries: readonly RunEntry[],
-  runs: ReadonlyMap<string, InsightsRun>,
+  runs: ReadonlyMap<string, InsightsOverviewRun>,
   manifests: ReadonlyMap<string, RunManifest>,
 ): Promise<string> {
   const body = `<div class="insights-layout">${runOverview(entries, runs, manifests)}</div>`;

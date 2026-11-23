@@ -11,10 +11,23 @@ import {
   FacetCatalogueSchema,
   type FacetName,
 } from "./models.js";
-export type FacetClient = Pick<
-  Orq,
-  "traces" | "projects" | "_options" | "_baseURL"
->;
+import type {
+  SourceClientOptions,
+  SourceProjects,
+  SourceRequestOptions,
+} from "./orq-source.js";
+
+export interface FacetClient {
+  _options: SourceClientOptions;
+  _baseURL: Orq["_baseURL"];
+  traces: {
+    listFacetValues: (
+      request: Parameters<Orq["traces"]["listFacetValues"]>[0],
+      options?: SourceRequestOptions,
+    ) => Promise<unknown>;
+  };
+  projects: SourceProjects;
+}
 const FACET_FIELDS: Readonly<Record<FacetName, string>> = Object.freeze({
   project: "project_id",
   model: "model",
@@ -275,7 +288,7 @@ async function facetValues(
   ];
 }
 export async function loadProjectNames(
-  client: FacetClient,
+  client: Pick<FacetClient, "projects">,
   options: FacetLoadOptions,
 ): Promise<Record<string, string>> {
   const projects = new Map<string, string>(),

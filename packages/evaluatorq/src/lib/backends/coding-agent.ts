@@ -66,6 +66,7 @@ import {
   pyRepr,
   RESERVED_ENV,
   register,
+  registerProcessCleanup,
   releaseContainers,
   removeContainersAsync,
   runControl,
@@ -1013,8 +1014,14 @@ export class CodingAgentTarget extends AgentTarget {
       );
     const timeoutMs = options.timeoutMs ?? DEFAULT_CODING_AGENT_TIMEOUT_MS;
     const maxTurnMs = options.maxTurnMs ?? DEFAULT_CODING_AGENT_MAX_TURN_MS;
-    if (timeoutMs <= 0 || maxTurnMs <= 0)
-      throw new Error("timeout_ms and max_turn_ms must be positive");
+    if (
+      [timeoutMs, maxTurnMs].some(
+        (value) => !Number.isFinite(value) || value <= 0 || value > 2147483647,
+      )
+    )
+      throw new RangeError(
+        "timeoutMs and maxTurnMs must be finite numbers greater than 0 and at most 2147483647",
+      );
     this.spec = AGENTS[agent];
     this.options = { ...options };
     const container = options.container
@@ -1430,11 +1437,36 @@ export class CodingAgentTarget extends AgentTarget {
               "cli.agent_not_found",
               `${pyRepr(agentBinary)} or evq-entrypoint is missing from image ${pyRepr(this.container.image)}: ${stderrExcerpt}`,
             );
-          if (this.container && returncode === 137) {
+          if (this.container && name !== null && returncode === 137) {
+            let stopped = false;
+            let stateDetail = "unavailable";
+            try {
+              const state = await this.docker([
+                ...dockerCli(this.container),
+                "inspect",
+                "-f",
+                "{{.State.Running}}",
+                name,
+              ]);
+              if (state.returncode === 0) {
+                stateDetail = pythonStrip(state.stdout);
+                stopped = stateDetail === "false";
+              } else if (/no such (?:object|container)/i.test(state.stderr)) {
+                stopped = true;
+                stateDetail = "missing";
+              }
+            } catch (error) {
+              stateDetail = `unavailable (${String(error)})`;
+            }
+            if (!stopped)
+              throw new CodingAgentError(
+                "cli.exit.137",
+                `The agent process exited 137; container state: ${stateDetail}. ${stderrExcerpt}`,
+              );
             logKill(
               this.agent,
               "container_lost",
-              `container ${name} was removed while the agent ran`,
+              `container ${name} stopped or was removed while the agent ran`,
             );
             await this.dropContainer();
             setSpanAttrs(span, {
@@ -1442,7 +1474,7 @@ export class CodingAgentTarget extends AgentTarget {
             });
             throw new CodingAgentUnavailableError(
               "cli.timeout",
-              "the container was removed while the agent was running",
+              "the container stopped or was removed while the agent was running",
               { killReason: "container_lost" },
             );
           }
@@ -1547,6 +1579,9 @@ export class CodingAgentTarget extends AgentTarget {
       throw this.spawnFailure(error, command as string);
     }
     this.proc = proc;
+    const forgetProcess = registerProcessCleanup(() =>
+      killGroup(proc, { force: true }),
+    );
     const idleS = this.timeoutMs / 1000,
       hardS = this.maxTurnMs / 1000;
     const started = codingAgentRuntime.monotonic();
@@ -1566,6 +1601,7 @@ export class CodingAgentTarget extends AgentTarget {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        forgetProcess();
         signal?.removeEventListener("abort", onAbort);
         if (error !== undefined) killGroup(proc, { force: true });
         this.proc = null;

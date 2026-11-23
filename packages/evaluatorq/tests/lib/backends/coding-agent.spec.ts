@@ -326,10 +326,16 @@ describe("limits and cancellation", () => {
     ).toBe(true);
   });
 
-  test("limits must be positive and the target manages its own timeout", () => {
-    expect(() => new CodingAgentTarget("claude", { timeoutMs: 0 })).toThrow(
-      "timeout_ms and max_turn_ms must be positive",
-    );
+  test("limits must fit finite positive timers and the target manages its own timeout", () => {
+    for (const key of ["timeoutMs", "maxTurnMs"] as const)
+      for (const value of [0, -1, Number.NaN, Infinity, -Infinity, 2147483648])
+        expect(() => new CodingAgentTarget("claude", { [key]: value })).toThrow(
+          "timeoutMs and maxTurnMs must be finite numbers greater than 0 and at most 2147483647",
+        );
+    expect(
+      new CodingAgentTarget("claude", { timeoutMs: 0.5, maxTurnMs: 2147483647 })
+        .managesOwnTimeout,
+    ).toBe(true);
     expect(new CodingAgentTarget("claude").managesOwnTimeout).toBe(true);
   });
 });

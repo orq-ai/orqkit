@@ -1,5 +1,6 @@
 // Ported from res-697 tests/common/test_cli_oauth.py.
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { readFileSync } from "node:fs";
 import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,11 +8,18 @@ import { join } from "node:path";
 import {
   buildCliOauthClients,
   cliProcess,
+  listOauthSessions,
   OrqCLIError,
   oauthSubject,
   type ProcessResult,
   type RunOptions,
 } from "../../../src/lib/common/cli-oauth.js";
+import {
+  FacetSelection,
+  NumericFilters,
+} from "../../../src/lib/trace-finder/models.js";
+import { OrqTraceSource } from "../../../src/lib/trace-finder/orq-source.js";
+import { type Fixture, fake } from "./orq-source-fake.js";
 
 type Call = { args: string[]; options: RunOptions };
 const original = { ...cliProcess };
@@ -33,8 +41,8 @@ function fakeAsync(
   };
 }
 
-function fakeSync(result: Partial<ProcessResult>) {
-  cliProcess.runSync = (args, options) => {
+function fakeResult(result: Partial<ProcessResult>) {
+  cliProcess.runAsync = async (args, options) => {
     calls.push({ args, options });
     return { returncode: 0, stdout: "", stderr: "", ...result };
   };
@@ -178,15 +186,15 @@ describe("oauthSubject", () => {
     "device-flow",
     "future-cli-source",
   ])
-    it(`accepts an authenticated ${source} source`, () => {
-      fakeSync({
+    it(`accepts an authenticated ${source} source`, async () => {
+      fakeResult({
         stdout: JSON.stringify({
           authenticated: true,
           source,
           user_id: "user-1",
         }),
       });
-      expect(oauthSubject("https://my.orq.ai")).toEqual({
+      expect(await oauthSubject("https://my.orq.ai")).toEqual({
         user_id: "user-1",
         workspace: null,
         project: null,
@@ -194,7 +202,7 @@ describe("oauthSubject", () => {
     });
 
   it("rejects an unauthenticated CLI", async () => {
-    fakeSync({
+    fakeResult({
       stdout: JSON.stringify({
         authenticated: false,
         source: "device-flow",
@@ -215,7 +223,7 @@ describe("oauthSubject", () => {
     ["HTTP 503 service unavailable", "unavailable", "Try again shortly"],
   ] as const)
     it(`classifies a failing whoami as ${kind}`, async () => {
-      fakeSync({ returncode: 1, stderr });
+      fakeResult({ returncode: 1, stderr });
       const error = await catchError(() => oauthSubject("https://my.orq.ai"));
       expect(error.message).toContain(message);
       expect(error.failureKind).toBe(kind);
@@ -227,7 +235,7 @@ describe("oauthSubject", () => {
     '{"authenticated":"yes","user_id":"u"}',
   ])
     it(`keeps unknown identity ${stdout} unavailable`, async () => {
-      fakeSync({ stdout });
+      fakeResult({ stdout });
       const error = await catchError(() => oauthSubject("https://my.orq.ai"));
       expect(error.failureKind).toBe("unavailable");
       expect(error.message).toContain("Try again shortly");
@@ -405,4 +413,187 @@ it("finds executable PATH entries without invoking which or falling back to cwd"
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+it("modern trace hooks are awaited and retain raw response metadata", async () => {
+  fakeAsync('{"search":{"data":[]}}');
+  const [client] = buildCliOauthClients("https://orq.example/prefix");
+  const captured: unknown[] = [];
+  client._options.hooks?.registerAfterSuccessHook({
+    afterSuccess: async (context, response) => {
+      await Promise.resolve();
+      captured.push([
+        context.operationID,
+        response.url,
+        await response.clone().json(),
+      ]);
+      return response;
+    },
+  });
+  const signal = new AbortController().signal;
+  await client.traces.query(
+    {
+      from: new Date("2026-01-02"),
+      to: new Date("2026-01-03"),
+      oql: "fetch traces",
+    },
+    { signal, timeoutMs: 1234 },
+  );
+  expect(captured).toEqual([
+    [
+      "TracesQueryOql",
+      "https://orq.example/prefix/v3/traces/query",
+      { search: { data: [] } },
+    ],
+  ]);
+  expect(calls[0]?.options.signal).toBe(signal);
+  expect(calls[0]?.options.timeoutMs).toBe(1234);
+});
+
+it("OrqTraceSource loads a CLI-backed trace and retains its original raw query", async () => {
+  const golden = JSON.parse(
+    readFileSync(
+      new URL("../fixtures/orq-source-python-goldens.json", import.meta.url),
+      "utf8",
+    ),
+  ) as { cases: { input: Fixture }[] };
+  const fixture = golden.cases[0]?.input;
+  if (!fixture) throw new Error("Missing trace fixture");
+  const underlying = fake(fixture).client;
+  cliProcess.runAsync = async (args, options) => {
+    calls.push({ args, options });
+    let result: unknown;
+    if (args.includes("query-oql")) {
+      const payload = JSON.parse(options.input ?? "{}");
+      result = await underlying.traces.query({
+        from: new Date(payload.from),
+        to: new Date(payload.to),
+        oql: String(payload.oql),
+        limit: Number(payload.limit),
+        ...(payload.page_token
+          ? { pageToken: String(payload.page_token) }
+          : {}),
+      });
+    } else if (args.includes("get-span")) {
+      const i = args.indexOf("get-span");
+      result = await underlying.traces.getSpan({
+        traceId: args[i + 1] as string,
+        spanId: args[i + 2] as string,
+      });
+    } else if (args.includes("list-spans")) {
+      result = await underlying.traces.listSpans({
+        traceId: args[args.indexOf("list-spans") + 1] as string,
+      });
+    } else result = await underlying.projects.list({ limit: 100 });
+    return { returncode: 0, stdout: JSON.stringify(result), stderr: "" };
+  };
+  const [client] = buildCliOauthClients("https://orq.example/prefix");
+  const source = new OrqTraceSource(client);
+  client._options.hooks?.registerAfterSuccessHook({
+    afterSuccess: async (context, response) =>
+      context.operationID === "TracesQueryOql"
+        ? new Response('{"search":{"data":[],"has_more":false}}')
+        : response,
+  });
+  try {
+    const snapshot = await source.loadAsync({
+      start: new Date("2026-11-09"),
+      end: new Date("2026-11-11"),
+      limit: 2,
+      facets: new FacetSelection(),
+      numeric: new NumericFilters(),
+    });
+    expect(snapshot.traces).toHaveLength(1);
+    expect(snapshot.traces[0]?.traceId).toBe("t");
+    expect(snapshot.traces[0]?.project).toBe("Project");
+    expect(snapshot.traces[0]?.messages).toEqual([
+      { role: "user", content: "u" },
+      { role: "assistant", content: "a" },
+    ]);
+  } finally {
+    source.close();
+  }
+});
+
+it("cancels an active CLI child through its request signal", async () => {
+  const controller = new AbortController();
+  const pending = original.runAsync(
+    [
+      process.execPath,
+      "-e",
+      "process.on('SIGTERM',()=>{});setInterval(()=>{},1000)",
+    ],
+    { env: { PATH: process.env.PATH ?? "" }, signal: controller.signal },
+  );
+  const timer = setTimeout(() => controller.abort(), 30);
+  try {
+    await expect(pending).rejects.toThrow();
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
+it("does not hide structured response-parser failures", async () => {
+  fakeAsync('{"choices":[{"message":{"content":"broken"}}]}');
+  const [, client] = buildCliOauthClients();
+  await expect(
+    client.chat.completions.parse({
+      responseParser: () => {
+        throw new Error("schema mismatch");
+      },
+    }),
+  ).rejects.toThrow("schema mismatch");
+});
+
+it("checks OAuth identity asynchronously without blocking timers", async () => {
+  cliProcess.runAsync = (_args, options) =>
+    original.runAsync(
+      [
+        process.execPath,
+        "-e",
+        "setTimeout(()=>console.log(JSON.stringify({authenticated:true,user_id:'async-user'})),50)",
+      ],
+      options,
+    );
+  const pending = oauthSubject("https://my.orq.ai");
+  let heartbeat = false;
+  const timer = setTimeout(() => {
+    heartbeat = true;
+  }, 5);
+  try {
+    expect((await pending).user_id).toBe("async-user");
+    expect(heartbeat).toBe(true);
+  } finally {
+    clearTimeout(timer);
+  }
+});
+
+it("checks non-ok OAuth sessions concurrently", async () => {
+  const waiting: (() => void)[] = [];
+  cliProcess.runAsync = async (args, options) => {
+    calls.push({ args, options });
+    if (args.includes("sessions"))
+      return {
+        returncode: 0,
+        stderr: "",
+        stdout: JSON.stringify({
+          sessions: [
+            { host: "one", server: "https://one.example", status: "refresh" },
+            { host: "two", server: "https://two.example", status: "refresh" },
+          ],
+        }),
+      };
+    await new Promise<void>((done) => {
+      waiting.push(done);
+      if (waiting.length === 2) for (const release of waiting) release();
+    });
+    return {
+      returncode: 0,
+      stderr: "",
+      stdout: JSON.stringify({ authenticated: true }),
+    };
+  };
+  const sessions = await listOauthSessions();
+  expect(sessions.map((session) => session.status)).toEqual(["valid", "valid"]);
+  expect(calls).toHaveLength(3);
 });

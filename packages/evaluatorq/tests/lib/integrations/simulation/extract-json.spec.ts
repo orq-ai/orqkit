@@ -87,8 +87,9 @@ describe("extractJsonFromResponse", () => {
     });
   });
 
-  test("skips an invalid bracket pair for a later valid one", () => {
-    expect(extractJsonFromResponse("Note {x}: [1, 2]")).toBe("[1, 2]");
+  test("preserves the first outer delimiter when its content is invalid", () => {
+    expect(extractJsonFromResponse("Note {x}: [1, 2]")).toBe("{x}");
+    expect(extractJsonFromResponse('Note [x]: {"a": 1}')).toBe("[x]");
   });
 
   test("returns the invalid candidate when no pair is valid", () => {

@@ -73,9 +73,11 @@ describe.skipIf(!python)("Python loads TS-written files", () => {
     const result = spawnSync(
       python as string,
       ["-c", LOADER, JSON.stringify(pairs)],
-      { encoding: "utf8" },
+      { encoding: "utf8", timeout: 30_000 },
     );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout.trim().split("\n")).toHaveLength(pairs.length);
-  });
+  }, 30_000);
 });
