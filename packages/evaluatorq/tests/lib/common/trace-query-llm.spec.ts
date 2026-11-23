@@ -172,6 +172,17 @@ test("compiler uses Responses strict wire format and preserves its complete inpu
   expect(text.format.strict).toBe(true);
   expect(text.format.schema).toMatchObject({ additionalProperties: false });
 });
+test("compiler retries a naive model time as an invalid plan", async () => {
+  script = [
+    response({ ...wire, start: "2026-11-01T12:00:00" }),
+    response({ ...wire, start: "2026-11-01T12:00:00Z" }),
+  ];
+  const result = await compileQuery(client(), model, "concern", { now });
+  expect(requests).toHaveLength(2);
+  expect(result.time?.start).toBe("2026-11-01T12:00:00Z");
+  expect(result.usages).toHaveLength(2);
+  expect(JSON.stringify(requests[1]?.body.input)).toContain("timezone");
+});
 test("compiler corrects an invalid plan once and retains each billed usage", async () => {
   script = [
     response({

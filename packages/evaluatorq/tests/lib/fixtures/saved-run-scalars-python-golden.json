@@ -1,0 +1,267 @@
+{
+  "source": "evaluatorq 1.85.0 datetime and bool field annotations, pydantic 2.14.4",
+  "datetimes": [
+    {
+      "input": "2026-11-23T12:34:56.123456",
+      "expected": "2026-11-23T12:34:56.123456"
+    },
+    {
+      "input": "2026-11-23",
+      "expected": "2026-11-23T00:00:00"
+    },
+    {
+      "input": "2026-11-23 12:34",
+      "expected": "2026-11-23T12:34:00"
+    },
+    {
+      "input": "2026-11-23t12:34:56z",
+      "expected": "2026-11-23T12:34:56Z"
+    },
+    {
+      "input": "2026-11-23T12:34:56+0230",
+      "expected": "2026-11-23T12:34:56+02:30"
+    },
+    {
+      "input": "2026-11-23T12:34:56.123456789",
+      "expected": "2026-11-23T12:34:56.123456"
+    },
+    {
+      "input": "2026-11-23T12:34:56.123456+02:00",
+      "expected": "2026-11-23T12:34:56.123456+02:00"
+    },
+    {
+      "input": "2026-11-23T12:34:56.123Z",
+      "expected": "2026-11-23T12:34:56.123000Z"
+    },
+    {
+      "input": "2026-11-23T12:34:56.000Z",
+      "expected": "2026-11-23T12:34:56Z"
+    },
+    {
+      "input": 1795437296,
+      "expected": "2026-11-23T12:34:56Z"
+    },
+    {
+      "input": 1795437296123,
+      "expected": "2026-11-23T12:34:56.123000Z"
+    },
+    {
+      "input": "1795437296",
+      "expected": "2026-11-23T12:34:56Z"
+    },
+    {
+      "input": "20261123",
+      "expected": "1970-08-23T12:05:23Z"
+    },
+    {
+      "input": 1.23456789,
+      "expected": "1970-01-01T00:00:01.234568Z"
+    },
+    {
+      "input": -1.23456789,
+      "expected": "1969-12-31T23:59:58.765432Z"
+    },
+    {
+      "input": 1.9999999,
+      "expected": "1970-01-01T00:00:02Z"
+    },
+    {
+      "input": 20000000001,
+      "expected": "1970-08-20T11:33:20.001000Z"
+    },
+    {
+      "input": null,
+      "error": true
+    },
+    {
+      "input": true,
+      "error": true
+    },
+    {
+      "input": "2026-02-30",
+      "error": true
+    },
+    {
+      "input": " 2026-11-23",
+      "error": true
+    },
+    {
+      "input": "2026-W48-1",
+      "error": true
+    },
+    {
+      "input": "1e3",
+      "error": true
+    },
+    {
+      "input": "2026-11-23X12:34:56",
+      "error": true
+    },
+    {
+      "input": "2026-11-23T12:34:56+01:02:03",
+      "error": true
+    },
+    {
+      "input": -1.2,
+      "expected": "1969-12-31T23:59:58.800000Z"
+    },
+    {
+      "input": "-1.2",
+      "expected": "1969-12-31T23:59:58.800000Z"
+    },
+    {
+      "input": -0.2,
+      "expected": "1969-12-31T23:59:59.800000Z"
+    },
+    {
+      "input": "-.2",
+      "expected": "1969-12-31T23:59:59.800000Z"
+    },
+    {
+      "input": ".5",
+      "expected": "1970-01-01T00:00:00.500000Z"
+    },
+    {
+      "input": "1.",
+      "expected": "1970-01-01T00:00:01Z"
+    },
+    {
+      "input": " 1.2 ",
+      "error": true
+    },
+    {
+      "input": "+1.2",
+      "expected": "1970-01-01T00:00:01.200000Z"
+    },
+    {
+      "input": "-0.000001",
+      "expected": "1969-12-31T23:59:59.999999Z"
+    },
+    {
+      "input": -20000000000.1,
+      "expected": "1969-05-14T12:26:39.999900Z"
+    },
+    {
+      "input": -20000000001.1,
+      "expected": "1969-05-14T12:26:39.998900Z"
+    },
+    {
+      "input": -1.0000005,
+      "expected": "1969-12-31T23:59:58.999999Z"
+    },
+    {
+      "input": "1.0000005",
+      "expected": "1970-01-01T00:00:01.000001Z"
+    },
+    {
+      "input": "2026-11-23T12:34+02",
+      "error": true
+    },
+    {
+      "input": "2026-11-23T12:34:56+01:90",
+      "error": true
+    },
+    {
+      "input": "2026-11-23T12:34:56-00:99",
+      "error": true
+    },
+    {
+      "input": "2026-11-23T12:34:56+25:00",
+      "error": true
+    }
+  ],
+  "booleans": [
+    {
+      "input": true,
+      "expected": true
+    },
+    {
+      "input": false,
+      "expected": false
+    },
+    {
+      "input": 0,
+      "expected": false
+    },
+    {
+      "input": 1,
+      "expected": true
+    },
+    {
+      "input": 0.0,
+      "expected": false
+    },
+    {
+      "input": 1.0,
+      "expected": true
+    },
+    {
+      "input": "yes",
+      "expected": true
+    },
+    {
+      "input": "YES",
+      "expected": true
+    },
+    {
+      "input": "no",
+      "expected": false
+    },
+    {
+      "input": "on",
+      "expected": true
+    },
+    {
+      "input": "off",
+      "expected": false
+    },
+    {
+      "input": "t",
+      "expected": true
+    },
+    {
+      "input": "F",
+      "expected": false
+    },
+    {
+      "input": "y",
+      "expected": true
+    },
+    {
+      "input": "n",
+      "expected": false
+    },
+    {
+      "input": "true",
+      "expected": true
+    },
+    {
+      "input": "False",
+      "expected": false
+    },
+    {
+      "input": "0",
+      "expected": false
+    },
+    {
+      "input": "1",
+      "expected": true
+    },
+    {
+      "input": null,
+      "error": true
+    },
+    {
+      "input": 2,
+      "error": true
+    },
+    {
+      "input": " yes ",
+      "error": true
+    },
+    {
+      "input": "enabled",
+      "error": true
+    }
+  ]
+}

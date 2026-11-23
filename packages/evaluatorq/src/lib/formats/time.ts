@@ -168,3 +168,45 @@ export function parseIso(value: string): ParsedIso {
   }
   throw new RangeError("Invalid ISO 8601 datetime");
 }
+
+export function parseSavedDateTime(value: unknown): string {
+  if (value instanceof Date) value = value.toISOString();
+  if (
+    typeof value === "number" ||
+    (typeof value === "string" && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value))
+  ) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric))
+      throw new RangeError("Invalid saved datetime");
+    const milliseconds =
+      Math.abs(numeric) > 20_000_000_000
+        ? Math.abs(numeric)
+        : Math.abs(numeric) * 1000;
+    const wholeMilliseconds = Math.floor(milliseconds);
+    const microseconds =
+      (BigInt(wholeMilliseconds) * 1000n +
+        BigInt(Math.round((milliseconds - wholeMilliseconds) * 1000))) *
+      (numeric < 0 ? -1n : 1n);
+    const wholeSeconds =
+      microseconds >= 0n
+        ? microseconds / 1000000n
+        : (microseconds - 999999n) / 1000000n;
+    const instant = new Date(Number(wholeSeconds) * 1000);
+    if (
+      Number.isNaN(instant.getTime()) ||
+      instant.getUTCFullYear() < 1 ||
+      instant.getUTCFullYear() > 9999
+    )
+      throw new RangeError("Invalid saved datetime");
+    const fraction = Number(microseconds - wholeSeconds * 1000000n);
+    return `${instant.toISOString().slice(0, 19)}${fraction ? `.${String(fraction).padStart(6, "0")}` : ""}Z`;
+  }
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}(?:[Tt ]\d{2}:\d{2}(?::\d{2}(?:[.,]\d+)?)?(?:[Zz]|[+-](?:[01]\d|2[0-3]):?[0-5]\d)?)?$/.test(
+      value,
+    )
+  )
+    throw new RangeError("Invalid saved datetime");
+  return parseIso(value).iso.replace(/\+00:00$/, "Z");
+}

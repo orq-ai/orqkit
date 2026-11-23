@@ -21,7 +21,10 @@ function dropNullDefaults(node: unknown): unknown {
   }
   return Object.fromEntries(
     Object.entries(node).flatMap(([key, value]) =>
-      key === "default" && value === null
+      (key === "default" && value === null) ||
+      (key === "id" &&
+        typeof value === "string" &&
+        typeof (node as Record<string, unknown>).type === "string")
         ? []
         : [[key, dropNullDefaults(value)]],
     ),

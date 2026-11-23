@@ -20,6 +20,7 @@ import {
   type Usage,
   UsageSchema,
 } from "../../contracts.js";
+import { parseSavedDateTime } from "../../formats/time.js";
 import { extractSingleDatapoint } from "./datapoint-io.js";
 import type {
   Datapoint,
@@ -224,7 +225,13 @@ export function parseSimulationResult(raw: unknown): StoredSimulationResult {
 }
 const RunSchema = z.object({
   runName: z.string(),
-  createdAt: z.string().datetime({ offset: true }),
+  createdAt: z.preprocess((value) => {
+    try {
+      return parseSavedDateTime(value);
+    } catch {
+      return undefined;
+    }
+  }, z.string()),
   mode: z.enum(["run", "simulate", "generate"]),
   targetKind: z.enum([
     "orq_agent",

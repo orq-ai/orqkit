@@ -34,6 +34,43 @@ const sampleDatapoint = {
 const callback = async () => "response";
 
 describe("wrapSimulationAgent", () => {
+  test("counts generated openers per row and writes canonical per-turn usage", async () => {
+    const { client } = makeFakeClient({ firstMessage: () => "opener" });
+    const job = wrapSimulationAgent({
+      client,
+      targetCallback: callback,
+      maxTurns: 1,
+    });
+    try {
+      const rows = await Promise.all(
+        [0, 1].map((row) =>
+          job(
+            { inputs: { persona: samplePersona, scenario: sampleScenario } },
+            row,
+          ),
+        ),
+      );
+      for (const row of rows) {
+        const output = row.output as {
+          usage: { total_tokens: number };
+          metadata: {
+            turn_metrics: {
+              token_usage: { input_tokens: number; total_tokens: number };
+              usage?: unknown;
+            }[];
+          };
+        };
+        expect(output.usage.total_tokens).toBe(7);
+        expect(output.metadata.turn_metrics[0]?.token_usage).toMatchObject({
+          input_tokens: 3,
+          total_tokens: 5,
+        });
+        expect(output.metadata.turn_metrics[0]).not.toHaveProperty("usage");
+      }
+    } finally {
+      await job.close();
+    }
+  });
   test("uses a first_message given next to persona + scenario", async () => {
     const { client, requests } = makeFakeClient();
     const seen: string[] = [];
