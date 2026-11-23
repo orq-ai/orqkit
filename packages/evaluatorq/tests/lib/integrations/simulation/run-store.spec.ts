@@ -648,3 +648,21 @@ it("persists the uploaded experiment link without changing returned results", as
     else process.env.ORQ_BASE_URL = before;
   }
 });
+
+const savedValues = (
+  await import("../../fixtures/saved-run-scalars-python-golden.json", {
+    with: { type: "json" },
+  })
+).default;
+for (const [index, row] of savedValues.datetimes.entries())
+  it(`simulation accepts pinned datetime shape ${index}`, () => {
+    const load = () =>
+      new SimulationRun({ ...fixtures.run, created_at: row.input });
+    if (row.error) expect(load).toThrow();
+    else expect(load().createdAt).toBe(row.expected as string);
+  });
+it("simulation still requires a creation time", () => {
+  const raw = { ...fixtures.run } as Record<string, unknown>;
+  delete raw.created_at;
+  expect(() => new SimulationRun(raw)).toThrow();
+});

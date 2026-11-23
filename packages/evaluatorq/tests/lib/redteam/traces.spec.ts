@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, spyOn } from "bun:test";
+import { spawnSync } from "node:child_process";
 
 import {
   AgentResponse,
@@ -63,7 +64,7 @@ for (const [index, fixture] of goldens.seeds.entries())
       fixture.expected,
     );
   });
-it("produces camelCase seed rows, retains structured messages and does not modify a trace", async () => {
+it("produces Python-compatible seed metadata, retains structured messages and does not modify a trace", async () => {
   const trace = new Trace({
     traceId: "trace",
     inputMessages: [
@@ -85,8 +86,8 @@ it("produces camelCase seed rows, retains structured messages and does not modif
   if (!row) throw new Error("Missing seed row");
   expect(row.inputs).toMatchObject({
     sourceTraceId: "trace",
-    traceStartFrom: "last_assistant",
-    traceSeedMessages: [
+    trace_start_from: "last_assistant",
+    trace_seed_messages: [
       { role: "system", content: "System" },
       { role: "user", content: [{ type: "input_text", text: "Hi" }] },
       { role: "assistant", content: "Hello" },
@@ -96,7 +97,35 @@ it("produces camelCase seed rows, retains structured messages and does not modif
   expect(parseTraceSeed(row.inputs, { label: "row" })[0]).toEqual(
     trace.messages,
   );
-  expect(row.inputs).not.toHaveProperty("trace_seed_messages");
+  expect(row.inputs).not.toHaveProperty("traceSeedMessages");
+  if (process.env.EVALUATORQ_PYTHON) {
+    const checked = spawnSync(
+      process.env.EVALUATORQ_PYTHON,
+      [
+        "-c",
+        `
+import json, sys
+from evaluatorq.redteam.traces import parse_trace_seed
+messages, start = parse_trace_seed(json.loads(sys.argv[1]), label="TS row")
+assert len(messages) == 3 and start == "last_assistant"
+print("Python accepted TS trace seed")
+`,
+        JSON.stringify(row.inputs),
+      ],
+      { encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024 },
+    );
+    expect(checked.status, checked.stderr).toBe(0);
+    expect(checked.stdout).toContain("Python accepted TS trace seed");
+  }
+  expect(
+    parseTraceSeed(
+      {
+        traceSeedMessages: row.inputs.trace_seed_messages,
+        traceStartFrom: row.inputs.trace_start_from,
+      },
+      { label: "legacy" },
+    ),
+  ).toEqual(parseTraceSeed(row.inputs, { label: "row" }));
 });
 it("skips import failures and unseedable traces but fails when no seed rows remain", async () => {
   const failed = new Trace({ traceId: "bad", importError: "unreadable" }),

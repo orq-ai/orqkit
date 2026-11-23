@@ -6,6 +6,7 @@
 
 import type OpenAI from "openai";
 
+import { addUsage } from "../../contracts.js";
 import type { DataPoint, Job, Output } from "../../types.js";
 import {
   resolveSimulationTarget,
@@ -20,6 +21,7 @@ import type { SimulationRunnerConfig } from "./runner/simulation.js";
 import { SimulationRunner } from "./runner/simulation.js";
 import { rememberSimulationResult } from "./scorer-adapter.js";
 import type { TargetCallback } from "./types.js";
+import { usageDetails } from "./usage.js";
 
 /**
  * Options for creating a simulation job.
@@ -126,17 +128,17 @@ export function wrapSimulationAgent(
     client,
   });
 
-  let firstMessages: FirstMessageGenerator | undefined;
-  const getFirstMessages = () => {
-    firstMessages ??= new FirstMessageGenerator({
-      model,
-      client,
-      llmConfig: options.llmConfig,
-    });
-    return firstMessages;
-  };
-
   const wrapped: Job = async (data: DataPoint, _row: number) => {
+    let firstMessages: FirstMessageGenerator | undefined;
+    const getFirstMessages = () => {
+      firstMessages ??= new FirstMessageGenerator({
+        model,
+        client,
+        llmConfig: options.llmConfig,
+      });
+      return firstMessages;
+    };
+
     const input = extractSingleInput(data);
 
     const result = await runSimulationInput(
@@ -146,6 +148,20 @@ export function wrapSimulationAgent(
       getFirstMessages,
       timeout ?? 0,
     );
+    const generationUsage = (
+      firstMessages as FirstMessageGenerator | undefined
+    )?.getUsage();
+    if (generationUsage) {
+      result.usage = addUsage(
+        usageDetails(result.token_usage, result.usage),
+        generationUsage,
+      );
+      result.token_usage = {
+        prompt_tokens: result.usage.inputTokens,
+        completion_tokens: result.usage.outputTokens,
+        total_tokens: result.usage.totalTokens,
+      };
+    }
 
     const output = toOpenResponses(
       result,

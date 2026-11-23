@@ -53,8 +53,8 @@ test("local snapshot resolves complete traces and records the raw file hash", as
     );
     expect(full.echo).toMatchObject({
       mode: "snapshot",
-      nTraces: 1,
-      nProjectionTruncated: 0,
+      n_traces: 1,
+      n_projection_truncated: 0,
     });
     await expect(
       resolvePopulation(new InsightsPopulation(), {
@@ -67,11 +67,14 @@ test("local snapshot resolves complete traces and records the raw file hash", as
     expect(JSON.stringify(population.traces)).toContain("full example");
     expect(population.echo).toMatchObject({
       mode: "snapshot",
-      snapshotPath: path,
-      snapshotSha256: createHash("sha256").update(raw).digest("hex"),
+      snapshot_path: path,
+      snapshot_sha256: createHash("sha256").update(raw).digest("hex"),
       limit: 1,
     });
     expect(population.compiled).toBeNull();
+    expect(Object.keys(full.echo).some((key) => /[A-Z]/.test(key))).toBe(false);
+    expect(full.echo).toHaveProperty("classifier_state_chars");
+    expect(full.echo).toHaveProperty("classifier_question_reserve");
     const coverage = await projectionCoverage(population.traces, {
       traceInputChars: 10000,
       classifierModel: "test/model",
@@ -201,8 +204,8 @@ test("Finder exports preserve pinned population and reject missing windows", asy
   expect(resolved.traces).toEqual([]);
   expect(resolved.echo).toMatchObject({
     mode: "export",
-    nMatchedIds: 0,
-    nMissingExportIds: 0,
+    n_matched_ids: 0,
+    n_missing_export_ids: 0,
   });
   expect(calls).toBe(0);
   const missingWindow = InsightsPopulation.fromFinderExport("finder.json", {
@@ -220,6 +223,9 @@ test("Finder exports preserve pinned population and reject missing windows", asy
     }),
   });
   const absent = await resolveExportPopulation(pinned, client);
-  expect(absent.echo).toMatchObject({ nMatchedIds: 1, nMissingExportIds: 1 });
+  expect(absent.echo).toMatchObject({
+    n_matched_ids: 1,
+    n_missing_export_ids: 1,
+  });
   expect(calls).toBe(1);
 });

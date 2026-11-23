@@ -24,8 +24,8 @@ export const TraceStart = Object.freeze({
 } as const);
 export type TraceStart = (typeof TraceStart)[keyof typeof TraceStart];
 export const TraceStartSchema = z.enum(TraceStart);
-export const TRACE_SEED_MESSAGES_KEY = "traceSeedMessages";
-export const TRACE_START_FROM_KEY = "traceStartFrom";
+export const TRACE_SEED_MESSAGES_KEY = "trace_seed_messages";
+export const TRACE_START_FROM_KEY = "trace_start_from";
 function messageDump(message: Message): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(message).filter(([, value]) => value !== null),
@@ -97,7 +97,7 @@ export function parseTraceSeed(
 ): [Message[], TraceStart] | [null, null] {
   const hasMessages =
     Object.hasOwn(inputs, TRACE_SEED_MESSAGES_KEY) ||
-    Object.hasOwn(inputs, "trace_seed_messages");
+    Object.hasOwn(inputs, "traceSeedMessages");
   if (!hasMessages) {
     if (options.required ?? true)
       throw new Error(
@@ -107,7 +107,7 @@ export function parseTraceSeed(
   }
   const rawMessages = Object.hasOwn(inputs, TRACE_SEED_MESSAGES_KEY)
     ? inputs[TRACE_SEED_MESSAGES_KEY]
-    : inputs.trace_seed_messages;
+    : inputs.traceSeedMessages;
   if (!Array.isArray(rawMessages) || !rawMessages.length)
     throw new Error(
       `${options.label}.${TRACE_SEED_MESSAGES_KEY} must be a non-empty list of Message mappings.`,
@@ -131,14 +131,14 @@ export function parseTraceSeed(
   });
   if (
     !Object.hasOwn(inputs, TRACE_START_FROM_KEY) &&
-    !Object.hasOwn(inputs, "trace_start_from")
+    !Object.hasOwn(inputs, "traceStartFrom")
   )
     throw new Error(
       `${options.label} has ${TRACE_SEED_MESSAGES_KEY} but no ${TRACE_START_FROM_KEY}; it is never defaulted because this would silently drop imported context.`,
     );
   const rawStart = Object.hasOwn(inputs, TRACE_START_FROM_KEY)
     ? inputs[TRACE_START_FROM_KEY]
-    : inputs.trace_start_from;
+    : inputs.traceStartFrom;
   const parsedStart = TraceStartSchema.safeParse(rawStart);
   if (!parsedStart.success)
     throw new Error(

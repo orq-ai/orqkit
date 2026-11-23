@@ -156,8 +156,12 @@ export function sumUsage(usages: Usage[]): Usage | null {
 
 function counts(values: VerdictValue[]): Map<VerdictValue, number> {
   const tally = new Map<VerdictValue, number>();
+  const representatives = new Map<VerdictValue, VerdictValue>();
   for (const value of values) {
-    tally.set(value, (tally.get(value) ?? 0) + 1);
+    const key = typeof value === "boolean" ? Number(value) : value;
+    const representative = representatives.get(key) ?? value;
+    representatives.set(key, representative);
+    tally.set(representative, (tally.get(representative) ?? 0) + 1);
   }
   return tally;
 }

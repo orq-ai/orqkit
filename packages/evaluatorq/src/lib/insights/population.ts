@@ -15,6 +15,7 @@ import {
   serializedQuestionChars,
 } from "../common/model-input.js";
 import { roleModel } from "../common/model-roles.js";
+import { camelToSnake } from "../common/python-json.js";
 import {
   ensureTraceDocument,
   type TraceDocument,
@@ -46,6 +47,15 @@ import { matchKey, prepareClassifierState } from "./labeling.js";
 import { ensureUniqueTraceIds, type InsightsPopulation } from "./models.js";
 import { buildSummaryPromptWithCoverage } from "./summarize.js";
 import type { UsageLedger } from "./usage.js";
+
+function populationFields(fields: object): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(JSON.parse(JSON.stringify(fields))).map(([key, value]) => [
+      camelToSnake(key),
+      value,
+    ]),
+  );
+}
 
 export class PopulationError extends Error {
   override readonly name = "PopulationError";
@@ -86,12 +96,12 @@ export async function resolveSnapshot(
   return {
     traces,
     compiled: null,
-    echo: {
+    echo: populationFields({
       mode: "snapshot",
       snapshotPath: path,
       snapshotSha256: sha256,
       limit: traces.length,
-    },
+    }),
     nScanned: traces.length,
   };
 }
@@ -265,21 +275,15 @@ export async function resolveFilterPopulation(
   return {
     traces,
     compiled: null,
-    echo: {
+    echo: populationFields({
       mode: "filter",
       query: null,
-      facets: JSON.parse(JSON.stringify(population.facets)) as Record<
-        string,
-        unknown
-      >,
-      numeric: JSON.parse(JSON.stringify(population.numeric)) as Record<
-        string,
-        unknown
-      >,
+      facets: populationFields(population.facets) as Record<string, unknown>,
+      numeric: populationFields(population.numeric) as Record<string, unknown>,
       start,
       end,
       limit: population.limit,
-    },
+    }),
     nScanned: traces.length,
   };
 }
@@ -347,18 +351,18 @@ export async function resolveExportPopulation(
   return {
     traces,
     compiled: null,
-    echo: {
+    echo: populationFields({
       mode: "export",
       query: exported.query,
       finderExport: resolve(population.finderExport),
-      facets: JSON.parse(JSON.stringify(facets)),
-      numeric: JSON.parse(JSON.stringify(numeric)),
+      facets: populationFields(facets),
+      numeric: populationFields(numeric),
       start,
       end,
       limit,
       nMatchedIds: exported.matchedTraceIds.length,
       nMissingExportIds: missing,
-    },
+    }),
     nScanned: loaded.length,
   };
 }
@@ -436,7 +440,7 @@ export async function resolveQueryPopulation(
   return {
     traces,
     compiled: plan.dimensions,
-    echo: {
+    echo: populationFields({
       mode: "query",
       query: population.query,
       filterSelection,
@@ -454,10 +458,10 @@ export async function resolveQueryPopulation(
         task: dimension.task.instructions,
         selection: dimension.selection,
       })),
-      facets: JSON.parse(JSON.stringify(effective.facets)),
-      generatedFacets: JSON.parse(JSON.stringify(plan.generatedFacets)),
-      numeric: JSON.parse(JSON.stringify(effective.numeric)),
-      generatedNumeric: JSON.parse(JSON.stringify(plan.generatedNumeric)),
+      facets: populationFields(effective.facets),
+      generatedFacets: populationFields(plan.generatedFacets),
+      numeric: populationFields(effective.numeric),
+      generatedNumeric: populationFields(plan.generatedNumeric),
       start: effective.start,
       end: effective.end,
       timeOrigin: effective.timeOrigin,
@@ -468,7 +472,7 @@ export async function resolveQueryPopulation(
       provenance: { ...plan.provenance },
       limit: effective.limit,
       filterSelectionError: plan.selectorError,
-    },
+    }),
     nScanned: traces.length,
   };
 }
@@ -561,7 +565,7 @@ export async function resolvePopulation(
       classifierModel: options.labelClassifierModel,
       classifierQuestions: questions,
     });
-    Object.assign(result.echo, coverage);
+    Object.assign(result.echo, populationFields(coverage));
     if (coverage.nProjectionTruncated)
       console.warn(
         `Insights ${String(result.echo.mode)} population has ${coverage.nProjectionTruncated} of ${result.traces.length} traces with shortened summary or classifier input`,
