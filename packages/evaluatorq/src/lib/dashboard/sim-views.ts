@@ -1,10 +1,24 @@
+import { loadTypedReport } from "../common/dashboard/library.js";
 import {
   entryOutcome,
   esc,
   statusBadge,
 } from "../common/reports/html-helpers.js";
 import { pyFixed } from "../common/reports/number-format.js";
+import {
+  renderTranscriptFragment,
+  type SimulationEntryView,
+} from "../common/reports/sim-detail.js";
 import { codepointCompare, pythonStrip } from "../common/sanitize.js";
+import {
+  simulationCohortId,
+  simulationIndividualEntries,
+} from "../integrations/simulation/reports/sections.js";
+import type { SimulationRun } from "../integrations/simulation/run-store.js";
+import { applyOrAll, parseSelections } from "./filters.js";
+import { cliSlugRenderScope } from "./orq-workspace.js";
+import { pyInt } from "./pairwise-views.js";
+import { stableSimulationEntries } from "./report-tabs.js";
 import type { SimulationDashboardEntry } from "./simulation-entities.js";
 import {
   singleTraceUrl,
@@ -163,4 +177,100 @@ export async function simulationInteractivePanels(
   entries: readonly Entry[],
 ): Promise<string> {
   return `<section class="sim-interactive-panels"><h2 class="sim-panels-title">Conversations</h2><div id="sim-row-list-${esc(rid)}">${await renderSimulationRowList(rid, entries)}</div></section>`;
+}
+
+export async function loadRun(
+  rid: string,
+  roots: readonly string[],
+): Promise<SimulationRun | null> {
+  const [, value] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  return value;
+}
+
+const htmlResponse = (body: string, status = 200) =>
+  new Response(body, {
+    status,
+    headers: { "content-type": "text/html; charset=utf-8" },
+  });
+
+const missing = () => htmlResponse("Report not found.", 404);
+
+export const simRowListWrapper = (rid: string, inner: string): string =>
+  `<div id="sim-row-list-${esc(rid)}">${inner}</div>`;
+
+export async function simRowListRoute(
+  rid: string,
+  query: URLSearchParams,
+  roots: readonly string[],
+): Promise<Response> {
+  const [status, run] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing();
+  const filtered = applyOrAll(
+    run,
+    "sim",
+    parseSelections(query, "sim"),
+  ) as SimulationRun["results"];
+  const entries = stableSimulationEntries(run, filtered) as unknown as Entry[];
+  const html = await cliSlugRenderScope(() =>
+    renderSimulationRowList(rid, entries, {
+      sort: query.get("sort") ?? "index",
+      direction: query.get("dir") ?? "asc",
+      page: pyInt(query.get("page") ?? "1") ?? 1,
+      pageSize: coerceSimulationPageSize(query.get("size")),
+    }),
+  );
+  return htmlResponse(simRowListWrapper(rid, html));
+}
+
+function entityDomIds(
+  results: SimulationRun["results"],
+  idx: number,
+): [string | null, string | null] {
+  const domId = (kind: "persona" | "scenario"): string | null => {
+    const order = new Map<string, number>();
+    for (const result of results) {
+      const id = simulationCohortId(result, kind);
+      if (!order.has(id)) order.set(id, order.size);
+    }
+    const target = order.get(
+      simulationCohortId(
+        results[idx] as SimulationRun["results"][number],
+        kind,
+      ),
+    );
+    return target === undefined ? null : `${kind}-${target}`;
+  };
+  return [domId("persona"), domId("scenario")];
+}
+
+export async function simTranscriptRoute(
+  rid: string,
+  query: URLSearchParams,
+  roots: readonly string[],
+): Promise<Response> {
+  const raw = query.get("idx");
+  const idx = raw === null ? 0 : (pyInt(raw) ?? -1);
+  const [status, run] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing();
+  const entries = simulationIndividualEntries(run.results);
+  if (!entries.length || idx < 0 || idx >= entries.length) {
+    return htmlResponse(
+      '<p class="sim-empty">No conversation at that index.</p>',
+    );
+  }
+  const [personaEntityId, scenarioEntityId] = entityDomIds(run.results, idx);
+  return htmlResponse(
+    cliSlugRenderScope(() =>
+      renderTranscriptFragment(entries[idx] as unknown as SimulationEntryView, {
+        personaEntityId,
+        scenarioEntityId,
+      }),
+    ),
+  );
 }

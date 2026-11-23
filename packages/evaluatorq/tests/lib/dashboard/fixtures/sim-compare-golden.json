@@ -1,0 +1,1030 @@
+{
+  "runs": {
+    "A": {
+      "run_name": "run-A",
+      "created_at": "2026-11-17T09:01:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 3,
+      "scorer_averages": {
+        "goal_achieved": 0.66,
+        "criteria_met": 0.5
+      },
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi A",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "hello A",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": true,
+          "goal_completion_score": 0.9,
+          "rules_broken": [],
+          "turn_count": 4,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "alice",
+            "scenario": "billing"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": false,
+          "goal_completion_score": 0.2,
+          "rules_broken": [],
+          "turn_count": 6,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "bob",
+            "scenario": "refund"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 2,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "carol",
+            "scenario": "onlyA"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    },
+    "B": {
+      "run_name": "run-B <b>",
+      "created_at": "2026-11-17T09:02:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 3,
+      "scorer_averages": {
+        "goal_achieved": 0.66,
+        "safety": 1.0
+      },
+      "results": [
+        {
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi B",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            },
+            {
+              "role": "assistant",
+              "content": "hello B",
+              "tool_calls": null,
+              "tool_call_id": null,
+              "name": null
+            }
+          ],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": false,
+          "goal_completion_score": 0.4,
+          "rules_broken": [],
+          "turn_count": 5,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "alice",
+            "scenario": "billing"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [],
+          "terminated_by": "max_turns",
+          "reason": "done",
+          "goal_achieved": true,
+          "goal_completion_score": 0.8,
+          "rules_broken": [],
+          "turn_count": 3,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "bob",
+            "scenario": "refund"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        },
+        {
+          "messages": [],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": true,
+          "goal_completion_score": 0.7,
+          "rules_broken": [],
+          "turn_count": 2,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "dave",
+            "scenario": "onlyB"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    },
+    "EA": {
+      "run_name": "empty-A",
+      "created_at": "2026-11-17T09:03:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 0,
+      "scorer_averages": {},
+      "results": [],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    },
+    "EB": {
+      "run_name": "empty-B",
+      "created_at": "2026-11-17T09:04:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 0,
+      "scorer_averages": {},
+      "results": [],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    },
+    "OA": {
+      "run_name": "only-A",
+      "created_at": "2026-11-17T09:05:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 0,
+      "scorer_averages": {
+        "criteria_met": 0.5
+      },
+      "results": [],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    },
+    "NB": {
+      "run_name": "nonempty-B",
+      "created_at": "2026-11-17T09:06:30Z",
+      "mode": "run",
+      "target_kind": "orq_agent",
+      "target": null,
+      "target_model": null,
+      "max_turns": null,
+      "agent_info": null,
+      "orq_base_url": null,
+      "evaluator_names": ["goal_achieved"],
+      "total_results": 1,
+      "scorer_averages": {},
+      "results": [
+        {
+          "messages": [],
+          "terminated_by": "judge",
+          "reason": "done",
+          "goal_achieved": true,
+          "goal_completion_score": 1.0,
+          "rules_broken": [],
+          "turn_count": 1,
+          "token_usage": {
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_tokens": 15,
+            "cached_tokens": 0,
+            "cache_creation_tokens": 0,
+            "cache_creation_1h_tokens": 0,
+            "cache_creation_5m_tokens": 0,
+            "reasoning_tokens": 0,
+            "input_cost": null,
+            "output_cost": null,
+            "total_cost": null,
+            "calls": 0,
+            "priced_calls": 0,
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "cost_usd": null
+          },
+          "token_usage_known": true,
+          "turn_metrics": [],
+          "metadata": {
+            "persona": "alice",
+            "scenario": "billing"
+          },
+          "criteria_results": null,
+          "criteria_verified": null,
+          "evaluator_details": {},
+          "total_turns": null,
+          "thread_id": null,
+          "response_traces": []
+        }
+      ],
+      "datapoints": null,
+      "replay_version": null,
+      "executive_summary": null,
+      "token_usage_total": null,
+      "run_id": null,
+      "experiment_url": null,
+      "recommendations": null,
+      "applied_suggestions": []
+    }
+  },
+  "cases": [
+    {
+      "a": "A",
+      "b": "B",
+      "html": "<header class=\"report-hero\"><p class=\"report-hero-kicker\">Agent Simulation \u00b7 Run comparison</p><h2 class=\"report-hero-title\">run-A <span class=\"cmp-vs\">vs</span> run-B &lt;b&gt;</h2><p class=\"report-hero-sub\">A: run-A \u00b7 2026-11-17 09:01 &nbsp;&nbsp; B: run-B &lt;b&gt; \u00b7 2026-11-17 09:02</p></header><p class=\"cmp-note\">2 matched \u00b7 1 only in A \u00b7 1 only in B.</p><div class=\"cmp-body\"><div class=\"panel\"><div class=\"panel-title\">KPI deltas</div><div class=\"panel-sub\">Headline metrics, B relative to A</div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">67%</div><div class=\"kpi-label\">Goal-achieved \u00b7 +0% vs A</div></div><div class=\"kpi-card kpi-card--fail\"><div class=\"kpi-value\">0.63</div><div class=\"kpi-label\">Mean score \u00b7 -0.07 vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3.3</div><div class=\"kpi-label\">Mean turns \u00b7 -0.7 vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3</div><div class=\"kpi-label\">Conversations \u00b7 3 \u2192 3</div></div></div></div><div class=\"cmp-charts\"><div class=\"panel\"><div class=\"panel-title\">Outcomes</div><div class=\"panel-sub\">Goal rate and mean score \u00b7 A vs B</div><svg data-chart=\"1\"></svg></div><div class=\"panel\"><div class=\"panel-title\">Scorer averages</div><div class=\"panel-sub\">Per-scorer mean \u00b7 shared scorers only</div><svg data-chart=\"2\"></svg><p class=\"cmp-note\">Not compared (measured by one run only): criteria_met, safety</p></div><div class=\"panel\"><div class=\"panel-title\">How conversations ended</div><div class=\"panel-sub\">Terminated-by counts \u00b7 A vs B</div><svg data-chart=\"3\"></svg></div></div><div class=\"panel\"><div class=\"panel-title\">Per-conversation score change</div><div class=\"panel-sub\">B minus A on matched conversations \u00b7 green improved, red regressed</div><svg data-chart=\"4\"></svg></div><div class=\"panel\"><div class=\"panel-title\">All metrics</div><div class=\"panel-sub\">Full A / B / delta breakdown</div><table class=\"cmp-table\"><thead><tr><th>Metric</th><th>run-A</th><th>run-B &lt;b&gt;</th><th>&Delta; (B - A)</th></tr></thead><tbody><tr><td>Conversations</td><td>3</td><td>3</td><td><span class=\"cmp-delta cmp-flat\">0</span></td></tr><tr><td>Goal-achieved rate</td><td>67%</td><td>67%</td><td><span class=\"cmp-delta cmp-flat\">0</span></td></tr><tr><td>Mean goal score</td><td>0.70</td><td>0.63</td><td><span class=\"cmp-delta cmp-down\">&#x25BC; -0.07</span></td></tr><tr><td>Mean turns</td><td>4.0</td><td>3.3</td><td><span class=\"cmp-delta cmp-down\">&#x25BC; -0.7</span></td></tr><tr><td>Scorer: criteria_met</td><td>0.50</td><td>n/a</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Scorer: goal_achieved</td><td>0.66</td><td>0.66</td><td><span class=\"cmp-delta cmp-flat\">0</span></td></tr><tr><td>Scorer: safety</td><td>n/a</td><td>1.00</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Terminated: judge</td><td>3</td><td>2</td><td><span class=\"cmp-delta cmp-down\">&#x25BC; -1</span></td></tr><tr><td>Terminated: max_turns</td><td>0</td><td>1</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +1</span></td></tr></tbody></table></div><div class=\"panel\"><div class=\"panel-title\">Outcome diffs</div><div class=\"panel-sub\">Matched by persona and scenario \u00b7 click a row to compare transcripts</div><table class=\"cmp-table\"><thead><tr><th>Persona</th><th>Scenario</th><th>Goal (A&rarr;B)</th><th>Score (A&rarr;B)</th><th>Turns (A&rarr;B)</th></tr></thead><tbody><tr class=\"cmp-diff-row\" style=\"cursor:pointer\" hx-get=\"/compare/sim/transcript?a=rid-A&b=rid-B&ia=0&ib=0\" hx-target=\"#cmp-transcript-panel\" hx-swap=\"innerHTML\"><td>alice</td><td>billing</td><td>yes &rarr; no <span class=\"cmp-flip\">flip</span></td><td>0.90 &rarr; 0.40 (-0.50)</td><td>4 &rarr; 5 (+1)</td></tr><tr class=\"cmp-diff-row\" style=\"cursor:pointer\" hx-get=\"/compare/sim/transcript?a=rid-A&b=rid-B&ia=1&ib=1\" hx-target=\"#cmp-transcript-panel\" hx-swap=\"innerHTML\"><td>bob</td><td>refund</td><td>no &rarr; yes <span class=\"cmp-flip\">flip</span></td><td>0.20 &rarr; 0.80 (+0.60)</td><td>6 &rarr; 3 (-3)</td></tr></tbody></table><div class=\"cmp-unmatched\"><strong>Only in A</strong><ul><li>carol &middot; onlyA</li></ul></div><div class=\"cmp-unmatched\"><strong>Only in B</strong><ul><li>dave &middot; onlyB</li></ul></div><div id=\"cmp-transcript-panel\" class=\"cmp-transcript-panel\"><p class=\"sim-select-prompt\">Select a matched conversation above to compare transcripts.</p></div></div></div>",
+      "specs": [
+        {
+          "data": {
+            "values": [
+              {
+                "cat": "Goal-achieved rate",
+                "series": "run-A",
+                "value": 0.6666666666666666
+              },
+              {
+                "cat": "Mean goal score",
+                "series": "run-A",
+                "value": 0.7000000000000001
+              },
+              {
+                "cat": "Goal-achieved rate",
+                "series": "run-B <b>",
+                "value": 0.6666666666666666
+              },
+              {
+                "cat": "Mean goal score",
+                "series": "run-B <b>",
+                "value": 0.6333333333333333
+              }
+            ]
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar",
+                "tooltip": true
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "0 to 1"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "color": {
+                  "field": "series",
+                  "type": "nominal",
+                  "legend": {
+                    "title": null
+                  }
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": "datum.value === 0"
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 3,
+                "fontSize": 9,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "0 to 1"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "text": {
+                  "value": "0"
+                }
+              }
+            }
+          ],
+          "width": 420,
+          "height": {
+            "step": 16
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {
+                "cat": "goal_achieved",
+                "series": "run-A",
+                "value": 0.66
+              },
+              {
+                "cat": "goal_achieved",
+                "series": "run-B <b>",
+                "value": 0.66
+              }
+            ]
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar",
+                "tooltip": true
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Average score"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "color": {
+                  "field": "series",
+                  "type": "nominal",
+                  "legend": {
+                    "title": null
+                  }
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": "datum.value === 0"
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 3,
+                "fontSize": 9,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Average score"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "text": {
+                  "value": "0"
+                }
+              }
+            }
+          ],
+          "width": 420,
+          "height": {
+            "step": 16
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {
+                "cat": "judge",
+                "series": "run-A",
+                "value": 3.0
+              },
+              {
+                "cat": "max_turns",
+                "series": "run-A",
+                "value": 0.0
+              },
+              {
+                "cat": "judge",
+                "series": "run-B <b>",
+                "value": 2.0
+              },
+              {
+                "cat": "max_turns",
+                "series": "run-B <b>",
+                "value": 1.0
+              }
+            ]
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar",
+                "tooltip": true
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "color": {
+                  "field": "series",
+                  "type": "nominal",
+                  "legend": {
+                    "title": null
+                  }
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": "datum.value === 0"
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 3,
+                "fontSize": 9,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "text": {
+                  "value": "0"
+                }
+              }
+            }
+          ],
+          "width": 420,
+          "height": {
+            "step": 16
+          }
+        },
+        {
+          "data": {
+            "values": [
+              {
+                "label": "alice/billing",
+                "value": -0.5,
+                "text": "-0.50",
+                "fill": "#d92d20"
+              },
+              {
+                "label": "bob/refund",
+                "value": 0.6000000000000001,
+                "text": "+0.60",
+                "fill": "#2ebd85"
+              }
+            ]
+          },
+          "encoding": {
+            "y": {
+              "field": "label",
+              "type": "nominal",
+              "sort": null,
+              "title": null
+            },
+            "x": {
+              "field": "value",
+              "type": "quantitative",
+              "title": "B minus A (goal score)"
+            }
+          },
+          "width": 420,
+          "height": {
+            "step": 24
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar"
+              },
+              "encoding": {
+                "y": {
+                  "field": "label",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "B minus A (goal score)"
+                },
+                "color": {
+                  "field": "fill",
+                  "type": "nominal",
+                  "scale": null,
+                  "legend": null
+                }
+              }
+            },
+            {
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 4,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "label",
+                  "type": "nominal",
+                  "sort": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative"
+                },
+                "text": {
+                  "field": "text",
+                  "type": "nominal"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "a": "EA",
+      "b": "EB",
+      "html": "<header class=\"report-hero\"><p class=\"report-hero-kicker\">Agent Simulation \u00b7 Run comparison</p><h2 class=\"report-hero-title\">empty-A <span class=\"cmp-vs\">vs</span> empty-B</h2><p class=\"report-hero-sub\">A: empty-A \u00b7 2026-11-17 09:03 &nbsp;&nbsp; B: empty-B \u00b7 2026-11-17 09:04</p></header><p class=\"cmp-note\">0 matched \u00b7 0 only in A \u00b7 0 only in B. <span class=\"cmp-warn\">low overlap (0%) \u2014 the two runs share few (persona, scenario) pairs, so most conversations can't be compared directly.</span></p><div class=\"cmp-body\"><div class=\"panel\"><div class=\"panel-title\">KPI deltas</div><div class=\"panel-sub\">Headline metrics, B relative to A</div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">n/a</div><div class=\"kpi-label\">Goal-achieved \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">n/a</div><div class=\"kpi-label\">Mean score \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">n/a</div><div class=\"kpi-label\">Mean turns \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">0</div><div class=\"kpi-label\">Conversations \u00b7 0 \u2192 0</div></div></div></div><div class=\"cmp-charts\"><div class=\"panel\"><div class=\"panel-title\">Outcomes</div><div class=\"panel-sub\">Goal rate and mean score \u00b7 A vs B</div><p class=\"sim-empty\">No outcome data is available in either run.</p></div><div class=\"panel\"><div class=\"panel-title\">Scorer averages</div><div class=\"panel-sub\">Per-scorer mean \u00b7 shared scorers only</div><p class=\"cmp-note\">No scorer data was measured by both runs.</p></div></div><div class=\"panel\"><div class=\"panel-title\">All metrics</div><div class=\"panel-sub\">Full A / B / delta breakdown</div><table class=\"cmp-table\"><thead><tr><th>Metric</th><th>empty-A</th><th>empty-B</th><th>&Delta; (B - A)</th></tr></thead><tbody><tr><td>Conversations</td><td>0</td><td>0</td><td><span class=\"cmp-delta cmp-flat\">0</span></td></tr><tr><td>Goal-achieved rate</td><td>n/a</td><td>n/a</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean goal score</td><td>n/a</td><td>n/a</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean turns</td><td>n/a</td><td>n/a</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr></tbody></table></div><div class=\"panel\"><div class=\"panel-title\">Outcome diffs</div><div class=\"panel-sub\">Matched by persona and scenario \u00b7 click a row to compare transcripts</div><p class=\"sim-empty\">No conversations matched on (persona, scenario).</p><div id=\"cmp-transcript-panel\" class=\"cmp-transcript-panel\"><p class=\"sim-select-prompt\">Select a matched conversation above to compare transcripts.</p></div></div></div>",
+      "specs": []
+    },
+    {
+      "a": "EA",
+      "b": "NB",
+      "html": "<header class=\"report-hero\"><p class=\"report-hero-kicker\">Agent Simulation \u00b7 Run comparison</p><h2 class=\"report-hero-title\">empty-A <span class=\"cmp-vs\">vs</span> nonempty-B</h2><p class=\"report-hero-sub\">A: empty-A \u00b7 2026-11-17 09:03 &nbsp;&nbsp; B: nonempty-B \u00b7 2026-11-17 09:06</p></header><p class=\"cmp-note\">0 matched \u00b7 0 only in A \u00b7 1 only in B. <span class=\"cmp-warn\">low overlap (0%) \u2014 the two runs share few (persona, scenario) pairs, so most conversations can't be compared directly.</span></p><div class=\"cmp-body\"><div class=\"panel\"><div class=\"panel-title\">KPI deltas</div><div class=\"panel-sub\">Headline metrics, B relative to A</div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">100%</div><div class=\"kpi-label\">Goal-achieved \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">1.00</div><div class=\"kpi-label\">Mean score \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">1.0</div><div class=\"kpi-label\">Mean turns \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">1</div><div class=\"kpi-label\">Conversations \u00b7 0 \u2192 1</div></div></div></div><div class=\"cmp-charts\"><div class=\"panel\"><div class=\"panel-title\">Outcomes</div><div class=\"panel-sub\">Goal rate and mean score \u00b7 A vs B</div><p class=\"sim-empty\">Outcome data requires entries from both runs.</p></div><div class=\"panel\"><div class=\"panel-title\">Scorer averages</div><div class=\"panel-sub\">Per-scorer mean \u00b7 shared scorers only</div><p class=\"cmp-note\">No scorer data was measured by both runs.</p></div><div class=\"panel\"><div class=\"panel-title\">How conversations ended</div><div class=\"panel-sub\">Terminated-by counts \u00b7 A vs B</div><svg data-chart=\"1\"></svg></div></div><div class=\"panel\"><div class=\"panel-title\">All metrics</div><div class=\"panel-sub\">Full A / B / delta breakdown</div><table class=\"cmp-table\"><thead><tr><th>Metric</th><th>empty-A</th><th>nonempty-B</th><th>&Delta; (B - A)</th></tr></thead><tbody><tr><td>Conversations</td><td>0</td><td>1</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +1</span></td></tr><tr><td>Goal-achieved rate</td><td>n/a</td><td>100%</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean goal score</td><td>n/a</td><td>1.00</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean turns</td><td>n/a</td><td>1.0</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Terminated: judge</td><td>0</td><td>1</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +1</span></td></tr></tbody></table></div><div class=\"panel\"><div class=\"panel-title\">Outcome diffs</div><div class=\"panel-sub\">Matched by persona and scenario \u00b7 click a row to compare transcripts</div><p class=\"sim-empty\">No conversations matched on (persona, scenario).</p><div class=\"cmp-unmatched\"><strong>Only in B</strong><ul><li>alice &middot; billing</li></ul></div><div id=\"cmp-transcript-panel\" class=\"cmp-transcript-panel\"><p class=\"sim-select-prompt\">Select a matched conversation above to compare transcripts.</p></div></div></div>",
+      "specs": [
+        {
+          "data": {
+            "values": [
+              {
+                "cat": "judge",
+                "series": "empty-A",
+                "value": 0.0
+              },
+              {
+                "cat": "judge",
+                "series": "nonempty-B",
+                "value": 1.0
+              }
+            ]
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar",
+                "tooltip": true
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "color": {
+                  "field": "series",
+                  "type": "nominal",
+                  "legend": {
+                    "title": null
+                  }
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": "datum.value === 0"
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 3,
+                "fontSize": 9,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "text": {
+                  "value": "0"
+                }
+              }
+            }
+          ],
+          "width": 420,
+          "height": {
+            "step": 16
+          }
+        }
+      ]
+    },
+    {
+      "a": "OA",
+      "b": "B",
+      "html": "<header class=\"report-hero\"><p class=\"report-hero-kicker\">Agent Simulation \u00b7 Run comparison</p><h2 class=\"report-hero-title\">only-A <span class=\"cmp-vs\">vs</span> run-B &lt;b&gt;</h2><p class=\"report-hero-sub\">A: only-A \u00b7 2026-11-17 09:05 &nbsp;&nbsp; B: run-B &lt;b&gt; \u00b7 2026-11-17 09:02</p></header><p class=\"cmp-note\">0 matched \u00b7 0 only in A \u00b7 3 only in B. <span class=\"cmp-warn\">low overlap (0%) \u2014 the two runs share few (persona, scenario) pairs, so most conversations can't be compared directly.</span></p><div class=\"cmp-body\"><div class=\"panel\"><div class=\"panel-title\">KPI deltas</div><div class=\"panel-sub\">Headline metrics, B relative to A</div><div class=\"kpi-band\"><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">67%</div><div class=\"kpi-label\">Goal-achieved \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">0.63</div><div class=\"kpi-label\">Mean score \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3.3</div><div class=\"kpi-label\">Mean turns \u00b7 n/a vs A</div></div><div class=\"kpi-card kpi-card--neutral\"><div class=\"kpi-value\">3</div><div class=\"kpi-label\">Conversations \u00b7 0 \u2192 3</div></div></div></div><div class=\"cmp-charts\"><div class=\"panel\"><div class=\"panel-title\">Outcomes</div><div class=\"panel-sub\">Goal rate and mean score \u00b7 A vs B</div><p class=\"sim-empty\">Outcome data requires entries from both runs.</p></div><div class=\"panel\"><div class=\"panel-title\">Scorer averages</div><div class=\"panel-sub\">Per-scorer mean \u00b7 shared scorers only</div><p class=\"cmp-note\">Not compared (measured by one run only): criteria_met, goal_achieved, safety</p></div><div class=\"panel\"><div class=\"panel-title\">How conversations ended</div><div class=\"panel-sub\">Terminated-by counts \u00b7 A vs B</div><svg data-chart=\"1\"></svg></div></div><div class=\"panel\"><div class=\"panel-title\">All metrics</div><div class=\"panel-sub\">Full A / B / delta breakdown</div><table class=\"cmp-table\"><thead><tr><th>Metric</th><th>only-A</th><th>run-B &lt;b&gt;</th><th>&Delta; (B - A)</th></tr></thead><tbody><tr><td>Conversations</td><td>0</td><td>3</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +3</span></td></tr><tr><td>Goal-achieved rate</td><td>n/a</td><td>67%</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean goal score</td><td>n/a</td><td>0.63</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Mean turns</td><td>n/a</td><td>3.3</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Scorer: criteria_met</td><td>0.50</td><td>n/a</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Scorer: goal_achieved</td><td>n/a</td><td>0.66</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Scorer: safety</td><td>n/a</td><td>1.00</td><td><span class=\"cmp-delta cmp-flat\">\u2014</span></td></tr><tr><td>Terminated: judge</td><td>0</td><td>2</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +2</span></td></tr><tr><td>Terminated: max_turns</td><td>0</td><td>1</td><td><span class=\"cmp-delta cmp-up\">&#x25B2; +1</span></td></tr></tbody></table></div><div class=\"panel\"><div class=\"panel-title\">Outcome diffs</div><div class=\"panel-sub\">Matched by persona and scenario \u00b7 click a row to compare transcripts</div><p class=\"sim-empty\">No conversations matched on (persona, scenario).</p><div class=\"cmp-unmatched\"><strong>Only in B</strong><ul><li>alice &middot; billing</li><li>bob &middot; refund</li><li>dave &middot; onlyB</li></ul></div><div id=\"cmp-transcript-panel\" class=\"cmp-transcript-panel\"><p class=\"sim-select-prompt\">Select a matched conversation above to compare transcripts.</p></div></div></div>",
+      "specs": [
+        {
+          "data": {
+            "values": [
+              {
+                "cat": "judge",
+                "series": "only-A",
+                "value": 0.0
+              },
+              {
+                "cat": "max_turns",
+                "series": "only-A",
+                "value": 0.0
+              },
+              {
+                "cat": "judge",
+                "series": "run-B <b>",
+                "value": 2.0
+              },
+              {
+                "cat": "max_turns",
+                "series": "run-B <b>",
+                "value": 1.0
+              }
+            ]
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "bar",
+                "tooltip": true
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "color": {
+                  "field": "series",
+                  "type": "nominal",
+                  "legend": {
+                    "title": null
+                  }
+                }
+              }
+            },
+            {
+              "transform": [
+                {
+                  "filter": "datum.value === 0"
+                }
+              ],
+              "mark": {
+                "type": "text",
+                "align": "left",
+                "dx": 3,
+                "fontSize": 9,
+                "color": "#25232e"
+              },
+              "encoding": {
+                "y": {
+                  "field": "cat",
+                  "type": "nominal",
+                  "sort": null,
+                  "title": null
+                },
+                "x": {
+                  "field": "value",
+                  "type": "quantitative",
+                  "title": "Conversations"
+                },
+                "yOffset": {
+                  "field": "series",
+                  "type": "nominal"
+                },
+                "text": {
+                  "value": "0"
+                }
+              }
+            }
+          ],
+          "width": 420,
+          "height": {
+            "step": 16
+          }
+        }
+      ]
+    }
+  ],
+  "transcript": "<div class=\"cmp-transcript-grid\"><div class=\"cmp-side\"><h3 class=\"cmp-side-title\">run-A</h3><div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">4 turns</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">alice</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">billing</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">done</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">hi A</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">hello A</pre></div></div></div></div></div></div><div class=\"cmp-side\"><h3 class=\"cmp-side-title\">run-B &lt;b&gt;</h3><div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">5 turns</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><span class=\"sim-conv-value\">alice</span></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><span class=\"sim-conv-value\">billing</span></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">done</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">hi B</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">hello B</pre></div></div></div></div></div></div></div>"
+}

@@ -1,0 +1,220 @@
+{
+ "run": {
+  "run_name": "run-A",
+  "created_at": "2026-11-17T09:01:30Z",
+  "mode": "run",
+  "target_kind": "orq_agent",
+  "target": null,
+  "target_model": null,
+  "max_turns": null,
+  "agent_info": null,
+  "orq_base_url": null,
+  "evaluator_names": [
+   "goal_achieved"
+  ],
+  "total_results": 3,
+  "scorer_averages": {
+   "goal_achieved": 0.66,
+   "criteria_met": 0.5
+  },
+  "results": [
+   {
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi A",
+      "tool_calls": null,
+      "tool_call_id": null,
+      "name": null
+     },
+     {
+      "role": "assistant",
+      "content": "hello A",
+      "tool_calls": null,
+      "tool_call_id": null,
+      "name": null
+     }
+    ],
+    "terminated_by": "judge",
+    "reason": "done",
+    "goal_achieved": true,
+    "goal_completion_score": 0.9,
+    "rules_broken": [],
+    "turn_count": 4,
+    "token_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15,
+     "cached_tokens": 0,
+     "cache_creation_tokens": 0,
+     "cache_creation_1h_tokens": 0,
+     "cache_creation_5m_tokens": 0,
+     "reasoning_tokens": 0,
+     "input_cost": null,
+     "output_cost": null,
+     "total_cost": null,
+     "calls": 0,
+     "priced_calls": 0,
+     "prompt_tokens": 10,
+     "completion_tokens": 5,
+     "cost_usd": null
+    },
+    "token_usage_known": true,
+    "turn_metrics": [],
+    "metadata": {
+     "persona": "alice",
+     "scenario": "billing"
+    },
+    "criteria_results": null,
+    "criteria_verified": null,
+    "evaluator_details": {},
+    "total_turns": null,
+    "thread_id": null,
+    "response_traces": []
+   },
+   {
+    "messages": [],
+    "terminated_by": "judge",
+    "reason": "done",
+    "goal_achieved": false,
+    "goal_completion_score": 0.2,
+    "rules_broken": [],
+    "turn_count": 6,
+    "token_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15,
+     "cached_tokens": 0,
+     "cache_creation_tokens": 0,
+     "cache_creation_1h_tokens": 0,
+     "cache_creation_5m_tokens": 0,
+     "reasoning_tokens": 0,
+     "input_cost": null,
+     "output_cost": null,
+     "total_cost": null,
+     "calls": 0,
+     "priced_calls": 0,
+     "prompt_tokens": 10,
+     "completion_tokens": 5,
+     "cost_usd": null
+    },
+    "token_usage_known": true,
+    "turn_metrics": [],
+    "metadata": {
+     "persona": "bob",
+     "scenario": "refund"
+    },
+    "criteria_results": null,
+    "criteria_verified": null,
+    "evaluator_details": {},
+    "total_turns": null,
+    "thread_id": null,
+    "response_traces": []
+   },
+   {
+    "messages": [],
+    "terminated_by": "judge",
+    "reason": "done",
+    "goal_achieved": true,
+    "goal_completion_score": 1.0,
+    "rules_broken": [],
+    "turn_count": 2,
+    "token_usage": {
+     "input_tokens": 10,
+     "output_tokens": 5,
+     "total_tokens": 15,
+     "cached_tokens": 0,
+     "cache_creation_tokens": 0,
+     "cache_creation_1h_tokens": 0,
+     "cache_creation_5m_tokens": 0,
+     "reasoning_tokens": 0,
+     "input_cost": null,
+     "output_cost": null,
+     "total_cost": null,
+     "calls": 0,
+     "priced_calls": 0,
+     "prompt_tokens": 10,
+     "completion_tokens": 5,
+     "cost_usd": null
+    },
+    "token_usage_known": true,
+    "turn_metrics": [],
+    "metadata": {
+     "persona": "carol",
+     "scenario": "onlyA"
+    },
+    "criteria_results": null,
+    "criteria_verified": null,
+    "evaluator_details": {},
+    "total_turns": null,
+    "thread_id": null,
+    "response_traces": []
+   }
+  ],
+  "datapoints": null,
+  "replay_version": null,
+  "executive_summary": null,
+  "token_usage_total": null,
+  "run_id": null,
+  "experiment_url": null,
+  "recommendations": null,
+  "applied_suggestions": []
+ },
+ "cases": [
+  {
+   "q": "/sim/row-list",
+   "status": 200,
+   "html": "<div id=\"sim-row-list-RID\"><section class=\"sim-row-list\"><div class=\"sim-conv-table-shell\"><table class=\"sim-conv-table\"><thead><tr><th scope=\"col\" aria-sort=\"ascending\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=desc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">#<span class=\"sim-th-caret sim-th-caret-active\">&#x25B2;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Persona<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=scenario&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Scenario<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=turn_count&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Turns<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=goal_completion_score&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Score<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=terminated_by&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Terminated by<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\">Status</th><th scope=\"col\">Traces</th></tr></thead><tbody><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=0\"><td class=\"sim-conv-idx\">#1</td><td class=\"sim-conv-persona\">alice</td><td class=\"sim-conv-scenario\">billing</td><td class=\"sim-conv-turns num\">4</td><td class=\"sim-conv-score num\">0.90</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--fail\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=1\"><td class=\"sim-conv-idx\">#2</td><td class=\"sim-conv-persona\">bob</td><td class=\"sim-conv-scenario\">refund</td><td class=\"sim-conv-turns num\">6</td><td class=\"sim-conv-score num\">0.20</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--fail\">Goal missed</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=2\"><td class=\"sim-conv-idx\">#3</td><td class=\"sim-conv-persona\">carol</td><td class=\"sim-conv-scenario\">onlyA</td><td class=\"sim-conv-turns num\">2</td><td class=\"sim-conv-score num\">1.00</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr></tbody></table></div><nav class=\"sim-pager\"><div class=\"sim-pager-nav\"><span class=\"sim-pager-info\">3 conversations</span></div><div class=\"sim-size\" role=\"group\" aria-label=\"Rows per page\"><span class=\"sim-size-label\">Show</span><button type=\"button\" class=\"sim-size-btn\" disabled aria-current=\"true\">5</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">10</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=25\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">25</button></div></nav></section></div>"
+  },
+  {
+   "q": "/sim/row-list?sort=persona&dir=desc",
+   "status": 200,
+   "html": "<div id=\"sim-row-list-RID\"><section class=\"sim-row-list\"><div class=\"sim-conv-table-shell\"><table class=\"sim-conv-table\"><thead><tr><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">#<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"descending\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Persona<span class=\"sim-th-caret sim-th-caret-active\">&#x25BC;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=scenario&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Scenario<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=turn_count&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Turns<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=goal_completion_score&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Score<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=terminated_by&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Terminated by<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\">Status</th><th scope=\"col\">Traces</th></tr></thead><tbody><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=2\"><td class=\"sim-conv-idx\">#3</td><td class=\"sim-conv-persona\">carol</td><td class=\"sim-conv-scenario\">onlyA</td><td class=\"sim-conv-turns num\">2</td><td class=\"sim-conv-score num\">1.00</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--fail\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=1\"><td class=\"sim-conv-idx\">#2</td><td class=\"sim-conv-persona\">bob</td><td class=\"sim-conv-scenario\">refund</td><td class=\"sim-conv-turns num\">6</td><td class=\"sim-conv-score num\">0.20</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--fail\">Goal missed</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=0\"><td class=\"sim-conv-idx\">#1</td><td class=\"sim-conv-persona\">alice</td><td class=\"sim-conv-scenario\">billing</td><td class=\"sim-conv-turns num\">4</td><td class=\"sim-conv-score num\">0.90</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr></tbody></table></div><nav class=\"sim-pager\"><div class=\"sim-pager-nav\"><span class=\"sim-pager-info\">3 conversations</span></div><div class=\"sim-size\" role=\"group\" aria-label=\"Rows per page\"><span class=\"sim-size-label\">Show</span><button type=\"button\" class=\"sim-size-btn\" disabled aria-current=\"true\">5</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=desc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">10</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=desc&page=1&size=25\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">25</button></div></nav></section></div>"
+  },
+  {
+   "q": "/sim/row-list?size=10&page=2",
+   "status": 200,
+   "html": "<div id=\"sim-row-list-RID\"><section class=\"sim-row-list\"><div class=\"sim-conv-table-shell\"><table class=\"sim-conv-table\"><thead><tr><th scope=\"col\" aria-sort=\"ascending\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=desc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">#<span class=\"sim-th-caret sim-th-caret-active\">&#x25B2;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Persona<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=scenario&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Scenario<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=turn_count&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Turns<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=goal_completion_score&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Score<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=terminated_by&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Terminated by<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\">Status</th><th scope=\"col\">Traces</th></tr></thead><tbody><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=0\"><td class=\"sim-conv-idx\">#1</td><td class=\"sim-conv-persona\">alice</td><td class=\"sim-conv-scenario\">billing</td><td class=\"sim-conv-turns num\">4</td><td class=\"sim-conv-score num\">0.90</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--fail\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=1\"><td class=\"sim-conv-idx\">#2</td><td class=\"sim-conv-persona\">bob</td><td class=\"sim-conv-scenario\">refund</td><td class=\"sim-conv-turns num\">6</td><td class=\"sim-conv-score num\">0.20</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--fail\">Goal missed</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=2\"><td class=\"sim-conv-idx\">#3</td><td class=\"sim-conv-persona\">carol</td><td class=\"sim-conv-scenario\">onlyA</td><td class=\"sim-conv-turns num\">2</td><td class=\"sim-conv-score num\">1.00</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr></tbody></table></div><nav class=\"sim-pager\"><div class=\"sim-pager-nav\"><span class=\"sim-pager-info\">3 conversations</span></div><div class=\"sim-size\" role=\"group\" aria-label=\"Rows per page\"><span class=\"sim-size-label\">Show</span><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">5</button><button type=\"button\" class=\"sim-size-btn\" disabled aria-current=\"true\">10</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=25\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">25</button></div></nav></section></div>"
+  },
+  {
+   "q": "/sim/row-list?size=bogus&page=x",
+   "status": 200,
+   "html": "<div id=\"sim-row-list-RID\"><section class=\"sim-row-list\"><div class=\"sim-conv-table-shell\"><table class=\"sim-conv-table\"><thead><tr><th scope=\"col\" aria-sort=\"ascending\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=desc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">#<span class=\"sim-th-caret sim-th-caret-active\">&#x25B2;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Persona<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=scenario&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Scenario<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=turn_count&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Turns<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=goal_completion_score&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Score<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=terminated_by&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Terminated by<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\">Status</th><th scope=\"col\">Traces</th></tr></thead><tbody><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=0\"><td class=\"sim-conv-idx\">#1</td><td class=\"sim-conv-persona\">alice</td><td class=\"sim-conv-scenario\">billing</td><td class=\"sim-conv-turns num\">4</td><td class=\"sim-conv-score num\">0.90</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--fail\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=1\"><td class=\"sim-conv-idx\">#2</td><td class=\"sim-conv-persona\">bob</td><td class=\"sim-conv-scenario\">refund</td><td class=\"sim-conv-turns num\">6</td><td class=\"sim-conv-score num\">0.20</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--fail\">Goal missed</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=2\"><td class=\"sim-conv-idx\">#3</td><td class=\"sim-conv-persona\">carol</td><td class=\"sim-conv-scenario\">onlyA</td><td class=\"sim-conv-turns num\">2</td><td class=\"sim-conv-score num\">1.00</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr></tbody></table></div><nav class=\"sim-pager\"><div class=\"sim-pager-nav\"><span class=\"sim-pager-info\">3 conversations</span></div><div class=\"sim-size\" role=\"group\" aria-label=\"Rows per page\"><span class=\"sim-size-label\">Show</span><button type=\"button\" class=\"sim-size-btn\" disabled aria-current=\"true\">5</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">10</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=25\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">25</button></div></nav></section></div>"
+  },
+  {
+   "q": "/sim/row-list?sim_terminated_by=max_turns",
+   "status": 200,
+   "html": "<div id=\"sim-row-list-RID\"><section class=\"sim-row-list\"><div class=\"sim-conv-table-shell\"><table class=\"sim-conv-table\"><thead><tr><th scope=\"col\" aria-sort=\"ascending\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=desc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">#<span class=\"sim-th-caret sim-th-caret-active\">&#x25B2;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=persona&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Persona<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=scenario&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Scenario<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=turn_count&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Turns<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\" class=\"num\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=goal_completion_score&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Score<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\" aria-sort=\"none\"><button type=\"button\" class=\"sim-th-sort\" hx-get=\"/r/RID/sim/row-list?sort=terminated_by&dir=asc&page=1&size=5\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">Terminated by<span class=\"sim-th-caret\">&#x21C5;</span></button></th><th scope=\"col\">Status</th><th scope=\"col\">Traces</th></tr></thead><tbody><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=0\"><td class=\"sim-conv-idx\">#1</td><td class=\"sim-conv-persona\">alice</td><td class=\"sim-conv-scenario\">billing</td><td class=\"sim-conv-turns num\">4</td><td class=\"sim-conv-score num\">0.90</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--fail\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=1\"><td class=\"sim-conv-idx\">#2</td><td class=\"sim-conv-persona\">bob</td><td class=\"sim-conv-scenario\">refund</td><td class=\"sim-conv-turns num\">6</td><td class=\"sim-conv-score num\">0.20</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--fail\">Goal missed</span></td><td class=\"sim-conv-trace\"></td></tr><tr class=\"sim-conv-row sim-conv-row--pass\" role=\"button\" tabindex=\"0\" data-sim-entity-trigger data-entity-kind=\"conversation\" data-drawer-url=\"/r/RID/sim/transcript?idx=2\"><td class=\"sim-conv-idx\">#3</td><td class=\"sim-conv-persona\">carol</td><td class=\"sim-conv-scenario\">onlyA</td><td class=\"sim-conv-turns num\">2</td><td class=\"sim-conv-score num\">1.00</td><td class=\"sim-conv-term\">judge</td><td class=\"sim-conv-status\"><span class=\"status-badge status-badge--pass\">Goal met</span></td><td class=\"sim-conv-trace\"></td></tr></tbody></table></div><nav class=\"sim-pager\"><div class=\"sim-pager-nav\"><span class=\"sim-pager-info\">3 conversations</span></div><div class=\"sim-size\" role=\"group\" aria-label=\"Rows per page\"><span class=\"sim-size-label\">Show</span><button type=\"button\" class=\"sim-size-btn\" disabled aria-current=\"true\">5</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=10\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">10</button><button type=\"button\" class=\"sim-size-btn\" hx-get=\"/r/RID/sim/row-list?sort=index&dir=asc&page=1&size=25\" hx-include=\"#filter-form\" hx-target=\"#sim-row-list-RID\" hx-swap=\"outerHTML\">25</button></div></nav></section></div>"
+  },
+  {
+   "q": "/sim/transcript",
+   "status": 200,
+   "html": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#0</span><span class=\"sim-conv-turns-pill\">4 turns</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona-0\">alice</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario-0\">billing</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--pass\">Goal met</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">done</p></div></div><div class=\"sim-transcript-bubbles\"><div class=\"sim-msg sim-msg-user\"><span class=\"sim-msg-avatar\">USR</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">USR</span><pre class=\"sim-msg-content\">hi A</pre></div></div><div class=\"sim-msg sim-msg-assistant\"><span class=\"sim-msg-avatar\">AGT</span><div class=\"sim-msg-bubble\"><span class=\"sim-msg-role\">AGT</span><pre class=\"sim-msg-content\">hello A</pre></div></div></div></div></div>"
+  },
+  {
+   "q": "/sim/transcript?idx=1",
+   "status": 200,
+   "html": "<div class=\"sim-transcript-detail\"><div class=\"sim-conv-summary\"><div class=\"sim-conv-head\"><span class=\"sim-conv-index\">#1</span><span class=\"sim-conv-turns-pill\">6 turns</span></div><div class=\"sim-conv-meta\"><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-6 8-6s8 2 8 6\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Persona</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"persona\" data-entity-id=\"persona-1\">bob</button></div></div><div class=\"sim-conv-field\"><span class=\"sim-conv-ico\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M4 12h16M4 19h10\"/></svg></span><div class=\"sim-conv-field-text\"><span class=\"sim-conv-label\">Scenario</span><button type=\"button\" class=\"sim-conv-value sim-conv-value--link\" data-sim-entity-trigger data-entity-kind=\"scenario\" data-entity-id=\"scenario-1\">refund</button></div></div></div></div><div class=\"sim-transcript-grid\"><div class=\"sim-criteria\"><div class=\"sim-goal\"><div class=\"sim-goal-head\"><span class=\"sim-goal-label\">GOAL</span><span class=\"status-badge status-badge--fail\">Goal missed</span></div><p class=\"sim-goal-text sim-goal-text--missing\">The goal text was not saved with this run.</p></div><div class=\"sim-criteria-head\"><span class=\"sim-criteria-header\">CRITERIA</span></div><p class=\"sim-criteria-empty\">No criteria defined for this scenario.</p><div class=\"sim-judge\"><span class=\"sim-judge-label\">Judge</span><p class=\"sim-judge-reason\">done</p></div></div><div class=\"sim-transcript-bubbles\"></div></div></div>"
+  },
+  {
+   "q": "/sim/transcript?idx=9",
+   "status": 200,
+   "html": "<p class=\"sim-empty\">No conversation at that index.</p>"
+  },
+  {
+   "q": "/sim/transcript?idx=x",
+   "status": 200,
+   "html": "<p class=\"sim-empty\">No conversation at that index.</p>"
+  },
+  {
+   "q": "missing-rowlist",
+   "status": 404,
+   "html": "Report not found."
+  },
+  {
+   "q": "missing-transcript",
+   "status": 404,
+   "html": "Report not found."
+  }
+ ]
+}

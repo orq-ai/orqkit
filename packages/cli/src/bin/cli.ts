@@ -2,12 +2,23 @@
 
 import { Command } from "commander";
 
+import { DASHBOARD_HELP } from "@orq-ai/evaluatorq/dashboard";
+
+import { runDashboard } from "../commands/dashboard.js";
 import { evaluate } from "../commands/evaluate.js";
 import { find } from "../commands/find.js";
 import { runInsights } from "../commands/insights.js";
 import { runSessions } from "../commands/sessions.js";
 
+// Python keeps debug logs hidden by default; Bun prints console.debug always.
+if (!process.env.ORQ_DEBUG) console.debug = () => {};
+
 const program = new Command();
+
+// Click exits 2 on usage errors; Commander's default is 1.
+program.exitOverride((err) => {
+  process.exit(err.exitCode === 1 ? 2 : err.exitCode);
+});
 
 program
   .name("orq")
@@ -140,5 +151,18 @@ program
   .option("--json", "Output sessions as JSON")
   .option("--export <path>", "Write an Insights snapshot")
   .action(runSessions);
+
+program
+  .command("dashboard [paths...]")
+  .description(DASHBOARD_HELP)
+  .option("--host <host>", "Host to bind the dashboard server to")
+  .option("-p, --port <port>", "Port for the dashboard server", integer)
+  .option("--no-browser", "Start the dashboard without opening a browser")
+  .option("--compiler-model <model>", "Finder compiler model")
+  .option("--classifier-model <model>", "Classifier model role")
+  .option("--window-days <days>", "Finder search window in days", integer)
+  .option("--limit <count>", "Finder trace limit", integer)
+  .option("--parallelism <count>", "Finder classifier concurrency", integer)
+  .action(runDashboard);
 
 program.parse(process.argv);

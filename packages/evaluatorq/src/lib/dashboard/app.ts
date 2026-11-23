@@ -6,23 +6,50 @@ import { resolve, sep } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
-import { loadSurface, scan } from "../common/dashboard/library.js";
-import { listManifests } from "../common/run-manifest.js";
-import { getSimulationRunsDir } from "../integrations/simulation/run-store.js";
-import { getPairwiseRunsDir } from "../pairwise-run.js";
+import {
+  defaultRoots,
+  loadSurface,
+  resolveManifest,
+  resolve as resolveReport,
+  scan,
+} from "../common/dashboard/library.js";
 import { rebuildFilteredReport } from "../redteam/reports/summary.js";
-import { getRedteamRunsDir } from "../redteam/run-store.js";
+import { type ApplyRouteDeps, applyRoutes } from "./apply-routes.js";
+import { authStatus } from "./auth.js";
 import { compressionInspectorRoutes } from "./compression-inspector.js";
 import { applyOrAll, FILTERS, parseSelections } from "./filters.js";
+import { type InsightsRouteDeps, insightsRoutes } from "./insights-routes.js";
 import { landing, redteamOverview, runRows, simOverview } from "./metrics.js";
+import { cliSlugRenderScope } from "./orq-workspace.js";
+import { comparePairwiseRoute } from "./pairwise-compare.js";
+import { pairwiseReportTabs } from "./pairwise-tabs.js";
+import {
+  pairwiseComparisonRoute,
+  pairwiseRowListRoute,
+  pyInt,
+} from "./pairwise-views.js";
 import { redteamReportTabs } from "./redteam-report-tabs.js";
+import {
+  redteamAgentHeatmapRoute,
+  redteamAttackRoute,
+  redteamBreakdownRoute,
+  redteamDisagreementRoute,
+} from "./redteam-views.js";
+import { type SettingsRouteDeps, settingsRoutes } from "./settings-routes.js";
 import { dashboardCss, dashboardCssVersion, page } from "./shell.js";
+import { compareSimRoute, compareSimTranscriptRoute } from "./sim-compare.js";
+import { simRowListRoute, simTranscriptRoute } from "./sim-views.js";
 import {
   simulationAgentCardFragment,
   simulationReportTabs,
 } from "./simulation-report-tabs.js";
 import { STATIC_DIR } from "./static-assets.js";
 import { ADAPTERS } from "./surfaces.js";
+import {
+  type FinderState,
+  finderRoutes,
+  withFinderSessions,
+} from "./trace-finder/routes.js";
 import {
   filterFragment,
   landingBody,
@@ -42,9 +69,7 @@ import {
   simOverviewBody,
 } from "./view.js";
 
-export function defaultRoots(): string[] {
-  return [getRedteamRunsDir(), getSimulationRunsDir(), getPairwiseRunsDir()];
-}
+export { defaultRoots };
 
 const html = (
   body: string,
@@ -123,22 +148,8 @@ const asciiJson = (value: unknown) =>
     (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
   );
 
-async function resolvePath(rid: string, roots: string[]) {
-  const card = (await scan(roots)).find((c) => c.id === rid && c.path);
-  return card?.path ?? null;
-}
-
-async function resolveManifest(rid: string, roots: string[]) {
-  const card = (await scan(roots)).find((c) => c.id === rid && !c.path);
-  if (!card) return null;
-  for (const root of roots)
-    for (const m of await listManifests(root))
-      if (!m.reportPath && card.name === m.runName) return m;
-  return null;
-}
-
 async function loadReport(rid: string, roots: string[]) {
-  const path = await resolvePath(rid, roots);
+  const path = await resolveReport(rid, roots);
   if (!path) return { path: null } as const;
   const [surface] = await loadSurface(path);
   const adapter = surface ? ADAPTERS[surface] : undefined;
@@ -165,6 +176,7 @@ async function surfaceBody(
   roots: string[],
   // biome-ignore lint/suspicious/noExplicitAny: filtered rows of that surface
   filtered?: any[],
+  focus: number | null = null,
 ): Promise<string | null> {
   if (surface === "sim") {
     const compareHtml = runCompareControl(
@@ -182,6 +194,19 @@ async function surfaceBody(
       return redteamReportTabs(rid, rebuildFilteredReport(report, filtered));
     }
     return redteamReportTabs(rid, report);
+  }
+  if (surface === "pairwise") {
+    const heroActionsHtml = runCompareControl(
+      rid,
+      await compareChoices(roots, "pairwise"),
+      "/compare/pairwise",
+    );
+    return cliSlugRenderScope(() =>
+      pairwiseReportTabs(rid, report, filtered ?? null, {
+        heroActionsHtml,
+        focus: filtered ? null : focus,
+      }),
+    );
   }
   return null;
 }
@@ -252,7 +277,7 @@ const STATIC_TYPES: Record<string, string> = {
   json: "application/json",
 };
 
-async function reportView(rid: string, roots: string[]) {
+async function reportView(rid: string, roots: string[], url: URL) {
   const loaded = await loadReport(rid, roots);
   if (!loaded.path) {
     const manifest = await resolveManifest(rid, roots);
@@ -275,13 +300,20 @@ async function reportView(rid: string, roots: string[]) {
     const name = filename(path);
     return html(
       await page(
-        `Error — ${name}`,
+        `Error \u2014 ${name}`,
         reportBroken(rid, name, (exc as Error).message),
         { activeSurface: surface },
       ),
     );
   }
-  const body = await surfaceBody(rid, surface, report, roots);
+  const body = await surfaceBody(
+    rid,
+    surface,
+    report,
+    roots,
+    undefined,
+    pyInt(url.searchParams.get("cmp")),
+  );
   if (body === null)
     return text(
       "This report view is not available in the TypeScript dashboard yet",
@@ -413,11 +445,30 @@ export function createDashboardHandler(
   options: {
     roots?: string[] | null;
     compressionInspector?: Parameters<typeof compressionInspectorRoutes>[0];
+    finder?: FinderState | null;
+    settings?: SettingsRouteDeps;
+    apply?: ApplyRouteDeps;
+    insights?: InsightsRouteDeps;
   } = {},
 ): (req: Request) => Promise<Response> {
   const roots = () => options.roots ?? defaultRoots();
   const compression = compressionInspectorRoutes(options.compressionInspector);
-  return async (req) => {
+  const finder = options.finder ? finderRoutes(options.finder) : null;
+  const settings = settingsRoutes({
+    roots: () => options.roots ?? null,
+    finder: options.finder ?? null,
+    ...options.settings,
+  });
+  const apply = applyRoutes({
+    roots: () => options.roots ?? null,
+    finder: options.finder ?? null,
+    ...options.apply,
+  });
+  const insights = insightsRoutes({
+    finder: options.finder ?? null,
+    ...options.insights,
+  });
+  const handler = async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
     const path = url.pathname;
     const method = req.method;
@@ -429,22 +480,54 @@ export function createDashboardHandler(
     }
     const inspected = await compression(req, url);
     if (inspected) return inspected;
+    const found = finder ? await finder(req, url) : null;
+    if (found) return found;
+    const configured = await settings(req, url);
+    if (configured) return configured;
+    const applied = await apply(req, url);
+    if (applied) return applied;
+    const insight = await insights(req, url);
+    if (insight) return insight;
     if (method === "GET" && path === "/") return index(url, roots());
+    if (method === "GET" && path === "/auth/status")
+      return Response.json(await authStatus());
     if (method === "GET" && path === "/static/dashboard.css")
       return cssResponse(url);
     if (method === "GET" && path === "/search")
       return html(
         searchResults(await scan(roots()), url.searchParams.get("q") ?? ""),
       );
+    if (method === "GET" && path === "/compare/sim")
+      return compareSimRoute(url.searchParams, roots());
+    if (method === "GET" && path === "/compare/pairwise")
+      return comparePairwiseRoute(url.searchParams, roots());
+    if (method === "GET" && path === "/compare/sim/transcript")
+      return compareSimTranscriptRoute(url.searchParams, roots());
     if (method === "GET" && path.startsWith("/static/"))
       return staticFile(decodeURIComponent(path.slice("/static/".length)));
     const m = /^\/r\/([^/]+)(\/.*)?$/.exec(path);
     if (m) {
       const rid = decodeURIComponent(m[1] as string);
       const rest = m[2] ?? "";
-      if (method === "GET" && rest === "") return reportView(rid, roots());
+      if (method === "GET" && rest === "") return reportView(rid, roots(), url);
       if (method === "GET" && rest === "/sim/agent-card")
         return simAgentCard(rid, roots());
+      if (method === "GET" && rest === "/sim/row-list")
+        return simRowListRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/sim/transcript")
+        return simTranscriptRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/pairwise/row-list")
+        return pairwiseRowListRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/pairwise/comparison")
+        return pairwiseComparisonRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/view/breakdown")
+        return redteamBreakdownRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/view/agent-heatmap")
+        return redteamAgentHeatmapRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/view/disagreement")
+        return redteamDisagreementRoute(rid, url.searchParams, roots());
+      if (method === "GET" && rest === "/redteam/attack")
+        return redteamAttackRoute(rid, url.searchParams, roots());
       if (method === "POST" && rest === "/filter")
         return reportFilter(rid, req, roots());
       if (method === "GET" && (rest === "/export" || rest === "/export.html"))
@@ -458,6 +541,7 @@ export function createDashboardHandler(
     }
     return text("404 Not Found", 404);
   };
+  return options.finder ? withFinderSessions(options.finder, handler) : handler;
 }
 
 function allowedHost(
@@ -499,11 +583,21 @@ export async function serveDashboard(options: {
   roots?: string[] | null;
   host?: string;
   port?: number;
+  finder?: FinderState | null;
+  readyNonce?: string | null;
 }) {
-  const handle = createDashboardHandler({ roots: options.roots });
   const requestedHost = options.host ?? "127.0.0.1";
   if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(requestedHost))
     throw new Error("The local dashboard must bind to a loopback address.");
+  const dashboard = createDashboardHandler({
+    roots: options.roots,
+    finder: options.finder,
+  });
+  const nonce = options.readyNonce;
+  const handle = (request: Request) =>
+    nonce && new URL(request.url).pathname === "/_dashboard-ready"
+      ? text(nonce, 200)
+      : dashboard(request);
   const bindHost =
     requestedHost === "localhost"
       ? "127.0.0.1"
