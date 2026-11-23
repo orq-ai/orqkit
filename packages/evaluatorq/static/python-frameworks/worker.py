@@ -82,7 +82,7 @@ async def initialize(params):
     return target, contracts
 
 
-def error_payload(error):
+def error_payload(error, identifier):
     message = str(error)
     if len(message) > MAX_ERROR_CHARS:
         message = message[:MAX_ERROR_CHARS] + " (truncated)"
@@ -106,9 +106,18 @@ def error_payload(error):
             if match and 100 <= int(match.group(1)) <= 599:
                 result["status_code"] = int(match.group(1))
                 break
-    usage = getattr(error, "usage", None)
-    if usage is not None:
-        result["usage"] = usage.model_dump(mode="json") if hasattr(usage, "model_dump") else usage
+    try:
+        usage = getattr(error, "usage", None)
+        if usage is not None:
+            usage = usage.model_dump(mode="json") if hasattr(usage, "model_dump") else usage
+            frame = json.dumps(
+                {"id": identifier, "ok": False, "error": {**result, "usage": usage}},
+                ensure_ascii=False, allow_nan=False, separators=(",", ":"),
+            ) + "\n"
+            if len(frame.encode("utf-8")) <= MAX_LINE_BYTES:
+                result["usage"] = usage
+    except Exception:
+        pass
     return result
 
 
@@ -146,7 +155,7 @@ async def main():
                     raise ProtocolError(f"Unknown Python worker method {method}")
                 write({"id": identifier, "ok": True, "result": result})
             except Exception as error:
-                write({"id": identifier, "ok": False, "error": error_payload(error)})
+                write({"id": identifier, "ok": False, "error": error_payload(error, identifier)})
     finally:
         if target is not None:
             close = getattr(target, "close", None)
