@@ -1155,3 +1155,60 @@ function trajectoryFromMessages(
     ? new AtifTrajectory({ ...trajectory, schemaVersion: "ATIF-v1.8" })
     : trajectory;
 }
+
+const snake = (key: string) =>
+  key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`);
+const snakeModel = (value: unknown): unknown =>
+  record(value)
+    ? Object.fromEntries(
+        Object.entries(value).map(([key, item]) => [snake(key), item]),
+      )
+    : value;
+const withoutNone = (value: unknown): unknown =>
+  Array.isArray(value)
+    ? value.map(withoutNone)
+    : record(value)
+      ? Object.fromEntries(
+          Object.entries(value)
+            .filter(([, item]) => item !== null)
+            .map(([key, item]) => [key, withoutNone(item)]),
+        )
+      : value;
+
+function signalsDict(report: SignalReport | null): unknown {
+  if (report === null) return null;
+  return {
+    trajectory_id: report.trajectoryId,
+    results: Object.fromEntries(
+      Object.entries(report.results).map(([name, result]) => {
+        const row = snakeModel(result) as Row;
+        row.evidence = result.evidence.map(snakeModel);
+        row.preconditions = result.preconditions.map(snakeModel);
+        return [name, row];
+      }),
+    ),
+    config_version: report.configVersion,
+  };
+}
+
+/** The document as Python's `model_dump_json` writes it: snake_case metadata, compact or indented. */
+export function traceDocumentJson(
+  document: TraceDocument,
+  options: { indent?: number; excludeNone?: boolean } = {},
+): string {
+  const metadata = snakeModel(document.metadata) as Row;
+  metadata.signals = signalsDict(document.metadata.signals);
+  metadata.dataset = snakeModel(document.metadata.dataset);
+  metadata.outcome = snakeModel(document.metadata.outcome);
+  let value: unknown = {
+    metadata,
+    trajectory: document.trajectory.toModelDict(),
+  };
+  if (options.excludeNone) value = withoutNone(value);
+  return pythonJson(
+    value,
+    options.indent === undefined
+      ? { compact: true, ensureAscii: false }
+      : { indent: options.indent, ensureAscii: false },
+  );
+}
