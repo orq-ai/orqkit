@@ -835,7 +835,7 @@
       const body = new FormData();
       body.set('csrf', field(form, 'csrf').value);
       body.set('file', file);
-      const response = await fetch('/insights/uploads', {method: 'POST', body: body, signal: abort.signal});
+      const response = await fetch('/insights/uploads', {method: 'POST', headers: {'X-CSRF-Token': field(form, 'csrf').value}, body: body, signal: abort.signal});
       if (!current()) return;
       let result;
       try { result = await response.json(); } catch (failure) { throw new Error('Upload failed.'); }

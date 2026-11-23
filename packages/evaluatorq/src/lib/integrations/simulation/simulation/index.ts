@@ -29,6 +29,7 @@ import {
 } from "../../../common/thread-context.js";
 import type { AgentTarget, LLMCallConfig, Usage } from "../../../contracts.js";
 import { evaluatorq } from "../../../evaluatorq.js";
+import { configuredOrqHost } from "../../../orq-host.js";
 import { flushTracing, initTracingIfNeeded } from "../../../tracing/setup.js";
 import type { DataPoint, Evaluator, Job, Output } from "../../../types.js";
 import { OrqResponsesTarget } from "../../openresponses/target.js";
@@ -179,6 +180,8 @@ export interface SimulateParams {
 export async function simulate(
   params: SimulateParams,
 ): Promise<SimulationResult[]> {
+  if (params.uploadResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   // Initialize OTel tracing (no-op if already initialized or not configured)
   await initTracingIfNeeded();
 
@@ -800,7 +803,7 @@ async function _simulateCore(
         await run.save(output);
         savedPath = output;
       } else savedPath = await autoSaveSimulationRun(run);
-      console.error(`Run saved: ${savedPath}`);
+      console.debug(`Run saved: ${savedPath}`);
     } catch (error) {
       console.warn(
         "Failed to prepare or save simulation run; completed results are still returned",
@@ -845,6 +848,8 @@ export interface GenerateAndSimulateParams
 export async function generateAndSimulate(
   params: GenerateAndSimulateParams,
 ): Promise<SimulationResult[]> {
+  if (params.uploadResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   // Initialize tracing early so generation spans are captured
   await initTracingIfNeeded();
 

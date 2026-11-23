@@ -14,6 +14,12 @@ import {
   formatScorerAverages,
   simulateCommand,
 } from "../../src/lib/integrations/simulation/cli.js";
+import {
+  GENERATE_AND_SIMULATE_CONFIG_MODEL,
+  GenerateAndSimulateCliConfigSchema,
+  SIMULATE_CONFIG_MODEL,
+  SimulateCliConfigSchema,
+} from "../../src/lib/integrations/simulation/run-config.js";
 
 const golden = JSON.parse(
   await readFile(
@@ -46,7 +52,7 @@ async function workDir(): Promise<string> {
   return dir;
 }
 
-describe("eq sim schema matches Python", () => {
+describe("eq sim schema matches pinned Python", () => {
   for (const [name, args] of [
     ["schema_simulate", {}],
     ["schema_run", { command: "run" }],
@@ -60,6 +66,85 @@ describe("eq sim schema matches Python", () => {
       );
     });
   }
+
+  for (const [name, live] of [
+    ["schema_simulate", SimulateCliConfigSchema],
+    ["schema_run", GenerateAndSimulateCliConfigSchema],
+  ] as const) {
+    test(`${name} stays aligned with live TypeScript config fields and defaults`, () => {
+      const schema = JSON.parse(cases[name]?.stdout as string) as {
+        properties: Record<string, { default?: unknown }>;
+      };
+      expect(Object.keys(live.shape).sort()).toEqual(
+        Object.keys(schema.properties).sort(),
+      );
+      for (const [key, field] of Object.entries(live.shape)) {
+        const property = schema.properties[key];
+        if (property && Object.hasOwn(property, "default")) {
+          const parsed = field.safeParse(undefined);
+          expect(parsed.success).toBe(true);
+          if (parsed.success)
+            expect<unknown>(parsed.data).toEqual(property.default);
+        }
+      }
+    });
+
+    test(`${name} retains documented numeric constraints`, () => {
+      const schema = JSON.parse(cases[name]?.stdout as string) as {
+        properties: Record<
+          string,
+          {
+            minimum?: number;
+            exclusiveMinimum?: number;
+            anyOf?: { minimum?: number; exclusiveMinimum?: number }[];
+          }
+        >;
+      };
+      for (const key of [
+        "max_turns",
+        "target_agent_timeout_ms",
+        "max_target_retries",
+        "max_tool_result_chars",
+      ] as const) {
+        const property = schema.properties[key];
+        if (!property) throw new Error(`Missing schema field: ${key}`);
+        const bounds =
+          property.anyOf?.find(
+            (branch) =>
+              branch.minimum !== undefined ||
+              branch.exclusiveMinimum !== undefined,
+          ) ?? property;
+        const minimum =
+          bounds.minimum ??
+          (bounds.exclusiveMinimum === undefined
+            ? undefined
+            : bounds.exclusiveMinimum + 1);
+        if (minimum === undefined)
+          throw new Error(`Missing numeric bound: ${key}`);
+        expect(live.shape[key].safeParse(minimum).success).toBe(true);
+        expect(live.shape[key].safeParse(minimum - 1).success).toBe(false);
+        expect(live.shape[key].safeParse("1").success).toBe(false);
+      }
+    });
+  }
+
+  test("default evaluation_name preserves whether the legacy alias was supplied", () => {
+    for (const model of [
+      SIMULATE_CONFIG_MODEL,
+      GENERATE_AND_SIMULATE_CONFIG_MODEL,
+    ]) {
+      expect(model.build({}).evaluation_name).toBe("");
+      expect(model.build({}).run_name).toBeNull();
+      expect(model.build({ evaluation_name: "" }).run_name).toBe("");
+      expect(model.build({ evaluation_name: "legacy" }).run_name).toBe(
+        "legacy",
+      );
+      expect(model.build({ run_name: "current" }).run_name).toBe("current");
+      expect(() =>
+        model.build({ run_name: "current", evaluation_name: "legacy" }),
+      ).toThrow("run_name and evaluation_name must match");
+    }
+  });
 
   test("unknown --command is a usage error", () => {
     expect(() =>

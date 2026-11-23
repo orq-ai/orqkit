@@ -27,6 +27,7 @@ import {
   launchInsights,
   MANIFEST_ENV,
   REQUEST_ENV,
+  readApprovedFinderExport,
   readLaunchPayload,
   readPrivateFinderReference,
   readPrivateSnapshot,
@@ -36,7 +37,10 @@ import {
   workerProcessIdentity,
   workerStatePath,
 } from "../../../src/lib/dashboard/insights-launch.js";
-import { storeUpload } from "../../../src/lib/dashboard/insights-uploads.js";
+import {
+  MAX_FINDER_EXPORT_BYTES,
+  storeUpload,
+} from "../../../src/lib/dashboard/insights-uploads.js";
 import { snapshotCandidateFromRequest } from "../../../src/lib/dashboard/insights-worker.js";
 import { InsightsPopulation } from "../../../src/lib/insights/models.js";
 import {
@@ -51,6 +55,19 @@ import goldens from "../fixtures/insights-uploads-python-goldens.json" with {
 
 const SCRATCH = join(process.env.HOME ?? ".", "insights-launch-tests");
 const DEAD_PID = 4_194_000;
+test("rejects oversized Finder exports instead of returning a truncated buffer", async () => {
+  if (process.platform === "win32") return;
+  const path = join(root, "oversized.json");
+  const fd = openSync(path, "w", 0o600);
+  try {
+    ftruncateSync(fd, MAX_FINDER_EXPORT_BYTES + 1);
+  } finally {
+    closeSync(fd);
+  }
+  await expect(readApprovedFinderExport(root, path)).rejects.toThrow(
+    "size limit",
+  );
+});
 let root: string;
 const previous = {
   dir: process.env.EVALUATORQ_DIR,

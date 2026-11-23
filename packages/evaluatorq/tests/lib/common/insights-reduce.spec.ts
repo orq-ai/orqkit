@@ -1,4 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, spyOn } from "bun:test";
+
+import { UMAP } from "umap-js";
 
 import { project2d, reduce3d } from "../../../src/lib/insights/reduce.js";
 
@@ -46,5 +48,49 @@ describe("Insights map reduction", () => {
     expect(
       await project2d(Array.from({ length: 5 }, () => [1, Infinity, 3])),
     ).toBeNull();
+  });
+
+  it("reports unexpected UMAP failures without changing the nullable result", async () => {
+    const fit = spyOn(UMAP.prototype, "fitAsync").mockRejectedValue(
+      new Error("synthetic layout failure"),
+    );
+    const errors: string[] = [];
+    try {
+      expect(
+        await reduce3d(vectors, 42, (error) => errors.push(error)),
+      ).toBeNull();
+      expect(
+        await project2d(
+          vectors.map((row) => row.slice(0, 3)),
+          7,
+          (error) => errors.push(error),
+        ),
+      ).toBeNull();
+      expect(errors).toEqual([
+        "synthetic layout failure",
+        "synthetic layout failure",
+      ]);
+      expect(
+        await reduce3d(vectors.slice(0, 4), 42, (error) => errors.push(error)),
+      ).toBeNull();
+      expect(errors).toHaveLength(2);
+    } finally {
+      fit.mockRestore();
+    }
+  });
+
+  it("reports invalid coordinates returned by UMAP", async () => {
+    const fit = spyOn(UMAP.prototype, "fitAsync").mockResolvedValue([
+      [NaN, 0, 0],
+    ]);
+    const errors: string[] = [];
+    try {
+      expect(
+        await reduce3d(vectors, 42, (error) => errors.push(error)),
+      ).toBeNull();
+      expect(errors).toEqual(["UMAP returned invalid coordinates"]);
+    } finally {
+      fit.mockRestore();
+    }
   });
 });

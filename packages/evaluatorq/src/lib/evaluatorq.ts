@@ -20,6 +20,7 @@ import {
   resolveEvaluationMode,
 } from "./common/runner-input.js";
 import { processDataPointEffect } from "./effects.js";
+import { configuredOrqHost } from "./orq-host.js";
 import {
   ProgressService,
   ProgressServiceLive,
@@ -105,6 +106,8 @@ export async function evaluatorq(
   params: EvaluatorParams,
 ): Promise<EvaluatorqResult> {
   const normalized = normalizeEvaluatorParams(params);
+  if (normalized.sendResults !== false && process.env.ORQ_API_KEY)
+    configuredOrqHost();
   return withRunLifecycle(normalized.llmParallelism ?? undefined, () =>
     evaluatorqCore(name, normalized),
   );
@@ -651,6 +654,8 @@ export const evaluatorqEffect = (
     return Effect.tryPromise({
       try: (signal) => {
         const normalized = normalizeEvaluatorParams(params);
+        if (normalized.sendResults !== false && process.env.ORQ_API_KEY)
+          configuredOrqHost();
         running = withRunLifecycle(
           normalized.llmParallelism ?? undefined,
           () =>

@@ -245,6 +245,14 @@ describe("eq sim simulate errors match Python", () => {
               ? { ...V, ...Q }
               : { target: "deployment:d", ...Q },
       );
+      if (name === "empty_input") {
+        expect(r.code).toBe(2);
+        expect(r.bad).toBeInstanceOf(BadParameter);
+        expect(r.bad?.message).toContain("No datapoints loaded");
+        expect(r.err()).toBe("");
+        expect(r.out()).toBe("");
+        return;
+      }
       const py = cases[name] as Case;
       expect(r.code).toBe(py.exit_code);
       expect(r.err()).toBe(py.stderr);

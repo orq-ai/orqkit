@@ -64,7 +64,7 @@ const positiveInt = z.number().int().min(1).nullable().default(null);
 
 const shared = {
   run_name: optionalString,
-  evaluation_name: z.string().optional(),
+  evaluation_name: z.string().default(""),
   target: optionalString,
   memory_entity_id: optionalString,
   max_turns: positiveInt,
@@ -141,7 +141,7 @@ const shared = {
     .default(true),
 };
 
-const SimulateCliConfigSchema = z
+export const SimulateCliConfigSchema = z
   .object({
     ...shared,
     personas: z.array(PersonaSchema).nullable().default(null),
@@ -154,7 +154,7 @@ const SimulateCliConfigSchema = z
   })
   .strict();
 
-const GenerateAndSimulateCliConfigSchema = z
+export const GenerateAndSimulateCliConfigSchema = z
   .object({
     ...shared,
     agent_description: optionalString,
@@ -188,8 +188,11 @@ function alias<T>(
 
 type SharedConfig = z.infer<z.ZodObject<typeof shared>>;
 
-function resolveAliases<T extends SharedConfig>(config: T): T {
-  if (config.evaluation_name !== undefined) {
+function resolveAliases<T extends SharedConfig>(
+  config: T,
+  evaluationNameProvided: boolean,
+): T {
+  if (evaluationNameProvided) {
     if (config.run_name === null) config.run_name = config.evaluation_name;
     else if (
       config.evaluation_name &&
@@ -230,14 +233,21 @@ function resolveAliases<T extends SharedConfig>(config: T): T {
 
 export const SIMULATE_CONFIG_MODEL: ConfigModel<SimulateCliConfig> = {
   name: "SimulateCliConfig",
-  build: (data) => resolveAliases(SimulateCliConfigSchema.parse(data)),
+  build: (data) =>
+    resolveAliases(
+      SimulateCliConfigSchema.parse(data),
+      Object.hasOwn(data, "evaluation_name"),
+    ),
 };
 
 export const GENERATE_AND_SIMULATE_CONFIG_MODEL: ConfigModel<GenerateAndSimulateCliConfig> =
   {
     name: "GenerateAndSimulateCliConfig",
     build: (data) =>
-      resolveAliases(GenerateAndSimulateCliConfigSchema.parse(data)),
+      resolveAliases(
+        GenerateAndSimulateCliConfigSchema.parse(data),
+        Object.hasOwn(data, "evaluation_name"),
+      ),
   };
 
 export const LLM_CALL_CONFIG_MODEL: ConfigModel<Record<string, unknown>> = {

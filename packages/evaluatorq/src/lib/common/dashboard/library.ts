@@ -77,7 +77,7 @@ export async function readJsonCached(path: string): Promise<unknown> {
   if (hit && hit.mtimeNs === mtimeNs) {
     jsonCache.delete(key);
     jsonCache.set(key, hit);
-    return hit.data;
+    return structuredClone(hit.data);
   }
   const data: unknown = JSON.parse(await readFile(key, "utf8"));
   jsonCache.set(key, { mtimeNs, data });
@@ -85,7 +85,7 @@ export async function readJsonCached(path: string): Promise<unknown> {
     const oldest = jsonCache.keys().next().value;
     if (oldest !== undefined) jsonCache.delete(oldest);
   }
-  return data;
+  return structuredClone(data);
 }
 
 export function manifestCardId(runId: string): string {
@@ -472,4 +472,27 @@ export async function resolveManifest(
     }
   }
   return null;
+}
+
+export type TypedReportResult<T> =
+  | readonly ["ok", T]
+  | readonly ["missing" | "error", null];
+export async function loadTypedReport<T>(
+  rid: string,
+  roots: readonly string[],
+  surface: string,
+): Promise<TypedReportResult<T>> {
+  const path = await resolve(rid, [...roots]);
+  if (path === null) return ["missing", null];
+  try {
+    const [found] = await loadSurfaceStrict(path);
+    if (found !== surface) return ["missing", null];
+    const { ADAPTERS } = await import("../../dashboard/surfaces.js");
+    const adapter = ADAPTERS[surface];
+    if (!adapter) return ["missing", null];
+    return ["ok", (await adapter.load(path)) as T];
+  } catch (error) {
+    console.warn(`Could not load ${surface} report ${rid}`, error);
+    return ["error", null];
+  }
 }

@@ -46,6 +46,11 @@ async function guarded(body: () => Promise<number> | number): Promise<void> {
     const code = await body();
     if (code) process.exitCode = code;
   } catch (error) {
+    if (error instanceof BadParameter) {
+      console.error(error.render());
+      process.exitCode = 2;
+      return;
+    }
     if (process.env.EQ_DEBUG) throw error;
     console.error(
       `Error: ${error instanceof Error ? error.message : String(error)}`,
@@ -57,32 +62,103 @@ async function guarded(body: () => Promise<number> | number): Promise<void> {
   }
 }
 
-const SNAKE: Record<string, keyof RedteamRunArguments> = {
-  category: "categories",
-  vulnerability: "vulnerabilities",
-  strategy: "strategies",
-  deliveryMethod: "delivery_methods",
-  config: "config",
-  llmConfig: "llm_config_json",
-  report: "report",
-  parallelism: "datapoint_parallelism",
-};
+export interface RedteamCommandOptions {
+  target?: string[];
+  name?: string;
+  mode?: string;
+  category?: string[];
+  vulnerability?: string[];
+  strategy?: string[];
+  deliveryMethod?: string[];
+  maxTurns?: number;
+  maxPerCategory?: number;
+  attackModel?: string;
+  attackerInstructions?: string;
+  evaluatorModel?: string;
+  minEvaluationCoverage?: number;
+  targetTimeoutMs?: number;
+  maxTargetRetries?: number;
+  maxBacktracks?: number;
+  retryCount?: number;
+  maxToolContinuations?: number;
+  targetReasoningEffort?: string;
+  datapointParallelism?: number;
+  parallelism?: number;
+  llmParallelism?: number;
+  generatedStrategyCount?: number;
+  generateStrategies?: boolean;
+  maxDynamicDatapoints?: number;
+  maxStaticDatapoints?: number;
+  cleanupMemory?: boolean;
+  dataset?: string;
+  fromRun?: string;
+  artifactsDir?: string;
+  save?: string;
+  yes?: boolean;
+  verbose?: number;
+  quiet?: boolean;
+  report?: string;
+  reportMd?: string;
+  reportHtml?: string;
+  executiveSummary?: boolean;
+  recommendations?: boolean;
+  systemPrompt?: string;
+  config?: string;
+  llmConfig?: string;
+  json?: boolean;
+}
 
 export function redteamRunArguments(
-  options: Record<string, unknown>,
+  options: RedteamCommandOptions,
 ): RedteamRunArguments {
-  const args: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(options)) {
-    if (value === undefined) continue;
-    const name =
-      SNAKE[key] ?? key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-    args[name] = value;
-  }
-  return args as RedteamRunArguments;
+  return {
+    target: options.target,
+    name: options.name,
+    mode: options.mode,
+    categories: options.category,
+    vulnerabilities: options.vulnerability,
+    strategies: options.strategy,
+    delivery_methods: options.deliveryMethod,
+    max_turns: options.maxTurns,
+    max_per_category: options.maxPerCategory,
+    attack_model: options.attackModel,
+    attacker_instructions: options.attackerInstructions,
+    evaluator_model: options.evaluatorModel,
+    min_evaluation_coverage: options.minEvaluationCoverage,
+    target_timeout_ms: options.targetTimeoutMs,
+    max_target_retries: options.maxTargetRetries,
+    max_backtracks: options.maxBacktracks,
+    retry_count: options.retryCount,
+    max_tool_continuations: options.maxToolContinuations,
+    target_reasoning_effort: options.targetReasoningEffort,
+    datapoint_parallelism: options.datapointParallelism ?? options.parallelism,
+    llm_parallelism: options.llmParallelism,
+    generated_strategy_count: options.generatedStrategyCount,
+    generate_strategies: options.generateStrategies,
+    max_dynamic_datapoints: options.maxDynamicDatapoints,
+    max_static_datapoints: options.maxStaticDatapoints,
+    cleanup_memory: options.cleanupMemory,
+    dataset: options.dataset,
+    from_run: options.fromRun,
+    artifacts_dir: options.artifactsDir,
+    save: options.save,
+    yes: options.yes,
+    verbose: options.verbose,
+    quiet: options.quiet,
+    report: options.report,
+    report_md: options.reportMd,
+    report_html: options.reportHtml,
+    executive_summary: options.executiveSummary,
+    recommendations: options.recommendations,
+    system_prompt: options.systemPrompt,
+    config: options.config,
+    llm_config_json: options.llmConfig,
+    json: options.json,
+  };
 }
 
 export function runRedteam(
-  options: Record<string, unknown>,
+  options: RedteamCommandOptions,
   command?: { outputHelp: () => void },
 ): Promise<void> {
   if (command && Object.values(options).every((value) => value === undefined)) {

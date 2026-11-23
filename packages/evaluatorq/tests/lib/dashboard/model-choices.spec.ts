@@ -34,7 +34,11 @@ const { catalogueClient, catalogueEntry, modelGroups } = await import(
   "../../../src/lib/dashboard/model-choices.js"
 );
 
-const auth = new DashboardAuth("api_key", "test-key", "https://orq.example");
+const auth = new DashboardAuth(
+  "stored_api_key",
+  "test-key",
+  "https://orq.example",
+);
 const saved = { key: process.env.ORQ_API_KEY, url: process.env.ORQ_BASE_URL };
 
 beforeEach(() => {

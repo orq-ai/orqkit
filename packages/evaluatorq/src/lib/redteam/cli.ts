@@ -436,6 +436,7 @@ export async function executeRedteamRun(
         out("Run cancelled.");
         return 0;
       }
+      if (process.env.EQ_DEBUG) throw error;
       if (
         error instanceof RedTeamError ||
         error instanceof ReplayError ||
@@ -557,7 +558,14 @@ async function loadRawDataset(
   if (dataset === undefined)
     return downloadHfDataset(DEFAULT_HF_REPO, DEFAULT_HF_FILENAME, io);
   if (dataset.startsWith("hf:")) {
-    const [repo, filename] = parseHfSource(dataset.slice(3));
+    let source: ReturnType<typeof parseHfSource>;
+    try {
+      source = parseHfSource(dataset.slice(3));
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      throw new BadParameter(error.message);
+    }
+    const [repo, filename] = source;
     return downloadHfDataset(repo, filename, io);
   }
   io.print(`Validating local file: ${dataset}`);
@@ -587,7 +595,8 @@ export async function executeRedteamValidateDataset(
       raw === null ||
       typeof raw !== "object" ||
       Array.isArray(raw) ||
-      !("samples" in raw)
+      !("samples" in raw) ||
+      !Array.isArray(raw.samples)
     ) {
       io.printError("FAIL: Expected top-level object with 'samples' key.");
       return 1;

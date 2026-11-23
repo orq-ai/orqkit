@@ -1,4 +1,4 @@
-import { loadSurfaceStrict, reportId } from "../common/dashboard/library.js";
+import { loadTypedReport } from "../common/dashboard/library.js";
 import { compensatedSum } from "../common/jury.js";
 import { pairIndicesByKey } from "../common/matching.js";
 import { esc, kpiCards, pct } from "../common/reports/html-helpers.js";
@@ -14,14 +14,12 @@ import {
   vlBarH,
   vlGroupedBar,
 } from "../common/reports/vega.js";
-import { iterReportFiles } from "../common/run-manifest.js";
 import { codepointCompare } from "../common/sanitize.js";
 import type { ReportResult } from "../integrations/simulation/reports/helpers.js";
 import { simulationIndividualEntries } from "../integrations/simulation/reports/sections.js";
 import type { SimulationRun } from "../integrations/simulation/run-store.js";
 import { cliSlugRenderScope } from "./orq-workspace.js";
 import { page } from "./shell.js";
-import { ADAPTERS } from "./surfaces.js";
 import { panel, reportBackLink } from "./view.js";
 
 export type SimCompareEntry = SimulationEntryView & {
@@ -519,30 +517,7 @@ export async function resolveRun<T = unknown>(
   roots: readonly string[],
   surface: string,
 ): Promise<ResolvedRun<T>> {
-  let path: string | null = null;
-  outer: for (const root of roots)
-    for (const p of await iterReportFiles(root))
-      if (reportId(p) === rid) {
-        path = p;
-        break outer;
-      }
-  if (path === null) return ["missing", null];
-  let found: string | null;
-  try {
-    [found] = await loadSurfaceStrict(path);
-  } catch (exc) {
-    console.warn(`compare: corrupt/unreadable ${surface} report ${rid}`, exc);
-    return ["error", null];
-  }
-  if (found !== surface) return ["missing", null];
-  const adapter = ADAPTERS[surface];
-  if (!adapter) return ["missing", null];
-  try {
-    return ["ok", (await adapter.load(path)) as T];
-  } catch (exc) {
-    console.warn(`compare: failed to load ${surface} report ${rid}`, exc);
-    return ["error", null];
-  }
+  return loadTypedReport<T>(rid, roots, surface);
 }
 
 const htmlResponse = (body: string, status = 200): Response =>

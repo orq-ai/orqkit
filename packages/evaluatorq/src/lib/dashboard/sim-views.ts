@@ -1,4 +1,4 @@
-import { loadSurface, resolve } from "../common/dashboard/library.js";
+import { loadTypedReport } from "../common/dashboard/library.js";
 import {
   entryOutcome,
   esc,
@@ -20,7 +20,6 @@ import { cliSlugRenderScope } from "./orq-workspace.js";
 import { pyInt } from "./pairwise-views.js";
 import { stableSimulationEntries } from "./report-tabs.js";
 import type { SimulationDashboardEntry } from "./simulation-entities.js";
-import { ADAPTERS } from "./surfaces.js";
 import {
   singleTraceUrl,
   threadTraceUrl,
@@ -184,16 +183,8 @@ export async function loadRun(
   rid: string,
   roots: readonly string[],
 ): Promise<SimulationRun | null> {
-  const path = await resolve(rid, [...roots]);
-  if (path === null) return null;
-  const [surface] = await loadSurface(path);
-  if (surface !== "sim") return null;
-  try {
-    return (await ADAPTERS.sim?.load(path)) as unknown as SimulationRun;
-  } catch (error) {
-    console.warn(`sim_views: failed to load ${path}: ${error}`);
-    return null;
-  }
+  const [, value] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  return value;
 }
 
 const htmlResponse = (body: string, status = 200) =>
@@ -212,8 +203,11 @@ export async function simRowListRoute(
   query: URLSearchParams,
   roots: readonly string[],
 ): Promise<Response> {
-  const run = await loadRun(rid, roots);
-  if (run === null) return missing();
+  const [status, run] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing();
   const filtered = applyOrAll(
     run,
     "sim",
@@ -259,8 +253,11 @@ export async function simTranscriptRoute(
 ): Promise<Response> {
   const raw = query.get("idx");
   const idx = raw === null ? 0 : (pyInt(raw) ?? -1);
-  const run = await loadRun(rid, roots);
-  if (run === null) return missing();
+  const [status, run] = await loadTypedReport<SimulationRun>(rid, roots, "sim");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : missing();
   const entries = simulationIndividualEntries(run.results);
   if (!entries.length || idx < 0 || idx >= entries.length) {
     return htmlResponse(

@@ -50,17 +50,14 @@ export function loadResultsForExport(
     if (run) return [run.results, run.recommendations ?? []];
   }
   const results: StoredSimulationResult[] = [];
-  for (const line of content.split("\n")) {
+  for (const [index, line] of content.split("\n").entries()) {
     const trimmed = line.trim();
     if (!trimmed) continue;
     let data: unknown;
     try {
       data = JSON.parse(trimmed);
     } catch {
-      console.warn(
-        `parseJsonl: skipping malformed line: ${trimmed.slice(0, 80)}`,
-      );
-      continue;
+      throw new Error(`Malformed JSON on line ${index + 1}`);
     }
     results.push(parseSimulationResult(data));
   }

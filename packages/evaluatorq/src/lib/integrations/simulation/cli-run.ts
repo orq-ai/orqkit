@@ -207,7 +207,8 @@ export function loadDatapointRecords(path: string): Record<string, unknown>[] {
       invalid("Invalid persona/scenario datapoint");
     records.push(candidate);
   }
-  if (!records.length) throw new Error(`No datapoints loaded from ${path}`);
+  if (!records.length)
+    throw new BadParameter(`No datapoints loaded from ${path}`);
   return records;
 }
 
@@ -563,7 +564,7 @@ async function execute<T extends SimCliConfig>(
   try {
     run = await body(cfg);
   } catch (error) {
-    if (error instanceof BadParameter) throw error;
+    if (error instanceof BadParameter || process.env.EQ_DEBUG) throw error;
     const code = abortCode(error, io);
     if (code !== null) return code;
     io.printError(

@@ -1,4 +1,5 @@
-// Generated from the Python pydantic models by tests/lib/fixtures/python_cli_schemas.py: the JSON schemas `schema` commands print.
+// Python CLI wire schemas from evaluatorq v1.85.0, commit a59c3a862dcb6a991ba660fe1bd13f56838b73ed.
+// Regenerate with tests/lib/fixtures/python_cli_schemas.py; config alignment is checked by the CLI tests.
 export const PYTHON_CLI_SCHEMAS: Readonly<Record<string, unknown>> = {
   RedTeamCliConfig: {
     $defs: {

@@ -9,8 +9,12 @@ import {
 } from "bun:test";
 
 import { SimulationDroppedError } from "../../../../src/lib/integrations/simulation/exceptions.js";
+import { DatapointGenerator } from "../../../../src/lib/integrations/simulation/generators/datapoint-generator.js";
 import { SimulationRunner } from "../../../../src/lib/integrations/simulation/runner/simulation.js";
-import { simulate } from "../../../../src/lib/integrations/simulation/simulation/index.js";
+import {
+  generateAndSimulate,
+  simulate,
+} from "../../../../src/lib/integrations/simulation/simulation/index.js";
 import type { TargetCallback } from "../../../../src/lib/integrations/simulation/types.js";
 import { finishTurn, makeFakeClient } from "./fake-client.js";
 
@@ -47,6 +51,50 @@ const audited = (occurred: boolean) => [
 ];
 
 describe("simulate", () => {
+  test("rejects ambiguous upload configuration before executing a row", async () => {
+    const saved = {
+      ORQ_BASE_URL: process.env.ORQ_BASE_URL,
+      ROUTER_BASE_URL: process.env.ROUTER_BASE_URL,
+    };
+    delete process.env.ORQ_BASE_URL;
+    process.env.ROUTER_BASE_URL = "https://proxy.example/custom";
+    process.env.ORQ_API_KEY = "test-key";
+    const target = mock(async () => "reply");
+    const generate = spyOn(
+      DatapointGenerator.prototype,
+      "generateFromDescription",
+    );
+    const { client } = makeFakeClient({
+      judge: () => finishTurn(audited(true)),
+    });
+    try {
+      await expect(
+        simulate({
+          evaluationName: "invalid-upload",
+          client,
+          datapoints: [datapoint("a")],
+          targetCallback: target,
+        }),
+      ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      await expect(
+        generateAndSimulate({
+          evaluationName: "invalid-generation-upload",
+          agentDescription: "Fixture agent",
+          client,
+          targetCallback: target,
+        }),
+      ).rejects.toThrow("set ORQ_BASE_URL explicitly");
+      expect(target).not.toHaveBeenCalled();
+      expect(generate).not.toHaveBeenCalled();
+    } finally {
+      generate.mockRestore();
+      for (const [name, value] of Object.entries(saved)) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
+  });
+
   const originalKey = process.env.ORQ_API_KEY;
   const originalFetch = globalThis.fetch;
 

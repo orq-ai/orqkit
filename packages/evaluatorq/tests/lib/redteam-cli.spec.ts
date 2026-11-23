@@ -8,6 +8,7 @@ import {
   BadParameter,
 } from "../../src/lib/common/cli-config.js";
 import { reportId } from "../../src/lib/common/dashboard/library.js";
+import { PYTHON_CLI_SCHEMAS } from "../../src/lib/common/python-cli-schemas.js";
 import { fromPythonKeys } from "../../src/lib/common/python-json.js";
 import {
   executeRedteamRun,
@@ -28,7 +29,10 @@ import {
   type PipelineHooks,
 } from "../../src/lib/redteam/hooks.js";
 import { RedTeamReport } from "../../src/lib/redteam/reports/models.js";
-import type { RedTeamCliConfig } from "../../src/lib/redteam/run-config.js";
+import {
+  RedTeamCliConfig,
+  RedTeamRunConfigSchema,
+} from "../../src/lib/redteam/run-config.js";
 import { keyDiff } from "./python-interop.js";
 
 const golden = JSON.parse(
@@ -376,12 +380,41 @@ describe("eq redteam runs matches Python", () => {
 });
 
 describe("eq redteam schema and validate-dataset", () => {
-  test("schema prints the Python input schema", () => {
+  test("schema prints the pinned Python input schema", () => {
     const out: string[] = [];
     executeRedteamSchema({}, { print: (line) => out.push(line) });
     const schema = JSON.parse(out.join("\n"));
     expect(schema.title).toBe("RedTeamCliConfig");
     expect(schema.additionalProperties).toBe(false);
+  });
+
+  test("the Python schema stays aligned with live TypeScript config fields and defaults", () => {
+    const schema = PYTHON_CLI_SCHEMAS.RedTeamCliConfig as {
+      properties: Record<string, { default?: unknown }>;
+    };
+    const snake = (key: string) =>
+      key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`);
+    expect(Object.keys(RedTeamRunConfigSchema.shape).map(snake).sort()).toEqual(
+      Object.keys(schema.properties).sort(),
+    );
+    const defaults = new RedTeamCliConfig({});
+    for (const key of Object.keys(RedTeamRunConfigSchema.shape)) {
+      const property = schema.properties[snake(key)];
+      if (property && Object.hasOwn(property, "default"))
+        expect<unknown>(defaults[key as keyof RedTeamCliConfig]).toEqual(
+          property.default,
+        );
+    }
+    expect(
+      RedTeamRunConfigSchema.shape.generatedStrategyCount.safeParse("2")
+        .success,
+    ).toBe(false);
+    expect(
+      RedTeamRunConfigSchema.shape.llmParallelism.safeParse(0).success,
+    ).toBe(false);
+    expect(
+      RedTeamRunConfigSchema.shape.llmParallelism.safeParse(1).success,
+    ).toBe(true);
   });
 
   test("validate-dataset reports sample errors and mocks the HF download", async () => {

@@ -346,8 +346,9 @@ export function pyInt(raw: string | null | undefined): number | null {
     : null;
 }
 
-const htmlResponse = (body: string) =>
+const htmlResponse = (body: string, status = 200) =>
   new Response(body, {
+    status,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
 const notFound = () =>
@@ -361,8 +362,11 @@ export async function pairwiseRowListRoute(
   query: URLSearchParams,
   roots: readonly string[],
 ): Promise<Response> {
-  const [, run] = await resolveRun<PairwiseRun>(rid, roots, "pairwise");
-  if (run === null) return notFound();
+  const [status, run] = await resolveRun<PairwiseRun>(rid, roots, "pairwise");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : notFound();
   const entries = applyOrAll(
     run,
     "pairwise",
@@ -384,8 +388,11 @@ export async function pairwiseComparisonRoute(
   query: URLSearchParams,
   roots: readonly string[],
 ): Promise<Response> {
-  const [, run] = await resolveRun<PairwiseRun>(rid, roots, "pairwise");
-  if (run === null) return notFound();
+  const [status, run] = await resolveRun<PairwiseRun>(rid, roots, "pairwise");
+  if (run === null)
+    return status === "error"
+      ? htmlResponse("Report could not be loaded.", 422)
+      : notFound();
   const idx = pyInt(query.get("idx")) ?? -1;
   if (!(idx >= 0 && idx < run.entries.length))
     return htmlResponse(

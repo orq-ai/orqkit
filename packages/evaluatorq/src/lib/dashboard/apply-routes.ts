@@ -328,7 +328,7 @@ export function applyRoutes(
       originalInstructions: result.originalInstructions,
       newInstructions: result.newInstructions,
       recommendations: [...result.recommendations],
-      credentialIdentity: authIdentity(ctx.auth, ctx.settings),
+      credentialIdentity: await authIdentity(ctx.auth, ctx.settings),
     });
     return html(
       renderPreviewDrawer(rid, result, area, {
@@ -379,7 +379,7 @@ export function applyRoutes(
     let clients: ApplyClients;
     try {
       const { auth, settings } = await selectedAuth();
-      if (entry.credentialIdentity !== authIdentity(auth, settings))
+      if (entry.credentialIdentity !== (await authIdentity(auth, settings)))
         return errorDrawer(
           "The Orq credentials changed after this preview; run the preview again.",
         );

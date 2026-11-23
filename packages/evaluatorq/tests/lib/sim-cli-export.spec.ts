@@ -76,6 +76,15 @@ function mockDatasets() {
 }
 
 describe("eq sim export matches Python", () => {
+  test("rejects a truncated JSONL line before writing an export", async () => {
+    const s = await setup();
+    const input = join(s.dir, "truncated.jsonl");
+    await writeFile(input, '{"broken":');
+    const result = await badParameter(() =>
+      executeSimExport({ input, output: join(s.dir, "out.json") }, s.io),
+    );
+    expect(result).toContain("Malformed JSON on line 1");
+  });
   for (const [name, input, format] of [
     ["export_missing", "nope.jsonl", undefined],
     ["export_bad_format", "results.jsonl", "pdf"],
