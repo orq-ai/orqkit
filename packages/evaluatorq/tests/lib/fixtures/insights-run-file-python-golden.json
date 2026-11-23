@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "evaluatorq_version": null,
+  "run_id": "r",
+  "run_name": "py insights café",
+  "created_at": "2026-11-10T00:00:00Z",
+  "status": "completed",
+  "stage_failures": [],
+  "population": {
+    "mode": "query"
+  },
+  "config": {
+    "labels": [
+      {
+        "name": "sentiment",
+        "kind": "choice",
+        "instructions": "Q",
+        "criteria": {
+          "yes": null,
+          "no": null
+        },
+        "noul_threshold": 0.5
+      }
+    ],
+    "dimensions": [
+      "intent"
+    ],
+    "summary_model": "s",
+    "classifier_model": "c",
+    "compiler_model": null,
+    "embedding_model": "e",
+    "max_clusters": 15,
+    "max_subclusters": 15,
+    "outlier_zscore": null,
+    "parallelism": 100,
+    "trace_input_chars": 4096,
+    "priority_dimension": "intent",
+    "cache": true,
+    "coding_analysis": false,
+    "coding_labels": [],
+    "signals": null
+  },
+  "traces": [
+    {
+      "trace_id": "t",
+      "span_id": "s",
+      "timestamp": null,
+      "dataset": null,
+      "outcome": null,
+      "agent_name": "",
+      "project": "",
+      "labels": {
+        "sentiment": {
+          "value": "yes",
+          "confidence": 0.7,
+          "probabilities": {
+            "yes": 0.7
+          },
+          "error": null
+        }
+      },
+      "summary": null,
+      "tool_stats": null,
+      "signals": null,
+      "source_coverage": {},
+      "assignments": {},
+      "coords": {
+        "intent": [
+          1.0,
+          2.0,
+          3.0
+        ]
+      },
+      "coords_2d": {
+        "intent": [
+          2.0,
+          3.0
+        ]
+      },
+      "errors": {}
+    },
+    {
+      "trace_id": "t",
+      "span_id": "s",
+      "timestamp": null,
+      "dataset": null,
+      "outcome": null,
+      "agent_name": "",
+      "project": "",
+      "labels": {
+        "sentiment": {
+          "value": "yes",
+          "confidence": 0.7,
+          "probabilities": {
+            "yes": 0.7
+          },
+          "error": null
+        }
+      },
+      "summary": null,
+      "tool_stats": null,
+      "signals": null,
+      "source_coverage": {},
+      "assignments": {},
+      "coords": {
+        "intent": [
+          1.0,
+          2.0,
+          3.0
+        ]
+      },
+      "coords_2d": {
+        "intent": [
+          2.0,
+          3.0
+        ]
+      },
+      "errors": {}
+    }
+  ],
+  "dimensions": {},
+  "labels": {},
+  "priority": null,
+  "priority_reason": null,
+  "counts": {},
+  "warnings": [],
+  "cost_by_stage": {},
+  "stage_history": null
+}

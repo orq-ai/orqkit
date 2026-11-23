@@ -9,6 +9,7 @@ import { DEFAULT_ORQ_BASE_URL, envText } from "../common/env-config.js";
 import { withFileLock } from "../common/file-lock.js";
 import { TASKS } from "../common/model-role-definitions.js";
 import { writePrivateAtomic } from "../common/private-files.js";
+import { pythonJsonDumps } from "../common/python-json.js";
 import { pythonStrip } from "../common/sanitize.js";
 import { decryptApiKey, encryptApiKey } from "./secure-credentials.js";
 
@@ -439,6 +440,15 @@ function patchModelOverrides(
     }
   return nested;
 }
+function pythonSettingsDocument(persisted: Row): Row {
+  const known = new Set([...KEYS, ...LEGACY_KEYS]);
+  return Object.fromEntries(
+    Object.entries(persisted).map(([key, value]) => [
+      known.has(key) ? snake(key) : key,
+      value,
+    ]),
+  );
+}
 export async function saveDashboardSettings(
   settings: DashboardSettings,
   path = dashboardSettingsPath(),
@@ -544,7 +554,7 @@ export async function saveDashboardSettings(
         );
       await writePrivateAtomic(
         path,
-        `${JSON.stringify(persisted, null, 2)}\n`,
+        `${pythonJsonDumps(pythonSettingsDocument(persisted))}\n`,
         { privateDirectory: false },
       );
     },

@@ -1,3 +1,4 @@
+import { BadParameter } from "../common/cli-config.js";
 import { writePrivateAtomic } from "../common/private-files.js";
 import {
   MAX_SELECTED_SESSIONS,
@@ -22,7 +23,7 @@ export interface SessionArguments {
 function day(value: string | undefined, next: boolean): Date | null {
   if (!value) return null;
   const match = /^(\d{4})(?:-(\d{2})-(\d{2})|(\d{2})(\d{2}))$/.exec(value);
-  if (!match) throw new RangeError("session date must be YYYY-MM-DD");
+  if (!match) throw new BadParameter("session date must be YYYY-MM-DD");
   const year = Number(match[1]),
     month = Number(match[2] ?? match[4]),
     date = Number(match[3] ?? match[5]);
@@ -35,7 +36,7 @@ function day(value: string | undefined, next: boolean): Date | null {
     result.getMonth() !== month - 1 ||
     result.getDate() !== date
   )
-    throw new RangeError("invalid session date");
+    throw new BadParameter("invalid session date");
   if (next) result.setDate(result.getDate() + 1);
   return result;
 }
@@ -49,18 +50,18 @@ export function sessionQuery(
       (source) => !SESSION_SOURCES.includes(source as SessionSource),
     )
   )
-    throw new RangeError("unknown session source");
+    throw new BadParameter("unknown session source");
   const start = day(args.from, false),
     end = day(args.to, true);
   if (start && end && start >= end)
-    throw new RangeError("The first day must not be after the last day.");
+    throw new BadParameter("The first day must not be after the last day.");
   const limit = args.limit ?? defaultLimit;
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_SELECTED_SESSIONS)
-    throw new RangeError(
+    throw new BadParameter(
       `limit must be between 1 and ${MAX_SELECTED_SESSIONS}`,
     );
   if (args.text && Array.from(args.text).length > MAX_SESSION_TEXT_CHARS)
-    throw new RangeError(
+    throw new BadParameter(
       `text must be at most ${MAX_SESSION_TEXT_CHARS} characters`,
     );
   return {

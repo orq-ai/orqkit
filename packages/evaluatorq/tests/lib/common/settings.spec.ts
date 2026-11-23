@@ -23,6 +23,8 @@ import goldens from "../fixtures/settings-python-goldens.json" with {
 type Row = Record<string, unknown>;
 const camel = (key: string) =>
   key.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+const snake = (key: string) =>
+  key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 const known = new Set([
   ...Object.keys(new DashboardSettings().toJSON()),
   "compilerModel",
@@ -137,7 +139,7 @@ for (const row of goldens.saves)
       if (persisted && !Array.isArray(persisted))
         expect(
           Object.keys(persisted as object).some(
-            (key) => known.has(camel(key)) && key !== camel(key),
+            (key) => known.has(key) && key !== snake(key),
           ),
         ).toBe(false);
     }
@@ -167,10 +169,10 @@ it("merges concurrent edits from separate readers and preserves future fields", 
     ),
   ]);
   const raw = JSON.parse(await readFile(path, "utf8"));
-  expect(raw.windowDays).toBe(12);
+  expect(raw.window_days).toBe(12);
   expect(raw.limit).toBe(800);
-  expect(raw.schemaVersion).toBe(9);
-  expect(raw.modelOverrides).toEqual({
+  expect(raw.schema_version).toBe(9);
+  expect(raw.model_overrides).toEqual({
     "future.task": "future",
     apply: "a",
     "finder.compiler": "b",
@@ -207,10 +209,10 @@ it("uses environment and explicit finder limits without persisting runtime overr
     path,
   );
   const raw = JSON.parse(await readFile(path, "utf8"));
-  expect(raw.windowDays).toBe(8);
+  expect(raw.window_days).toBe(8);
   expect(raw.limit).toBe(700);
-  expect(raw.orqWorkspace).toBe("legacy");
-  expect(raw.compressionInspectorEnabled).toBe(true);
+  expect(raw.orq_workspace).toBe("legacy");
+  expect(raw.compression_inspector_enabled).toBe(true);
 });
 it("reads canonical settings through the existing role-model resolver", async () => {
   const path = join(directory, "settings.json"),

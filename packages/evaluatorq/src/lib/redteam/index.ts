@@ -1,3 +1,4 @@
+export { BadParameter } from "../common/cli-config.js";
 export { classifyErrorType } from "../common/target-call.js";
 export * from "./adaptive/attack-generator.js";
 export * from "./adaptive/blackbox-classifier.js";

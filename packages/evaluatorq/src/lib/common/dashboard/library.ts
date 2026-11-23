@@ -1,17 +1,26 @@
 import { createHash } from "node:crypto";
 import { realpathSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve as resolvePath } from "node:path";
 
 import {
-  type ManifestStatus,
+  ManifestStatus,
   ManifestSurface,
+  RUN_SUMMARY_VERSION,
   type RunManifest,
+  RunManifestSchema,
+  type RunSummary,
 } from "../../contracts.js";
+import { getSimulationRunsDir } from "../../integrations/simulation/run-store.js";
+import { getPairwiseRunsDir } from "../../pairwise-run.js";
+import { getRedteamRunsDir } from "../../redteam/run-store.js";
 import {
   iterReportFiles,
+  listManifests,
   listRunRecords,
   MANIFESTS_DIR_NAME,
+  ManifestWriter,
+  summaryIsCurrent,
 } from "../run-manifest.js";
 
 export type ReportSurface = "sim" | "redteam" | "pairwise";
@@ -40,12 +49,43 @@ export function reportId(path: string): string {
     .toString("base64url");
 }
 
+// Like Python's Path.resolve(): symlinks in the existing prefix still resolve
+// after the file itself is gone, so a deleted report keeps its id.
 function canonicalPath(path: string): string {
+  const absolute = resolvePath(path);
   try {
-    return realpathSync(path);
+    return realpathSync(absolute);
   } catch {
-    return resolve(path);
+    const parent = dirname(absolute);
+    return parent === absolute
+      ? absolute
+      : join(canonicalPath(parent), basename(absolute));
   }
+}
+
+export function defaultRoots(): string[] {
+  return [getRedteamRunsDir(), getSimulationRunsDir(), getPairwiseRunsDir()];
+}
+
+const JSON_CACHE_SIZE = 64;
+const jsonCache = new Map<string, { mtimeNs: bigint; data: unknown }>();
+
+export async function readJsonCached(path: string): Promise<unknown> {
+  const key = canonicalPath(path);
+  const { mtimeNs } = await stat(key, { bigint: true });
+  const hit = jsonCache.get(key);
+  if (hit && hit.mtimeNs === mtimeNs) {
+    jsonCache.delete(key);
+    jsonCache.set(key, hit);
+    return structuredClone(hit.data);
+  }
+  const data: unknown = JSON.parse(await readFile(key, "utf8"));
+  jsonCache.set(key, { mtimeNs, data });
+  if (jsonCache.size > JSON_CACHE_SIZE) {
+    const oldest = jsonCache.keys().next().value;
+    if (oldest !== undefined) jsonCache.delete(oldest);
+  }
+  return structuredClone(data);
 }
 
 export function manifestCardId(runId: string): string {
@@ -76,7 +116,7 @@ export async function loadSurface(
   path: string,
 ): Promise<[ReportSurface | null, ReportData]> {
   try {
-    const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
+    const parsed = await readJsonCached(path);
     if (!isReportObject(parsed)) {
       return [null, {}];
     }
@@ -89,7 +129,7 @@ export async function loadSurface(
 export async function loadSurfaceStrict(
   path: string,
 ): Promise<[ReportSurface | null, ReportData]> {
-  const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
+  const parsed = await readJsonCached(path);
   if (!isReportObject(parsed)) {
     throw new Error(`${path}: report is not a JSON object`);
   }
@@ -251,8 +291,76 @@ async function card(path: string): Promise<ReportCard | null> {
   };
 }
 
-export async function scan(runsDirs: string | string[]): Promise<ReportCard[]> {
-  const roots = Array.isArray(runsDirs) ? runsDirs : [runsDirs];
+async function backfillManifest(path: string, c: ReportCard): Promise<void> {
+  if (
+    c.error ||
+    (c.surface !== ManifestSurface.SIM && c.surface !== ManifestSurface.REDTEAM)
+  ) {
+    return;
+  }
+  const stem = basename(path).replace(/\.json$/, "");
+  const mpath = join(dirname(path), MANIFESTS_DIR_NAME, `${stem}.json`);
+  let existing: RunManifest | null = null;
+  let raw: string | null = null;
+  try {
+    raw = await readFile(mpath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+      console.warn(`Rewriting unreadable run manifest ${mpath}: ${error}`);
+  }
+  if (raw !== null) {
+    try {
+      existing = RunManifestSchema.parse(JSON.parse(raw));
+    } catch (error) {
+      console.warn(`Rewriting unreadable run manifest ${mpath}: ${error}`);
+    }
+    if (existing !== null && summaryIsCurrent(existing)) {
+      return;
+    }
+  }
+  const summary = await reportSummary(path, c.surface);
+  if (summary === null) {
+    return;
+  }
+  const manifest =
+    existing ??
+    RunManifestSchema.parse({
+      runId: stem,
+      surface: c.surface,
+      runName: c.name,
+      status: ManifestStatus.COMPLETED,
+      startedAt: c.createdAt,
+      updatedAt: c.createdAt,
+      endedAt: c.createdAt,
+      reportPath: path,
+    });
+  const writer = new ManifestWriter(manifest, mpath);
+  writer.manifest.summary = summary;
+  writer.manifest.summaryVersion = RUN_SUMMARY_VERSION;
+  await writer.flush();
+}
+
+async function reportSummary(
+  path: string,
+  surface: string,
+): Promise<RunSummary | null> {
+  try {
+    const { ADAPTERS } = await import("../../dashboard/surfaces.js");
+    const report = (await ADAPTERS[surface]?.load(path)) as {
+      manifestSummary(): RunSummary;
+    };
+    return report.manifestSummary();
+  } catch (error) {
+    console.warn(`Skipping manifest backfill for ${path}: ${error}`);
+    return null;
+  }
+}
+
+export async function scan(
+  runsDirs: string | string[] = [],
+): Promise<ReportCard[]> {
+  const given = Array.isArray(runsDirs) ? runsDirs : [runsDirs];
+  const roots = given.length > 0 ? given : defaultRoots();
   const seen = new Set<string>();
   const deduped: string[] = [];
   for (const root of roots) {
@@ -271,6 +379,7 @@ export async function scan(runsDirs: string | string[]): Promise<ReportCard[]> {
         const cardOrNull = await card(record.reportPath);
         if (cardOrNull !== null) {
           cards.push(cardOrNull);
+          await backfillManifest(record.reportPath, cardOrNull);
         }
       }
     }
@@ -287,7 +396,8 @@ export interface Fingerprint {
 export async function fingerprint(
   runsDirs: string | string[] = [],
 ): Promise<Fingerprint> {
-  const roots = Array.isArray(runsDirs) ? runsDirs : [runsDirs];
+  const given = Array.isArray(runsDirs) ? runsDirs : [runsDirs];
+  const roots = given.length > 0 ? given : defaultRoots();
   const seen = new Set<string>();
   const deduped: string[] = [];
   for (const root of roots) {
@@ -334,4 +444,55 @@ function hashStamps(stamps: Array<[bigint, bigint]>): string {
     hash.update(`${ino}:${size};`);
   }
   return hash.digest("hex");
+}
+
+export async function resolve(
+  rid: string,
+  roots: string[] = defaultRoots(),
+): Promise<string | null> {
+  for (const root of roots) {
+    for (const path of await iterReportFiles(root)) {
+      if (reportId(path) === rid) {
+        return path;
+      }
+    }
+  }
+  return null;
+}
+
+export async function resolveManifest(
+  rid: string,
+  roots: string[] = defaultRoots(),
+): Promise<RunManifest | null> {
+  for (const root of roots) {
+    for (const m of await listManifests(root)) {
+      if (!m.reportPath && manifestCardId(m.runId) === rid) {
+        return m;
+      }
+    }
+  }
+  return null;
+}
+
+export type TypedReportResult<T> =
+  | readonly ["ok", T]
+  | readonly ["missing" | "error", null];
+export async function loadTypedReport<T>(
+  rid: string,
+  roots: readonly string[],
+  surface: string,
+): Promise<TypedReportResult<T>> {
+  const path = await resolve(rid, [...roots]);
+  if (path === null) return ["missing", null];
+  try {
+    const [found] = await loadSurfaceStrict(path);
+    if (found !== surface) return ["missing", null];
+    const { ADAPTERS } = await import("../../dashboard/surfaces.js");
+    const adapter = ADAPTERS[surface];
+    if (!adapter) return ["missing", null];
+    return ["ok", (await adapter.load(path)) as T];
+  } catch (error) {
+    console.warn(`Could not load ${surface} report ${rid}`, error);
+    return ["error", null];
+  }
 }

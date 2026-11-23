@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 
-import { buildCliOauthClients, oauthSubject } from "../common/cli-oauth.js";
+import {
+  buildCliOauthClients,
+  OrqCLIError,
+  oauthSubject,
+} from "../common/cli-oauth.js";
 import { DEFAULT_ORQ_BASE_URL, envText } from "../common/env-config.js";
 import { resolveLlmClient } from "../common/llm-client.js";
 import {
@@ -9,8 +13,10 @@ import {
   orqServerUrl,
   resolveOrqClient,
 } from "../common/orq-client.js";
+import { pythonJson } from "../formats/json.js";
 import {
   type DashboardSettings,
+  effectiveDashboardSettings,
   readStoredDashboardApiKey,
 } from "../trace-finder/settings.js";
 
@@ -102,26 +108,16 @@ export async function resolveDashboardAuth(
 const sha256 = (text: string) =>
   createHash("sha256").update(text).digest("hex");
 
-// Python json.dumps(sort_keys=True): ", " and ": " separators, ASCII escapes.
-function pyJson(value: unknown): string {
-  if (value === null || value === undefined) return "null";
-  if (Array.isArray(value)) return `[${value.map(pyJson).join(", ")}]`;
-  if (typeof value === "object")
-    return `{${Object.keys(value)
-      .sort()
-      .map(
-        (k) => `${pyJson(k)}: ${pyJson((value as Record<string, unknown>)[k])}`,
-      )
-      .join(", ")}}`;
-  if (typeof value === "string")
-    return JSON.stringify(value).replace(
-      /[\u007f-￿]/g,
-      (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
-    );
-  return JSON.stringify(value);
-}
-
-const hashFields = (fields: Record<string, unknown>) => sha256(pyJson(fields));
+// Python json.dumps(sort_keys=True); undefined fields hash as null, as None did.
+const hashFields = (fields: Record<string, unknown>) =>
+  sha256(
+    pythonJson(
+      JSON.parse(
+        JSON.stringify(fields, (_k, v) => (v === undefined ? null : v)),
+      ),
+      { sortKeys: true, ensureAscii: true },
+    ),
+  );
 
 async function accountFields(
   auth: DashboardAuth,
@@ -270,4 +266,165 @@ export async function buildOrqClient(
       scope.project,
     )[0];
   return resolveOrqClient(auth.apiKey, auth.baseUrl);
+}
+
+const REJECTION_MARKERS = [
+  "unauthorized",
+  "not authenticated",
+  "login required",
+  "http 401",
+  "http 403",
+  "session expired",
+  "cli is not installed",
+  "sign-in needs attention",
+  "orq auth login",
+];
+
+// Mirrors Python's httpx.HTTPError/APIError. A bare timeout of the probe
+// itself is unexpected there (asyncio.wait_for), so it reports "error" here too.
+const PROVIDER_ERROR_NAMES = new Set([
+  "APIError",
+  "SDKError",
+  "HTTPClientError",
+  "UnexpectedClientError",
+  "ConnectionError",
+  "RequestAbortedError",
+  "RequestTimeoutError",
+  "APIConnectionError",
+  "APIConnectionTimeoutError",
+]);
+
+function isProgrammingError(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    error instanceof ReferenceError ||
+    error instanceof SyntaxError ||
+    error instanceof RangeError
+  );
+}
+
+function isProviderFailure(error: Error | undefined): boolean {
+  if (!error) return false;
+  if (error instanceof OrqCLIError) return error.failureKind === "unavailable";
+  // fetch reports network failures as a TypeError("fetch failed").
+  if (error.name === "TypeError") return error.message === "fetch failed";
+  return (
+    PROVIDER_ERROR_NAMES.has(error.name) ||
+    PROVIDER_ERROR_NAMES.has(error.constructor.name)
+  );
+}
+
+export interface AuthStatus {
+  status: "valid" | "action" | "error" | "unavailable";
+  method: string;
+  message?: string;
+}
+
+interface ProbeClient {
+  traces: {
+    listFacetValues: (
+      request: { field: string; from: Date; to: Date; limit: number },
+      options?: { signal?: AbortSignal },
+    ) => Promise<unknown>;
+  };
+}
+
+export async function authStatus(
+  deps: {
+    settings?: () => Promise<DashboardSettings>;
+    resolve?: (settings: DashboardSettings) => Promise<DashboardAuth>;
+    clients?: (
+      auth: DashboardAuth,
+      scope: ScopeOptions,
+    ) => Promise<readonly [unknown, unknown]>;
+    timeoutMs?: number;
+  } = {},
+): Promise<AuthStatus> {
+  const settings = await (deps.settings ?? effectiveDashboardSettings)();
+  let auth: DashboardAuth;
+  try {
+    auth = await (deps.resolve ?? resolveDashboardAuth)(settings);
+  } catch (exc) {
+    if (isProgrammingError(exc)) throw exc;
+    return {
+      status: "action",
+      method: settings.orqAuthMethod,
+      message: (exc as Error).message,
+    };
+  }
+  if (auth.method === "environment" && !auth.apiKey) {
+    return {
+      status: "action",
+      method: auth.method,
+      message:
+        "ORQ_API_KEY is not set. Choose an authentication method in Settings.",
+    };
+  }
+  let orq: unknown = null;
+  let llm: unknown = null;
+  try {
+    [orq, llm] = await (deps.clients ?? buildAuthClients)(auth, {
+      workspace: settings.orqWorkspace,
+      project: settings.orqProjectId,
+    });
+    const now = new Date();
+    await (orq as ProbeClient).traces.listFacetValues(
+      {
+        field: "agent_name",
+        from: new Date(now.getTime() - 86_400_000),
+        to: now,
+        limit: 1,
+      },
+      { signal: AbortSignal.timeout(deps.timeoutMs ?? 12_000) },
+    );
+  } catch (exc) {
+    const error = exc as Error & { response?: { status?: number } };
+    const status = statusOf(exc) ?? error?.response?.status;
+    const message = String(error?.message ?? exc).toLowerCase();
+    if (
+      status === 401 ||
+      status === 403 ||
+      REJECTION_MARKERS.some((marker) => message.includes(marker))
+    ) {
+      return {
+        status: "action",
+        method: auth.method,
+        message: `${auth.label} was rejected. Open Settings to choose or renew a credential.`,
+      };
+    }
+    if (status === undefined && !isProviderFailure(error)) {
+      console.error(
+        `Unexpected dashboard auth status probe failure for ${auth.label}: ${exc}`,
+      );
+      return {
+        status: "error",
+        method: auth.method,
+        message:
+          "The authentication check failed unexpectedly. Check the dashboard logs.",
+      };
+    }
+    console.warn(
+      `Dashboard auth status probe failed for ${auth.label}: ${exc}`,
+    );
+    return {
+      status: "unavailable",
+      method: auth.method,
+      message: `Could not check ${auth.label} right now. Try again shortly.`,
+    };
+  } finally {
+    for (const [name, client] of [
+      ["Orq", orq],
+      ["LLM", llm],
+    ] as const) {
+      const close = (client as { close?: () => unknown } | null)?.close;
+      if (typeof close === "function") {
+        try {
+          await close.call(client);
+        } catch (exc) {
+          console.warn(`Could not close dashboard auth ${name} client: ${exc}`);
+        }
+      }
+    }
+  }
+  return { status: "valid", method: auth.method };
 }

@@ -119,20 +119,22 @@ it("reads the Python run fixture and preserves priced usage, transcript content,
     scorerAverages: fixtures.summary.scorer_averages,
   });
 });
-it("writes camelCase model fields and reads them back without mutating protocol data or metadata", async () => {
+it("writes Python's snake_case model fields and reads them back without mutating protocol data or metadata", async () => {
   const original = run();
   const path = join(dir, "explicit.json");
   await original.save(path);
   const raw = JSON.parse(await readFile(path, "utf8"));
-  expect(raw).toHaveProperty("runName");
-  expect(raw).not.toHaveProperty("run_name");
-  expect(raw).toHaveProperty("replayVersion", 1);
-  expect(raw.results[0]).toHaveProperty("tokenUsage.totalCost", 0.03);
-  expect(raw.results[0]).not.toHaveProperty("token_usage");
-  expect(raw.results[0].turnMetrics[0].tokenUsage.totalCost).toBe(0.03);
-  expect(raw.results[0].messages[1].toolCalls[0].function.arguments).toBe("{}");
-  expect(raw.datapoints[0].persona.communicationStyle).toBe("casual");
-  expect(raw.datapoints[0]).toHaveProperty("firstMessage", "Reply mango");
+  expect(raw).toHaveProperty("run_name");
+  expect(raw).not.toHaveProperty("runName");
+  expect(raw).toHaveProperty("replay_version", 1);
+  expect(raw.results[0]).toHaveProperty("token_usage.total_cost", 0.03);
+  expect(raw.results[0]).not.toHaveProperty("tokenUsage");
+  expect(raw.results[0].turn_metrics[0].token_usage.total_cost).toBe(0.03);
+  expect(raw.results[0].messages[1].tool_calls[0].function.arguments).toBe(
+    "{}",
+  );
+  expect(raw.datapoints[0].persona.communication_style).toBe("casual");
+  expect(raw.datapoints[0]).toHaveProperty("first_message", "Reply mango");
   expect(raw.results[0].metadata.custom_under_score.keep_key).toBe(true);
   const loaded = await SimulationRun.load(path);
   expect(loaded.toJSON()).toEqual(original.toJSON());

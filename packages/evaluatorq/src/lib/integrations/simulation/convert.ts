@@ -3,6 +3,7 @@ import {
   RESPONSES_ASSISTANT_TURN_ORDER_KEY,
   RESPONSES_ITEM_ORDER_KEY,
 } from "../../common/output-adapters.js";
+import { toPythonKeys } from "../../common/python-json.js";
 import { responsesFunctionCallItemId } from "../openresponses/input-items.js";
 import { usageDetails } from "./usage.js";
 
@@ -183,17 +184,9 @@ export function toOpenResponses(
       ...(result.turn_metrics.length > 0 && {
         turn_metrics: result.turn_metrics.map(({ usage, ...turn }) => ({
           ...turn,
-          token_usage: Object.fromEntries(
-            Object.entries(usageDetails(turn.token_usage, usage)).map(
-              ([key, value]) => [
-                key === "cacheCreation1hTokens"
-                  ? "cache_creation_1h_tokens"
-                  : key === "cacheCreation5mTokens"
-                    ? "cache_creation_5m_tokens"
-                    : key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`),
-                value,
-              ],
-            ),
+          token_usage: toPythonKeys(
+            usageDetails(turn.token_usage, usage),
+            "Usage",
           ),
         })),
       }),

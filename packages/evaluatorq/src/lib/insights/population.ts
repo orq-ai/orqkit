@@ -15,6 +15,7 @@ import {
   serializedQuestionChars,
 } from "../common/model-input.js";
 import { roleModel } from "../common/model-roles.js";
+import { camelToSnake } from "../common/python-json.js";
 import {
   ensureTraceDocument,
   type TraceDocument,
@@ -50,7 +51,7 @@ import type { UsageLedger } from "./usage.js";
 function populationFields(fields: object): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(JSON.parse(JSON.stringify(fields))).map(([key, value]) => [
-      key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`),
+      camelToSnake(key),
       value,
     ]),
   );

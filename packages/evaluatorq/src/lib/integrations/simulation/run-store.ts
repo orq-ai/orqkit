@@ -1,11 +1,12 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { mkdir, open, readFile, rm } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import { z } from "zod";
 
 import { orqServerUrl } from "../../common/orq-client.js";
+import { writeAtomic } from "../../common/private-files.js";
+import { toPythonKeys } from "../../common/python-json.js";
 import {
   loadRunPayload,
   REPLAY_VERSION,
@@ -418,16 +419,15 @@ export class SimulationRun implements SimulationRunInput {
       datapoints: this.datapoints?.map(wireDatapoint) ?? null,
     };
   }
+  toPythonJson(): string {
+    return JSON.stringify(
+      toPythonKeys(this.toJSON(), "SimulationRun"),
+      null,
+      2,
+    );
+  }
   async save(path: string): Promise<void> {
-    await mkdir(dirname(path), { recursive: true });
-    const temp = `${path}.${process.pid}.${randomUUID()}.tmp`;
-    try {
-      await writeFile(temp, JSON.stringify(this, null, 2), "utf8");
-      await rename(temp, path);
-    } catch (error) {
-      await rm(temp, { force: true }).catch(() => {});
-      throw error;
-    }
+    await writeAtomic(path, this.toPythonJson());
   }
   static async load(path: string): Promise<SimulationRun> {
     return new SimulationRun(JSON.parse(await readFile(path, "utf8")));
@@ -498,7 +498,7 @@ export async function autoSaveSimulationRun(
     .replaceAll(":", "")
     .replace("T", "-");
   const base = `${sanitiseRunName(options.runName ?? run.runName)}_${timestamp}`;
-  const text = JSON.stringify(run, null, 2);
+  const text = run.toPythonJson();
   for (let counter = 0; counter < 1000; counter++) {
     const path = join(
       dir,

@@ -3,6 +3,11 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
+import {
+  fromPythonKeys,
+  toPythonKeys,
+} from "../../../src/lib/common/python-json.js";
+import { vlAvailable } from "../../../src/lib/common/reports/vega.js";
 import { InsightsRunSchema } from "../../../src/lib/insights/models.js";
 import {
   insightsRunSlug,
@@ -37,7 +42,7 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
       expect(loaded.runId).toBe(run.runId);
       expect(
         (JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>)
-          .runName,
+          .run_name,
       ).toBe(run.runName);
     }
     expect(await listRunPaths(directory)).toHaveLength(8);
@@ -56,4 +61,50 @@ test("run saves are complete and collision-safe, with corrupt files retained in 
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("chart loading cannot change saved Set fields into strings", async () => {
+  expect(await vlAvailable()).toBe(true);
+  const root = await mkdtemp(join(tmpdir(), "insights-chart-save-"));
+  try {
+    const base = await loadRun(
+      new URL(
+        "../fixtures/insights-run-file-python-golden.json",
+        import.meta.url,
+      ).pathname,
+    );
+    const run = InsightsRunSchema.parse({
+      ...base,
+      config: { ...base.config, signals: { emptyValues: new Set(["", "[]"]) } },
+    });
+    const path = await saveRun(run, root);
+    const raw = JSON.parse(await readFile(path, "utf8"));
+    expect(raw.config.signals.empty_values).toEqual(["", "[]"]);
+    expect((await loadRun(path)).config.signals?.emptyValues).toEqual(
+      new Set(["", "[]"]),
+    );
+    expect(toPythonKeys(new Set(["a"]), "SignalsConfig")).toEqual(["a"]);
+    expect(toPythonKeys({ nested: [new Set(["b"])] }, "SignalsConfig")).toEqual(
+      { nested: [["b"]] },
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("saved-run key conversion preserves unknown Object prototype names", () => {
+  const input = JSON.parse(
+    '{"constructor":{"nested":1},"toString":{"nested":2},"valueOf":3,"__proto__":{"marker":true}}',
+  );
+  const written = toPythonKeys(input, "InsightsRun") as Record<string, unknown>;
+  expect(Object.getPrototypeOf(written)).toBe(Object.prototype);
+  expect(Object.hasOwn(written, "__proto__")).toBe(true);
+  expect(written.constructor as unknown).toEqual({ nested: 1 });
+  expect(written.to_string).toEqual({ nested: 2 });
+  expect(written.value_of).toBe(3);
+  const read = fromPythonKeys(input, "InsightsRun") as Record<string, unknown>;
+  expect(Object.getPrototypeOf(read)).toBe(Object.prototype);
+  expect(read.constructor as unknown).toEqual({ nested: 1 });
+  expect(read.toString as unknown).toEqual({ nested: 2 });
+  expect(Object.hasOwn(read, "undefined")).toBe(false);
 });

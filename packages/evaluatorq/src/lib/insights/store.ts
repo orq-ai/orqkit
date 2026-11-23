@@ -11,6 +11,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 
+import { toPythonKeys } from "../common/python-json.js";
 import { getStoreDir } from "../common/run-store-dir.js";
 import { type InsightsRunFields, InsightsRunSchema } from "./models.js";
 
@@ -32,6 +33,9 @@ function code(error: unknown): string | undefined {
     ? String(error.code)
     : undefined;
 }
+export function insightsRunJson(run: InsightsRunFields): string {
+  return `${JSON.stringify(toPythonKeys(run, "InsightsRun"), null, 2)}\n`;
+}
 export async function saveRun(
   run: InsightsRunFields,
   runsDir = getInsightsRunsDir(),
@@ -51,15 +55,7 @@ export async function saveRun(
   try {
     const file = await open(temporary, "wx", 0o600);
     try {
-      const json = JSON.stringify(
-        parsed,
-        function (this: Record<string, unknown>, key, serialized) {
-          const original = this[key];
-          return original instanceof Set ? [...original] : serialized;
-        },
-        2,
-      );
-      await file.writeFile(`${json}\n`, "utf8");
+      await file.writeFile(insightsRunJson(parsed), "utf8");
       await file.sync();
     } finally {
       await file.close();

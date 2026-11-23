@@ -1,9 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
+import { cliProcess } from "../../../src/lib/common/cli-oauth.js";
 import {
   accountIdentity,
   accountLabel,
   authIdentity,
+  authStatus,
   DashboardAuth,
   resolveDashboardAuth,
   verifiedAccountIdentity,
@@ -135,4 +137,31 @@ describe("dashboard auth", () => {
     expect(accountLabel(oauth)).toBe("CLI OAuth on my.orq.ai");
     expect(JSON.stringify(resolved)).not.toContain("sk-test");
   });
+});
+
+it("auth status probes the real CLI client facade", async () => {
+  const original = { ...cliProcess };
+  const captured: string[][] = [];
+  cliProcess.which = () => "/fixture/orq";
+  cliProcess.runAsync = async (args) => {
+    captured.push(args);
+    return { returncode: 0, stdout: '{"values":[]}', stderr: "" };
+  };
+  try {
+    expect(
+      await authStatus({
+        settings: async () =>
+          settings({
+            orqAuthMethod: "cli_oauth",
+            orqWorkspace: null,
+            orqProjectId: null,
+          }),
+        resolve: async () =>
+          new DashboardAuth("cli_oauth", null, "https://my.orq.ai"),
+      }),
+    ).toEqual({ status: "valid", method: "cli_oauth" });
+    expect(captured[0]).toContain("list-facet-values");
+  } finally {
+    Object.assign(cliProcess, original);
+  }
 });

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { getField } from "./common/fields.js";
 import { UNKNOWN_ARGUMENTS, wireArguments } from "./common/messages.js";
+import { isPlain, snakeToCamel } from "./common/python-json.js";
 import {
   iterPaired,
   PairedToolCall,
@@ -1328,7 +1329,14 @@ export const RUN_SUMMARY_TOTAL_KEY = "totalResults";
  */
 export const RUN_SUMMARY_VERSION = 1;
 
-export const RunSummarySchema = z.object({
+const acceptSnakeKeys = (value: unknown): unknown => {
+  if (!isPlain(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, field]) => [snakeToCamel(key), field]),
+  );
+};
+
+const RunSummaryObject = z.object({
   totalResults: z.number().int().optional(),
   pipeline: z.string().optional(),
   totalAttacks: z.number().int().optional(),
@@ -1339,6 +1347,7 @@ export const RunSummarySchema = z.object({
   targetKind: z.string().optional(),
   scorerAverages: z.record(z.string(), z.number()).optional(),
 });
+export const RunSummarySchema = z.preprocess(acceptSnakeKeys, RunSummaryObject);
 export type RunSummary = z.infer<typeof RunSummarySchema>;
 
 const manifestStatus = z.nativeEnum(ManifestStatus);
@@ -1351,7 +1360,7 @@ const optionalDateTime = z.preprocess(
   z.date().nullable().default(null),
 );
 
-export const StageRecordSchema = z
+const StageRecordObject = z
   .object({
     name: z.string(),
     target: z.string().nullable().default(null),
@@ -1377,9 +1386,13 @@ export const StageRecordSchema = z
       }
     }
   });
+export const StageRecordSchema = z.preprocess(
+  acceptSnakeKeys,
+  StageRecordObject,
+);
 export type StageRecord = z.infer<typeof StageRecordSchema>;
 
-export const RunManifestSchema = z.object({
+export const RunManifestObject = z.object({
   runId: z.string(),
   surface: z.nativeEnum(ManifestSurface),
   runName: z.string(),
@@ -1397,6 +1410,10 @@ export const RunManifestSchema = z.object({
   summary: RunSummarySchema.nullable().default(null),
   summaryVersion: z.number().int().nullable().default(null),
 });
+export const RunManifestSchema = z.preprocess(
+  acceptSnakeKeys,
+  RunManifestObject,
+);
 export type RunManifest = z.infer<typeof RunManifestSchema>;
 
 /** Null while the stage or run is still going. */

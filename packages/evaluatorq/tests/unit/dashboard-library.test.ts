@@ -11,7 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import {
   cardFromManifest,
@@ -50,7 +50,7 @@ function manifest(overrides: Partial<RunManifest> = {}): RunManifest {
 const tempDirs: string[] = [];
 
 async function tempDir(prefix: string): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), prefix));
+  const dir = resolve(await mkdtemp(join(tmpdir(), prefix)));
   tempDirs.push(dir);
   return dir;
 }
